@@ -66,7 +66,7 @@
 
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
-const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
+const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string.
 const char* reb_version_str = "3.27.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
@@ -411,11 +411,8 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     // ********** TRACE
     r->ri_tr.allocatedN = 0;
     r->ri_tr.allocatedN_additionalforces = 0;
-    r->ri_tr.dcrit_allocatedN = 0;
-    r->ri_tr.dcrit = NULL;
     r->ri_tr.particles_backup = NULL;
     r->ri_tr.particles_backup_try = NULL;
-    r->ri_tr.particles_backup_additionalforces = NULL;
     r->ri_tr.encounter_map = NULL;
     // ********** JANUS
     r->ri_janus.allocated_N = 0;
@@ -477,7 +474,7 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
     FILE* fin = fmemopen(bufp, sizep, "r");
     reb_input_fields(r_copy, fin, warnings);
     fclose(fin);
-    
+
 }
 
 char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2){
@@ -489,7 +486,7 @@ char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation
     reb_output_binary_to_stream(r2, &bufp2,&sizep2);
 
     reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
-    
+
     free(bufp1);
     free(bufp2);
     return bufp;
@@ -545,23 +542,23 @@ void reb_init_simulation(struct reb_simulation* r){
     r->nghostx  = 0;
     r->nghosty  = 0;
     r->nghostz  = 0;
-    r->N        = 0;    
-    r->allocated_N   = 0;    
-    r->N_active     = -1;   
-    r->var_rescale_warning   = 0;   
+    r->N        = 0;
+    r->allocated_N   = 0;
+    r->N_active     = -1;
+    r->var_rescale_warning   = 0;
     r->particle_lookup_table = NULL;
     r->hash_ctr = 0;
     r->N_lookup = 0;
     r->allocated_N_lookup = 0;
-    r->testparticle_type = 0;   
+    r->testparticle_type = 0;
     r->testparticle_hidewarnings = 0;
-    r->N_var    = 0;    
-    r->var_config_N = 0;    
-    r->var_config   = NULL;     
-    r->exit_min_distance    = 0;    
-    r->exit_max_distance    = 0;    
-    r->max_radius0    = 0.;   
-    r->max_radius1    = 0.;   
+    r->N_var    = 0;
+    r->var_config_N = 0;
+    r->var_config   = NULL;
+    r->exit_min_distance    = 0;
+    r->exit_max_distance    = 0;
+    r->max_radius0    = 0.;
+    r->max_radius1    = 0.;
     r->status       = REB_RUNNING;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
@@ -649,7 +646,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_tr.mode = 0;
     r->ri_tr.safe_mode = 1;
     r->ri_tr.recalculate_coordinates_this_timestep = 0;
-    r->ri_tr.recalculate_dcrit_this_timestep = 0;
     r->ri_tr.is_synchronized = 1;
     r->ri_tr.encounterN = 0;
     r->ri_tr.hillfac = 4;
@@ -966,4 +962,3 @@ const char* reb_logo[26] = {
 "          `-/oyyyssosssyso+/.            ",
 "                ``....`                  ",
 };
-

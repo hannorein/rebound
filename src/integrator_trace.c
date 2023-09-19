@@ -331,17 +331,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
           i_enc++;
           if (r->N_active==-1 || i<r->N_active){
               ri_tr->encounterNactive++;
-              if (ri_tr->tponly_encounter){
-                  ri_tr->particles_backup_try[i] = tmp;         // Make copy of particles after the kepler step.
-                                                          // used to restore the massive objects' states in the case
-                                                          // of only massless test-particle encounters
-              }
           }
       }
   }
 
   ri_tr->mode = 1;
-  // ri_tr->ts_rej = 0;
   // run
   const double old_dt = r->dt;
   const double old_t = r->t;
@@ -395,28 +389,19 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
     const int N = r->N;
-    //ri_tr->encounterN = N; // TLu temp for full IAS15 integration
 
-    if (ri_tr->dcrit_allocatedN<N){
-        // Need to safe these arrays in SimulationArchive
-        ri_tr->dcrit_allocatedN = N; // better way around this maybe
-        // Heliocentric coordinates were never calculated.
-        // This will get triggered on first step only (not when loaded from archive)
-         ri_tr->recalculate_coordinates_this_timestep = 1;
-    }
     if (ri_tr->allocatedN<N){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         ri_tr->particles_backup       = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*N);
 
         ri_tr->current_Ks = realloc(ri_tr->current_Ks, sizeof(int)*((N-1)*(N-2))/2);
-        ri_tr->delta_Ks   = realloc(ri_tr->delta_Ks, sizeof(int)*100);
         ri_tr->encounter_map          = realloc(ri_tr->encounter_map,sizeof(int)*N);
         ri_tr->encounter_map_internal = realloc(ri_tr->encounter_map_internal,sizeof(int)*N);
-        ri_tr->encounter_map_backup   = realloc(ri_tr->encounter_map_backup,sizeof(int)*N);
 
         // Only need this stuff for Listing 3
         ri_tr->particles_backup_try   = realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*N);
+        ri_tr->recalculate_coordinates_this_timestep = 1;
         ri_tr->allocatedN = N;
     }
     if (ri_tr->safe_mode || ri_tr->recalculate_coordinates_this_timestep){
@@ -430,7 +415,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
     // Calculate collisions only with DIRECT method
     if (r->collision != REB_COLLISION_NONE && r->collision != REB_COLLISION_DIRECT){
-        reb_warning(r,"trace only works with a direct collision search.");
+        reb_warning(r,"TRACE only works with a direct collision search.");
     }
 
     // Calculate gravity with special function
@@ -455,7 +440,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
       //ri_tr->regime_switch = 0;
     }
 
-    if (ri_tr->dt_shells == NULL){
+    if (ri_tr->dt_shells == NULL && ri_tr->nshells != NULL){
         // Allocate dt_shells
         ri_tr->dt_shells = realloc(ri_tr->dt_shells, sizeof(double)*ri_tr->nshells);
         for (int i = 0; i < ri_tr->nshells; i++){
@@ -466,14 +451,17 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
     r->gravity = REB_GRAVITY_TRACE;
     ri_tr->mode = 0;
+
+    // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
-      // Clear encounter map
       ri_tr->encounter_map[i] = 0;
+      ri_tr->encounter_map_internal[i] = 0;
     }
+    ri_tr->encounter_map_internal[0] = 1;
 }
 
 // Particle-particle collision tracking. Explanation is in my notes.
-int reb_integrator_trace_pindex(int i, int j, int N){
+int reb_integrator_trace_pindex(unsigned int i, unsigned int j, int N){
   return (i-1)*N-((i-1)*(2+i)/2)+j-i-1;
 }
 
@@ -483,8 +471,8 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   const int Nactive = r->N_active==-1?r->N:r->N_active;
 
   // Switching functions
-  double (*_switch) (const struct reb_simulation* const r, int i, int j) = r->ri_tr.S;
-  double (*_switch_peri) (const struct reb_simulation* const r, int j) = r->ri_tr.S_peri;
+  double (*_switch) (const struct reb_simulation* const r, unsigned int i, unsigned int j) = r->ri_tr.S;
+  double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
 
   int new_c = 0; // New CEs
   ri_tr->regime = 0; // Assume no CEs
@@ -554,13 +542,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     const int N = r->N;
     // Make copy of particles
     memcpy(ri_tr->particles_backup,r->particles,N*sizeof(struct reb_particle));
-
-    // Set encounter map
-    ri_tr->encounter_map_internal[0] = 1;
-    for (int i=1; i<N; i++){
-        ri_tr->encounter_map_internal[i] = 0;
-    }
-
     ri_tr->encounterN = 1;
     ri_tr->current_L = 0;
 
@@ -614,23 +595,24 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       }
 
       // Kepler - Interaction/Jump - Kepler if we use adaptive timesteps
-      /*
+      
       reb_integrator_trace_kepler_step(r, r->dt/2.); // always accept this
       reb_integrator_trace_interaction_step(r, r->dt);
       reb_integrator_trace_jump_step(r, r->dt);
       reb_integrator_trace_com_step(r,r->dt);
       reb_integrator_trace_kepler_step(r, r->dt/2.);
-      */
+
       // This sets last_regime. At the end of the loop, this should be correctly set
 
       // This is faster if not using adaptive TS
+      /*
       reb_integrator_trace_interaction_step(r, r->dt/2.);
       reb_integrator_trace_jump_step(r, r->dt/2.);
       reb_integrator_trace_kepler_step(r, r->dt); // always accept this
       reb_integrator_trace_com_step(r,r->dt);
       reb_integrator_trace_jump_step(r, r->dt/2.);
       reb_integrator_trace_interaction_step(r, r->dt/2.);
-
+      */
       // Also check for new close_encounters
       int ctry = reb_integrator_trace_Fcond(r);
 
@@ -705,37 +687,23 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.ats = 0; // turn off adaptive timesteps
     r->ri_tr.vfac = 3.;
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)
-    r->ri_tr.tponly_encounter = 0;
     r->ri_tr.recalculate_coordinates_this_timestep = 0;
     // Internal arrays (only used within one timestep)
     free(r->ri_tr.particles_backup);
     r->ri_tr.particles_backup = NULL;
-    free(r->ri_tr.particles_backup_additionalforces);
-    r->ri_tr.particles_backup_additionalforces = NULL;
+
     free(r->ri_tr.encounter_map);
     r->ri_tr.encounter_map = NULL;
     r->ri_tr.allocatedN = 0;
     r->ri_tr.allocatedN_additionalforces = 0;
-    // dcrit array
-    free(r->ri_tr.dcrit);
-    r->ri_tr.dcrit = NULL;
-    r->ri_tr.dcrit_allocatedN = 0;
 
     free(r->ri_tr.particles_backup_try);
     r->ri_tr.particles_backup_try = NULL;
 
     free(r->ri_tr.current_Ks);
     r->ri_tr.current_Ks = NULL;
-    free(r->ri_tr.delta_Ks);
-    r->ri_tr.delta_Ks = NULL;
 
     r->ri_tr.current_L = 0;
-
-    free(r->ri_tr.encounter_map_backup);
-    r->ri_tr.encounter_map_backup = NULL;
-
-    free(r->ri_tr.encounter_map_WH);
-    r->ri_tr.encounter_map_WH = NULL;
 
     free(r->ri_tr.dt_shells);
     r->ri_tr.dt_shells = NULL;

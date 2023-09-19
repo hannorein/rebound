@@ -121,8 +121,8 @@ struct reb_simulation_integrator_ias15 {
     unsigned int epsilon_global;
 
     // Internal use
-    unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge. 
-    unsigned int allocated_N;          
+    unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge.
+    unsigned int allocated_N;
     double* REBOUND_RESTRICT at;
     double* REBOUND_RESTRICT x0;
     double* REBOUND_RESTRICT v0;
@@ -168,12 +168,14 @@ struct reb_simulation_integrator_mercurius {
 };
 
 struct reb_simulation_integrator_trace {
+    double (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+    double (*S_peri) (struct reb_simulation* const r, const unsigned int j);
+
     double hillfac;
     double peri; // TLu check for close pericenter passage
     double vfac;
     double vfac_p;
     unsigned int recalculate_coordinates_this_timestep;
-    unsigned int recalculate_dcrit_this_timestep;
     unsigned int safe_mode;
 
     // Internal use
@@ -181,43 +183,32 @@ struct reb_simulation_integrator_trace {
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
     unsigned int encounterN;        // Number of particles currently having an encounter
     unsigned int encounterNactive;  // Number of active particles currently having an encounter
-    unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
     unsigned int allocatedN;
     unsigned int allocatedN_additionalforces;
-    unsigned int dcrit_allocatedN;  // Current size of dcrit arrays
-    double* dcrit;                  // Precalculated switching radii for particles
+
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
-    struct reb_particle* REBOUND_RESTRICT particles_backup_additionalforces; // contains coordinates before Kepler step for encounter prediction
+    struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
+
     int* encounter_map;             // Map to represent which particles are integrated with BS
-    // int* close_encounters; // TLu tracking which integrator is used for each particle
+    int* encounter_map_internal;
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
     int* current_Ks; // TLu tracking K for the entire timestep
-    int* current_Ls; // TLu tracking K for the entire timestep
-    int* delta_Ks; // TLu checking if Ks change during timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
-    int* encounter_map_WH;             // Map to represent which particles are integrated with WHFast - maybe speeds things up?
-    int* encounter_map_backup;             // Needed for step rejections
-    struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
-    int print; // for debugging
-
-    double (*S) (struct reb_simulation* const r, const int i, const int j);
-    double (*S_peri) (struct reb_simulation* const r, const int j);
+    unsigned int print; // for debugging
 
     // Adaptive timestep
     double dt_proposed;
     double dt_saved;
     double* dt_shells;
-    int current_shell;
-    int nshells;
-    int ts_rej;
+    unsigned int current_shell;
+    unsigned int nshells;
     double last_dt;
 
-    int* encounter_map_internal;
-    int last_regime;
-    int regime;
-    int ats;
+    unsigned int last_regime;
+    unsigned int regime;
+    unsigned int ats;
 };
 
 struct reb_simulation_integrator_sei {
@@ -584,7 +575,7 @@ struct reb_simulation {
     unsigned int     N;
     int     N_var;
     unsigned int     var_config_N;
-    struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles. 
+    struct reb_variational_configuration* var_config;   // These configuration structs contain details on variational particles.
     int     var_rescale_warning;
     int     N_active;
     int     testparticle_type;
@@ -593,11 +584,11 @@ struct reb_simulation {
     int     hash_ctr;               // Counter for number of assigned hashes to assign unique values.
     int     N_lookup;               // Number of entries in the particle lookup table.
     int     allocated_N_lookup;      // Number of lookup table entries allocated.
-    unsigned int   allocated_N;             // Current maximum space allocated in the particles array on this node. 
+    unsigned int   allocated_N;             // Current maximum space allocated in the particles array on this node.
     struct reb_particle* particles;
-    struct reb_vec3d* gravity_cs;   // Containing the information for compensated gravity summation 
+    struct reb_vec3d* gravity_cs;   // Containing the information for compensated gravity summation
     int     gravity_cs_allocated_N;
-    struct reb_treecell** tree_root;// Pointer to the roots of the trees. 
+    struct reb_treecell** tree_root;// Pointer to the roots of the trees.
     int     tree_needs_update;      // Flag to force a tree update (after boundary check)
     double opening_angle2;
     enum REB_STATUS status;
@@ -651,7 +642,7 @@ struct reb_simulation {
 #endif // MPI
 
     int collision_resolve_keep_sorted;
-    struct reb_collision* collisions;       ///< Array of all collisions. 
+    struct reb_collision* collisions;       ///< Array of all collisions.
     int collisions_allocated_N;
     double minimum_collision_velocity;
     double collisions_plog;
@@ -704,7 +695,7 @@ struct reb_simulation {
         REB_INTEGRATOR_MERCURIUS = 9,// MERCURIUS integrator
         REB_INTEGRATOR_SABA = 10,    // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,     // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
-        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer 
+        REB_INTEGRATOR_BS = 12,      // Gragg-Bulirsch-Stoer
         // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,   // WHFast integrator, optimized for AVX512
         REB_INTEGRATOR_TRACE = 25,     // TRACE
@@ -852,8 +843,8 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep);
 // Same as reb_binary_diff, but with options.
 // output_option:
-// - If set to 0, differences are written to bufp in the form of reb_binary_field structs. 
-// - If set to 1, differences are printed on the screen. 
+// - If set to 0, differences are written to bufp in the form of reb_binary_field structs.
+// - If set to 1, differences are printed on the screen.
 // - If set to 2, only the return value indicates any differences.
 // - If set to 3, differences are written to bufp in a human readable form.
 // returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.

@@ -103,7 +103,6 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
         struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
 				// TODO: RIGHT NOW JUST MERCURIUS
         if (r->ri_tr.mode==0){ //WHFast part
-            ri_tr->recalculate_dcrit_this_timestep       = 1;
             ri_tr->recalculate_coordinates_this_timestep = 1;
         }else{  // BS part
             reb_integrator_bs_reset(r);
@@ -145,7 +144,7 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	int proc_id = rootbox/root_n_per_node;
     	const unsigned int N_active = (r->N_active==-1)?r->N: (unsigned int)r->N_active;
 	if (proc_id != r->mpi_id && r->N >= N_active){
-		// Add particle to array and send them to proc_id later. 
+		// Add particle to array and send them to proc_id later.
 		reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
 		return;
 	}
@@ -351,17 +350,9 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 		if (r->integrator == REB_INTEGRATOR_TRACE){
 				// TODO: RIGHT NOW JUST MERCURIUS
         keepSorted = 1; // Force keepSorted for hybrid integrator
-        struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-        if (ri_tr->dcrit_allocatedN>0 && index<ri_tr->dcrit_allocatedN){
-            for (int i=0;i<r->N-1;i++){
-                if (i>=index){
-                    ri_tr->dcrit[i] = ri_tr->dcrit[i+1];
-                }
-            }
-        }
         reb_integrator_bs_reset(r);
-        if (r->ri_mercurius.mode==1){
-            struct reb_simulation_integrator_mercurius* ri_tr = &(r->ri_mercurius);
+        if (r->ri_tr.mode==1){
+            struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
             for (int i=0;i<ri_tr->encounterN;i++){
