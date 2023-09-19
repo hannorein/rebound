@@ -201,6 +201,11 @@ next_field:
 
         // We should never get here. If so, it's an unknown field type.
         *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+        int err = fseek(inf, field.size, SEEK_CUR);
+        if (err){
+            // Even worse, can't seek to end of field.
+            *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+        }
     } 
 
 finish_fields:
