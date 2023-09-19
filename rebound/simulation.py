@@ -2573,16 +2573,6 @@ class reb_simulation_integrator_trace(Structure):
                 ("_current_Ks", POINTER(c_int)),
                 ("current_L", c_uint),
                 ("print", c_uint),
-                # ----------------------------- ADAPTIVE TIMESTEPS -----------------------------
-                ("dt_proposed", c_double),
-                ("dt_saved", c_double),
-                ("dt_shells", POINTER(c_double)),
-                ("current_shell", c_uint),
-                ("nshells", c_uint),
-                ("last_dt", c_double),
-                ("last_regime", c_uint),
-                ("regime", c_uint),
-                ("ats", c_uint),
                 ]
     @property
     def S(self):
