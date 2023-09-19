@@ -42,8 +42,6 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
-// Can we just use Mercurius for these? Maybe not if Jacobi...
-
 double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i, int j){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   double dcriti = 0.0;
@@ -315,11 +313,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
 
   if (ri_tr->encounterN < 2){
     // No close encounters, skip
-    ri_tr->last_regime = 0;
     return;
   }
-
-  ri_tr->last_regime = 1;
 
   int i_enc = 0;
   ri_tr->encounterNactive = 0;
@@ -340,7 +335,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
   const double old_dt = r->dt;
   const double old_t = r->t;
   double t_needed = r->t + _dt;
-  ri_tr->last_dt = old_dt;
   //reb_integrator_bs_reset(r);
 
   r->dt = _dt; // start with a small timestep.
@@ -365,7 +359,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     r->particles[0].vz = star.vz;
   }
 
-  ri_tr->dt_proposed = 2.*r->dt;
   r->t = old_t;
   r->dt = old_dt;
   ri_tr->mode = 0;
@@ -432,23 +425,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
       ri_tr->S_peri = reb_integrator_trace_peri_switch_default;
     }
 
-    // ------------------ Adaptive TS ---------------------
-    if (r->t == 0){ // This only happens at the first timestep. Needs to be improved
-      ri_tr->dt_proposed = r->dt;
-      ri_tr->dt_saved = r->dt;
-      //ri_tr->regime = 0;
-      //ri_tr->regime_switch = 0;
-    }
-
-    if (ri_tr->dt_shells == NULL && ri_tr->nshells != NULL){
-        // Allocate dt_shells
-        ri_tr->dt_shells = realloc(ri_tr->dt_shells, sizeof(double)*ri_tr->nshells);
-        for (int i = 0; i < ri_tr->nshells; i++){
-          ri_tr->dt_shells[i] = pow(2., i) * r->dt;
-        }
-    }
-    // ------------------ Adaptive TS ---------------------
-
     r->gravity = REB_GRAVITY_TRACE;
     ri_tr->mode = 0;
 
@@ -475,7 +451,6 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
 
   int new_c = 0; // New CEs
-  ri_tr->regime = 0; // Assume no CEs
 
   // Check for pericenter CE
   // test particles cannot have pericenter CEs
@@ -484,7 +459,6 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
     if (fcond_peri < 0.0 && ri_tr->current_L == 0){
       ri_tr->current_L = 1;
       new_c = 1;
-      ri_tr->regime = 1;
     }
   }
 
@@ -496,7 +470,6 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
       double fcond = _switch(r, i, j);
 
       if (fcond < 0.0){
-        ri_tr->regime = 1; // Flagged a CE
         if (ri_tr->encounter_map_internal[i] == 0){
             ri_tr->encounter_map_internal[i] = i;
             ri_tr->encounterN++;
@@ -518,24 +491,6 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   return new_c;
 }
 
-void reb_integrator_trace_select_timestep(struct reb_simulation* const r){
-    struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-    for (int i = ri_tr->nshells - 1; i >= 0; i--){
-      if (ri_tr->dt_proposed >= ri_tr->dt_shells[i]){
-        r->dt = ri_tr->dt_shells[i];
-        ri_tr->current_shell = i;
-        break;
-      }
-
-      // If we get to the last shell this is the minimum ts
-      if (i == 0){
-        r->dt = ri_tr->dt_shells[i];
-      }
-    }
-
-    //printf("Choose TS with proposed %f %f\n", ri_tr->dt_proposed, r->dt);
-}
-
 // This is Listing 2
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
@@ -551,38 +506,32 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     int new_ce = reb_integrator_trace_Fcond(r); // output means nothing at this step for now
 
-    // ------------------- Adaptive TS -------------------------
-    // Check condition at the beginning of TS
-    if (ri_tr->ats){
-      if (ri_tr->regime){
-        reb_integrator_trace_select_timestep(r);
+    if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
+      // Pericenter close encounter detected. We integrate the entire simulation with BS
+      ri_tr->encounter_map_internal[0] = 1;
+      ri_tr->encounterN = N;
+      for (int i = 1; i < N; i++){
+        ri_tr->encounter_map_internal[i] = i; // Identity map
       }
-      else{
-        // no close encounters, we use the lowest timestep for WHFast only
-        r->dt = ri_tr->dt_shells[0];
-        ri_tr->current_shell = 0;
-      }
+      ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
     }
-    // ------------------- Adaptive TS -------------------------
 
-    for (int loop = 1; loop; ) { // Loop until timestep is accepted
+    // This is faster if not using adaptive TS
+    reb_integrator_trace_interaction_step(r, r->dt/2.);
+    reb_integrator_trace_jump_step(r, r->dt/2.);
+    reb_integrator_trace_kepler_step(r, r->dt); // always accept this
+    reb_integrator_trace_com_step(r,r->dt);
+    reb_integrator_trace_jump_step(r, r->dt/2.);
+    reb_integrator_trace_interaction_step(r, r->dt/2.);
 
-      // ------------------- Adaptive TS -------------------------
-      // Check for regime shift
-      if (ri_tr->ats){
-        if (ri_tr->regime == 1 && ri_tr->last_regime == 0){
-          // Switching from WHFAST back to BS. We need to use the old timestep.
-          r->dt = ri_tr->dt_saved;
-          // printf("WHFAST to BS: %f %f\n", r->t, r->dt);
-        }
-
-        if (ri_tr->regime == 0 && ri_tr->last_regime == 1){
-          // Switching from BS to WHFAST. Need to save the last timestep we used.
-          ri_tr->dt_saved = ri_tr->last_dt;
-          // printf("BS to WHFAST: %f %f\n", r->t, ri_tr->dt_saved);
-        }
+    // Check for new close_encounters
+    if (reb_integrator_trace_Fcond(r)){
+      // REJECT STEP
+      // reset simulation and try again with new timestep
+      for (int i=0; i<N; i++){
+          // Reject & reset
+          r->particles[i] = ri_tr->particles_backup[i];
       }
-      // ------------------- Adaptive TS -------------------------
 
       if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
         // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -594,65 +543,13 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
       }
 
-      // Kepler - Interaction/Jump - Kepler if we use adaptive timesteps
-      
-      reb_integrator_trace_kepler_step(r, r->dt/2.); // always accept this
-      reb_integrator_trace_interaction_step(r, r->dt);
-      reb_integrator_trace_jump_step(r, r->dt);
-      reb_integrator_trace_com_step(r,r->dt);
-      reb_integrator_trace_kepler_step(r, r->dt/2.);
-
-      // This sets last_regime. At the end of the loop, this should be correctly set
-
       // This is faster if not using adaptive TS
-      /*
       reb_integrator_trace_interaction_step(r, r->dt/2.);
       reb_integrator_trace_jump_step(r, r->dt/2.);
       reb_integrator_trace_kepler_step(r, r->dt); // always accept this
       reb_integrator_trace_com_step(r,r->dt);
       reb_integrator_trace_jump_step(r, r->dt/2.);
       reb_integrator_trace_interaction_step(r, r->dt/2.);
-      */
-      // Also check for new close_encounters
-      int ctry = reb_integrator_trace_Fcond(r);
-
-      // ------------------- Adaptive TS -------------------------
-      // r->dt_proposed is now the new proposed timestep
-      // Here check for timestep
-      double proposed_shell = 0;
-      double proposed_dt;
-
-      if (ri_tr->ats){
-        proposed_shell = ri_tr->current_shell;
-        proposed_dt = r->dt;
-        reb_integrator_trace_select_timestep(r); // updates current_shell, and sets r->dt
-      }
-      // ------------------- Adaptive TS -------------------------
-
-      if (ri_tr->current_shell >= proposed_shell && !ctry){
-        // Timestep is fine and no new close encounters. We break the loop.
-        loop = 0;
-
-        // Reset in case a higher timestep is demanded
-
-        if (ri_tr->ats){
-          r->dt = proposed_dt;
-          ri_tr->current_shell = proposed_shell;
-        }
-      }
-      else{
-        // Reject, reset simulation and try again with new timestep
-        for (int i=0; i<N; i++){
-            // Reject & reset
-            r->particles[i] = ri_tr->particles_backup[i];
-        }
-
-        if (ri_tr->ats){
-          if (ctry && ri_tr->regime == 0){
-            ri_tr->regime = 1;
-          }
-        }
-      }
     }
 
     ri_tr->is_synchronized = 0;
@@ -684,7 +581,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.encounterN = 0;
     r->ri_tr.encounterNactive = 0;
     r->ri_tr.hillfac = 4; // TLu changed to Hernandez (2023)
-    r->ri_tr.ats = 0; // turn off adaptive timesteps
     r->ri_tr.vfac = 3.;
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)
     r->ri_tr.recalculate_coordinates_this_timestep = 0;
@@ -704,9 +600,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.current_Ks = NULL;
 
     r->ri_tr.current_L = 0;
-
-    free(r->ri_tr.dt_shells);
-    r->ri_tr.dt_shells = NULL;
 
     free(r->ri_tr.encounter_map_internal);
     r->ri_tr.encounter_map_internal = NULL;

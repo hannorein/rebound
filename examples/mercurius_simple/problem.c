@@ -72,9 +72,6 @@ int main(int argc, char* argv[]){
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_tr.peri = 0.01;
-    r->ri_tr.nshells = 7;
-    r->exact_finish_time = 0; // Need to fix
-    r->ri_tr.ats = 0;
 
 
     //struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
