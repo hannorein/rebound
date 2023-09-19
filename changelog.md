@@ -4,6 +4,13 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.28.1
+* Improved support for reading old and corrupted SimulationArchives.
+* Renamed `ri_ias15.epsilon_global` to `ri_ias15.adaptive_mode`.
+* Added new timestep method for IAS15 `ri_ias15.adaptive_mode = 2`. This is experimental for now. Details to be described in Pham, Rein & Spiegel (in prep).
+* Added unit tests to check for fused multiply add instruction (these break reproducibility).
+* Added phony target in C Makefile to force rebuilding librebound whenever building examples. 
+
 ### Version 3.28.0
 - Native Windows support. REBOUND can now be built natively on Windows (without WSL) using the Microsoft Visual Studio Compiler. 
 - Python Wheels are now provided for Linux, MacOS, and Windows. This should significantly speed up the installation process on a wide variety of systems.

@@ -548,7 +548,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
-        }else{ // adaptive_mode == 1 (New adaptive timestepping method)
+        }else{ // adaptive_mode == 2 (New adaptive timestepping method)
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){
                 double a0i = 0; //accelertation at beginning of timestep
