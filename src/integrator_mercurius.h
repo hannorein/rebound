@@ -1,8 +1,8 @@
 /**
  * @file 	integrator_mercurius.h
  * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein 
- * 
+ * @author 	Hanno Rein
+ *
  * @section 	LICENSE
  * Copyright (c) 2017 Hanno Rein
  *
