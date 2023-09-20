@@ -25,7 +25,6 @@
  *
  */
 #include <stdlib.h>
-#include <math.h>
 #include "rebound.h"
 #include "tools.h"
 

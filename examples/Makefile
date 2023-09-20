@@ -1,6 +1,13 @@
+ifndef OS
+	OS=$(shell uname)
+endif
 MPIEXAMPLES := shearing_sheet_mpi/. selfgravity_disc_mpi/. mpi_unittests/.
 WHFAST512EXAMPLES := whfast512_unittests/. whfast512_solar_system/.
+ifneq ($(OS), Windows_NT)
 SUBDIRS := $(filter-out $(WHFAST512EXAMPLES) $(MPIEXAMPLES),$(wildcard */.))
+else
+SUBDIRS := $(filter-out openmp/. $(WHFAST512EXAMPLES) $(MPIEXAMPLES),$(wildcard */.))
+endif
 MPISUBDIRS := $(filter $(MPIEXAMPLES),$(wildcard */.))
 
 all: $(SUBDIRS)

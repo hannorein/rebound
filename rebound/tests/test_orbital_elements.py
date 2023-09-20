@@ -1,5 +1,5 @@
 import rebound
-import numpy as np
+import math
 import unittest
 import ctypes
 
@@ -244,21 +244,21 @@ class TestOrbitalElements(unittest.TestCase):
         sim = rebound.Simulation()
         d = 1.e-12 # abs error tolerance
         sim.add(m=1.2354)
-        sim.add(m=1.e-4,a=1.00,e=0.123,inc=np.pi) # dummy, make sure jacobi com is calculated right for higher indices
-        sim.add(m=1.e-4,a=1.24,e=0.123,inc=np.pi,pomega=0.12,l=0.632)
-        sim.add(m=1.e-4,a=2.24,e=0.123,inc=np.pi,pomega=0.12,f=0.632)
-        sim.add(m=1.e-4,a=3.24,e=0.123,inc=np.pi,pomega=0.12,theta=0.632)
-        sim.add(m=1.e-4,a=4.24,e=0.123,inc=np.pi,pomega=0.12,M=0.632)
-        sim.add(m=1.e-4,a=5.24,e=0.123,inc=np.pi,pomega=0.12,T=0.632)
-        sim.add(m=1.e-4,a=6.24,e=0.123,inc=np.pi,Omega=1.25,pomega=0.12,l=0.632)
-        sim.add(m=1.e-4,a=7.24,e=0.123,inc=np.pi,Omega=1.25,pomega=0.12,f=0.632)
-        sim.add(m=1.e-4,a=8.24,e=0.123,inc=np.pi,Omega=1.25,pomega=0.12,theta=0.632)
-        sim.add(m=1.e-4,a=9.24,e=0.123,inc=np.pi,Omega=1.25,pomega=0.12,M=0.632)
-        sim.add(m=1.e-4,a=10.24,e=0.123,inc=np.pi,Omega=1.25,pomega=0.12,T=6.32)
+        sim.add(m=1.e-4,a=1.00,e=0.123,inc=math.pi) # dummy, make sure jacobi com is calculated right for higher indices
+        sim.add(m=1.e-4,a=1.24,e=0.123,inc=math.pi,pomega=0.12,l=0.632)
+        sim.add(m=1.e-4,a=2.24,e=0.123,inc=math.pi,pomega=0.12,f=0.632)
+        sim.add(m=1.e-4,a=3.24,e=0.123,inc=math.pi,pomega=0.12,theta=0.632)
+        sim.add(m=1.e-4,a=4.24,e=0.123,inc=math.pi,pomega=0.12,M=0.632)
+        sim.add(m=1.e-4,a=5.24,e=0.123,inc=math.pi,pomega=0.12,T=0.632)
+        sim.add(m=1.e-4,a=6.24,e=0.123,inc=math.pi,Omega=1.25,pomega=0.12,l=0.632)
+        sim.add(m=1.e-4,a=7.24,e=0.123,inc=math.pi,Omega=1.25,pomega=0.12,f=0.632)
+        sim.add(m=1.e-4,a=8.24,e=0.123,inc=math.pi,Omega=1.25,pomega=0.12,theta=0.632)
+        sim.add(m=1.e-4,a=9.24,e=0.123,inc=math.pi,Omega=1.25,pomega=0.12,M=0.632)
+        sim.add(m=1.e-4,a=10.24,e=0.123,inc=math.pi,Omega=1.25,pomega=0.12,T=6.32)
 
         def test_p(p):
             self.assertAlmostEqual(p.e, 0.123, delta=d)
-            self.assertAlmostEqual(p.inc, np.pi, delta=d)
+            self.assertAlmostEqual(p.inc, math.pi, delta=d)
 
         ps = sim.particles
         for p in ps[1:]: 
@@ -321,13 +321,13 @@ class TestOrbitalElements(unittest.TestCase):
         sim = rebound.Simulation()
         d = 1.e-12 # abs error tolerance
         sim.add(m=1.2354)
-        sim.add(m=1.e-4,inc=np.pi,a=1.00) # dummy, make sure jacobi com is calculated right for higher indices
-        sim.add(m=1.e-4,inc=np.pi,a=1.24,l=0.632)
-        sim.add(m=1.e-4,inc=np.pi,a=2.24,theta=0.632)
+        sim.add(m=1.e-4,inc=math.pi,a=1.00) # dummy, make sure jacobi com is calculated right for higher indices
+        sim.add(m=1.e-4,inc=math.pi,a=1.24,l=0.632)
+        sim.add(m=1.e-4,inc=math.pi,a=2.24,theta=0.632)
 
         def test_p(p):
             self.assertAlmostEqual(p.e, 0., delta=d)
-            self.assertAlmostEqual(p.inc, np.pi, delta=d)
+            self.assertAlmostEqual(p.inc, math.pi, delta=d)
 
         ps = sim.particles
         for p in ps[1:]: 
@@ -335,10 +335,10 @@ class TestOrbitalElements(unittest.TestCase):
            
         self.assertAlmostEqual(ps[2].a, 1.24, delta=d)
         self.assertAlmostEqual(ps[2].l, 0.632, delta=d)
-        self.assertAlmostEqual(ps[2].inc, np.pi, delta=d)
+        self.assertAlmostEqual(ps[2].inc, math.pi, delta=d)
         self.assertAlmostEqual(ps[3].a, 2.24, delta=d)
         self.assertAlmostEqual(ps[3].theta, 0.632, delta=d)
-        self.assertAlmostEqual(ps[3].inc, np.pi, delta=d)
+        self.assertAlmostEqual(ps[3].inc, math.pi, delta=d)
 
     def test_pal_back_and_forth(self):
         def test_p(x, y, z, vx, vy, vz):

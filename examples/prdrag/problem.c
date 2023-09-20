@@ -7,7 +7,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -45,7 +44,7 @@ int main(int argc, char* argv[]){
         reb_add(r, p); 
     }
 
-    system("rm -v radius.txt");                    // remove previous output
+    remove("radius.txt");                    // remove previous output
 
     reb_integrate(r, tmax);
 }
@@ -82,7 +81,7 @@ void heartbeat(struct reb_simulation* r){
         reb_output_timing(r, tmax);;
     }
     if(reb_output_check(r, M_PI*2.*1000.)){                     // output radial distance every 1000 years
-        FILE* f = fopen("radius.txt","a");
+        FILE* f = fopen("radius.txt","ab");
         struct reb_particle* particles = r->particles;
         const struct reb_particle star = particles[0];
         const int N = r->N;

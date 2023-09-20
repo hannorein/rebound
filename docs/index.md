@@ -2,7 +2,7 @@
 
 ![REBOUND Examples](img/reboundbanner.png)
 
-REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  
+REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics. 
 
 ## Features
 
@@ -12,13 +12,14 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
+* REBOUND runs natively on Linux, MacOS, and Windows. 
+* REBOUND has no dependencies on external libraries (the use of OpenGL/glfw3 for visualization is optional)
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
 * Extensive set of example problems in both C and Python
 * Real-time, 3D OpenGL visualization (C version)
 * Parallelized [WHFast512](integrators/#whfast512) integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with [MPI](mpi/) is supported for some special use cases only (using an essential tree for gravity and collisions)
-* No dependencies on external libraries (use of OpenGL/glfw3 for visualization is optional)
 * The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines
@@ -32,7 +33,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Garett Brown, University of Toronto, <garett.brown@mail.utoronto.ca>
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
 * Ari Silburt, Penn State University, <ajs725@psu.edu>
-* Pejvak Javaher, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
+* Pejvak Javaheri, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
 * and many others! Check the git history to find out who contributed to the code.
 
 REBOUND is open source and you are invited to contribute to this project! 

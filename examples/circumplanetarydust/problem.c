@@ -11,7 +11,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -61,7 +60,7 @@ int main(int argc, char* argv[]){
     
     reb_move_to_com(r);
 
-    system("rm -v a.txt");    
+    remove("a.txt");    
 
     reb_integrate(r, tmax);
 }
@@ -99,7 +98,7 @@ void heartbeat(struct reb_simulation* r){
         reb_output_timing(r, tmax);
     }
     if(reb_output_check(r, M_PI*2.)){ // output every year
-        FILE* f = fopen("a.txt","a");
+        FILE* f = fopen("a.txt","ab");
         const struct reb_particle* particles = r->particles;
         const struct reb_particle planet = particles[1];
         const double G = r->G;

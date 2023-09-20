@@ -58,8 +58,8 @@ The setting for IAS15 are stored in the `reb_simulation_integrator_ias15` struct
         sim.ri_ias15.min_dt = 1e-3
         ```
 
-`epsilon_global` `(unsigned int`)
-:   This flag determines how the relative acceleration error is estimated. If set to 1, IAS15 estimates the fractional error via `max(acceleration_error)/max(acceleration)` where the maximum is taken over all particles. If set to 0, the fractional error is estimates via `max(acceleration_error/acceleration)`.
+`adaptive_mode` `(unsigned int`)
+:   This flag determines how the relative acceleration error is estimated. The previous name of this flag was `epsilon_global`. If set to 1, IAS15 estimates the fractional error via `max(acceleration_error)/max(acceleration)` where the maximum is taken over all particles. If set to 0, the fractional error is estimates via `max(acceleration_error/acceleration)`.
 
 All other members of this structure are only for internal IAS15 use.
 

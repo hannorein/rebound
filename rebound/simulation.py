@@ -468,17 +468,19 @@ class reb_simulation_integrator_ias15(Structure):
 
     :ivar float min_dt:
         IAS15 is an adaptive method. This sets the minimum timestep.
-
-    :ivar float epsilon_global:
-        Determines how the adaptive timestep is chosen.
-
+    
+    :ivar float adaptive_mode:
+        Determines how the adaptive timestep is chosen. 
+        This replaces the previous epsilon_global variable.
+        TODO: list options.
+    
     """
     def __repr__(self):
         return '<{0}.{1} object at {2}, epsilon={3}, min_dt={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.epsilon, self.min_dt)
 
     _fields_ = [("epsilon", c_double),
                 ("min_dt", c_double),
-                ("epsilon_global", c_uint),
+                ("adaptive_mode", c_uint),
                 ("_iterations_max_exceeded", c_ulong),
                 ("_allocated_N", c_uint),
                 ("_at", POINTER(c_double)),

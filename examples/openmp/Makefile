@@ -1,6 +1,6 @@
 # Turninng on OpenMP
-# On Mac OSX, we can use the CLANG compiler. But it requires some additional 
-# flags (see Makefile.defs in src/ directory). You also need to install the 
+# On Mac OSX, we can use the CLANG compiler. But it requires some additional
+# flags (see Makefile.defs in src/ directory). You also need to install the
 # OpenMP library with homebrew:
 #    brew install libomp
 # Alternatively use a compiler which supports OpenMP out of the box (gcc) and
@@ -13,25 +13,30 @@ else
 export OPENMP=1
 endif
 
-# Include the other definitions from the default makefile
+
+export OPENGL=0
 include ../../src/Makefile.defs
 
-all: librebound
+# CCPROBLEM is defined in Makefile.defs to allow for
+# a compact cross platform Makefile
+.PHONY: all librebound
+all: problem.c librebound
+	@echo "Compiling $< ..."
+	$(CCPROBLEM)
 	@echo ""
-	@echo "Compiling problem file ..."
-	$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) problem.c -L. -lrebound $(LIB) -o rebound
+	@echo "Compilation successful. To run REBOUND, execute the file '$(EXEREBOUND)'."
 	@echo ""
-	@echo "REBOUND compiled successfully."
 
-librebound: 
-	@echo "Compiling shared library librebound.so ..."
+librebound:
+	@echo "Compiling shared library $(LIBREBOUND) ..."
 	$(MAKE) -C ../../src/
-	@-rm -f librebound.so
-	@ln -s ../../src/librebound.so .
+	@-$(RM) $(LIBREBOUND)
+	@$(LINKORCOPYLIBREBOUND)
+	@echo ""
 
 clean:
-	@echo "Cleaning up shared library librebound.so ..."
-	@-rm -f librebound.so
+	@echo "Cleaning up shared library $(LIBREBOUND) ..."
 	$(MAKE) -C ../../src/ clean
 	@echo "Cleaning up local directory ..."
-	@-rm -vf rebound
+	@-$(RM) $(LIBREBOUND)
+	@-$(RM) $(EXEREBOUND)

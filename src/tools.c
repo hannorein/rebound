@@ -24,11 +24,10 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include <string.h>
-#include <sys/time.h>
+#ifdef _WIN32
+# define strtok_r strtok_s
+#endif // _WIN32
 #include <stdint.h>
 #include <stdarg.h>
 #include "particle.h"
@@ -49,7 +48,7 @@ void reb_tools_init_srand(struct reb_simulation* r){
 }
 
 double reb_random_uniform(struct reb_simulation* r, double min, double max){
-	return ((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))*(max-min)+min;
+	return ((double)rand_r(&(r->rand_seed)))/((double)(REB_RAND_MAX))*(max-min)+min;
 }
 
 
@@ -62,8 +61,8 @@ double reb_random_powerlaw(struct reb_simulation* r, double min, double max, dou
 double reb_random_normal(struct reb_simulation* r, double variance){
 	double v1,v2,rsq=1.;
 	while(rsq>=1. || rsq<1.0e-12){
-		v1=2.*((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))-1.0;
-		v2=2.*((double)rand_r(&(r->rand_seed)))/((double)(RAND_MAX))-1.0;
+		v1=2.*((double)rand_r(&(r->rand_seed)))/((double)(REB_RAND_MAX))-1.0;
+		v2=2.*((double)rand_r(&(r->rand_seed)))/((double)(REB_RAND_MAX))-1.0;
 		rsq=v1*v1+v2*v2;
 	}
 	// Note: This gives another random variable for free, but we'll throw it away for simplicity and for thread-safety.

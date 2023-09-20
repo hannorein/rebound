@@ -16,8 +16,6 @@ class TestPlotting(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w: 
             warnings.simplefilter("always")
             import matplotlib; matplotlib.use("pdf")
-            import numpy as np
-            t = np.array(1.)
             op = rebound.OrbitPlot(self.sim,periastron=True)
             self.assertIsInstance(op.fig,matplotlib.figure.Figure)
             op = rebound.OrbitPlot(self.sim,periastron=True,color=True,unitlabel="AU")
@@ -27,8 +25,6 @@ class TestPlotting(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w: 
             warnings.simplefilter("always")
             import matplotlib; matplotlib.use("pdf")
-            import numpy as np
-            t = np.array(1.)
             op  = rebound.OrbitPlotSet(self.sim,periastron=True)
             self.assertIsInstance(op.fig,matplotlib.figure.Figure)
             op = rebound.OrbitPlot(self.sim,periastron=True,color=True,orbit_style="solid",unitlabel="AU",xlim=[-1.,1])

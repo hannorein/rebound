@@ -10,7 +10,7 @@ all: librebound
 	@echo ""
 	@echo "REBOUND compiled successfully."
 
-librebound: 
+librebound:
 	@echo "Compiling shared library librebound.so ..."
 	$(MAKE) -C ../../src/
 	@-rm -f librebound.so

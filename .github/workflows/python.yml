@@ -4,11 +4,14 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: Python tests on ${{ matrix.os }} (${{ matrix.python-version }})
+    timeout-minutes: 10
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-latest, windows-2019]
 
     steps:
       - uses: actions/checkout@v3
@@ -20,20 +23,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
       - name: Build package
         run: pip install -e .
+      - name: Output package contents
+        run: | 
+          pip show rebound -vf
       - name: Running unittests
         run: |
           python -m unittest discover -s rebound/tests/ -v
       - name: Running python examples
         run: |
-          cd python_examples
-          python dragforce/problem.py
-          python horizons/problem.py
-          python longtermtest/problem.py
-          python megno/problem.py
-          python megno_simple/problem.py
-          python orbital_elements/problem.py
-          python outersolarsystem/problem.py
-          python simple_orbit/problem.py
+          python python_examples/dragforce/problem.py
+          python python_examples/horizons/problem.py
+          python python_examples/megno_simple/problem.py
+          python python_examples/orbital_elements/problem.py
+          python python_examples/outersolarsystem/problem.py
+          python python_examples/simple_orbit/problem.py
+      - name: Running remaining python examples
+        # Skipping on Windows because of multiprocessing
+        if: ${{ contains(matrix.os, 'ubuntu') }}
+        run: |
+          python python_examples/longtermtest/problem.py
+          python python_examples/megno/problem.py

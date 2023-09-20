@@ -8,7 +8,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -50,7 +49,7 @@ void heartbeat(struct reb_simulation* r){
         reb_output_timing(r, tmax);
     }
     // Output the time and the current timestep. Plot it to see how IAS15 automatically reduces the timestep at pericentre. 
-    FILE* of = fopen("timestep.txt","a"); 
+    FILE* of = fopen("timestep.txt","ab"); 
     fprintf(of,"%e\t%e\t\n",r->t/tmax,r->dt/tmax);
     fclose(of);
 }

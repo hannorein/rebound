@@ -6,7 +6,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -68,7 +67,7 @@ void heartbeat(struct reb_simulation* const r){
     }
     if (reb_output_check(r, 362.)){
         // Output the time and the MEGNO to the screen and a file.
-        FILE* f = fopen("Y.txt","a+");
+        FILE* f = fopen("Y.txt","a+b");
         fprintf(f,"        %.20e     %.20e\n",r->t, reb_tools_calculate_megno(r));
         //printf("        %.20e     %.20e\n",r->t, reb_tools_calculate_megno(r));
         fclose(f);
