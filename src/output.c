@@ -24,11 +24,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include <string.h>
-#include <sys/time.h>
 #include <stddef.h>
 #include "particle.h"
 #include "rebound.h"
@@ -53,6 +49,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 3,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0},
     { 4,  REB_UINT,         "N",                            offsetof(struct reb_simulation, N), 0, 0},
     { 5,  REB_INT,          "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0},
+    // 6 Used to be varconfig
     { 7,  REB_INT,          "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0},
     { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0},
     { 9,  REB_INT,          "hash_ctr",                     offsetof(struct reb_simulation, hash_ctr), 0, 0},
@@ -114,7 +111,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 66, REB_UINT,         "ri_whfast.timestep_warnning",  offsetof(struct reb_simulation, ri_whfast.timestep_warning), 0, 0},
     { 69, REB_DOUBLE,       "ri_ias15.epsilon",             offsetof(struct reb_simulation, ri_ias15.epsilon), 0, 0},
     { 70, REB_DOUBLE,       "ri_ias15.min_dt",              offsetof(struct reb_simulation, ri_ias15.min_dt), 0, 0},
-    { 71, REB_UINT,         "ri_ias15.epsilon_global",      offsetof(struct reb_simulation, ri_ias15.epsilon_global), 0, 0},
+    { 71, REB_UINT,         "ri_ias15.adaptive_mode",       offsetof(struct reb_simulation, ri_ias15.adaptive_mode), 0, 0},
     { 72, REB_ULONG,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, var_config_N), sizeof(struct reb_variational_configuration)},
@@ -335,9 +332,9 @@ void reb_output_ascii(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"a"); 
+    FILE* of = fopen(filename_mpi,"ab"); 
 #else // MPI
-    FILE* of = fopen(filename,"a"); 
+    FILE* of = fopen(filename,"ab"); 
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -355,9 +352,9 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"a"); 
+    FILE* of = fopen(filename_mpi,"ab"); 
 #else // MPI
-    FILE* of = fopen(filename,"a"); 
+    FILE* of = fopen(filename,"ab"); 
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -606,7 +603,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
     Q_tot.x = sqrt(Q_tot.x/(double)N_tot);
     Q_tot.y = sqrt(Q_tot.y/(double)N_tot);
     Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
-    FILE* of = fopen(filename,"a"); 
+    FILE* of = fopen(filename,"ab"); 
     if (of==NULL){
         reb_error(r, "Can not open file.");
         return;

@@ -27,12 +27,11 @@
 #define DEG2RAD (M_PI/180.)
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <unistd.h>
+#ifndef _WIN32
 #include <pthread.h>
+#endif // _WIN32
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include "rebound.h"
 #include "display.h"
 #include "tools.h"
@@ -1040,6 +1039,7 @@ static void reb_display_set_default_scale(struct reb_simulation* const r){
 
 
 void reb_display_init_data(struct reb_simulation* const r){
+#ifndef _WIN32
     if (r->display_data==NULL){
         r->display_data = calloc(sizeof(struct reb_display_data),1);
         r->display_data->r = r;
@@ -1048,6 +1048,9 @@ void reb_display_init_data(struct reb_simulation* const r){
         }
         reb_display_set_default_scale(r);
     }
+#else // _WIN32
+    reb_error(r,"Visualizations not supported on Windows.");
+#endif // _WIN32
 }
 
 int reb_display_copy_data(struct reb_simulation* const r){
@@ -1092,28 +1095,28 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     // Update data on GPU 
     for (unsigned int i=0;i<r_copy->N;i++){
         struct reb_particle p = r_copy->particles[i];
-        data->particle_data[i].x  = p.x;
-        data->particle_data[i].y  = p.y;
-        data->particle_data[i].z  = p.z;
-        data->particle_data[i].vx = p.vx;
-        data->particle_data[i].vy = p.vy;
-        data->particle_data[i].vz = p.vz;
-        data->particle_data[i].r  = p.r;
+        data->particle_data[i].x  = (float)p.x;
+        data->particle_data[i].y  = (float)p.y;
+        data->particle_data[i].z  = (float)p.z;
+        data->particle_data[i].vx = (float)p.vx;
+        data->particle_data[i].vy = (float)p.vy;
+        data->particle_data[i].vz = (float)p.vz;
+        data->particle_data[i].r  = (float)p.r;
     }
     if (orbits){
         struct reb_particle com = r_copy->particles[0];
         for (unsigned int i=1;i<r_copy->N;i++){
             struct reb_particle p = r_copy->particles[i];
-            data->orbit_data[i-1].x  = com.x;
-            data->orbit_data[i-1].y  = com.y;
-            data->orbit_data[i-1].z  = com.z;
+            data->orbit_data[i-1].x  = (float)com.x;
+            data->orbit_data[i-1].y  = (float)com.y;
+            data->orbit_data[i-1].z  = (float)com.z;
             struct reb_orbit o = reb_tools_particle_to_orbit(r_copy->G, p,com);
-            data->orbit_data[i-1].a = o.a;
-            data->orbit_data[i-1].e = o.e;
-            data->orbit_data[i-1].f = o.f;
-            data->orbit_data[i-1].omega = o.omega;
-            data->orbit_data[i-1].Omega = o.Omega;
-            data->orbit_data[i-1].inc = o.inc;
+            data->orbit_data[i-1].a = (float)o.a;
+            data->orbit_data[i-1].e = (float)o.e;
+            data->orbit_data[i-1].f = (float)o.f;
+            data->orbit_data[i-1].omega = (float)o.omega;
+            data->orbit_data[i-1].Omega = (float)o.Omega;
+            data->orbit_data[i-1].inc = (float)o.inc;
             com = reb_get_com_of_pair(p,com);
         }
     }

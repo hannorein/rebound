@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """An N-body integrator package for python."""
 
+import sys
+import os
+import warnings
+from ctypes import cdll, c_char_p
+
 # Find suffix
-import sysconfig
-suffix = sysconfig.get_config_var("EXT_SUFFIX")
+# Using distutils.sysconfig instead of sysconfig because 
+# of a bug in Python < 3.8 on windows
+import distutils.sysconfig
+suffix = distutils.sysconfig.get_config_var('EXT_SUFFIX')
 if suffix is None:
     suffix = ".so"
 
@@ -27,11 +34,9 @@ except ImportError:
 
 
 # Import shared library
-import os
-import warnings
-pymodulepath = os.path.dirname(__file__)
-from ctypes import cdll, c_char_p
-__libpath__ = pymodulepath+"/../librebound"+suffix
+pymodulepath = os.path.dirname(os.path.abspath(__file__))
+pymodulepath = os.path.abspath(os.path.join(pymodulepath, os.pardir))
+__libpath__ = os.path.join(pymodulepath, "librebound"+suffix)
 clibrebound = cdll.LoadLibrary(__libpath__)
 
 # Version
@@ -89,7 +94,6 @@ from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import SimulationArchive
 
-import sys
 if "pyodide" in sys.modules:
     class InterruptiblePool:
         def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):

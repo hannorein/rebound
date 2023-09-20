@@ -6,7 +6,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -79,7 +78,7 @@ int main(int argc, char* argv[]){
     }
     reb_move_to_com(r);
     e_init = reb_tools_energy(r);
-    system("rm -f energy.txt");
+    remove("energy.txt");
     reb_integrate(r, tmax);
 }
 
@@ -87,7 +86,7 @@ void heartbeat(struct reb_simulation* r){
     if (reb_output_check(r, 10000.)){
         reb_output_timing(r, tmax);
         reb_integrator_synchronize(r);
-        FILE* f = fopen("energy.txt","a");
+        FILE* f = fopen("energy.txt","ab");
         double e = reb_tools_energy(r);
         fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
         fclose(f);

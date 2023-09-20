@@ -22,18 +22,13 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
+#pragma comment(lib, "legacy_stdio_definitions.lib")
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include <stddef.h> // for offsetof()
 #include <sys/types.h>
 #include <string.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/wait.h>
-#include <pthread.h>
 #include <fcntl.h>
 #include "rebound.h"
 #include "integrator.h"
@@ -62,11 +57,13 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 #define STRINGIFY(s) str(s)
 #define str(s) #s
-
+#ifdef _WIN32
+void usleep(__int64 usec);
+#endif // _WIN32
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "3.27.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "3.28.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_error_message_waiting(struct reb_simulation* const r);
@@ -312,6 +309,8 @@ void reb_free_pointers(struct reb_simulation* const r){
         free(r->simulationarchive_filename);
     }
     reb_tree_delete(r);
+#ifndef _WIN32
+    // Visualization is not support on Windows
     if(r->display_data){
         pthread_mutex_destroy(&(r->display_data->mutex));
         free(r->display_data->r_copy);
@@ -321,6 +320,7 @@ void reb_free_pointers(struct reb_simulation* const r){
         free(r->display_data->orbit_data);
         free(r->display_data); // TODO: Free other pointers in display_data
     }
+#endif // _WIN32
     if (r->gravity_cs){
         free(r->gravity_cs  );
     }
@@ -616,7 +616,7 @@ void reb_init_simulation(struct reb_simulation* r){
     // ********** IAS15
     r->ri_ias15.epsilon         = 1e-9;
     r->ri_ias15.min_dt      = 0;
-    r->ri_ias15.epsilon_global  = 1;
+    r->ri_ias15.adaptive_mode = 1; // default is old mode for now
     r->ri_ias15.iterations_max_exceeded = 0;    
     
     // ********** SEI
@@ -665,11 +665,6 @@ void reb_init_simulation(struct reb_simulation* r){
     r->tree_essential_recv = NULL;
     r->tree_essential_recv_N = 0;             
     r->tree_essential_recv_Nmax = 0;          
-
-#else // MPI
-#ifndef LIBREBOUND
-    printf("Process id: %d.\n", getpid());
-#endif // LIBREBOUND
 #endif // MPI
 #ifdef OPENMP
     printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
@@ -907,6 +902,144 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
     return r->status;
 }
 
+int reb_check_fp_contract(){
+    // Checks if floating point contractions are on. 
+    // If so, this will prevent unit tests from passing
+    // and bit-wise reproducibility will fail.
+    double a = 1.2382309285234567;
+    double b = 2.123478623874623234567;
+    double c = 6.0284234234234567;
+
+    double r1 = a*b+c;
+    double ab = a*b;
+    double r2 = ab+c;
+
+    return r1 != r2;
+}
+
+#ifdef _WIN32
+
+void PyInit_librebound() {};
+
+// Source: https://git.musl-libc.org/cgit/musl/tree/src/prng/rand_r.c
+static unsigned temper(unsigned x) {
+    x ^= x>>11;
+    x ^= x<<7 & 0x9D2C5680;
+    x ^= x<<15 & 0xEFC60000;
+    x ^= x>>18;
+    return x;
+}
+
+int rand_r(unsigned *seed) {
+    return temper(*seed = *seed * 1103515245 + 12345)/2;
+}
+
+
+// Source: https://stackoverflow.com/a/40160038/115102
+#include <stdarg.h>
+int vasprintf(char **strp, const char *fmt, va_list ap) {
+    // _vscprintf tells you how big the buffer needs to be
+    int len = _vscprintf(fmt, ap);
+    if (len == -1) {
+        return -1;
+    }
+    size_t size = (size_t)len + 1;
+    char *str = malloc(size);
+    if (!str) {
+        return -1;
+    }
+    // _vsprintf_s is the "secure" version of vsprintf
+    int r = vsprintf_s(str, len + 1, fmt, ap);
+    if (r == -1) {
+        free(str);
+        return -1;
+    }
+    *strp = str;
+    return r;
+}
+int asprintf(char **strp, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int r = vasprintf(strp, fmt, ap);
+    va_end(ap);
+    return r;
+}
+
+// Source: https://stackoverflow.com/a/26085827/115102
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <stdint.h> // portable: uint64_t   MSVC: __int64
+int gettimeofday(struct timeval * tp, struct timezone * tzp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+    // until 00:00:00 January 1, 1970
+    static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime( &system_time );
+    SystemTimeToFileTime( &system_time, &file_time );
+    time =  ((uint64_t)file_time.dwLowDateTime )      ;
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec  = (long) ((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+    return 0;
+}
+
+// Source: https://stackoverflow.com/a/17283549/115102
+void usleep(__int64 usec)
+{
+    HANDLE timer;
+    LARGE_INTEGER ft;
+
+    ft.QuadPart = -(10*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+}
+
+
+// Source: https://github.com/Arryboom/fmemopen_windows
+#include <windows.h>
+#include <share.h>
+#include <io.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+FILE *fmemopen(void *buf, size_t len, const char *type) {
+    int fd;
+    FILE *fp;
+    char tp[MAX_PATH - 13];
+    char fn[MAX_PATH + 1];
+    int * pfd = &fd;
+    int retner = -1;
+    char tfname[] = "MemTF_";
+    if (!GetTempPathA(sizeof(tp), tp))
+        return NULL;
+    if (!GetTempFileNameA(tp, tfname, 0, fn))
+        return NULL;
+    retner = _sopen_s(pfd, fn, _O_CREAT | _O_SHORT_LIVED | _O_TEMPORARY | _O_RDWR | _O_BINARY | _O_NOINHERIT, _SH_DENYRW, _S_IREAD | _S_IWRITE);
+    if (retner != 0)
+        return NULL;
+    if (fd == -1)
+        return NULL;
+    fp = _fdopen(fd, "wb+");
+    if (!fp) {
+        _close(fd);
+        return NULL;
+    }
+    /*File descriptors passed into _fdopen are owned by the returned FILE * stream.If _fdopen is successful, do not call _close on the file descriptor.Calling fclose on the returned FILE * also closes the file descriptor.*/
+    fwrite(buf, len, 1, fp);
+    rewind(fp);
+    return fp;
+}
+
+#endif // _WIN32
   
 #ifdef OPENMP
 void reb_omp_set_num_threads(int num_threads){

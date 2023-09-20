@@ -24,11 +24,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
 #include <string.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <stdint.h>
 #include "particle.h"
@@ -128,12 +124,16 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
 
 
     do{
-        fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
+        int didReadField = fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
+        if (!didReadField){
+            *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+            break;
+        }
         if (field.type == fd_header.type){
             long objects = 0;
             // Input header.
             const long bufsize = 64 - sizeof(struct reb_binary_field);
-            char readbuf[bufsize], curvbuf[bufsize];
+            char readbuf[64], curvbuf[64];
             const char* header = "REBOUND Binary File. Version: ";
             sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
 
@@ -329,9 +329,9 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,mpi_id);
-    sa->inf = fopen(filename_mpi,"r");
+    sa->inf = fopen(filename_mpi,"rb");
 #else // MPI
-    sa->inf = fopen(filename,"r");
+    sa->inf = fopen(filename,"rb");
 #endif // MPI
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);

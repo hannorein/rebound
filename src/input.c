@@ -24,10 +24,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
-#include <getopt.h>
 #include <string.h>
 #include "particle.h"
 #include "rebound.h"
@@ -108,7 +104,12 @@ next_field:
                     char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                     if (fd.dtype == REB_POINTER_ALIGNED){
                         if (*(char**)pointer) free(*(char**)pointer);
+#ifndef _WIN32
                         *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+#else // _WIN32
+      // WHFast512 not supported on Windows!
+                        *(char**)pointer = malloc(sizeof(struct reb_particle_avx512));
+#endif // _WIN32
                     }else{ // normal malloc
                         *(char**)pointer = realloc(*(char**)pointer, field.size);
                     }
@@ -181,8 +182,8 @@ next_field:
         if (field.type == fd_header.type){
             // Check header.
             long objects = 0;
-            const long bufsize = 64 - sizeof(struct reb_binary_field);
-            char readbuf[bufsize], curvbuf[bufsize];
+            const size_t bufsize = 64 - sizeof(struct reb_binary_field);
+            char readbuf[64], curvbuf[64];
             const char* header = "REBOUND Binary File. Version: ";
             sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
 
@@ -200,6 +201,11 @@ next_field:
 
         // We should never get here. If so, it's an unknown field type.
         *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+        int err = fseek(inf, field.size, SEEK_CUR);
+        if (err){
+            // Even worse, can't seek to end of field.
+            *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+        }
     } 
 
 finish_fields:

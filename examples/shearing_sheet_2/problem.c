@@ -13,7 +13,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -113,14 +112,7 @@ int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_c
     double _r = sqrt(x21*x21 + y21*y21 + z21*z21);
     /* double r21 = sqrt(x21*x21 + y21*y21 + z21*z21); */
     double rp   = p1.r+p2.r;
-    double oldvyouter;
-
-    if (x21>0){
-        oldvyouter = p1.vy;
-    }else{
-        oldvyouter = p2.vy;
-    }
-
+    
     if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
 
     double vx21 = p1.vx + gb.shiftvx - p2.vx; 

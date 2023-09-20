@@ -1,5 +1,11 @@
 *.o
+*.obj
+*.dll
 *.swp
+*.lib
+*.exp
+*.exe
+*.pyd
 /*.ipynb
 Info.plist
 *.so

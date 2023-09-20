@@ -2,7 +2,6 @@ import rebound
 import unittest
 import os
 import math
-import numpy as np
 
 class TestSerialize(unittest.TestCase):
     def setUp(self):
@@ -15,6 +14,13 @@ class TestSerialize(unittest.TestCase):
         self.sim = None
 
     def test_serialize(self):
+        try:
+            import numpy as np
+        except:
+            # Make numpy tests optional
+            print("WARNING: Not testing serialization because numpy is not available")
+            return;
+
         a = np.zeros((self.sim.N,3),dtype="float64")
         self.sim.serialize_particle_data(xyz=a)
 

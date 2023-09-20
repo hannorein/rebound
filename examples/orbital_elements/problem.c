@@ -9,10 +9,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
-#include "tools.h"
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();

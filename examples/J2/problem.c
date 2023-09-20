@@ -9,7 +9,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -47,7 +46,7 @@ int main(int argc, char* argv[]){
 	
 	reb_move_to_com(r);
 
-	system("rm -v a.txt");					// delete previous output
+	remove("a.txt");					// delete previous output
 
 	// Setup callback functions
 	r->heartbeat 		= heartbeat;
@@ -88,7 +87,7 @@ void heartbeat(struct reb_simulation* r){
 		reb_output_timing(r, tmax);
 	}
 	if(reb_output_check(r,M_PI*2.*0.01)){				// output semimajor axis to file
-		FILE* f = fopen("a.txt","a");
+		FILE* f = fopen("a.txt","ab");
 		const struct reb_particle planet = r->particles[0];
 		const int N = r->N;
 		for (int i=1;i<N;i++){

@@ -7,7 +7,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -39,7 +38,7 @@ int main(int argc, char* argv[]){
     }
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
     e_init = reb_tools_energy(r);
-    system("rm -rf energy.txt");
+    remove("energy.txt");
 
     reb_integrate(r, INFINITY);
 }
@@ -50,7 +49,7 @@ void heartbeat(struct reb_simulation* r){
     }
     if (reb_output_check(r, 2.*M_PI)){  
         // Once per year, output the relative energy error to a text file
-        FILE* f = fopen("energy.txt","a");
+        FILE* f = fopen("energy.txt","ab");
         reb_integrator_synchronize(r);
         double e = reb_tools_energy(r);
         fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
