@@ -38,6 +38,7 @@
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
 #include "collision.h"
+#include "integrator_bs.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
@@ -336,7 +337,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     reb_integrator_ias15_reset(r);
 
     r->dt = 0.0001*_dt; // start with a small timestep.
-
+    //r->dt = _dt;
     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh
@@ -344,6 +345,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         r->particles[0].vz = 0;
         reb_update_acceleration(r);
         reb_integrator_ias15_part2(r);
+        //reb_integrator_bs_part2(r);
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
@@ -434,7 +436,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
 
     struct reb_simulation_integrator_mercurius* const rim = &(r->ri_mercurius);
     const unsigned int N = r->N;
-    
+
     if (rim->dcrit_allocated_N<N){
         // Need to safe these arrays in SimulationArchive
         rim->dcrit              = realloc(rim->dcrit, sizeof(double)*N);
@@ -446,7 +448,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         rim->recalculate_coordinates_this_timestep = 1;
     }
     if (rim->allocated_N<N){
-        // These arrays are only used within one timestep. 
+        // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility
         rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*N);
         rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*N);

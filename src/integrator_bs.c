@@ -104,6 +104,17 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         return;
       }
     }
+
+    // BS Mercurius testing
+    else if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+      N = r->ri_mercurius.encounterN;
+      map = r->ri_mercurius.encounter_map;
+      if (map==NULL){
+        reb_error(r, "Cannot access MERCURIUS map from BS.");
+        return;
+      }
+    }
+
     else{
       N = r->N;
       map = r->ri_bs.map;
@@ -387,6 +398,24 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       yDot[4] = 0.0;
       yDot[5] = 0.0;
     }
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+      start = 1;
+      map = r->ri_mercurius.encounter_map;
+      if (map==NULL){
+        reb_error(r, "Cannot access MERCURIUS map from BS.");
+        return;
+      }
+
+      N = r->ri_mercurius.encounterN;
+
+      // If we are using MERCURIUS, this is in DH, so star feels no acceleration
+      yDot[0] = 0.0;
+      yDot[1] = 0.0;
+      yDot[2] = 0.0;
+      yDot[3] = 0.0;
+      yDot[4] = 0.0;
+      yDot[5] = 0.0;
+    }
     else{
       map = r->ri_bs.map;
       N = r->N;
@@ -468,6 +497,9 @@ static void allocate_sequence_arrays(struct reb_simulation* r, struct reb_simula
     int N;
     if (r->integrator == REB_INTEGRATOR_TRACE){
       N = r->ri_tr.encounterN;
+    }
+    else if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+      N = r->ri_mercurius.encounterN;
     }
     else{
       N = r->N;
@@ -880,6 +912,11 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
       N = r->ri_tr.encounterN;
       map = r->ri_tr.encounter_map;
     }
+    else if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+      //nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
+      N = r->ri_mercurius.encounterN;
+      map = r->ri_mercurius.encounter_map;
+    }
     else{
       N = r->N;
       map = ri_bs->map;
@@ -1012,63 +1049,3 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->targetIter       = 0;
 
 }
-
-// TLU FOR TRACE
-/*
-void reb_integrator_bs_timestep_prediction(struct reb_simulation* r){
-    //printf("Time: %f\n", r->t);
-    struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
-    struct reb_simulation_integrator_bs* ri_tr = &(r->ri_tr);
-
-    int nbody_length = r->N*3*2;
-    int N = r->ri_tr.encounterN;
-    int* map = r->ri_tr.encounter_map;
-    double old_dt = r->dt;
-
-    if (ri_bs->sequence==NULL){ // Moved from BS Step because need to allocate map here
-        allocate_sequence_arrays(r, ri_bs);
-    }
-
-    // Check if particle numbers changed, if so delete and recreate ode.
-    if (ri_bs->nbody_ode != NULL){
-        if (ri_bs->nbody_ode->length != nbody_length){
-            reb_free_ode(ri_bs->nbody_ode);
-            ri_bs->nbody_ode = NULL;
-        }
-    }
-
-    if (ri_bs->nbody_ode == NULL){
-        ri_bs->nbody_ode = reb_create_ode(r, nbody_length);
-        ri_bs->nbody_ode->derivatives = nbody_derivatives;
-        ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
-        ri_bs->firstOrLastStep = 1;
-    }
-
-    for (int s=0; s < r->odes_N; s++){
-        if (r->odes[s]->needs_nbody){
-            ri_bs->user_ode_needs_nbody = 1;
-        }
-    }
-
-    double* const y = ri_bs->nbody_ode->y;
-    for (int i=0; i<N; i++){
-        int mi = map[i];
-        const struct reb_particle p = r->particles[mi];
-        y[i*6+0] = p.x;
-        y[i*6+1] = p.y;
-        y[i*6+2] = p.z;
-        y[i*6+3] = p.vx;
-        y[i*6+4] = p.vy;
-        y[i*6+5] = p.vz;
-    }
-
-
-    int success = reb_integrator_bs_step(r, r->dt);
-    if (success){
-        ri_tr->dt_proposed = r->dt;
-    }
-    else{
-      ri_tr->dt_proposed = old_dt;
-    }
-}
-*/
