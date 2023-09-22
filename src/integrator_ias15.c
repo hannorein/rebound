@@ -93,7 +93,7 @@ static double sqrt7(double a){
         scale = 0.1;
         a *= 1e7;
     }
-    if (a>1e-2){
+    if (a>1e2){
         scale = 10;
         a *= 1e-7;
     }
