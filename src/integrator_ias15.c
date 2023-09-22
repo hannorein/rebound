@@ -86,12 +86,23 @@ static const double w[8] = {0.03125, 0.18535815480297927854072897280718075447981
 
 // Machine independent implementation of pow(*,1./7.)
 static double sqrt7(double a){
+    // Without scaling, this is only accurate for arguments in [1e-7, 1e2]
+    // With scaling: [1e-14, 1e8]
+    double scale = 1;
+    if (a<1e-7){
+        scale = 0.1;
+        a *= 1e7;
+    }
+    if (a>1e-2){
+        scale = 10;
+        a *= 1e-7;
+    }
     double x = 1.;
     for (int k=0; k<20;k++){  // A smaller number should be ok too.
         double x6 = x*x*x*x*x*x;
         x += (a/x6-x)/7.;
     }
-    return x;
+    return x*scale;
 }
 
 static void free_dp7(struct reb_dp7* dp7){
