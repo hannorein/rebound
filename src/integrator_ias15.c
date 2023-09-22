@@ -87,10 +87,17 @@ static const double w[8] = {0.03125, 0.18535815480297927854072897280718075447981
 // Machine independent implementation of pow(*,1./7.)
 static double sqrt7(double a){
     double x = 1.;
-    for (int k=0; k<20;k++){  // A smaller number should be ok too.
+    int iter = 0;
+    while(1){
         double x6 = x*x*x*x*x*x;
-        x += (a/x6-x)/7.;
+        double xnew = (a/x6-x)/7.;
+        if (fabs(xnew)<1.0e-14 || iter>100){
+            break;
+        }
+        x += xnew;
+        iter++;
     }
+    // printf("iter: %d\n", iter);
     return x;
 }
 
