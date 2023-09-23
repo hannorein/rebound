@@ -1,6 +1,6 @@
 ---
 name: Ask for advice
-about: Ask for advise on how to use REBOUND to run your simulation. Inquire about what integrator is best for your problem, what settings to choose, or how to optmimize runtime.
+about: Ask for advise on how to use REBOUND to run your simulation. Find out if REBOUND is the right tool for your physics problem. Inquire about what integrator is best for your problem, what settings to choose, or how to optmimize runtime.
 title: ''
 labels: question
 assignees: ''

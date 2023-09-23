@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve REBOUND
+about: Think you encountered a bug? File a bug report and help us improve REBOUND.
 title: ''
 labels: bug
 assignees: ''
