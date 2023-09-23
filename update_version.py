@@ -44,9 +44,32 @@ while shortversion[-1] != '.':
     
 shortversion = shortversion[:-1]
 
+# find changelog
+with open("changelog.md") as f:
+    found_start = 0
+    changelog = ""
+    cl = f.readlines()
+    for l in cl:
+        if found_start == 0 and l.startswith("### Version"):
+            if reboundversion in l:
+                found_start = 1
+                continue
+        if found_start == 1 and l.startswith("### Version"):
+            found_start = 2
+        if found_start == 1:
+            changelog += l
+
+if found_start != 2 or len(changelog.strip())<5:
+    raise RuntimeError("Changelog not found")
+
+with open("_changelog.tmp", "w") as f:
+    f.writelines(changelog.strip()+"\n")
+
+print("----")
+print("Changelog:\n")
+print(changelog.strip())
+print("----")
 print("Next:")
 print("\ngit commit -a -m \"Updating version to "+reboundversion+"\"")
-print("----")
 print("git tag "+reboundversion+" && git push --tags")
-print("----")
-print("Create release on github")
+print("gh release create "+reboundversion+" --notes-file _changelog.tmp")
