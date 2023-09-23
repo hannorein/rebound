@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**Environment:**
-Which version of REBOUND are you using and on what operating System?
+**Environment**
+Which version of REBOUND are you using and on what operating system?
  - REBOUND Version: [e.g. 28.7.0]
  - API interface: [C or Python]
  - Operating System (including version): [e.g. Linux, Windows, MacOS]
