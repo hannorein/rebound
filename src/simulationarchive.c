@@ -340,7 +340,7 @@ void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, 
 
 void reb_read_simulationarchive_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_input_binary_messages* warnings){
     // Somewhat complicated calls for backwards compatability.
-    sa->inf = fmemopen(buf,size,"rb");
+    sa->inf = reb_fmemopen(buf,size,"rb");
     sa->filename = NULL;
     reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
 }

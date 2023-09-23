@@ -47,7 +47,6 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp);
 int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
 #define REB_RAND_MAX 4294967295  // UINT_MAX
-FILE *fmemopen( void *buf, size_t len, const char *type);
 #include <io.h>
 #else // _WIN32
 #define REB_RAND_MAX RAND_MAX
@@ -755,6 +754,7 @@ DLLEXPORT void reb_run_heartbeat(struct reb_simulation* const r);  // used inter
 DLLEXPORT void reb_tree_update(struct reb_simulation* const r);
 DLLEXPORT void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 DLLEXPORT void reb_output_free_stream(char* buf);
+FILE *reb_fmemopen( void *buf, size_t len, const char *type); // Used as a workaround for old MacOS and Windows.
 
 // transformations to/from vec3d
 DLLEXPORT struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
