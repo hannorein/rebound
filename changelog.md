@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.28.2
+* Implemented own fmemopen implementation on MacOS. This is mainly to appease conda-forge builds.
+* Improved sqrt7 algorithm allows larger convergence interval.
+
 ### Version 3.28.1
 * Improved support for reading old and corrupted SimulationArchives.
 * Renamed `ri_ias15.epsilon_global` to `ri_ias15.adaptive_mode`.
