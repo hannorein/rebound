@@ -148,6 +148,7 @@ nav:
       - ipython_examples/UniquelyIdentifyingParticlesWithHashes.ipynb
       - ipython_examples/Units.ipynb
       - ipython_examples/Cheartbeat.ipynb
+      - ipython_examples/Holmberg.ipynb
 
 theme:
   name: material

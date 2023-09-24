@@ -34,6 +34,7 @@ jobs:
           python ipynb2py.py Forces.ipynb
           python ipynb2py.py FourierSpectrum.ipynb
           python ipynb2py.py Horizons.ipynb
+          python ipynb2py.py Holmberg.ipynb
           python ipynb2py.py Megno.ipynb
           python ipynb2py.py Resonances_of_Jupiters_moons.ipynb
           python ipynb2py.py VariationalEquations.ipynb
