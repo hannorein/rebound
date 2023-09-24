@@ -2816,8 +2816,9 @@ class Particles(MutableMapping):
         pass
 
     def __iter__(self):
-        for p in self._ps:
-            yield p
+        if self.sim.N>0:
+            for p in self._ps:
+                yield p
 
     def __len__(self):
         return self.sim.N
