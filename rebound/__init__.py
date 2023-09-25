@@ -94,11 +94,8 @@ from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import SimulationArchive
 
-if "pyodide" in sys.modules:
-    class InterruptiblePool:
-        def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
-            print("InterruptiblePool is not available in pyodide")
-else:
-    from .interruptible_pool import InterruptiblePool
+class InterruptiblePool:
+    def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
+        raise RuntimeError("InterruptiblePool is deprecated. Use the multiprocess module instead.")
 
 __all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical","binary_field_descriptor_list"]

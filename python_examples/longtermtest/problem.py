@@ -7,7 +7,6 @@ from matplotlib.colors import LogNorm
 import rebound
 import numpy as np
 import time
-from rebound.interruptible_pool import InterruptiblePool
 import warnings
 
 def simulation(par):
@@ -125,9 +124,13 @@ trials = 4
     
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
 if len(sys.argv)!=2:
-    pool = InterruptiblePool()
-    print("Running %d simulations" % (len(parameters)))
-    res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,Ngrid)
+    try:
+        from multiprocess import Pool
+    except:
+        raise RuntimeError("Please install the multiprocess module with `pip install multiprocess`.")
+    with Pool() as pool:
+        print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
+        res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,Ngrid)
     np.save("res.npy",res)
 else:
     print("Loading %d simulations" % (len(parameters)))

@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
-        os: [ubuntu-latest, windows-2019]
+        os: [ubuntu-latest, windows-2019, macos-11]
 
     steps:
       - uses: actions/checkout@v3
@@ -24,6 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           pip install -r requirements.txt
+          pip install multiprocess
       - name: Build package
         run: pip install -e .
       - name: Output package contents
