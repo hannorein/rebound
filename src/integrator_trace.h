@@ -35,6 +35,7 @@ double reb_integrator_trace_calculate_dcrit_for_particle(struct reb_simulation* 
 // Switching functions
 double reb_integrator_trace_peri_switch_default(const struct reb_simulation* const r, int j); // TLu
 double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const r, int j);
+double reb_integrator_trace_switch_vdiff_peri(const struct reb_simulation* const r, int j);
 
 //double reb_integrator_trace_switch_default(const struct reb_simulation* const r, int i, int j); // TLu
 double reb_integrator_trace_switch_velocity(const struct reb_simulation* const r, int i, int j);

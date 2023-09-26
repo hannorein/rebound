@@ -99,10 +99,6 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
   double dcritmax = MAX(dcriti,dcritj);
   dcritmax *= 1.21;
 
-  if (ai < 0.0 || aj < 0.0){
-    printf("Unbound orbit, using dcrit = %f\n", dcritmax);
-  }
-
   double fcond = d - dcritmax;
   return fcond;
 }
@@ -163,15 +159,35 @@ double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const 
     const double F_vel_peri = 2 * M_PI * sqrt(((ome*ome*ome)/(1+e))*(a*a*a/mu));
   */
 
-  const double dx = r->particles[0].x - r->particles[j].x;
-  const double dy = r->particles[0].y - r->particles[j].y;
-  const double dz = r->particles[0].z - r->particles[j].z;
-  const double d = sqrt(dx*dx + dy*dy + dz*dz);
+  const double dx = r->particles[j].x;
+  const double dy = r->particles[j].y;
+  const double dz = r->particles[j].z;
+  const double d2 = dx*dx + dy*dy + dz*dz;
 
   struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[j], r->particles[0]);
-  const double fdot = o.h / (d*d);
-  const double F_vel_peri = 2 * M_PI / fdot;
-  double fcond_peri = F_vel_peri - vfacp * r->dt;
+  const double fdot = o.h / (d2);
+  const double F_vel_peri = (2 * M_PI / fdot) / r->dt; // effective period
+  double fcond_peri = F_vel_peri - vfacp;
+
+  return fcond_peri;
+}
+
+double reb_integrator_trace_switch_vdiff_peri(const struct reb_simulation* const r, int j){
+  struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[j], r->particles[0]);
+  if (o.a < 0.0){
+    return 1.; //unbound orbits have no pericenter approach
+  }
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  const double vfacp = ri_tr->vfac_p;
+
+  const double dvx = r->particles[j].vx;
+  const double dvy = r->particles[j].vy;
+  const double dvz = r->particles[j].vz;
+  const double dv = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
+
+  const double vcirc = sqrt(r->G * (r->particles[0].m + r->particles[j].m) / o.a);
+  const double vdiff = dv / vcirc;
+  double fcond_peri = vfacp - vdiff;
 
   return fcond_peri;
 }
@@ -329,6 +345,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
           }
       }
   }
+  //exit(1);
 
   ri_tr->mode = 1;
   // run
@@ -459,6 +476,7 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
     if (fcond_peri < 0.0 && ri_tr->current_L == 0){
       ri_tr->current_L = 1;
       new_c = 1;
+      //printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
     }
   }
 
@@ -516,7 +534,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
     }
 
-    // This is faster if not using adaptive TS
     reb_integrator_trace_interaction_step(r, r->dt/2.);
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_kepler_step(r, r->dt); // always accept this
@@ -543,7 +560,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         ri_tr->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
       }
 
-      // This is faster if not using adaptive TS
       reb_integrator_trace_interaction_step(r, r->dt/2.);
       reb_integrator_trace_jump_step(r, r->dt/2.);
       reb_integrator_trace_kepler_step(r, r->dt); // always accept this
@@ -551,7 +567,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       reb_integrator_trace_jump_step(r, r->dt/2.);
       reb_integrator_trace_interaction_step(r, r->dt/2.);
     }
-
     ri_tr->is_synchronized = 0;
     if (ri_tr->safe_mode){
         reb_integrator_trace_synchronize(r);
@@ -582,6 +597,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.encounterNactive = 0;
     r->ri_tr.hillfac = 4; // TLu changed to Hernandez (2023)
     r->ri_tr.vfac = 3.;
+    r->ri_tr.vfac_p = 3.;
+
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)
     r->ri_tr.recalculate_coordinates_this_timestep = 0;
     // Internal arrays (only used within one timestep)
@@ -603,5 +620,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
 
     free(r->ri_tr.encounter_map_internal);
     r->ri_tr.encounter_map_internal = NULL;
+
+    r->ri_tr.S = NULL;
+    r->ri_tr.S_peri = NULL;
 
 }

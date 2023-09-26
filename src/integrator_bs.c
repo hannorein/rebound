@@ -361,21 +361,17 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     if (r->integrator==REB_INTEGRATOR_TRACE){
       start = 1;
       map = r->ri_tr.encounter_map;
+
       if (map==NULL){
         reb_error(r, "Cannot access TRACE map from BS.");
         return;
       }
 
       N = r->ri_tr.encounterN;
+
       // Kepler Step
       // This is only for pericenter approach
       if (r->ri_tr.current_L){
-        //reb_integrator_trace_pxyz(r);
-        //px = r->ri_tr.px;
-        //py = r->ri_tr.py;
-        //pz = r->ri_tr.pz;
-
-
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
             py += r->particles[i].vy*r->particles[i].m;
@@ -395,7 +391,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       yDot[4] = 0.0;
       yDot[5] = 0.0;
     }
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+    else if (r->integrator==REB_INTEGRATOR_MERCURIUS){
       start = 1;
       map = r->ri_mercurius.encounter_map;
       if (map==NULL){
@@ -417,7 +413,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       map = r->ri_bs.map;
       N = r->N;
     }
-
 
     for (int i=start; i<r->N; i++){
         // TLu may be a better way to structure this
@@ -573,7 +568,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
         // y is set earlier in part2 to x y z vx vy vz
         odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t); // This sets the nbody derivatives into y0Dot
     }
-    //exit(1);
 
     const int forward = (dt >= 0.);
 
@@ -892,7 +886,6 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 }
 
 void reb_integrator_bs_part2(struct reb_simulation* r){
-    //printf("Time: %f\n", r->t);
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
     struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
 
@@ -909,11 +902,13 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
       N = r->ri_tr.encounterN;
       map = r->ri_tr.encounter_map;
     }
+
     else if (r->integrator == REB_INTEGRATOR_MERCURIUS){
       //nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
       N = r->ri_mercurius.encounterN;
       map = r->ri_mercurius.encounter_map;
     }
+
     else{
       N = r->N;
       map = ri_bs->map;
@@ -951,17 +946,14 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+5] = p.vz;
     }
 
-
     int success = reb_integrator_bs_step(r, r->dt);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
     }
-
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
-    ri_bs->counter += 1;
 }
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){

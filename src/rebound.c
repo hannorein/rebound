@@ -1061,7 +1061,6 @@ FILE *fmemopen(void *buf, size_t len, const char *type) {
 
 #endif // _WIN32
   
->>>>>>> f31a253e77fbaa75b4814474afbf557129198237
 #ifdef OPENMP
 void reb_omp_set_num_threads(int num_threads){
     omp_set_num_threads(num_threads);
