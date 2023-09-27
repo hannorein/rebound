@@ -4,13 +4,18 @@
 import sys
 import os
 import warnings
+import platform
 from ctypes import cdll, c_char_p
 
 # Find suffix
-# Using distutils.sysconfig instead of sysconfig because 
-# of a bug in Python < 3.8 on windows
-import distutils.sysconfig
-suffix = distutils.sysconfig.get_config_var('EXT_SUFFIX')
+if platform.system()=="Windows":
+    # Using distutils.sysconfig instead of sysconfig because 
+    # of a bug in Python < 3.8 on windows
+    import distutils.sysconfig as sysconfig
+else:
+    import sysconfig
+suffix = sysconfig.get_config_var('EXT_SUFFIX')
+
 if suffix is None:
     suffix = ".so"
 

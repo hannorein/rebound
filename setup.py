@@ -1,6 +1,7 @@
 try:
     from setuptools import setup, Extension
 except ImportError:
+    # Legacy distutils import. No longer available on Pyton > 3.12
     from distutils.core import setup, Extension
 from codecs import open
 import os
@@ -21,9 +22,8 @@ except:
 
 extra_link_args=[]
 if sys.platform == 'darwin':
-    from distutils import sysconfig
-    vars = sysconfig.get_config_vars()
-    vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
+    config_vars = sysconfig.get_config_vars()
+    config_vars['LDSHARED'] = config_vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
 if sys.platform == 'win32':
     extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE']
