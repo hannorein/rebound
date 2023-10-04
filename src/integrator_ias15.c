@@ -559,13 +559,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
-        }else{ // adaptive_mode == 2 (New adaptive timestepping method)
+        }else{ // adaptive_mode >= 2 (New adaptive timestepping method)
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){
                 double a0i = 0; //accelertation at beginning of timestep
                 double ai = 0;  //accalaeration at end of timestep
                 double ji = 0;  //jerk
                 double si = 0;  //snap
+                double ci = 0; // crackle
                 for(unsigned int k=3*i;k<3*(i+1);k++) {
                     a0i += a0[k]*a0[k];
                     double tmp = a0[k] + b.p0[k] + b.p1[k] + b.p2[k] + b.p3[k] + b.p4[k] + b.p5[k] + b.p6[k];
@@ -574,20 +575,28 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     ji += tmp*tmp;
                     tmp = 2.* b.p1[k] + 6.* b.p2[k] + 12.* b.p3[k] + 20.* b.p4[k] + 30.* b.p5[k] + 42.* b.p6[k];
                     si += tmp*tmp;
+                    tmp = 6.* b.p2[k] + 24.* b.p3[k] + 60.* b.p4[k] + 120.* b.p5[k] + 210.* b.p6[k];
+                    ci += tmp*tmp;
                 }
                 if (!isnormal(a0i)){
                     // Skipp particles which do not experience any acceleration or
                     // have acceleration which is inf or Nan.
                     continue;
                 }
-                double timescale2 = 1./(ji/ai+sqrt(si/ai));
+                double timescale2 = 0;
+                if (r->ri_ias15.adaptive_mode==2){
+                    timescale2 = 2./(ji/ai+sqrt(si/ai)); // PRS23
+                }else{  // adaptive_mode==3
+                    timescale2 = (sqrt(ai*si)+ji) / (sqrt(ji*ci)+si); // A85
+                }
+
                 if (isnormal(timescale2) && timescale2<min_timescale2){
                     min_timescale2 = timescale2;
                 }
             }
             if (isnormal(min_timescale2)){
                 // Numerical factor below is there to match timestep to that of adaptive_mode==0 and default epsilon
-                dt_new = sqrt(min_timescale2*2) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0);
+                dt_new = sqrt(min_timescale2) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0);
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
