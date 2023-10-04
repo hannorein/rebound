@@ -4,6 +4,13 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 3.x
 
+### Version 3.28.3
+* Removed distutils requirement in preparation  for python 3.12.
+* Removed rebound.InterruptiblePool as it no longer works with recent python version. Updated examples.
+* Added Holmberg example.
+* Added adaptive_mode==3 for IAS15 (Aarseth 1985).
+
+
 ### Version 3.28.2
 * Implemented own fmemopen implementation on MacOS. This is mainly to appease conda-forge builds.
 * Improved sqrt7 algorithm allows larger convergence interval.
