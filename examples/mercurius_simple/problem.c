@@ -75,10 +75,9 @@ int main(int argc, char* argv[]){
     r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_tr.peri = 0.01;
 
-/*
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-*/
+//    r->integrator = REB_INTEGRATOR_MERCURIUS;
+//    r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+
 
     //struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
     //ri_bs->counter = 0;
@@ -111,13 +110,14 @@ int main(int argc, char* argv[]){
     reb_add(r, test);
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-    e_init = jacobi_dh(r);
+    //e_init = jacobi_dh(r);
 
     //r->heartbeat  = heartbeat;
-    //system("rm -rf energy_cts.txt");
-    //FILE* f = fopen("energy_cts.txt","w");
+    //system("rm -rf energy.txt");
+    //FILE* f = fopen("energy.txt","w");
 
-    reb_integrate(r, 5000. * 11.86 * 2 * M_PI);
+    reb_integrate(r, 500000. * 11.86 * 2 * M_PI);
+    //reb_integrate(r, 2.0);
     //printf("Counter: %d\n", ri_bs->counter);
     //reb_steps(r, 20.);
     //reb_integrate(r, 1000.);
@@ -129,9 +129,9 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    //if (reb_output_check(r, (4. / 365.25) * 2.*M_PI)){
+    if (reb_output_check(r, 100. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
-        FILE* f = fopen("energy_cts.txt","a");
+        FILE* f = fopen("energy.txt","a");
 
         // rotate whole simulation to rotating frame
         //struct reb_vec3d v1 = {.x = r->particles[1].x, .y = r->particles[1].y, .z = r->particles[1].z};
@@ -147,5 +147,5 @@ void heartbeat(struct reb_simulation* r){
 
         //struct reb_rotation inverse = reb_rotation_inverse(r1);
         //reb_simulation_irotate(r, inverse);
-    //}
+    }
 }

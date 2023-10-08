@@ -34,8 +34,8 @@
 #include "integrator_mercurius.h"
 #include "integrator_ias15.h"
 #include "integrator_whfast.h"
-#include "collision.h"
 #include "integrator_bs.h"
+#include "collision.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
@@ -261,6 +261,7 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
     }
+    //exit(1);
 }
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
@@ -331,18 +332,20 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     const double old_t = r->t;
     double t_needed = r->t + _dt;
 
-    reb_integrator_ias15_reset(r);
+    //reb_integrator_ias15_reset(r);
 
-    r->dt = 0.0001*_dt; // start with a small timestep.
-    //r->dt = _dt;
+    //r->dt = 0.0001*_dt; // start with a small timestep.
+    r->dt = _dt; // start with a small timestep.
+
     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh
         r->particles[0].vy = 0;
         r->particles[0].vz = 0;
-        reb_update_acceleration(r);
-        reb_integrator_ias15_part2(r);
-        //reb_integrator_bs_part2(r);
+        //reb_update_acceleration(r);
+        //exit(1);
+        //reb_integrator_ias15_part2(r);
+        reb_integrator_bs_part2(r);
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
@@ -490,7 +493,6 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // Setting default switching function
         rim->L = reb_integrator_mercurius_L_mercury;
     }
-
 }
 
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
@@ -502,7 +504,9 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     }else{
         reb_integrator_mercurius_interaction_step(r,r->dt);
     }
-    //reb_integrator_mercurius_jump_step(r,r->dt/2.);
+
+    reb_integrator_mercurius_jump_step(r,r->dt/2.);
+
     reb_integrator_mercurius_com_step(r,r->dt);
 
     // Make copy of particles before the kepler step.
@@ -510,6 +514,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     // Result will be used in encounter prediction.
     // Particles having a close encounter will be overwritten
     // later by encounter step.
+    //printf("Before Kepler: %f\n", r->particles[2].vx);
     memcpy(rim->particles_backup,r->particles,N*sizeof(struct reb_particle));
     reb_integrator_mercurius_kepler_step(r,r->dt);
 
@@ -523,9 +528,9 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     if (rim->safe_mode){
         reb_integrator_mercurius_synchronize(r);
     }
-
     r->t+=r->dt;
     r->dt_last_done = r->dt;
+    //exit(1);
 }
 
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r){

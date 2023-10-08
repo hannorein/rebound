@@ -81,10 +81,10 @@ FILE *fmemopen( void *buf, size_t len, const char *type);
 DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.
 DLLEXPORT extern const char* reb_version_str; ///< Version string.
 DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
-DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
+DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound.
 DLLEXPORT extern const int reb_max_messages_length;
 DLLEXPORT extern const int reb_max_messages_N;
-extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
+extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler
 
 // Forward declarations
 struct reb_simulation;
@@ -151,7 +151,7 @@ struct reb_simulation_integrator_ias15 {
     double epsilon;
     double min_dt;
     unsigned int adaptive_mode;
-   
+
     // Internal use
     unsigned long iterations_max_exceeded; // Counter how many times the iteration did not converge.
     unsigned int allocated_N;
@@ -229,6 +229,10 @@ struct reb_simulation_integrator_trace {
     int* current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
     unsigned int print; // for debugging
+
+    double whts;
+
+    double* dcrit;
 };
 
 struct reb_simulation_integrator_sei {
@@ -658,7 +662,7 @@ struct reb_orbit {
 
 // Simulation life cycle
 DLLEXPORT struct reb_simulation* reb_create_simulation(void);     // allocates memory, then calls reb_init_simulation
-DLLEXPORT void reb_init_simulation(struct reb_simulation* r);    
+DLLEXPORT void reb_init_simulation(struct reb_simulation* r);
 DLLEXPORT void reb_free_simulation(struct reb_simulation* const r);
 DLLEXPORT struct reb_simulation* reb_copy_simulation(struct reb_simulation* r);
 DLLEXPORT void reb_free_pointers(struct reb_simulation* const r);
@@ -685,7 +689,7 @@ DLLEXPORT void reb_stop(struct reb_simulation* const r); // Stop current integra
 
 // Compare simulations
 // If r1 and r2 are exactly equal to each other then 0 is returned, otherwise 1. Walltime is ignored.
-// If output_option=1, then output is printed on the screen. If 2, only return value os given. 
+// If output_option=1, then output is printed on the screen. If 2, only return value os given.
 DLLEXPORT int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
 // Same but return value is string to human readable difference. Needs to be freed.
 DLLEXPORT char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2);
@@ -700,7 +704,7 @@ DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* cons
 DLLEXPORT int reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c);
 DLLEXPORT int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
 DLLEXPORT int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
-DLLEXPORT void reb_set_collision_resolve(struct reb_simulation* r, int (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python 
+DLLEXPORT void reb_set_collision_resolve(struct reb_simulation* r, int (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python
 
 // Random sampling
 DLLEXPORT double reb_random_uniform(struct reb_simulation* r, double min, double max);
@@ -722,7 +726,7 @@ DLLEXPORT void reb_output_binary_positions(struct reb_simulation* r, const char*
 DLLEXPORT void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 
 // Compares two simulations, stores difference in buffer.
-DLLEXPORT void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep); 
+DLLEXPORT void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep);
 // Same as reb_binary_diff, but with options.
 // output_option:
 // - If set to 0, differences are written to bufp in the form of reb_binary_field structs.
@@ -803,7 +807,7 @@ DLLEXPORT void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* ma
 
 
 // Functions to add and initialize particles
-DLLEXPORT struct reb_particle reb_particle_nan(void); // Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
+DLLEXPORT struct reb_particle reb_particle_nan(void); // Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL.
 DLLEXPORT void reb_add(struct reb_simulation* const r, struct reb_particle pt);
 DLLEXPORT void reb_add_fmt(struct reb_simulation* r, const char* fmt, ...);
 DLLEXPORT struct reb_particle reb_particle_new(struct reb_simulation* r, const char* fmt, ...);    // Same as reb_add_fmt() but returns the particle instead of adding it to the simualtion.
@@ -869,8 +873,8 @@ DLLEXPORT int reb_add_var_2nd_order(struct reb_simulation* const r, int testpart
 // factor is stored in the reb_variational_configuration's lrescale variable.
 // This function is called automatically every timestep. To avoid automatic rescaling,
 // set the reb_variational_configuration's lrescale variable to -1.
-// For this function to work, the positions and velocities needs to be synchronized. 
-// A warning is presented if the integrator is not synchronized. 
+// For this function to work, the positions and velocities needs to be synchronized.
+// A warning is presented if the integrator is not synchronized.
 DLLEXPORT void reb_var_rescale(struct reb_simulation* const r);
 
 // These functions calculates the first/second derivative of a Keplerian orbit.
@@ -1144,7 +1148,7 @@ struct reb_display_data {
 };
 
 
-// Temporary. Function declarations needed by REBOUNDx 
+// Temporary. Function declarations needed by REBOUNDx
 DLLEXPORT void reb_integrator_ias15_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
 DLLEXPORT void reb_integrator_ias15_part2(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
 DLLEXPORT void reb_integrator_whfast_from_inertial(struct reb_simulation* const r);   ///< Internal function to the appropriate WHFast coordinates from inertial

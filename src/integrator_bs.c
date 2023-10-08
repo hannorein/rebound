@@ -117,6 +117,7 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
       map = r->ri_bs.map;
     }
 
+    //printf("Update particles! %f\n", r->t);
     for (int i=0; i<N; i++){
         int mi = map[i];
         struct reb_particle* const p = &(r->particles[mi]);
@@ -126,7 +127,9 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         p->vx = y[i*6+3];
         p->vy = y[i*6+4];
         p->vz = y[i*6+5];
+        //printf("%d %d %f %f %f %f\n", i, mi, y[i*6+0], y[i*6+1], y[i*6+3], y[i*6+4]);
     }
+    //exit(1);
 }
 
 
@@ -245,6 +248,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
     // other substeps
     if (needs_nbody){
+        //printf("Other substeps\n");
         reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
     }
     for (int s=0; s < Ns; s++){
@@ -274,6 +278,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         }
 
         if (needs_nbody){
+            //printf("Normal update\n");
             reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
         }
         for (int s=0; s < Ns; s++){
@@ -313,6 +318,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
             y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); // = 0.25*(y_(2n-1) + 2*y_n(2) + y_(2n+1))     Eq (9.13c)
         } // At the end, y1[i] is y_n for each particle (this is 17.3.2)
     }
+    //printf("In tryStep: %f %f %f %f\n", odes[0]->y1[6], odes[0]->y1[7], odes[0]->y1[9], odes[0]->y1[10]);
     return 1;
 }
 
@@ -347,7 +353,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE) { // TRACE always needs this to ensure the right Hamiltonian is evolved
+    if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE || r->integrator == REB_INTEGRATOR_MERCURIUS) { // TRACE always needs this to ensure the right Hamiltonian is evolved
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
         reb_update_acceleration(r);
@@ -392,7 +398,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       yDot[5] = 0.0;
     }
     else if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-      start = 1;
+      //start = 1;
       map = r->ri_mercurius.encounter_map;
       if (map==NULL){
         reb_error(r, "Cannot access MERCURIUS map from BS.");
@@ -402,12 +408,14 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
       N = r->ri_mercurius.encounterN;
 
       // If we are using MERCURIUS, this is in DH, so star feels no acceleration
+      /*
       yDot[0] = 0.0;
       yDot[1] = 0.0;
       yDot[2] = 0.0;
       yDot[3] = 0.0;
       yDot[4] = 0.0;
       yDot[5] = 0.0;
+      */
     }
     else{
       map = r->ri_bs.map;
@@ -425,6 +433,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
           yDot[i*6+3] = p.ax;
           yDot[i*6+4] = p.ay;
           yDot[i*6+5] = p.az;
+          //printf("%d %d %e %e %e %e %e %e\n", i, mi, yDot[i*6+0], yDot[i*6+1], yDot[i*6+2], yDot[i*6+3], yDot[i*6+4], yDot[i*6+5]);
         }
         else{
           yDot[i*6+0] = 0.0;
@@ -434,9 +443,9 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
           yDot[i*6+4] = 0.0;
           yDot[i*6+5] = 0.0;
         }
-
         //printf("%d %e %e %e %e %e %e\n", i, yDot[i*6+0], yDot[i*6+1], yDot[i*6+2], yDot[i*6+3], yDot[i*6+4], yDot[i*6+5]);
     }
+    //printf("yDots: %f %f %f %f %f %f %f %f\n", yDot[6],yDot[7],yDot[9],yDot[10],yDot[12],yDot[13],yDot[15],yDot[16]);
 }
 
 
@@ -763,6 +772,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             if (odes[s]->post_timestep){
                 odes[s]->post_timestep(odes[s], odes[s]->y);
             }
+            //printf("IN BS STEP: %f %f %f %f\n", odes[s]->y[6], odes[s]->y[7], odes[s]->y[9], odes[s]->y[10]);
         }
 
         int optimalIter;
@@ -824,10 +834,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     if (ri_bs->max_dt != 0.0 && dt > ri_bs->max_dt) {
         dt = ri_bs->max_dt;
-        // no warning if TRACE. Better way for this??
-        if (r->integrator != REB_INTEGRATOR_TRACE){
-          reb_warning(r,"Maximum stepsize reached during ODE integration.");
-        }
+        reb_warning(r,"Maximum stepsize reached during ODE integration.");
     }
 
     if (! forward) {
@@ -888,6 +895,7 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
     struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+    struct reb_simulation_integrator_mercurius* ri_mercurius = &(r->ri_mercurius);
 
     int nbody_length = r->N*3*2;;
     int N;
@@ -899,14 +907,14 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
 
     if (r->integrator == REB_INTEGRATOR_TRACE){
       //nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
-      N = r->ri_tr.encounterN;
-      map = r->ri_tr.encounter_map;
+      N = ri_tr->encounterN;
+      map = ri_tr->encounter_map;
     }
 
     else if (r->integrator == REB_INTEGRATOR_MERCURIUS){
       //nbody_length = r->ri_tr.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
-      N = r->ri_mercurius.encounterN;
-      map = r->ri_mercurius.encounter_map;
+      N = ri_mercurius->encounterN;
+      map = ri_mercurius->encounter_map;
     }
 
     else{
@@ -944,16 +952,24 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+3] = p.vx;
         y[i*6+4] = p.vy;
         y[i*6+5] = p.vz;
+
     }
 
+    //printf("Initial: %f %f %f %f %f %f %f %f\n", y[6],y[7],y[9],y[10],y[12],y[13],y[15],y[16]);
     int success = reb_integrator_bs_step(r, r->dt);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
+        //printf("SUCCESS\n");
+    }
+    else{
+      //printf("FAILURE\n");
     }
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
+    //printf("Final: %f %f %f %f %f %f %f %f\n", r->particles[1].x,r->particles[1].y,r->particles[1].vx,r->particles[1].vy,r->particles[2].x,r->particles[2].y,r->particles[2].vx,r->particles[2].vy);
+    //exit(1);
 }
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){

@@ -173,8 +173,8 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         r->ri_ias15.csx= realloc(r->ri_ias15.csx,sizeof(double)*N3);
         r->ri_ias15.csv= realloc(r->ri_ias15.csv,sizeof(double)*N3);
         r->ri_ias15.csa0 = realloc(r->ri_ias15.csa0,sizeof(double)*N3);
-        double* restrict const csx = r->ri_ias15.csx; 
-        double* restrict const csv = r->ri_ias15.csv; 
+        double* restrict const csx = r->ri_ias15.csx;
+        double* restrict const csv = r->ri_ias15.csv;
         for (unsigned int i=0;i<N3;i++){
             // Kill compensated summation coefficients
             csx[i] = 0;
@@ -240,6 +240,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         a0[3*k+1] = particles[mk].ay;
         a0[3*k+2] = particles[mk].az;
     }
+    //printf("Initial: %f %f %f %f %f %f %f %f\n", x0[3], x0[4], v0[3], v0[4], x0[6], x0[7], v0[6], v0[7]);
+    //printf("yDots: %f %f %f %f %f %f %f %f\n", v0[3], v0[4], a0[3], a0[4], v0[6], v0[7], a0[6], a0[7]);
     if (r->gravity==REB_GRAVITY_COMPENSATED){
         for(int k=0;k<N;k++) {
             int mk = map[k];
@@ -480,7 +482,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                                 predictor_corrector_error = errork;
                             }
                         }
-                    } 
+                    }
                     if (r->ri_ias15.adaptive_mode!=0){
                         predictor_corrector_error = maxb6ktmp/maxak;
                     }
@@ -494,25 +496,25 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-    
+
     double dt_new;
     if (r->ri_ias15.epsilon>0){
         // Estimate error (given by last term in series expansion)
         // There are two options:
         // TODO: There are now three options. Update documentation.
         // r->ri_ias15.adaptive_mode==1  (default)
-        //   First, we determine the maximum acceleration and the maximum of the last term in the series. 
+        //   First, we determine the maximum acceleration and the maximum of the last term in the series.
         //   Then, the two are divided.
         // r->ri_ias15.adaptive_mode==0
         //   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
-        //   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
+        //   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors.
         unsigned int Nreal = N - r->N_var;
         if (r->ri_ias15.adaptive_mode<2){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
             if (r->ri_ias15.adaptive_mode==1){
                 double maxa = 0.0;
                 double maxj = 0.0;
-                for(unsigned int i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
+                for(unsigned int i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration.
                                           // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
                                           // close encounters more stable if variational particles are present.
                     int mi = map[i];
@@ -659,6 +661,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         particles[mk].vy = v0[3*k+1];
         particles[mk].vz = v0[3*k+2];
     }
+    //printf("Final: %f %f %f %f %f %f %f %f\n", x0[3], x0[4], v0[3], v0[4], x0[6], x0[7], v0[6], v0[7]);
     copybuffers(e,er,N3);
     copybuffers(b,br,N3);
     double ratio = r->dt/dt_done;

@@ -88,13 +88,14 @@ int main(int argc, char* argv[]){
     //printf("%f\n", min * 0.05);
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->dt = min * 0.01;//0.059331635924546614;
-    r->ri_tr.S_peri = reb_integrator_trace_switch_vdiff_peri;
+    r->dt = min * 0.010123456;//0.059331635924546614;
+    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->ri_tr.hillfac = 4.;
-    r->ri_tr.vfac_p = 2.0;
+    r->ri_tr.vfac_p = 32.0;
+
 /*
     r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->dt = min * 0.01;//0.059331635924546614;
+    r->dt = min * 0.010123456;//0.059331635924546614;
     r->ri_mercurius.hillfac = 4.;
 */
 
@@ -109,7 +110,7 @@ int main(int argc, char* argv[]){
       //FILE* f = fopen(title, "w");
       FILE* f = fopen("test.txt", "w");
       fprintf(f, "# Seed: %d\n", index);
-      fprintf(f, "t,E");
+      fprintf(f, "t,E,sx,sy,sz");
       for (int i = 1; i < nbodies+1; i++){
         //fprintf(f, ",a%d,x%d,y%d,z%d,vx%d,vy%d,vz%d",i,i,i,i,i,i,i);
         fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
@@ -120,7 +121,9 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax =1e6*2*M_PI; //min * 100000;
+    tmax =1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
+    reb_integrate(r, tmax/2.);
+    r->ri_tr.vfac_p = 1000.0;
     reb_integrate(r, tmax);
     //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
     reb_free_simulation(r);
@@ -128,10 +131,10 @@ int main(int argc, char* argv[]){
 
 
 void heartbeat(struct reb_simulation* r){
-    //if (reb_output_check(r, 1.*2.*M_PI)){
-    //    reb_output_timing(r, tmax);
-    //}
-    if (reb_output_check(r, 1. * 2.*M_PI)){
+    if (reb_output_check(r, 10.*2.*M_PI)){
+        reb_output_timing(r, tmax);
+    }
+    if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         //FILE* f = fopen(title, "a");
         FILE* f = fopen("test.txt", "a");
@@ -139,7 +142,7 @@ void heartbeat(struct reb_simulation* r){
         //fprintf(f, "%f", r->t);
         struct reb_particle* sun = &r->particles[0];
 
-        //fprintf(f, ",%e,%e,%e",sun->x,sun->y,sun->z);
+        fprintf(f, ",%e,%e,%e",sun->x,sun->y,sun->z);
 
         for (int i = 0; i < nbodies; i++){
           struct reb_particle* p = &r->particles[i+1];

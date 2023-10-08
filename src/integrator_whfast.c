@@ -46,7 +46,7 @@ static const double reb_whfast_corrector_a_2 = 0.8366600265340755479781720257851
 static const double reb_whfast_corrector_a_3 = 1.2549900398011133219672580386777812340892230539480;
 static const double reb_whfast_corrector_a_4 = 1.6733200530681510959563440515703749787856307385973;
 static const double reb_whfast_corrector_a_5 = 2.0916500663351888699454300644629687234820384232467;
-static const double reb_whfast_corrector_a_6 = 2.5099800796022266439345160773555624681784461078960; 
+static const double reb_whfast_corrector_a_6 = 2.5099800796022266439345160773555624681784461078960;
 static const double reb_whfast_corrector_a_7 = 2.9283100928692644179236020902481562128748537925454;
 static const double reb_whfast_corrector_a_8 = 3.3466401061363021919126881031407499575712614771947;
 static const double reb_whfast_corrector_b_31 = -0.024900596027799867499350357910273437184309981229127;
@@ -60,14 +60,14 @@ static const double reb_whfast_corrector_b_112 = -0.0023487215292295354188307328
 static const double reb_whfast_corrector_b_113 = 0.012309078592019946317544564763237909911330686448336;
 static const double reb_whfast_corrector_b_114 = -0.038121613681288650508647613260247372125243616270670;
 static const double reb_whfast_corrector_b_115 = 0.072593394748842738674253180742744961827622366521517;
-static const double reb_whfast_corrector_b_178 = 0.093056103771425958591541059067553547100903397724386; 
-static const double reb_whfast_corrector_b_177 = -0.065192863576377893658290760803725762027864651086787; 
-static const double reb_whfast_corrector_b_176 = 0.032422198864713580293681523029577130832258806467604; 
-static const double reb_whfast_corrector_b_175 = -0.012071760822342291062449751726959664253913904872527; 
-static const double reb_whfast_corrector_b_174 = 0.0033132577069380655655490196833451994080066801611459; 
-static const double reb_whfast_corrector_b_173 = -0.00063599983075817658983166881625078545864140848560259; 
-static const double reb_whfast_corrector_b_172 = 0.000076436355227935738363241846979413475106795392377415; 
-static const double reb_whfast_corrector_b_171 = -0.0000043347415473373580190650223498124944896789841432241; 
+static const double reb_whfast_corrector_b_178 = 0.093056103771425958591541059067553547100903397724386;
+static const double reb_whfast_corrector_b_177 = -0.065192863576377893658290760803725762027864651086787;
+static const double reb_whfast_corrector_b_176 = 0.032422198864713580293681523029577130832258806467604;
+static const double reb_whfast_corrector_b_175 = -0.012071760822342291062449751726959664253913904872527;
+static const double reb_whfast_corrector_b_174 = 0.0033132577069380655655490196833451994080066801611459;
+static const double reb_whfast_corrector_b_173 = -0.00063599983075817658983166881625078545864140848560259;
+static const double reb_whfast_corrector_b_172 = 0.000076436355227935738363241846979413475106795392377415;
+static const double reb_whfast_corrector_b_171 = -0.0000043347415473373580190650223498124944896789841432241;
 static const double reb_whfast_corrector2_b = 0.03486083443891981449909050107438281205803;
 
 // Fast inverse factorial lookup table
@@ -181,7 +181,6 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
             // other parts of the code, nor is it vital to show it.
             ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;
             reb_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
-            printf("%f %f\n", r->t, _dt);
         }
         //X = _dt*invperiod*X_per_period; // first order guess
         const double dtr0i = _dt*r0i;
@@ -414,14 +413,14 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
-#pragma omp parallel for 
+#pragma omp parallel for
             for (int i=1;i<N_active;i++){
                 const double mi = particles[i].m;
                 p_j[i].vx += _dt*(m0+mi)*particles[i].ax/m0;
                 p_j[i].vy += _dt*(m0+mi)*particles[i].ay/m0;
                 p_j[i].vz += _dt*(m0+mi)*particles[i].az/m0;
             }
-#pragma omp parallel for 
+#pragma omp parallel for
             for (int i=N_active;i<(int)N_real;i++){
                 p_j[i].vx += _dt*particles[i].ax;
                 p_j[i].vy += _dt*particles[i].ay;
@@ -499,7 +498,7 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
     double eta = m0;
     switch (coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
-#pragma omp parallel for 
+#pragma omp parallel for
             for (int i=1;i<(int)N_real;i++){
                 if (i<N_active){
                     eta += p_j[i].m;
@@ -514,7 +513,7 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
-#pragma omp parallel for 
+#pragma omp parallel for
             for (int i=1;i<(int)N_real;i++){
                 if (i<N_active){
                     eta = m0+p_j[i].m;
@@ -809,7 +808,7 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
     const int N = r->N;
     const int N_real = N-r->N_var;
     const unsigned int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
-    
+
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
             reb_transformations_inertial_to_jacobi_posvel(particles, ri_whfast->p_jh, particles, N_real, N_active);

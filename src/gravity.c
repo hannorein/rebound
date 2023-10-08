@@ -640,6 +640,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         particles[mi].ax    = prefact*x;
                         particles[mi].ay    = prefact*y;
                         particles[mi].az    = prefact*z;
+                        //printf("Star: %d %d %f %f\n", i, mi, particles[mi].ax, particles[mi].ay);
                     }
                     // We're in a heliocentric coordinate system.
                     // The star feels no acceleration
@@ -688,6 +689,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mj].ay    += prefacti*dy;
                                 particles[mj].az    += prefacti*dz;
                             }
+                            //printf("Active-TP: %d %d %d %d %f\n", i, j, mi, mj, L);
                         }
                     }
   #else // OPENMP
