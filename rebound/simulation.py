@@ -468,12 +468,12 @@ class reb_simulation_integrator_ias15(Structure):
 
     :ivar float min_dt:
         IAS15 is an adaptive method. This sets the minimum timestep.
-    
+
     :ivar float adaptive_mode:
-        Determines how the adaptive timestep is chosen. 
+        Determines how the adaptive timestep is chosen.
         This replaces the previous epsilon_global variable.
         TODO: list options.
-    
+
     """
     def __repr__(self):
         return '<{0}.{1} object at {2}, epsilon={3}, min_dt={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.epsilon, self.min_dt)
@@ -2546,7 +2546,7 @@ class reb_simulation_integrator_trace(Structure):
 
     >>> sim = rebound.Simulation()
     >>> sim.integrator = "trace"
-    >>> sim.ri_tr.hillfac = 3.
+    >>> sim.ri_tr.hillfac = 4.
 
     """
     def __repr__(self):
@@ -2556,7 +2556,6 @@ class reb_simulation_integrator_trace(Structure):
                 ("_S_peri", CFUNCTYPE(c_double, POINTER(Simulation), c_uint, c_uint)),
                 ("hillfac", c_double),
                 ("peri", c_double),
-                ("vfac", c_double),
                 ("vfac_p", c_double),
                 ("recalculate_coordinates_this_timestep", c_uint),
                 ("safe_mode", c_uint),
@@ -2583,8 +2582,6 @@ class reb_simulation_integrator_trace(Structure):
     def S(self, func):
         if func == "default":
             self._S = cast(clibrebound.reb_integrator_trace_switch_default,TRACEKF)
-        elif func == "velocity":
-            self._S = cast(clibrebound.reb_integrator_trace_switch_velocity,TRACEKF)
         else:
             self._Sfp = TRACEKF(func) # what is this
             self._S = self._Sfp
@@ -2595,9 +2592,9 @@ class reb_simulation_integrator_trace(Structure):
     @L.setter
     def S_peri(self, func):
         if func == "default":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACELF)
-        elif func == "fdot":
             self._S_peri = cast(clibrebound.reb_integrator_trace_switch_fdot_peri,TRACELF)
+        elif func == "distance":
+            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACELF)
         else:
             self._S_peri_fp = TRACELF(func) # what is this
             self._S_peri = self._S_peri_fp

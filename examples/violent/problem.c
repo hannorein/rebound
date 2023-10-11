@@ -46,10 +46,48 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m = 1;
     star.r = 0.005;
+
+    star.x = -9.184617e-02;
+    star.y = 1.183124e+01;
+    star.z = 6.603905e-01;
+    star.vx = -7.676444e-04;
+    star.vy = 2.034279e-04;
+    star.vz = 7.427045e-05;
     reb_add(r, star);
 
     double planet_m = 9.55e-4;
     // double planet_r = 0.000477895;
+
+    struct reb_particle p1 = {0};
+    p1.m = planet_m;
+    p1.x = -1.066705e+00;
+    p1.y = 1.051777e+01;
+    p1.z = 4.684022e-01;
+    p1.vx = 8.115600e-01;
+    p1.vy = -3.859641e-01;
+    p1.vz = -5.767662e-02;
+
+    struct reb_particle p2 = {0};
+    p2.m = planet_m;
+    p2.x = 1.791964e+01;
+    p2.y = 1.161478e+01;
+    p2.z = 3.701365e+00;
+    p2.vx = -8.189499e-03;
+    p2.vy = 2.114994e-01;
+    p2.vz = -1.787831e-02;
+
+    struct reb_particle p3 = {0};
+    p3.m = planet_m;
+    p3.x = 7.932107e+01;
+    p3.y = -1.241087e+04;
+    p3.z = -6.956781e+02;
+    p3.vx = 4.455993e-04;
+    p3.vy = -3.854883e-02;
+    p3.vz = -2.215181e-03;
+
+    reb_add(r, p1);
+    reb_add(r, p2);
+    reb_add(r, p3);
 
     double sma = 5.;
     double delta= 2.5;
@@ -59,7 +97,7 @@ int main(int argc, char* argv[]){
       strcat(title, argv[1]);
       index = atoi(argv[1]);
     }
-
+/*
     r->rand_seed = index;
 
     for (int i = 0; i < nbodies; i++){
@@ -76,19 +114,18 @@ int main(int argc, char* argv[]){
 
     struct reb_particle* sun = &r->particles[0];
     double min = INFINITY;
+
     for (int i = 1; i < nbodies+1; i++){
       struct reb_particle* p = &r->particles[i];
       struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-      if (o.P < min){
+      if (abs(o.P) < min){
         min = o.P;
       }
       //printf("%d %f %f\n", i, p->x, p->y);
     }
-
-    //printf("%f\n", min * 0.05);
-
+*/
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->dt = min * 0.010123456;//0.059331635924546614;
+    r->dt = 7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->ri_tr.hillfac = 4.;
     r->ri_tr.vfac_p = 32.0;
@@ -121,10 +158,18 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax =1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
-    reb_integrate(r, tmax/2.);
-    r->ri_tr.vfac_p = 1000.0;
+    tmax =0.1*1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
+    //reb_integrate(r, tmax/2.);
+    //r->ri_tr.vfac_p = 1000.0;
     reb_integrate(r, tmax);
+/*
+    for (int i = 0; i < r->N; i++){
+      //fprintf(f, ",a%d,x%d,y%d,z%d,vx%d,vy%d,vz%d",i,i,i,i,i,i,i);
+      struct reb_particle* p = &r->particles[i];
+      printf("%d %e %e %e %e %e %e\n", i, p->x,p->y,p->z,p->vx,p->vy,p->vz);
+      //fprintf(f, ",a%d",i);
+    }
+    */
     //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
     reb_free_simulation(r);
 }

@@ -47,13 +47,9 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
   double dcriti = 0.0;
   double dcritj = 0.0;
 
-  // For debugging
-  //double ai = 0.0;
-  //double aj = 0.0;
-
   const double m0 = r->particles[0].m;
 
-  //if (r->particles[i].m != 0){
+  if (r->particles[i].m != 0){
 
     const double dxi  = r->particles[i].x;  // in dh
     const double dyi  = r->particles[i].y;
@@ -70,9 +66,9 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     //struct reb_orbit o1 = reb_tools_particle_to_orbit(r->G, r->particles[i], r->particles[0]);
     //const double ai = o1.a;
     dcriti = ri_tr->hillfac*ai*cbrt(r->particles[i].m/(3.*m0));
-  //}
+  }
 
-  //if (r->particles[j].m != 0){
+  if (r->particles[j].m != 0){
 
     const double dxj  = r->particles[j].x;  // in dh
     const double dyj  = r->particles[j].y;
@@ -90,13 +86,15 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     //const double aj = o2.a;
 
     dcritj = ri_tr->hillfac*aj*cbrt(r->particles[j].m/(3.*m0));
-  //}
+  }
 
   const double dx = r->particles[i].x - r->particles[j].x;
   const double dy = r->particles[i].y - r->particles[j].y;
   const double dz = r->particles[i].z - r->particles[j].z;
   const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
+  // This stuff seems unimportant...
+  /*
   // Interaction hamiltonian
   const double hi = (r->G * r->particles[j].m * r->particles[i].m) / d;
 
@@ -115,6 +113,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
       return 1.0;
     }
   }
+  */
 
   // Use traditional switching function
   double dcritmax = MAX(dcriti,dcritj);
@@ -533,7 +532,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     }
 
     int new_ce = reb_integrator_trace_Fcond(r); // output means nothing at this step for now
-
 
     if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
       // Pericenter close encounter detected. We integrate the entire simulation with BS

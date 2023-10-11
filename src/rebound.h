@@ -205,7 +205,6 @@ struct reb_simulation_integrator_trace {
 
     double hillfac;
     double peri; // TLu check for close pericenter passage
-    double vfac;
     double vfac_p;
     unsigned int recalculate_coordinates_this_timestep;
     unsigned int safe_mode;
@@ -229,10 +228,6 @@ struct reb_simulation_integrator_trace {
     int* current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
     unsigned int print; // for debugging
-
-    double whts;
-
-    double* dcrit;
 };
 
 struct reb_simulation_integrator_sei {
