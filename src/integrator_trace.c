@@ -612,7 +612,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.encounterN = 0;
     r->ri_tr.encounterNactive = 0;
     r->ri_tr.hillfac = 4; // TLu changed to Hernandez (2023)
-    r->ri_tr.vfac = 3.;
     r->ri_tr.vfac_p = 32.;
 
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)
