@@ -1,12 +1,12 @@
 from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t, c_char
 from .simulation import Simulation, BINARY_WARNINGS
-from . import clibrebound 
+from . import clibrebound
 import os
 import sys
 import math
 import warnings
 
-POINTER_REB_SIM = POINTER(Simulation) 
+POINTER_REB_SIM = POINTER(Simulation)
 
 class SimulationArchive(Structure):
     """
@@ -14,7 +14,7 @@ class SimulationArchive(Structure):
 
     The SimulationArchive is a binary file format which includes all
     settings, constants as well as particle positions and velocities.
-    This makes it possible to reproduce a simulation exactly 
+    This makes it possible to reproduce a simulation exactly
     (down to the last bit). The SimulationArchive allows you to add
     an arbitrary number of snapshots. Simulations can be reconstructed
     from these snapshots. Since version 2 of the SimulationArchive
@@ -24,16 +24,16 @@ class SimulationArchive(Structure):
     that changed is stored in the SimulationArchive file. This is all
     done automatically. All the user has to do is call the function
     to create a snapshot.
-    The SimulationArchive thus allows for fast access to any long-running 
-    simulations. For a full discussion of the functionality see the paper 
+    The SimulationArchive thus allows for fast access to any long-running
+    simulations. For a full discussion of the functionality see the paper
     by Rein & Tamayo 2017.
 
     Requirements
     ------------
-    When using the SimulationArchive, the user is responsible for 
-    setting up any additional forces or post-timestep modifications that 
-    were  present during the original integration. 
-        
+    When using the SimulationArchive, the user is responsible for
+    setting up any additional forces or post-timestep modifications that
+    were  present during the original integration.
+
     Examples
     --------
     Here is a simple example:
@@ -47,15 +47,15 @@ class SimulationArchive(Structure):
     """
     _fields_ = [("_inf", c_void_p),
                 ("_filename", c_char_p),
-                ("version", c_int), 
-                ("size_first", c_long), 
-                ("size_snapshot", c_long), 
-                ("auto_interval", c_double), 
-                ("auto_walltime", c_double), 
-                ("auto_step", c_ulonglong), 
-                ("nblobs", c_long), 
-                ("offset64", POINTER(c_uint64)), 
-                ("t", POINTER(c_double)) 
+                ("version", c_int),
+                ("size_first", c_long),
+                ("size_snapshot", c_long),
+                ("auto_interval", c_double),
+                ("auto_walltime", c_double),
+                ("auto_step", c_ulonglong),
+                ("nblobs", c_long),
+                ("offset64", POINTER(c_uint64)),
+                ("t", POINTER(c_double))
                 ]
     def __repr__(self):
         return '<{0}.{1} object at {2}, nblobs={3}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs)
@@ -75,8 +75,8 @@ class SimulationArchive(Structure):
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
         reuse_index : SimulationArchive
-            Useful when loading many large SimulationArchives. After loading the first 
-            SimulationArchive, pass it as this argument when opening other SimulationArchives with the 
+            Useful when loading many large SimulationArchives. After loading the first
+            SimulationArchive, pass it as this argument when opening other SimulationArchives with the
             same shape. Note: SimulationArchive shape must be exactly the same to avoid unexpected
             behaviour.
 
@@ -95,7 +95,7 @@ class SimulationArchive(Structure):
             if w.value & value:
                 if majorerror:
                     raise RuntimeError(message)
-                else:  
+                else:
                     # Just a warning
                     if process_warnings:
                         warnings.warn(message, RuntimeWarning)
@@ -108,7 +108,7 @@ class SimulationArchive(Structure):
         self.tmax = self.t[self.nblobs-1]
 
     def __del__(self):
-        if self._b_needsfree_ == 1: 
+        if self._b_needsfree_ == 1:
             clibrebound.reb_free_simulationarchive_pointers(byref(self))
 
     def __str__(self):
@@ -122,7 +122,7 @@ class SimulationArchive(Structure):
         if PY3:
             int_types = int,
         else:
-            int_types = int, long, 
+            int_types = int, long,
 
         if isinstance(key, slice):
             raise AttributeError("Slicing not supported due to optimizations.")
@@ -132,7 +132,7 @@ class SimulationArchive(Structure):
             key += len(self)
         if key>= len(self) or key<0:
             raise IndexError("Index out of range, number of snapshots stored in binary: %d."%len(self))
-        
+
         w = c_int(0)
         sim = Simulation()
         clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim), byref(self), c_long(key), byref(w))
@@ -142,15 +142,15 @@ class SimulationArchive(Structure):
             if w.value & value:
                 if majorerror:
                     raise RuntimeError(message)
-                else:  
+                else:
                     # Just a warning
                     if self.process_warnings:
                         warnings.warn(message, RuntimeWarning)
-        if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0:
+        if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_tr.is_synchronized==0:
             warnings.warn("The simulation might not be synchronized. You can manually synchronize it by calling sim.integrator_synchronize().", RuntimeWarning)
 
         return sim
-    
+
     def __setitem__(self, key, value):
         raise AttributeError("Cannot modify SimulationArchive.")
 
@@ -186,7 +186,7 @@ class SimulationArchive(Structure):
 
     def getSimulation(self, t, mode='snapshot', keep_unsynchronized=1):
         """
-        This function returns a simulation object at (or close to) the requested time `t`. 
+        This function returns a simulation object at (or close to) the requested time `t`.
         Everytime this function is called a new simulation object is created.
 
 
@@ -196,21 +196,21 @@ class SimulationArchive(Structure):
             Requested time. Needs to be within tmin and tmax of this Simulation Archive.
         mode : str
             This argument determines how close the simulation should be to the requested time.
-            There are three options. 
+            There are three options.
             - 'snapshot' This loads a nearby snapshot such that sim.t<t. This is the default.
             - 'close' This integrates the simulation to get to the time t but may overshoot by at most one timestep sim.dt.
-            - 'exact' This integrates the simulation to exactly time t. This is not compatible with keep_unsynchronized=1. 
+            - 'exact' This integrates the simulation to exactly time t. This is not compatible with keep_unsynchronized=1.
         keep_unsynchronized : int
             By default this argument is 1. This means that if the simulation had to be synchronized to generate this output, then it will nevertheless use the unsynchronized values if one integrates the simulation further in time. This is important for exact (bit-by-bit) reproducibility. If the value of this argument is 0, then one can modify the particles coordinates and these changes are taken into account when integrating the simulation further in time.
-        
+
         Returns
-        ------- 
+        -------
         A rebound.Simulation object. Everytime the function gets called
-        a new object gets created. 
-        
+        a new object gets created.
+
         Examples
         --------
-        Here is a simple example on how to load a simulation from a 
+        Here is a simple example on how to load a simulation from a
         Simulation Archive file with the `getSimulation` method.
         As the `mode` argument is set to `close`, the simulation
         will be integrated from the nearest snapshot to the request time.
@@ -235,7 +235,7 @@ class SimulationArchive(Structure):
             self.setup(sim, *self.setup_args)
 
         if mode=='snapshot':
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
+            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1) or (sim.integrator=="trace" and sim.ri_tr.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
@@ -244,29 +244,29 @@ class SimulationArchive(Structure):
         else:
             if mode=='exact':
                 keep_unsynchronized = 0
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
+            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1) or (sim.integrator=="trace" and sim.ri_tr.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
-                
+
             return sim
 
 
     def getSimulations(self, times, **kwargs):
         """
-        A generator to quickly access many simulations. 
+        A generator to quickly access many simulations.
         The arguments are the same as for `getSimulation`.
         """
         for t in times:
             yield self.getSimulation(t, **kwargs)
 
-    
+
     def getBezierPaths(self,origin=None):
         """
         This function returns array that can be used as a Cubic Bezier
-        Path in matplotlib. 
+        Path in matplotlib.
         The function returns two arrays, the first one contains
         the vertices for each particle and has the shape
         (Nvert, Nparticles, 2) where Nvert is the number of vertices.
@@ -276,18 +276,18 @@ class SimulationArchive(Structure):
         Arguments
         ---------
         origin : multiple, optional
-                 If `origin` is None (default), then none of the 
+                 If `origin` is None (default), then none of the
                  coordinates are shifted. If `origin` is an integer
                  then the particle with that index is used as the
-                 origin. if `origin` is equal to `com`, then the 
-                 centre of mass is used as the origin. 
+                 origin. if `origin` is equal to `com`, then the
+                 centre of mass is used as the origin.
 
 
         Examples
         --------
         The following example reads in a SimulationArchive and plots
-        the trajectories as Cubic Bezier Curves. It also plots the 
-        actual datapoints stored in the SimulationArchive. 
+        the trajectories as Cubic Bezier Curves. It also plots the
+        actual datapoints stored in the SimulationArchive.
         Note that the SimulationArchive needs to have enough
         datapoints to allow for smooth and reasonable orbits.
 
@@ -303,7 +303,7 @@ class SimulationArchive(Structure):
         >>>     ax.scatter(verts[::3,j,0],verts[::3,j,1])
         >>> ax.set_aspect('equal')
         >>> ax.autoscale_view()
-        
+
         """
         import numpy as np
         Npoints = len(self)*3-2

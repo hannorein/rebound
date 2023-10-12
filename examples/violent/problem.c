@@ -168,10 +168,10 @@ int main(int argc, char* argv[]){
     //r->integrator = REB_INTEGRATOR_WHFAST;
     //r->ri_whfast.coordinates = 1;
     r->dt = 7.108147e-01;//min * 0.010123456;//0.059331635924546614;
-    r->ri_tr.S_peri = reb_integrator_trace_peri_switch_default;//reb_integrator_trace_switch_fdot_peri;
+    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->ri_tr.hillfac = 4.;
-    r->ri_tr.peri = 2.;
-    //r->ri_tr.vfac_p = 32.0;
+    //r->ri_tr.peri = 2.;
+    r->ri_tr.vfac_p = 16.0;
 
 /*
     r->integrator = REB_INTEGRATOR_MERCURIUS;
@@ -201,7 +201,7 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax =200;//2e6*2*M_PI; //min * 100000;
+    tmax =400;//2e6*2*M_PI; //min * 100000;
     //reb_integrate(r, tmax/2.);
     //r->ri_tr.vfac_p = 1000.0;
     reb_integrate(r, tmax);

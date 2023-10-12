@@ -2,7 +2,7 @@
  * @file    output.c
  * @brief   Output routines.
  * @author  Hanno Rein <hanno@hanno-rein.de>
- * 
+ *
  * @section     LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
@@ -173,8 +173,19 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 160, REB_INT,         "ri_bs.firstOrLastStep",        offsetof(struct reb_simulation, ri_bs.firstOrLastStep), 0, 0},
     { 161, REB_INT,         "ri_bs.previousRejected",       offsetof(struct reb_simulation, ri_bs.previousRejected), 0, 0},
     { 162, REB_INT,         "ri_bs.targetIter",             offsetof(struct reb_simulation, ri_bs.targetIter), 0, 0},
+    // TLu which fields are needed?
+    { 165, REB_DOUBLE,      "ri_tr.hillfac",                offsetof(struct reb_simulation, ri_tr.hillfac), 0, 0},
+    { 166, REB_DOUBLE,      "ri_tr.peri",                   offsetof(struct reb_simulation, ri_tr.peri), 0, 0},
+    { 167, REB_DOUBLE,      "ri_tr.vfac_p",                 offsetof(struct reb_simulation, ri_tr.vfac_p), 0, 0},
+    { 168, REB_UINT,        "ri_tr.safe_mode",              offsetof(struct reb_simulation, ri_tr.safe_mode), 0, 0},
+    { 169, REB_UINT,        "ri_tr.is_synchronized",        offsetof(struct reb_simulation, ri_tr.is_synchronized), 0, 0},
+    { 170, REB_UINT,        "ri_tr.recalculate_coordinates_this_timestep", offsetof(struct reb_simulation, ri_tr.recalculate_coordinates_this_timestep), 0, 0},
+    //{ 171, REB_POINTER,     "ri_tr.current_Ks",             offsetof(struct reb_simulation, ri_tr.current_Ks), offsetof(struct reb_simulation, ri_tr.dcrit_allocated_N), sizeof(double)},
+    { 172, REB_UINT,        "ri_tr.current_L",              offsetof(struct reb_simulation, ri_tr.current_L), 0, 0},
+    { 173, REB_VEC3D,       "ri_tr.com_pos",                offsetof(struct reb_simulation, ri_tr.com_pos), 0, 0},
+    { 174, REB_VEC3D,       "ri_tr.com_vel",                offsetof(struct reb_simulation, ri_tr.com_vel), 0, 0},
 //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
-    // TES Variables used to have ids 300 - 388. Do not reuse. 
+    // TES Variables used to have ids 300 - 388. Do not reuse.
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
     { 392, REB_UINT,        "ri_whfast512.gr_potential",    offsetof(struct reb_simulation, ri_whfast512.gr_potential), 0, 0},
@@ -192,7 +203,7 @@ void reb_output_free_stream(char* buf){
     free(buf);
 }
 
-/** 
+/**
  * @brief Replacement for open_memstream
  */
 void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
@@ -218,7 +229,7 @@ int reb_output_check_phase(struct reb_simulation* r, double interval,double phas
     if (floor(shift/interval)!=floor((shift-r->dt)/interval)){
         return 1;
     }
-    // Output at beginning 
+    // Output at beginning
     if (r->t==0){
         return 1;
     }
@@ -253,7 +264,7 @@ void reb_output_timing(struct reb_simulation* r, const double tmax){
     const int N = r->N;
 #ifdef MPI
     int N_tot = 0;
-    MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
+    MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     if (r->mpi_id!=0) return;
 #else
     int N_tot = N;
@@ -332,9 +343,9 @@ void reb_output_ascii(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"ab"); 
+    FILE* of = fopen(filename_mpi,"ab");
 #else // MPI
-    FILE* of = fopen(filename,"ab"); 
+    FILE* of = fopen(filename,"ab");
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -352,9 +363,9 @@ void reb_output_orbits(struct reb_simulation* r, char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"ab"); 
+    FILE* of = fopen(filename_mpi,"ab");
 #else // MPI
-    FILE* of = fopen(filename,"ab"); 
+    FILE* of = fopen(filename,"ab");
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -412,16 +423,16 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
             switch (dtype){
-                case REB_DOUBLE: 
+                case REB_DOUBLE:
                     field.size = sizeof(double);
                     break;
-                case REB_INT: 
+                case REB_INT:
                     field.size = sizeof(int);
                     break;
-                case REB_UINT: 
+                case REB_UINT:
                     field.size = sizeof(unsigned int);
                     break;
-                case REB_UINT32: 
+                case REB_UINT32:
                     field.size = sizeof(uint32_t);
                     break;
                 case REB_LONG:
@@ -451,7 +462,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             field.type = reb_binary_field_descriptor_list[i].type;
             unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
-                
+
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
@@ -466,7 +477,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
             field.type = reb_binary_field_descriptor_list[i].type;
             unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
-                
+
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
@@ -496,12 +507,12 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
 
     struct reb_binary_field field_functionp;
     memset(&field_functionp,0,sizeof(struct reb_binary_field));
-    field_functionp.type = 87; // TODO do not hardcode. 
+    field_functionp.type = 87; // TODO do not hardcode.
     field_functionp.size = sizeof(int);
     reb_output_stream_write(bufp, &allocatedsize, sizep, &field_functionp, sizeof(struct reb_binary_field));
     reb_output_stream_write(bufp, &allocatedsize, sizep, &functionpointersused, field_functionp.size);
 
-    // To output size of binary file, need to calculate it first. 
+    // To output size of binary file, need to calculate it first.
     if (r->simulationarchive_version<3){ // to be removed in a future release
         r->simulationarchive_size_first = (*sizep)+sizeof(struct reb_binary_field)*2+sizeof(long)+sizeof(struct reb_simulationarchive_blob16);
     }else{
@@ -509,7 +520,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
     }
     WRITE_FIELD_TYPE( 45 ,        &r->simulationarchive_size_first,   sizeof(long));
     int end_null = 0;
-    
+
     struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
     WRITE_FIELD_TYPE(fd_end.type, &end_null, 0);
     if (r->simulationarchive_version<3){ // to be removed in a future release
@@ -525,9 +536,9 @@ void reb_output_binary(struct reb_simulation* r, const char* filename){
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"wb"); 
+    FILE* of = fopen(filename_mpi,"wb");
 #else // MPI
-    FILE* of = fopen(filename,"wb"); 
+    FILE* of = fopen(filename,"wb");
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -546,9 +557,9 @@ void reb_output_binary_positions(struct reb_simulation* r, const char* filename)
 #ifdef MPI
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    FILE* of = fopen(filename_mpi,"wb"); 
+    FILE* of = fopen(filename_mpi,"wb");
 #else // MPI
-    FILE* of = fopen(filename,"wb"); 
+    FILE* of = fopen(filename,"wb");
 #endif // MPI
     if (of==NULL){
         reb_error(r, "Can not open file.");
@@ -591,9 +602,9 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
     int N_tot = 0;
     struct reb_vec3d A_tot = {.x=0, .y=0, .z=0};
     struct reb_vec3d Q_tot = {.x=0, .y=0, .z=0};
-    MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD); 
-    MPI_Reduce(&A, &A_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
-    MPI_Reduce(&Q, &Q_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+    MPI_Reduce(&N, &N_tot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&A, &A_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&Q, &Q_tot, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (r->mpi_id!=0) return;
 #else
     int N_tot = N;
@@ -603,7 +614,7 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
     Q_tot.x = sqrt(Q_tot.x/(double)N_tot);
     Q_tot.y = sqrt(Q_tot.y/(double)N_tot);
     Q_tot.z = sqrt(Q_tot.z/(double)N_tot);
-    FILE* of = fopen(filename,"ab"); 
+    FILE* of = fopen(filename,"ab");
     if (of==NULL){
         reb_error(r, "Can not open file.");
         return;
@@ -611,5 +622,3 @@ void reb_output_velocity_dispersion(struct reb_simulation* r, char* filename){
     fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
     fclose(of);
 }
-
-    

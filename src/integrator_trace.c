@@ -36,7 +36,6 @@
 #include "gravity.h"
 #include "integrator_trace.h"
 #include "integrator_whfast.h"
-#include "integrator_mercurius.h"
 #include "integrator_bs.h"
 #include "collision.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b

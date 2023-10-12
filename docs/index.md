@@ -2,17 +2,17 @@
 
 ![REBOUND Examples](img/reboundbanner.png)
 
-REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics. 
+REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.
 
 ## Features
 
 * Symplectic integrators ([WHFast](integrators/#whfast), [SEI](integrators/#sei), [LEAPFROG](integrators/#leapfrog), [EOS](integrators/#embedded-operator-splitting-method-eos))
 * High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
-* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
+* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius), [TRACE]](integrators/#trace))
 * High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
 * Support for collisional/granular dynamics, various collision detection routines
 * The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
-* REBOUND runs natively on Linux, MacOS, and Windows. 
+* REBOUND runs natively on Linux, MacOS, and Windows.
 * REBOUND has no dependencies on external libraries (the use of OpenGL/glfw3 for visualization is optional)
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
 * Extensive set of example problems in both C and Python
@@ -36,7 +36,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Pejvak Javaheri, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
 * and many others! Check the git history to find out who contributed to the code.
 
-REBOUND is open source and you are invited to contribute to this project! 
+REBOUND is open source and you are invited to contribute to this project!
 
 ## YouTube tutorials
 
@@ -70,7 +70,7 @@ There are several papers describing the functionality of REBOUND.
 
 If you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation.
 please cite REBOUND.
-The simplest way to find the citations relevant to the specific setup of your REBOUND simulation is: 
+The simplest way to find the citations relevant to the specific setup of your REBOUND simulation is:
 
 ```python
 sim = rebound.Simulation()
@@ -79,7 +79,7 @@ sim.cite()
 ```
 
 !!! Info
-    When you cite one of the REBOUND papers, your paper will receive an automatic shout-out from the [REBOUND Citation Bot](https://botsin.space/@reboundbot). 
+    When you cite one of the REBOUND papers, your paper will receive an automatic shout-out from the [REBOUND Citation Bot](https://botsin.space/@reboundbot).
 
 ## License
 
@@ -88,4 +88,3 @@ REBOUND is free software: you can redistribute it and/or modify it under the ter
 REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
-

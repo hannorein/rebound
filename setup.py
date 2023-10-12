@@ -31,17 +31,17 @@ else:
     # Default compile args
     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
 
-# Option to disable FMA in CLANG. 
+# Option to disable FMA in CLANG.
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
 if FFP_CONTRACT_OFF:
     extra_compile_args.append('-ffp-contract=off')
 
-# Option to enable AVX512 enabled integrators (WHFast512). 
+# Option to enable AVX512 enabled integrators (WHFast512).
 AVX512 = os.environ.get("AVX512", None)
 if AVX512:
     extra_compile_args.append('-march=native')
     extra_compile_args.append('-DAVX512')
-    
+
 libreboundmodule = Extension('librebound',
                     sources = [ 'src/rebound.c',
                                 'src/integrator_ias15.c',
@@ -49,6 +49,7 @@ libreboundmodule = Extension('librebound',
                                 'src/integrator_whfast512.c',
                                 'src/integrator_saba.c',
                                 'src/integrator_mercurius.c',
+                                'src/integrator_trace.c',
                                 'src/integrator_eos.c',
                                 'src/integrator_leapfrog.c',
                                 'src/integrator_bs.c',

@@ -7,7 +7,7 @@ import warnings
 from ctypes import cdll, c_char_p
 
 # Find suffix
-# Using distutils.sysconfig instead of sysconfig because 
+# Using distutils.sysconfig instead of sysconfig because
 # of a bug in Python < 3.8 on windows
 import distutils.sysconfig
 suffix = distutils.sysconfig.get_config_var('EXT_SUFFIX')
@@ -89,7 +89,7 @@ class ParticleNotFound(Exception):
     pass
 
 from .tools import hash, mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
-from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_ias15, ODE, Rotation, Vec3d, _Vec3d, binary_field_descriptor_list
+from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_trace, reb_simulation_integrator_ias15, ODE, Rotation, Vec3d, _Vec3d, binary_field_descriptor_list
 from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import SimulationArchive
@@ -101,4 +101,4 @@ if "pyodide" in sys.modules:
 else:
     from .interruptible_pool import InterruptiblePool
 
-__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical","binary_field_descriptor_list"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "reb_simulation_integrator_trace", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical","binary_field_descriptor_list"]

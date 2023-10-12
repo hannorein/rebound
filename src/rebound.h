@@ -227,6 +227,7 @@ struct reb_simulation_integrator_trace {
 
     int* current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
+
     unsigned int print; // for debugging
 };
 
