@@ -2578,7 +2578,7 @@ class reb_simulation_integrator_trace(Structure):
     @property
     def S(self):
         raise AttributeError("You can only set C function pointers from python.")
-    @L.setter
+    @S.setter
     def S(self, func):
         if func == "default":
             self._S = cast(clibrebound.reb_integrator_trace_switch_default,TRACEKF)
@@ -2589,15 +2589,15 @@ class reb_simulation_integrator_trace(Structure):
     @property
     def S_peri(self):
         raise AttributeError("You can only set C function pointers from python.")
-    @L.setter
+    @S_peri.setter
     def S_peri(self, func):
         if func == "default":
             self._S_peri = cast(clibrebound.reb_integrator_trace_switch_fdot_peri,TRACELF)
         elif func == "distance":
             self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACELF)
         else:
-            self._S_peri_fp = TRACELF(func) # what is this
-            self._S_peri = self._S_peri_fp
+            self._S_perifp = TRACELF(func) # what is this
+            self._S_peri = self._S_perifp
 
 class ODE(Structure):
     @property
