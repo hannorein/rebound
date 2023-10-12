@@ -160,7 +160,7 @@ double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const 
   double fcond_peri = F_vel_peri - vfacp;
 
   //if (ri_tr->print){
-  //  printf("In cond: %d %f %f %f\n", j, fdot, F_vel_peri / r->dt, r->dt);
+    //printf("In cond: %d %f %f %f\n", j, fdot, F_vel_peri / r->dt, r->dt);
   //}
 
   return fcond_peri;
@@ -269,11 +269,7 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
-        //if (i == 2){
-        //  printf("%e %f %f\n", r->t, particles[i].vx, particles[i].ax);
-      //}
     }
-    //exit(1);
 }
 
 void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
@@ -474,7 +470,7 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
       ri_tr->current_L = 1;
       new_c = 1;
       //if (ri_tr->print){
-      //  printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
+      printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
       //}
     }
   }
@@ -511,11 +507,98 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   return new_c;
 }
 
+void reb_integrator_trace_F_start(struct reb_simulation* const r){
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  const int N = r->N;
+  const int Nactive = r->N_active==-1?r->N:r->N_active;
+
+  // Switching functions
+  double (*_switch) (const struct reb_simulation* const r, unsigned int i, unsigned int j) = r->ri_tr.S;
+  double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
+
+  // Check for pericenter CE
+  // test particles cannot have pericenter CEs
+  for (int j = 1; j < Nactive; j++){
+    double fcond_peri = _switch_peri(r, j);
+    if (fcond_peri < 0.0){
+      ri_tr->current_L = 1;
+      //break;
+    }
+  }
+
+
+  // Body-body
+  // there cannot be TP-TP CEs
+  for (int i = 1; i < Nactive; i++){
+    for (int j = i + 1; j < N; j++){
+
+      double fcond = _switch(r, i, j);
+
+      if (fcond < 0.0){
+        if (ri_tr->encounter_map_internal[i] == 0){
+            ri_tr->encounter_map_internal[i] = i;
+            ri_tr->encounterN++;
+        }
+        if (ri_tr->encounter_map_internal[j] == 0){
+            ri_tr->encounter_map_internal[j] = j;
+            ri_tr->encounterN++;
+        }
+        ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] = 1;
+      }
+    }
+  }
+}
+
+int reb_integrator_trace_F_check(struct reb_simulation* const r){
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  const int N = r->N;
+  const int Nactive = r->N_active==-1?r->N:r->N_active;
+  int reject = 0;
+
+  // Switching functions
+  double (*_switch) (const struct reb_simulation* const r, unsigned int i, unsigned int j) = r->ri_tr.S;
+  double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
+
+  // Check for L 0 -> 1
+  if (ri_tr->current_L == 0){
+    for (int j = 1; j < Nactive; j++){
+      double fcond_peri = _switch_peri(r, j);
+      if (fcond_peri < 0.0){
+        ri_tr->current_L = 1;
+        reject = 1;
+        break;
+      }
+    }
+  }
+
+
+  // Check for K 0 -> 1
+  for (int i = 1; i < Nactive; i++){
+    for (int j = i + 1; j < N; j++){
+      if (ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] == 0){
+        double fcond = _switch(r, i, j);
+        if (fcond < 0.0){
+          if (ri_tr->encounter_map_internal[i] == 0){
+              ri_tr->encounter_map_internal[i] = i;
+              ri_tr->encounterN++;
+          }
+          if (ri_tr->encounter_map_internal[j] == 0){
+              ri_tr->encounter_map_internal[j] = j;
+              ri_tr->encounterN++;
+          }
+          ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] = 1;
+          reject = 1;
+        }
+      }
+    }
+  }
+  return reject;
+}
+
 // This is Listing 2
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
     const int N = r->N;
-
     //if (r->t >= 3141593.0){
     //  ri_tr->print = 1;
     //}
@@ -531,10 +614,11 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       ri_tr->current_Ks[i] = 0;
     }
 
-    int new_ce = reb_integrator_trace_Fcond(r); // output means nothing at this step for now
+    reb_integrator_trace_F_start(r); // output means nothing at this step for now
 
     if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
       // Pericenter close encounter detected. We integrate the entire simulation with BS
+      //printf("Flagged Peri %f\n", r->t);
       ri_tr->encounter_map_internal[0] = 1;
       ri_tr->encounterN = N;
       for (int i = 1; i < N; i++){
@@ -556,7 +640,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     //if (ri_tr->print){
     //  printf("\nREJECTION CHECK\n");
     //}
-    if (reb_integrator_trace_Fcond(r)){
+    if (reb_integrator_trace_F_check(r)){
       // REJECT STEP
       // reset simulation and try again with new timestep
       for (int i=0; i<N; i++){
@@ -566,6 +650,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
       if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
         // Pericenter close encounter detected. We integrate the entire simulation with BS
+        //printf("REJECT Flagged Peri %f\n", r->t);
         ri_tr->encounter_map_internal[0] = 1;
         ri_tr->encounterN = N;
         for (int i = 1; i < N; i++){

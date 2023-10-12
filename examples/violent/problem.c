@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m = 1;
     star.r = 0.005;
-
+/*
     star.x = -9.184617e-02;
     star.y = 1.183124e+01;
     star.z = 6.603905e-01;
@@ -84,9 +84,49 @@ int main(int argc, char* argv[]){
     p3.vx = 4.455993e-04;
     p3.vy = -3.854883e-02;
     p3.vz = -2.215181e-03;
+*/
+    // In DH!
+    star.x = 0.0;
+    star.y = 0.0;
+    star.z = 0.0;
+    star.vx = -7.676444e-04;
+    star.vy = 2.034279e-04;
+    star.vz = 7.427045e-05;
+    reb_add(r, star);
+
+    double planet_m = 9.55e-4;
+    // double planet_r = 0.000477895;
+
+    struct reb_particle p1 = {0};
+    p1.m = planet_m;
+    p1.x = -9.748588e-01;
+    p1.y = -1.313470e+00;
+    p1.z = -1.919883e-01;
+    p1.vx = 8.115600e-01;
+    p1.vy = -3.859641e-01;
+    p1.vz = -5.767662e-02;
+
+    struct reb_particle p2 = {0};
+    p2.m = planet_m;
+    p2.x = 1.801149e+01;
+    p2.y = -2.164600e-01;
+    p2.z = 3.040974e+00;
+    p2.vx = -8.189499e-03;
+    p2.vy = 2.114994e-01;
+    p2.vz = -1.787831e-02;
+
+    struct reb_particle p3 = {0};
+    p3.m = planet_m;
+    p3.x = 7.941292e+01;
+    p3.y = -1.242270e+04;
+    p3.z = -6.963385e+02;
+    p3.vx = 4.455993e-04;
+    p3.vy = -3.854883e-02;
+    p3.vz = -2.215181e-03;
+
 
     reb_add(r, p1);
-    reb_add(r, p2);
+    //reb_add(r, p2);
     reb_add(r, p3);
 
     double sma = 5.;
@@ -125,10 +165,13 @@ int main(int argc, char* argv[]){
     }
 */
     r->integrator = REB_INTEGRATOR_TRACE;
+    //r->integrator = REB_INTEGRATOR_WHFAST;
+    //r->ri_whfast.coordinates = 1;
     r->dt = 7.108147e-01;//min * 0.010123456;//0.059331635924546614;
-    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    r->ri_tr.S_peri = reb_integrator_trace_peri_switch_default;//reb_integrator_trace_switch_fdot_peri;
     r->ri_tr.hillfac = 4.;
-    r->ri_tr.vfac_p = 32.0;
+    r->ri_tr.peri = 2.;
+    //r->ri_tr.vfac_p = 32.0;
 
 /*
     r->integrator = REB_INTEGRATOR_MERCURIUS;
@@ -158,7 +201,7 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax =0.1*1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
+    tmax =200;//2e6*2*M_PI; //min * 100000;
     //reb_integrate(r, tmax/2.);
     //r->ri_tr.vfac_p = 1000.0;
     reb_integrate(r, tmax);
@@ -179,7 +222,7 @@ void heartbeat(struct reb_simulation* r){
     if (reb_output_check(r, 10.*2.*M_PI)){
         reb_output_timing(r, tmax);
     }
-    if (reb_output_check(r, 10. * 2.*M_PI)){
+    //if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         //FILE* f = fopen(title, "a");
         FILE* f = fopen("test.txt", "a");
@@ -214,5 +257,5 @@ void heartbeat(struct reb_simulation* r){
 */
         fprintf(f, "\n");
         fclose(f);
-    }
+    //}
 }

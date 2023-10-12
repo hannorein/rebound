@@ -377,6 +377,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
       // Kepler Step
       // This is only for pericenter approach
+      
       if (r->ri_tr.current_L){
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
