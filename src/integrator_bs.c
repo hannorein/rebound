@@ -79,8 +79,6 @@ static const double stabilityReduction = 0.5;
 static const int maxIter = 2; // maximal number of iterations for which checks are performed
 static const int maxChecks = 1; // maximal number of checks for each iteration
 
-int calls = 0;
-
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){
         reb_error(r, "Update particles called without valid simulation pointer.");
@@ -377,7 +375,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
       // Kepler Step
       // This is only for pericenter approach
-      
+
       if (r->ri_tr.current_L){
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
