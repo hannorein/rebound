@@ -277,7 +277,10 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     const int current_L = ri_tr->current_L;
 
     const int N_active = r->N_active==-1?r->N:r->N_active;
+
+    // If TP type 1, use r->N. Else, use N_active.
     const int N = r->testparticle_type==0 ? N_active: r->N;
+
     double px=0., py=0., pz=0.;
     for (int i=1;i<N;i++){
         px += r->particles[i].vx*r->particles[i].m; // in dh
@@ -287,6 +290,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     px /= r->particles[0].m;
     py /= r->particles[0].m;
     pz /= r->particles[0].m;
+    
     const int N_all = r->N;
     for (int i=1;i<N_all;i++){
         particles[i].x += dt*px*(1-current_L);
@@ -468,7 +472,7 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
       ri_tr->current_L = 1;
       new_c = 1;
       //if (ri_tr->print){
-      printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
+      //printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
       //}
     }
   }
