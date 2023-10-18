@@ -290,7 +290,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     px /= r->particles[0].m;
     py /= r->particles[0].m;
     pz /= r->particles[0].m;
-    
+
     const int N_all = r->N;
     for (int i=1;i<N_all;i++){
         particles[i].x += dt*px*(1-current_L);
@@ -363,10 +363,27 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     reb_integrator_bs_part2(r);
 
     // Now, r->dt is the proposed next step
-
     r->particles[0].vx = star.vx; // restore every timestep for collisions
     r->particles[0].vy = star.vy;
     r->particles[0].vz = star.vz;
+
+    star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
+    star.vy = r->particles[0].vy;
+    star.vz = r->particles[0].vz;
+    if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
+        // Collision with star occured
+        // Shift all particles back to heliocentric coordinates
+        // Ignore stars velocity:
+        //   - will not be used after this
+        //   - com velocity is unchained. this velocity will be used
+        //     to reconstruct star's velocity later.
+        for (int i=r->N-1; i>=0; i--){
+            r->particles[i].x -= r->particles[0].x;
+            r->particles[i].y -= r->particles[0].y;
+            r->particles[i].z -= r->particles[0].z;
+        }
+      }
+    }
   }
 
   r->t = old_t;
@@ -448,7 +465,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
 // Particle-particle collision tracking. Explanation is in my notes.
 int reb_integrator_trace_pindex(unsigned int i, unsigned int j, int N){
-  return (i-1)*N-((i-1)*(2+i)/2)+j-i-1;
+  return (i-1)*N - ((i-1)*(2+i) / 2) + j - i - 1;
 }
 
 int reb_integrator_trace_Fcond(struct reb_simulation* const r){

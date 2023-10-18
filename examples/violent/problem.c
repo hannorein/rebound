@@ -125,8 +125,9 @@ int main(int argc, char* argv[]){
 
 
     reb_add(r, p1);
-    //reb_add(r, p2);
-    reb_add(r, p3);
+    reb_add(r, p2);
+    //reb_add(r, p3);
+    reb_add_fmt(r, "m a e inc", planet_m, -742.792028, 5.0, 0.13263699999999998);
 
     double sma = 5.;
     double delta= 2.5;
@@ -185,9 +186,9 @@ int main(int argc, char* argv[]){
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     if (r->heartbeat != NULL){
-      system("rm -rf test.txt");
+      system("rm -rf test_2.txt");
       //FILE* f = fopen(title, "w");
-      FILE* f = fopen("test.txt", "w");
+      FILE* f = fopen("test_2.txt", "w");
       fprintf(f, "# Seed: %d\n", index);
       fprintf(f, "t,E,sx,sy,sz");
       for (int i = 1; i < nbodies+1; i++){
@@ -200,7 +201,7 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax =400;//2e6*2*M_PI; //min * 100000;
+    tmax =1000;//2e6*2*M_PI; //min * 100000;
     //reb_integrate(r, tmax/2.);
     //r->ri_tr.vfac_p = 1000.0;
     reb_integrate(r, tmax);
@@ -224,7 +225,7 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         //FILE* f = fopen(title, "a");
-        FILE* f = fopen("test.txt", "a");
+        FILE* f = fopen("test_2.txt", "a");
         fprintf(f, "%e,%e", r->t, reb_tools_energy(r));
         //fprintf(f, "%f", r->t);
         struct reb_particle* sun = &r->particles[0];
@@ -234,7 +235,8 @@ void heartbeat(struct reb_simulation* r){
         for (int i = 0; i < nbodies; i++){
           struct reb_particle* p = &r->particles[i+1];
           struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-          fprintf(f, ",%e,%e,%e,%e,%e,%e", o.a, o.e, o.inc,p->x,p->y,p->z);
+          fprintf(f, ",%f,%f,%f,%f,%f,%f", o.a, o.e, o.inc,p->x,p->y,p->z);
+          //printf("%f %f %f\n", o.a, o.e, o.inc);
           //fprintf(f, ",%f,%e,%e,%e,%e,%e,%e", o.a, p->x,p->y,p->z, p->vx, p->vy, p->vz);
           //fprintf(f, ",%e", o.a);
         }

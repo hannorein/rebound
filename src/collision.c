@@ -392,6 +392,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     }else{ // Not in a tree, particles get removed immediately
                         // Update p2 of current collision
                         if (collision_resolve_keep_sorted){
+                          // Always here for TRACE
                             if (c.p2 > c.p1){
                                 c.p2--;
                             }
