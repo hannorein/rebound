@@ -927,7 +927,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
             return;
         }
         if (r->N>9 && ri_whfast512->systems_N == 1) {
-            reb_error(r, "WHFast512 supports a maximum of 9 particles.");
+            reb_error(r, "WHFast512 supports a maximum of 9 particles when systems_N is set to 1.");
             r->status = REB_EXIT_ERROR;
             return;
         }
