@@ -599,11 +599,8 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
         dvz = _mm512_mul_pd(gr_prefac2, dvz); 
    
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
-        //dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
         dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
-        //dvy = _mm512_add_pd(_mm512_permutex_pd(dvy, _MM_PERM_ABCD), dvy);
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
-        //dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
         
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
@@ -886,12 +883,12 @@ void static recalculate_constants(struct reb_simulation* r){
     double _gr_prefac[8];
     double _gr_prefac2[8];
     for(unsigned int i=0;i<8;i++){
-        _gr_prefac[0] = 0; // for when N<8
-        _gr_prefac2[0] = 0;
+        _gr_prefac[i] = 0; // for when N<8
+        _gr_prefac2[i] = 0;
     }
     for (int s=0; s<systems_N; s++){
+        double m0 = r->particles[s*N_per_system].m;
         for (int p=1; p<N_per_system; p++){
-            double m0 = r->particles[s*N_per_system].m;
             _gr_prefac[s*p_per_system+(p-1)] = 6.*m0*m0/(c*c);
             _gr_prefac2[s*p_per_system+(p-1)] = r->particles[s*N_per_system+p].m/m0;
         }
