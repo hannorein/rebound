@@ -179,9 +179,10 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
     { 392, REB_UINT,        "ri_whfast512.gr_potential",    offsetof(struct reb_simulation, ri_whfast512.gr_potential), 0, 0},
     { 394, REB_POINTER_ALIGNED, "ri_whfast512.pjh",         offsetof(struct reb_simulation, ri_whfast512.p_jh), offsetof(struct reb_simulation, ri_whfast512.allocated_N), sizeof(struct reb_particle_avx512)},
-    { 395, REB_PARTICLE,    "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
     { 396, REB_DOUBLE,      "max_radius0",                  offsetof(struct reb_simulation, max_radius0), 0, 0},
     { 397, REB_DOUBLE,      "max_radius1",                  offsetof(struct reb_simulation, max_radius1), 0, 0},
+    { 398, REB_UINT,        "ri_whfast512.systems_N",       offsetof(struct reb_simulation, ri_whfast512.systems_N), 0, 0},
+    { 399, REB_PARTICLE4,   "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0},
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}
@@ -407,7 +408,7 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
                 dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG ||
-                dtype == REB_PARTICLE || dtype == REB_VEC3D ){
+                dtype == REB_PARTICLE || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
@@ -438,6 +439,9 @@ void reb_output_binary_to_stream(struct reb_simulation* r, char** bufp, size_t* 
                     break;
                 case REB_PARTICLE:
                     field.size = sizeof(struct reb_particle);
+                    break;
+                case REB_PARTICLE4:
+                    field.size = 4*sizeof(struct reb_particle);
                     break;
             }
             reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));

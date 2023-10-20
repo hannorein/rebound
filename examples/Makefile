@@ -2,7 +2,7 @@ ifndef OS
 	OS=$(shell uname)
 endif
 MPIEXAMPLES := shearing_sheet_mpi/. selfgravity_disc_mpi/. mpi_unittests/.
-WHFAST512EXAMPLES := whfast512_unittests/. whfast512_solar_system/.
+WHFAST512EXAMPLES := whfast512_unittests/. whfast512_solar_system/. whfast512_2planets/.
 ifneq ($(OS), Windows_NT)
 SUBDIRS := $(filter-out $(WHFAST512EXAMPLES) $(MPIEXAMPLES),$(wildcard */.))
 else

@@ -2630,8 +2630,9 @@ class reb_simulation_integrator_whfast512(Structure):
                 ("_allocated_N", c_uint),
                 ("gr_potential", c_uint),
                 ("recalculate_constants", c_uint),
+                ("systems_N", c_uint),
                 ("_p_jh", POINTER(Particle)),
-                ("_p_jh0", Particle)]
+                ("_p_jh0", Particle*4)]
 
 # Setting up fields after class definition (because of self-reference)
 Simulation._fields_ = [

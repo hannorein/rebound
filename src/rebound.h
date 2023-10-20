@@ -287,8 +287,9 @@ struct reb_simulation_integrator_whfast512 {
     unsigned int allocated_N;
     unsigned int gr_potential;
     unsigned int recalculate_constants;
+    unsigned int systems_N;
     struct reb_particle_avx512* p_jh;
-    struct reb_particle p_jh0;
+    struct reb_particle p_jh0[4];
 };
 
 struct reb_ode{ // defines an ODE 
@@ -711,6 +712,7 @@ struct reb_binary_field_descriptor {
         REB_OTHER = 12,              // Fields that need special treatment during input and/or output
         REB_FIELD_END = 13,          // Special type to indicate end of blob
         REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
+        REB_PARTICLE4 = 15,          // Used for WHFast512
     } dtype;
     char name[1024];
     size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
