@@ -50,7 +50,7 @@ struct reb_simulation* setup_single(){
 double run(int use_whfast512){
     struct timeval time_beginning;
     struct timeval time_end;
-    double tmax = 2.*M_PI*1e5; // 1 Myr
+    double tmax = 2.*M_PI*1e5; // 100 kyr
     
     // We integrate four 2 planet systems in parallel. 
     // To do that, simply add all the planet to one simulation
@@ -128,9 +128,9 @@ double run(int use_whfast512){
 }
 
 int main(int argc, char* argv[]) {
-    printf("Integrating for 1 Myr with WHFast512:\n");
+    printf("Integrating for 100 kyr with WHFast512:\n");
     double w1= run(1);
-    printf("Integrating for 1 Myr with WHFast:\n");
+    printf("Integrating for 100 kyr with WHFast:\n");
     double w0= run(0);
     printf("\nSpeedup: %.2fx\n", w0/w1);
     return EXIT_SUCCESS;
