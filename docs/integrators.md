@@ -675,10 +675,12 @@ Once you have compiled REBOUND with AVX512 enabled, you can use WHFast512 like a
     ```
 
 See also [this example](c_examples/whfast512_solar_system) on how to use WHFast512.
+If you are interested in integrating 2 or 4 planet systems in parallel, see [this example](c_examples/whfast512_2_planets).
 
 To allow for the best performance, WHFast512 has certain limitations that WHFast does not have.
 
 - The number of particles cannot exceed 9 (1 star and 8 planets) and needs to be constant. 
+- Although you can use WHFast512 with any number of planets (up to 8), the performance is best if the system has either 2, 4, or 8 planets. 
 - The gravitational constant needs to be exactly equal to 1. Note that you can always [rescale](../units/) your system such that G=1. 
 - The integrator always combines the first and last drift step (`safe_mode=0` for WHFast). 
 - No variational or test particles are supported (although a particle can have mass 0). 
@@ -697,4 +699,7 @@ The following settings are available:
 
 `unsigned int gr_potential`
 :   This flag determines if an additional $1/r^2$ potential is included in the force calculation. The default is 0. Set to 1 to turn on the potential. This can be used to mimic general relativistic precession. Note that this feature assumes [units](../units/) of AU and year/2pi. 
+
+`unsigned int systems_N`
+:   This flag determines how many systems are integrated in parallel. Possible values are 1, 2, or 4.  By default this is set to 1 which means WHFast512 is integrating only one system at a time. If your system has fewer than 5 planets, then you can use WHFast512 to integrate 2 systems in parallel. If your system has fewer than 3 planets, then you can use WHFast512 to integrate 4 systems in parallel. If multiple systems are integrated at the same time, particles must be added in the following order: Star 1, Planet, Planet, Star 2, Planet, Planet, ... For more information see the [this example](c_examples/whfast512_2_planets).
 
