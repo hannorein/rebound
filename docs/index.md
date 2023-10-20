@@ -34,6 +34,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
 * Ari Silburt, Penn State University, <ajs725@psu.edu>
 * Pejvak Javaheri, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
+* Ruth Huang, University of Toronto, <ruth.huang@mail.utoronto.ca>
 * and many others! Check the git history to find out who contributed to the code.
 
 REBOUND is open source and you are invited to contribute to this project! 
