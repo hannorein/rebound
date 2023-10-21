@@ -296,16 +296,15 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         dvy = _mm512_mul_pd(gr_prefac2, dvy); 
         dvz = _mm512_mul_pd(gr_prefac2, dvz); 
     
-        const int shuffle_order = _MM_SHUFFLE(1,0,3,2);
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
-        dvx = _mm512_add_pd(_mm512_shuffle_f64x2(dvx,dvx, shuffle_order), dvx);
+        dvx = _mm512_add_pd(_mm512_shuffle_f64x2(dvx,dvx, 78), dvx);
         dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
         dvy = _mm512_add_pd(_mm512_permutex_pd(dvy, _MM_PERM_ABCD), dvy);
-        dvy = _mm512_add_pd(_mm512_shuffle_f64x2(dvy,dvy, shuffle_order), dvy);
+        dvy = _mm512_add_pd(_mm512_shuffle_f64x2(dvy,dvy, 78), dvy);
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
         dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
-        dvz = _mm512_add_pd(_mm512_shuffle_f64x2(dvz,dvz, shuffle_order), dvz);
+        dvz = _mm512_add_pd(_mm512_shuffle_f64x2(dvz,dvz, 78), dvz);
         
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
@@ -787,7 +786,6 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
     double m0 = r->particles[0].m;
     
     __m512d pf512 = _mm512_set1_pd(_dt/m0);
-    const int shuffle_order = _MM_SHUFFLE(1,0,3,2);
     
     __m512d sumx = _mm512_mul_pd(p_jh->m, p_jh->vx);
     __m512d sumy = _mm512_mul_pd(p_jh->m, p_jh->vy);
@@ -796,15 +794,15 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
     if (ri_whfast512->systems_N == 1){
         sumx = _mm512_add_pd(_mm512_shuffle_pd(sumx, sumx, 0x55), sumx); // Swapping neighbouring elements
         sumx = _mm512_add_pd(_mm512_permutex_pd(sumx, _MM_PERM_ABCD), sumx);
-        sumx = _mm512_add_pd(_mm512_shuffle_f64x2(sumx,sumx, shuffle_order), sumx);
+        sumx = _mm512_add_pd(_mm512_shuffle_f64x2(sumx,sumx, 78), sumx); // 78 is _MM_SHUFFLE(1,0,3,2), changed for icx
 
         sumy = _mm512_add_pd(_mm512_shuffle_pd(sumy, sumy, 0x55), sumy);
         sumy = _mm512_add_pd(_mm512_permutex_pd(sumy, _MM_PERM_ABCD), sumy);
-        sumy = _mm512_add_pd(_mm512_shuffle_f64x2(sumy,sumy, shuffle_order), sumy);
+        sumy = _mm512_add_pd(_mm512_shuffle_f64x2(sumy,sumy, 78), sumy);
 
         sumz = _mm512_add_pd(_mm512_shuffle_pd(sumz, sumz, 0x55), sumz);
         sumz = _mm512_add_pd(_mm512_permutex_pd(sumz, _MM_PERM_ABCD), sumz);
-        sumz = _mm512_add_pd(_mm512_shuffle_f64x2(sumz,sumz, shuffle_order), sumz);
+        sumz = _mm512_add_pd(_mm512_shuffle_f64x2(sumz,sumz, 78), sumz);
     }else if (ri_whfast512->systems_N == 2){
         sumx = _mm512_add_pd(_mm512_shuffle_pd(sumx, sumx, 0x55), sumx); // Swapping neighbouring elements
         sumx = _mm512_add_pd(_mm512_permutex_pd(sumx, _MM_PERM_ABCD), sumx);
