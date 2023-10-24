@@ -110,13 +110,13 @@ int main(int argc, char* argv[]){
     reb_add(r, test);
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-    //e_init = jacobi_dh(r);
+    e_init = jacobi_dh(r);
 
-    //r->heartbeat  = heartbeat;
-    //system("rm -rf energy.txt");
+    r->heartbeat  = heartbeat;
+    system("rm -rf energy.txt");
     //FILE* f = fopen("energy.txt","w");
 
-    reb_integrate(r, 500000. * 11.86 * 2 * M_PI);
+    reb_integrate(r, 50000. * 11.86 * 2 * M_PI);
     //reb_integrate(r, 2.0);
     //printf("Counter: %d\n", ri_bs->counter);
     //reb_steps(r, 20.);
@@ -129,7 +129,7 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-    if (reb_output_check(r, 100. * 2.*M_PI)){
+    if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         FILE* f = fopen("energy.txt","a");
 

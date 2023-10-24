@@ -98,7 +98,7 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
     }
 		if (r->integrator == REB_INTEGRATOR_TRACE){
         struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-				// TODO: RIGHT NOW JUST MERCURIUS
+				// TODO!!!!!
         if (r->ri_tr.mode==0){ //WHFast part
             ri_tr->recalculate_coordinates_this_timestep = 1;
         }else{  // BS part
@@ -345,16 +345,45 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
     }
 
 		if (r->integrator == REB_INTEGRATOR_TRACE){
-				// TODO: RIGHT NOW JUST MERCURIUS
         keepSorted = 1; // Force keepSorted for hybrid integrator
+				struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+				ri_tr->collisions[index] = 1;
+
+				//if (ri_tr->allocatedN<N > 0 && index<(int)rim->dcrit_allocated_N){ //WHY
+				// This is ALWAYS required, to properly integrate subsequent steps. Can probably be improved
+				// Set current current_K cells to 0
+				for (unsigned int i = 0; i<r->N-1;i++){
+					ri_tr->current_Ks[i][index] = 0;
+					ri_tr->current_Ks[index][i] = 0;
+				}
+
+				int iu;
+				int ju;
+				// Now shift. Double check logic!
+				for (unsigned int i=0;i<r->N-1;i++){
+					iu = i;
+					if ((int)i>=index){
+						iu = i+1;
+					}
+					for (unsigned int j=i+1;j<r->N-1;j++){
+						ju = j;
+						if ((int)j>=index){
+							ju = j+1;
+						}
+						ri_tr->current_Ks[i][j] = ri_tr->current_Ks[iu][ju];
+					}
+				}
+
+        //}
         reb_integrator_bs_reset(r);
         if (r->ri_tr.mode==1){
-            struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+						// Only removed mid-timestep if collision - BS Step!
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
             for (int i=0;i<ri_tr->encounterN;i++){
                 if (after_to_be_removed_particle == 1){
                     ri_tr->encounter_map[i-1] = ri_tr->encounter_map[i] - 1;
+										ri_tr->encounter_map_internal[i-1] = ri_tr->encounter_map_internal[i] - 1;
                 }
                 if (ri_tr->encounter_map[i]==index){
                     encounter_index = i;

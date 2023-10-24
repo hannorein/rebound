@@ -214,6 +214,7 @@ struct reb_simulation_integrator_trace {
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
     unsigned int encounterN;        // Number of particles currently having an encounter
     unsigned int encounterNactive;  // Number of active particles currently having an encounter
+
     unsigned int allocatedN;
     unsigned int allocatedN_additionalforces;
 
@@ -225,7 +226,9 @@ struct reb_simulation_integrator_trace {
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
-    int* current_Ks; // TLu tracking K for the entire timestep
+    int** current_Ks; // TLu tracking K for the entire timestep
+    int* collisions; // Tracks particles removed in collisions
+    int** Ks_backup; // Backup of Ks at the beginning of the step, in case of collisions
     unsigned int current_L; // TLu tracking L for the entire timestep
 
     unsigned int print; // for debugging

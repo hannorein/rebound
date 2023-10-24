@@ -362,6 +362,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
 
     reb_integrator_bs_part2(r);
 
+    reb_collision_search(r);
+
     // Now, r->dt is the proposed next step
     r->particles[0].vx = star.vx; // restore every timestep for collisions
     r->particles[0].vy = star.vy;
@@ -384,7 +386,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
         }
       }
     }
-  }
 
   r->t = old_t;
   r->dt = old_dt;
@@ -414,10 +415,16 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         ri_tr->particles_backup       = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*N);
+        ri_tr->current_Ks             = realloc(ri_tr->current_Ks, sizeof(int*)*N); // This is inefficient for now, can be Nactive instead of N
+        ri_tr->Ks_backup              = realloc(ri_tr->Ks_backup, sizeof(int*)*N);
+        for (int k = 0; k < N; ++k) {
+            ri_tr->current_Ks[k]      = realloc(ri_tr->current_Ks[k], sizeof(int)*N);
+            ri_tr->Ks_backup[k]       = realloc(ri_tr->Ks_backup[k], sizeof(int)*N);
+        }
 
-        ri_tr->current_Ks = realloc(ri_tr->current_Ks, sizeof(int)*((N-1)*(N-2))/2);
+        ri_tr->collisions             = realloc(ri_tr->collisions,sizeof(int)*N);
         ri_tr->encounter_map          = realloc(ri_tr->encounter_map,sizeof(int)*N);
-        ri_tr->encounter_map_internal = realloc(ri_tr->encounter_map_internal,sizeof(int)*N);
+        ri_tr->encounter_map_internal = realloc(ri_tr->encounter_map_internal,sizeof(int)*N); // Do we need this now?
 
         // Only need this stuff for Listing 3
         ri_tr->particles_backup_try   = realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*N);
@@ -459,14 +466,15 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     for (unsigned int i=0; i<r->N; i++){
       ri_tr->encounter_map[i] = 0;
       ri_tr->encounter_map_internal[i] = 0;
+      ri_tr->collisions[i] = 0;
     }
     ri_tr->encounter_map_internal[0] = 1;
 }
 
 // Particle-particle collision tracking. Explanation is in my notes.
-int reb_integrator_trace_pindex(unsigned int i, unsigned int j, int N){
-  return (i-1)*N - ((i-1)*(2+i) / 2) + j - i - 1;
-}
+//int reb_integrator_trace_pindex(unsigned int i, unsigned int j, int N){
+//  return (i-1)*N - ((i-1)*(2+i) / 2) + j - i - 1;
+//}
 
 int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
@@ -512,8 +520,8 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
             ri_tr->encounterN++;
         }
         // Checks for switching Kij 0->1. Initialized as all 0 the first time of asking.
-        if (ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] == 0){
-          ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] = 1;
+        if (ri_tr->current_Ks[i][j] == 0){
+          ri_tr->current_Ks[i][j] = 1;
           new_c = 1;
           //if (ri_tr->print){
           //  printf("CE at %f detected between %d %d\n", r->t,i, j);
@@ -562,13 +570,13 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
             ri_tr->encounter_map_internal[j] = j;
             ri_tr->encounterN++;
         }
-        ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] = 1;
+        ri_tr->current_Ks[i][j] = 1;
       }
     }
   }
 }
 
-int reb_integrator_trace_F_check(struct reb_simulation* const r){
+int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   const int N = r->N;
   const int Nactive = r->N_active==-1?r->N:r->N_active;
@@ -579,6 +587,7 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r){
   double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
 
   // Check for L 0 -> 1
+  // Deal with collisions here later
   if (ri_tr->current_L == 0){
     for (int j = 1; j < Nactive; j++){
       double fcond_peri = _switch_peri(r, j);
@@ -592,11 +601,20 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r){
 
 
   // Check for K 0 -> 1
+  int collisions = 0;
   for (int i = 1; i < Nactive; i++){
+    int oldi = i;
     for (int j = i + 1; j < N; j++){
-      if (ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] == 0){
+      int oldj = j;
+      if (ri_tr->collisions[j]){
+        collisions++;
+        old_j += collisions;
+      }
+
+      if (ri_tr->Ks_backup[oldi][oldj] == 0){
         double fcond = _switch(r, i, j);
         if (fcond < 0.0){
+          // Need to fix internal maps...
           if (ri_tr->encounter_map_internal[i] == 0){
               ri_tr->encounter_map_internal[i] = i;
               ri_tr->encounterN++;
@@ -605,7 +623,7 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r){
               ri_tr->encounter_map_internal[j] = j;
               ri_tr->encounterN++;
           }
-          ri_tr->current_Ks[reb_integrator_trace_pindex(i,j,N)] = 1;
+          ri_tr->current_Ks[i][j] = 1;
           reject = 1;
         }
       }
@@ -629,11 +647,17 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     //printf("Initial: %f\n", r->particles[2].vx);
 
-    for (int i = 0; i < (N-1)*(N-2)/2; i++){
-      ri_tr->current_Ks[i] = 0;
+    for (int i = 0; i < N; i++){
+      for (unsigned int j = i + 1; j < N; j++){
+          ri_tr->current_Ks[i][j] = 0;
+      }
     }
 
     reb_integrator_trace_F_start(r); // output means nothing at this step for now
+    // Make copy of current_Ks
+    for (unsigned int i = 0; i < N; i++){
+        memcpy(ri_tr->Ks_backup[i],ri_tr->current_Ks[i],N*sizeof(int));
+    }
 
     if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
       // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -659,7 +683,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     //if (ri_tr->print){
     //  printf("\nREJECTION CHECK\n");
     //}
-    if (reb_integrator_trace_F_check(r)){
+    if (reb_integrator_trace_F_check(r, N)){
       // REJECT STEP
       // reset simulation and try again with new timestep
       for (int i=0; i<N; i++){
@@ -732,8 +756,13 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     free(r->ri_tr.particles_backup_try);
     r->ri_tr.particles_backup_try = NULL;
 
-    free(r->ri_tr.current_Ks);
-    r->ri_tr.current_Ks = NULL;
+    if (r->ri_tr.current_Ks){
+        for (int k = 0; k < r->N; ++k) {
+            r->ri_tr.current_Ks[k] = NULL;
+        }
+        free(r->ri_tr.current_Ks);
+        r->ri_tr.current_Ks = NULL;
+    }
 
     r->ri_tr.current_L = 0;
 
