@@ -1,0 +1,32 @@
+name: reb_trigger_rebx
+on:
+  workflow_dispatch:
+    inputs:
+      trigger_rebx:
+        description: 'Trigger REBOUNDx CI'
+        required: true
+        default: 'trigger_rebx'
+
+      trigger_rebx_github_account:
+        description: 'Dan'
+        required: true
+        default: ':dtamayo'
+
+      trigger_rebx_repo_github:
+        description: 'REBOUNDx'
+        required: true
+        default: ':reboundx'
+
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+
+      steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Test
+        run: |
+          curl -X POST https://api.github.com/repos/:userName/:repoName/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.TRIGGER_REBX_TOKEN }} \
+          --data '{"event_type": "Trigger Workflow", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
+      - uses: actions/checkout@v3
