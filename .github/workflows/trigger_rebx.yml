@@ -1,5 +1,4 @@
 name: Trigger REBOUNDx CI
-
 on:
   workflow_dispatch:
     inputs:
