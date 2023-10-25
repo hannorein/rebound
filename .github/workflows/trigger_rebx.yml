@@ -8,14 +8,14 @@ on:
         default: 'trigger_rebx'
 
       trigger_rebx_github_account:
-        description: 'Dan'
+        description: 'dtamayo'
         required: true
-        default: ':dtamayo'
+        default: ':userName'
 
       trigger_rebx_repo_github:
-        description: 'REBOUNDx'
+        description: 'reboundx'
         required: true
-        default: ':reboundx'
+        default: ':repoName'
 
 jobs:
   build:
