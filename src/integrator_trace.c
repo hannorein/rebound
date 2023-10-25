@@ -549,7 +549,9 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
     double fcond_peri = _switch_peri(r, j);
     if (fcond_peri < 0.0){
       ri_tr->current_L = 1;
-      //break;
+      //if (ri_tr->print){
+      //  printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
+      //}
     }
   }
 
@@ -562,6 +564,10 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
       double fcond = _switch(r, i, j);
 
       if (fcond < 0.0){
+        //if (ri_tr->print){
+        //  printf("Flagged %d %d CE at %f %f\n", i, j, r->t, fcond);
+        //}
+
         if (ri_tr->encounter_map_internal[i] == 0){
             ri_tr->encounter_map_internal[i] = i;
             ri_tr->encounterN++;
@@ -601,17 +607,18 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
 
 
   // Check for K 0 -> 1
+  // Implement collisions here
+
   int collisions = 0;
   for (int i = 1; i < Nactive; i++){
-    int oldi = i;
+    //int oldi = i;
     for (int j = i + 1; j < N; j++){
-      int oldj = j;
-      if (ri_tr->collisions[j]){
-        collisions++;
-        old_j += collisions;
-      }
-
-      if (ri_tr->Ks_backup[oldi][oldj] == 0){
+      //int oldj = j;
+      //if (ri_tr->collisions[j]){
+      //  collisions++;
+      //  oldj += collisions;
+    //  }
+      if (ri_tr->current_Ks[i][j] == 0){
         double fcond = _switch(r, i, j);
         if (fcond < 0.0){
           // Need to fix internal maps...
@@ -636,8 +643,8 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
     const int N = r->N;
-    //if (r->t >= 3141593.0){
-    //  ri_tr->print = 1;
+    //if (r->t >= 6.54e5 * 2. * M_PI){
+      //ri_tr->print = 1;
     //}
     // ri_tr->print = 1;
     // Make copy of particles
