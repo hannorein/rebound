@@ -86,7 +86,6 @@ void reb_step(struct reb_simulation* const r){
         r->pre_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
-        r->ri_tr.recalculate_coordinates_this_timestep = 1;
     }
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
@@ -142,7 +141,6 @@ void reb_step(struct reb_simulation* const r){
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
-        r->ri_tr.recalculate_coordinates_this_timestep = 1;
     }
 
     if (r->N_var){
@@ -644,8 +642,6 @@ void reb_init_simulation(struct reb_simulation* r){
 
     // ********** TRACE
     r->ri_tr.mode = 0;
-    r->ri_tr.recalculate_coordinates_this_timestep = 0;
-    r->ri_tr.is_synchronized = 1;
     r->ri_tr.encounterN = 0;
     r->ri_tr.hillfac = 4;
     r->ri_tr.peri = 1;

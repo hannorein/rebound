@@ -206,10 +206,8 @@ struct reb_simulation_integrator_trace {
     double hillfac;
     double peri; // TLu check for close pericenter passage
     double vfac_p;
-    unsigned int recalculate_coordinates_this_timestep;
 
     // Internal use
-    unsigned int is_synchronized;
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
     unsigned int encounterN;        // Number of particles currently having an encounter
     unsigned int encounterNactive;  // Number of active particles currently having an encounter

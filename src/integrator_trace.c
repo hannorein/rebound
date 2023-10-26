@@ -441,6 +441,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         reb_warning(r,"TRACE has it's own gravity routine. Gravity routine set by the user will be ignored.");
     }
 
+    // Don't need to do this every timestep... fix this later
     reb_integrator_trace_inertial_to_dh(r);
 
     // Switching functions
