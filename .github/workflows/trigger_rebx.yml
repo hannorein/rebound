@@ -28,4 +28,4 @@ jobs:
           curl -L -X POST https://api.github.com/repos/dtamayo/reboundx/actions/workflows/rebound_trigger.yml/dispatches \
           -H 'Accept: application/vnd.github+json' \
           -H 'Authorization: Bearer ${{ secrets.REBX_TRIGGER_TOKEN }}' \
-          -d '{"event_type": "awesomeness", "client_payload": {"foo": "bar"}}'
+          -d '{"ref":"main", "event_type": "awesomeness", "client_payload": {"foo": "bar"}}'
