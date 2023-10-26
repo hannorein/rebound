@@ -25,7 +25,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Test
         run: |
-          curl -L -X POST https://api.github.com/repos/dtamayo/reboundx/actions/workflows/trigger_on_rebound.yml/dispatches \
+          curl -L -X POST https://api.github.com/repos/dtamayo/reboundx/actions/workflows/rebound_trigger.yml/dispatches \
           -H 'Accept: application/vnd.github+json' \
           -H 'Authorization: Bearer ${{ secrets.REBX_TRIGGER_TOKEN }}' \
           -d '{"ref":"main", "inputs":{"name":"test"}}'
