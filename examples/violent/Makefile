@@ -1,4 +1,4 @@
-export OPENGL=1
+export OPENGL=0
 include ../../src/Makefile.defs
 
 all: librebound
