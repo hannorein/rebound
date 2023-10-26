@@ -98,13 +98,15 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
     }
 		if (r->integrator == REB_INTEGRATOR_TRACE){
         struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-				// TODO!!!!!
         if (r->ri_tr.mode==0){ //WHFast part
         }else{  // BS part
             reb_integrator_bs_reset(r);
             if (ri_tr->allocatedN<r->N){
-                ri_tr->particles_backup   = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
-                ri_tr->encounter_map      = realloc(ri_tr->encounter_map,sizeof(int)*r->N);
+                ri_tr->particles_backup     = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
+								ri_tr->particles_backup_try = realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*r->N);
+                ri_tr->encounter_map        = realloc(ri_tr->encounter_map,sizeof(int)*r->N);
+								ri_tr->encounter_map_internal        = realloc(ri_tr->encounter_map_internal,sizeof(int)*r->N);
+								ri_tr->current_Ks        		= realloc(ri_tr->current_Ks,sizeof(int)*r->N);
                 ri_tr->allocatedN = r->N;
             }
             ri_tr->encounter_map[ri_tr->encounterN] = r->N-1;
@@ -346,37 +348,6 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 		if (r->integrator == REB_INTEGRATOR_TRACE){
         keepSorted = 1; // Force keepSorted for hybrid integrator
 				struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-				//ri_tr->collisions[index] = 1;
-
-				//if (ri_tr->allocatedN<N > 0 && index<(int)rim->dcrit_allocated_N){ //WHY
-				// This is ALWAYS required, to properly integrate subsequent steps. Can probably be improved
-				// Set current current_K cells to 0
-				/*
-				for (unsigned int i = 0; i<r->N-1;i++){
-					ri_tr->current_Ks[i][index] = 0;
-					ri_tr->current_Ks[index][i] = 0;
-				}
-
-				int iu;
-				int ju;
-				// Now shift. Double check logic!
-				for (unsigned int i=0;i<r->N-1;i++){
-					iu = i;
-					if ((int)i>=index){
-						iu = i+1;
-					}
-					for (unsigned int j=i+1;j<r->N-1;j++){
-						ju = j;
-						if ((int)j>=index){
-							ju = j+1;
-						}
-						ri_tr->current_Ks[i][j] = ri_tr->current_Ks[iu][ju];
-					}
-				}
-				*/
-
-
-        //}
         reb_integrator_bs_reset(r);
         if (r->ri_tr.mode==1){
 						// Only removed mid-timestep if collision - BS Step!
