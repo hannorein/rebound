@@ -15,32 +15,14 @@ void heartbeat(struct reb_simulation* r);
 double e_init; // initial energy
 double err;
 double emax = 0.0;
-
-double amax = 1e4;
-
-// Values from Issue 544
-double as[10] = {0.4805534574239261,
-  0.7337708461939174,
-  2.9472592774364457,
-  0.33135308945198694,
-  4.344916055712149,
-  3.7665109455686245,
-  7.077599283999203,
-  2.002750283874912,
-  0.6411739552952435,
-  0.6527258031474394};
-
-double fs[10] = {3.141592653589793, 2.940157490939905, 1.5707963267948966, 1.5707963267948966, 2.9083687607633983,
-  6.23982548472831, 0.15988105992264678, 0.12859413226990846, 6.2831853071795845, 6.104371966391728};
-
-double Omegas[10] = {0.0, 3.1129104598773245, -1.3274903358954842, -1.0319182859768408, 0.01323272347183684, 1.4373554275242735,
-  0.1922025319432963, -0.38233708635963903, 2.6522366656182905, 2.751328894621499};
+double amax = 1.5e4;//1e4;
 
 int nbodies = 3;
 double tmax = 1000.*2*M_PI;
 
-char title[100] = "time";
-char title_remove[100] = "rm -rf ly_test_";
+char title[100] = "chaotic_trace_";
+char title_final[100] = "chaotic_trace_finals";
+char title_remove[100] = "rm -rf chaotic_trace_";
 
 int main(int argc, char* argv[]){
 
@@ -136,23 +118,24 @@ int main(int argc, char* argv[]){
     //reb_add_fmt(r, "m a e inc", planet_m, -742.792028, 5.0, 0.13263699999999998);
 */
     double sma = 5.;
-    double delta= 1.0;
+    double delta= 2.5;
 
     int index = 0;
     if (argc == 2){
-      //strcat(title, argv[1]);
-      //strcat(title_remove, argv[1]);
+      strcat(title, argv[1]);
+      strcat(title_remove, argv[1]);
       index = atoi(argv[1]);
     }
 
     r->rand_seed = index;
 
     for (int i = 0; i < nbodies; i++){
-      double a_rand = 0.;//reb_random_uniform(r, -1e-10, 1e-10);
-      double e_rand = 0.;//reb_random_uniform(r, -1e-10, 1e-10);
-      double Om_rand = reb_random_uniform(r, 0, 2 * M_PI);
-      double f_rand = reb_random_uniform(r, 0, 2 * M_PI);
-      reb_add_fmt(r, "m a e inc Omega f", planet_m, sma + 1e-12, 0.05, (double)i * M_PI / 180., Om_rand, f_rand);
+      double Om_rand = 0.0;//reb_random_uniform(r, 0, 2 * M_PI);
+      double f_rand = 0.0;//reb_random_uniform(r, 0, 2 * M_PI);
+      if (i == 2){
+        sma += reb_random_uniform(r, -1e-12, 1e-12);
+      }
+      reb_add_fmt(r, "m a e inc Omega f", planet_m, sma, 0.05, (double)i * M_PI / 180., Om_rand, f_rand);
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
 
@@ -164,6 +147,7 @@ int main(int argc, char* argv[]){
 
     for (int i = 1; i < nbodies+1; i++){
       struct reb_particle* p = &r->particles[i];
+      p->hash = i;
       struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
       if (abs(o.P) < min){
         min = o.P;
@@ -171,10 +155,11 @@ int main(int argc, char* argv[]){
       //printf("%d %f %f\n", i, p->x, p->y);
     }
 
+    //struct reb_particle* sun = &r->particles[0];
     //r->integrator = REB_INTEGRATOR_WHFAST;
     r->integrator = REB_INTEGRATOR_TRACE;
     //r->ri_whfast.coordinates = 1;
-    r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
+    r->dt = 7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->ri_tr.hillfac = 4.;
     //r->ri_tr.peri = 2.;
@@ -188,7 +173,7 @@ int main(int argc, char* argv[]){
 
     //r->integrator = REB_INTEGRATOR_BS;
     r->visualization = REB_VISUALIZATION_NONE;
-    // r->heartbeat  = heartbeat;
+    r->heartbeat  = heartbeat;
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
@@ -197,27 +182,37 @@ int main(int argc, char* argv[]){
       FILE* f = fopen(title, "w");
       //FILE* f = fopen("test.txt", "w");
       //fprintf(f, "# Seed: %d\n", index);
-      fprintf(f, "t,E,sx,sy,sz");
+      fprintf(f, "t,E");
       for (int i = 1; i < nbodies+1; i++){
         //fprintf(f, ",a%d,x%d,y%d,z%d,vx%d,vy%d,vz%d",i,i,i,i,i,i,i);
-        fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
-        //fprintf(f, ",a%d",i);
+        //fprintf(f, ",hash%d,a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i,i);
+        fprintf(f, ",hash%d,d%d,ej%d",i,i,i);
       }
 
       fprintf(f, "\n");
       fclose(f);
     }
 
-    tmax =1e6 * 2 * M_PI;//1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
+    tmax = 1e7 * 2 * M_PI;//1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
     e_init = reb_tools_energy(r);
-    clock_t begin = clock();
+    //clock_t begin = clock();
     reb_integrate(r, tmax);
-    clock_t end = clock();
 
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-    FILE* f = fopen(title, "a");
-    fprintf(f, "%f\n", time_spent);
-    fclose(f);
+    FILE* tf = fopen(title_final, "a");
+    for (int i = 1; i < r->N; i++){
+      struct reb_particle* p = &r->particles[i];
+      struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
+      fprintf(tf, ",%u,%e,%e,%e", p->hash, o.a, o.e, o.inc);
+      //fprintf(f, ",%e", o.a);
+    }
+    fprintf(tf, "\n");
+    fclose(tf);
+    // clock_t end = clock();
+
+    // double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    //FILE* f = fopen(title, "a");
+    //fprintf(f, "%f\n", time_spent);
+    //fclose(f);
     //printf("%f\n", time_spent);
 
     //for (int i = 0; i < r->N; i++){
@@ -237,39 +232,46 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, tmax);
     //}
+    FILE* f = fopen(title, "a");
+    fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
     struct reb_particle* sun = &r->particles[0];
     for (unsigned int i = 1; i < r->N; i++){
+      unsigned int ej = 0;
       struct reb_particle* p = &r->particles[i];
-      //double dx = p->x - sun->x;
-      //double dy = p->y - sun->y;
-      //double dz = p->z - sun->z;
-      //double d = sqrt(dx*dx + dy*dy + dz*dz);
-      struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-      if (o.a < 0){//(d > amax){
-        printf("Ejection\n");
+      double dx = p->x - sun->x;
+      double dy = p->y - sun->y;
+      double dz = p->z - sun->z;
+      double d = sqrt(dx*dx + dy*dy + dz*dz);
+      //struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
+      fprintf(f, ",%u,%f", p->hash, d);
+      if (d > amax){
+        //printf("Ejection %u\n", i);
         reb_remove(r, i, 1);
         e_init = reb_tools_energy(r);
+        ej = 1;
       }
+      //printf("Here\n");
+      fprintf(f, ",%u", ej);
     }
+    fprintf(f, "\n");
+    fclose(f);
     //if (reb_output_check(r, 1. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         //FILE* f = fopen(title, "a");
-        FILE* f = fopen(title, "a");
-        fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
         //fprintf(f, "%f", r->t);
         //struct reb_particle* sun = &r->particles[0];
 
-        fprintf(f, ",%e,%e,%e",sun->x,sun->y,sun->z);
-
+        // fprintf(f, ",%e,%e,%e",sun->x,sun->y,sun->z);
+/*
         for (int i = 1; i < r->N; i++){
           struct reb_particle* p = &r->particles[i];
           struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-          fprintf(f, ",%f,%f,%f,%f,%f,%f", o.a, o.e, o.inc,p->x,p->y,p->z);
+          //fprintf(f, ",%u,%f,%f,%f,%f,%f,%f", p->hash, o.a, o.e, o.inc,p->x,p->y,p->z);
           //printf("%f %f %f\n", o.a, o.e, o.inc);
-          //fprintf(f, ",%f,%e,%e,%e,%e,%e,%e", o.a, p->x,p->y,p->z, p->vx, p->vy, p->vz);
+          fprintf(f, ",%f,%e,%e,%e,%e,%e,%e", o.a, p->x,p->y,p->z, p->vx, p->vy, p->vz);
           //fprintf(f, ",%e", o.a);
         }
-
+*/
 
 /*
         struct reb_particle* p1 = &r->particles[1];
@@ -286,7 +288,7 @@ void heartbeat(struct reb_simulation* r){
 
         fprintf(f, "%e,%e,%e,%e", r->t, reb_tools_energy(r), dij, dvij);
 */
-        fprintf(f, "\n");
-        fclose(f);
+        //fprintf(f, "\n");
+        //fclose(f);
   //  }
 }

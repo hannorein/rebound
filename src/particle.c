@@ -347,11 +347,12 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 		if (r->integrator == REB_INTEGRATOR_TRACE){
         keepSorted = 1; // Force keepSorted for hybrid integrator
 				struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-				ri_tr->collisions[index] = 1;
+				//ri_tr->collisions[index] = 1;
 
 				//if (ri_tr->allocatedN<N > 0 && index<(int)rim->dcrit_allocated_N){ //WHY
 				// This is ALWAYS required, to properly integrate subsequent steps. Can probably be improved
 				// Set current current_K cells to 0
+				/*
 				for (unsigned int i = 0; i<r->N-1;i++){
 					ri_tr->current_Ks[i][index] = 0;
 					ri_tr->current_Ks[index][i] = 0;
@@ -373,6 +374,8 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 						ri_tr->current_Ks[i][j] = ri_tr->current_Ks[iu][ju];
 					}
 				}
+				*/
+
 
         //}
         reb_integrator_bs_reset(r);
