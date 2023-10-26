@@ -27,6 +27,6 @@ jobs:
         run: |
           curl -X POST https://api.github.com/repos/dtamayo/reboundx/actions/workflows/trigger_on_rebound.yml/dispatches \
           -H 'Accept: application/vnd.github+json' \
-          -H 'Authorization: Bearer REBX_TRIGGER_TOKEN' \
+          -H 'Authorization: Bearer ${{ secrets.REBX_TRIGGER_TOKEN }}' \
           --data '{"event_type": "Trigger Workflow", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
       - uses: actions/checkout@v3
