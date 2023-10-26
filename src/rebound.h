@@ -207,7 +207,6 @@ struct reb_simulation_integrator_trace {
     double peri; // TLu check for close pericenter passage
     double vfac_p;
     unsigned int recalculate_coordinates_this_timestep;
-    unsigned int safe_mode;
 
     // Internal use
     unsigned int is_synchronized;

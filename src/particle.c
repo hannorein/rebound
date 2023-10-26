@@ -100,7 +100,6 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
         struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
 				// TODO!!!!!
         if (r->ri_tr.mode==0){ //WHFast part
-            ri_tr->recalculate_coordinates_this_timestep = 1;
         }else{  // BS part
             reb_integrator_bs_reset(r);
             if (ri_tr->allocatedN<r->N){

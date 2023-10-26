@@ -428,16 +428,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
         // Only need this stuff for Listing 3
         ri_tr->particles_backup_try   = realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*N);
-        ri_tr->recalculate_coordinates_this_timestep = 1;
         ri_tr->allocatedN = N;
-    }
-    if (ri_tr->recalculate_coordinates_this_timestep){
-        if (ri_tr->is_synchronized==0){
-            reb_integrator_trace_synchronize(r);
-            reb_warning(r,"TRACE: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
-        }
-        reb_integrator_trace_inertial_to_dh(r);
-        ri_tr->recalculate_coordinates_this_timestep = 0;
     }
 
     // Calculate collisions only with DIRECT method
@@ -449,6 +440,8 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
         reb_warning(r,"TRACE has it's own gravity routine. Gravity routine set by the user will be ignored.");
     }
+
+    reb_integrator_trace_inertial_to_dh(r);
 
     // Switching functions
     if (ri_tr->S == NULL){
@@ -718,26 +711,14 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       reb_integrator_trace_interaction_step(r, r->dt/2.);
     }
 
-    ri_tr->is_synchronized = 0;
-    reb_integrator_trace_synchronize(r);
-
     r->t+=r->dt;
     r->dt_last_done = r->dt;
+    ri_tr->mode = 0;
+    r->gravity = REB_GRAVITY_TRACE; // Is this needed?
+    reb_integrator_trace_dh_to_inertial(r);
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
-    struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-    if (ri_tr->is_synchronized == 0){
-        //printf("synchronizing\n");
-        r->gravity = REB_GRAVITY_TRACE; // needed here again for SimulationArchive
-
-        ri_tr->mode=0;
-        //reb_integrator_trace_jump_step(r,r->dt/2.);
-        reb_integrator_trace_dh_to_inertial(r);
-
-        ri_tr->recalculate_coordinates_this_timestep = 1;
-        ri_tr->is_synchronized = 1;
-    }
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){
@@ -748,7 +729,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_tr.vfac_p = 32.;
 
     //r->ri_tr.peri = 0.; // TLu changed to Hernandez (2023)
-    r->ri_tr.recalculate_coordinates_this_timestep = 0;
     // Internal arrays (only used within one timestep)
     free(r->ri_tr.particles_backup);
     r->ri_tr.particles_backup = NULL;
