@@ -1,21 +1,6 @@
 name: Trigger REBOUNDx CI
 on:
   workflow_dispatch:
-    inputs:
-      trigger_rebx:
-        description: 'Trigger REBOUNDx CI'
-        required: true
-        default: 'trigger_rebx'
-
-      trigger_rebx_github_account:
-        description: 'dtamayo'
-        required: true
-        default: ':userName'
-
-      trigger_rebx_repo_github:
-        description: 'reboundx'
-        required: true
-        default: ':repoName'
 
 jobs:
   build:
@@ -28,4 +13,4 @@ jobs:
           curl -L -X POST https://api.github.com/repos/dtamayo/reboundx/dispatches \
           -H 'Accept: application/vnd.github+json' \
           -H 'Authorization: Bearer ${{ secrets.REBX_TRIGGER_TOKEN }}' \
-          -d '{"event_type": "trigger_rebx", "client_payload": {"foo": "bar"}}'
+          -d '{"event_type": "trigger_rebx", "client_payload": {"ref": "$GITHUB_SHA$"}}'
