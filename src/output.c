@@ -177,7 +177,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 165, REB_DOUBLE,      "ri_tr.hillfac",                offsetof(struct reb_simulation, ri_tr.hillfac), 0, 0},
     { 166, REB_DOUBLE,      "ri_tr.peri",                   offsetof(struct reb_simulation, ri_tr.peri), 0, 0},
     { 167, REB_DOUBLE,      "ri_tr.vfac_p",                 offsetof(struct reb_simulation, ri_tr.vfac_p), 0, 0},
-    { 168, REB_UINT,        "ri_tr.safe_mode",              offsetof(struct reb_simulation, ri_tr.safe_mode), 0, 0},
     { 169, REB_UINT,        "ri_tr.is_synchronized",        offsetof(struct reb_simulation, ri_tr.is_synchronized), 0, 0},
     { 170, REB_UINT,        "ri_tr.recalculate_coordinates_this_timestep", offsetof(struct reb_simulation, ri_tr.recalculate_coordinates_this_timestep), 0, 0},
     //{ 171, REB_POINTER,     "ri_tr.current_Ks",             offsetof(struct reb_simulation, ri_tr.current_Ks), offsetof(struct reb_simulation, ri_tr.dcrit_allocated_N), sizeof(double)},

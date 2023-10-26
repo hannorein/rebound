@@ -431,7 +431,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_tr->recalculate_coordinates_this_timestep = 1;
         ri_tr->allocatedN = N;
     }
-    if (ri_tr->safe_mode || ri_tr->recalculate_coordinates_this_timestep){
+    if (ri_tr->recalculate_coordinates_this_timestep){
         if (ri_tr->is_synchronized==0){
             reb_integrator_trace_synchronize(r);
             reb_warning(r,"TRACE: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
@@ -719,9 +719,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     }
 
     ri_tr->is_synchronized = 0;
-    if (ri_tr->safe_mode){
-        reb_integrator_trace_synchronize(r);
-    }
+    reb_integrator_trace_synchronize(r);
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;

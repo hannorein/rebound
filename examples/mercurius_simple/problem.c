@@ -116,7 +116,7 @@ int main(int argc, char* argv[]){
     system("rm -rf energy.txt");
     //FILE* f = fopen("energy.txt","w");
 
-    reb_integrate(r, 50000. * 11.86 * 2 * M_PI);
+    reb_integrate(r, 5000. * 11.86 * 2 * M_PI);
     //reb_integrate(r, 2.0);
     //printf("Counter: %d\n", ri_bs->counter);
     //reb_steps(r, 20.);

@@ -63,7 +63,7 @@ void usleep(__int64 usec);
 #endif // _WIN32
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
-const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
+const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string.
 const char* reb_version_str = "3.28.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
@@ -626,8 +626,8 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_ias15.epsilon         = 1e-9;
     r->ri_ias15.min_dt      = 0;
     r->ri_ias15.adaptive_mode = 1; // default is old mode for now
-    r->ri_ias15.iterations_max_exceeded = 0;    
-    
+    r->ri_ias15.iterations_max_exceeded = 0;
+
     // ********** SEI
     r->ri_sei.OMEGA     = 1;
     r->ri_sei.OMEGAZ    = -1;
@@ -644,12 +644,12 @@ void reb_init_simulation(struct reb_simulation* r){
 
     // ********** TRACE
     r->ri_tr.mode = 0;
-    r->ri_tr.safe_mode = 1;
     r->ri_tr.recalculate_coordinates_this_timestep = 0;
     r->ri_tr.is_synchronized = 1;
     r->ri_tr.encounterN = 0;
     r->ri_tr.hillfac = 4;
     r->ri_tr.peri = 1;
+    r->ri_tr.vfac_p = 32.;
 
     // ********** EOS
     r->ri_eos.n = 2;
@@ -681,8 +681,8 @@ void reb_init_simulation(struct reb_simulation* r){
     r->tree_essential_send_N = 0;
     r->tree_essential_send_Nmax = 0;
     r->tree_essential_recv = NULL;
-    r->tree_essential_recv_N = 0;             
-    r->tree_essential_recv_Nmax = 0;          
+    r->tree_essential_recv_N = 0;
+    r->tree_essential_recv_Nmax = 0;
 #endif // MPI
 #ifdef OPENMP
     printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
@@ -923,7 +923,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
 }
 
 int reb_check_fp_contract(){
-    // Checks if floating point contractions are on. 
+    // Checks if floating point contractions are on.
     // If so, this will prevent unit tests from passing
     // and bit-wise reproducibility will fail.
     double a = 1.2382309285234567;
@@ -1060,7 +1060,7 @@ FILE *fmemopen(void *buf, size_t len, const char *type) {
 }
 
 #endif // _WIN32
-  
+
 #ifdef OPENMP
 void reb_omp_set_num_threads(int num_threads){
     omp_set_num_threads(num_threads);
