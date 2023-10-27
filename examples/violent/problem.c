@@ -20,9 +20,9 @@ double amax = 1.5e4;//1e4;
 int nbodies = 3;
 double tmax = 1000.*2*M_PI;
 
-char title[100] = "chaotic_trace_";
-char title_final[100] = "chaotic_trace_finals";
-char title_remove[100] = "rm -rf chaotic_trace_";
+char title[100] = "chaotic_ias15_";
+char title_final[100] = "chaotic_ias15_finals";
+char title_remove[100] = "rm -rf chaotic_ias15_";
 
 int main(int argc, char* argv[]){
 
@@ -157,13 +157,14 @@ int main(int argc, char* argv[]){
 
     //struct reb_particle* sun = &r->particles[0];
     //r->integrator = REB_INTEGRATOR_WHFAST;
-    r->integrator = REB_INTEGRATOR_TRACE;
+    r->integrator = REB_INTEGRATOR_IAS15;
+    r->ri_ias15.adaptive_mode = 2;
     //r->ri_whfast.coordinates = 1;
-    r->dt = min * 0.05; //7.108147e-01;//min * 0.010123456;//0.059331635924546614;
-    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
-    r->ri_tr.hillfac = 4.;
+    //r->dt = min * 0.05; //7.108147e-01;//min * 0.010123456;//0.059331635924546614;
+    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    //r->ri_tr.hillfac = 4.;
     //r->ri_tr.peri = 2.;
-    r->ri_tr.vfac_p = 32.0;
+    //r->ri_tr.vfac_p = 32.0;
 
 /*
     r->integrator = REB_INTEGRATOR_MERCURIUS;
@@ -193,7 +194,7 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax = 1e2 * 2 * M_PI;//1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
+    tmax = 1e7 * 2 * M_PI;//1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
     e_init = reb_tools_energy(r);
     //clock_t begin = clock();
     reb_integrate(r, tmax);
