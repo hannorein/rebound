@@ -9,10 +9,6 @@ jobs:
     steps:
       - name: Trigger REBOUNDx CI
         uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.REBX_TRIGGER_TOKEN }}
-          repository: dtamayo/reboundx
-          client-payload: '{"ref": "'"$GITHUB_SHA"'"}'
 
           #run: |
           #echo $GITHUB_SHA
