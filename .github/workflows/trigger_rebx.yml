@@ -14,4 +14,4 @@ jobs:
           curl -L -X POST https://api.github.com/repos/dtamayo/reboundx/dispatches \
           -H 'Accept: application/vnd.github+json' \
           -H 'Authorization: Bearer ${{ secrets.REBX_TRIGGER_TOKEN }}' \
-          -d '{"event_type": "trigger_rebx", "client_payload": {"ref": "$GITHUB_SHA$"}}'
+          -d '{"event_type": "trigger_rebx", "client_payload": {"ref": "'"$GITHUB_SHA"'" }}'
