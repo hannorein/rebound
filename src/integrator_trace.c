@@ -335,6 +335,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
           i_enc++;
           if (r->N_active==-1 || i<r->N_active){
               ri_tr->encounterNactive++;
+              if (ri_tr->tponly_encounter){
+                    ri_tr->particles_backup_try[i] = tmp;         // Make copy of particles after the kepler step.
+                                                            // used to restore the massive objects' states in the case
+                                                            // of only massless test-particle encounters
+                }
           }
       }
   }
@@ -386,6 +391,15 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
         }
       }
     }
+
+  // if only test particles encountered massive bodies, reset the
+  // massive body coordinates to their post Kepler step state
+  if(ri_tr->tponly_encounter){
+      for (unsigned int i=1; i < ri_tr->encounterNactive; i++){
+          unsigned int mi = ri_tr->encounter_map[i];
+          r->particles[mi] = ri_tr->particles_backup_try[mi];
+      }
+  }
 
   r->t = old_t;
   r->dt = old_dt;
@@ -462,74 +476,16 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     ri_tr->encounter_map_internal[0] = 1;
 }
 
-// Particle-particle collision tracking. Explanation is in my notes.
-//int reb_integrator_trace_pindex(unsigned int i, unsigned int j, int N){
-//  return (i-1)*N - ((i-1)*(2+i) / 2) + j - i - 1;
-//}
-
-int reb_integrator_trace_Fcond(struct reb_simulation* const r){
-  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
-  const int N = r->N;
-  const int Nactive = r->N_active==-1?r->N:r->N_active;
-  //int print = ri_tr->print;
-
-  // Switching functions
-  double (*_switch) (const struct reb_simulation* const r, unsigned int i, unsigned int j) = r->ri_tr.S;
-  double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
-
-  int new_c = 0; // New CEs
-
-  // Check for pericenter CE
-  // test particles cannot have pericenter CEs
-
-  for (int j = 1; j < Nactive; j++){
-    double fcond_peri = _switch_peri(r, j);
-    if (fcond_peri < 0.0 && ri_tr->current_L == 0){
-      ri_tr->current_L = 1;
-      new_c = 1;
-      //if (ri_tr->print){
-      //printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
-      //}
-    }
-  }
-
-
-  // Body-body
-  // there cannot be TP-TP CEs
-  for (int i = 1; i < Nactive; i++){
-    for (int j = i + 1; j < N; j++){
-      //printf("%d %d\n", i, j);
-
-      double fcond = _switch(r, i, j);
-
-      if (fcond < 0.0){
-        if (ri_tr->encounter_map_internal[i] == 0){
-            ri_tr->encounter_map_internal[i] = i;
-            ri_tr->encounterN++;
-        }
-        if (ri_tr->encounter_map_internal[j] == 0){
-            ri_tr->encounter_map_internal[j] = j;
-            ri_tr->encounterN++;
-        }
-        // Checks for switching Kij 0->1. Initialized as all 0 the first time of asking.
-        if (ri_tr->current_Ks[i][j] == 0){
-          ri_tr->current_Ks[i][j] = 1;
-          new_c = 1;
-          //if (ri_tr->print){
-            //printf("CE at %f detected between %d %d\n", r->t,i, j);
-          //}
-        }
-      }
-    }
-  }
-
-  return new_c;
-}
-
 void reb_integrator_trace_F_start(struct reb_simulation* const r){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   const int N = r->N;
   const int Nactive = r->N_active==-1?r->N:r->N_active;
+
+  if (r->testparticle_type == 1){
+        ri_tr->tponly_encounter = 0; // testparticles affect massive particles
+  }else{
+        ri_tr->tponly_encounter = 1;
+  }
 
   // Switching functions
   double (*_switch) (const struct reb_simulation* const r, unsigned int i, unsigned int j) = r->ri_tr.S;
@@ -546,7 +502,6 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
       //}
     }
   }
-
 
   // Body-body
   // there cannot be TP-TP CEs
@@ -568,6 +523,11 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
             ri_tr->encounter_map_internal[j] = j;
             ri_tr->encounterN++;
         }
+
+        if (j < Nactive){ // Two massive particles have a close encounter
+            ri_tr->tponly_encounter = 0;
+        }
+
         ri_tr->current_Ks[i][j] = 1;
       }
     }
@@ -612,6 +572,9 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
           if (ri_tr->encounter_map_internal[j] == 0){
               ri_tr->encounter_map_internal[j] = j;
               ri_tr->encounterN++;
+          }
+          if (j < Nactive){ // Two massive particles have a close encounter
+              ri_tr->tponly_encounter = 0;
           }
           ri_tr->current_Ks[i][j] = 1;
           reject = 1;
@@ -658,7 +621,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     reb_integrator_trace_interaction_step(r, r->dt/2.);
     reb_integrator_trace_jump_step(r, r->dt/2.);
-    //printf("Before Kepler: %f\n", r->particles[2].vx);
     reb_integrator_trace_kepler_step(r, r->dt); // always accept this
     reb_integrator_trace_com_step(r,r->dt);
     reb_integrator_trace_jump_step(r, r->dt/2.);

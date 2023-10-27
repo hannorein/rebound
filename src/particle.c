@@ -102,11 +102,11 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
         }else{  // BS part
             reb_integrator_bs_reset(r);
             if (ri_tr->allocatedN<r->N){
-                ri_tr->particles_backup     = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
-								ri_tr->particles_backup_try = realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*r->N);
-                ri_tr->encounter_map        = realloc(ri_tr->encounter_map,sizeof(int)*r->N);
-								ri_tr->encounter_map_internal        = realloc(ri_tr->encounter_map_internal,sizeof(int)*r->N);
-								ri_tr->current_Ks        		= realloc(ri_tr->current_Ks,sizeof(int)*r->N);
+                ri_tr->particles_backup     				= realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
+								ri_tr->particles_backup_try 				= realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*r->N);
+                ri_tr->encounter_map        				= realloc(ri_tr->encounter_map,sizeof(int)*r->N);
+								ri_tr->encounter_map_internal       = realloc(ri_tr->encounter_map_internal,sizeof(int)*r->N);
+								ri_tr->current_Ks        						= realloc(ri_tr->current_Ks,sizeof(int)*r->N);
                 ri_tr->allocatedN = r->N;
             }
             ri_tr->encounter_map[ri_tr->encounterN] = r->N-1;

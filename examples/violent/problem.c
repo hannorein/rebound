@@ -20,9 +20,9 @@ double amax = 1.5e4;//1e4;
 int nbodies = 3;
 double tmax = 1000.*2*M_PI;
 
-char title[100] = "chaotic_ias15_";
-char title_final[100] = "chaotic_ias15_finals";
-char title_remove[100] = "rm -rf chaotic_ias15_";
+char title[100] = "chaotic_mercurius_";
+char title_final[100] = "chaotic_mercurius_finals";
+char title_remove[100] = "rm -rf chaotic_mercurius_";
 
 int main(int argc, char* argv[]){
 
@@ -157,12 +157,12 @@ int main(int argc, char* argv[]){
 
     //struct reb_particle* sun = &r->particles[0];
     //r->integrator = REB_INTEGRATOR_WHFAST;
-    r->integrator = REB_INTEGRATOR_IAS15;
-    r->ri_ias15.adaptive_mode = 2;
+    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    //r->ri_ias15.adaptive_mode = 2;
     //r->ri_whfast.coordinates = 1;
-    //r->dt = min * 0.05; //7.108147e-01;//min * 0.010123456;//0.059331635924546614;
+    r->dt = min * 0.05; //7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
-    //r->ri_tr.hillfac = 4.;
+    r->ri_mercurius.hillfac = 4.;
     //r->ri_tr.peri = 2.;
     //r->ri_tr.vfac_p = 32.0;
 

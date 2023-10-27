@@ -214,6 +214,7 @@ struct reb_simulation_integrator_trace {
 
     unsigned int allocatedN;
     unsigned int allocatedN_additionalforces;
+    unsigned int tponly_encounter;
 
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
     struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
