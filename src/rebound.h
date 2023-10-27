@@ -224,8 +224,6 @@ struct reb_simulation_integrator_trace {
     struct reb_vec3d com_vel;
 
     int** current_Ks; // TLu tracking K for the entire timestep
-    int* collisions; // Tracks particles removed in collisions
-    int** Ks_backup; // Backup of Ks at the beginning of the step, in case of collisions
     unsigned int current_L; // TLu tracking L for the entire timestep
 
     unsigned int print; // for debugging

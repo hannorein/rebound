@@ -159,7 +159,7 @@ int main(int argc, char* argv[]){
     //r->integrator = REB_INTEGRATOR_WHFAST;
     r->integrator = REB_INTEGRATOR_TRACE;
     //r->ri_whfast.coordinates = 1;
-    r->dt = 7.108147e-01;//min * 0.010123456;//0.059331635924546614;
+    r->dt = min * 0.05; //7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->ri_tr.hillfac = 4.;
     //r->ri_tr.peri = 2.;
@@ -193,12 +193,13 @@ int main(int argc, char* argv[]){
       fclose(f);
     }
 
-    tmax = 1e7 * 2 * M_PI;//1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
+    tmax = 1e2 * 2 * M_PI;//1e6*2*M_PI;//2e6*2*M_PI; //min * 100000;
     e_init = reb_tools_energy(r);
     //clock_t begin = clock();
     reb_integrate(r, tmax);
 
     FILE* tf = fopen(title_final, "a");
+    fprintf(tf, "%d", index);
     for (int i = 1; i < r->N; i++){
       struct reb_particle* p = &r->particles[i];
       struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
@@ -232,29 +233,31 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, tmax);
     //}
-    FILE* f = fopen(title, "a");
-    fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
-    struct reb_particle* sun = &r->particles[0];
-    for (unsigned int i = 1; i < r->N; i++){
-      unsigned int ej = 0;
-      struct reb_particle* p = &r->particles[i];
-      double dx = p->x - sun->x;
-      double dy = p->y - sun->y;
-      double dz = p->z - sun->z;
-      double d = sqrt(dx*dx + dy*dy + dz*dz);
-      //struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-      fprintf(f, ",%u,%f", p->hash, d);
-      if (d > amax){
-        //printf("Ejection %u\n", i);
-        reb_remove(r, i, 1);
-        e_init = reb_tools_energy(r);
-        ej = 1;
+    if (reb_output_check(r, 1. * 2.*M_PI)){
+      FILE* f = fopen(title, "a");
+      fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
+      struct reb_particle* sun = &r->particles[0];
+      for (unsigned int i = 1; i < r->N; i++){
+        unsigned int ej = 0;
+        struct reb_particle* p = &r->particles[i];
+        double dx = p->x - sun->x;
+        double dy = p->y - sun->y;
+        double dz = p->z - sun->z;
+        double d = sqrt(dx*dx + dy*dy + dz*dz);
+        //struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
+        fprintf(f, ",%u,%f", p->hash, d);
+        if (d > amax){
+          //printf("Ejection %u\n", i);
+          reb_remove(r, i, 1);
+          e_init = reb_tools_energy(r);
+          ej = 1;
+        }
+        //printf("Here\n");
+        fprintf(f, ",%u", ej);
       }
-      //printf("Here\n");
-      fprintf(f, ",%u", ej);
+      fprintf(f, "\n");
+      fclose(f);
     }
-    fprintf(f, "\n");
-    fclose(f);
     //if (reb_output_check(r, 1. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         //FILE* f = fopen(title, "a");

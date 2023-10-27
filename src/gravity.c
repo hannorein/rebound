@@ -886,6 +886,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                               for (int i=2; i<encounterNactive; i++){
                                   int mi = map[i];
                                   for (int j=1; j<i; j++){
+                                    //printf("%d %d\n", i, j);
                                       int mj = map[j];
                                       int current_K = r->ri_tr.current_Ks[mj][mi];
                                       if (current_K){ // Only need to calculate if CE

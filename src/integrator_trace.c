@@ -404,6 +404,7 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_part1(struct reb_simulation* r){
+   //printf("TRACE part 1\n");
     if (r->var_config_N){
         reb_warning(r,"TRACE does not work with variational equations.");
     }
@@ -416,13 +417,10 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         // Can be recreated without loosing bit-wise reproducibility.
         ri_tr->particles_backup       = realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*N);
         ri_tr->current_Ks             = realloc(ri_tr->current_Ks, sizeof(int*)*N); // This is inefficient for now, can be Nactive instead of N
-        ri_tr->Ks_backup              = realloc(ri_tr->Ks_backup, sizeof(int*)*N);
         for (int k = 0; k < N; ++k) {
             ri_tr->current_Ks[k]      = realloc(ri_tr->current_Ks[k], sizeof(int)*N);
-            ri_tr->Ks_backup[k]       = realloc(ri_tr->Ks_backup[k], sizeof(int)*N);
         }
 
-        ri_tr->collisions             = realloc(ri_tr->collisions,sizeof(int)*N);
         ri_tr->encounter_map          = realloc(ri_tr->encounter_map,sizeof(int)*N);
         ri_tr->encounter_map_internal = realloc(ri_tr->encounter_map_internal,sizeof(int)*N); // Do we need this now?
 
@@ -460,7 +458,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     for (unsigned int i=0; i<r->N; i++){
       ri_tr->encounter_map[i] = 0;
       ri_tr->encounter_map_internal[i] = 0;
-      ri_tr->collisions[i] = 0;
     }
     ri_tr->encounter_map_internal[0] = 1;
 }
@@ -501,6 +498,7 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
   // there cannot be TP-TP CEs
   for (int i = 1; i < Nactive; i++){
     for (int j = i + 1; j < N; j++){
+      //printf("%d %d\n", i, j);
 
       double fcond = _switch(r, i, j);
 
@@ -518,7 +516,7 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
           ri_tr->current_Ks[i][j] = 1;
           new_c = 1;
           //if (ri_tr->print){
-          //  printf("CE at %f detected between %d %d\n", r->t,i, j);
+            //printf("CE at %f detected between %d %d\n", r->t,i, j);
           //}
         }
       }
@@ -559,7 +557,7 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
 
       if (fcond < 0.0){
         //if (ri_tr->print){
-        //  printf("Flagged %d %d CE at %f %f\n", i, j, r->t, fcond);
+          //printf("Flagged %d %d CE at %f %f\n", i, j, r->t, fcond);
         //}
 
         if (ri_tr->encounter_map_internal[i] == 0){
@@ -601,17 +599,8 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
 
 
   // Check for K 0 -> 1
-  // Implement collisions here
-
-  int collisions = 0;
   for (int i = 1; i < Nactive; i++){
-    //int oldi = i;
     for (int j = i + 1; j < N; j++){
-      //int oldj = j;
-      //if (ri_tr->collisions[j]){
-      //  collisions++;
-      //  oldj += collisions;
-    //  }
       if (ri_tr->current_Ks[i][j] == 0){
         double fcond = _switch(r, i, j);
         if (fcond < 0.0){
@@ -635,12 +624,12 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
 
 // This is Listing 2
 void reb_integrator_trace_part2(struct reb_simulation* const r){
+  //printf("TRACE part 2\n");
     struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
     const int N = r->N;
     //if (r->t >= 6.54e5 * 2. * M_PI){
       //ri_tr->print = 1;
     //}
-    // ri_tr->print = 1;
     // Make copy of particles
     memcpy(ri_tr->particles_backup,r->particles,N*sizeof(struct reb_particle));
     ri_tr->encounterN = 1;
@@ -654,12 +643,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       }
     }
 
-    reb_integrator_trace_F_start(r); // output means nothing at this step for now
-    // Make copy of current_Ks
-    for (unsigned int i = 0; i < N; i++){
-        memcpy(ri_tr->Ks_backup[i],ri_tr->current_Ks[i],N*sizeof(int));
-    }
-
+    reb_integrator_trace_F_start(r);
     if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
       // Pericenter close encounter detected. We integrate the entire simulation with BS
       //printf("Flagged Peri %f\n", r->t);
