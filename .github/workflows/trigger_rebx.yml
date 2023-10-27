@@ -13,6 +13,7 @@ jobs:
           token: ${{ secrets.REBX_TRIGGER_TOKEN }}
           repository: dtamayo/reboundx
           event-type: trigger_rebx
+          client-payload: '{"ref": "'"$GITHUB_SHA"'"}'
 
           #run: |
           #echo $GITHUB_SHA
