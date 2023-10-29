@@ -142,26 +142,31 @@ double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const 
   const double dy = r->particles[j].y;
   const double dz = r->particles[j].z;
   const double d2 = dx*dx + dy*dy + dz*dz;
+  const double d = sqrt(d2);
+  //printf("%d %f\n", j, d);
 
   const double dvx = r->particles[j].vx - r->particles[0].vx;
   const double dvy = r->particles[j].vy - r->particles[0].vy;
   const double dvz = r->particles[j].vz - r->particles[0].vz;
+  const double v2 = dvx * dvx + dvy * dvy + dvz * dvz;
 
   const double hx = (dy*dvz - dz*dvy); 					// specific angular momentum vector
   const double hy = (dz*dvx - dx*dvz);
   const double hz = (dx*dvy - dy*dvx);
   const double h = sqrt ( hx*hx + hy*hy + hz*hz );
 
-  //struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[j], r->particles[0]);
+  // This only works for bound orbits!
   const double fdot = h / (d2);
-  const double F_vel_peri = (2 * M_PI / fdot) / r->dt; // effective period
-  double fcond_peri = F_vel_peri - vfacp;
+  const double peff = (2 * M_PI / fdot); // effective period
+  double fcond_peri = (peff / r->dt) - vfacp;
 
-  //if (ri_tr->print){
-    //printf("In cond: %d %f %f %f\n", j, fdot, F_vel_peri / r->dt, r->dt);
-  //}
+  // Failsafe - use velocity dependent condition
+  double f_vel = d / sqrt(3. * v2 + (r->G * (r->particles[0].m + r->particles[j].m) / d));
+  double fcond_vel = (f_vel/r->dt) - 1.;// - vfacp;
 
-  return fcond_peri;
+  // if one is violated both are
+  double fcond = MIN(fcond_peri, fcond_vel);
+  return fcond;
 }
 
 double reb_integrator_trace_switch_vdiff_peri(const struct reb_simulation* const r, int j){
@@ -343,6 +348,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
           }
       }
   }
+  // printf("Encounter step triggered %f\n", r->t);
   //exit(1);
 
   ri_tr->mode = 1;
@@ -366,6 +372,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     r->particles[0].vz = 0;
 
     reb_integrator_bs_part2(r);
+
+    const double dx = r->particles[2].x;
+    const double dy = r->particles[2].y;
+    const double dz = r->particles[2].z;
+    const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
     reb_collision_search(r);
 
@@ -482,9 +493,9 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
   const int Nactive = r->N_active==-1?r->N:r->N_active;
 
   if (r->testparticle_type == 1){
-        ri_tr->tponly_encounter = 0; // testparticles affect massive particles
+      ri_tr->tponly_encounter = 0; // testparticles affect massive particles
   }else{
-        ri_tr->tponly_encounter = 1;
+      ri_tr->tponly_encounter = 1;
   }
 
   // Switching functions
@@ -512,7 +523,7 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
 
       if (fcond < 0.0){
         //if (ri_tr->print){
-          //printf("Flagged %d %d CE at %f %f\n", i, j, r->t, fcond);
+        //printf("Flagged %d %d CE at %f %f\n", i, j, r->t, fcond);
         //}
 
         if (ri_tr->encounter_map_internal[i] == 0){

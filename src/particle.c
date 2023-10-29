@@ -351,6 +351,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         reb_integrator_bs_reset(r);
         if (r->ri_tr.mode==1){
 						// Only removed mid-timestep if collision - BS Step!
+						// Need to fix current_Ks still
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
             for (int i=0;i<ri_tr->encounterN;i++){

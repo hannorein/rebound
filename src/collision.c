@@ -54,10 +54,12 @@ void reb_collision_search(struct reb_simulation* const r){
             // After jump step, only collisions with star might occur.
             // All other collisions in encounter step/
             Ninner = 1;
+            //printf("Mode 0\n");
         }else{
             N = r->ri_mercurius.encounterN;
             Ninner = N;
             mercurius_map = r->ri_mercurius.encounter_map;
+            //printf("Mode 1\n");
         }
     }
 
@@ -121,6 +123,7 @@ void reb_collision_search(struct reb_simulation* const r){
                         if (trace_map){
                             jp = trace_map[j];
                         }
+                        //printf("%f %d %d\n", r->t, ip, jp);
                         struct reb_particle p2 = particles[jp];
                         double dx = gb.shiftx - p2.x;
                         double dy = gb.shifty - p2.y;
@@ -141,6 +144,7 @@ void reb_collision_search(struct reb_simulation* const r){
                             r->collisions_allocated_N = r->collisions_allocated_N ? r->collisions_allocated_N * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocated_N);
                         }
+                        printf("Collision! %f %d %d\n", r->t, ip, jp);
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;
                         r->collisions[collisions_N].gb = gborig;

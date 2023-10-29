@@ -63,7 +63,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 17, REB_DOUBLE,       "exit_max_distance",            offsetof(struct reb_simulation, exit_max_distance), 0, 0},
     { 18, REB_DOUBLE,       "exit_min_distance",            offsetof(struct reb_simulation, exit_min_distance), 0, 0},
     { 19, REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0},
-    { 20, REB_INT,          "track_energ_yoffset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0},
+    { 20, REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0},
     { 21, REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0},
     { 22, REB_VEC3D,        "boxsize",                      offsetof(struct reb_simulation, boxsize), 0, 0},
     { 23, REB_DOUBLE,       "boxsize_max",                  offsetof(struct reb_simulation, boxsize_max), 0, 0},
