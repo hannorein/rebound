@@ -214,7 +214,7 @@ struct reb_simulation_integrator_trace {
 
     unsigned int allocatedN;
     unsigned int allocatedN_additionalforces;
-    unsigned int tponly_encounter;
+    unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
     struct reb_particle* REBOUND_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
@@ -226,8 +226,9 @@ struct reb_simulation_integrator_trace {
 
     int** current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
+    unsigned int collision; // Checks for collision during BS step
 
-    unsigned int print; // for debugging
+    unsigned int print; // for debugging. Get rid of this at some point.
 };
 
 struct reb_simulation_integrator_sei {

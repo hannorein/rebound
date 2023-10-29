@@ -54,16 +54,13 @@ void reb_collision_search(struct reb_simulation* const r){
             // After jump step, only collisions with star might occur.
             // All other collisions in encounter step/
             Ninner = 1;
-            //printf("Mode 0\n");
         }else{
             N = r->ri_mercurius.encounterN;
             Ninner = N;
             mercurius_map = r->ri_mercurius.encounter_map;
-            //printf("Mode 1\n");
         }
     }
 
-    // TODO: For now just mercurius
     int* trace_map = NULL;
     if (r->integrator==REB_INTEGRATOR_TRACE){
         if (r->ri_tr.mode==0){
@@ -123,7 +120,6 @@ void reb_collision_search(struct reb_simulation* const r){
                         if (trace_map){
                             jp = trace_map[j];
                         }
-                        //printf("%f %d %d\n", r->t, ip, jp);
                         struct reb_particle p2 = particles[jp];
                         double dx = gb.shiftx - p2.x;
                         double dy = gb.shifty - p2.y;
@@ -144,7 +140,10 @@ void reb_collision_search(struct reb_simulation* const r){
                             r->collisions_allocated_N = r->collisions_allocated_N ? r->collisions_allocated_N * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->collisions_allocated_N);
                         }
-                        printf("Collision! %f %d %d\n", r->t, ip, jp);
+                        if (r->integrator==REB_INTEGRATOR_TRACE){
+                          // if collision, TRACE automatically accepts the step
+                          r->ri_tr.collision = 1;
+                        }
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;
                         r->collisions[collisions_N].gb = gborig;
@@ -433,7 +432,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 }
             }
             if (outcome & 2){
-                // Remove p1
+                // Remove p2
                 int removedp2 = reb_remove(r,c.p2,collision_resolve_keep_sorted);
                 if (removedp2){ // Update other collisions
                     if (r->tree_root){ // In a tree, particles get removed later.
@@ -836,7 +835,6 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->m  = pi->m + pj->m;
     pi->r  = cbrt(pi->r*pi->r*pi->r + pj->r*pj->r*pj->r);
     pi->lastcollision = r->t;
-
 
     // Keeping track of energy offst
     if(r->track_energy_offset){

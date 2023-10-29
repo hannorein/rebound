@@ -646,6 +646,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_tr.hillfac = 4.;
     r->ri_tr.peri = 1.;
     r->ri_tr.vfac_p = 32.;
+    r->ri_tr.collision = 0;
 
     // ********** EOS
     r->ri_eos.n = 2;

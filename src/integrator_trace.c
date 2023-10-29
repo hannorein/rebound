@@ -162,7 +162,7 @@ double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const 
 
   // Failsafe - use velocity dependent condition
   double f_vel = d / sqrt(3. * v2 + (r->G * (r->particles[0].m + r->particles[j].m) / d));
-  double fcond_vel = (f_vel/r->dt) - 1.;// - vfacp;
+  double fcond_vel = (f_vel/r->dt) - 1.;
 
   // if one is violated both are
   double fcond = MIN(fcond_peri, fcond_vel);
@@ -360,6 +360,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
 
   r->dt = _dt; // start with a small timestep.
   //printf("BEGIN!!! %f %f ", r->t, r->dt);
+
   while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
     // In case of overshoot
     if (r->t+r->dt >  t_needed){
@@ -411,6 +412,10 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
           r->particles[mi] = ri_tr->particles_backup_try[mi];
       }
   }
+
+  //for (unsigned int i = 0; i<r->N; i++){
+  //  printf("%f %d %e %e %e %e %e\n", r->t, i, r->particles[i].m, r->particles[i].x, r->particles[i].y, r->particles[i].vx, r->particles[i].vy);
+  //}
 
   r->t = old_t;
   r->dt = old_dt;
@@ -478,6 +483,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
     r->gravity = REB_GRAVITY_TRACE;
     ri_tr->mode = 0;
+    ri_tr->collision = 0;
 
     // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
@@ -511,6 +517,9 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
       //if (ri_tr->print){
       //  printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
       //}
+      if (j < Nactive){ // Two massive particles have a close encounter
+          ri_tr->tponly_encounter = 0;
+      }
     }
   }
 
@@ -641,7 +650,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     //if (ri_tr->print){
     //  printf("\nREJECTION CHECK\n");
     //}
-    if (reb_integrator_trace_F_check(r, N)){
+    if (reb_integrator_trace_F_check(r, N) && !ri_tr->collision){
       // REJECT STEP
       // reset simulation and try again with new timestep
       for (int i=0; i<N; i++){
