@@ -11,7 +11,7 @@ do
         echo "Creating dir... "
         echo $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/
         mkdir -p $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/
-        emcc -O3 -Isrc/ src/*.c $dir/problem.c -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sPTHREAD_POOL_SIZE=2 -s WASM_BIGINT -lwebsocket.js -sASYNCIFY --shell-file docs/c_examples/shell_rebound.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html
+        emcc -O3 -Isrc/ src/*.c $dir/problem.c -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY --shell-file docs/c_examples/shell_rebound.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html
         echo "Compiling... "
     else
         echo "Skipping."
