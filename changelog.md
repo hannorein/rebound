@@ -8,6 +8,7 @@ This changelog only includes the most important changes in recent updates. For a
 * `reb_random` functions now callable with `r=NULL`. In that case the time and PID is used as a seed.
 * Removed support for Simulationarchives with version 2.
 * Fixed memory leak in `reb_simulation_copy`.
+* Consistent integer sizes for 32/64bit. Includes padding fore `reb_particle`.
 
 
 ## Version 3.x
