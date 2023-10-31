@@ -1,0 +1,23 @@
+name: REBOUND (emscripten)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    name: Compiling with emscripten
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download and install emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          emsdk/emsdk install latest
+          emsdk/emsdk activate latest
+      - name: Compile all C examples (OPENGL=1)
+        run: |
+          bash docs/c_examples/compile_emcc.bash 1 0
+      - name: Compile all C examples (OPENGL=0)
+        run: |
+          bash docs/c_examples/compile_emcc.bash 0 0
