@@ -34,7 +34,8 @@
 #define DLLEXPORT __declspec(dllexport)
 #define __restrict__
 #elif __EMSCRIPTEN__
-#include "emscripten.h"
+#include <emscripten.h>
+#include <emscripten/html5.h>
 #define REB_RESTRICT
 #define DLLEXPORT
 #else // Linux and MacOS
@@ -536,6 +537,7 @@ struct reb_simulation {
         REB_VISUALIZATION_NONE = 0,     // No visualization (default if OPENGL compiler flag is turned off)
         REB_VISUALIZATION_OPENGL = 1,   // OpenGL visualization (default if OPENGL compiler flag is turned on)
         REB_VISUALIZATION_WEBGL = 2,    // WebGL visualization, only usable from Jupyter notebook widget
+        REB_VISUALIZATION_SERVER = 3,   // Act as a WebSocket server
         } visualization;
     enum {
         REB_COLLISION_NONE = 0,         // Do not search for collisions (default)
@@ -1072,10 +1074,12 @@ struct reb_display_data {
     uint64_t N_allocated_whfast;
     unsigned int opengl_enabled;
     double scale;
+    double mouse_scale;
     double mouse_x;
     double mouse_y;
     double retina;
 #ifndef _WIN32
+    int need_copy;
     pthread_mutex_t mutex;          // Mutex to guarantee non-flickering
 #endif // _WIN32
     int spheres;                    // Switches between point sprite and real spheres.
@@ -1097,6 +1101,7 @@ struct reb_display_data {
     unsigned int simplefont_shader_ypos_location;
     unsigned int simplefont_shader_scale_location;
     unsigned int simplefont_shader_aspect_location;
+    unsigned int simplefont_shader_screen_aspect_location;
     unsigned int simplefont_shader_charval_buffer;
     unsigned int box_shader_program;
     unsigned int box_shader_box_vao;
@@ -1115,6 +1120,10 @@ struct reb_display_data {
     unsigned int orbit_shader_program;
     unsigned int orbit_shader_particle_vao;
     unsigned int orbit_shader_vertex_count;
+    unsigned int particle_buffer;
+    unsigned int orbit_buffer;
+    void* window;
+
 };
 
 // Declarations and functions needed internally or by python interface only.

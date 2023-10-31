@@ -90,7 +90,7 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-1*2.*M_PI/r->ri_sei.OMEGA)){
         reb_simulation_output_timing(r, 0);
         //reb_output_append_velocity_dispersion("veldisp.txt");
     }

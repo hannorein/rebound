@@ -248,6 +248,19 @@ void profiling_stop(int cat){
 }
 #endif // PROFILING
 
+#ifdef __EMSCRIPTEN__
+// fflush does not work in emscripten. Workaround.
+EM_JS(void, reb_remove_last_line, (), {
+    var output = document.getElementById("output");
+    const lastIndex1 = output.value.lastIndexOf("\n");
+    const lastIndex2 = output.value.lastIndexOf("\n",lastIndex1-1);
+    const lastIndexNtot = output.value.lastIndexOf("N_tot=");
+    if(lastIndex1>0 && lastIndex2<lastIndexNtot){
+        output.value = output.value.substring(0, lastIndex2+1);
+    }
+});
+#endif
+
 void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
     const int N = r->N;
 #ifdef MPI
@@ -263,7 +276,11 @@ void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
     if (r->output_timing_last==-1){
         r->output_timing_last = temp;
     }else{
+#ifdef __EMSCRIPTEN__
+        reb_remove_last_line();
+#else
         printf("\r");
+#endif
 #ifdef PROFILING
         fputs("\033[A\033[2K",stdout);
         for (int i=0;i<=PROFILING_CAT_NUM;i++){
@@ -321,7 +338,11 @@ void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
         }
     }
 #endif // PROFILING
+#ifdef __EMSCRIPTEN__
+    printf("\n");
+#else
     fflush(stdout);
+#endif
     r->output_timing_last = temp;
 }
 

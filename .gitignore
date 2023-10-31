@@ -40,7 +40,7 @@ src/*.html
 ipython_examples/*.png
 others/*.tar.gz
 others/*.tar
-docs/c_examples
+docs/c_examples/*.md
 problems/
 .vscode/
 *.pete

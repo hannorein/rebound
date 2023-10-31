@@ -9,6 +9,13 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.11"
+  jobs:
+    post_build:
+      - mkdir -p $READTHEDOCS_OUTPUT/html/emscripten_c_examples/
+      - git clone https://github.com/emscripten-core/emsdk.git
+      - emsdk/emsdk install latest
+      - emsdk/emsdk activate latest
+      - bash docs/c_examples/compile_emcc.bash
 
 mkdocs:
   configuration: mkdocs.yml

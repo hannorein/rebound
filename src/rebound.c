@@ -675,7 +675,11 @@ void reb_simulation_init(struct reb_simulation* r){
 int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
     while(r->status == REB_RUNNING_PAUSED){
         // Wait for user to disable paused simulation
+#ifdef __EMSCRIPTEN__
+        emscripten_sleep(100);
+#else
         usleep(1000);
+#endif 
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
     if (reb_simulation_error_message_waiting(r)){
@@ -823,10 +827,28 @@ static void* reb_simulation_integrate_raw(void* args){
 
     r->status = REB_RUNNING;
     reb_run_heartbeat(r);
+#ifdef __EMSCRIPTEN__
+    double t0 = emscripten_performance_now();
+#endif
     while(reb_check_exit(r,thread_info->tmax,&last_full_dt)<0){
+#ifdef __EMSCRIPTEN__
+        double t1 = emscripten_performance_now();
+        if (t1-t0>1000./120.){ // max framerate 120Hz
+            t0 = t1;
+            emscripten_sleep(0); // allow drawing and event handling
+        }
+
+#endif 
 #ifdef OPENGL
         if (r->display_data){
-            if (r->display_data->opengl_enabled){ pthread_mutex_lock(&(r->display_data->mutex)); }
+            if (r->display_data->opengl_enabled){ 
+                // Note: Mutex is not FIFO.
+                // Allow time for mutex to lock in display.c before it is relocked here.
+                while (r->display_data->need_copy == 1){
+                    usleep(10);
+                }
+                pthread_mutex_lock(&(r->display_data->mutex)); 
+            }
         }
 #endif // OPENGL
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -874,6 +896,14 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
         case REB_VISUALIZATION_OPENGL:
             {
 #ifdef OPENGL
+#ifdef __EMSCRIPTEN__
+                if (r->display_data==NULL){
+                    reb_display_init_data(r);
+                    r->display_data->opengl_enabled = 1;
+                    reb_display_init(r); // Will return. Display routines running in animation_loop.
+                }
+                reb_simulation_integrate_raw(&thread_info);
+#else
                 reb_display_init_data(r);
                 r->display_data->opengl_enabled = 1;
 
@@ -887,6 +917,7 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
                 if (pthread_join(compute_thread,NULL)){
                     reb_simulation_error(r, "Error joining display thread.");
                 }
+#endif
 #else // OPENGL
                 reb_simulation_error(r,"REBOUND was not compiled/linked with OPENGL libraries.");
                 return REB_EXIT_ERROR; 
@@ -898,6 +929,8 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
                 reb_display_init_data(r);
                 reb_simulation_integrate_raw(&thread_info);
             }
+            break;
+        case REB_VISUALIZATION_SERVER:
             break;
     }
     return r->status;
