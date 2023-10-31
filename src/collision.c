@@ -723,7 +723,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
 }
 
 int reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c){
-    r->status = REB_EXIT_COLLISION;
+    r->status = REB_STATUS_COLLISION;
     r->particles[c.p1].last_collision = r->t;
     r->particles[c.p2].last_collision = r->t;
     return 0; // don't remove either particle

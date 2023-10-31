@@ -1,5 +1,4 @@
 from ctypes import c_uint32, c_uint, c_uint64, c_char_p, c_double, byref
-from . import clibrebound
 import sys
 import rebound
 
@@ -76,3 +75,4 @@ def xyz_to_spherical(vector):
     clibrebound.reb_tools_xyz_to_spherical(rebound.Vec3d(vector)._vec3d, byref(magnitude), byref(theta), byref(phi))
     return magnitude.value, theta.value, phi.value
 
+from . import clibrebound

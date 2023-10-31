@@ -1,11 +1,11 @@
 /**
- * Simulation Archive
+ * Simulationarchive
  *
- * This example shows how to use the Simulation Archive.
+ * This example shows how to use the Simulationarchive.
  * We integrate a two planet system forward in time using
  * the WHFast integrator. The simulation can be interrupted
  * at any time. On the next run, the program will try to reload
- * the latest data from the Simulation Archive. 
+ * the latest data from the Simulationarchive. 
  */
 
 #include <stdio.h>
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     reb_simulationarchive_free(sa);
     // Check if we were successful
     if (r==NULL){
-        printf("No simulation archive found. Creating new simulation.\n");
+        printf("No simulationarchive found. Creating new simulation.\n");
         r= reb_simulation_create();
         reb_simulation_add_fmt(r, "m", 1.0);                   // star
         reb_simulation_add_fmt(r, "m a e", 1e-3, 1.0, 0.01);   // planet 1
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
         r->ri_whfast.corrector = 5;    
         r->integrator = REB_INTEGRATOR_WHFAST;
     }else{
-        printf("Found simulation archive. Loaded snapshot at t=%.16f.\n",r->t);
+        printf("Found simulationarchive. Loaded snapshot at t=%.16f.\n",r->t);
     }
     
     // Automatically create a snapshot every 100 time units

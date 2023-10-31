@@ -1,6 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_int64, c_uint64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t, c_char
-from .simulation import Simulation, BINARY_WARNINGS
-from . import clibrebound 
+from ctypes import Structure, c_double, POINTER, c_int, c_int64, c_uint64, c_void_p, c_char_p, byref 
 import os
 import sys
 import math
@@ -109,7 +107,7 @@ class Simulationarchive(Structure):
 
     def __str__(self):
         """
-        Returns a string with details of this simulation archive.
+        Returns a string with details of this simulationarchive.
         """
         return "<rebound.Simulationarchive instance, snapshots={0} >".format(str(len(self)))
 
@@ -189,7 +187,7 @@ class Simulationarchive(Structure):
         Arguments
         ---------
         t : float
-            Requested time. Needs to be within tmin and tmax of this Simulation Archive.
+            Requested time. Needs to be within tmin and tmax of this Simulationarchive.
         mode : str
             This argument determines how close the simulation should be to the requested time.
             There are three options. 
@@ -207,7 +205,7 @@ class Simulationarchive(Structure):
         Examples
         --------
         Here is a simple example on how to load a simulation from a 
-        Simulation Archive file with the `getSimulation` method.
+        Simulationarchive file with the `getSimulation` method.
         As the `mode` argument is set to `close`, the simulation
         will be integrated from the nearest snapshot to the request time.
 
@@ -324,7 +322,7 @@ class Simulationarchive(Structure):
             if origin is None:
                 shift = (0,0,0,0)
             elif origin == -2:
-                sp = sim.calculate_com()
+                sp = sim.com()
                 shift = (sp.x,sp.y,sp.vx,sp.vy)
             else:
                 sp = sim.particles[origin]
@@ -352,3 +350,6 @@ class Simulationarchive(Structure):
         codes = np.full(Npoints,4,dtype=np.uint8) # Hardcoded 4 = matplotlib.path.Path.CURVE4
         codes[0] = 1 # Hardcoded 1 = matplotlib.path.Path.MOVETO
         return verts, codes
+
+from .simulation import Simulation, BINARY_WARNINGS
+from . import clibrebound 

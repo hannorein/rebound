@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
     
     // Instead of shifting the initial x coordinate, we can also use variational equations. 
     r = create_sim();
-    var_i = reb_simulation_add_var_1st_order(r, -1);   // The -1 means we vary a particle which is not a testparticle  and therefore can influence other particles
+    var_i = reb_simulation_add_variation_1st_order(r, -1);   // The -1 means we vary a particle which is not a testparticle  and therefore can influence other particles
     
     // By default all components of variational particles are initialized to zero.
     // We are interested in shifting the planet's x coordinates and thus initialize the x coordinate of the variational particle to 1.
@@ -58,8 +58,8 @@ int main(int argc, char* argv[]) {
 
     // Better yet, we can use second order variational particles.
     r = create_sim();
-    var_i = reb_simulation_add_var_1st_order(r, -1);
-    var_ii = reb_simulation_add_var_2nd_order(r, -1, var_i, var_i);
+    var_i = reb_simulation_add_variation_1st_order(r, -1);
+    var_ii = reb_simulation_add_variation_2nd_order(r, -1, var_i, var_i);
     r->particles[var_i+1].x = 1.;
     reb_simulation_integrate(r,100.);
     printf("Position of testparticle at t=100 using 2nd order var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i+2].x+DeltaX*DeltaX/2.*r->particles[var_ii+2].x,r->particles[2].y+DeltaX*r->particles[var_i+2].y+DeltaX*DeltaX/2.*r->particles[var_ii+2].y);
@@ -75,15 +75,15 @@ int main(int argc, char* argv[]) {
     reb_simulation_free(r);
     
     r = create_sim();
-    var_i = reb_simulation_add_var_1st_order(r, 2); // The 2 corresponds to the index of the testparticle that we vary.
+    var_i = reb_simulation_add_variation_1st_order(r, 2); // The 2 corresponds to the index of the testparticle that we vary.
     r->particles[var_i].x = 1.;
     reb_simulation_integrate(r,100.);
     printf("Position of testparticle at t=100 using 1st order var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i].x,r->particles[2].y+DeltaX*r->particles[var_i].y);
     reb_simulation_free(r);
 
     r = create_sim();
-    var_i = reb_simulation_add_var_1st_order(r, 2);
-    var_ii = reb_simulation_add_var_2nd_order(r, 2, var_i, var_i);
+    var_i = reb_simulation_add_variation_1st_order(r, 2);
+    var_ii = reb_simulation_add_variation_2nd_order(r, 2, var_i, var_i);
     r->particles[var_i].x = 1.;
     reb_simulation_integrate(r,100.);
     printf("Position of testparticle at t=100 using 2nd order var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles[var_i].x+DeltaX*DeltaX/2.*r->particles[var_ii].x,r->particles[2].y+DeltaX*r->particles[var_i].y+DeltaX*DeltaX/2.*r->particles[var_ii].y);
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_free(r);
 
     r = create_sim();
-    var_i = reb_simulation_add_var_1st_order(r, 2);
+    var_i = reb_simulation_add_variation_1st_order(r, 2);
     // The function that sets up the variational particle gets the same orbital parameters as the original particle.
     r->particles[var_i] = reb_particle_derivative_a(1.,r->particles[0],r->particles[2]);
     reb_simulation_integrate(r,100.);
@@ -107,8 +107,8 @@ int main(int argc, char* argv[]) {
     reb_simulation_free(r);
     
     r = create_sim();
-    var_i = reb_simulation_add_var_1st_order(r, 2);
-    var_ii = reb_simulation_add_var_2nd_order(r, 2, var_i, var_i);
+    var_i = reb_simulation_add_variation_1st_order(r, 2);
+    var_ii = reb_simulation_add_variation_2nd_order(r, 2, var_i, var_i);
     // first derivative with respect to a
     r->particles[var_i] = reb_particle_derivative_a(1.,r->particles[0],r->particles[2]);
     // second derivative with respect to a

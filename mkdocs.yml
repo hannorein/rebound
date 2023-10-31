@@ -86,7 +86,7 @@ nav:
         - ipython_examples/HighOrderSymplectic.ipynb
         - ipython_examples/EmbeddedOperatorSplittingMethods.ipynb
         - ipython_examples/PoincareSurfaceOfSection.ipynb
-    - "Checkpoints and Simulation Archive":
+    - "Checkpoints and Simulationarchive":
       - ipython_examples/Checkpoints.ipynb
       - c_examples/simulationarchive.md
       - c_examples/restarting_simulation.md

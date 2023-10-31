@@ -65,7 +65,7 @@ except:
     pass
 
 # Exceptions
-class SimulationError(Exception):
+class GenericError(Exception):
     """The simulation exited with a generic error."""
     pass
 
@@ -102,4 +102,4 @@ from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import Simulationarchive
 
-__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Simulationarchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "Variation", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Simulationarchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "GenericError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "Variation", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]

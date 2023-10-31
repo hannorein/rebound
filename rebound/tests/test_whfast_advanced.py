@@ -52,7 +52,7 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
         rebound.data.add_outer_solar_system(sim)
         for p in sim.particles:
             p.vx += 1.
-        com = sim.calculate_com()
+        com = sim.com()
         sim.integrator = "whfast"
         sim.ri_whfast.corrector = corrector 
         sim.ri_whfast.corrector2 = corrector2
@@ -62,7 +62,7 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
         sim.integrate(1000.*2.*3.1415)
         e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),maxerror)
-        com1 = sim.calculate_com()
+        com1 = sim.com()
         self.assertLess(math.fabs((com.x+com.vx*sim.t-com1.x)/(com1.x+com1.y)),1e-12)
         self.assertLess(math.fabs((com.y+com.vy*sim.t-com1.y)/(com1.x+com1.y)),1e-12)
 

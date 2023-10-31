@@ -1,10 +1,5 @@
 import ctypes 
 
-from . import clibrebound
-from .simulation import Simulation
-from .vectors import Vec3d, Vec3dBasic
-from .particle import Particle
-
 class Rotation(ctypes.Structure):
     """
     This class facilitates rotations of Vec3d objects, and provides various convenience functions
@@ -184,4 +179,9 @@ class Rotation(ctypes.Structure):
                 ("iy", ctypes.c_double),
                 ("iz", ctypes.c_double),
                 ("r", ctypes.c_double)]
+
+from . import clibrebound
+from .simulation import Simulation
+from .vectors import Vec3d, Vec3dBasic
+from .particle import Particle
 

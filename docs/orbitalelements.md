@@ -59,7 +59,7 @@ The following function allows you to calculate the orbital elements of a particl
     sim = rebound.Simulation()
     sim.add(m=1)  # star
     sim.add(a=1, e=0.1) # planet
-    o = sim.particles[1].calculate_orbit(primary=sim.particles[0])
+    o = sim.particles[1].orbit(primary=sim.particles[0])
     print(o.a, o.e)
     ```
     If `primary` is not given, Jacobi coordinates are used.

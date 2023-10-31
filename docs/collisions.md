@@ -117,7 +117,7 @@ You can set this pointer to a function that should be called when a collision oc
 
 ### Halt
 
-This function resolves a collision by simply halting the integration and setting the `status` flag in the simulation to `REB_EXIT_COLLISION`. 
+This function resolves a collision by simply halting the integration and setting the `status` flag in the simulation to `REB_STATUS_COLLISION`. 
 In python this will raise the `Collision` exception.
 This is the default.
 It can also be set manually using the following syntax:

@@ -1,13 +1,13 @@
-# Simulation Archive
+# Simulationarchive
 
 The concepts behind the Simulationarchive are described in detail in [Rein & Tamayo 2017](https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.2377R/abstract).
 Further examples of how to work with the Simulationarchive are provided in an [iPython](ipython_examples/Simulationarchive.ipynb) and [C example](c_examples/simulationarchive.md).
 
-## Creating Simulation Archive snapshots
+## Creating Simulationarchive snapshots
 
-The following code shows how to manually append a Simulation Archive snapshot to a file.
+The following code shows how to manually append a Simulationarchive snapshot to a file.
 If the file does not exist yet, the function outputs a new binary file. 
-If the file already exists, the function will append a Simulation Archive snapshot to the existing file. 
+If the file already exists, the function will append a Simulationarchive snapshot to the existing file. 
 
 === "C"
     ```c
@@ -20,7 +20,7 @@ If the file already exists, the function will append a Simulation Archive snapsh
     ```python
     sim = rebound.Simulation()
     # ... work on simulation ...
-    sim.simulationarchive_snapshot("archive.bin")
+    sim.save_to_file("archive.bin")
     ```
     You can pass the optional argument `delete_file=True` to delete the file if it already exists.
     By default, the function appends a snapshot to existing files.
@@ -28,7 +28,7 @@ If the file already exists, the function will append a Simulation Archive snapsh
 Instead of manually outputting each snapshot, you can also automate this process as shown below.
 
 ### Regular time intervals
-The following code automatically creates a Simulation Archive snapshot at regular intervals.
+The following code automatically creates a Simulationarchive snapshot at regular intervals.
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
@@ -40,11 +40,11 @@ The following code automatically creates a Simulation Archive snapshot at regula
     ```python
     sim = rebound.Simulation()
     # ... work on simulation ...
-    sim.automateSimulationarchive("archive.bin", interval=10.)
+    sim.save_to_file("archive.bin", interval=10.)
     ```
 
 ### Regular number of timesteps
-The following code automatically creates a Simulation Archive snapshot after a fixed number of timesteps.
+The following code automatically creates a Simulationarchive snapshot after a fixed number of timesteps.
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
@@ -56,7 +56,7 @@ The following code automatically creates a Simulation Archive snapshot after a f
     ```python
     sim = rebound.Simulation()
     # ... work on simulation ...
-    sim.automateSimulationarchive("archive.bin", step=100)
+    sim.save_to_file("archive.bin", step=100)
     ```
 !!! Info
     This method is in general more reliable than the interval method.
@@ -66,7 +66,7 @@ The following code automatically creates a Simulation Archive snapshot after a f
 
 
 ### Regular wall-time intervals
-The following code automatically creates a Simulation Archive snapshot after a fixed wall-time.
+The following code automatically creates a Simulationarchive snapshot after a fixed wall-time.
 This is particularly useful for creating restart files when running long simulations.
 The wall-time is given in seconds.
 === "C"
@@ -80,14 +80,14 @@ The wall-time is given in seconds.
     ```python
     sim = rebound.Simulation()
     # ... work on simulation ...
-    sim.automateSimulationarchive("archive.bin", walltime=120) # 2 minutes
+    sim.save_to_file("archive.bin", walltime=120) # 2 minutes
     ```
 
-## Reading Simulation Archives
+## Reading Simulationarchives
 
 ### Reading one snapshot
-The following example shows how to read in a specific snapshot of a Simulation Archive.
-If you pass a negative number for the snapshot, it will wrap around to the end of the Simulation Archive.
+The following example shows how to read in a specific snapshot of a Simulationarchive.
+If you pass a negative number for the snapshot, it will wrap around to the end of the Simulationarchive.
 For example, the last snapshot in the file would have the index `-1`, the second to last `-2`, and so on.
 === "C"
     ```c

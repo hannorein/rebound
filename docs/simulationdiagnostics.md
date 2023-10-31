@@ -50,6 +50,6 @@ The return value is particle object with mass, position, and velocity reflecting
     ```python
     sim = rebound.Simulation()
     # ... setup simulation ...
-    com = sim.calculate_com()
+    com = sim.com()
     ```
 

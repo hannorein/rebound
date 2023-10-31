@@ -137,7 +137,7 @@ void reb_integrator_part2(struct reb_simulation* r){
         r->ri_bs.first_or_last_step = 1;
         while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
             if (reb_sigint== 1){
-                r->status = REB_EXIT_SIGINT;
+                r->status = REB_STATUS_SIGINT;
                 return;
             }
             if (r->ri_bs.dt_proposed !=0.){

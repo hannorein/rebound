@@ -529,7 +529,7 @@ class Widget(DOMWidget):
         Manually refreshes a widget.
         
         Note that this function can also be called using the wrapper function of
-        the Simulation object: sim.refreshWidgets(). 
+        the Simulation object: sim.refresh_widgets(). 
         """
 
         if simp is None:
@@ -600,7 +600,7 @@ class Widget(DOMWidget):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> w = sim.getWidget()
+        >>> w = sim.widget()
         >>> w
 
         The widget should show up. To take a screenshot, simply call 

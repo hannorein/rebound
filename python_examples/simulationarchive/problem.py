@@ -5,7 +5,7 @@ import os
 filename = "simulationarchive.bin"
 try:
     sim = rebound.Simulation(filename)
-    print("Restarting from simulation archive. Last snapshot found at t=%.1f"%sim.t)
+    print("Restarting from simulationarchive. Last snapshot found at t=%.1f"%sim.t)
 except:
     print("Cannot load Simulationarchive. Creating new simulation.")
     sim = rebound.Simulation()
@@ -16,7 +16,7 @@ except:
     sim.dt = 3.1415*2.*6./365.25 # 6 days in units where G=1
     sim.move_to_com()
 
-sim.automateSimulationarchive(filename, interval=2.*3.1415*1e5)
+sim.save_to_file(filename, interval=2.*3.1415*1e5)
 
 # Run a very long simulation.
 # Interrupted at any time and then run script again to restart.

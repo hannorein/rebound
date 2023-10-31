@@ -1,5 +1,5 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_float, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, c_char, c_size_t, string_at 
-from . import clibrebound, Escape, NoParticles, Encounter, Collision, SimulationError 
+from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
 from .citations import cite
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .hash import hash as rebhash, HashPointerPair
@@ -16,8 +16,8 @@ import types
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
-COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "mercurius": 3, "line": 4, "linetree": 5}
-VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2}
+COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
+VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2, "server":3}
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
     (True,  1, "Cannot read binary file. Check filename and file contents."),
@@ -28,7 +28,7 @@ BINARY_WARNINGS = [
     (True,  32, "Index out of range.",),
     (True,  64, "Error while trying to seek file.",),
     (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
-    (True,  256, "Integrator type is not supported by this simulation archive version."),
+    (True,  256, "Integrator type is not supported by this simulationarchive version."),
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
     (True, 1024, "Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
 ]
@@ -65,15 +65,15 @@ class Simulation(Structure):
        
     By calling rebound.Simulation() as shown above, you create a new simulation object
     The following example creates a simulation, saves it to a file and then creates
-    a copy of the simulation store in the binary file.
+    a copy of the simulation stored in the binary file.
 
     >>> sim = rebound.Simulation()
     >>> sim.add(m=1.)
     >>> sim.add(m=1.e-3,x=1.,vy=1.)
-    >>> sim.save("simulation.bin")
+    >>> sim.save_to_file("simulation.bin")
     >>> sim_copy = rebound.Simulation("simulation.bin")
     
-    Similarly, you can create a simulation, from a simulation archive
+    Similarly, you can create a simulation from a Simulationarchive
     by specifying the snapshot you want to load. 
 
     >>> sim = rebound.Simulation("archive.bin", 34)
@@ -89,50 +89,53 @@ class Simulation(Structure):
 
     """
     def __new__(cls, *args, **kw):
-        # Handle arguments
-        filename = None
-        if len(args)>0:
-            # If first argument is of type bytes, then this is unpickling a Simulation
-            if isinstance(args[0], bytes):
-                l = len(args[0]) 
-                buft = c_char * l
-                buf = buft.from_buffer_copy(args[0])
-                # Note: Not calling Simulationarchive.
-                # Doing this manually here because we need to keep the reference to buf.
-                # So we can later access the contents of the archive to get the simulation.
-                sa = Simulationarchive.__new__(Simulationarchive, None, None)
-                w = c_int(0)
-                clibrebound.reb_simulationarchive_init_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
-                sim = super(Simulation,cls).__new__(cls)
-                clibrebound.reb_simulation_init(byref(sim))
-                clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
-                for majorerror, value, message in BINARY_WARNINGS:
-                    if w.value & value:
-                        if majorerror:
-                            raise RuntimeError(message)
-                        else:  
-                            # Just a warning
-                            warnings.warn(message, RuntimeWarning)
-                return sim
+        # Create a new simulation if no arguments given
+        if len(args)==0:
+            sim = super(Simulation,cls).__new__(cls)
+            clibrebound.reb_simulation_init(byref(sim))
+            return sim
+        
+        # If first argument is of type bytes, then unpickle a Simulation
+        if isinstance(args[0], bytes):
+            l = len(args[0]) 
+            buft = c_char * l
+            buf = buft.from_buffer_copy(args[0])
+            # Note: Not calling Simulationarchive.
+            # Doing this manually here because we need to keep the reference to buf.
+            # So we can later access the contents of the archive to get the simulation.
+            sa = Simulationarchive.__new__(Simulationarchive, None, None)
+            w = c_int(0)
+            clibrebound.reb_simulationarchive_init_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
+            sim = super(Simulation,cls).__new__(cls)
+            clibrebound.reb_simulation_init(byref(sim))
+            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
+            for majorerror, value, message in BINARY_WARNINGS:
+                if w.value & value:
+                    if majorerror:
+                        raise RuntimeError(message)
+                    else:  
+                        # Just a warning
+                        warnings.warn(message, RuntimeWarning)
+            return sim
+       
+        # Create simulation from Simulationarchive
+        if isinstance(args[0], Simulationarchive):
+            sa = args[0]
+        else:
             # Otherwise assume first argument is filename
             filename = args[0]
-        if "filename" in kw:
-            filename = kw["filename"]
+            if "filename" in kw:
+                filename = kw["filename"]
+            sa = Simulationarchive(filename,process_warnings=False)
+
         snapshot = -1
         if len(args)>1:
             snapshot = args[1]
         if "snapshot" in kw:
             snapshot = kw["snapshot"]
 
-        # Create simulation
-        if filename is None:
-            # Create a new simulation
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
-            return sim
-        else:
+        if sa is not None:
             # Recreate exisitng simulation 
-            sa = Simulationarchive(filename,process_warnings=False)
             sim = super(Simulation,cls).__new__(cls)
             clibrebound.reb_simulation_init(byref(sim))
             w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
@@ -146,6 +149,9 @@ class Simulation(Structure):
                         warnings.warn(message, RuntimeWarning)
             return sim
 
+        # Still here? Then an error occured.
+        raise RuntimeError("Can not create Simulation.")
+
     def __init__(self,filename=None,snapshot=None):
         self.save_messages = 1 # Warnings will be checked within python
 
@@ -153,16 +159,12 @@ class Simulation(Structure):
         return '<{0}.{1} object at {2}, N={3}, t={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.N, self.t)
     
     @classmethod
-    def from_archive(cls, filename,snapshot=-1):
-        """ rebound.Simulation.from_archive(filename,snapshot) is deprecated and will be removed in the futute. Use rebound.Simulation(filename,snapshot) instead """
-        warnings.warn( "rebound.Simulation.from_archive(filename,snapshot) is deprecated and will be removed in the future. Use rebound.Simulation(filename,snapshot) instead", FutureWarning)
+    def from_simulationarchive(cls, simulationarchive, snapshot=-1):
         return cls(filename=filename,snapshot=snapshot)
 
     @classmethod
-    def from_file(cls, filename):
-        """ rebound.Simulation.from_file(filename) is deprecated and will be removed in the future. Use rebound.Simulation(filename) instead """
-        warnings.warn( "rebound.Simulation.from_file(filename) is deprecated and will be removed in the future. Use rebound.Simulation(filename) instead", FutureWarning)
-        return cls(filename=filename)
+    def from_file(cls, filename, snapshot=-1):
+        return cls(filename=filename, snapshot=snapshot)
     
     def copy(self):
         """
@@ -198,7 +200,7 @@ class Simulation(Structure):
         # one could check for REBOUNDx here, then append txt and bib accordingly
         print(txt + "\n\n\n" + bib)
 
-    def getWidget(self,**kwargs):
+    def widget(self,**kwargs):
         """
         Wrapper function that returns a new widget attached to this simulation.
 
@@ -220,7 +222,7 @@ class Simulation(Structure):
         >>> sim = rebound.Simulation()
         >>> sim.add(m=1.)
         >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> sim.getWidget()
+        >>> sim.widget()
 
         """
         from .widget import Widget # ondemand
@@ -241,7 +243,7 @@ class Simulation(Structure):
         newWidget.refresh(isauto=0)
         return newWidget
     
-    def refreshWidgets(self):
+    def refresh_widgets(self):
         """
         This function manually refreshed all widgets attached to this simulation.
         
@@ -254,92 +256,11 @@ class Simulation(Structure):
             raise RuntimeError("No widgets found")
 
 
-# Simulation Archive tools
-    def automateSimulationarchive(self, filename, interval=None, walltime=None, step=None, delete_file=False):
-        """
-        This function automates taking snapshots during a simulation using the Simulation Archive.
-        Instead of using this function, one can also call simulationarchive_snapshot() manually
-        to create snapshots.
-
-        
-        Arguments
-        ---------
-        filename : str
-            Filename of the binary file.
-        interval : float
-            Interval between outputs in code units.
-        walltime : float
-            Interval between outputs in wall time (seconds). 
-            Useful when using IAS15 with adaptive timesteps. 
-        step : int
-            Interval between outputs in number of timesteps. 
-            Useful when outputs need to be spaced exactly.
-        delete_file: bool
-            False (default) appends to archive if it exists.
-            True deletes filename and starts a new archive.
-        
-        Examples
-        --------
-        The following example creates a simulation, then 
-        initializes the Simulation Archive and integrates
-        it forward in time. 
-
-        >>> sim = rebound.Simulation()
-        >>> sim.add(m=1.)
-        >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> sim.automateSimulationarchive("sa.bin",interval=1000.)
-        >>> sim.integrate(1e8)
-
-        The Simulationarchive can later be read in using the following syntax:
-
-        >>> sa = rebound.Simulationarchive("sa.bin")
-        >>> sim = sa[0]   # get the first snapshot in the SA file (initial conditions)
-        >>> sim = sa[-1]  # get the last snapshot in the SA file
-
-        """
-        modes = sum(1 for i in [interval, walltime,step] if i is not None)
-        if modes != 1:
-            raise AttributeError("Need to specify either interval, walltime, or step")
-        if delete_file and os.path.isfile(filename):
-            os.remove(filename)
-            
-            # reset intervals so that automate functions C set sim->next consistently
-            self.simulationarchive_auto_interval=0
-            self.simulationarchive_auto_walltime=0
-            self.simulationarchive_auto_step=0
-        if interval:
-            clibrebound.reb_simulation_save_to_file_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
-        if walltime:
-            clibrebound.reb_simulation_save_to_file_walltime(byref(self), c_char_p(filename.encode("ascii")), c_double(walltime))
-        if step:
-            clibrebound.reb_simulation_save_to_file_step(byref(self), c_char_p(filename.encode("ascii")), c_uint64(step))
-        self.process_messages()
-
-    def simulationarchive_snapshot(self, filename, delete_file=False):
-        """
-        Take a snapshot and save it to a Simulationarchive file.
-        If the file does not exist yet, a new one will be created. 
-        If the file does exist, a snapshot will be appended.
-        
-        Arguments
-        ---------
-        filename : str
-            Filename of the binary file.
-        delete_file: bool
-            False (default) appends to archive if it exists.
-            True deletes filename and starts a new archive.
-
-        """
-        if delete_file and os.path.isfile(filename):
-            os.remove(filename)
-        clibrebound.reb_simulation_save_to_file(byref(self), c_char_p(filename.encode("ascii")))
-        self.process_messages()
-
     @property
     def simulationarchive_filename(self):
         """
         Returns the current Simulationarchive filename in use. 
-        Do not set manually. Use sim.automateSimulationarchive() instead
+        Do not set manually. Use sim.save_to_file() instead
         """
         return self._simulationarchive_filename
 
@@ -794,8 +715,8 @@ class Simulation(Structure):
         - ``'none'`` (default)
         - ``'direct'``
         - ``'tree'``
-        - ``'mercurius'`` 
-        - ``'direct'``
+        - ``'line'`` 
+        - ``'linetree'``
         
         Check the online documentation for a full description of each of the modules. 
         """
@@ -925,13 +846,13 @@ class Simulation(Structure):
         """
         cur_N_var_config = self.N_var_config
         if order==1:
-            index = clibrebound.reb_simulation_add_var_1st_order(byref(self),c_int(testparticle))
+            index = clibrebound.reb_simulation_add_variation_1st_order(byref(self),c_int(testparticle))
         elif order==2:
             if first_order is None:
                 raise AttributeError("Please specify corresponding first order variational equations when initializing second order variational equations.")
             if first_order_2 is None:
                 first_order_2 = first_order
-            index = clibrebound.reb_simulation_add_var_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
+            index = clibrebound.reb_simulation_add_variation_2nd_order(byref(self),c_int(testparticle),c_int(first_order.index),c_int(first_order_2.index))
         else:
             raise AttributeError("Only variational equations of first and second order are supported.")
 
@@ -1019,7 +940,7 @@ class Simulation(Structure):
                     if "frame" not in kwargs:
                         if hasattr(self, 'default_plane'):
                             kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
-                    self.add(horizons.getParticle(particle, **kwargs), hash=particle)
+                    self.add(horizons.query_horizons_for_particle(particle, **kwargs), hash=particle)
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
@@ -1085,41 +1006,6 @@ class Simulation(Structure):
 
         self.process_messages()
 
-    def particles_ascii(self, prec=8):
-        """
-        Returns an ASCII string with all particles' masses, radii, positions and velocities.
-
-        Parameters
-        ----------
-        prec : int, optional
-            Number of digits after decimal point. Default 8.
-        """
-        s = ""
-        for p in self.particles:
-            s += (("%%.%de "%prec) * 8)%(p.m, p.r, p.x, p.y, p.z, p.vx, p.vy, p.vz) + "\n"
-        if len(s):
-            s = s[:-1]
-        return s
-    
-    def add_particles_ascii(self, s):
-        """
-        Adds particles from an ASCII string. 
-
-        Parameters
-        ----------
-        s : string
-            One particle per line. Each line should include particle's mass, radius, position and velocity.
-        """
-        for l in s.split("\n"):
-            r = l.split()
-            if len(r):
-                try:
-                    r = [float(x) for x in r]
-                    p = Particle(simulation=self, m=r[0], r=r[1], x=r[2], y=r[3], z=r[4], vx=r[5], vy=r[6], vz=r[7])
-                    self.add(p)
-                except:
-                    raise AttributeError("Each line requires 8 floats corresponding to mass, radius, position (x,y,z) and velocity (x,y,z).")
-
 # Orbit calculation
     def orbits(self, primary=None, jacobi_masses=False):
         """ 
@@ -1155,17 +1041,17 @@ class Simulation(Structure):
                 interior_mass = primary.m
                 # orbit conversion uses mu=G*(p.m+primary.m) so set prim.m=Mjac-m so mu=G*Mjac
                 primary.m = self.particles[0].m*(p.m + interior_mass)/interior_mass - p.m
-                orbits.append(p.calculate_orbit(primary=primary))
+                orbits.append(p.orbit(primary=primary))
                 primary.m = interior_mass # back to total mass of interior bodies to update com
             else:
-                orbits.append(p.calculate_orbit(primary=primary))
+                orbits.append(p.orbit(primary=primary))
             if jacobi is True: # update com to include current particle for next iteration
                 primary = clibrebound.reb_particle_com_of_pair(primary, p)
 
         return orbits
 
 # COM calculation 
-    def calculate_com(self, first=0, last=None):
+    def com(self, first=0, last=None):
         """
         Returns the center of momentum for all particles in the simulation.
 
@@ -1186,10 +1072,10 @@ class Simulation(Structure):
         >>> sim.add(m=1, x=0)
         >>> sim.add(m=1, x=10)
         >>> sim.add(m=1, x=20)
-        >>> com = sim.calculate_com()
+        >>> com = sim.com()
         >>> com.x
         0.0 
-        >>> com = sim.calculate_com(first=2,last=4) # Considers indices 2,3
+        >>> com = sim.com(first=2,last=4) # Considers indices 2,3
         >>> com.x
         5.0
 
@@ -1381,14 +1267,85 @@ class Simulation(Structure):
         return
 
 
-# Input/Output routines
-    def save(self, filename, delete_file=False):
+# Output to file (Simulationarchive)
+    def save_to_file(self, filename, interval=None, walltime=None, step=None, delete_file=False):
         """
-        Save the entire REBOUND simulation to a binary file. File will be appended if it exists.
+        Saves a simulation to a file (Simulationarchive binary format). 
+
+        If just the filename is passed, then the simulation is saved immediately. 
+        You can also automate taking snapshots during a simulation. For that specify
+        the interval at which outputs are required. You can do that using either
+        `interval` (physical time), `walltime` (in seconds), or `step` 
+        (the number of timesteps in-between snapshots). 
+
+        
+        Arguments
+        ---------
+        filename : str
+            Filename of the binary file.
+        interval : float
+            Interval between outputs in code units.
+        walltime : float
+            Interval between outputs in wall time (seconds). 
+            Useful when using IAS15 with adaptive timesteps. 
+        step : int
+            Interval between outputs in number of timesteps. 
+            Useful when outputs need to be spaced exactly.
+        delete_file: bool
+            False (default) appends to file if it exists.
+            True deletes the file first.
+        
+        Examples
+        --------
+        The following example shows how to output a simulation and
+        then read it back in. 
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.save_to_file("test.bin")
+        >>> sim2 = rebound.Simulation("test.bin")
+
+        The following example creates a simulation, then 
+        initializes the Simulationarchive and integrates
+        it forward in time. 
+
+        >>> sim = rebound.Simulation()
+        >>> sim.add(m=1.)
+        >>> sim.add(m=1.e-3,x=1.,vy=1.)
+        >>> sim.save_to_file("sa.bin",interval=1000.)
+        >>> sim.integrate(1e8)
+
+        The Simulationarchive can later be read in using the following syntax:
+
+        >>> sa = rebound.Simulationarchive("sa.bin")
+        >>> sim = sa[0]   # get the first snapshot in the SA file (initial conditions)
+        >>> sim = sa[-1]  # get the last snapshot in the SA file
+
         """
         if delete_file and os.path.isfile(filename):
             os.remove(filename)
-        clibrebound.reb_simulation_save_to_file(byref(self), c_char_p(filename.encode("ascii")))
+
+        modes = sum(1 for i in [interval, walltime,step] if i is not None)
+
+        if modes == 0:
+            # Immediately save to file.
+            clibrebound.reb_simulation_save_to_file(byref(self), c_char_p(filename.encode("ascii")))
+        elif modes == 1:
+            if delete_file:
+                # reset intervals so that automate functions in C set sim->next consistently
+                self.simulationarchive_auto_interval = 0
+                self.simulationarchive_auto_walltime = 0
+                self.simulationarchive_auto_step = 0
+            if interval:
+                clibrebound.reb_simulation_save_to_file_interval(byref(self), c_char_p(filename.encode("ascii")), c_double(interval))
+            if walltime:
+                clibrebound.reb_simulation_save_to_file_walltime(byref(self), c_char_p(filename.encode("ascii")), c_double(walltime))
+            if step:
+                clibrebound.reb_simulation_save_to_file_step(byref(self), c_char_p(filename.encode("ascii")), c_uint64(step))
+            self.process_messages()
+        else:
+            raise AttributeError("Cannot specify more than one of interval, walltime, or step.")
+
 
 # Integration
     def step(self):
@@ -1438,7 +1395,7 @@ class Simulation(Structure):
         ret_value = clibrebound.reb_simulation_integrate(byref(self), c_double(tmax))
         if ret_value == 1:
             self.process_messages()
-            raise SimulationError("An error occured during the integration.")
+            raise GenericError("An error occured during the integration.")
         if ret_value == 2:
             if self._N_odes>0:
                 raise NoParticles("No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");

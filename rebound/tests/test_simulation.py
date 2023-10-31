@@ -70,15 +70,6 @@ class TestSimulation(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.sim.remove(hash=-99334)
     
-    def test_ascii(self):
-        a = self.sim.particles_ascii()
-        sim = rebound.Simulation()
-        sim.add_particles_ascii(a)
-        for i in range(self.sim.N):
-            self.assertAlmostEqual(self.sim.particles[i].m,sim.particles[i].m,delta=1e-7)
-            self.assertAlmostEqual(self.sim.particles[i].x,sim.particles[i].x,delta=1e-7)
-            self.assertAlmostEqual(self.sim.particles[i].vy,sim.particles[i].vy,delta=1e-7)
-    
     def test_configure_ghostboxes(self):
         self.sim.configure_ghostboxes(1,1,1)
    
@@ -102,12 +93,12 @@ class TestSimulation(unittest.TestCase):
         self.assertAlmostEqual(orbits[0].e,0.01,delta=1e-15)
         self.assertAlmostEqual(orbits[0].omega,0.02,delta=1e-12)
         self.assertAlmostEqual(orbits[0].inc,0.1,delta=1e-15)
-        orbits = self.sim.orbits(primary=self.sim.calculate_com())
+        orbits = self.sim.orbits(primary=self.sim.com())
         self.assertAlmostEqual(orbits[0].a,1.,delta=1e-2)
         
     def test_com(self):
         self.sim.move_to_com()
-        com = self.sim.calculate_com()
+        com = self.sim.com()
         self.assertAlmostEqual(com.x, 0., delta=1e-15)
     
     def test_com_range(self):
@@ -115,13 +106,13 @@ class TestSimulation(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1., x=2.)
         sim.add(m=2., x=5.)
-        com = sim.calculate_com(first=1)
+        com = sim.com(first=1)
         self.assertAlmostEqual(com.x, 4., delta=1e-15)
-        com = sim.calculate_com(last=2)
+        com = sim.com(last=2)
         self.assertAlmostEqual(com.x, 1., delta=1e-15)
-        com = sim.calculate_com(first=1,last=2)
+        com = sim.com(first=1,last=2)
         self.assertAlmostEqual(com.x, 2., delta=1e-15)
-        com = sim.calculate_com(first=4, last=-3)
+        com = sim.com(first=4, last=-3)
         self.assertAlmostEqual(com.x, 0., delta=1e-15)
     
     def test_jacobi_com(self):
@@ -226,7 +217,7 @@ class TestSimulation(unittest.TestCase):
 
 
     def test_checkpoint(self):
-        self.sim.save("bintest.bin")
+        self.sim.save_to_file("bintest.bin")
         sim2 = rebound.Simulation("bintest.bin")
         self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
         self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
@@ -237,7 +228,7 @@ class TestSimulation(unittest.TestCase):
     
     def test_checkpoint_ias15_pointers(self):
         self.sim.integrate(1.)
-        self.sim.save("bintest.bin")
+        self.sim.save_to_file("bintest.bin")
         self.sim.integrate(5.)
         sim2 = rebound.Simulation("bintest.bin")
         sim2.integrate(5.)

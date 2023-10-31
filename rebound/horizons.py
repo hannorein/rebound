@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-
 """
 Pull data from HORIZONS and format it for use as a REBOUND particle. 
 
 """
-from __future__ import print_function
-
 import datetime
 import re
 import warnings
@@ -25,8 +22,6 @@ else:
     except ImportError:
         from urllib import urlencode
         from urllib2 import urlopen
-
-__all__ = ["getParticle"]
 
 # Default date for orbital elements is the current time when first particle added, if no date is passed.
 # Cached at the beginning to ensure that all particles are synchronized.
@@ -70,7 +65,7 @@ def api_request(particle, datestart, dateend, plane):
     return body
 
 
-def getParticle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
+def query_horizons_for_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
                 anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic", hash=0):
     if plane not in ["ecliptic", "frame"]:
         raise AttributeError(

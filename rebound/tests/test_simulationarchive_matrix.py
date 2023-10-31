@@ -32,7 +32,7 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
             sim.add(m=1e-4,a=1.2,e=0.04,omega=0.21,M=1.41,inc=0.21,Omega=1.1)
             sim.N_active = sim.N-1 # one test particle
         if interval:
-            sim.automateSimulationarchive("test.bin", interval, delete_file=True)
+            sim.save_to_file("test.bin", interval, delete_file=True)
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         sim.integrate(tmax,exact_finish_time=0)

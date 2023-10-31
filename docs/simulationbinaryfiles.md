@@ -21,7 +21,7 @@ Below is an example on how to work with binary files.
     sim = rebound.Simulation()
     // ... setup simulation ...
     sim.integrate(10)
-    sim.save("snapshot.bin")
+    sim.save_to_file("snapshot.bin")
     sim = None # Remove reference, allow python to release memory
 
     sim2 = rebound.Simulation("snapshot.bin")
@@ -29,8 +29,8 @@ Below is an example on how to work with binary files.
     sim2 = None 
     ```
 
-Rather than using one file for one snapshot of a simulation, you can also use a [Simulation Archive](simulationarchive.md).
-A Simulation Archive is a collection of simulation snapshots stored in one binary file. 
+Rather than using one file for one snapshot of a simulation, you can also use a [Simulationarchive](simulationarchive.md).
+A Simulationarchive is a collection of simulation snapshots stored in one binary file. 
 
 
 

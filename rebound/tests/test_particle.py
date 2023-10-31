@@ -134,8 +134,8 @@ class TestParticleInSimulation(unittest.TestCase):
         self.sim.add(a=1.)
         p = self.sim.particles
         with self.assertRaises(ValueError):
-            p[0].calculate_orbit()
-        o = p[1].calculate_orbit()
+            p[0].orbit()
+        o = p[1].orbit()
         string = o.__str__()
         self.assertGreater(len(string),20)
         self.assertAlmostEqual(o.a,1.,delta=1e-15)
@@ -164,23 +164,23 @@ class TestParticleInSimulation(unittest.TestCase):
         self.sim.add()
         self.sim.add(x=1)
         with self.assertRaises(ValueError):
-            self.sim.particles[1].orbit
+            self.sim.particles[1].orbit()
 
     def test_orbits_errors2(self):
         self.sim.add(m=1)
         p1 = rebound.Particle(simulation=self.sim, a=1,m=0.1)
         self.sim.add(p1)
         with self.assertRaises(ValueError):
-            self.sim.particles[1].calculate_orbit(primary=p1)
+            self.sim.particles[1].orbit(primary=p1)
     
     def test_orbits_errors3(self):
         p1 = rebound.Particle(m=1.,x=1.,vy=0.4)
         p2 = rebound.Particle(m=1.,x=4.,vy=2.4)
         with self.assertRaises(ValueError):
-            p2.calculate_orbit()
+            p2.orbit()
         with self.assertRaises(ValueError):
-            p2.calculate_orbit(primary=p1)
-        p2.calculate_orbit(primary=p1,G=1.)
+            p2.orbit(primary=p1)
+        p2.orbit(primary=p1,G=1.)
         
 
 class TestParticleOperators(unittest.TestCase):

@@ -224,7 +224,7 @@ void reb_simulation_error(struct reb_simulation* const r, const char* const msg)
 }
 
 void reb_simulation_stop(struct reb_simulation* const r){
-    r->status = REB_EXIT_USER;
+    r->status = REB_STATUS_USER;
 }
 
 int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf){
@@ -552,7 +552,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->exit_max_distance    = 0;    
     r->max_radius0    = 0.;   
     r->max_radius1    = 0.;   
-    r->status       = REB_RUNNING;
+    r->status       = REB_STATUS_RUNNING;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
     r->gravity_ignore_terms    = 0;
@@ -673,7 +673,7 @@ void reb_simulation_init(struct reb_simulation* r){
 }
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
-    while(r->status == REB_RUNNING_PAUSED){
+    while(r->status == REB_STATUS_PAUSED){
         // Wait for user to disable paused simulation
 #ifdef __EMSCRIPTEN__
         emscripten_sleep(100);
@@ -683,7 +683,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
     if (reb_simulation_error_message_waiting(r)){
-        r->status = REB_EXIT_ERROR;
+        r->status = REB_STATUS_GENERIC_ERROR;
     }
     if (r->status>=0){
         // Exit now.
@@ -691,21 +691,21 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
         if(r->exact_finish_time==1){
             if ((r->t+r->dt)*dtsign>=tmax*dtsign){  // Next step would overshoot
                 if (r->t==tmax){
-                    r->status = REB_EXIT_SUCCESS;
-                }else if(r->status == REB_RUNNING_LAST_STEP){
+                    r->status = REB_STATUS_SUCCESS;
+                }else if(r->status == REB_STATUS_LAST_STEP){
                     double tscale = 1e-12*fabs(tmax);   // Find order of magnitude for time
                     if (tscale<1e-200){     // Failsafe if tmax==0.
                         tscale = 1e-12;
                     }
                     if (fabs(r->t-tmax)<tscale){
-                        r->status = REB_EXIT_SUCCESS;
+                        r->status = REB_STATUS_SUCCESS;
                     }else{
                         // not there yet, do another step.
                         reb_simulation_synchronize(r);
                         r->dt = tmax-r->t;
                     }
                 }else{
-                    r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
+                    r->status = REB_STATUS_LAST_STEP; // Do one small step, then exit.
                     reb_simulation_synchronize(r);
                     if (r->dt_last_done!=0.){   // If first timestep is also last, do not use dt_last_done (which would be 0.)
                         *last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
@@ -713,15 +713,15 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
                     r->dt = tmax-r->t;
                 }
             }else{
-                if (r->status == REB_RUNNING_LAST_STEP){
+                if (r->status == REB_STATUS_LAST_STEP){
                     // This will get executed if an adaptive integrator reduces
                     // the timestep in what was supposed to be the last timestep.
-                    r->status = REB_RUNNING;
+                    r->status = REB_STATUS_RUNNING;
                 }
             }
         }else{
             if (r->t*dtsign>=tmax*dtsign){  // Past the integration time
-                r->status = REB_EXIT_SUCCESS; // Exit now.
+                r->status = REB_STATUS_SUCCESS; // Exit now.
             }
         }
     }
@@ -729,11 +729,11 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     if (!r->N){
         if (!r->N_odes){
             reb_simulation_warning(r,"No particles found. Will exit.");
-            r->status = REB_EXIT_NOPARTICLES; // Exit now.
+            r->status = REB_STATUS_NO_PARTICLES; // Exit now.
         }else{
             if (r->integrator != REB_INTEGRATOR_BS){
                 reb_simulation_warning(r,"No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
-                r->status = REB_EXIT_NOPARTICLES; // Exit now.
+                r->status = REB_STATUS_NO_PARTICLES; // Exit now.
             }
         }
     }
@@ -761,7 +761,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
             struct reb_particle p = particles[i];
             double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
             if (r2>max2){
-                r->status = REB_EXIT_ESCAPE;
+                r->status = REB_STATUS_ESCAPE;
             }
         }
     }
@@ -779,7 +779,7 @@ void reb_run_heartbeat(struct reb_simulation* const r){
                 const double z = pi.z-pj.z;
                 const double r2 = x*x + y*y + z*z;
                 if (r2<min2){
-                    r->status = REB_EXIT_ENCOUNTER;
+                    r->status = REB_STATUS_ENCOUNTER;
                 }
             }
         }
@@ -825,7 +825,7 @@ static void* reb_simulation_integrate_raw(void* args){
         reb_simulation_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
 
-    r->status = REB_RUNNING;
+    r->status = REB_STATUS_RUNNING;
     reb_run_heartbeat(r);
 #ifdef __EMSCRIPTEN__
     double t0 = emscripten_performance_now();
@@ -855,7 +855,7 @@ static void* reb_simulation_integrate_raw(void* args){
         reb_simulation_step(r); 
         reb_run_heartbeat(r);
         if (reb_sigint== 1){
-            r->status = REB_EXIT_SIGINT;
+            r->status = REB_STATUS_SIGINT;
         }
 #ifdef OPENGL
         if (r->display_data){
@@ -920,7 +920,7 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
 #endif
 #else // OPENGL
                 reb_simulation_error(r,"REBOUND was not compiled/linked with OPENGL libraries.");
-                return REB_EXIT_ERROR; 
+                return REB_STATUS_GENERIC_ERROR; 
 #endif // OPENGL
             }
             break;

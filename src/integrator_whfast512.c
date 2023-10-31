@@ -909,58 +909,58 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         // So it is possible for the user to screw things up.
         if (r->dt<=0.0){
             reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N_var!=0){
             reb_simulation_error(r, "WHFast512 does not support variational particles.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->exact_finish_time!=0){
             reb_simulation_error(r, "WHFast512 requires exact_finish_time=0.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N>9 && ri_whfast512->N_systems == 1) {
             reb_simulation_error(r, "WHFast512 supports a maximum of 9 particles when N_systems is set to 1.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N>10 && ri_whfast512->N_systems == 2) {
             reb_simulation_error(r, "WHFast512 supports a maximum of 10 particles when N_systems is set to 2.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N>12 && ri_whfast512->N_systems == 4) {
             reb_simulation_error(r, "WHFast512 supports a maximum of 12 particles when N_systems is set to 4.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (ri_whfast512->N_systems != 1 && ri_whfast512->N_systems !=2 && ri_whfast512->N_systems != 4){
             reb_simulation_error(r, "WHFast512 supports 1, 2, or 4 systems only.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N % ri_whfast512->N_systems != 0){
             reb_simulation_error(r, "Number of particles must be a multiple of ri_whfast512.N_systems.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->G!=1.0){
             reb_simulation_error(r, "WHFast512 requires units in which G=1. Please rescale your system.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N_active!=-1 && r->N_active!=r->N){
             reb_simulation_error(r, "WHFast512 does not support test particles.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         ri_whfast512->p_jh = aligned_alloc(64,sizeof(struct reb_particle_avx512));
         if (!ri_whfast512->p_jh){
             reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->exit_min_distance || r->exit_max_distance){
@@ -1018,7 +1018,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 // Dummy function when AVX512 is not available
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     reb_simulation_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
-    r->status = REB_EXIT_ERROR;
+    r->status = REB_STATUS_GENERIC_ERROR;
 }
 #endif // AVX512
 

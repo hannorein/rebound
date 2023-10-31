@@ -325,15 +325,15 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 data->onscreenhelp = !data->onscreenhelp;
                 break;
             case 'Q':
-                data->r->status = REB_EXIT_USER;
+                data->r->status = REB_STATUS_USER;
                 break;
             case ' ':
-                if (data->r->status == REB_RUNNING_PAUSED){
+                if (data->r->status == REB_STATUS_PAUSED){
                     printf("Resume.\n");
-                    data->r->status = REB_RUNNING;
+                    data->r->status = REB_STATUS_RUNNING;
                 }else{
                     printf("Pause.\n");
-                    data->r->status = REB_RUNNING_PAUSED;
+                    data->r->status = REB_STATUS_PAUSED;
                 }
                 break;
             case 'S':
@@ -526,9 +526,9 @@ static void reb_display(GLFWwindow* window){
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
-        if (data->r_copy->status == REB_RUNNING){
+        if (data->r_copy->status == REB_STATUS_RUNNING){
             sprintf(str, "Simulation is running  ");
-        }else if (data->r_copy->status == REB_RUNNING_PAUSED){
+        }else if (data->r_copy->status == REB_STATUS_PAUSED){
             sprintf(str, "Simulation is paused   ");
         }
         glUniform1f(data->simplefont_shader_ypos_location, ypos++);
@@ -1144,7 +1144,7 @@ void reb_display_init(struct reb_simulation * const r){
     glfwDestroyWindow(window);
     glfwTerminate();
     if (data->r->status<0){
-        data->r->status = REB_EXIT_USER; 
+        data->r->status = REB_STATUS_USER; 
     }
 #endif
 }

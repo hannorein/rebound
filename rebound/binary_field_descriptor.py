@@ -3,7 +3,7 @@ from . import clibrebound
 
 class BinaryFieldDescriptor(ctypes.Structure):
     """ 
-    Describes the binary field in simulation archives 
+    Describes the binary field in simulationarchives 
 
     Used here for unit tests only. Checking if ids are unique.
     """

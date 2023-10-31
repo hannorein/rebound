@@ -1377,7 +1377,7 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
 }
 
 
-int reb_simulation_add_var_1st_order(struct reb_simulation* const r, int testparticle){
+int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle){
     r->N_var_config++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
@@ -1401,7 +1401,7 @@ int reb_simulation_add_var_1st_order(struct reb_simulation* const r, int testpar
 }
 
 
-int reb_simulation_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b){
+int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b){
     r->N_var_config++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
@@ -1439,7 +1439,7 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
 	r->megno_n = 0;
 	r->megno_mean_Y = 0;
 	r->megno_mean_t = 0;
-    int i = reb_simulation_add_var_1st_order(r,-1);
+    int i = reb_simulation_add_variation_1st_order(r,-1);
 	r->calculate_megno = i;
     const int imax = i + (r->N-r->N_var);
     struct reb_particle* const particles = r->particles;

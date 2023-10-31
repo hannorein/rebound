@@ -418,7 +418,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     for (int s=0; s < Ns; s++){
         if (!odes[s]->derivatives){
             reb_simulation_error(r,"A user-specified set of ODEs has not been provided with a derivatives function.");
-            r->status = REB_EXIT_ERROR;
+            r->status = REB_STATUS_GENERIC_ERROR;
             return 0;
         }
     }
@@ -501,7 +501,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                 error = sqrt(error);
                 if (isnan(error)) {
                     reb_simulation_error(r, "NaN appearing during ODE integration.");
-                    r->status = REB_EXIT_ERROR;
+                    r->status = REB_STATUS_GENERIC_ERROR;
                     return 0;
                 }
 

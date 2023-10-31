@@ -1,6 +1,6 @@
 /**
  * @file 	simulationarchive.c
- * @brief 	Tools for creating and reading Simulation Archive binary files.
+ * @brief 	Tools for creating and reading Simulationarchive binary files.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE

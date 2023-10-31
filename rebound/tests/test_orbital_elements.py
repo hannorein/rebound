@@ -20,7 +20,7 @@ class TestOrbitalElements(unittest.TestCase):
         with self.assertRaises(ValueError):
             sim.add(a=-1, e=2.2, f=3.)
     
-    def test_calculate_orbit_errors(self):
+    def test_orbit_errors(self):
         sim = rebound.Simulation()
         sim.add()
         sim.add(x=1.)

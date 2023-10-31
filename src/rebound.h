@@ -404,17 +404,17 @@ struct reb_integrator_janus {
 
 // Possible return values of of rebound_integrate
 enum REB_STATUS {
-    REB_RUNNING_PAUSED = -3,    // Simulation is paused by visualization.
-    REB_RUNNING_LAST_STEP = -2, // Current timestep is the last one. Needed to ensure that t=tmax exactly.
-    REB_RUNNING = -1,           // Simulation is current running, no error occurred.
-    REB_EXIT_SUCCESS = 0,       // Integration finished successfully.
-    REB_EXIT_ERROR = 1,         // A generic error occurred and the integration was not successful.
-    REB_EXIT_NOPARTICLES = 2,   // The integration ends early because no particles are left in the simulation.
-    REB_EXIT_ENCOUNTER = 3,     // The integration ends early because two particles had a close encounter (see exit_min_distance)
-    REB_EXIT_ESCAPE = 4,        // The integration ends early because a particle escaped (see exit_max_distance)  
-    REB_EXIT_USER = 5,          // User caused exit, simulation did not finish successfully.
-    REB_EXIT_SIGINT = 6,        // SIGINT received. Simulation stopped.
-    REB_EXIT_COLLISION = 7,     // The integration ends early because two particles collided. 
+    REB_STATUS_PAUSED = -3,       // Simulation is paused by visualization.
+    REB_STATUS_LAST_STEP = -2,    // Current timestep is the last one. Needed to ensure that t=tmax exactly.
+    REB_STATUS_RUNNING = -1,      // Simulation is current running, no error occurred.
+    REB_STATUS_SUCCESS = 0,       // Integration finished successfully.
+    REB_STATUS_GENERIC_ERROR = 1, // A generic error occurred and the integration was not successful.
+    REB_STATUS_NO_PARTICLES = 2,  // The integration ends early because no particles are left in the simulation.
+    REB_STATUS_ENCOUNTER = 3,     // The integration ends early because two particles had a close encounter (see exit_min_distance)
+    REB_STATUS_ESCAPE = 4,        // The integration ends early because a particle escaped (see exit_max_distance)  
+    REB_STATUS_USER = 5,          // User caused exit, simulation did not finish successfully.
+    REB_STATUS_SIGINT = 6,        // SIGINT received. Simulation stopped.
+    REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
 // Holds a particle's hash and the particle's index in the particles array. Used for particle_lookup_table.
@@ -819,7 +819,7 @@ struct reb_simulationarchive{
     uint64_t* offset;               // Index of offsets in file (length nblobs)
     double* t;                      // Index of simulation times in file (length nblobs)
 };
-// Allocate memory for a simulation archive and initialize it with a file.
+// Allocate memory for a simulationarchive and initialize it with a file.
 DLLEXPORT struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename);
 // Free memory allocated by simulationarchive
 DLLEXPORT void reb_simulationarchive_free(struct reb_simulationarchive* sa);
@@ -910,7 +910,7 @@ struct reb_variational_configuration{
 // If testparticle is >= 0, then only one variational particle (the test particle) will be added.
 // If testparticle is -1, one variational particle for each real particle will be added.
 // Returns the index of the first variational particle added
-DLLEXPORT int reb_simulation_add_var_1st_order(struct reb_simulation* const r, int testparticle);
+DLLEXPORT int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle);
 
 // Add and initialize a set of second order variational particles
 // Note: a set of second order variational particles requires two sets of first order variational equations.
@@ -919,7 +919,7 @@ DLLEXPORT int reb_simulation_add_var_1st_order(struct reb_simulation* const r, i
 // index_1st_order_a is the index of the corresponding first variational particles.
 // index_1st_order_b is the index of the corresponding first variational particles.
 // Returns the index of the first variational particle added
-DLLEXPORT int reb_simulation_add_var_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
+DLLEXPORT int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
 
 // Rescale all sets of variational particles if their size gets too large (>1e100).
 // This can prevent an overflow in floating point numbers. The logarithm of the rescaling

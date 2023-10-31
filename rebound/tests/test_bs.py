@@ -149,11 +149,11 @@ class TestIntegratorBS(unittest.TestCase):
         sim.integrator = "bs"
         sim.ri_bs.eps_rel = eps
         sim.ri_bs.eps_abs = eps
-        sim.save("sim0.bin")
+        sim.save_to_file("sim0.bin")
         sim1 = rebound.Simulation("sim0.bin")
         sim.integrate(100)
         sim1.integrate(100)
-        sim1.save("sim1.bin")
+        sim1.save_to_file("sim1.bin")
         sim2 = rebound.Simulation("sim1.bin")
         sim.integrate(200)
         sim1.integrate(200)
@@ -172,7 +172,7 @@ class TestIntegratorBS(unittest.TestCase):
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1)
         sim.add(m=1e-3,a=2,e=0.1)
-        sim.automateSimulationarchive("test.sa",interval=10, delete_file=True)
+        sim.save_to_file("test.sa",interval=10, delete_file=True)
         sim.integrate(100, exact_finish_time=0)
         sim1 = rebound.Simulationarchive("test.sa")[-1]
         sim.integrate(200, exact_finish_time=0)

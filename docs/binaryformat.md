@@ -3,7 +3,7 @@
 REBOUND comes with its own binary format.
 The binary format allows you to store a current simulation state to a file or to memory.
 The binary format is also used when you make a copy of a simulation or when you compare two similations with each other.
-The Simulation Archive is an extension of the binary format which allows you to store multiple snapshots of a simulation in one file.
+The Simulationarchive is an extension of the binary format which allows you to store multiple snapshots of a simulation in one file.
 This page explains the details of the binary format.
 It is mainly intended for people who wish to extend the built-in REBOUND functionality.
 You do not need to know those details if you're only working with binary files to save and load simulations.
@@ -43,7 +43,7 @@ You create a binary file if you save a simulation
     ```python
     sim = rebound.Simulation()
     // ... setup simulation ...
-    sim.save("snapshot.bin")
+    sim.save_to_file("snapshot.bin")
     ```
 Such a binary file with one snapshot is simply a set of `reb_binaryfield`s followed by one `reb_simulationarchive_blob` at the end, for example:
 
