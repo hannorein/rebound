@@ -57,6 +57,7 @@
 #include <float.h> // for DBL_MAX
 #include "rebound.h"
 #include "gravity.h"
+#include "integrator.h"
 #include "integrator_bs.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -80,11 +81,11 @@ static const int maxChecks = 1; // maximal number of checks for each iteration
 
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){
-        reb_error(r, "Update particles called without valid simulation pointer.");
+        reb_simulation_error(r, "Update particles called without valid simulation pointer.");
         return;
     }
     if (y==NULL){
-        reb_error(r, "Update particles called without valid y pointer.");
+        reb_simulation_error(r, "Update particles called without valid y pointer.");
         return;
     }
     for (unsigned int i=0; i<r->N; i++){
@@ -316,7 +317,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     if (r->t != t) { 
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
-        reb_update_acceleration(r);
+        reb_simulation_update_acceleration(r);
     }
 
     for (unsigned int i=0; i<r->N; i++){
@@ -333,7 +334,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 void reb_integrator_bs_part1(struct reb_simulation* r){
     struct reb_ode** odes = r->odes;
-    int Ns = r->odes_N; // Number of ode sets
+    int Ns = r->N_odes; // Number of ode sets
     for (int s=0; s < Ns; s++){
         const int length = odes[s]->length;
         double* y0 = odes[s]->y;
@@ -344,12 +345,12 @@ void reb_integrator_bs_part1(struct reb_simulation* r){
     }
 }
 
-static void allocate_sequence_arrays(struct reb_simulation_integrator_bs* ri_bs){
+static void allocate_sequence_arrays(struct reb_integrator_bs* ri_bs){
     ri_bs->sequence        = malloc(sizeof(int)*sequence_length);
-    ri_bs->costPerStep     = malloc(sizeof(int)*sequence_length);
+    ri_bs->cost_per_step     = malloc(sizeof(int)*sequence_length);
     ri_bs->coeff           = malloc(sizeof(double)*sequence_length);
-    ri_bs->costPerTimeUnit = malloc(sizeof(double)*sequence_length);
-    ri_bs->optimalStep     = malloc(sizeof(double)*sequence_length);
+    ri_bs->cost_per_time_unit = malloc(sizeof(double)*sequence_length);
+    ri_bs->optimal_step     = malloc(sizeof(double)*sequence_length);
 
     // step size sequence: 2, 6, 10, 14, ...  // only needed for dense output
      for (int k = 0; k < sequence_length; ++k) {
@@ -363,11 +364,11 @@ static void allocate_sequence_arrays(struct reb_simulation_integrator_bs* ri_bs)
 
     // initialize the order selection cost array
     // (number of function calls for each column of the extrapolation table)
-    ri_bs->costPerStep[0] = ri_bs->sequence[0] + 1;
+    ri_bs->cost_per_step[0] = ri_bs->sequence[0] + 1;
     for (int k = 1; k < sequence_length; ++k) {
-        ri_bs->costPerStep[k] = ri_bs->costPerStep[k - 1] + ri_bs->sequence[k];
+        ri_bs->cost_per_step[k] = ri_bs->cost_per_step[k - 1] + ri_bs->sequence[k];
     }
-    ri_bs->costPerTimeUnit[0]       = 0;
+    ri_bs->cost_per_time_unit[0]       = 0;
 
     // initialize the extrapolation tables
     for (int j = 0; j < sequence_length; ++j) {
@@ -389,7 +390,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     // return 1 if step was successful
     //        0 if rejected 
     //
-    struct reb_simulation_integrator_bs* ri_bs = &r->ri_bs;
+    struct reb_integrator_bs* ri_bs = &r->ri_bs;
     
     if (ri_bs->sequence==NULL){
         allocate_sequence_arrays(ri_bs);
@@ -399,16 +400,16 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     ri_bs->dt_proposed = dt; // In case of early fail
 
     // initial order selection
-    if (ri_bs->targetIter == 0){
+    if (ri_bs->target_iter == 0){
         const double tol    = ri_bs->eps_rel;
         const double log10R = log10(MAX(1.0e-10, tol));
-        ri_bs->targetIter = MAX(1, MIN(sequence_length - 2, (int) floor(0.5 - 0.6 * log10R)));
+        ri_bs->target_iter = MAX(1, MIN(sequence_length - 2, (int) floor(0.5 - 0.6 * log10R)));
     }
 
     // maxError not used at the moment.
     // double  maxError = DBL_MAX;
 
-    int Ns = r->odes_N; // Number of ode sets
+    int Ns = r->N_odes; // Number of ode sets
     struct reb_ode** odes = r->odes;
     double error;
     int reject = 0;
@@ -416,7 +417,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     // Check if ODEs have been set up correctly 
     for (int s=0; s < Ns; s++){
         if (!odes[s]->derivatives){
-            reb_error(r,"A user-specified set of ODEs has not been provided with a derivatives function.");
+            reb_simulation_error(r,"A user-specified set of ODEs has not been provided with a derivatives function.");
             r->status = REB_EXIT_ERROR;
             return 0;
         }
@@ -499,7 +500,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                 // Note: Used to be: error = sqrt(error / combined_length). But for N-body applications it might be more consistent to use:
                 error = sqrt(error);
                 if (isnan(error)) {
-                    reb_error(r, "NaN appearing during ODE integration.");
+                    reb_simulation_error(r, "NaN appearing during ODE integration.");
                     r->status = REB_EXIT_ERROR;
                     return 0;
                 }
@@ -522,36 +523,36 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                     double fac = stepControl2 / pow(error / stepControl1, exp);
                     const double power = pow(stepControl3, exp);
                     fac = MAX(power / stepControl4, MIN(1. / power, fac));
-                    ri_bs->optimalStep[k]     = fabs(dt * fac);
-                    ri_bs->costPerTimeUnit[k] = ri_bs->costPerStep[k] / ri_bs->optimalStep[k];
+                    ri_bs->optimal_step[k]     = fabs(dt * fac);
+                    ri_bs->cost_per_time_unit[k] = ri_bs->cost_per_step[k] / ri_bs->optimal_step[k];
 
                     // check convergence
-                    switch (k - ri_bs->targetIter) {
+                    switch (k - ri_bs->target_iter) {
 
                         case -1 : // one before target
-                            if ((ri_bs->targetIter > 1) && ! ri_bs->previousRejected) {
+                            if ((ri_bs->target_iter > 1) && ! ri_bs->previous_rejected) {
 
                                 // check if we can stop iterations now
                                 if (error <= 1.0) {
-                                    // convergence have been reached just before targetIter
+                                    // convergence have been reached just before target_iter
                                     loop = 0;
                                 } else {
                                     // estimate if there is a chance convergence will
                                     // be reached on next iteration, using the
                                     // asymptotic evolution of error
-                                    const double ratio = ((double) ri_bs->sequence[ri_bs->targetIter] * ri_bs->sequence[ri_bs->targetIter + 1]) / (ri_bs->sequence[0] * ri_bs->sequence[0]);
+                                    const double ratio = ((double) ri_bs->sequence[ri_bs->target_iter] * ri_bs->sequence[ri_bs->target_iter + 1]) / (ri_bs->sequence[0] * ri_bs->sequence[0]);
                                     if (error > ratio * ratio) {
                                         // we don't expect to converge on next iteration
                                         // we reject the step immediately and reduce order
                                         reject = 1;
                                         loop   = 0;
-                                        ri_bs->targetIter = k;
-                                        if ((ri_bs->targetIter > 1) &&
-                                                (ri_bs->costPerTimeUnit[ri_bs->targetIter - 1] <
-                                                 orderControl1 * ri_bs->costPerTimeUnit[ri_bs->targetIter])) {
-                                            ri_bs->targetIter -= 1;
+                                        ri_bs->target_iter = k;
+                                        if ((ri_bs->target_iter > 1) &&
+                                                (ri_bs->cost_per_time_unit[ri_bs->target_iter - 1] <
+                                                 orderControl1 * ri_bs->cost_per_time_unit[ri_bs->target_iter])) {
+                                            ri_bs->target_iter -= 1;
                                         }
-                                        dt = ri_bs->optimalStep[ri_bs->targetIter];
+                                        dt = ri_bs->optimal_step[ri_bs->target_iter];
 #if DEBUG
                                         printf("O");
 #endif
@@ -562,7 +563,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
                         case 0: // exactly on target
                             if (error <= 1.0) {
-                                // convergence has been reached exactly at targetIter
+                                // convergence has been reached exactly at target_iter
                                 loop = 0;
                             } else {
                                 // estimate if there is a chance convergence will
@@ -577,12 +578,12 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 #endif
                                     reject = 1;
                                     loop = 0;
-                                    if ((ri_bs->targetIter > 1) &&
-                                            (ri_bs->costPerTimeUnit[ri_bs->targetIter - 1] <
-                                             orderControl1 * ri_bs->costPerTimeUnit[ri_bs->targetIter])) {
-                                        --ri_bs->targetIter;
+                                    if ((ri_bs->target_iter > 1) &&
+                                            (ri_bs->cost_per_time_unit[ri_bs->target_iter - 1] <
+                                             orderControl1 * ri_bs->cost_per_time_unit[ri_bs->target_iter])) {
+                                        --ri_bs->target_iter;
                                     }
-                                    dt = ri_bs->optimalStep[ri_bs->targetIter];
+                                    dt = ri_bs->optimal_step[ri_bs->target_iter];
                                 }
                             }
                             break;
@@ -593,18 +594,18 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                 printf("e");
 #endif
                                 reject = 1;
-                                if ((ri_bs->targetIter > 1) &&
-                                        (ri_bs->costPerTimeUnit[ri_bs->targetIter - 1] <
-                                         orderControl1 * ri_bs->costPerTimeUnit[ri_bs->targetIter])) {
-                                    --ri_bs->targetIter;
+                                if ((ri_bs->target_iter > 1) &&
+                                        (ri_bs->cost_per_time_unit[ri_bs->target_iter - 1] <
+                                         orderControl1 * ri_bs->cost_per_time_unit[ri_bs->target_iter])) {
+                                    --ri_bs->target_iter;
                                 }
-                                dt = ri_bs->optimalStep[ri_bs->targetIter];
+                                dt = ri_bs->optimal_step[ri_bs->target_iter];
                             }
                             loop = 0;
                             break;
 
                         default :
-                            if (ri_bs->firstOrLastStep && (error <= 1.0)) {
+                            if (ri_bs->first_or_last_step && (error <= 1.0)) {
                                 loop = 0;
                             }
                             break;
@@ -634,45 +635,45 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
         int optimalIter;
         if (k == 1) {
             optimalIter = 2;
-            if (ri_bs->previousRejected) {
+            if (ri_bs->previous_rejected) {
                 optimalIter = 1;
             }
-        } else if (k <= ri_bs->targetIter) { // Converged before or on target
+        } else if (k <= ri_bs->target_iter) { // Converged before or on target
             optimalIter = k;
-            if (ri_bs->costPerTimeUnit[k - 1] < orderControl1 * ri_bs->costPerTimeUnit[k]) {
+            if (ri_bs->cost_per_time_unit[k - 1] < orderControl1 * ri_bs->cost_per_time_unit[k]) {
                 optimalIter = k - 1;
-            } else if (ri_bs->costPerTimeUnit[k] < orderControl2 * ri_bs->costPerTimeUnit[k - 1]) {
+            } else if (ri_bs->cost_per_time_unit[k] < orderControl2 * ri_bs->cost_per_time_unit[k - 1]) {
                 optimalIter = MIN(k + 1, sequence_length - 2);
             }
         } else {                            // converged after target
             optimalIter = k - 1;
-            if ((k > 2) && (ri_bs->costPerTimeUnit[k - 2] < orderControl1 * ri_bs->costPerTimeUnit[k - 1])) {
+            if ((k > 2) && (ri_bs->cost_per_time_unit[k - 2] < orderControl1 * ri_bs->cost_per_time_unit[k - 1])) {
                 optimalIter = k - 2;
             }
-            if (ri_bs->costPerTimeUnit[k] < orderControl2 * ri_bs->costPerTimeUnit[optimalIter]) {
+            if (ri_bs->cost_per_time_unit[k] < orderControl2 * ri_bs->cost_per_time_unit[optimalIter]) {
                 optimalIter = MIN(k, sequence_length - 2);
             }
         }
 
-        if (ri_bs->previousRejected) {
+        if (ri_bs->previous_rejected) {
             // after a rejected step neither order nor stepsize
             // should increase
-            ri_bs->targetIter = MIN(optimalIter, k);
-            dt = MIN(fabs(dt), ri_bs->optimalStep[ri_bs->targetIter]);
+            ri_bs->target_iter = MIN(optimalIter, k);
+            dt = MIN(fabs(dt), ri_bs->optimal_step[ri_bs->target_iter]);
         } else {
             // stepsize control
             if (optimalIter <= k) {
-                dt = ri_bs->optimalStep[optimalIter];
+                dt = ri_bs->optimal_step[optimalIter];
             } else {
-                if ((k < ri_bs->targetIter) &&
-                        (ri_bs->costPerTimeUnit[k] < orderControl2 * ri_bs->costPerTimeUnit[k - 1])) {
-                    dt = ri_bs->optimalStep[k] * ri_bs->costPerStep[optimalIter + 1] / ri_bs->costPerStep[k];
+                if ((k < ri_bs->target_iter) &&
+                        (ri_bs->cost_per_time_unit[k] < orderControl2 * ri_bs->cost_per_time_unit[k - 1])) {
+                    dt = ri_bs->optimal_step[k] * ri_bs->cost_per_step[optimalIter + 1] / ri_bs->cost_per_step[k];
                 } else {
-                    dt = ri_bs->optimalStep[k] * ri_bs->costPerStep[optimalIter] / ri_bs->costPerStep[k];
+                    dt = ri_bs->optimal_step[k] * ri_bs->cost_per_step[optimalIter] / ri_bs->cost_per_step[k];
                 }
             }
 
-            ri_bs->targetIter = optimalIter;
+            ri_bs->target_iter = optimalIter;
 
         }
     }
@@ -681,12 +682,12 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     if (ri_bs->min_dt !=0.0 && dt < ri_bs->min_dt) {
         dt = ri_bs->min_dt;
-        reb_warning(r,"Minimal stepsize reached during ODE integration.");
+        reb_simulation_warning(r,"Minimal stepsize reached during ODE integration.");
     }
 
     if (ri_bs->max_dt !=0.0 && dt > ri_bs->max_dt) {
         dt = ri_bs->max_dt;
-        reb_warning(r,"Maximum stepsize reached during ODE integration.");
+        reb_simulation_warning(r,"Maximum stepsize reached during ODE integration.");
     }
 
     if (! forward) {
@@ -695,32 +696,32 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     ri_bs->dt_proposed = dt;
 
     if (reject) {
-        ri_bs->previousRejected = 1;
+        ri_bs->previous_rejected = 1;
     } else {
-        ri_bs->previousRejected = 0;
-        ri_bs->firstOrLastStep = 0;
+        ri_bs->previous_rejected = 0;
+        ri_bs->first_or_last_step = 0;
     }
     return !reject;
 }
 
-struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
+struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     struct reb_ode* ode = malloc(sizeof(struct reb_ode));
     
     memset(ode, 0, sizeof(struct reb_ode)); // not really necessaery
 
-    if (r->odes_allocated_N <= r->odes_N){
-        r->odes_allocated_N += 32;
-        r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->odes_allocated_N);
+    if (r->N_allocated_odes <= r->N_odes){
+        r->N_allocated_odes += 32;
+        r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->N_allocated_odes);
     }
     
-    r->odes[r->odes_N] = ode;
-    r->odes_N += 1;
+    r->odes[r->N_odes] = ode;
+    r->N_odes += 1;
 
 
     ode->r = r; // weak reference
     ode->length = length;
     ode->needs_nbody = 1;
-    ode->allocated_N = length;
+    ode->N_allocated = length;
     ode->getscale = NULL;
     ode->derivatives = NULL;
     ode->pre_timestep = NULL;
@@ -739,30 +740,30 @@ struct reb_ode* reb_create_ode(struct reb_simulation* r, unsigned int length){
 
     ode->scale = malloc(sizeof(double)*length);
 
-    r->ri_bs.firstOrLastStep = 1;
+    r->ri_bs.first_or_last_step = 1;
 
     return ode;
 }
 
 void reb_integrator_bs_part2(struct reb_simulation* r){
-    struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
+    struct reb_integrator_bs* ri_bs = &(r->ri_bs);
     
     unsigned int nbody_length = r->N*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
         if (ri_bs->nbody_ode->length != nbody_length){
-            reb_free_ode(ri_bs->nbody_ode);
+            reb_ode_free(ri_bs->nbody_ode);
             ri_bs->nbody_ode = NULL;
         }
     }
     if (ri_bs->nbody_ode == NULL){ 
-        ri_bs->nbody_ode = reb_create_ode(r, nbody_length);
+        ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
         ri_bs->nbody_ode->derivatives = nbody_derivatives;
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
-        ri_bs->firstOrLastStep = 1;
+        ri_bs->first_or_last_step = 1;
     }
     
-    for (int s=0; s < r->odes_N; s++){
+    for (int s=0; s < r->N_odes; s++){
         if (r->odes[s]->needs_nbody){
             ri_bs->user_ode_needs_nbody = 1;
         }
@@ -793,7 +794,7 @@ void reb_integrator_bs_synchronize(struct reb_simulation* r){
     // Do nothing.
 }
 
-void reb_free_ode(struct reb_ode* ode){
+void reb_ode_free(struct reb_ode* ode){
     // Free data array
     free(ode->y1);
     ode->y1 = NULL;
@@ -818,14 +819,14 @@ void reb_free_ode(struct reb_ode* ode){
     
     struct reb_simulation* r = ode->r;
     if (r){ // only do this is ode is in a simulation
-        struct reb_simulation_integrator_bs* ri_bs = &r->ri_bs;
+        struct reb_integrator_bs* ri_bs = &r->ri_bs;
         int shift = 0;
-        for (int s=0; s < r->odes_N; s++){
+        for (int s=0; s < r->N_odes; s++){
             if (r->odes[s] == ode){
-                r->odes_N--;
+                r->N_odes--;
                 shift = 1;
             }
-            if (shift && s <= r->odes_N ){
+            if (shift && s <= r->N_odes ){
                 r->odes[s] = r->odes[s+1];
             }
         }
@@ -839,11 +840,11 @@ void reb_free_ode(struct reb_ode* ode){
 
 
 void reb_integrator_bs_reset(struct reb_simulation* r){
-    struct reb_simulation_integrator_bs* ri_bs = &(r->ri_bs);
+    struct reb_integrator_bs* ri_bs = &(r->ri_bs);
     
     // Delete nbody ode but not others
     if (ri_bs->nbody_ode){
-        reb_free_ode(ri_bs->nbody_ode);
+        reb_ode_free(ri_bs->nbody_ode);
         ri_bs->nbody_ode = NULL;
     }
 
@@ -853,12 +854,12 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     
     free(ri_bs->coeff);
     ri_bs->coeff = NULL;
-    free(ri_bs->costPerStep);
-    ri_bs->costPerStep = NULL;
-    free(ri_bs->costPerTimeUnit);
-    ri_bs->costPerTimeUnit = NULL;
-    free(ri_bs->optimalStep);
-    ri_bs->optimalStep = NULL;
+    free(ri_bs->cost_per_step);
+    ri_bs->cost_per_step = NULL;
+    free(ri_bs->cost_per_time_unit);
+    ri_bs->cost_per_time_unit = NULL;
+    free(ri_bs->optimal_step);
+    ri_bs->optimal_step = NULL;
     
     
     // Default settings
@@ -866,8 +867,8 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->eps_rel          = 1e-8;
     ri_bs->max_dt           = 0;
     ri_bs->min_dt           = 0; 
-    ri_bs->firstOrLastStep  = 1;
-    ri_bs->previousRejected = 0;
-    ri_bs->targetIter       = 0;
+    ri_bs->first_or_last_step  = 1;
+    ri_bs->previous_rejected = 0;
+    ri_bs->target_iter       = 0;
         
 }

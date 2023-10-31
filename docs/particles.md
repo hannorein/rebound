@@ -33,7 +33,7 @@ You then access the particle using the simulation's `particles` array:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation, add particles ...
     r->particles[0].x = 1;
     ```
@@ -48,12 +48,12 @@ You then access the particle using the simulation's `particles` array:
 Alternatively you can assign a hash value to particles and access them using the following syntax: 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt(r, "m", 1.); 
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.); 
     r->particles[0].hash = reb_hash("star");
-    reb_add_fmt(r, "a", 1.); 
+    reb_simulation_add_fmt(r, "a", 1.); 
     r->particles[1].hash = reb_hash("planet1");
-    struct reb_particle* p = reb_get_particle_by_hash(r, reb_hash("planet1"));
+    struct reb_particle* p = reb_simulation_particle_by_hash(r, reb_hash("planet1"));
     ```
 
 === "Python"

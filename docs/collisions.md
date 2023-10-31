@@ -13,7 +13,7 @@ By default REBOUND does not search for collisions.
 You can manually set the collision routine to NONE with the following code:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->collision = REB_COLLISION_NONE;
     ```
 
@@ -29,7 +29,7 @@ It checks for instantaneous overlaps between every particle pair.
 The following code enables this module:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->collision = REB_COLLISION_DIRECT;
     ```
 
@@ -51,7 +51,7 @@ It assumes particles travelled along straight lines during the timestep and migh
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->collision = REB_COLLISION_LINE;
     ```
 
@@ -69,8 +69,8 @@ Below is an example on how to enable the tree based collision search.
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_configure_box(r, 10, 1, 1, 1); # confine the simulation to a box of size 10
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_configure_box(r, 10, 1, 1, 1); # confine the simulation to a box of size 10
     r->collision = REB_COLLISION_TREE;
     ```
 
@@ -92,8 +92,8 @@ Below is an example on how to enable the line-tree collision search.
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_configure_box(r, 10, 1, 1, 1); # confine the simulation to a box of size 10
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_configure_box(r, 10, 1, 1, 1); # confine the simulation to a box of size 10
     r->collision = REB_COLLISION_LINETREE;
     ```
 
@@ -124,7 +124,7 @@ It can also be set manually using the following syntax:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_halt;
     ```
@@ -151,7 +151,7 @@ The following example shows how to set up a hard-sphere collision resolve functi
         // Here, we just use a constant coefficient of restitution
         return 0.5;
     }
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->collision = REB_COLLISION_DIRECT;
     r->coefficient_of_restitution = coefficient_of_restitution_constant;
     r->collision_resolve = reb_collision_resolve_hardsphere;
@@ -180,7 +180,7 @@ The following example shows how to set up a hard-sphere collision resolve functi
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
     ```
@@ -214,7 +214,7 @@ Here is a short example on how to write a simple custom collision resolve functi
     }
 
     int main(int argc, char* argv[]){
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         r->collision = REB_COLLISION_DIRECT;
         r->collision_resolve = collision_print_only;
     }
@@ -243,5 +243,5 @@ It contains information about which particles are involved in the collision and,
 `int p2`
 :   Index corresponding to one of the colliding particles
 
-`struct reb_ghostbox gb`
+`struct reb_vec6d gb`
 :   Shift of particle p1 due to a collision across periodic and shearing sheet boundaries. All entries are zero if a normal collision occurs.

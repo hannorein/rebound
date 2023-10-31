@@ -15,15 +15,15 @@ void heartbeat(struct reb_simulation* r);
 double e_init; // initial energy
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->dt = 0.0012*2.*M_PI;                
     r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->ri_mercurius.hillfac = 3;            // By default the switching radius is three times the hill radius
+    r->ri_mercurius.r_crit_hill = 3;            // By default the switching radius is three times the hill radius
     r->heartbeat  = heartbeat;
 
     struct reb_particle star = {0};
     star.m = 1;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
     
     // Add planets
     int N_planets = 3;
@@ -34,24 +34,24 @@ int main(int argc, char* argv[]){
         planet.m = 2e-3; 
         planet.x = a; 
         planet.vy = v;
-        reb_add(r, planet); 
+        reb_simulation_add(r, planet); 
     }
-    reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-    e_init = reb_tools_energy(r);
+    reb_simulation_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    e_init = reb_simulation_energy(r);
     remove("energy.txt");
 
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 10.*2.*M_PI)){  
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 10.*2.*M_PI)){  
+        reb_simulation_output_timing(r, 0);
     }
-    if (reb_output_check(r, 2.*M_PI)){  
+    if (reb_simulation_output_check(r, 2.*M_PI)){  
         // Once per year, output the relative energy error to a text file
         FILE* f = fopen("energy.txt","ab");
-        reb_integrator_synchronize(r);
-        double e = reb_tools_energy(r);
+        reb_simulation_synchronize(r);
+        double e = reb_simulation_energy(r);
         fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
         fclose(f);
     }

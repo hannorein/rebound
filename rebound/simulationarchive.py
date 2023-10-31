@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_long, c_ulong, c_ulonglong, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t, c_char
+from ctypes import Structure, c_double, POINTER, c_float, c_int, c_uint, c_uint32, c_int64, c_uint64, c_int64, c_uint64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, pointer, cast, c_size_t, c_char
 from .simulation import Simulation, BINARY_WARNINGS
 from . import clibrebound 
 import os
@@ -6,31 +6,29 @@ import sys
 import math
 import warnings
 
-POINTER_REB_SIM = POINTER(Simulation) 
-
-class SimulationArchive(Structure):
+class Simulationarchive(Structure):
     """
-    SimulationArchive Class.
+    Simulationarchive Class.
 
-    The SimulationArchive is a binary file format which includes all
+    The Simulationarchive is a binary file format which includes all
     settings, constants as well as particle positions and velocities.
     This makes it possible to reproduce a simulation exactly 
-    (down to the last bit). The SimulationArchive allows you to add
+    (down to the last bit). The Simulationarchive allows you to add
     an arbitrary number of snapshots. Simulations can be reconstructed
-    from these snapshots. Since version 2 of the SimulationArchive
+    from these snapshots. Since version 2 of the Simulationarchive
     (Spring 2018), you can change anything in-between snapshots,
     including settings like the integrator, the timestep, the number of
     particles. The file format is efficient in that only data
-    that changed is stored in the SimulationArchive file. This is all
+    that changed is stored in the Simulationarchive file. This is all
     done automatically. All the user has to do is call the function
     to create a snapshot.
-    The SimulationArchive thus allows for fast access to any long-running 
+    The Simulationarchive thus allows for fast access to any long-running 
     simulations. For a full discussion of the functionality see the paper 
     by Rein & Tamayo 2017.
 
     Requirements
     ------------
-    When using the SimulationArchive, the user is responsible for 
+    When using the Simulationarchive, the user is responsible for 
     setting up any additional forces or post-timestep modifications that 
     were  present during the original integration. 
         
@@ -38,7 +36,7 @@ class SimulationArchive(Structure):
     --------
     Here is a simple example:
 
-    >>> sa = rebound.SimulationArchive("archive.bin")
+    >>> sa = rebound.Simulationarchive("archive.bin")
     >>> sim = sa.getSimulation(t=1e6)
     >>> print(sim.particles[1])
     >>> for sim in sa:
@@ -48,13 +46,11 @@ class SimulationArchive(Structure):
     _fields_ = [("_inf", c_void_p),
                 ("_filename", c_char_p),
                 ("version", c_int), 
-                ("size_first", c_long), 
-                ("size_snapshot", c_long), 
                 ("auto_interval", c_double), 
                 ("auto_walltime", c_double), 
-                ("auto_step", c_ulonglong), 
-                ("nblobs", c_long), 
-                ("offset64", POINTER(c_uint64)), 
+                ("auto_step", c_uint64), 
+                ("nblobs", c_int64), 
+                ("offset", POINTER(c_uint64)), 
                 ("t", POINTER(c_double)) 
                 ]
     def __repr__(self):
@@ -65,7 +61,7 @@ class SimulationArchive(Structure):
         Arguments
         ---------
         filename : str or bytes
-            Filename of the SimulationArchive file to be opened.
+            Filename of the Simulationarchive file to be opened.
             Can also be of type bytes to read from memory (uses fmemopen).
         setup : function
             Function to be called everytime a simulation object is created
@@ -74,10 +70,10 @@ class SimulationArchive(Structure):
             Arguments passed to setup function.
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
-        reuse_index : SimulationArchive
-            Useful when loading many large SimulationArchives. After loading the first 
-            SimulationArchive, pass it as this argument when opening other SimulationArchives with the 
-            same shape. Note: SimulationArchive shape must be exactly the same to avoid unexpected
+        reuse_index : Simulationarchive
+            Useful when loading many large Simulationarchives. After loading the first 
+            Simulationarchive, pass it as this argument when opening other Simulationarchives with the 
+            same shape. Note: Simulationarchive shape must be exactly the same to avoid unexpected
             behaviour.
 
         """
@@ -87,10 +83,10 @@ class SimulationArchive(Structure):
         w = c_int(0)
         if reuse_index:
             # Optimized loading
-            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
+            clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
 
         else:
-            clibrebound.reb_read_simulationarchive_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
+            clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
@@ -103,19 +99,19 @@ class SimulationArchive(Structure):
             # Store for later
             self.warnings = w
         if self.nblobs<1:
-            RuntimeError("Something went wrong. SimulationArchive is empty.")
+            RuntimeError("Something went wrong. Simulationarchive is empty.")
         self.tmin = self.t[0]
         self.tmax = self.t[self.nblobs-1]
 
     def __del__(self):
         if self._b_needsfree_ == 1: 
-            clibrebound.reb_free_simulationarchive_pointers(byref(self))
+            clibrebound.reb_simulationarchive_free_pointers(byref(self))
 
     def __str__(self):
         """
         Returns a string with details of this simulation archive.
         """
-        return "<rebound.SimulationArchive instance, snapshots={0} >".format(str(len(self)))
+        return "<rebound.Simulationarchive instance, snapshots={0} >".format(str(len(self)))
 
     def __getitem__(self, key):
         PY3 = sys.version_info[0] == 3
@@ -135,7 +131,7 @@ class SimulationArchive(Structure):
         
         w = c_int(0)
         sim = Simulation()
-        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim), byref(self), c_long(key), byref(w))
+        clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim), byref(self), c_int64(key), byref(w))
         if self.setup:
             self.setup(sim, *self.setup_args)
         for majorerror, value, message in BINARY_WARNINGS:
@@ -152,10 +148,10 @@ class SimulationArchive(Structure):
         return sim
     
     def __setitem__(self, key, value):
-        raise AttributeError("Cannot modify SimulationArchive.")
+        raise AttributeError("Cannot modify Simulationarchive.")
 
     def __delitem__(self, key):
-        raise AttributeError("Cannot modify SimulationArchive.")
+        raise AttributeError("Cannot modify Simulationarchive.")
 
     def __iter__(self):
         for i in range(len(self)):
@@ -215,7 +211,7 @@ class SimulationArchive(Structure):
         As the `mode` argument is set to `close`, the simulation
         will be integrated from the nearest snapshot to the request time.
 
-        >>> sa = rebound.SimulationArchive("archive.bin")
+        >>> sa = rebound.Simulationarchive("archive.bin")
         >>> sim = sa.getSimulation(t=1e6, mode="close")
         >>> print(sim.particles[1])
         >>> for sim in sa:
@@ -228,7 +224,7 @@ class SimulationArchive(Structure):
         bi, bt = self._getSnapshotIndex(t)
         sim = Simulation()
         w = c_int(0)
-        clibrebound.reb_create_simulation_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
+        clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
 
         # Restore function pointers and any additional setup required by the user provided functions
         if self.setup:
@@ -285,15 +281,15 @@ class SimulationArchive(Structure):
 
         Examples
         --------
-        The following example reads in a SimulationArchive and plots
+        The following example reads in a Simulationarchive and plots
         the trajectories as Cubic Bezier Curves. It also plots the 
-        actual datapoints stored in the SimulationArchive. 
-        Note that the SimulationArchive needs to have enough
+        actual datapoints stored in the Simulationarchive. 
+        Note that the Simulationarchive needs to have enough
         datapoints to allow for smooth and reasonable orbits.
 
         >>> from matplotlib.path import Path
         >>> import matplotlib.patches as patches
-        >>> sa = rebound.SimulationArchive("test.bin")
+        >>> sa = rebound.Simulationarchive("test.bin")
         >>> verts, codes = sa.getBezierPaths(origin=0)
         >>> fig, ax = plt.subplots()
         >>> for j in range(sa[0].N):

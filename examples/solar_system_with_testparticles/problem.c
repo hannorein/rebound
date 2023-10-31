@@ -17,7 +17,7 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation_from_binary("ss-2020-03-03.bin");
+    struct reb_simulation* r = reb_simulation_create_from_file("ss-2020-03-03.bin", 0);
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
     r->integrator   = REB_INTEGRATOR_WHFAST;
@@ -31,16 +31,16 @@ int main(int argc, char* argv[]){
         double e = reb_random_uniform(r, 0.01,0.2);
         double omega = reb_random_uniform(r, 0.,2.*M_PI);
         double f = reb_random_uniform(r, 0.,2.*M_PI);
-        struct reb_particle p = reb_tools_orbit_to_particle(1.,r->particles[0],0.,a,e,0.,0.,omega,f);
-        reb_add(r, p); 
+        struct reb_particle p = reb_particle_from_orbit(1.,r->particles[0],0.,a,e,0.,0.,omega,f);
+        reb_simulation_add(r, p); 
     }
-    reb_move_to_com(r);
-    reb_integrate(r, INFINITY);
+    reb_simulation_move_to_com(r);
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 100.)){
-        reb_output_timing(r, INFINITY);
+    if (reb_simulation_output_check(r, 100.)){
+        reb_simulation_output_timing(r, INFINITY);
     }
 }
 

@@ -24,7 +24,7 @@ def simulation(integrator):
         times = np.logspace(2,5,num=1000)
         for t in times:
             sim.integrate(t,0)
-            print("%e %e %e %e %e %e %e %e\n" %(sim.t, sim.calculate_megno(), particles[0].x, particles[1].x, particles[2].x, particles[3].x, particles[4].x, particles[5].x),file=f)
+            print("%e %e %e %e %e %e %e %e\n" %(sim.t, sim.megno(), particles[0].x, particles[1].x, particles[2].x, particles[3].x, particles[4].x, particles[5].x),file=f)
 
 simulation("whfast")
 simulation("ias15")

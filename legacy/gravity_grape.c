@@ -66,9 +66,9 @@ void reb_calculate_acceleration(void){
 	// Set domain size and minimum mass for GRAPE.
 	// This could be made more precise.
 	double gravity_boxsize 	= 0;
-	if (boxsize.x*((double)nghostx+1.)>gravity_boxsize) gravity_boxsize = boxsize.x*((double)nghostx+1.);
-	if (boxsize.y*((double)nghosty+1.)>gravity_boxsize) gravity_boxsize = boxsize.y*((double)nghosty+1.);
-	if (boxsize.z*((double)nghostz+1.)>gravity_boxsize) gravity_boxsize = boxsize.z*((double)nghostz+1.);
+	if (boxsize.x*((double)N_ghost_x+1.)>gravity_boxsize) gravity_boxsize = boxsize.x*((double)N_ghost_x+1.);
+	if (boxsize.y*((double)N_ghost_y+1.)>gravity_boxsize) gravity_boxsize = boxsize.y*((double)N_ghost_y+1.);
+	if (boxsize.z*((double)N_ghost_z+1.)>gravity_boxsize) gravity_boxsize = boxsize.z*((double)N_ghost_z+1.);
 	g5_set_range(-gravity_boxsize,gravity_boxsize, gravity_minimum_mass);
 	if (gravity_range){
 		g5_set_eta(gravity_range);
@@ -118,15 +118,15 @@ void reb_calculate_acceleration(void){
 	}
 
 	// Summing over all Ghost Boxes
-	for (int gbx=-nghostx; gbx<=nghostx; gbx++){
-	for (int gby=-nghosty; gby<=nghosty; gby++){
-	for (int gbz=-nghostz; gbz<=nghostz; gbz++){
+	for (int gbx=-N_ghost_x; gbx<=N_ghost_x; gbx++){
+	for (int gby=-N_ghost_y; gby<=N_ghost_y; gby++){
+	for (int gbz=-N_ghost_z; gbz<=N_ghost_z; gbz++){
 		struct ghostbox gb = boundaries_get_ghostbox(gbx,gby,gbz);
 		// Copy passive (i) particle mass and positions
 		for(int i=0;i<ni;i++){
-			xi[i][0] 	= gb.shiftx+particles[i].x;
-			xi[i][1] 	= gb.shifty+particles[i].y;
-			xi[i][2] 	= gb.shiftz+particles[i].z;
+			xi[i][0] 	= gb.x+particles[i].x;
+			xi[i][1] 	= gb.y+particles[i].y;
+			xi[i][2] 	= gb.z+particles[i].z;
 		}
 		// Summing over all particle pairs
 		int nj_cur = 0;

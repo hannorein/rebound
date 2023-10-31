@@ -7,9 +7,9 @@ If you want to use a chaos indicator in REBOUND, first add all the particles to 
 Then, initialize the variational particles and MEGNO variables with
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init(r);
+    reb_simulation_init_megno(r);
     ```
 === "Python"
     ```python
@@ -26,9 +26,9 @@ See the discussion on [random sampling](c_randomsamplingfunctions.md) for more d
 If you want to have reproducible result, you can specify the seed manually:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init_seed(r, 0); // 0 is the initial seed
+    reb_simulation_init_megno_seed(r, 0); // 0 is the initial seed
     ```
 === "Python"
     ```python
@@ -42,12 +42,12 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init_seed(r);
+    reb_simulation_init_megno_seed(r);
     // ... integrate ...
-    printf("MEGNO = %f\n", reb_tools_calculate_megno(r));
-    printf("LCN = %f\n", reb_tools_calculate_lyapunov(r));
+    printf("MEGNO = %f\n", reb_simulation_megno(r));
+    printf("LCN = %f\n", reb_simulation_lyapunov(r));
     ```
 === "Python"
     ```python
@@ -56,7 +56,7 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
     sim.init_megno()
     # ... integrate ...
     print("MEGNO", sim.calculate_megno())
-    print("LCN", sim.calculate_lyapunov())
+    print("LCN", sim.lyapunov())
     ```
 !!! Note
     Using chaos indicators is not always straightforward. 
@@ -82,9 +82,9 @@ This variable contains the natural logarithm of all rescaling factors that have 
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init_seed(r);
+    reb_simulation_init_megno_seed(r);
     // ... integrate ...
     struct reb_variational_configuration* vc = &(r->var_config[0]);
     double log_x = log(r->particles[vc->index].x) + vc->lrescale; // log of x coordinate of variational particle

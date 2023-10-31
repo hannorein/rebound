@@ -17,7 +17,7 @@ void heartbeat(struct reb_simulation* const r);
 double tmax = 40.;
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->dt             = 1e-4;        // initial timestep.
     r->integrator        = REB_INTEGRATOR_IAS15;
@@ -34,13 +34,13 @@ int main(int argc, char* argv[]){
     p.m      = 0;    // massless
     p.x     = 1;
     p.vx     = -1;
-    reb_add(r, p); 
+    reb_simulation_add(r, p); 
 
     // Delete previous output
     remove("r.txt");    
 
     // Do the integration
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 }
 
 void additional_forces(struct reb_simulation* const r){
@@ -57,8 +57,8 @@ void additional_forces(struct reb_simulation* const r){
 
 void heartbeat(struct reb_simulation* const r){
     // Output some information to the screen every 100th timestep
-    if(reb_output_check(r, 100.*r->dt)){
-        reb_output_timing(r, tmax);
+    if(reb_simulation_output_check(r, 100.*r->dt)){
+        reb_simulation_output_timing(r, tmax);
     }
     // Output the particle position to a file every timestep.
     const struct reb_particle* const particles = r->particles;

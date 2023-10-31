@@ -326,12 +326,12 @@ void reb_collision_search(void){
 void detect_collision_of_pair(int pt1, int pt2, int proci, int crossing, struct ghostbox gb){
 	struct reb_particle* p1 = &(particles[pt1]);
 	struct reb_particle* p2 = &(particles[pt2]);
-	double x  = p1->x  + gb.shiftx	- p2->x;
-	double y  = p1->y  + gb.shifty	- p2->y;
-	double z  = p1->z  + gb.shiftz	- p2->z;
-	double vx = p1->vx + gb.shiftvx	- p2->vx;
-	double vy = p1->vy + gb.shiftvy - p2->vy;
-	double vz = p1->vz + gb.shiftvz	- p2->vz;
+	double x  = p1->x  + gb.x	- p2->x;
+	double y  = p1->y  + gb.y	- p2->y;
+	double z  = p1->z  + gb.z	- p2->z;
+	double vx = p1->vx + gb.vx	- p2->vx;
+	double vy = p1->vy + gb.vy - p2->vy;
+	double vz = p1->vz + gb.vz	- p2->vz;
 
 	double a = vx*vx + vy*vy + vz*vz;
 	double b = 2.*(vx*x + vy*y + vz*z);

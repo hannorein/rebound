@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
 	softening		= 1e-6;
 	dt 			= 1.0e-2*2.*M_PI;
 	N_active 		= 2; 	// Only the star and the planet have non-zero mass
-	root_nx	= 2; root_ny	= 2; root_nz	= 1; 
+	N_root_x	= 2; N_root_y	= 2; N_root_z	= 1; 
 	init_box();
 	
 	// Initial conditions for star
@@ -77,8 +77,8 @@ int main(int argc, char* argv[]){
 	star.vx   -= com_vx; 	star.vy   -= com_vy; 	star.vz   -= com_vz;
 
 	// Add active particles on all nodes
-	reb_add(r, star);
-	reb_add(r, planet);
+	reb_simulation_add(r, star);
+	reb_simulation_add(r, planet);
 #ifdef MPI
 	// Create _N particles in total.
 	_N /= mpi_num;
@@ -111,11 +111,11 @@ int main(int argc, char* argv[]){
 }
 
 void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(2.*M_PI)){
-		reb_output_timing();
+	if (reb_simulation_output_check(2.*M_PI)){
+		reb_simulation_output_timing();
 	}
-	if (reb_output_check(2.*M_PI)){
-		reb_output_ascii("positions.txt");
+	if (reb_simulation_output_check(2.*M_PI)){
+		reb_simulation_output_ascii("positions.txt");
 	}
 }
 

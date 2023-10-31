@@ -34,9 +34,9 @@ struct reb_simulationarchive_blob {
 You create a binary file if you save a simulation
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    reb_output_binary(r, "snapshot.bin");
+    reb_simulation_save_to_file(r, "snapshot.bin");
     ```
 
 === "Python"
@@ -80,8 +80,8 @@ The last binary field of type `9999` (`end`) to indicate that the snapshot ends 
     Before version 3.27 data was encoded using the enum `REB_BINARY_FIELD_TYPE` instead of `reb_binary_field_descriptor_list`.
 
 
-## SimulationArchive file (multiple snapshots)
-The binary file above can also be interpeted as a SimulationArchive with one snapshot. 
+## Simulationarchive file (multiple snapshots)
+The binary file above can also be interpeted as a Simulationarchive with one snapshot. 
 You can append many (millions!) of snapshots to a binary file.
 REBOUND only stores data that has changed since the original snapshot (typically the particle data, time, etc).
 This allows for a very compact file size, while still maintaining bit-wise reproducibility. 
@@ -90,7 +90,7 @@ Each snapshot is separated by a `reb_simulationarchive_blob`.
 The blob contains the offset to the previous and next blobs. 
 This allows REBOUND to quickly jump from one blob in the archive to the next.
 Between the blobs are the same `reb_binary_field`s we already encountered for a binary file with one snapshot.
-Thus, a SimulationArchive file with multiple snapshots looks something like this:
+Thus, a Simulationarchive file with multiple snapshots looks something like this:
 
 ```
 reb_binary_field:

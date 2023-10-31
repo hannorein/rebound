@@ -23,7 +23,7 @@ void heartbeat(struct reb_simulation* r);
 void force_J2(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-	struct reb_simulation* r = reb_create_simulation();
+	struct reb_simulation* r = reb_simulation_create();
 	// Setup constants
 	r->integrator			= REB_INTEGRATOR_IAS15;
 	r->dt 				= 1e-6;			// initial timestep
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
 	// Planet
 	struct reb_particle planet = {0};
 	planet.m  = Mplanet;
-	reb_add(r, planet);
+	reb_simulation_add(r, planet);
 
 	struct reb_particle p = {0};			// test particle 
 	double a = Rplanet*3.;				// small distance from planet (makes J2 important)
@@ -42,9 +42,9 @@ int main(int argc, char* argv[]){
 	p.vy = v;
 	p.x += planet.x; 	p.y += planet.y; 	p.z += planet.z;
 	p.vx += planet.vx; 	p.vy += planet.vy; 	p.vz += planet.vz;
-	reb_add(r, p); 
+	reb_simulation_add(r, p); 
 	
-	reb_move_to_com(r);
+	reb_simulation_move_to_com(r);
 
 	remove("a.txt");					// delete previous output
 
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 	r->heartbeat 		= heartbeat;
 	r->additional_forces 	= force_J2;
 
-	reb_integrate(r, tmax);
+	reb_simulation_integrate(r, tmax);
 }
 
 void force_J2(struct reb_simulation* r){
@@ -83,15 +83,15 @@ void force_J2(struct reb_simulation* r){
 }
 
 void heartbeat(struct reb_simulation* r){
-	if(reb_output_check(r, 4000.*r->dt)){				// output something to screen	
-		reb_output_timing(r, tmax);
+	if(reb_simulation_output_check(r, 4000.*r->dt)){				// output something to screen	
+		reb_simulation_output_timing(r, tmax);
 	}
-	if(reb_output_check(r,M_PI*2.*0.01)){				// output semimajor axis to file
+	if(reb_simulation_output_check(r,M_PI*2.*0.01)){				// output semimajor axis to file
 		FILE* f = fopen("a.txt","ab");
 		const struct reb_particle planet = r->particles[0];
 		const int N = r->N;
 		for (int i=1;i<N;i++){
-			struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[i],planet);
+			struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[i],planet);
 			fprintf(f,"%.15e\t%.15e\t%.15e\t%.15e\n",r->t,o.a,o.e,o.omega);
 		}
 		fclose(f);

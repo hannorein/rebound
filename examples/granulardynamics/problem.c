@@ -16,7 +16,7 @@ void heartbeat(struct reb_simulation* r);
 int N_border;
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->dt             = 1e-1;    
     r->gravity        = REB_GRAVITY_NONE;
@@ -26,9 +26,9 @@ int main(int argc, char* argv[]){
     // Override default collision handling to account for border particles
     r->collision_resolve     = collision_resolve_hardsphere_withborder;
     r->heartbeat        = heartbeat;
-    reb_configure_box(r, 20., 1, 1, 4);
+    reb_simulation_configure_box(r, 20., 1, 1, 4);
     
-    r->nghostx = 1; r->nghosty = 1; r->nghostz = 0;     
+    r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;     
     
     double N_part     = 0.00937*r->boxsize.x*r->boxsize.y*r->boxsize.z;
 
@@ -49,12 +49,12 @@ int main(int argc, char* argv[]){
             // Add particle to bottom
             pt.z         = -r->boxsize.z/2.+radius;
             pt.vy         = 1;
-            reb_add(r, pt);
+            reb_simulation_add(r, pt);
 
             // Add particle to top
             pt.z         = r->boxsize.z/2.-radius;
             pt.vy         = -1;
-            reb_add(r, pt);
+            reb_simulation_add(r, pt);
         }
     }
 
@@ -72,15 +72,15 @@ int main(int argc, char* argv[]){
         pt.r         = radius;                        // m
         pt.m         = 1;
         pt.hash        = 2;
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
     }
 
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 10.*r->dt)){
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 10.*r->dt)){
+        reb_simulation_output_timing(r, 0);
     }
 }
 
@@ -89,16 +89,16 @@ int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb
     struct reb_particle* particles = r->particles;
     struct reb_particle p1 = particles[c.p1];
     struct reb_particle p2 = particles[c.p2];
-    struct reb_ghostbox gb = c.gb;
+    struct reb_vec6d gb = c.gb;
     double m21  = p1.m  /  p2.m; 
-    double x21  = p1.x + gb.shiftx  - p2.x; 
-    double y21  = p1.y + gb.shifty  - p2.y; 
-    double z21  = p1.z + gb.shiftz  - p2.z; 
+    double x21  = p1.x + gb.x  - p2.x; 
+    double y21  = p1.y + gb.y  - p2.y; 
+    double z21  = p1.z + gb.z  - p2.z; 
     double rp   = p1.r+p2.r;
     if (rp*rp < x21*x21 + y21*y21 + z21*z21) return 0;
-    double vx21 = p1.vx + gb.shiftvx - p2.vx; 
-    double vy21 = p1.vy + gb.shiftvy - p2.vy; 
-    double vz21 = p1.vz + gb.shiftvz - p2.vz; 
+    double vx21 = p1.vx + gb.vx - p2.vx; 
+    double vy21 = p1.vy + gb.vy - p2.vy; 
+    double vz21 = p1.vz + gb.vz - p2.vz; 
     if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
     // Bring the to balls in the xy plane.
     // NOTE: this could probabely be an atan (which is faster than atan2)
@@ -130,13 +130,13 @@ int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb
         particles[c.p2].vx -=    m21*dvx2n;
         particles[c.p2].vy -=    m21*dvy2nn;
         particles[c.p2].vz -=    m21*dvz2nn;
-        particles[c.p2].lastcollision = t;
+        particles[c.p2].last_collision = t;
     }
     if (p1.hash!=1){
         particles[c.p1].vx +=    dvx2n; 
         particles[c.p1].vy +=    dvy2nn; 
         particles[c.p1].vz +=    dvz2nn; 
-        particles[c.p1].lastcollision = t;
+        particles[c.p1].last_collision = t;
     }
     return 0; // Do not remove any particle from simulation.
 }

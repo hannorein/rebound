@@ -21,7 +21,7 @@ double betaparticles = 0.01;     // Beta parameter, defined as the ratio of radi
 double tmax = 1e6;
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->integrator        = REB_INTEGRATOR_IAS15;
     r->dt             = 1e-4;    // Initial timestep.
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
     // Star
     struct reb_particle star = {0};
     star.m  = 1.;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
 
 
     // planet 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
     planet.m  = 1e-3;
     planet.x  = 1; 
     planet.vy = sqrt(r->G*(star.m+planet.m)/planet.x);
-    reb_add(r, planet);
+    reb_simulation_add(r, planet);
     
     
 
@@ -55,14 +55,14 @@ int main(int argc, char* argv[]){
         p.vy = v;
         p.x += planet.x;     p.y += planet.y;     p.z += planet.z;
         p.vx += planet.vx;     p.vy += planet.vy;     p.vz += planet.vz;
-        reb_add(r, p); 
+        reb_simulation_add(r, p); 
     }
     
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
 
     remove("a.txt");    
 
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 }
 
 void force_radiation(struct reb_simulation* r){
@@ -94,10 +94,10 @@ void force_radiation(struct reb_simulation* r){
 }
 
 void heartbeat(struct reb_simulation* r){
-    if(reb_output_check(r, M_PI*2.)){
-        reb_output_timing(r, tmax);
+    if(reb_simulation_output_check(r, M_PI*2.)){
+        reb_simulation_output_timing(r, tmax);
     }
-    if(reb_output_check(r, M_PI*2.)){ // output every year
+    if(reb_simulation_output_check(r, M_PI*2.)){ // output every year
         FILE* f = fopen("a.txt","ab");
         const struct reb_particle* particles = r->particles;
         const struct reb_particle planet = particles[1];

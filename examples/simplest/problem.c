@@ -10,13 +10,13 @@
 #include <stdlib.h>
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
 
-    reb_add_fmt(r, "m", 1.);                // Central object
-    reb_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
-    reb_add_fmt(r, "a e", 1.4, 0.1);        // Massless test particle 
+    reb_simulation_add_fmt(r, "m", 1.);                // Central object
+    reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
+    reb_simulation_add_fmt(r, "a e", 1.4, 0.1);        // Massless test particle 
 
-    reb_integrate(r,100.);
+    reb_simulation_integrate(r,100.);
 
     for (int i=0; i<r->N; i++){
         struct reb_particle p = r->particles[i];
@@ -25,10 +25,10 @@ int main(int argc, char* argv[]) {
     struct reb_particle primary = r->particles[0];
     for (int i=1; i<r->N; i++){
         struct reb_particle p = r->particles[i];
-        struct reb_orbit o = reb_tools_particle_to_orbit(r->G, p, primary);
+        struct reb_orbit o = reb_orbit_from_particle(r->G, p, primary);
         printf("%f %f %f\n", o.a, o.e, o.f);
     }
 
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 

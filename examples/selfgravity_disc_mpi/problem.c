@@ -23,7 +23,7 @@
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* const r = reb_create_simulation();
+    struct reb_simulation* const r = reb_simulation_create();
     // Setup constants
     r->integrator    = REB_INTEGRATOR_LEAPFROG;
     r->gravity    = REB_GRAVITY_TREE;
@@ -36,10 +36,10 @@ int main(int argc, char* argv[]){
     // Setup root boxes for gravity tree.
     // Here, we use 2x2=4 root boxes (each with length 'boxsize')
     // This allows you to use up to 4 MPI nodes.
-    reb_configure_box(r,boxsize,2,2,1);
+    reb_simulation_configure_box(r,boxsize,2,2,1);
 
     // Initialize MPI
-    // This can only be done after reb_configure_box.
+    // This can only be done after reb_simulation_configure_box.
     reb_mpi_init(r);
 
     // Setup particles only on master node
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m         = 1;
     if (r->mpi_id==0){
-        reb_add(r, star);
+        reb_simulation_add(r, star);
     }
     for (int i=0;i<N;i++){
         struct reb_particle pt = {0};
@@ -68,27 +68,27 @@ int main(int argc, char* argv[]){
         pt.vy         = -vkep * cos(phi);
         pt.vz         = 0;
         pt.m         = disc_mass/(double)N;
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
     }
     r->heartbeat = heartbeat;
 
 #ifdef OPENGL
     // Hack to artificially increase particle array.
     // This cannot be done once OpenGL is activated. 
-    r->allocated_N *=8;
-    r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocated_N);
+    r->N_allocated *=8;
+    r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->N_allocated);
 #endif // OPENGL
     
     // Start the integration
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 
     // Cleanup
     reb_mpi_finalize(r);
-    reb_free_simulation(r); 
+    reb_simulation_free(r); 
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_output_check(r,10.0*r->dt)){
-        reb_output_timing(r,0);
+    if (reb_simulation_output_check(r,10.0*r->dt)){
+        reb_simulation_output_timing(r,0);
     }
 }

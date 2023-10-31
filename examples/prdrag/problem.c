@@ -17,7 +17,7 @@ double betaparticles = 0.01;     // beta parameter, defined as the ratio of radi
 double tmax = 1e5;
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // setup constants
     r->dt                 = 1e-3;            // initial timestep
     r->integrator            = REB_INTEGRATOR_IAS15;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
     // star is at rest at origin
     struct reb_particle star = {0};
     star.m  = 1.;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
 
     // dust particles are initially on a circular orbit
     while(r->N<2){
@@ -41,12 +41,12 @@ int main(int argc, char* argv[]){
         double phi = reb_random_uniform(r, 0,2.*M_PI);        // random phase
         p.x  = a*sin(phi);  p.y  = a*cos(phi); 
         p.vx = -v*cos(phi); p.vy = v*sin(phi);
-        reb_add(r, p); 
+        reb_simulation_add(r, p); 
     }
 
     remove("radius.txt");                    // remove previous output
 
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 }
 
 void radiation_forces(struct reb_simulation* r){
@@ -77,10 +77,10 @@ void radiation_forces(struct reb_simulation* r){
 }
 
 void heartbeat(struct reb_simulation* r){
-    if(reb_output_check(r, 400.)){                        // print some information to screen
-        reb_output_timing(r, tmax);;
+    if(reb_simulation_output_check(r, 400.)){                        // print some information to screen
+        reb_simulation_output_timing(r, tmax);;
     }
-    if(reb_output_check(r, M_PI*2.*1000.)){                     // output radial distance every 1000 years
+    if(reb_simulation_output_check(r, M_PI*2.*1000.)){                     // output radial distance every 1000 years
         FILE* f = fopen("radius.txt","ab");
         struct reb_particle* particles = r->particles;
         const struct reb_particle star = particles[0];

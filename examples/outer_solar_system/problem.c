@@ -12,7 +12,7 @@
  *
  * The example also works with the WHFAST symplectic integrator. We turn
  * off safe-mode to allow fast and accurate simulations with the symplectic
- * corrector. If an output is required, you need to call ireb_integrator_synchronize()
+ * corrector. If an output is required, you need to call ireb_simulation_synchronize()
  * before accessing the particle structure.
  */
 #include <stdio.h>
@@ -54,7 +54,7 @@ double tmax = 7.3e7;
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     const double k = 0.01720209895; // Gaussian constant
     r->dt = 40;            // in days
@@ -78,24 +78,24 @@ int main(int argc, char* argv[]) {
         p.vy = ss_vel[i][1];
         p.vz = ss_vel[i][2];
         p.m = ss_mass[i];
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
 
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
 
     r->N_active = r->N - 1; // Pluto is treated as a test-particle.
 
-    double e_initial = reb_tools_energy(r);
+    double e_initial = reb_simulation_energy(r);
 
     // Start integration
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 
-    double e_final = reb_tools_energy(r);
+    double e_final = reb_simulation_energy(r);
     printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
 }
 
 void heartbeat(struct reb_simulation* const r) {
-    if (reb_output_check(r, 10000000.)) {
-        reb_output_timing(r, tmax);
+    if (reb_simulation_output_check(r, 10000000.)) {
+        reb_simulation_output_timing(r, tmax);
     }
 }

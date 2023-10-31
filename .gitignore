@@ -33,6 +33,9 @@ venv/
 dist/
 build/
 src/rebound
+src/*.wasm
+src/*.js
+src/*.html
 .ipynb_checkpoints
 ipython_examples/*.png
 others/*.tar.gz

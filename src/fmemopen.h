@@ -25,4 +25,6 @@
 #ifndef FMEMOPEN_H
 #define FMEMOPEN_H
 
+FILE *reb_fmemopen( void *buf, size_t len, const char *type); // Used as a workaround for old MacOS and Windows.
+
 #endif 	// FMEMOPEN_H

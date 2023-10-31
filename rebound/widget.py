@@ -583,12 +583,12 @@ class Widget(DOMWidget):
             Note that the prefix can include a directory.
         resetCounter : (bool), optional
             Resets the output counter to 0. 
-        archive : (rebound.SimulationArchive), optional
-            Use a REBOUND SimulationArchive. Thus, instead of integratating the 
-            Simulation from the current time, it will use the SimulationArchive
+        archive : (rebound.Simulationarchive), optional
+            Use a REBOUND Simulationarchive. Thus, instead of integratating the 
+            Simulation from the current time, it will use the Simulationarchive
             to load a snapshot. See examples for usage.
         mode : (string), optional
-            Mode to use when querying the SimulationArchive. See SimulationArchive
+            Mode to use when querying the Simulationarchive. See Simulationarchive
             documentation for details. By default the value is "snapshot".
 
         Examples

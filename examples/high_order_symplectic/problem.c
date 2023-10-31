@@ -53,7 +53,7 @@ double ss_mass[10] =
 
 struct reb_simulation* create_sim(){
     // Setup constants
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->dt             = 4;          // in days
     r->G              = 1.0e-34;    // in AU^3 / kg / day^2.
     
@@ -63,7 +63,7 @@ struct reb_simulation* create_sim(){
         p.x  = ss_pos[i][0];         p.y  = ss_pos[i][1];         p.z  = ss_pos[i][2];
         p.vx = ss_vel[i][0];         p.vy = ss_vel[i][1];         p.vz = ss_vel[i][2];
         p.m  = ss_mass[i];
-        reb_add(r, p); 
+        reb_simulation_add(r, p); 
     }
 
     return r;
@@ -76,12 +76,12 @@ int main(int argc, char* argv[]){
     {    
         struct reb_simulation* r = create_sim();
         r->integrator           = REB_INTEGRATOR_WHFAST;
-        r->ri_whfast.safe_mode  = 0;        // Turn off safe mode (Need to call reb_integrator_synchronize() before outputs).
+        r->ri_whfast.safe_mode  = 0;        // Turn off safe mode (Need to call reb_simulation_synchronize() before outputs).
         r->ri_whfast.corrector  = 17;       // 17th order symplectic corrector
         r->ri_whfast.kernel     = REB_WHFAST_KERNEL_LAZY;   // Using the lazy implementers method which supports additional forces
-        double e_init = reb_tools_energy(r);
-        reb_integrate(r, tmax);
-        double e = reb_tools_energy(r);
+        double e_init = reb_simulation_energy(r);
+        reb_simulation_integrate(r, tmax);
+        double e = reb_simulation_energy(r);
         printf("Relative energy error WHCKL: %e\n", fabs((e_init-e)/e_init));
     }
     
@@ -93,9 +93,9 @@ int main(int argc, char* argv[]){
         r->integrator           = REB_INTEGRATOR_SABA; 
         r->ri_saba.type  = REB_SABA_10_6_4;    // Chooses the type of SABA integrator. 
         r->ri_saba.safe_mode  = 0;        // Turn off safe mode. 
-        double e_init = reb_tools_energy(r);
-        reb_integrate(r, tmax);
-        double e = reb_tools_energy(r);
+        double e_init = reb_simulation_energy(r);
+        reb_simulation_integrate(r, tmax);
+        double e = reb_simulation_energy(r);
         printf("Relative energy error SABA(10,6,4):    %e\n", fabs((e_init-e)/e_init));
     }
     // Run the same simulation with the standard WH method.
@@ -103,9 +103,9 @@ int main(int argc, char* argv[]){
         struct reb_simulation* r = create_sim();
         r->integrator           = REB_INTEGRATOR_WHFAST; // All WHFast settings default to the standard WH method
         r->ri_whfast.safe_mode  = 0;        // Turn off safe mode. 
-        double e_init = reb_tools_energy(r);
-        reb_integrate(r, tmax);
-        double e = reb_tools_energy(r);
+        double e_init = reb_simulation_energy(r);
+        reb_simulation_integrate(r, tmax);
+        double e = reb_simulation_energy(r);
         printf("Relative energy error WH:    %e\n", fabs((e_init-e)/e_init));
     }
 }

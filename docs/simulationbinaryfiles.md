@@ -5,15 +5,15 @@ Below is an example on how to work with binary files.
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    reb_integrate(r, 10); // integrate 
-    reb_output_binary(r, "snapshot.bin");
-    reb_free_simulation(r); 
+    reb_simulation_integrate(r, 10); // integrate 
+    reb_simulation_save_to_file(r, "snapshot.bin");
+    reb_simulation_free(r); 
 
-    struct reb_simulation* r2 = reb_create_simulation_from_binary("snapshot.bin);
-    reb_integrate(r2, 20); // continue integration
-    reb_free_simulation(r2); 
+    struct reb_simulation* r2 = reb_simulation_create_from_file("snapshot.bin", 0);
+    reb_simulation_integrate(r2, 20); // continue integration
+    reb_simulation_free(r2); 
     ```
 
 === "Python"

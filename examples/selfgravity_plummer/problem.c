@@ -15,7 +15,7 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
 
     // Setup system characteristics
     int _N = 100;             // Number of particles
@@ -35,14 +35,14 @@ int main(int argc, char* argv[]){
     r->softening     = 0.01*r0;    // Softening parameter
     r->heartbeat    = heartbeat;
     
-    reb_configure_box(r, 20.*r0, 1, 1, 1);
-    reb_tools_init_plummer(r, _N, M, R);    // Adds particles
-    reb_move_to_com(r); 
-    reb_integrate(r, INFINITY);
+    reb_simulation_configure_box(r, 20.*r0, 1, 1, 1);
+    reb_simulation_add_plummer(r, _N, M, R);    // Adds particles
+    reb_simulation_move_to_com(r); 
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 10.0*r->dt)){
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 10.0*r->dt)){
+        reb_simulation_output_timing(r, 0);
     }
 }

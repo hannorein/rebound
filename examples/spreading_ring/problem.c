@@ -11,7 +11,7 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->integrator    = REB_INTEGRATOR_LEAPFROG;
     r->collision    = REB_COLLISION_TREE;
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     r->heartbeat    = heartbeat;
     
     double boxsize = 4.8;
-    reb_configure_box(r, boxsize, 1, 1, 1);
+    reb_simulation_configure_box(r, boxsize, 1, 1, 1);
 
     // Setup particles
     int _N = 1000;
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m         = 1;
     star.r        = 0.01;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
 
     while(r->N<_N){
         struct reb_particle pt = {0};
@@ -46,14 +46,14 @@ int main(int argc, char* argv[]){
         pt.vy         = -vkep * cos(phi);
         pt.m         = 0.0001;
         pt.r         = .3/sqrt((double)_N);
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
     }
 
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 0.0*r->dt)){
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 0.0*r->dt)){
+        reb_simulation_output_timing(r, 0);
     }
 }

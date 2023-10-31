@@ -38,7 +38,7 @@ def simulation(par):
         warnings.simplefilter("always")
         sim.integrate(1e3*2.*np.pi)
 
-    return [sim.calculate_megno(),1./(sim.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
+    return [sim.megno(),1./(sim.lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 ### Setup grid and run many simulations in parallel

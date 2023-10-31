@@ -46,7 +46,7 @@ nav:
       - "Just getting started":
         - c_examples/simplest.md
         - c_examples/heartbeat.md
-        - c_examples/reb_add_fmt.md
+        - c_examples/reb_simulation_add_fmt.md
         - ipython_examples/Churyumov-Gerasimenko.ipynb
         - ipython_examples/WHFast.ipynb
         - c_examples/solar_system.md
@@ -90,8 +90,8 @@ nav:
       - ipython_examples/Checkpoints.ipynb
       - c_examples/simulationarchive.md
       - c_examples/restarting_simulation.md
-      - ipython_examples/SimulationArchive.ipynb
-      - ipython_examples/SimulationArchiveRestart.ipynb
+      - ipython_examples/Simulationarchive.ipynb
+      - ipython_examples/SimulationarchiveRestart.ipynb
     - "Variational equations":
       - c_examples/variational_equations.md
       - ipython_examples/VariationalEquations.ipynb

@@ -56,16 +56,16 @@ double e_init;
 double tmax;
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->dt             = 4;                // in days
     tmax            = 7.3e10;            // 200 Myr
     r->G            = 1.4880826e-34;        // in AU^3 / kg / day^2.
-    r->ri_whfast.safe_mode     = 0;        // Turn off safe mode. Need to call reb_integrator_synchronize() before outputs. 
+    r->ri_whfast.safe_mode     = 0;        // Turn off safe mode. Need to call reb_simulation_synchronize() before outputs. 
     r->ri_whfast.corrector     = 11;        // 11th order symplectic corrector
     r->integrator        = REB_INTEGRATOR_WHFAST;
     r->heartbeat        = heartbeat;
-    r->exact_finish_time = 1; // Finish exactly at tmax in reb_integrate(). Default is already 1.
+    r->exact_finish_time = 1; // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
     //r->integrator        = REB_INTEGRATOR_IAS15;        // Alternative non-symplectic integrator
 
     // Initial conditions
@@ -74,20 +74,20 @@ int main(int argc, char* argv[]){
         p.x  = ss_pos[i][0];         p.y  = ss_pos[i][1];         p.z  = ss_pos[i][2];
         p.vx = ss_vel[i][0];         p.vy = ss_vel[i][1];         p.vz = ss_vel[i][2];
         p.m  = ss_mass[i];
-        reb_add(r, p); 
+        reb_simulation_add(r, p); 
     }
-    reb_move_to_com(r);
-    e_init = reb_tools_energy(r);
+    reb_simulation_move_to_com(r);
+    e_init = reb_simulation_energy(r);
     remove("energy.txt");
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 10000.)){
-        reb_output_timing(r, tmax);
-        reb_integrator_synchronize(r);
+    if (reb_simulation_output_check(r, 10000.)){
+        reb_simulation_output_timing(r, tmax);
+        reb_simulation_synchronize(r);
         FILE* f = fopen("energy.txt","ab");
-        double e = reb_tools_energy(r);
+        double e = reb_simulation_energy(r);
         fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
         fclose(f);
     }

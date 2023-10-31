@@ -2,7 +2,7 @@ import rebound
 import unittest
 import warnings
 
-class TestSimulationArchiveMatrix(unittest.TestCase):
+class TestSimulationarchiveMatrix(unittest.TestCase):
     pass
 
 def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=3):
@@ -10,7 +10,7 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
         if keep_unsynchronized==1:
             sim = rebound.Simulation("test.bin")
         else:
-            sa = rebound.SimulationArchive("test.bin")
+            sa = rebound.Simulationarchive("test.bin")
             sim = sa.getSimulation(sa.tmax,keep_unsynchronized=0)
     else:
         sim = rebound.Simulation()
@@ -20,8 +20,7 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = integrator
         sim.dt = 0.1313
-        if simulationarchive_version==1:
-            sim.simulationarchive_version = 1
+        sim.simulationarchive_version = simulationarchive_version
         if safe_mode==False:
             sim.ri_whfast.safe_mode = 1
             sim.ri_mercurius.safe_mode = 1
@@ -33,7 +32,7 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
             sim.add(m=1e-4,a=1.2,e=0.04,omega=0.21,M=1.41,inc=0.21,Omega=1.1)
             sim.N_active = sim.N-1 # one test particle
         if interval:
-            sim.automateSimulationArchive("test.bin", interval, deletefile=True)
+            sim.automateSimulationarchive("test.bin", interval, delete_file=True)
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         sim.integrate(tmax,exact_finish_time=0)
@@ -73,7 +72,7 @@ def create_test_sa_synchronize(params):
         if params['keep_unsynchronized']==1:
             sim2 = rebound.Simulation("test.bin")
         else:
-            sa = rebound.SimulationArchive("test.bin")
+            sa = rebound.Simulationarchive("test.bin")
             sim2 = sa.getSimulation(sa.tmax,keep_unsynchronized=0)
         compareSim(self,sim1,sim2)
         with warnings.catch_warnings(record=True) as w:
@@ -94,7 +93,7 @@ for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabac
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
-                    for simulationarchive_version in [2,3]: # no longer testing version 1!
+                    for simulationarchive_version in [3]: # no longer testing versions 1 and 2!
                         params = {'safe_mode':safe_mode,
                                 'integrator':integrator,
                                 'G':G, 
@@ -106,14 +105,14 @@ for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabac
                         for key in params:
                             name += "_"+key+":"+str(params[key])
                         test_method.__name__ = name
-                        setattr(TestSimulationArchiveMatrix, name,test_method)
+                        setattr(TestSimulationarchiveMatrix, name,test_method)
                         
                         test_method = create_test_sa_synchronize(params)
                         name = "test_sa_synchronize"
                         for key in params:
                             name += "_"+key+":"+str(params[key])
                         test_method.__name__ = name
-                        setattr(TestSimulationArchiveMatrix, name,test_method)
+                        setattr(TestSimulationarchiveMatrix, name,test_method)
 
 if __name__ == "__main__":
     unittest.main()

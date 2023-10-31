@@ -51,4 +51,7 @@ void reb_integrator_part2(struct reb_simulation* r);
  * set before a binary file is outputted.
  */
 void reb_integrator_init(struct reb_simulation* r);
+
+// Update accelerations.
+void reb_simulation_update_acceleration(struct reb_simulation* r);
 #endif

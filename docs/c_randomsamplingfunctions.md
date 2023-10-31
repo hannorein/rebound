@@ -9,7 +9,7 @@ The `rand_seed` variable is stored in binary files. This makes the random number
 
 The following example draws a number in the interval between 0 and $2\pi$ from a uniform distribution.
 ```c
-struct reb_simulation* r = reb_create_simulation();
+struct reb_simulation* r = reb_simulation_create();
 double phi = reb_random_uniform(r, 0., 2.*M_PI);
 ```
 

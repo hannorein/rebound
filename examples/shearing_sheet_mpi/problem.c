@@ -20,7 +20,7 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->opening_angle2    = .5;                    // This determines the precission of the tree code gravity calculation.
     r->integrator        = REB_INTEGRATOR_SEI;
@@ -48,12 +48,12 @@ int main(int argc, char* argv[]) {
     }
     // Setup 2x2 root boxes.
     // This allows you to use up to 4 MPI nodes.
-    reb_configure_box(r, boxsize, 2, 2, 1);
-    // Initialize MPI (this only works after reb_configure_box)
+    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+    // Initialize MPI (this only works after reb_simulation_configure_box)
     reb_mpi_init(r);
-    r->nghostx = 2;
-    r->nghosty = 2;
-    r->nghostz = 0;
+    r->N_ghost_x = 2;
+    r->N_ghost_y = 2;
+    r->N_ghost_z = 0;
     
     // Initial conditions
     printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
@@ -82,22 +82,22 @@ int main(int argc, char* argv[]) {
         pt.r         = radius;                        // m
         double        particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
         pt.m         = particle_mass;     // kg
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
         mass += particle_mass;
     }
 #ifdef OPENGL
     // Hack to artificially increase particle array.
     // This cannot be done once OpenGL is activated. 
-    r->allocated_N *=8;
-    r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocated_N);
+    r->N_allocated *=8;
+    r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->N_allocated);
 #endif // OPENGL
 
     // Start the integration
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 
     // Cleanup
     reb_mpi_finalize(r);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 
 // This example is using a custom velocity dependend coefficient of restitution
@@ -110,12 +110,12 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+        reb_simulation_output_timing(r, 0);
         //reb_output_append_velocity_dispersion("veldisp.txt");
     }
-    if (reb_output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
-        //reb_output_ascii("position.txt");
+    if (reb_simulation_output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
+        //reb_simulation_output_ascii("position.txt");
     }
 }
 

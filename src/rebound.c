@@ -31,6 +31,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include "rebound.h"
+#include "fmemopen.h" // own implementation of fmemopen
 #include "integrator.h"
 #include "integrator_saba.h"
 #include "integrator_whfast.h"
@@ -61,19 +62,19 @@
 void usleep(__int64 usec);
 #endif // _WIN32
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
-const int reb_max_messages_N = 10;
+const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "3.28.4";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
-static int reb_error_message_waiting(struct reb_simulation* const r);
+static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
 
-void reb_steps(struct reb_simulation* const r, unsigned int N_steps){
+void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
     for (unsigned int i=0;i<N_steps;i++){
-        reb_step(r);
+        reb_simulation_step(r);
     }
 }
-void reb_step(struct reb_simulation* const r){
+void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime
     struct timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
@@ -81,7 +82,7 @@ void reb_step(struct reb_simulation* const r){
     // A 'DKD'-like integrator will do the first 'D' part.
     PROFILING_START()
     if (r->pre_timestep_modifications){
-        reb_integrator_synchronize(r);
+        reb_simulation_synchronize(r);
         r->pre_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
@@ -101,7 +102,7 @@ void reb_step(struct reb_simulation* const r){
 
         // Update tree (this will remove particles which left the box)
         PROFILING_START()
-        reb_tree_update(r);          
+        reb_simulation_update_tree(r);          
         PROFILING_STOP(PROFILING_CAT_GRAVITY)
     }
 
@@ -113,7 +114,7 @@ void reb_step(struct reb_simulation* const r){
 
     if (r->tree_root!=NULL && r->gravity==REB_GRAVITY_TREE){
         // Update center of mass and quadrupole moments in tree in preparation of force calculation.
-        reb_tree_update_gravity_data(r); 
+        reb_simulation_update_tree_gravity_data(r); 
 #ifdef MPI
         // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
         reb_tree_prepare_essential_tree_for_gravity(r);
@@ -137,14 +138,14 @@ void reb_step(struct reb_simulation* const r){
     reb_integrator_part2(r);
     
     if (r->post_timestep_modifications){
-        reb_integrator_synchronize(r);
+        reb_simulation_synchronize(r);
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
     
     if (r->N_var){
-        reb_var_rescale(r);
+        reb_simulation_rescale_var(r);
     }
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -154,7 +155,7 @@ void reb_step(struct reb_simulation* const r){
     reb_boundary_check(r);     
     if (r->tree_needs_update){
         // Update tree (this will remove particles which left the box)
-        reb_tree_update(r);          
+        reb_simulation_update_tree(r);          
     }
     PROFILING_STOP(PROFILING_CAT_BOUNDARY)
 
@@ -192,21 +193,21 @@ void reb_message(struct reb_simulation* const r, char type, const char* const ms
         }
     }else{
         if (r->messages==NULL){
-            r->messages = calloc(reb_max_messages_N,sizeof(char*));
+            r->messages = calloc(reb_N_max_messages,sizeof(char*));
         }
         int n = 0;
-        for (;n<reb_max_messages_N;n++){
+        for (;n<reb_N_max_messages;n++){
             if (r->messages[n]==NULL){
                 break;
             }
         }
-        if (n==reb_max_messages_N){
+        if (n==reb_N_max_messages){
             free(r->messages[0]);
-            for (int i=0;i<reb_max_messages_N-1;i++){
+            for (int i=0;i<reb_N_max_messages-1;i++){
                 r->messages[i] = r->messages[i+1];
             }
-            r->messages[reb_max_messages_N-1] = NULL;
-            n= reb_max_messages_N-1;
+            r->messages[reb_N_max_messages-1] = NULL;
+            n= reb_N_max_messages-1;
         }
         r->messages[n] = malloc(sizeof(char*)*reb_max_messages_length);
         r->messages[n][0] = type;
@@ -214,26 +215,26 @@ void reb_message(struct reb_simulation* const r, char type, const char* const ms
     }
 }
 
-void reb_warning(struct reb_simulation* const r, const char* const msg){
+void reb_simulation_warning(struct reb_simulation* const r, const char* const msg){
     reb_message(r, 'w', msg);
 }
 
-void reb_error(struct reb_simulation* const r, const char* const msg){
+void reb_simulation_error(struct reb_simulation* const r, const char* const msg){
     reb_message(r, 'e', msg);
 }
 
-void reb_stop(struct reb_simulation* const r){
+void reb_simulation_stop(struct reb_simulation* const r){
     r->status = REB_EXIT_USER;
 }
 
-int reb_get_next_message(struct reb_simulation* const r, char* const buf){
+int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf){
     if (r->messages){
         char* w0 = r->messages[0];
         if (w0){
-            for(int i=0;i<reb_max_messages_N-1;i++){
+            for(int i=0;i<reb_N_max_messages-1;i++){
                 r->messages[i] = r->messages[i+1];
             }
-            r->messages[reb_max_messages_N-1] = NULL;
+            r->messages[reb_N_max_messages-1] = NULL;
             strcpy(buf,w0);
             free(w0);
             return 1;
@@ -242,9 +243,9 @@ int reb_get_next_message(struct reb_simulation* const r, char* const buf){
     return 0;
 }
 
-static int reb_error_message_waiting(struct reb_simulation* const r){
+static int reb_simulation_error_message_waiting(struct reb_simulation* const r){
     if (r->messages){
-        for (int i=0;i<reb_max_messages_N;i++){
+        for (int i=0;i<reb_N_max_messages;i++){
             if (r->messages[i]!=NULL){
                 if (r->messages[i][0]=='e'){
                     return 1;
@@ -256,18 +257,18 @@ static int reb_error_message_waiting(struct reb_simulation* const r){
 }
 
 
-void reb_configure_box(struct reb_simulation* const r, const double root_size, const int root_nx, const int root_ny, const int root_nz){
+void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const int N_root_x, const int N_root_y, const int N_root_z){
     r->root_size = root_size;
-    r->root_nx = root_nx;
-    r->root_ny = root_ny;
-    r->root_nz = root_nz;
+    r->N_root_x = N_root_x;
+    r->N_root_y = N_root_y;
+    r->N_root_z = N_root_z;
     // Setup box sizes
-    r->boxsize.x = r->root_size *(double)r->root_nx;
-    r->boxsize.y = r->root_size *(double)r->root_ny;
-    r->boxsize.z = r->root_size *(double)r->root_nz;
-    r->root_n = r->root_nx*r->root_ny*r->root_nz;
+    r->boxsize.x = r->root_size *(double)r->N_root_x;
+    r->boxsize.y = r->root_size *(double)r->N_root_y;
+    r->boxsize.z = r->root_size *(double)r->N_root_z;
+    r->N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
-    if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
+    if (r->N_root_x <=0 || r->N_root_y <=0 || r->N_root_z <= 0){
         reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
     }
 }
@@ -275,8 +276,8 @@ void reb_configure_box(struct reb_simulation* const r, const double root_size, c
 void reb_mpi_init(struct reb_simulation* const r){
     reb_communication_mpi_init(r,0,NULL);
     // Make sure domain can be decomposed into equal number of root boxes per node.
-    if ((r->root_n/r->mpi_num)*r->mpi_num != r->root_n){
-        if (r->mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->root_n,r->mpi_num);
+    if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
+        if (r->mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
         exit(-1);
     }
     printf("MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
@@ -299,12 +300,12 @@ static void set_dp7_null(struct reb_dp7 * dp){
     dp->p6 = NULL;
 }
 
-void reb_free_simulation(struct reb_simulation* const r){
-    reb_free_pointers(r);
+void reb_simulation_free(struct reb_simulation* const r){
+    reb_simulation_free_pointers(r);
     free(r);
 }
 
-void reb_free_pointers(struct reb_simulation* const r){
+void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
     }
@@ -343,7 +344,7 @@ void reb_free_pointers(struct reb_simulation* const r){
         free(r->particle_lookup_table);
     }
     if (r->messages){
-        for (int i=0;i<reb_max_messages_N;i++){
+        for (int i=0;i<reb_N_max_messages;i++){
             free(r->messages[i]);
         }
     }
@@ -356,31 +357,31 @@ void reb_free_pointers(struct reb_simulation* const r){
     if (r->var_config){
         free(r->var_config);
     }
-    for (int s=0; s<r->odes_N; s++){
+    for (int s=0; s<r->N_odes; s++){
         r->odes[s]->r = NULL;
     }
 }
 
-void reb_reset_temporary_pointers(struct reb_simulation* const r){
+void reb_simulation_reset_temporary_pointers(struct reb_simulation* const r){
     // Note: this will not clear the particle array.
-    r->gravity_cs_allocated_N    = 0;
+    r->N_allocated_gravity_cs    = 0;
     r->gravity_cs           = NULL;
-    r->collisions_allocated_N    = 0;
+    r->N_allocated_collisions    = 0;
     r->collisions           = NULL;
     r->extras               = NULL;
     r->messages             = NULL;
     // ********** Lookup Table
     r->particle_lookup_table = NULL;
     r->N_lookup = 0;
-    r->allocated_N_lookup = 0;
+    r->N_allocated_lookup = 0;
     // ********** WHFAST
-    r->ri_whfast.allocated_N    = 0;
-    r->ri_whfast.allocated_Ntemp= 0;
+    r->ri_whfast.N_allocated    = 0;
+    r->ri_whfast.N_allocated_tmp= 0;
     r->ri_whfast.p_jh           = NULL;
     r->ri_whfast.p_temp         = NULL;
     r->ri_whfast.keep_unsynchronized = 0;
     // ********** IAS15
-    r->ri_ias15.allocated_N      = 0;
+    r->ri_ias15.N_allocated      = 0;
     set_dp7_null(&(r->ri_ias15.g));
     set_dp7_null(&(r->ri_ias15.b));
     set_dp7_null(&(r->ri_ias15.csb));
@@ -395,18 +396,18 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_ias15.csv         = NULL;
     r->ri_ias15.csa0        = NULL;
     r->ri_ias15.at          = NULL;
-    r->ri_ias15.map_allocated_N      = 0;
+    r->ri_ias15.N_allocated_map      = 0;
     r->ri_ias15.map         = NULL;
     // ********** MERCURIUS
-    r->ri_mercurius.allocated_N = 0;
-    r->ri_mercurius.allocated_N_additionalforces = 0;
-    r->ri_mercurius.dcrit_allocated_N = 0;
+    r->ri_mercurius.N_allocated = 0;
+    r->ri_mercurius.N_allocated_additional_forces = 0;
+    r->ri_mercurius.N_allocated_dcrit = 0;
     r->ri_mercurius.dcrit = NULL;
     r->ri_mercurius.particles_backup = NULL;
-    r->ri_mercurius.particles_backup_additionalforces = NULL;
+    r->ri_mercurius.particles_backup_additional_forces = NULL;
     r->ri_mercurius.encounter_map = NULL;
     // ********** JANUS
-    r->ri_janus.allocated_N = 0;
+    r->ri_janus.N_allocated = 0;
     r->ri_janus.p_int = NULL;
     r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
     r->ri_janus.order = 6;
@@ -414,11 +415,11 @@ void reb_reset_temporary_pointers(struct reb_simulation* const r){
     r->ri_janus.scale_vel = 1e-16;
     // ********** ODEs
     r->odes = NULL;
-    r->odes_N = 0;
-    r->odes_allocated_N = 0;
+    r->N_odes = 0;
+    r->N_allocated_odes = 0;
 }
 
-int reb_reset_function_pointers(struct reb_simulation* const r){
+int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
     int wasnotnull = 0;
     if (r->coefficient_of_restitution ||
         r->collision_resolve ||
@@ -443,20 +444,20 @@ int reb_reset_function_pointers(struct reb_simulation* const r){
     return wasnotnull;
 }
 
-struct reb_simulation* reb_create_simulation(){
+struct reb_simulation* reb_simulation_create(){
     struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
-    reb_init_simulation(r);
+    reb_simulation_init(r);
     return r;
 }
 
 
-void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_input_binary_messages* warnings){
+void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings){
     char* bufp;
     size_t sizep;
-    reb_output_binary_to_stream(r, &bufp,&sizep);
+    reb_simulation_save_to_stream(r, &bufp,&sizep);
     
-    reb_reset_temporary_pointers(r_copy);
-    reb_reset_function_pointers(r_copy);
+    reb_simulation_reset_temporary_pointers(r_copy);
+    reb_simulation_reset_function_pointers(r_copy);
     r_copy->simulationarchive_filename = NULL;
     
     // Set to old version by default. Will be overwritten if new version was used.
@@ -465,25 +466,26 @@ void reb_copy_simulation_with_messages(struct reb_simulation* r_copy,  struct re
     FILE* fin = reb_fmemopen(bufp, sizep, "r");
     reb_input_fields(r_copy, fin, warnings);
     fclose(fin);
-    
+
+    free(bufp);
 }
 
-char* reb_diff_simulations_char(struct reb_simulation* r1, struct reb_simulation* r2){
+char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2){
     char* bufp1;
     char* bufp2;
     char* bufp;
     size_t sizep1, sizep2, size;
-    reb_output_binary_to_stream(r1, &bufp1,&sizep1);
-    reb_output_binary_to_stream(r2, &bufp2,&sizep2);
+    reb_simulation_save_to_stream(r1, &bufp1,&sizep1);
+    reb_simulation_save_to_stream(r2, &bufp2,&sizep2);
 
-    reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
+    reb_binary_diff(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
     
     free(bufp1);
     free(bufp2);
     return bufp;
 }
 
-int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
+int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
     if (output_option!=1 && output_option!=2){
         // Not implemented
         return -1;
@@ -491,20 +493,20 @@ int reb_diff_simulations(struct reb_simulation* r1, struct reb_simulation* r2, i
     char* bufp1;
     char* bufp2;
     size_t sizep1, sizep2;
-    reb_output_binary_to_stream(r1, &bufp1,&sizep1);
-    reb_output_binary_to_stream(r2, &bufp2,&sizep2);
+    reb_simulation_save_to_stream(r1, &bufp1,&sizep1);
+    reb_simulation_save_to_stream(r2, &bufp2,&sizep2);
 
-    int ret = reb_binary_diff_with_options(bufp1, sizep1, bufp2, sizep2, NULL, NULL, output_option);
+    int ret = reb_binary_diff(bufp1, sizep1, bufp2, sizep2, NULL, NULL, output_option);
     
     free(bufp1);
     free(bufp2);
     return ret;
 }
 
-struct reb_simulation* reb_copy_simulation(struct reb_simulation* r){
-    struct reb_simulation* r_copy = reb_create_simulation();
-    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    reb_copy_simulation_with_messages(r_copy,r,&warnings);
+struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
+    struct reb_simulation* r_copy = reb_simulation_create();
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    reb_simulation_copy_with_messages(r_copy,r,&warnings);
     r = reb_input_process_warnings(r, warnings);
     return r_copy;
 }
@@ -515,10 +517,10 @@ void reb_clear_pre_post_pointers(struct reb_simulation* const r){
     r->post_timestep_modifications  = NULL;
 }
 
-void reb_init_simulation(struct reb_simulation* r){
-    reb_tools_init_srand(r);
-    reb_reset_temporary_pointers(r);
-    reb_reset_function_pointers(r);
+void reb_simulation_init(struct reb_simulation* r){
+    r->rand_seed = reb_tools_get_rand_seed();
+    reb_simulation_reset_temporary_pointers(r);
+    reb_simulation_reset_function_pointers(r);
     r->t        = 0; 
     r->G        = 1;
     r->softening    = 0;
@@ -526,25 +528,25 @@ void reb_init_simulation(struct reb_simulation* r){
     r->dt_last_done = 0.;
     r->steps_done = 0;
     r->root_size    = -1;
-    r->root_nx  = 1;
-    r->root_ny  = 1;
-    r->root_nz  = 1;
-    r->root_n   = 1;
-    r->nghostx  = 0;
-    r->nghosty  = 0;
-    r->nghostz  = 0;
+    r->N_root_x  = 1;
+    r->N_root_y  = 1;
+    r->N_root_z  = 1;
+    r->N_root   = 1;
+    r->N_ghost_x  = 0;
+    r->N_ghost_y  = 0;
+    r->N_ghost_z  = 0;
     r->N        = 0;    
-    r->allocated_N   = 0;    
+    r->N_allocated   = 0;    
     r->N_active     = -1;   
     r->var_rescale_warning   = 0;   
     r->particle_lookup_table = NULL;
     r->hash_ctr = 0;
     r->N_lookup = 0;
-    r->allocated_N_lookup = 0;
+    r->N_allocated_lookup = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;
     r->N_var    = 0;    
-    r->var_config_N = 0;    
+    r->N_var_config = 0;    
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    
     r->exit_max_distance    = 0;    
@@ -563,11 +565,9 @@ void reb_init_simulation(struct reb_simulation* r){
 
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
-    r->collisions_Nlog  = 0;    
+    r->collisions_log_n  = 0;    
     r->collision_resolve_keep_sorted   = 0;    
     
-    r->simulationarchive_size_first    = 0;    
-    r->simulationarchive_size_snapshot = 0;    
     r->simulationarchive_version       = 3;
     r->simulationarchive_auto_interval = 0.;    
     r->simulationarchive_auto_walltime = 0.;    
@@ -607,7 +607,7 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_whfast512.gr_potential = 0;
     r->ri_whfast512.keep_unsynchronized = 0;
     r->ri_whfast512.recalculate_constants = 1;
-    r->ri_whfast512.systems_N = 1;
+    r->ri_whfast512.N_systems = 1;
     
     // ********** SABA
     r->ri_saba.type = REB_SABA_10_6_4;
@@ -629,10 +629,10 @@ void reb_init_simulation(struct reb_simulation* r){
     r->ri_mercurius.mode = 0;
     r->ri_mercurius.safe_mode = 1;
     r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
-    r->ri_mercurius.recalculate_dcrit_this_timestep = 0;
+    r->ri_mercurius.recalculate_r_crit_this_timestep = 0;
     r->ri_mercurius.is_synchronized = 1;
-    r->ri_mercurius.encounterN = 0;
-    r->ri_mercurius.hillfac = 3;
+    r->ri_mercurius.encounter_N = 0;
+    r->ri_mercurius.r_crit_hill = 3;
     
     // ********** EOS
     r->ri_eos.n = 2;
@@ -654,18 +654,18 @@ void reb_init_simulation(struct reb_simulation* r){
     r->mpi_id = 0;                            
     r->mpi_num = 0;                           
     r->particles_send = NULL;  
-    r->particles_send_N = 0;                  
-    r->particles_send_Nmax = 0;               
+    r->N_particles_send = 0;                  
+    r->N_particles_send_max = 0;               
     r->particles_recv = NULL;     
-    r->particles_recv_N = 0;                  
-    r->particles_recv_Nmax = 0;               
+    r->N_particles_recv = 0;                  
+    r->N_particles_recv_max = 0;               
     
     r->tree_essential_send = NULL;
-    r->tree_essential_send_N = 0;             
-    r->tree_essential_send_Nmax = 0;          
+    r->N_tree_essential_send = 0;             
+    r->N_tree_essential_send_max = 0;          
     r->tree_essential_recv = NULL;
-    r->tree_essential_recv_N = 0;             
-    r->tree_essential_recv_Nmax = 0;          
+    r->N_tree_essential_recv = 0;             
+    r->N_tree_essential_recv_max = 0;          
 #endif // MPI
 #ifdef OPENMP
     printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
@@ -678,7 +678,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
         usleep(1000);
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
-    if (reb_error_message_waiting(r)){
+    if (reb_simulation_error_message_waiting(r)){
         r->status = REB_EXIT_ERROR;
     }
     if (r->status>=0){
@@ -697,12 +697,12 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
                         r->status = REB_EXIT_SUCCESS;
                     }else{
                         // not there yet, do another step.
-                        reb_integrator_synchronize(r);
+                        reb_simulation_synchronize(r);
                         r->dt = tmax-r->t;
                     }
                 }else{
                     r->status = REB_RUNNING_LAST_STEP; // Do one small step, then exit.
-                    reb_integrator_synchronize(r);
+                    reb_simulation_synchronize(r);
                     if (r->dt_last_done!=0.){   // If first timestep is also last, do not use dt_last_done (which would be 0.)
                         *last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
                     }
@@ -723,12 +723,12 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
     }
 #ifndef MPI
     if (!r->N){
-        if (!r->odes_N){
-            reb_warning(r,"No particles found. Will exit.");
+        if (!r->N_odes){
+            reb_simulation_warning(r,"No particles found. Will exit.");
             r->status = REB_EXIT_NOPARTICLES; // Exit now.
         }else{
             if (r->integrator != REB_INTEGRATOR_BS){
-                reb_warning(r,"No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
+                reb_simulation_warning(r,"No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
                 r->status = REB_EXIT_NOPARTICLES; // Exit now.
             }
         }
@@ -799,7 +799,7 @@ void reb_sigint_handler(int signum) {
     }
 }
 
-static void* reb_integrate_raw(void* args){
+static void* reb_simulation_integrate_raw(void* args){
     reb_sigint = 0;
     signal(SIGINT, reb_sigint_handler);
     struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
@@ -818,7 +818,7 @@ static void* reb_integrate_raw(void* args){
     r->dt_last_done = 0.; // Reset in case first timestep attempt will fail
 
     if (r->testparticle_hidewarnings==0 && reb_particle_check_testparticles(r)){
-        reb_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
+        reb_simulation_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
 
     r->status = REB_RUNNING;
@@ -830,7 +830,7 @@ static void* reb_integrate_raw(void* args){
         }
 #endif // OPENGL
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
-        reb_step(r); 
+        reb_simulation_step(r); 
         reb_run_heartbeat(r);
         if (reb_sigint== 1){
             r->status = REB_EXIT_SIGINT;
@@ -845,7 +845,7 @@ static void* reb_integrate_raw(void* args){
         }
     }
 
-    reb_integrator_synchronize(r);
+    reb_simulation_synchronize(r);
     if (r->display_heartbeat){                          // Display Heartbeat
         r->display_heartbeat(r); 
     }
@@ -857,7 +857,7 @@ static void* reb_integrate_raw(void* args){
     return NULL;
 }
 
-enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
+enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax){
     struct reb_thread_info thread_info = {
         .r = r,
         .tmax = tmax, 
@@ -868,7 +868,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
                 if (r->display_data){
                     r->display_data->opengl_enabled = 0;
                 }
-                reb_integrate_raw(&thread_info);
+                reb_simulation_integrate_raw(&thread_info);
             }
             break;
         case REB_VISUALIZATION_OPENGL:
@@ -878,17 +878,17 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
                 r->display_data->opengl_enabled = 1;
 
                 pthread_t compute_thread;
-                if (pthread_create(&compute_thread,NULL,reb_integrate_raw,&thread_info)){
-                    reb_error(r, "Error creating display thread.");
+                if (pthread_create(&compute_thread,NULL,reb_simulation_integrate_raw,&thread_info)){
+                    reb_simulation_error(r, "Error creating display thread.");
                 }
                 
                 reb_display_init(r); // Display routines running on main thread.
 
                 if (pthread_join(compute_thread,NULL)){
-                    reb_error(r, "Error joining display thread.");
+                    reb_simulation_error(r, "Error joining display thread.");
                 }
 #else // OPENGL
-                reb_error(r,"REBOUND was not compiled/linked with OPENGL libraries.");
+                reb_simulation_error(r,"REBOUND was not compiled/linked with OPENGL libraries.");
                 return REB_EXIT_ERROR; 
 #endif // OPENGL
             }
@@ -896,7 +896,7 @@ enum REB_STATUS reb_integrate(struct reb_simulation* const r, double tmax){
         case REB_VISUALIZATION_WEBGL:
             {
                 reb_display_init_data(r);
-                reb_integrate_raw(&thread_info);
+                reb_simulation_integrate_raw(&thread_info);
             }
             break;
     }
@@ -986,8 +986,8 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
     time =  ((uint64_t)file_time.dwLowDateTime )      ;
     time += ((uint64_t)file_time.dwHighDateTime) << 32;
 
-    tp->tv_sec  = (long) ((time - EPOCH) / 10000000L);
-    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+    tp->tv_sec  = (int64_t) ((time - EPOCH) / 10000000L);
+    tp->tv_usec = (int64_t) (system_time.wMilliseconds * 1000);
     return 0;
 }
 

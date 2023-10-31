@@ -6,7 +6,7 @@ The result is in the range $[0, 2\pi]$.
 
 === "C"
     ```c
-    double f = reb_tools_mod2pi(7.); // returns 0.7168 = 7 - 2*pi
+    double f = reb_mod2pi(7.); // returns 0.7168 = 7 - 2*pi
     ```
 
 === "Python"

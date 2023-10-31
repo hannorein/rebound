@@ -406,12 +406,12 @@ static void reb_display(GLFWwindow* window){
         rotation2mat(data->view,view);
     }
     
-    for (int i=-data->ghostboxes*data->r_copy->nghostx;i<=data->ghostboxes*data->r_copy->nghostx;i++){
-    for (int j=-data->ghostboxes*data->r_copy->nghosty;j<=data->ghostboxes*data->r_copy->nghosty;j++){
-    for (int k=-data->ghostboxes*data->r_copy->nghostz;k<=data->ghostboxes*data->r_copy->nghostz;k++){
-        struct reb_ghostbox gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
+    for (int i=-data->ghostboxes*data->r_copy->N_ghost_x;i<=data->ghostboxes*data->r_copy->N_ghost_x;i++){
+    for (int j=-data->ghostboxes*data->r_copy->N_ghost_y;j<=data->ghostboxes*data->r_copy->N_ghost_y;j++){
+    for (int k=-data->ghostboxes*data->r_copy->N_ghost_z;k<=data->ghostboxes*data->r_copy->N_ghost_z;k++){
+        struct reb_vec6d gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
         { // Particles
-            mattranslate(tmp2,gb.shiftx,gb.shifty,gb.shiftz);
+            mattranslate(tmp2,gb.x,gb.y,gb.z);
             matmult(view,tmp2,tmp1);
             matmult(projection,tmp1,tmp2);
             if(data->spheres>0){
@@ -452,7 +452,7 @@ static void reb_display(GLFWwindow* window){
             }
             glUniform4f(data->box_shader_color_location, 1.,0.,0.,1.);
             matscale(tmp1,data->r_copy->boxsize_max/2.);
-            mattranslate(tmp2,gb.shiftx,gb.shifty,gb.shiftz);
+            mattranslate(tmp2,gb.x,gb.y,gb.z);
             matmult(tmp2,tmp1,tmp3);
             matmult(view,tmp3,tmp1);
             matmult(projection,tmp1,tmp2);
@@ -552,7 +552,7 @@ static void reb_display(GLFWwindow* window){
 void reb_display_init(struct reb_simulation * const r){
     struct reb_display_data* data = r->display_data;
     if (!glfwInit()){
-        reb_error(r, "GLFW initialization failed.");
+        reb_simulation_error(r, "GLFW initialization failed.");
         return;
     }
 
@@ -565,7 +565,7 @@ void reb_display_init(struct reb_simulation * const r){
 
     GLFWwindow*  window = glfwCreateWindow(700, 700, "rebound", NULL, NULL);
     if (!window){
-        reb_error(r,"GLFW window creation failed.");
+        reb_simulation_error(r,"GLFW window creation failed.");
         return;
     }
 
@@ -596,7 +596,7 @@ void reb_display_init(struct reb_simulation * const r){
     data->reference     = -1;
     data->view.r        = 1.;
     data->p_jh_copy      = NULL;
-    data->allocated_N_whfast = 0;
+    data->N_allocated_whfast = 0;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
@@ -998,9 +998,9 @@ void reb_display_init(struct reb_simulation * const r){
         // Copy data to GPU
         if (size_changed){ // reallocated GPU memory
             glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-            glBufferData(GL_ARRAY_BUFFER, data->allocated_N*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-            glBufferData(GL_ARRAY_BUFFER, data->allocated_N*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
         }
         glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
         glBufferSubData(GL_ARRAY_BUFFER, 0, data->r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
@@ -1044,12 +1044,12 @@ void reb_display_init_data(struct reb_simulation* const r){
         r->display_data = calloc(sizeof(struct reb_display_data),1);
         r->display_data->r = r;
         if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
-            reb_error(r,"Mutex creation failed.");
+            reb_simulation_error(r,"Mutex creation failed.");
         }
         reb_display_set_default_scale(r);
     }
 #else // _WIN32
-    reb_error(r,"Visualizations not supported on Windows.");
+    reb_simulation_error(r,"Visualizations not supported on Windows.");
 #endif // _WIN32
 }
 
@@ -1057,13 +1057,13 @@ int reb_display_copy_data(struct reb_simulation* const r){
     if (r->N==0) return 0;
     struct reb_display_data* data = r->display_data;
     int size_changed = 0;
-    if (r->N>data->allocated_N){
+    if (r->N>data->N_allocated){
         size_changed = 1;
-        data->allocated_N = r->N;
+        data->N_allocated = r->N;
         data->r_copy = realloc(data->r_copy,sizeof(struct reb_simulation));
         data->particles_copy = realloc(data->particles_copy,r->N*sizeof(struct reb_particle));
-        data->particle_data = realloc(data->particle_data, data->allocated_N*sizeof(struct reb_particle_opengl));
-        data->orbit_data = realloc(data->orbit_data, data->allocated_N*sizeof(struct reb_orbit_opengl));
+        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
+        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
     }
     memcpy(data->r_copy, r, sizeof(struct reb_simulation));
     memcpy(data->particles_copy, r->particles, sizeof(struct reb_particle)*r->N);
@@ -1072,12 +1072,12 @@ int reb_display_copy_data(struct reb_simulation* const r){
             (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0)
        )
        {
-        if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
+        if (r->ri_whfast.N_allocated > data->N_allocated_whfast){
             size_changed = 1;
-            data->allocated_N_whfast = r->ri_whfast.allocated_N;
-            data->p_jh_copy = realloc(data->p_jh_copy,data->allocated_N_whfast*sizeof(struct reb_particle));
+            data->N_allocated_whfast = r->ri_whfast.N_allocated;
+            data->p_jh_copy = realloc(data->p_jh_copy,data->N_allocated_whfast*sizeof(struct reb_particle));
         }
-        memcpy(data->p_jh_copy, r->ri_whfast.p_jh, data->allocated_N_whfast*sizeof(struct reb_particle));
+        memcpy(data->p_jh_copy, r->ri_whfast.p_jh, data->N_allocated_whfast*sizeof(struct reb_particle));
     }
     data->r_copy->ri_whfast.p_jh= data->p_jh_copy;
     
@@ -1090,7 +1090,7 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
     struct reb_simulation* const r_copy = data->r_copy;
 
     // this only does something for WHFAST
-    reb_integrator_synchronize(r_copy);
+    reb_simulation_synchronize(r_copy);
        
     // Update data on GPU 
     for (unsigned int i=0;i<r_copy->N;i++){
@@ -1110,14 +1110,14 @@ void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
             data->orbit_data[i-1].x  = (float)com.x;
             data->orbit_data[i-1].y  = (float)com.y;
             data->orbit_data[i-1].z  = (float)com.z;
-            struct reb_orbit o = reb_tools_particle_to_orbit(r_copy->G, p,com);
+            struct reb_orbit o = reb_orbit_from_particle(r_copy->G, p,com);
             data->orbit_data[i-1].a = (float)o.a;
             data->orbit_data[i-1].e = (float)o.e;
             data->orbit_data[i-1].f = (float)o.f;
             data->orbit_data[i-1].omega = (float)o.omega;
             data->orbit_data[i-1].Omega = (float)o.Omega;
             data->orbit_data[i-1].inc = (float)o.inc;
-            com = reb_get_com_of_pair(p,com);
+            com = reb_particle_com_of_pair(p,com);
         }
     }
 }

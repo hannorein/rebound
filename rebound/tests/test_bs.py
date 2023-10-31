@@ -172,9 +172,9 @@ class TestIntegratorBS(unittest.TestCase):
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.1)
         sim.add(m=1e-3,a=2,e=0.1)
-        sim.automateSimulationArchive("test.sa",interval=10, deletefile=True)
+        sim.automateSimulationarchive("test.sa",interval=10, delete_file=True)
         sim.integrate(100, exact_finish_time=0)
-        sim1 = rebound.SimulationArchive("test.sa")[-1]
+        sim1 = rebound.Simulationarchive("test.sa")[-1]
         sim.integrate(200, exact_finish_time=0)
         sim1.integrate(200, exact_finish_time=0)
         self.assertEqual(sim.particles[1].x, sim1.particles[1].x)

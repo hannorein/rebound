@@ -70,7 +70,7 @@ class TestVariationalRescale(unittest.TestCase):
         if sys.maxsize > 2**32: # 64 bit
             self.assertGreater(sim.var_config[0].lrescale, 100.0)
             self.assertEqual(sim2.var_config[0].lrescale, -1.0)
-            self.assertAlmostEqual(sim2.calculate_megno(), sim.calculate_megno(), places=12)
+            self.assertAlmostEqual(sim2.megno(), sim.megno(), places=12)
         
 
 

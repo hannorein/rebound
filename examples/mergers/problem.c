@@ -15,7 +15,7 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->dt                   = 0.01*2.*M_PI;                // initial timestep
     r->integrator           = REB_INTEGRATOR_IAS15;
     r->collision            = REB_COLLISION_DIRECT;
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m = 1;
     star.r = 0.1;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
     
     // Add planets
     int N_planets = 7;
@@ -35,18 +35,18 @@ int main(int argc, char* argv[]){
         struct reb_particle planet = {0};
         planet.m = 1e-4; 
         planet.r = 4e-2;                     // radius in AU (it is unphysically large in this example)
-        planet.lastcollision = 0;                // The first time particles can collide with each other
+        planet.last_collision = 0;                // The first time particles can collide with each other
         planet.x = a; 
         planet.vy = v;
-        reb_add(r, planet); 
+        reb_simulation_add(r, planet); 
     }
-    reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    reb_simulation_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 10.*2.*M_PI)){  
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 10.*2.*M_PI)){  
+        reb_simulation_output_timing(r, 0);
     }
 }

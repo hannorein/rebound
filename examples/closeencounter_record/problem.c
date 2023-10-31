@@ -22,9 +22,9 @@ int collision_record_only(struct reb_simulation* const r, struct reb_collision c
     const double t = r->t;
 
     // only record a maximum of one collision per year per particle
-    if ( particles[c.p1].lastcollision+delta_t < t  &&  particles[c.p2].lastcollision+delta_t < t ){
-        particles[c.p1].lastcollision = t; 
-        particles[c.p2].lastcollision = t;
+    if ( particles[c.p1].last_collision+delta_t < t  &&  particles[c.p2].last_collision+delta_t < t ){
+        particles[c.p1].last_collision = t; 
+        particles[c.p2].last_collision = t;
         printf("\nCollision detected.\n");        
         FILE* of = fopen("collisions.txt","a+b");        // open file for collision output
         fprintf(of, "%e\t", t);                    // time
@@ -38,13 +38,13 @@ int collision_record_only(struct reb_simulation* const r, struct reb_collision c
 
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 10.*2.*M_PI)){  
-        reb_output_timing(r, 0);
+    if (reb_simulation_output_check(r, 10.*2.*M_PI)){  
+        reb_simulation_output_timing(r, 0);
     }
 }
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->dt             = 0.1*2.*M_PI;                // initial timestep
     r->integrator         = REB_INTEGRATOR_IAS15;
     r->collision        = REB_COLLISION_DIRECT;
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m = 1;
     star.r = 0;                            // Star is pointmass
-    reb_add(r, star);
+    reb_simulation_add(r, star);
     
     // Add planets
     int N_planets = 7;
@@ -68,12 +68,12 @@ int main(int argc, char* argv[]){
         planet.r = rhill;                    // Set planet radius to hill radius 
                                     // A collision is recorded when planets get within their hill radius
                                     // The hill radius of the particles might change, so it should be recalculated after a while
-        planet.lastcollision = 0; 
+        planet.last_collision = 0; 
         planet.x = a;
         planet.vy = v;
-        reb_add(r, planet); 
+        reb_simulation_add(r, planet); 
     }
-    reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    reb_simulation_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 }

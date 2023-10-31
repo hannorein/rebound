@@ -24,7 +24,7 @@ double coefficient_of_restitution(const struct reb_simulation*r, double v){
 }
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->ri_sei.OMEGA         = 1.;
     r->ri_sei.OMEGAZ         = 3.6;
@@ -38,8 +38,8 @@ int main(int argc, char* argv[]){
     r->gravity            = REB_GRAVITY_NONE;
     r->boundary            = REB_BOUNDARY_SHEAR;
 
-    reb_configure_box(r,1.,200,5,20);
-    r->nghostx = 1;     r->nghosty = 1;     r->nghostz = 0;
+    reb_simulation_configure_box(r,1.,200,5,20);
+    r->N_ghost_x = 1;     r->N_ghost_y = 1;     r->N_ghost_z = 0;
 
     // Initial conditions
     double _N = tau * r->boxsize.x * r->boxsize.y/(M_PI*particle_r *particle_r);
@@ -54,13 +54,13 @@ int main(int argc, char* argv[]){
         p.ax     = 0; p.ay     = 0; p.az     = 0;
         p.m     = 1.;
         p.r     = particle_r;
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
-    reb_integrate(r,INFINITY);
+    reb_simulation_integrate(r,INFINITY);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r,2.*M_PI)){
-        reb_output_timing(r,0);
+    if (reb_simulation_output_check(r,2.*M_PI)){
+        reb_simulation_output_timing(r,0);
     }
 }

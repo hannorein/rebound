@@ -21,8 +21,8 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.dt = self.sim.particles[1].P*0.07
         self.sim.integrate(10000.)
-        self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
-        self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
+        self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
+        self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
 
     def test_whfast_close_regular(self):
         self.sim = rebound.Simulation()
@@ -38,8 +38,8 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.dt = 0.034641008279678746
         self.sim.integrate(10000.)
-        self.assertAlmostEqual(self.sim.calculate_megno(),2.,delta=2e-1)
-        self.assertAlmostEqual(self.sim.calculate_lyapunov(),0.,delta=1e-3)
+        self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
+        self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
 
     def test_chaotic(self):
         self.sim = rebound.Simulation()
@@ -50,7 +50,7 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
         self.sim.integrate(1000.)
-        self.megnoIAS = self.sim.calculate_megno()
+        self.megnoIAS = self.sim.megno()
         self.sim = rebound.Simulation()
         self.sim.integrator = "eos"
         self.sim.ri_eos.phi0 = "lf4"
@@ -62,7 +62,7 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
         self.sim.integrate(1000)
-        self.megnoWHFast = self.sim.calculate_megno()
+        self.megnoWHFast = self.sim.megno()
         if sys.maxsize > 2**32: # 64 bit
             self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.3)
         else: # 32 bit

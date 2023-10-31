@@ -18,25 +18,25 @@
 int main(int argc, char* argv[]) {
     char* filename = "simulationarchive.bin";
 
-    // Trying to open a SimulationArchive file
-    struct reb_simulationarchive* sa = reb_open_simulationarchive(filename);
+    // Trying to open a Simulationarchive file
+    struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file(filename);
     if (sa==NULL){
         printf("Can not open file.\n");
     }
     // Get a simulation from the file (if possible, otherwise NULL is returned)
-    struct reb_simulation* r = reb_create_simulation_from_simulationarchive(sa,-1);
-    // Whenever you've opened a SimulationArchive and don't need it anymore, close it.
-    reb_close_simulationarchive(sa);
+    struct reb_simulation* r = reb_simulation_create_from_simulationarchive(sa,-1);
+    // Whenever you've opened a Simulationarchive and don't need it anymore, close it.
+    reb_simulationarchive_free(sa);
     // Check if we were successful
     if (r==NULL){
         printf("No simulation archive found. Creating new simulation.\n");
-        r= reb_create_simulation();
-        reb_add_fmt(r, "m", 1.0);                   // star
-        reb_add_fmt(r, "m a e", 1e-3, 1.0, 0.01);   // planet 1
-        reb_add_fmt(r, "m a e", 1e-3, 2.3, 0.01);   // planet 2
-        reb_move_to_com(r);
+        r= reb_simulation_create();
+        reb_simulation_add_fmt(r, "m", 1.0);                   // star
+        reb_simulation_add_fmt(r, "m a e", 1e-3, 1.0, 0.01);   // planet 1
+        reb_simulation_add_fmt(r, "m a e", 1e-3, 2.3, 0.01);   // planet 2
+        reb_simulation_move_to_com(r);
         r->dt = 6./365.25*2.*M_PI;              // 6 days in units where G=1 
-        r->ri_whfast.safe_mode = 0;             // The SimulationArchive works with both safe_mode on and off           
+        r->ri_whfast.safe_mode = 0;             // The Simulationarchive works with both safe_mode on and off           
         r->ri_whfast.corrector = 5;    
         r->integrator = REB_INTEGRATOR_WHFAST;
     }else{
@@ -44,19 +44,19 @@ int main(int argc, char* argv[]) {
     }
     
     // Automatically create a snapshot every 100 time units
-    reb_simulationarchive_automate_interval(r,filename,100.);
+    reb_simulation_save_to_file_interval(r,filename,100.);
     // Alternatively, you can also create a snapshot every 5 seconds (walltime)
-    //reb_simulationarchive_automate_walltime(r,filename,5.);
+    //reb_simulation_save_to_file_walltime(r,filename,5.);
 
     // Run the integration (this will be very quick in this example)
-    reb_integrate(r, r->t+2000); // integrate (a little further than where we currently are)
+    reb_simulation_integrate(r, r->t+2000); // integrate (a little further than where we currently are)
     printf("Final time: %f\n",r->t);
     
     // You can also manually append a snapshot
-    reb_simulationarchive_snapshot(r,filename);
+    reb_simulation_save_to_file(r,filename);
 
     // Free the simulation to free up memory
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 
 

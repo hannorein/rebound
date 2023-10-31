@@ -51,8 +51,8 @@ int main(int argc, char* argv[]){
 	softening 	= 0.01;		
 	dt 		= 3e-3;
 	boxsize 	= 1.2;
-	root_nx = 1; root_ny = 1; root_nz = 1;
-	nghostx = 0; nghosty = 0; nghostz = 0; 		
+	N_root_x = 1; N_root_y = 1; N_root_z = 1;
+	N_ghost_x = 0; N_ghost_y = 0; N_ghost_z = 0; 		
 	init_box();
 
 	// Setup particles
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
 	star.vx 	= 0; star.vy 	= 0; star.vz 	= 0;
 	star.ax 	= 0; star.ay 	= 0; star.az 	= 0;
 	star.m 		= 1;
-	reb_add(r, star);
+	reb_simulation_add(r, star);
 	while(N<_N){
 		struct reb_particle pt;
 		double a	= reb_random_powerlaw(boxsize/10.,boxsize/2./1.2,-1.5);
@@ -81,13 +81,13 @@ int main(int argc, char* argv[]){
 		pt.ay 		= 0;
 		pt.az 		= 0;
 		pt.m 		= disc_mass/(double)_N;
-		reb_add(r, pt);
+		reb_simulation_add(r, pt);
 	}
 }
 
 void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(10.0*dt)) reb_output_timing();
-	if (reb_output_check(1.)) reb_output_ascii("ascii.txt");
+	if (reb_simulation_output_check(10.0*dt)) reb_simulation_output_timing();
+	if (reb_simulation_output_check(1.)) reb_simulation_output_ascii("ascii.txt");
 }
 
 void problem_finish(){
