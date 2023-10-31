@@ -5,6 +5,7 @@ This changelog only includes the most important changes in recent updates. For a
 ## Version 4.x
 
 ### Version 4.XX
+* Added emscripten support. All C examples with OpenGL can now be run from within the browser.
 * Removed race condition in OpenGL visualization which allows the visualization to run smoother.
 * `reb_random` functions now callable with `r=NULL`. In that case the time and PID is used as a seed.
 * Removed support for Simulationarchives with version 2.
