@@ -166,6 +166,9 @@ double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const 
 
   // if one is violated both are
   double fcond = MIN(fcond_peri, fcond_vel);
+  //if (fcond < 0.0){
+  //  printf("%f %d %f %f\n", r->t, j, fcond_peri, fcond_vel);
+  //}
   return fcond;
 }
 
@@ -515,7 +518,7 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
     if (fcond_peri < 0.0){
       ri_tr->current_L = 1;
       //if (ri_tr->print){
-      //  printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
+      //printf("Flagged %d peri approach at %f %f\n", j, r->t, fcond_peri);
       //}
       if (j < Nactive){ // Two massive particles have a close encounter
           ri_tr->tponly_encounter = 0;
@@ -554,6 +557,75 @@ void reb_integrator_trace_F_start(struct reb_simulation* const r){
   }
 }
 
+int reb_integrator_trace_Fcond(struct reb_simulation* const r){
+  struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
+  const int N = r->N;
+  const int Nactive = r->N_active==-1?r->N:r->N_active;
+  //int print = ri_tr->print;
+
+  int new_c = 0; // New CEs
+
+  // Switching functions
+  double (*_switch) (const struct reb_simulation* const r, unsigned int i, unsigned int j) = r->ri_tr.S;
+  double (*_switch_peri) (const struct reb_simulation* const r, unsigned int j) = r->ri_tr.S_peri;
+
+  if (r->testparticle_type == 1){
+      ri_tr->tponly_encounter = 0; // testparticles affect massive particles
+  }else{
+      ri_tr->tponly_encounter = 1;
+  }
+
+  // Check for pericenter CE
+  // test particles cannot have pericenter CEs
+
+  for (int j = 1; j < Nactive; j++){
+    double fcond_peri = _switch_peri(r, j);
+    if (fcond_peri < 0.0 && ri_tr->current_L == 0){
+      ri_tr->current_L = 1;
+      new_c = 1;
+
+      if (j < Nactive){ // Two massive particles have a close encounter
+          ri_tr->tponly_encounter = 0;
+      }
+    }
+  }
+
+  // Body-body
+  // there cannot be TP-TP CEs
+  for (int i = 1; i < Nactive; i++){
+    for (int j = i + 1; j < N; j++){
+
+      double fcond = _switch(r, i, j);
+
+      if (fcond < 0.0){
+        if (ri_tr->encounter_map_internal[i] == 0){
+            ri_tr->encounter_map_internal[i] = i;
+            ri_tr->encounterN++;
+        }
+        if (ri_tr->encounter_map_internal[j] == 0){
+            ri_tr->encounter_map_internal[j] = j;
+            ri_tr->encounterN++;
+        }
+
+        if (j < Nactive){ // Two massive particles have a close encounter
+            ri_tr->tponly_encounter = 0;
+        }
+
+        // Checks for switching Kij 0->1. Initialized as all 0 the first time of asking.
+        if (ri_tr->current_Ks[i][j] == 0){
+          ri_tr->current_Ks[i][j] = 1;
+          new_c = 1;
+          //if (ri_tr->print){
+          //  printf("CE at %f detected between %d %d\n", r->t,i, j);
+          //}
+        }
+      }
+    }
+  }
+
+  return new_c;
+}
+
 int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
   struct reb_simulation_integrator_trace* const ri_tr = &(r->ri_tr);
   const int N = r->N;
@@ -572,6 +644,8 @@ int reb_integrator_trace_F_check(struct reb_simulation* const r, int old_N){
       if (fcond_peri < 0.0){
         ri_tr->current_L = 1;
         reject = 1;
+
+        //printf("REJECT BC %d peri approach at %f %f\n", j, r->t, fcond_peri);
         break;
       }
     }
@@ -626,7 +700,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
       }
     }
 
-    reb_integrator_trace_F_start(r);
+    //reb_integrator_trace_F_start(r);
+    int rej = reb_integrator_trace_Fcond(r); // output means nothing here
     if (ri_tr->current_L){ //more efficient way to check if we need to redo this...
       // Pericenter close encounter detected. We integrate the entire simulation with BS
       //printf("Flagged Peri %f\n", r->t);
@@ -650,7 +725,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     //if (ri_tr->print){
     //  printf("\nREJECTION CHECK\n");
     //}
-    if (reb_integrator_trace_F_check(r, N) && !ri_tr->collision){
+    //if (reb_integrator_trace_F_check(r, N) && !ri_tr->collision){
+    if (reb_integrator_trace_Fcond(r)){
       // REJECT STEP
       // reset simulation and try again with new timestep
       for (int i=0; i<N; i++){

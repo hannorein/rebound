@@ -35,20 +35,21 @@ int main(int argc, char* argv[]){
     double omse = 1. - se;
     double si = M_PI / 2.;
 
-    const double tau_f_j = 2 * M_PI * sqrt((ja * ja * ja * jmse * jmse * jmse) / (r->G * star.m * (1 + je)));
-    const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
+    //const double tau_f_j = 2 * M_PI * sqrt((ja * ja * ja * jmse * jmse * jmse) / (r->G * star.m * (1 + je)));
+    //const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
 
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_tr.hillfac = 0.1;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
-    r->ri_tr.vfac_p = 16.0;
-    //r->ri_tr.peri = 0.001;
+    //r->ri_tr.S_peri = reb_integrator_trace_peri_switch_default;
+    r->ri_tr.vfac_p = 100.0;
+    //r->ri_tr.peri = 0.000001;
 
     //r->integrator = REB_INTEGRATOR_IAS15;
     //r->ri_ias15.adaptive_mode = 2;
     r->dt = 0.15*2.*M_PI;
     r->heartbeat = heartbeat;
-    printf("tau_j = %f, %f steps, tau_s = %f, %f steps\n", tau_f_j, tau_f_j / r->dt, tau_f_s, tau_f_s / r->dt);
+    //rintf("tau_j = %f, %f steps, tau_s = %f, %f steps\n", tau_f_j, tau_f_j / r->dt, tau_f_s, tau_f_s / r->dt);
     // r->integrator = REB_INTEGRATOR_WHFAST;
 //    r->integrator = REB_INTEGRATOR_MERCURIUS;
 //    r->ri_mercurius.hillfac = 4;

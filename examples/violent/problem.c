@@ -20,9 +20,9 @@ double amax = 1.5e4;//1e4;
 int nbodies = 3;
 double tmax = 1000.*2*M_PI;
 
-char title[100] = "chaotic_mercurius_";
-char title_final[100] = "chaotic_mercurius_finals";
-char title_remove[100] = "rm -rf chaotic_mercurius_";
+char title[100] = "bad_trace_";
+//char title_final[100] = "chaotic_mercurius_finals";
+char title_remove[100] = "rm -rf bad_trace_";
 
 int main(int argc, char* argv[]){
 
@@ -130,11 +130,11 @@ int main(int argc, char* argv[]){
     r->rand_seed = index;
 
     for (int i = 0; i < nbodies; i++){
-      double Om_rand = 0.0;//reb_random_uniform(r, 0, 2 * M_PI);
-      double f_rand = 0.0;//reb_random_uniform(r, 0, 2 * M_PI);
-      if (i == 2){
-        sma += reb_random_uniform(r, -1e-12, 1e-12);
-      }
+      double Om_rand = reb_random_uniform(r, 0, 2 * M_PI);
+      double f_rand = reb_random_uniform(r, 0, 2 * M_PI);
+      //if (i == 2){
+      //  sma += reb_random_uniform(r, -1e-12, 1e-12);
+      //}
       reb_add_fmt(r, "m a e inc Omega f", planet_m, sma, 0.05, (double)i * M_PI / 180., Om_rand, f_rand);
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
@@ -147,7 +147,6 @@ int main(int argc, char* argv[]){
 
     for (int i = 1; i < nbodies+1; i++){
       struct reb_particle* p = &r->particles[i];
-      p->hash = i;
       struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
       if (abs(o.P) < min){
         min = o.P;
@@ -157,14 +156,14 @@ int main(int argc, char* argv[]){
 
     //struct reb_particle* sun = &r->particles[0];
     //r->integrator = REB_INTEGRATOR_WHFAST;
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = REB_INTEGRATOR_TRACE;
     //r->ri_ias15.adaptive_mode = 2;
     //r->ri_whfast.coordinates = 1;
     r->dt = min * 0.05; //7.108147e-01;//min * 0.010123456;//0.059331635924546614;
-    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
-    r->ri_mercurius.hillfac = 4.;
+    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    r->ri_tr.hillfac = 4.;
     //r->ri_tr.peri = 2.;
-    //r->ri_tr.vfac_p = 32.0;
+    r->ri_tr.vfac_p = 32.0;
 
 /*
     r->integrator = REB_INTEGRATOR_MERCURIUS;
@@ -186,8 +185,8 @@ int main(int argc, char* argv[]){
       fprintf(f, "t,E");
       for (int i = 1; i < nbodies+1; i++){
         //fprintf(f, ",a%d,x%d,y%d,z%d,vx%d,vy%d,vz%d",i,i,i,i,i,i,i);
-        //fprintf(f, ",hash%d,a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i,i);
-        fprintf(f, ",hash%d,d%d,ej%d",i,i,i);
+        fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
+        //fprintf(f, ",hash%d,d%d,ej%d",i,i,i);
       }
 
       fprintf(f, "\n");
@@ -198,7 +197,7 @@ int main(int argc, char* argv[]){
     e_init = reb_tools_energy(r);
     //clock_t begin = clock();
     reb_integrate(r, tmax);
-
+/*
     FILE* tf = fopen(title_final, "a");
     fprintf(tf, "%d", index);
     for (int i = 1; i < r->N; i++){
@@ -209,6 +208,7 @@ int main(int argc, char* argv[]){
     }
     fprintf(tf, "\n");
     fclose(tf);
+    */
     // clock_t end = clock();
 
     // double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -231,13 +231,14 @@ int main(int argc, char* argv[]){
 
 void heartbeat(struct reb_simulation* r){
     // remove particles if needed
-    //if (reb_output_check(r, 10.*2.*M_PI)){
-    //    reb_output_timing(r, tmax);
-    //}
-    if (reb_output_check(r, 1. * 2.*M_PI)){
+    if (reb_output_check(r, 10.*2.*M_PI)){
+        reb_output_timing(r, tmax);
+    }
+    if (reb_output_check(r, 10. * 2.*M_PI)){
       FILE* f = fopen(title, "a");
       fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
       struct reb_particle* sun = &r->particles[0];
+
       for (unsigned int i = 1; i < r->N; i++){
         unsigned int ej = 0;
         struct reb_particle* p = &r->particles[i];
@@ -246,15 +247,17 @@ void heartbeat(struct reb_simulation* r){
         double dz = p->z - sun->z;
         double d = sqrt(dx*dx + dy*dy + dz*dz);
         //struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
-        fprintf(f, ",%u,%f", p->hash, d);
+        //fprintf(f, ",%u,%f", p->hash, d);
+        struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
+        fprintf(f, ",%f,%f,%f,%f,%f,%f", o.a, o.e, o.inc,p->x,p->y,p->z);
         if (d > amax){
-          //printf("Ejection %u\n", i);
+          printf("Ejection %u\n", i);
           reb_remove(r, i, 1);
           e_init = reb_tools_energy(r);
           ej = 1;
         }
         //printf("Here\n");
-        fprintf(f, ",%u", ej);
+        //fprintf(f, ",%u", ej);
       }
       fprintf(f, "\n");
       fclose(f);
