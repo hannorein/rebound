@@ -789,11 +789,6 @@ void reb_run_heartbeat(struct reb_simulation* const r){
 ////////////////////////////////////////////////////
 ///  Integrate functions and visualization stuff
 
-struct reb_thread_info {
-    struct reb_simulation* r;
-    double tmax;
-};
-
 volatile sig_atomic_t reb_sigint;
 
 void reb_sigint_handler(int signum) {
@@ -879,6 +874,9 @@ static void* reb_simulation_integrate_raw(void* args){
     return NULL;
 }
 
+// TODO Move to rebound.h
+void* start_server(void* args);
+
 enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax){
     struct reb_thread_info thread_info = {
         .r = r,
@@ -931,6 +929,23 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
             }
             break;
         case REB_VISUALIZATION_SERVER:
+                reb_display_init_data(r);
+                r->display_data->opengl_enabled = 1;
+
+                pthread_t server_thread;
+                if (pthread_create(&server_thread,NULL,start_server,&thread_info)){
+                    reb_simulation_error(r, "Error creating server thread.");
+                }
+                
+                reb_simulation_integrate_raw(&thread_info);
+
+                // Keep server running until killed by user.
+                // TODO need to do this better
+                while(r->status != REB_STATUS_SIGINT && reb_sigint != 1){
+                    usleep(1000);
+                }
+                reb_simulation_warning(r, "Killing server thread.");
+                pthread_kill(server_thread, SIGINT);
             break;
     }
     return r->status;

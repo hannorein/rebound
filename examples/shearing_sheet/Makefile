@@ -1,4 +1,4 @@
-export OPENGL=1
+export OPENGL=0
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for

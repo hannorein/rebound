@@ -1127,6 +1127,7 @@ struct reb_display_data {
 };
 
 // Declarations and functions needed internally or by python interface only.
+void reb_sigint_handler(int signum);
 
 // Used in the binary file to identify data blobs
 struct reb_simulationarchive_blob {  

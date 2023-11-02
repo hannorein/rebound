@@ -18,6 +18,7 @@ void heartbeat(struct reb_simulation* const r);
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
+    //r->visualization = REB_VISUALIZATION_SERVER;
     r->opening_angle2    = .5;                    // This determines the precission of the tree code gravity calculation.
     r->integrator            = REB_INTEGRATOR_SEI;
     r->boundary            = REB_BOUNDARY_SHEAR;
@@ -77,6 +78,9 @@ int main(int argc, char* argv[]) {
         reb_simulation_add(r, pt);
         mass += particle_mass;
     }
+    reb_simulation_integrate(r, 0.5);// INFINITY);
+    reb_simulation_integrate(r, 1.5);// INFINITY);
+    reb_simulation_integrate(r, 2.5);// INFINITY);
     reb_simulation_integrate(r, INFINITY);
 }
 
