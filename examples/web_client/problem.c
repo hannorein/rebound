@@ -7,7 +7,9 @@
 #include "display.h"
 #include "input.h"
 #include <emscripten/fetch.h>
+int first = 1;
 
+void newCallback(struct reb_simulation* r);
 
 void downloadSucceeded(emscripten_fetch_t *fetch) {
     printf("Finished downloading %llu bytes from URL %s.\n", fetch->numBytes, fetch->url);
@@ -19,23 +21,24 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
     reb_input_fields(r, fin, warnings);
     fclose(fin);
 
+    if (first){
+                    reb_display_init_data(r);
+                    r->display_data->opengl_enabled = 1;
+                    reb_display_init(r); // Will return. Display routines running in animation_loop.
+    }
     printf("t=%f\n",r->t);
-
+    first = 0;
     emscripten_fetch_close(fetch); // Free data associated with the fetch.
+      
+    sleep(1);
+    newCallback(r);
 }
 
 void downloadFailed(emscripten_fetch_t *fetch) {
     printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
     emscripten_fetch_close(fetch); // Also free data on failure.
 }
-
-int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_simulation_create();
-    r->t = 123.;
-                    reb_display_init_data(r);
-                    r->display_data->opengl_enabled = 1;
-                    reb_display_init(r); // Will return. Display routines running in animation_loop.
-    //while(1){
+void newCallback(struct reb_simulation* r){
       emscripten_fetch_attr_t attr;
       emscripten_fetch_attr_init(&attr);
       attr.userData = r;
@@ -46,6 +49,14 @@ int main(int argc, char* argv[]) {
       printf("fetch now\n");
       emscripten_fetch(&attr, "http://localhost:1234/simulation");
       printf("Sleep.\n");
+
+}
+
+int main(int argc, char* argv[]) {
+    struct reb_simulation* r = reb_simulation_create();
+    r->t = 123.;
+    newCallback(r);
+    //while(1){
       //sleep(1);
   //}
 }
