@@ -135,11 +135,15 @@ void* start_server(void* args){
         fprintf(stream, "HTTP/1.1 200 OK\n");
         fprintf(stream, "Server: Tiny Web Server\n");
         if (!strcasecmp(uri, "/simulation")) {
-            //fprintf(stream, "Content-length: %d\n", (int)sbuf.st_size);
-            fprintf(stream, "Content-type: text/html\n");
+            char* bufp = NULL;
+            size_t sizep;
+            reb_simulation_save_to_stream(r, &bufp,&sizep);
+            fprintf(stream, "Content-length: %d\n", (int)sizep);
+            fprintf(stream, "Content-type: application/octet-stream\n");
             fprintf(stream, "\r\n"); 
             fflush(stream);
-            fprintf(stream, "<h1>Not sure what to do!</h1>\n");
+            fwrite(bufp, 1, sizep, stream);
+            free(bufp);
         }else{
             fprintf(stream, "Content-type: text/html\n");
             fprintf(stream, "\r\n"); 

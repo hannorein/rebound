@@ -309,7 +309,7 @@ void reb_simulation_free(struct reb_simulation* const r){
         printf("Did not find server thread while trying to cancel it.\n");
     }
     void* retval = 0;
-    int ret = pthread_join(r->display_data->server_thread, &retval);
+    pthread_join(r->display_data->server_thread, &retval);
     if (retval==PTHREAD_CANCELED){
         printf("Server thread cancelled.\n");
     }else{
@@ -818,7 +818,6 @@ volatile sig_atomic_t reb_sigint;
 
 void reb_sigint_handler(int signum) {
     // Handles graceful shutdown for interrupts
-    printf("reb_sigint_hanlder\n");
     if (signum == SIGINT){
         reb_sigint = 1;
     }
