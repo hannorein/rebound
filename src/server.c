@@ -132,16 +132,20 @@ void* start_server(void* args){
             //printf("%s", buf);
         }
 
-        /* print response header */
         fprintf(stream, "HTTP/1.1 200 OK\n");
         fprintf(stream, "Server: Tiny Web Server\n");
-        //fprintf(stream, "Content-length: %d\n", (int)sbuf.st_size);
-        fprintf(stream, "Content-type: text/html\n");
-        fprintf(stream, "\r\n"); 
-        fflush(stream);
-        fprintf(stream, "<html><title>All good</title>");
-        fprintf(stream, "<body bgcolor=""ffffff"">\n");
-        fprintf(stream, "<hr>Hello!\n");
+        if (!strcasecmp(uri, "/simulation")) {
+            //fprintf(stream, "Content-length: %d\n", (int)sbuf.st_size);
+            fprintf(stream, "Content-type: text/html\n");
+            fprintf(stream, "\r\n"); 
+            fflush(stream);
+            fprintf(stream, "<h1>Not sure what to do!</h1>\n");
+        }else{
+            fprintf(stream, "Content-type: text/html\n");
+            fprintf(stream, "\r\n"); 
+            fflush(stream);
+            fprintf(stream, "<h1>Not sure what to do!</h1>\n");
+        }
 
         /* clean up */
         fclose(stream);
