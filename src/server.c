@@ -138,8 +138,11 @@ void* start_server(void* args){
             char* bufp = NULL;
             size_t sizep;
             reb_simulation_save_to_stream(r, &bufp,&sizep);
-            fprintf(stream, "Content-length: %d\n", (int)sizep);
-            fprintf(stream, "Content-type: application/octet-stream\n");
+            //fprintf(stream, "Content-length: %d\n", (int)sizep);
+            //fprintf(stream, "Content-type: application/octet-stream\n");
+            fprintf(stream, "Content-type: text/html\n");
+            fprintf(stream, "Access-Control-Allow-Origin: *\n");
+            fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
             fprintf(stream, "\r\n"); 
             fflush(stream);
             fwrite(bufp, 1, sizep, stream);
