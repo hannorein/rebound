@@ -32,9 +32,9 @@ void cerror(FILE *stream, char *cause, char *errno,
 }
 
 void* start_server(void* args){
-    reb_sigint = 0;
-    signal(SIGINT, reb_sigint_handler);
-    struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+    struct reb_simulation* r = (struct reb_simulation*)args;
 
     /* variables for connection management */
     int parentfd;          /* parent socket */
@@ -87,7 +87,9 @@ void* start_server(void* args){
     clientlen = sizeof(clientaddr);
     while (1) {
         /* wait for a connection request */
+        printf("Pre accept\n");
         childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
+        printf("Post accept\n");
         if (childfd < 0) 
             reb_exit("ERROR on accept");
 
@@ -146,4 +148,5 @@ void* start_server(void* args){
         close(childfd);
 
     }
+    printf("Server shutting down...\n");
 }

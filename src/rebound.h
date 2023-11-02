@@ -1052,6 +1052,12 @@ DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 #endif // OPENMP
 
 // The following stuctures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
+
+struct reb_thread_info {
+    struct reb_simulation* r;
+    double tmax;
+};
+
 struct reb_particle_opengl {
     float x,y,z;
     float vx,vy,vz;
@@ -1081,6 +1087,8 @@ struct reb_display_data {
 #ifndef _WIN32
     int need_copy;
     pthread_mutex_t mutex;          // Mutex to guarantee non-flickering
+    pthread_t main_thread;
+    pthread_t server_thread;
 #endif // _WIN32
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running

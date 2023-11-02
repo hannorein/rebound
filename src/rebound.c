@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stddef.h> // for offsetof()
 #include <sys/types.h>
+#include <errno.h>
 #include <string.h>
 #include <fcntl.h>
 #include "rebound.h"
@@ -48,6 +49,7 @@
 #include "input.h"
 #include "binarydiff.h"
 #include "simulationarchive.h"
+#include "server.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
@@ -301,6 +303,19 @@ static void set_dp7_null(struct reb_dp7 * dp){
 }
 
 void reb_simulation_free(struct reb_simulation* const r){
+#ifdef SERVER
+    int ret_cancel = pthread_cancel(r->display_data->server_thread);
+    if (ret_cancel==ESRCH){
+        printf("Did not find server thread while trying to cancel it.\n");
+    }
+    void* retval = 0;
+    int ret = pthread_join(r->display_data->server_thread, &retval);
+    if (retval==PTHREAD_CANCELED){
+        printf("Server thread cancelled.\n");
+    }else{
+        printf("An error occured while cancelling server thread.\n");
+    }
+#endif //SERVER
     reb_simulation_free_pointers(r);
     free(r);
 }
@@ -670,6 +685,16 @@ void reb_simulation_init(struct reb_simulation* r){
 #ifdef OPENMP
     printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
 #endif // OPENMP
+
+#ifdef SERVER
+    reb_display_init_data(r);
+    r->display_data->opengl_enabled = 1;
+    r->display_data->main_thread = pthread_self();
+    int ret_create = pthread_create(&(r->display_data->server_thread),NULL,start_server,r);
+    if (ret_create){
+        reb_simulation_error(r, "Error creating server thread.");
+    }
+#endif // SERVER
 }
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
@@ -793,6 +818,7 @@ volatile sig_atomic_t reb_sigint;
 
 void reb_sigint_handler(int signum) {
     // Handles graceful shutdown for interrupts
+    printf("reb_sigint_hanlder\n");
     if (signum == SIGINT){
         reb_sigint = 1;
     }
@@ -874,8 +900,6 @@ static void* reb_simulation_integrate_raw(void* args){
     return NULL;
 }
 
-// TODO Move to rebound.h
-void* start_server(void* args);
 
 enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax){
     struct reb_thread_info thread_info = {
@@ -929,23 +953,7 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
             }
             break;
         case REB_VISUALIZATION_SERVER:
-                reb_display_init_data(r);
-                r->display_data->opengl_enabled = 1;
-
-                pthread_t server_thread;
-                if (pthread_create(&server_thread,NULL,start_server,&thread_info)){
-                    reb_simulation_error(r, "Error creating server thread.");
-                }
-                
                 reb_simulation_integrate_raw(&thread_info);
-
-                // Keep server running until killed by user.
-                // TODO need to do this better
-                while(r->status != REB_STATUS_SIGINT && reb_sigint != 1){
-                    usleep(1000);
-                }
-                reb_simulation_warning(r, "Killing server thread.");
-                pthread_kill(server_thread, SIGINT);
             break;
     }
     return r->status;
