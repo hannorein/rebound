@@ -30,7 +30,7 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
     first = 0;
     emscripten_fetch_close(fetch); // Free data associated with the fetch.
       
-    sleep(1);
+    emscripten_sleep(1000./120.);
     newCallback(r);
 }
 
