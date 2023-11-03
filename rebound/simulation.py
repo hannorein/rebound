@@ -1575,7 +1575,6 @@ Simulation._fields_ = [
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
-                ("_display_heartbeat", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_coefficient_of_restitution", CFUNCTYPE(c_double,POINTER(Simulation), c_double)),
                 ("_collision_resolve", CFUNCTYPE(c_int,POINTER(Simulation), CollisionS)),
                 ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),

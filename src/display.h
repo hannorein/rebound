@@ -28,18 +28,11 @@
 struct reb_simulation;
 
 /**
- * @brief Internal function to check if display update is needed.
- */
-void reb_check_for_display_heartbeat(struct reb_simulation* const r);
-
-/**
  * @brief This function initializes OpenGL and starts the run loop.
  * @param data A struct containing all the data needed by the visualization.
  */
 void reb_display_init(struct reb_simulation* const r);
 
 void reb_display_init_data(struct reb_simulation* const r);
-int reb_display_copy_data(struct reb_simulation* const r);
-void reb_display_prepare_data(struct reb_simulation* const r, int orbits);
 
 #endif

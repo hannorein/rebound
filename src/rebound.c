@@ -316,8 +316,13 @@ void reb_simulation_free(struct reb_simulation* const r){
         printf("An error occured while cancelling server thread.\n");
     }
 #endif //SERVER
+    pthread_mutex_t mutex = r->display_data->mutex;
+    pthread_mutex_lock(&mutex); 
+    printf("Mutex locked for freeing\n");
     reb_simulation_free_pointers(r);
     free(r);
+    pthread_mutex_unlock(&mutex); 
+    printf("Simulation freed.\n");
 }
 
 void reb_simulation_free_pointers(struct reb_simulation* const r){
@@ -439,7 +444,6 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
         r->collision_resolve ||
         r->additional_forces ||
         r->heartbeat ||
-        r->display_heartbeat ||
         r->pre_timestep_modifications ||
         r->post_timestep_modifications ||
         r->free_particle_ap ||
@@ -450,7 +454,6 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
     r->collision_resolve        = NULL;
     r->additional_forces        = NULL;
     r->heartbeat            = NULL;
-    r->display_heartbeat    = NULL;
     r->pre_timestep_modifications  = NULL;
     r->post_timestep_modifications  = NULL;
     r->free_particle_ap = NULL;
@@ -775,7 +778,6 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 
 void reb_run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
-    if (r->display_heartbeat){ reb_check_for_display_heartbeat(r); } 
     if (r->exit_max_distance){
         // Check for escaping particles
         const double max2 = r->exit_max_distance * r->exit_max_distance;
@@ -887,9 +889,6 @@ static void* reb_simulation_integrate_raw(void* args){
     }
 
     reb_simulation_synchronize(r);
-    if (r->display_heartbeat){                          // Display Heartbeat
-        r->display_heartbeat(r); 
-    }
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 
     }

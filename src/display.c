@@ -247,6 +247,10 @@ static void reb_glfw_error_callback(int error, const char* description){
 
 static void reb_display_mouse_button(GLFWwindow* window, int button, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_mouse_button\n");
+        return;
+    }
     data->mouse_action = action;
 }
 
@@ -256,6 +260,10 @@ static void reb_display_resize(GLFWwindow* window, int x, int y){
 
 static void reb_display_cursor(GLFWwindow* window, double x, double y){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_cursor\n");
+        return;
+    }
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     if (data->mouse_action==GLFW_RELEASE){
@@ -318,6 +326,10 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
 
 static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_keyboard\n");
+        return;
+    }
     data->key_mods = mods;
     if (action==GLFW_PRESS){
         switch(key){
@@ -401,7 +413,7 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
 static void reb_display(GLFWwindow* window){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
-        // No user pointer available
+        printf("Error accessing data in reb_display\n");
         return;
     }
     int width, height;
@@ -587,29 +599,83 @@ static void reb_display(GLFWwindow* window){
 void reb_render_frame(void* p){
     struct reb_simulation* r = (struct reb_simulation*)p;
     struct reb_display_data* data = r->display_data;
+    if (!data){
+        printf("reb_display_data undefinded in reb_render_frame().\n");
+        return;
+    }
 #ifdef __EMSCRIPTEN__
     int width = canvas_get_width();
     int height = canvas_get_height();
     glfwSetWindowSize(data->window, width, height);
 #endif
-    int size_changed = reb_display_copy_data(r);
+    struct reb_simulation* r_copy = r->display_data->r_copy;
+    if (!r_copy){
+        data->r_copy = reb_simulation_create();
+        r_copy = data->r_copy;
+    }
+    
+    // lock mutex for update
+    data->need_copy = 1;
+    pthread_mutex_lock(&(data->mutex));    
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
+    data->need_copy = 0;
+    pthread_mutex_unlock(&(data->mutex));  
 
     // prepare data (incl orbit calculation)
-    reb_display_prepare_data(r, data->wire);
-
-    // Copy data to GPU
-    if (size_changed){ // reallocated GPU memory
+    if (r_copy->N==0) return;
+    if (r_copy->N > data->N_allocated){
+        data->N_allocated = r_copy->N;
+        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
+        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
+        // Resize memory if needed
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
         glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
         glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
     }
-    if (data->r_copy->N>0){
-        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data->r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
-        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, (data->r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+
+    // this only does something for WHFAST
+    reb_simulation_synchronize(r_copy);
+       
+    // Update data on GPU 
+    for (unsigned int i=0;i<r_copy->N;i++){
+        struct reb_particle p = r_copy->particles[i];
+        data->particle_data[i].x  = (float)p.x;
+        data->particle_data[i].y  = (float)p.y;
+        data->particle_data[i].z  = (float)p.z;
+        data->particle_data[i].vx = (float)p.vx;
+        data->particle_data[i].vy = (float)p.vy;
+        data->particle_data[i].vz = (float)p.vz;
+        data->particle_data[i].r  = (float)p.r;
     }
+    if (data->wire){
+        struct reb_particle com = r_copy->particles[0];
+        for (unsigned int i=1;i<r_copy->N;i++){
+            struct reb_particle p = r_copy->particles[i];
+            data->orbit_data[i-1].x  = (float)com.x;
+            data->orbit_data[i-1].y  = (float)com.y;
+            data->orbit_data[i-1].z  = (float)com.z;
+            struct reb_orbit o = reb_orbit_from_particle(r_copy->G, p,com);
+            data->orbit_data[i-1].a = (float)o.a;
+            data->orbit_data[i-1].e = (float)o.e;
+            data->orbit_data[i-1].f = (float)o.f;
+            data->orbit_data[i-1].omega = (float)o.omega;
+            data->orbit_data[i-1].Omega = (float)o.Omega;
+            data->orbit_data[i-1].inc = (float)o.inc;
+            com = reb_particle_com_of_pair(p,com);
+        }
+    }
+    if (r_copy->N>0){
+        // Fill memory (but not resize)
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, (r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+    }
+
+
+
 
     // Do actual drawing
     reb_display(data->window);
@@ -1178,83 +1244,4 @@ void reb_display_init_data(struct reb_simulation* const r){
 #endif // _WIN32
 }
 
-int reb_display_copy_data(struct reb_simulation* const r){
-    if (r->N==0) return 0;
-    struct reb_display_data* data = r->display_data;
-    int size_changed = 0;
-    if (data->r_copy==NULL){
-        data->r_copy = reb_simulation_create();
-    }
-    struct reb_simulation* r_copy = r->display_data->r_copy;
-    
-    
-    // lock mutex for update
-    data->need_copy = 1;
-    pthread_mutex_lock(&(data->mutex));    
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
-    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
-    data->need_copy = 0;
-    pthread_mutex_unlock(&(data->mutex));  
-    
-    if (data->r_copy->N > data->N_allocated){
-        size_changed = 1;
-        data->N_allocated = r_copy->N;
-        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
-        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
-    }
-    
-    return size_changed;
-}
-
-void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
-    if (r->N==0) return;
-    struct reb_display_data* data = r->display_data;
-    struct reb_simulation* const r_copy = data->r_copy;
-
-    // this only does something for WHFAST
-    reb_simulation_synchronize(r_copy);
-       
-    // Update data on GPU 
-    for (unsigned int i=0;i<r_copy->N;i++){
-        struct reb_particle p = r_copy->particles[i];
-        data->particle_data[i].x  = (float)p.x;
-        data->particle_data[i].y  = (float)p.y;
-        data->particle_data[i].z  = (float)p.z;
-        data->particle_data[i].vx = (float)p.vx;
-        data->particle_data[i].vy = (float)p.vy;
-        data->particle_data[i].vz = (float)p.vz;
-        data->particle_data[i].r  = (float)p.r;
-    }
-    if (orbits){
-        struct reb_particle com = r_copy->particles[0];
-        for (unsigned int i=1;i<r_copy->N;i++){
-            struct reb_particle p = r_copy->particles[i];
-            data->orbit_data[i-1].x  = (float)com.x;
-            data->orbit_data[i-1].y  = (float)com.y;
-            data->orbit_data[i-1].z  = (float)com.z;
-            struct reb_orbit o = reb_orbit_from_particle(r_copy->G, p,com);
-            data->orbit_data[i-1].a = (float)o.a;
-            data->orbit_data[i-1].e = (float)o.e;
-            data->orbit_data[i-1].f = (float)o.f;
-            data->orbit_data[i-1].omega = (float)o.omega;
-            data->orbit_data[i-1].Omega = (float)o.Omega;
-            data->orbit_data[i-1].inc = (float)o.inc;
-            com = reb_particle_com_of_pair(p,com);
-        }
-    }
-}
-
-
-
-void reb_check_for_display_heartbeat(struct reb_simulation* const r){
-    if (r->display_heartbeat){                          // Display Heartbeat
-        struct timeval tim;
-        gettimeofday(&tim, NULL);
-        unsigned long milis = (tim.tv_sec+(tim.tv_usec/1000000.0))*1000;
-        if (r->display_clock==0 || (milis - r->display_clock)>25){
-            r->display_clock = milis;
-            r->display_heartbeat(r); 
-        }
-    }
-}
 
