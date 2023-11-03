@@ -92,6 +92,8 @@ int main(int argc, char* argv[]) {
 
     double e_final = reb_simulation_energy(r);
     printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
+//    r->status = REB_STATUS_PAUSED;
+    reb_simulation_integrate(r, INFINITY);
 }
 
 void heartbeat(struct reb_simulation* const r) {

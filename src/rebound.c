@@ -691,7 +691,6 @@ void reb_simulation_init(struct reb_simulation* r){
 #ifdef SERVER
     reb_display_init_data(r);
     r->display_data->opengl_enabled = 1;
-    r->display_data->main_thread = pthread_self();
     int ret_create = pthread_create(&(r->display_data->server_thread),NULL,start_server,r);
     if (ret_create){
         reb_simulation_error(r, "Error creating server thread.");
@@ -926,14 +925,14 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
                 reb_display_init_data(r);
                 r->display_data->opengl_enabled = 1;
 
-                pthread_t compute_thread;
-                if (pthread_create(&compute_thread,NULL,reb_simulation_integrate_raw,&thread_info)){
+                r->display_data->compute_thread;
+                if (pthread_create(&r->display_data->compute_thread,NULL,reb_simulation_integrate_raw,&thread_info)){
                     reb_simulation_error(r, "Error creating display thread.");
                 }
                 
-                reb_display_init(r); // Display routines running on main thread.
+                reb_display_init(r); // Display routines need to run on main thread. Will not return until r->status<0.
 
-                if (pthread_join(compute_thread,NULL)){
+                if (pthread_join(r->display_data->compute_thread,NULL)){
                     reb_simulation_error(r, "Error joining display thread.");
                 }
 #endif
