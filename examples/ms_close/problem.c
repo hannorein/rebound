@@ -39,21 +39,12 @@ int main(int argc, char* argv[]){
     //const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_tr.hillfac = 0.1;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     //r->ri_tr.S_peri = reb_integrator_trace_peri_switch_default;
-    r->ri_tr.vfac_p = 100.0;
-    //r->ri_tr.peri = 0.000001;
+    //r->ri_tr.vfac_p = 16.0;
 
-    //r->integrator = REB_INTEGRATOR_IAS15;
-    //r->ri_ias15.adaptive_mode = 2;
     r->dt = 0.15*2.*M_PI;
     r->heartbeat = heartbeat;
-    //rintf("tau_j = %f, %f steps, tau_s = %f, %f steps\n", tau_f_j, tau_f_j / r->dt, tau_f_s, tau_f_s / r->dt);
-    // r->integrator = REB_INTEGRATOR_WHFAST;
-//    r->integrator = REB_INTEGRATOR_MERCURIUS;
-//    r->ri_mercurius.hillfac = 4;
-//    r->visualization = REB_VISUALIZATION_NONE;
 
 
     reb_add(r, star);
@@ -70,7 +61,7 @@ int main(int argc, char* argv[]){
     FILE* f = fopen("energy_fdot.txt","w");
     //fprintf(f, "t,sf,stauf,jf,jtauf\n");
 
-    reb_integrate(r, 500*2*M_PI*11.86);
+    reb_integrate(r, 1000*M_PI*11.86);
     //reb_integrate(r, orb.P * 3.);
     //reb_integrate(r,2. *M_PI*11.86);
     //reb_integrate(r, 1277.);
@@ -84,33 +75,6 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}
-/*
-    FILE* f = fopen("fdot.txt","a");
-    struct reb_particle* sun = &r->particles[0];
-    struct reb_particle* jup = &r->particles[1];
-    struct reb_particle* sat = &r->particles[2];
-
-    // Jupiter-Sun
-    double djx = jup->x - sun->x;
-    double djy = jup->y - sun->y;
-    double djz = jup->z - sun->z;
-    double dj2 = djx*djx + djy*djy + djz*djz;
-
-    // Saturn-Sun
-    double dsx = sat->x - sun->x;
-    double dsy = sat->y - sun->y;
-    double dsz = sat->z - sun->z;
-    double ds2 = dsx*dsx + dsy*dsy + dsz*dsz;
-
-    struct reb_orbit os = reb_tools_particle_to_orbit(r->G, *sat, *sun);
-    struct reb_orbit oj = reb_tools_particle_to_orbit(r->G, *jup, *sun);
-
-    double fdot_s = os.h / ds2;
-    double fdot_j = oj.h / dj2;
-
-    fprintf(f, "%f,%f,%f,%f,%f\n", r->t, os.f * 180./M_PI, 2*M_PI/fdot_s, oj.f * 180./M_PI, 2*M_PI/fdot_j);
-    fclose(f);
-    */
 
     //if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file

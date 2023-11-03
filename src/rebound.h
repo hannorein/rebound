@@ -214,6 +214,7 @@ struct reb_simulation_integrator_trace {
 
     unsigned int allocatedN;
     unsigned int allocatedN_additionalforces;
+
     unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
     struct reb_particle* REBOUND_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
