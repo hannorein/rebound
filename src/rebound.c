@@ -304,12 +304,12 @@ static void set_dp7_null(struct reb_dp7 * dp){
 
 void reb_simulation_free(struct reb_simulation* const r){
 #ifdef SERVER
-    int ret_cancel = pthread_cancel(r->display_data->display_thread);
+    int ret_cancel = pthread_cancel(r->display_data->server_thread);
     if (ret_cancel==ESRCH){
         printf("Did not find server thread while trying to cancel it.\n");
     }
     void* retval = 0;
-    pthread_join(r->display_data->display_thread, &retval);
+    pthread_join(r->display_data->server_thread, &retval);
     if (retval==PTHREAD_CANCELED){
         printf("Server thread cancelled.\n");
     }else{
@@ -692,7 +692,7 @@ void reb_simulation_init(struct reb_simulation* r){
     reb_display_init_data(r);
     r->display_data->opengl_enabled = 1;
     r->display_data->main_thread = pthread_self();
-    int ret_create = pthread_create(&(r->display_data->display_thread),NULL,start_server,r);
+    int ret_create = pthread_create(&(r->display_data->server_thread),NULL,start_server,r);
     if (ret_create){
         reb_simulation_error(r, "Error creating server thread.");
     }

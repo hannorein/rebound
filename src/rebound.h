@@ -1087,7 +1087,7 @@ struct reb_display_data {
     int need_copy;
     pthread_mutex_t mutex;          // Mutex to guarantee non-flickering
     pthread_t main_thread;
-    pthread_t display_thread;
+    pthread_t server_thread;
 #endif // _WIN32
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running
