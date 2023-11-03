@@ -592,12 +592,7 @@ void reb_render_frame(void* p){
     int height = canvas_get_height();
     glfwSetWindowSize(data->window, width, height);
 #endif
-    // lock mutex for update
-    data->need_copy = 1;
-    pthread_mutex_lock(&(data->mutex));    
     int size_changed = reb_display_copy_data(r);
-    pthread_mutex_unlock(&(data->mutex));  
-    data->need_copy = 0;
 
     // prepare data (incl orbit calculation)
     reb_display_prepare_data(r, data->wire);
@@ -684,7 +679,6 @@ void reb_display_init(struct reb_simulation * const r){
     data->ghostboxes    = 0; 
     data->reference     = -1;
     data->view.r        = 1.;
-    data->p_jh_copy      = NULL;
     data->window        = window;
     data->N_allocated_whfast = 0;
 
@@ -1191,26 +1185,23 @@ int reb_display_copy_data(struct reb_simulation* const r){
     if (data->r_copy==NULL){
         data->r_copy = reb_simulation_create();
     }
-    if (r->N>data->N_allocated){
+    struct reb_simulation* r_copy = r->display_data->r_copy;
+    
+    
+    // lock mutex for update
+    data->need_copy = 1;
+    pthread_mutex_lock(&(data->mutex));    
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
+    data->need_copy = 0;
+    pthread_mutex_unlock(&(data->mutex));  
+    
+    if (data->r_copy->N > data->N_allocated){
         size_changed = 1;
-        data->N_allocated = r->N;
+        data->N_allocated = r_copy->N;
         data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
         data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
     }
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
-    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
-    if (
-            (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0)
-       )
-       {
-        if (r->ri_whfast.N_allocated > data->N_allocated_whfast){
-            size_changed = 1;
-            data->N_allocated_whfast = r->ri_whfast.N_allocated;
-            data->p_jh_copy = realloc(data->p_jh_copy,data->N_allocated_whfast*sizeof(struct reb_particle));
-        }
-        memcpy(data->p_jh_copy, r->ri_whfast.p_jh, data->N_allocated_whfast*sizeof(struct reb_particle));
-    }
-    data->r_copy->ri_whfast.p_jh= data->p_jh_copy;
     
     return size_changed;
 }

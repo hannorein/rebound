@@ -331,7 +331,6 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
         pthread_mutex_destroy(&(r->display_data->mutex));
         free(r->display_data->r_copy);
         free(r->display_data->particles_copy);
-        free(r->display_data->p_jh_copy);
         free(r->display_data->particle_data);
         free(r->display_data->orbit_data);
         free(r->display_data); // TODO: Free other pointers in display_data

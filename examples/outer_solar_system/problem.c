@@ -49,7 +49,7 @@ double ss_mass[6] =
      0.0  // Pluto
 };
 
-double tmax = 7.3e7;
+double tmax = 7.3e8;
 
 void heartbeat(struct reb_simulation* const r);
 

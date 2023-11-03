@@ -35,6 +35,7 @@ void* start_server(void* args){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     struct reb_simulation* r = (struct reb_simulation*)args;
+    struct reb_display_data* data = r->display_data;
 
     /* variables for connection management */
     int parentfd;          /* parent socket */
@@ -134,7 +135,11 @@ void* start_server(void* args){
         if (!strcasecmp(uri, "/simulation")) {
             char* bufp = NULL;
             size_t sizep;
+            data->need_copy = 1;
+            pthread_mutex_lock(&(data->mutex));    
             reb_simulation_save_to_stream(r, &bufp,&sizep);
+            data->need_copy = 0;
+            pthread_mutex_unlock(&(data->mutex));  
             //fprintf(stream, "Content-length: %d\n", (int)sizep);
             //fprintf(stream, "Content-type: application/octet-stream\n");
             fprintf(stream, "Content-type: text/html\n");
