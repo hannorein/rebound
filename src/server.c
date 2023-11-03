@@ -87,9 +87,7 @@ void* start_server(void* args){
     clientlen = sizeof(clientaddr);
     while (1) {
         /* wait for a connection request */
-        printf("Pre accept\n");
         childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
-        printf("Post accept\n");
         if (childfd < 0) 
             reb_exit("ERROR on accept");
 
@@ -122,7 +120,6 @@ void* start_server(void* args){
             continue;
         }
             
-        printf("URI: %s\n",uri);
 
         /* read (and ignore) the HTTP headers */
         fgets(buf, BUFSIZE, stream);
@@ -148,6 +145,7 @@ void* start_server(void* args){
             fwrite(bufp, 1, sizep, stream);
             free(bufp);
         }else{
+            printf("Not sure what to do with URI: %s\n",uri);
             fprintf(stream, "Content-type: text/html\n");
             fprintf(stream, "\r\n"); 
             fflush(stream);
