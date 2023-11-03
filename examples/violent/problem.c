@@ -17,9 +17,9 @@ double e_init; // initial energy
 double tmax = 1e7*2*M_PI;
 int nbodies=3;
 
-char title[100] = "bad_trace_";
-char title_stats[100] = "chaotic_trace_stats.txt";
-char title_remove[100] = "rm -rf bad_trace_";
+char title[100] = "bad_mercurius_";
+char title_stats[100] = "chaotic_mercurius_stats.txt";
+char title_remove[100] = "rm -rf bad_mercurius_";
 
 int main(int argc, char* argv[]){
 
@@ -67,9 +67,9 @@ int main(int argc, char* argv[]){
         }
     }
 
-    r->integrator = REB_INTEGRATOR_TRACE;
+    r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->dt = min*0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
-    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->track_energy_offset = 1;
     reb_configure_box(r, 1000., 1, 1, 1);
     r->boundary = REB_BOUNDARY_OPEN;
