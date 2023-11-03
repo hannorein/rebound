@@ -943,12 +943,6 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
 #endif // OPENGL
             }
             break;
-        case REB_VISUALIZATION_WEBGL:
-            {
-                reb_display_init_data(r);
-                reb_simulation_integrate_raw(&thread_info);
-            }
-            break;
         case REB_VISUALIZATION_SERVER:
                 reb_simulation_integrate_raw(&thread_info);
             break;

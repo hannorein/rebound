@@ -536,7 +536,7 @@ struct reb_simulation {
     enum {
         REB_VISUALIZATION_NONE = 0,     // No visualization (default if OPENGL compiler flag is turned off)
         REB_VISUALIZATION_OPENGL = 1,   // OpenGL visualization (default if OPENGL compiler flag is turned on)
-        REB_VISUALIZATION_WEBGL = 2,    // WebGL visualization, only usable from Jupyter notebook widget
+        // REB_VISUALIZATION_WEBGL = 2, // WebGL visualization no longer supported.
         REB_VISUALIZATION_SERVER = 3,   // Act as a WebSocket server
         } visualization;
     enum {
