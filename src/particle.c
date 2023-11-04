@@ -98,24 +98,9 @@ static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt
     }
 		if (r->integrator == REB_INTEGRATOR_TRACE){
         struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-        if (r->ri_tr.mode==0){ //WHFast part
-        }else{  // BS part
-            reb_integrator_bs_reset(r);
-            if (ri_tr->allocatedN<r->N){
-                ri_tr->particles_backup     				= realloc(ri_tr->particles_backup,sizeof(struct reb_particle)*r->N);
-								ri_tr->particles_backup_try 				= realloc(ri_tr->particles_backup_try,sizeof(struct reb_particle)*r->N);
-                ri_tr->encounter_map        				= realloc(ri_tr->encounter_map,sizeof(int)*r->N);
-								ri_tr->encounter_map_internal       = realloc(ri_tr->encounter_map_internal,sizeof(int)*r->N);
-								ri_tr->current_Ks        						= realloc(ri_tr->current_Ks,sizeof(int)*r->N);
-                ri_tr->allocatedN = r->N;
-            }
-            ri_tr->encounter_map[ri_tr->encounterN] = r->N-1;
-            ri_tr->encounterN++;
-            if (r->N_active==-1){
-                // If global N_active is not set, then all particles are active, so the new one as well.
-                // Otherwise, assume we're adding non active particle.
-                ri_tr->encounterNactive++;
-            }
+        if (r->ri_tr.mode==1){ // BS part
+					reb_error(r,"TRACE does not support adding particles mid-timestep\n");
+					return;
         }
     }
 }
@@ -357,13 +342,27 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
             for (int i=0;i<ri_tr->encounterN;i++){
                 if (after_to_be_removed_particle == 1){
                     ri_tr->encounter_map[i-1] = ri_tr->encounter_map[i] - 1;
-										ri_tr->encounter_map_internal[i-1] = ri_tr->encounter_map_internal[i] - 1;
+										// ri_tr->encounter_map_internal[i-1] = ri_tr->encounter_map_internal[i] - 1; // Don't think we need this since we auto accept collisions
                 }
                 if (ri_tr->encounter_map[i]==index){
                     encounter_index = i;
                     after_to_be_removed_particle = 1;
                 }
             }
+
+						// reshuffle current_Ks. Check logic on this
+						for (unsigned int i = 1; i < r->N-1; i++){
+							if (i < index){
+								for (unsigned int j = index+1; j < r->N; j++){
+										ri_tr->current_Ks[i][j-1] = ri_tr->current_Ks[i][j];
+								}
+							}
+							else{
+								for (unsigned int j = i+1; j < r->N-1; j++){
+										ri_tr->current_Ks[i][j] = ri_tr->current_Ks[i+1][j+1];
+								}
+							}
+						}
             if (encounter_index<ri_tr->encounterNactive){
                 ri_tr->encounterNactive--;
             }
