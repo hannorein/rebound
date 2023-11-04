@@ -71,7 +71,6 @@ void* start_server(void* args){
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);
-    printf("Trying to bind on %d\n", data->port);
     if (bind(parentfd, (struct sockaddr *) &serveraddr,
                 sizeof(serveraddr)) < 0)
         reb_exit("ERROR on binding");
@@ -80,7 +79,7 @@ void* start_server(void* args){
     if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */
         reb_exit("ERROR on listen");
 
-    printf("Listening on port %d...\n",data->port);
+    printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
     /*
      * main loop: wait for a connection request, parse HTTP,
      * serve requested content, close connection.
@@ -124,10 +123,8 @@ void* start_server(void* args){
 
         /* read (and ignore) the HTTP headers */
         fgets(buf, BUFSIZE, stream);
-        //printf("%s", buf);
         while(strcmp(buf, "\r\n")) {
             fgets(buf, BUFSIZE, stream);
-            //printf("%s", buf);
         }
 
         fprintf(stream, "HTTP/1.1 200 OK\n");

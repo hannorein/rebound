@@ -78,13 +78,8 @@ int main(int argc, char* argv[]) {
         reb_simulation_add(r, pt);
         mass += particle_mass;
     }
-    reb_simulation_integrate(r, 0.5);// INFINITY);
-    reb_simulation_integrate(r, 1.5);// INFINITY);
-    reb_simulation_integrate(r, 2.5);// INFINITY);
     reb_simulation_integrate(r, INFINITY);
-    printf("\nFreeing simulation...\n");
     reb_simulation_free(r);
-    printf("Shutting down.\n");
 }
 
 // This example is using a custom velocity dependend coefficient of restitution

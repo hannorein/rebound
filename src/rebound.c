@@ -318,13 +318,8 @@ void reb_simulation_free(struct reb_simulation* const r){
         }
     }
 #endif //SERVER
-    pthread_mutex_t mutex = r->display_data->mutex;
-    pthread_mutex_lock(&mutex); 
-    printf("Mutex locked for freeing\n");
     reb_simulation_free_pointers(r);
     free(r);
-    pthread_mutex_unlock(&mutex); 
-    printf("Simulation freed.\n");
 }
 
 void reb_simulation_free_pointers(struct reb_simulation* const r){
