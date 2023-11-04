@@ -67,7 +67,7 @@ EM_JS(int, canvas_get_height, (), {
 #define reb_glDrawArraysInstanced glDrawArraysInstanced
 #endif
 
-static void reb_display(GLFWwindow* window);
+void reb_render_frame(void* p);
 static void reb_display_set_default_scale(struct reb_simulation* const r);
                 
 static const char* onscreenhelp[] = { 
@@ -255,7 +255,8 @@ static void reb_display_mouse_button(GLFWwindow* window, int button, int action,
 }
 
 static void reb_display_resize(GLFWwindow* window, int x, int y){
-    reb_display(window);
+    struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    reb_render_frame(data);
 }
 
 static void reb_display_cursor(GLFWwindow* window, double x, double y){
@@ -406,18 +407,94 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 }
                 break;
         }
-        reb_display(window);
+        reb_render_frame(data);
     }
 }
 
-static void reb_display(GLFWwindow* window){
-    struct reb_display_data* data = glfwGetWindowUserPointer(window);
+
+void reb_render_frame(void* p){
+    struct reb_display_data* data = (struct reb_display_data*)p;
+    struct reb_simulation* r = data->r;
     if (!data){
-        printf("Error accessing data in reb_display\n");
+        printf("reb_display_data undefinded in reb_render_frame().\n");
         return;
     }
     int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
+#ifdef __EMSCRIPTEN__
+    // Need to query canvas size using JS, set window size, then read framebuffer size.
+    width = canvas_get_width();
+    height = canvas_get_height();
+    glfwSetWindowSize(data->window, width, height);
+#endif
+    glfwGetFramebufferSize(data->window, &width, &height);
+
+    struct reb_simulation* r_copy = r->display_data->r_copy;
+    if (!r_copy){
+        data->r_copy = reb_simulation_create();
+        r_copy = data->r_copy;
+    }
+    
+    // lock mutex for update
+    data->need_copy = 1;
+    pthread_mutex_lock(&(data->mutex));    
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
+    data->need_copy = 0;
+    pthread_mutex_unlock(&(data->mutex));  
+
+    // prepare data (incl orbit calculation)
+    if (r_copy->N==0) return;
+    if (r_copy->N > data->N_allocated){
+        data->N_allocated = r_copy->N;
+        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
+        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
+        // Resize memory if needed
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+    }
+
+    // this only does something for WHFAST
+    reb_simulation_synchronize(r_copy);
+       
+    // Update data on GPU 
+    for (unsigned int i=0;i<r_copy->N;i++){
+        struct reb_particle p = r_copy->particles[i];
+        data->particle_data[i].x  = (float)p.x;
+        data->particle_data[i].y  = (float)p.y;
+        data->particle_data[i].z  = (float)p.z;
+        data->particle_data[i].vx = (float)p.vx;
+        data->particle_data[i].vy = (float)p.vy;
+        data->particle_data[i].vz = (float)p.vz;
+        data->particle_data[i].r  = (float)p.r;
+    }
+    if (data->wire){
+        struct reb_particle com = r_copy->particles[0];
+        for (unsigned int i=1;i<r_copy->N;i++){
+            struct reb_particle p = r_copy->particles[i];
+            data->orbit_data[i-1].x  = (float)com.x;
+            data->orbit_data[i-1].y  = (float)com.y;
+            data->orbit_data[i-1].z  = (float)com.z;
+            struct reb_orbit o = reb_orbit_from_particle(r_copy->G, p,com);
+            data->orbit_data[i-1].a = (float)o.a;
+            data->orbit_data[i-1].e = (float)o.e;
+            data->orbit_data[i-1].f = (float)o.f;
+            data->orbit_data[i-1].omega = (float)o.omega;
+            data->orbit_data[i-1].Omega = (float)o.Omega;
+            data->orbit_data[i-1].inc = (float)o.inc;
+            com = reb_particle_com_of_pair(p,com);
+        }
+    }
+    if (r_copy->N>0){
+        // Fill memory (but not resize)
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, (r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+    }
+
+    // Do actual drawing
     double ratio = (double)width/(double)height;
     glViewport(0,0,width,height);
     if (data->clear){
@@ -592,101 +669,16 @@ static void reb_display(GLFWwindow* window){
         }
     }
 
-    glfwSwapBuffers(window);
-    return;
-}
-
-void reb_render_frame(void* p){
-    struct reb_simulation* r = (struct reb_simulation*)p;
-    struct reb_display_data* data = r->display_data;
-    if (!data){
-        printf("reb_display_data undefinded in reb_render_frame().\n");
-        return;
-    }
-#ifdef __EMSCRIPTEN__
-    int width = canvas_get_width();
-    int height = canvas_get_height();
-    glfwSetWindowSize(data->window, width, height);
-#endif
-    struct reb_simulation* r_copy = r->display_data->r_copy;
-    if (!r_copy){
-        data->r_copy = reb_simulation_create();
-        r_copy = data->r_copy;
-    }
-    
-    // lock mutex for update
-    data->need_copy = 1;
-    pthread_mutex_lock(&(data->mutex));    
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
-    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
-    data->need_copy = 0;
-    pthread_mutex_unlock(&(data->mutex));  
-
-    // prepare data (incl orbit calculation)
-    if (r_copy->N==0) return;
-    if (r_copy->N > data->N_allocated){
-        data->N_allocated = r_copy->N;
-        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
-        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
-        // Resize memory if needed
-        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
-    }
-
-    // this only does something for WHFAST
-    reb_simulation_synchronize(r_copy);
-       
-    // Update data on GPU 
-    for (unsigned int i=0;i<r_copy->N;i++){
-        struct reb_particle p = r_copy->particles[i];
-        data->particle_data[i].x  = (float)p.x;
-        data->particle_data[i].y  = (float)p.y;
-        data->particle_data[i].z  = (float)p.z;
-        data->particle_data[i].vx = (float)p.vx;
-        data->particle_data[i].vy = (float)p.vy;
-        data->particle_data[i].vz = (float)p.vz;
-        data->particle_data[i].r  = (float)p.r;
-    }
-    if (data->wire){
-        struct reb_particle com = r_copy->particles[0];
-        for (unsigned int i=1;i<r_copy->N;i++){
-            struct reb_particle p = r_copy->particles[i];
-            data->orbit_data[i-1].x  = (float)com.x;
-            data->orbit_data[i-1].y  = (float)com.y;
-            data->orbit_data[i-1].z  = (float)com.z;
-            struct reb_orbit o = reb_orbit_from_particle(r_copy->G, p,com);
-            data->orbit_data[i-1].a = (float)o.a;
-            data->orbit_data[i-1].e = (float)o.e;
-            data->orbit_data[i-1].f = (float)o.f;
-            data->orbit_data[i-1].omega = (float)o.omega;
-            data->orbit_data[i-1].Omega = (float)o.Omega;
-            data->orbit_data[i-1].inc = (float)o.inc;
-            com = reb_particle_com_of_pair(p,com);
-        }
-    }
-    if (r_copy->N>0){
-        // Fill memory (but not resize)
-        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
-        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, (r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
-    }
-
-
-
-
-    // Do actual drawing
-    reb_display(data->window);
+    glfwSwapBuffers(data->window);
     glfwPollEvents();
 }
+
 #ifdef __EMSCRIPTEN__
 EM_BOOL reb_render_frame_emscripten(double time, void* p){
     struct reb_simulation* r = (struct reb_simulation*)p;
     struct reb_display_data* data = r->display_data;
     if (!data->pause){
-        reb_render_frame(p);
+        reb_render_frame(data);
     }
     return EM_TRUE;
 }
@@ -722,6 +714,7 @@ void reb_display_init(struct reb_simulation * const r){
     glfwSetWindowUserPointer(window,data); 
 
     // Default parameters
+    reb_display_set_default_scale(r);
     { // Check if we have a retina display
         int wwidth, wheight, fwidth, fheight;
         glfwGetWindowSize(window, &wwidth, &wheight);
@@ -1194,7 +1187,7 @@ void reb_display_init(struct reb_simulation * const r){
     while(!glfwWindowShouldClose(window) && r->status<0){
         double t0 = glfwGetTime();
         if (!data->pause){
-            reb_render_frame(r);
+            reb_render_frame(data);
         }
         while (glfwGetTime()-t0 < 1.0/120.) { // Maxframerate 120Hz
             usleep(10);
@@ -1237,7 +1230,6 @@ void reb_display_init_data(struct reb_simulation* const r){
         if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
             reb_simulation_error(r,"Mutex creation failed.");
         }
-        reb_display_set_default_scale(r);
     }
 #else // _WIN32
     reb_simulation_error(r,"Visualizations not supported on Windows.");
