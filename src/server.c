@@ -34,13 +34,12 @@ void cerror(FILE *stream, char *cause, char *errno,
 void* start_server(void* args){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-    struct reb_simulation* r = (struct reb_simulation*)args;
-    struct reb_display_data* data = r->display_data;
+    struct reb_server_data* data = (struct reb_server_data*)args;
+    struct reb_simulation* r = data->r;
 
     /* variables for connection management */
     int parentfd;          /* parent socket */
     int childfd;           /* child socket */
-    int portno;            /* port to listen on */
     unsigned int clientlen;         /* byte size of client's address */
     struct hostent *hostp; /* client host info */
     int optval;            /* flag value for setsockopt */
@@ -53,9 +52,6 @@ void* start_server(void* args){
     char method[BUFSIZE];  /* request method */
     char uri[BUFSIZE];     /* request uri */
     char version[BUFSIZE]; /* request method */
-
-    /* check command line args */
-    portno = 1234;
 
     /* open socket descriptor */
     parentfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -71,7 +67,8 @@ void* start_server(void* args){
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serveraddr.sin_port = htons((unsigned short)portno);
+    serveraddr.sin_port = htons((unsigned short)data->port);
+    printf("Trying to bind on %d\n", data->port);
     if (bind(parentfd, (struct sockaddr *) &serveraddr, 
                 sizeof(serveraddr)) < 0) 
         reb_exit("ERROR on binding");
@@ -80,7 +77,7 @@ void* start_server(void* args){
     if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */ 
         reb_exit("ERROR on listen");
 
-    printf("Listening on port %d...\n",portno);
+    printf("Listening on port %d...\n",data->port);
     /* 
      * main loop: wait for a connection request, parse HTTP,
      * serve requested content, close connection.

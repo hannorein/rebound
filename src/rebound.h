@@ -96,6 +96,7 @@ extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler
 struct reb_simulation;
 struct reb_simulationarchive;
 struct reb_display_data;
+struct reb_server_data;
 struct reb_treecell;
 struct reb_variational_configuration;
 
@@ -464,6 +465,7 @@ struct reb_simulation {
     double exit_min_distance;       // Exit simulation if two particles come this close to each other.
     double usleep;                  // Artificially slow down simulations by this many microseconds each timestep.
     struct reb_display_data* display_data; // Datastructure stores visualization related data. Does not have to be modified by the user. 
+    struct reb_server_data* server_data; // Datastructure stores server related data. Does not have to be modified by the user. 
     int track_energy_offset;        // 0 (default): do not track energy offset due to merging/lost particles, 1: track offset
     double energy_offset;           // Only used if track_energy_offset = 1
     double walltime;                // Cumulative walltime of entire integration.
@@ -1062,6 +1064,15 @@ struct reb_orbit_opengl {
     float omega, Omega, inc;
 };
 
+struct reb_server_data {
+    struct reb_simulation* r;
+    struct reb_simulation* r_copy;
+    int port;
+    int need_copy;
+    pthread_mutex_t mutex;          // Mutex to allow for copying
+    pthread_t server_thread;
+};
+
 struct reb_display_data {
     struct reb_simulation* r;
     struct reb_simulation* r_copy;
@@ -1077,7 +1088,6 @@ struct reb_display_data {
     int need_copy;
     pthread_mutex_t mutex;          // Mutex to allow for copying
     pthread_t compute_thread;
-    pthread_t server_thread;
 #endif // _WIN32
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running
@@ -1184,7 +1194,7 @@ struct reb_binary_field { // This structure is used to save and load binary file
     uint64_t size;  // Size in bytes of field (only counting what follows, not the binary field, itself).
 };
 
-DLLEXPORT void reb_simulation_init(struct reb_simulation* r);     // Used internally and by python. Should not be called by the user.
+DLLEXPORT void reb_simulation_init(struct reb_simulation* r, int server_port); // Used internally and by python. Should not be called by the user.
 DLLEXPORT void reb_simulation_update_tree(struct reb_simulation* const r);
 DLLEXPORT int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf); // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
 DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contraction are enabled. 0 otherwise.

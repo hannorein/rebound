@@ -304,16 +304,18 @@ static void set_dp7_null(struct reb_dp7 * dp){
 
 void reb_simulation_free(struct reb_simulation* const r){
 #ifdef SERVER
-    int ret_cancel = pthread_cancel(r->display_data->server_thread);
-    if (ret_cancel==ESRCH){
-        printf("Did not find server thread while trying to cancel it.\n");
-    }
-    void* retval = 0;
-    pthread_join(r->display_data->server_thread, &retval);
-    if (retval==PTHREAD_CANCELED){
-        printf("Server thread cancelled.\n");
-    }else{
-        printf("An error occured while cancelling server thread.\n");
+    if (r->server_data){
+        int ret_cancel = pthread_cancel(r->server_data->server_thread);
+        if (ret_cancel==ESRCH){
+            printf("Did not find server thread while trying to cancel it.\n");
+        }
+        void* retval = 0;
+        pthread_join(r->server_data->server_thread, &retval);
+        if (retval==PTHREAD_CANCELED){
+            printf("Server thread cancelled.\n");
+        }else{
+            printf("An error occured while cancelling server thread.\n");
+        }
     }
 #endif //SERVER
     pthread_mutex_t mutex = r->display_data->mutex;
@@ -462,7 +464,7 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
 
 struct reb_simulation* reb_simulation_create(){
     struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
-    reb_simulation_init(r);
+    reb_simulation_init(r, 1234);
     return r;
 }
 
@@ -533,7 +535,7 @@ void reb_clear_pre_post_pointers(struct reb_simulation* const r){
     r->post_timestep_modifications  = NULL;
 }
 
-void reb_simulation_init(struct reb_simulation* r){
+void reb_simulation_init(struct reb_simulation* r, int server_port){
     r->rand_seed = reb_tools_get_rand_seed();
     reb_simulation_reset_temporary_pointers(r);
     reb_simulation_reset_function_pointers(r);
@@ -683,10 +685,17 @@ void reb_simulation_init(struct reb_simulation* r){
 #endif // OPENMP
 
 #ifdef SERVER
-    reb_display_init_data(r);
-    int ret_create = pthread_create(&(r->display_data->server_thread),NULL,start_server,r);
-    if (ret_create){
-        reb_simulation_error(r, "Error creating server thread.");
+    if (server_port){
+        r->server_data = calloc(sizeof(struct reb_server_data),1);
+        r->server_data->r = r;
+        r->server_data->port = server_port;
+        if (pthread_mutex_init(&(r->server_data->mutex), NULL)){
+            reb_simulation_error(r,"Mutex creation failed.");
+        }
+        int ret_create = pthread_create(&(r->server_data->server_thread),NULL,start_server,r->server_data);
+        if (ret_create){
+            reb_simulation_error(r, "Error creating server thread.");
+        }
     }
 #endif // SERVER
 }

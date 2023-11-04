@@ -92,7 +92,7 @@ class Simulation(Structure):
         # Create a new simulation if no arguments given
         if len(args)==0:
             sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
+            clibrebound.reb_simulation_init(byref(sim),c_int(0))
             return sim
         
         # If first argument is of type bytes, then unpickle a Simulation
@@ -107,7 +107,7 @@ class Simulation(Structure):
             w = c_int(0)
             clibrebound.reb_simulationarchive_init_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
             sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
+            clibrebound.reb_simulation_init(byref(sim),c_int(0))
             clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
                 if w.value & value:
@@ -137,7 +137,7 @@ class Simulation(Structure):
         if sa is not None:
             # Recreate exisitng simulation 
             sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
+            clibrebound.reb_simulation_init(byref(sim),c_int(0))
             w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
             clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
