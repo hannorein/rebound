@@ -1,5 +1,5 @@
 #export OPENGL=1
-#export OPT=-DSERVER
+export OPT=-DSERVER
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for
