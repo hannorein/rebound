@@ -334,8 +334,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     // Visualization is not support on Windows
     if(r->display_data){
         pthread_mutex_destroy(&(r->display_data->mutex));
-        free(r->display_data->r_copy);
-        free(r->display_data->particles_copy);
+        reb_simulation_free(r->display_data->r_copy);
         free(r->display_data->particle_data);
         free(r->display_data->orbit_data);
         free(r->display_data); // TODO: Free other pointers in display_data
@@ -594,11 +593,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->simulationarchive_filename      = NULL;    
     
     // Default modules
-#ifdef OPENGL
-    r->visualization= REB_VISUALIZATION_OPENGL;
-#else // OPENGL
-    r->visualization= REB_VISUALIZATION_NONE;
-#endif // OPENGL
     r->integrator   = REB_INTEGRATOR_IAS15;
     r->boundary     = REB_BOUNDARY_NONE;
     r->gravity      = REB_GRAVITY_BASIC;
@@ -899,45 +893,38 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
         .r = r,
         .tmax = tmax, 
     };
-    switch (r->visualization){
-        case REB_VISUALIZATION_NONE:
-            {
-                reb_simulation_integrate_raw(&thread_info);
-            }
-            break;
-        case REB_VISUALIZATION_OPENGL:
-            {
+
 #ifdef OPENGL
 #ifdef __EMSCRIPTEN__
-                if (r->display_data==NULL){
-                    reb_display_init_data(r);
-                    reb_display_init(r); // Will return. Display routines running in animation_loop.
-                }
-                reb_simulation_integrate_raw(&thread_info);
-#else
-                reb_display_init_data(r);
-
-                r->display_data->compute_thread;
-                if (pthread_create(&r->display_data->compute_thread,NULL,reb_simulation_integrate_raw,&thread_info)){
-                    reb_simulation_error(r, "Error creating display thread.");
-                }
-                
-                reb_display_init(r); // Display routines need to run on main thread. Will not return until r->status<0.
-
-                if (pthread_join(r->display_data->compute_thread,NULL)){
-                    reb_simulation_error(r, "Error joining display thread.");
-                }
-#endif
-#else // OPENGL
-                reb_simulation_error(r,"REBOUND was not compiled/linked with OPENGL libraries.");
-                return REB_STATUS_GENERIC_ERROR; 
-#endif // OPENGL
-            }
-            break;
-        case REB_VISUALIZATION_SERVER:
-                reb_simulation_integrate_raw(&thread_info);
-            break;
+    if (r->display_data==NULL){
+        r->display_data = calloc(sizeof(struct reb_display_data),1);
+        r->display_data->r = r;
+        // Setup windows, compile shaders, etc.
+        reb_display_init(r); // Will return. Display routines running in animation_loop.
     }
+    reb_simulation_integrate_raw(&thread_info);
+#else // __EMSCRIPTEN__
+    if (r->display_data==NULL){
+        r->display_data = calloc(sizeof(struct reb_display_data),1);
+        r->display_data->r = r;
+        if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
+            reb_simulation_error(r,"Mutex creation failed.");
+        }
+    }
+
+    if (pthread_create(&r->display_data->compute_thread,NULL,reb_simulation_integrate_raw,&thread_info)){
+        reb_simulation_error(r, "Error creating compute thread.");
+    }
+
+    reb_display_init(r); // Display routines need to run on main thread. Will not return until r->status<0.
+
+    if (pthread_join(r->display_data->compute_thread,NULL)){
+        reb_simulation_error(r, "Error joining compute thread.");
+    }
+#endif // __EMSCRIPTEN__
+#else // OPENGL
+    reb_simulation_integrate_raw(&thread_info);
+#endif // OPENGL
     return r->status;
 }
 

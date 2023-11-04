@@ -128,7 +128,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 100, REB_DP7,         "ri_ias15.br",                  offsetof(struct reb_simulation, ri_ias15.br), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
     { 101, REB_DP7,         "ri_ias15.er",                  offsetof(struct reb_simulation, ri_ias15.er), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
     { 104, REB_POINTER,     "ri_whfast.p_jh",               offsetof(struct reb_simulation, ri_whfast.p_jh), offsetof(struct reb_simulation, ri_whfast.N_allocated), sizeof(struct reb_particle)},
-    { 107, REB_INT,         "visualization",                offsetof(struct reb_simulation, visualization), 0, 0},
+    //{ 107, REB_INT,         "visualization",                offsetof(struct reb_simulation, visualization), 0, 0},
     { 112, REB_POINTER,     "ri_janus.p_int",               offsetof(struct reb_simulation, ri_janus.p_int), offsetof(struct reb_simulation, ri_janus.N_allocated), sizeof(struct reb_particle_int)},
     { 113, REB_DOUBLE,      "ri_janus.scale_pos",           offsetof(struct reb_simulation, ri_janus.scale_pos), 0, 0},
     { 114, REB_DOUBLE,      "ri_janus.scale_vel",           offsetof(struct reb_simulation, ri_janus.scale_vel), 0, 0},

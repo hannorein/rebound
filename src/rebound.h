@@ -534,12 +534,6 @@ struct reb_simulation {
 
     // Available modules in REBOUND
     enum {
-        REB_VISUALIZATION_NONE = 0,     // No visualization (default if OPENGL compiler flag is turned off)
-        REB_VISUALIZATION_OPENGL = 1,   // OpenGL visualization (default if OPENGL compiler flag is turned on)
-        // REB_VISUALIZATION_WEBGL = 2, // WebGL visualization no longer supported.
-        REB_VISUALIZATION_SERVER = 3,   // Act as a WebSocket server
-        } visualization;
-    enum {
         REB_COLLISION_NONE = 0,         // Do not search for collisions (default)
         REB_COLLISION_DIRECT = 1,       // Direct collision search O(N^2)
         REB_COLLISION_TREE = 2,         // Tree based collision search O(N log(N))
@@ -1073,10 +1067,7 @@ struct reb_display_data {
     struct reb_simulation* r_copy;
     struct reb_particle_opengl* particle_data;
     struct reb_orbit_opengl* orbit_data;
-    struct reb_particle* particles_copy;
-    struct reb_particle* p_jh_copy;
     uint64_t N_allocated;
-    uint64_t N_allocated_whfast;
     double scale;
     double mouse_scale;
     double mouse_x;
@@ -1084,7 +1075,7 @@ struct reb_display_data {
     double retina;
 #ifndef _WIN32
     int need_copy;
-    pthread_mutex_t mutex;          // Mutex to guarantee non-flickering
+    pthread_mutex_t mutex;          // Mutex to allow for copying
     pthread_t compute_thread;
     pthread_t server_thread;
 #endif // _WIN32

@@ -97,7 +97,6 @@ int main(int argc, char* argv[]) {
 }
 
 void heartbeat(struct reb_simulation* const r) {
-    sleep(1);
     if (reb_simulation_output_check(r, 10000000.)) {
         reb_simulation_output_timing(r, tmax);
     }

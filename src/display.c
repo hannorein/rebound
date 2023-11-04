@@ -761,7 +761,6 @@ void reb_display_init(struct reb_simulation * const r){
     data->reference     = -1;
     data->view.r        = 1.;
     data->window        = window;
-    data->N_allocated_whfast = 0;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
@@ -1202,6 +1201,7 @@ void reb_display_init(struct reb_simulation * const r){
 
     // Main display loop
 #ifdef __EMSCRIPTEN__
+    // Will return 
     emscripten_request_animation_frame_loop(reb_render_frame_emscripten, r);
 #else
     glfwSwapInterval(1);
@@ -1218,12 +1218,8 @@ void reb_display_init(struct reb_simulation * const r){
     }
     glfwDestroyWindow(window);
     glfwTerminate();
-    if (data->r->status<0){
-        data->r->status = REB_STATUS_USER; 
-    }
 #endif
 }
-#endif // OPENGL
 
 static void reb_display_set_default_scale(struct reb_simulation* const r){
     // Need a scale for visualization
@@ -1243,19 +1239,6 @@ static void reb_display_set_default_scale(struct reb_simulation* const r){
     }
 }
 
-
-void reb_display_init_data(struct reb_simulation* const r){
-#ifndef _WIN32
-    if (r->display_data==NULL){
-        r->display_data = calloc(sizeof(struct reb_display_data),1);
-        r->display_data->r = r;
-        if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
-            reb_simulation_error(r,"Mutex creation failed.");
-        }
-    }
-#else // _WIN32
-    reb_simulation_error(r,"Visualizations not supported on Windows.");
-#endif // _WIN32
-}
+#endif // OPENGL
 
 
