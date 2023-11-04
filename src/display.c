@@ -31,6 +31,7 @@
 #include <pthread.h>
 #endif // _WIN32
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include "rebound.h"
 #include "display.h"
@@ -256,6 +257,10 @@ static void reb_display_mouse_button(GLFWwindow* window, int button, int action,
 
 static void reb_display_resize(GLFWwindow* window, int x, int y){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_resize\n");
+        return;
+    }
     reb_render_frame(data);
 }
 
@@ -411,7 +416,8 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
     }
 }
 
-
+// Actual rendering
+// Makes a copy of the simulation first.
 void reb_render_frame(void* p){
     struct reb_display_data* data = (struct reb_display_data*)p;
     struct reb_simulation* r = data->r;
@@ -436,11 +442,24 @@ void reb_render_frame(void* p){
     
     // lock mutex for update
     data->need_copy = 1;
-    pthread_mutex_lock(&(data->mutex));    
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
-    reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
-    data->need_copy = 0;
-    pthread_mutex_unlock(&(data->mutex));  
+    int wait_count = 0;
+    const int wait_count_max = 10;
+    int ret_try = EBUSY;
+    while (wait_count<wait_count_max && ret_try){// wait at most one frame.
+        ret_try = pthread_mutex_trylock(&data->mutex);
+        if (ret_try){ // not locked
+            usleep(1./120.*1e6/wait_count_max); 
+            wait_count++;
+        }
+    }
+
+    if (!ret_try){
+        // Copy if lock obtained. Otherwise use old data.
+        enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+        reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
+        data->need_copy = 0;
+        pthread_mutex_unlock(&(data->mutex));  
+    }
 
     // prepare data (incl orbit calculation)
     if (r_copy->N==0) return;
@@ -677,6 +696,9 @@ void reb_render_frame(void* p){
 EM_BOOL reb_render_frame_emscripten(double time, void* p){
     struct reb_simulation* r = (struct reb_simulation*)p;
     struct reb_display_data* data = r->display_data;
+    if (!data){
+        return;
+    }
     if (!data->pause){
         reb_render_frame(data);
     }
