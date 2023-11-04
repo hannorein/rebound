@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
@@ -90,16 +89,16 @@ static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char*
             asprintf(&newbuf,"%u",*(unsigned int*)(pointer));
             break;
         case REB_UINT32:
-            asprintf(&newbuf,"%"PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
+            asprintf(&newbuf,"%" PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
             break;
         case REB_LONG:
-            asprintf(&newbuf,"%lu",*(int64_t*)(pointer));
+            asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
             break;
         case REB_ULONG:
-            asprintf(&newbuf,"%lu",*(uint64_t*)(pointer));
+            asprintf(&newbuf,"%" PRIu64,*(uint64_t*)(pointer));
             break;
         case REB_ULONGLONG:
-            asprintf(&newbuf,"%lu",*(uint64_t*)(pointer));
+            asprintf(&newbuf,"%" PRIu64,*(uint64_t*)(pointer));
             break;
         default:
             asprintf(&newbuf,"(%zu bytes, values not printed)", dsize);

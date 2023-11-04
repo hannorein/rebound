@@ -206,7 +206,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                             blob_finished = 1;
                         }else{
                             int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                            if (debug) printf("SA Field. type=%-6d    size=%lu\n",field.type,(uint64_t)field.size);
+                            if (debug) printf("SA Field. type=%-6d    size=%" PRIu64 "\n",field.type,(uint64_t)field.size);
                             if (s2){
                                 read_error = 1;
                             }
@@ -232,7 +232,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                     // Checking the offsets. Acts like a checksum.
                     if (((int64_t)blob.offset_prev )+ ((int64_t)sizeof(struct reb_simulationarchive_blob)) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
                         // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                        if (debug) printf("SA Error. Offset mismatch: %lu != %ld.\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
+                        if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
                         read_error = 1;
                         break;
                     }
