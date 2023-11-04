@@ -458,7 +458,6 @@ struct reb_simulation {
     unsigned int force_is_velocity_dependent; // 0 (default): force only depends on position, 1: force also depends on velocities
     unsigned int gravity_ignore_terms;
     double output_timing_last;      // Time when reb_simulation_output_timing() was called the last time. 
-    uint64_t display_clock;    // Internal variable for timing visualization refreshs.
     int save_messages;              // 0 (default): print messages on screen, 1: ignore messages (used in python interface).
     char** messages;                // Array of strings containing last messages (only used if save_messages==1). 
     double exit_max_distance;       // Exit simulation if a particle is this far away from the origin.
@@ -1047,11 +1046,6 @@ DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 #endif // OPENMP
 
 // The following stuctures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
-
-struct reb_thread_info {
-    struct reb_simulation* r;
-    double tmax;
-};
 
 struct reb_particle_opengl {
     float x,y,z;

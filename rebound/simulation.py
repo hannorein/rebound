@@ -17,7 +17,6 @@ INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "jan
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
-VISUALIZATIONS = {"none": 0, "opengl": 1, "webgl": 2, "server":3}
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
     (True,  1, "Cannot read binary file. Check filename and file contents."),
@@ -199,62 +198,6 @@ class Simulation(Structure):
         txt, bib = cite(self)
         # one could check for REBOUNDx here, then append txt and bib accordingly
         print(txt + "\n\n\n" + bib)
-
-    def widget(self,**kwargs):
-        """
-        Wrapper function that returns a new widget attached to this simulation.
-
-        Widgets provide real-time 3D visualizations from within a Jupyter notebook.
-        See the Widget class for more details on the possible arguments.
-        
-        
-        Arguments
-        ---------
-        All arguments passed to this wrapper function will be passed to /Widget class.
-        
-        Returns
-        ------- 
-        A rebound.Widget object.
-        
-        Examples
-        --------
-
-        >>> sim = rebound.Simulation()
-        >>> sim.add(m=1.)
-        >>> sim.add(m=1.e-3,x=1.,vy=1.)
-        >>> sim.widget()
-
-        """
-        from .widget import Widget # ondemand
-        from ipywidgets import DOMWidget
-        from IPython.display import display, HTML
-        if not hasattr(self, '_widgets'):
-            self._widgets = []
-            def display_heartbeat(simp):
-                for w in self._widgets:
-                    w.refresh(simp,isauto=1)
-            self.visualization = VISUALIZATIONS["webgl"] 
-            clibrebound.reb_display_init_data(byref(self))
-            self._dhbf = AFF(display_heartbeat)
-            self._display_heartbeat = self._dhbf
-            display(HTML(Widget.getClientCode())) # HACK! Javascript should go into custom.js
-        newWidget = Widget(self,**kwargs)
-        self._widgets.append(newWidget)
-        newWidget.refresh(isauto=0)
-        return newWidget
-    
-    def refresh_widgets(self):
-        """
-        This function manually refreshed all widgets attached to this simulation.
-        
-        You want to call this function if any particle data has been manually changed.
-        """
-        if hasattr(self, '_widgets'):
-            for w in self._widgets:
-                w.refresh(isauto=0)
-        else:
-            raise RuntimeError("No widgets found")
-
 
     @property
     def simulationarchive_filename(self):
@@ -946,8 +889,6 @@ class Simulation(Structure):
                 raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
-        if hasattr(self, '_widgets'):
-            self._display_heartbeat(pointer(self))
 
 # Particle getter functions
     @property
@@ -1001,8 +942,6 @@ class Simulation(Structure):
                 clibrebound.reb_simulation_remove_particle_by_hash(byref(self), c_uint32(hash), keep_sorted)
             elif isinstance(hash, hash_types):
                 clibrebound.reb_simulation_remove_particle_by_hash(byref(self), hash, keep_sorted)
-        if hasattr(self, '_widgets'):
-            self._display_heartbeat(pointer(self))
 
         self.process_messages()
 
@@ -1445,23 +1384,6 @@ class timeval(Structure):
 from .particle import Particle
 from .particles import Particles
 
-class DisplayData(Structure):
-    _fields_ = [("r", POINTER(Simulation)),
-                ("r_copy", POINTER(Simulation)),
-                ("particle_data", c_void_p),
-                ("orbit_data", c_void_p),
-                ("particles_copy", POINTER(Particle)),
-                ("p_jh_copy", POINTER(Particle)),
-                ("N_allocated", c_uint64),
-                ("N_allocated_whfast", c_uint64),
-                ("opengl_enabled", c_int),
-                ("scale", c_double),
-                ("mouse_x", c_double),
-                ("mouse_y", c_double),
-                ("retina", c_double),
-                # ignoring other data (never used)
-                ]
-
 
 from .integrators.bs import ODE, IntegratorBS
 from .integrators.whfast import IntegratorWHFast
@@ -1507,13 +1429,13 @@ Simulation._fields_ = [
                 ("force_is_velocity_dependent", c_uint),
                 ("gravity_ignore", c_uint),
                 ("_output_timing_last", c_double),
-                ("_display_clock", c_uint64),
                 ("save_messages", c_int),
                 ("messages", c_void_p),
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
-                ("display_data", POINTER(DisplayData)),
+                ("_display_data", c_void_p), # not needed from python
+                ("_server_data", c_void_p),  # not needed from python
                 ("track_energy_offset", c_int),
                 ("energy_offset", c_double),
                 ("walltime", c_double),
@@ -1553,7 +1475,6 @@ Simulation._fields_ = [
                 ("simulationarchive_next", c_double),
                 ("simulationarchive_next_step", c_uint64),
                 ("_simulationarchive_filename", c_char_p),
-                ("_visualization", c_int),
                 ("_collision", c_int),
                 ("_integrator", c_int),
                 ("_boundary", c_int),

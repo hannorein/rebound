@@ -818,6 +818,11 @@ void reb_sigint_handler(int signum) {
     }
 }
 
+struct reb_thread_info {
+    struct reb_simulation* r;
+    double tmax;
+};
+
 static void* reb_simulation_integrate_raw(void* args){
     reb_sigint = 0;
     signal(SIGINT, reb_sigint_handler);
