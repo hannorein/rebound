@@ -146,6 +146,33 @@ void* start_server(void* args){
             fflush(stream);
             fwrite(bufp, 1, sizep, stream);
             free(bufp);
+        }else if (!strncasecmp(uri, "/keyboard/",10)) {
+            int key = 0;
+            sscanf(uri, "/keyboard/%d", &key);
+            fprintf(stream, "Content-type: text/html\n");
+            fprintf(stream, "Access-Control-Allow-Origin: *\n");
+            fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
+            fprintf(stream, "\r\n"); 
+            switch (key){
+                case 'Q':
+                    data->r->status = REB_STATUS_USER;
+                    fprintf(stream, "ok.\n"); 
+                    break;
+                case ' ':
+                    if (data->r->status == REB_STATUS_PAUSED){
+                        printf("Resume.\n");
+                        data->r->status = REB_STATUS_RUNNING;
+                    }else{
+                        printf("Pause.\n");
+                        data->r->status = REB_STATUS_PAUSED;
+                    }
+                    fprintf(stream, "ok.\n"); 
+                    break;
+                default:
+                    fprintf(stream, "Unknown key received: %d\n",key);
+                    break;
+            }
+            fflush(stream);
         }else{
             printf("Not sure what to do with URI: %s\n",uri);
             fprintf(stream, "Content-type: text/html\n");

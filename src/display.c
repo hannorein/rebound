@@ -50,6 +50,7 @@
 #include <GLFW/glfw3.h>
 
 #ifdef __EMSCRIPTEN__
+#include <emscripten/fetch.h>
 // Need to use emscripten_ version of these functions because types are wrong otherwise
 void emscripten_glVertexAttribDivisor(GLuint index, GLuint divisor);
 void emscripten_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
@@ -329,6 +330,27 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
         }
     }
 }
+#ifdef __EMSCRIPTEN__
+static void downloadSucceeded(emscripten_fetch_t *fetch) {
+    emscripten_fetch_close(fetch); // Free data associated with the fetch.
+}
+
+static void downloadFailed(emscripten_fetch_t *fetch) {
+    printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
+    emscripten_fetch_close(fetch); // Also free data on failure.
+}
+void send_key(int key){
+    emscripten_fetch_attr_t attr;
+    emscripten_fetch_attr_init(&attr);
+    strcpy(attr.requestMethod, "GET");
+    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+    attr.onsuccess = downloadSucceeded;
+    attr.onerror = downloadFailed;
+    char buffer[1024];
+    sprintf(buffer, "http://localhost:1234/keyboard/%d", key);
+    emscripten_fetch(&attr, buffer);
+}
+#endif // __EMSCRIPTEN__
 
 static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
@@ -344,6 +366,9 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 break;
             case 'Q':
                 data->r->status = REB_STATUS_USER;
+#ifdef __EMSCRIPTEN__
+                send_key(key);
+#endif //__EMSCRIPTEN__
                 break;
             case ' ':
                 if (data->r->status == REB_STATUS_PAUSED){
@@ -353,6 +378,9 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                     printf("Pause.\n");
                     data->r->status = REB_STATUS_PAUSED;
                 }
+#ifdef __EMSCRIPTEN__
+                send_key(key);
+#endif //__EMSCRIPTEN__
                 break;
             case 'S':
                 data->spheres = (data->spheres+1)%3;
@@ -430,7 +458,11 @@ void reb_render_frame(void* p){
     // Need to query canvas size using JS, set window size, then read framebuffer size.
     width = canvas_get_width();
     height = canvas_get_height();
-    glfwSetWindowSize(data->window, width, height);
+    int cwidth, cheight;
+    glfwGetWindowSize(data->window, &cwidth, &cheight);
+    if (cwidth!=width || cheight !=height){
+        glfwSetWindowSize(data->window, width, height);
+    }
 #endif
     glfwGetFramebufferSize(data->window, &width, &height);
 
@@ -698,7 +730,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
     struct reb_simulation* r = (struct reb_simulation*)p;
     struct reb_display_data* data = r->display_data;
     if (!data){
-        return;
+        return EM_TRUE;
     }
     if (!data->pause){
         reb_render_frame(data);

@@ -22,7 +22,8 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
     fclose(fin);
 
     if (first){
-        reb_display_init_data(r);
+        r->display_data = calloc(1, sizeof(struct reb_display_data));
+        r->display_data->r = r;
         reb_display_init(r); // Will return. Display routines running in animation_loop.
     }
     first = 0;
