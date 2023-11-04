@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e5*2*M_PI;
+double tmax = 1e7*2*M_PI;
 int nbodies=3;
 
 char title[100] = "bad_trace_";
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
     FILE* tf = fopen(title_stats, "a");
-    fprintf(tf, "%d,%e,%e\n", index, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
+    fprintf(tf, "%d,%d,%e,%e\n", index, r->N - 1, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
     fclose(tf);
 
     //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
