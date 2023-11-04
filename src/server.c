@@ -1,4 +1,4 @@
-/* 
+/*
  * tiny.c - a minimal HTTP server
  *          Dave O'Hallaron, Carnegie Mellon
  */
@@ -22,7 +22,7 @@ extern char **environ; /* the environment */
 /*
  * cerror - returns an error message to the client
  */
-void cerror(FILE *stream, char *cause, char *errno, 
+void cerror(FILE *stream, char *cause, char *errno,
         char *shortmsg, char *longmsg) {
     fprintf(stream, "HTTP/1.1 %s %s\n", errno, shortmsg);
     fprintf(stream, "Content-type: text/html\n");
@@ -58,12 +58,12 @@ void* start_server(void* args){
 
     /* open socket descriptor */
     parentfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (parentfd < 0) 
+    if (parentfd < 0)
         reb_exit("ERROR opening socket");
 
     /* allows us to restart server immediately */
     optval = 1;
-    setsockopt(parentfd, SOL_SOCKET, SO_REUSEADDR, 
+    setsockopt(parentfd, SOL_SOCKET, SO_REUSEADDR,
             (const void *)&optval , sizeof(int));
 
     /* bind port to socket */
@@ -72,16 +72,16 @@ void* start_server(void* args){
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);
     printf("Trying to bind on %d\n", data->port);
-    if (bind(parentfd, (struct sockaddr *) &serveraddr, 
-                sizeof(serveraddr)) < 0) 
+    if (bind(parentfd, (struct sockaddr *) &serveraddr,
+                sizeof(serveraddr)) < 0)
         reb_exit("ERROR on binding");
 
     /* get us ready to accept connection requests */
-    if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */ 
+    if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */
         reb_exit("ERROR on listen");
 
     printf("Listening on port %d...\n",data->port);
-    /* 
+    /*
      * main loop: wait for a connection request, parse HTTP,
      * serve requested content, close connection.
      */
@@ -89,11 +89,11 @@ void* start_server(void* args){
     while (1) {
         /* wait for a connection request */
         childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
-        if (childfd < 0) 
+        if (childfd < 0)
             reb_exit("ERROR on accept");
 
         /* determine who sent the message */
-        hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
+        hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr,
                 sizeof(clientaddr.sin_addr.s_addr), AF_INET);
         if (hostp == NULL)
             reb_exit("ERROR on gethostbyaddr");
@@ -120,7 +120,7 @@ void* start_server(void* args){
             close(childfd);
             continue;
         }
-            
+           
 
         /* read (and ignore) the HTTP headers */
         fgets(buf, BUFSIZE, stream);
@@ -138,14 +138,14 @@ void* start_server(void* args){
             char* bufp = NULL;
             size_t sizep;
             data->need_copy = 1;
-            pthread_mutex_lock(&(data->mutex));    
+            pthread_mutex_lock(&(data->mutex));
             reb_simulation_save_to_stream(r, &bufp,&sizep);
             data->need_copy = 0;
-            pthread_mutex_unlock(&(data->mutex));  
+            pthread_mutex_unlock(&(data->mutex));
             //fprintf(stream, "Content-length: %d\n", (int)sizep);
             //fprintf(stream, "Content-type: application/octet-stream\n");
             fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "\r\n"); 
+            fprintf(stream, "\r\n");
             fflush(stream);
             fwrite(bufp, 1, sizep, stream);
             free(bufp);
@@ -153,11 +153,11 @@ void* start_server(void* args){
             int key = 0;
             sscanf(uri, "/keyboard/%d", &key);
             fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "\r\n"); 
+            fprintf(stream, "\r\n");
             switch (key){
                 case 'Q':
                     data->r->status = REB_STATUS_USER;
-                    fprintf(stream, "ok.\n"); 
+                    fprintf(stream, "ok.\n");
                     break;
                 case ' ':
                     if (data->r->status == REB_STATUS_PAUSED){
@@ -167,7 +167,7 @@ void* start_server(void* args){
                         printf("Pause.\n");
                         data->r->status = REB_STATUS_PAUSED;
                     }
-                    fprintf(stream, "ok.\n"); 
+                    fprintf(stream, "ok.\n");
                     break;
                 default:
                     fprintf(stream, "Unknown key received: %d\n",key);
@@ -179,14 +179,14 @@ void* start_server(void* args){
             if (stat("rebound.html", &sbuf) < 0) {
                 printf("Unable to find rebound.html\n");
                 fprintf(stream, "Content-type: text/html\n");
-                fprintf(stream, "\r\n"); 
+                fprintf(stream, "\r\n");
                 fflush(stream);
                 fprintf(stream, "<h1>Unable to find rebound.html.</h1>\n");
                 fprintf(stream, "The server was unable to find rebound.html.\n");
                 fprintf(stream, "Download rebound.html from github and place it in the same directory as your rebound executable.\n");
             }else{
                 fprintf(stream, "Content-type: text/html\n");
-                fprintf(stream, "\r\n"); 
+                fprintf(stream, "\r\n");
                 fflush(stream);
                 int fd = open("rebound.html", O_RDONLY);
                 void* p = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -196,7 +196,7 @@ void* start_server(void* args){
         }else{
             printf("Not sure what to do with URI: %s\n",uri);
             fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "\r\n"); 
+            fprintf(stream, "\r\n");
             fflush(stream);
             fprintf(stream, "<h1>Not sure what to do!</h1>\n");
         }
