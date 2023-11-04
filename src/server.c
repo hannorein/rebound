@@ -87,9 +87,10 @@ void* reb_server_start(void* args){
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);
-    if (bind(parentfd, (struct sockaddr *) &serveraddr,
-                sizeof(serveraddr)) < 0)
-        reb_exit("ERROR on binding");
+    if (bind(parentfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
+        printf("Error opening binding port %d. Port might be in use.\n", data->port);
+        return PTHREAD_CANCELED;
+    }
 
     /* get us ready to accept connection requests */
     if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */
