@@ -8,7 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
+#include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <netinet/in.h>
 #include "rebound.h"
 
@@ -129,6 +132,8 @@ void* start_server(void* args){
 
         fprintf(stream, "HTTP/1.1 200 OK\n");
         fprintf(stream, "Server: Tiny Web Server\n");
+        fprintf(stream, "Access-Control-Allow-Origin: *\n");
+        fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
         if (!strcasecmp(uri, "/simulation")) {
             char* bufp = NULL;
             size_t sizep;
@@ -140,8 +145,6 @@ void* start_server(void* args){
             //fprintf(stream, "Content-length: %d\n", (int)sizep);
             //fprintf(stream, "Content-type: application/octet-stream\n");
             fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "Access-Control-Allow-Origin: *\n");
-            fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
             fprintf(stream, "\r\n"); 
             fflush(stream);
             fwrite(bufp, 1, sizep, stream);
@@ -150,8 +153,6 @@ void* start_server(void* args){
             int key = 0;
             sscanf(uri, "/keyboard/%d", &key);
             fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "Access-Control-Allow-Origin: *\n");
-            fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
             fprintf(stream, "\r\n"); 
             switch (key){
                 case 'Q':
@@ -173,6 +174,25 @@ void* start_server(void* args){
                     break;
             }
             fflush(stream);
+        }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
+            struct stat sbuf;
+            if (stat("rebound.html", &sbuf) < 0) {
+                printf("Unable to find rebound.html\n");
+                fprintf(stream, "Content-type: text/html\n");
+                fprintf(stream, "\r\n"); 
+                fflush(stream);
+                fprintf(stream, "<h1>Unable to find rebound.html.</h1>\n");
+                fprintf(stream, "The server was unable to find rebound.html.\n");
+                fprintf(stream, "Download rebound.html from github and place it in the same directory as your rebound executable.\n");
+            }else{
+                fprintf(stream, "Content-type: text/html\n");
+                fprintf(stream, "\r\n"); 
+                fflush(stream);
+                int fd = open("rebound.html", O_RDONLY);
+                void* p = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+                fwrite(p, 1, sbuf.st_size, stream);
+                munmap(p, sbuf.st_size);
+            }
         }else{
             printf("Not sure what to do with URI: %s\n",uri);
             fprintf(stream, "Content-type: text/html\n");
