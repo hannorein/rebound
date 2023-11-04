@@ -14,11 +14,11 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e7*2*M_PI;
+double tmax = 1e5*2*M_PI;
 int nbodies=3;
 
 char title[100] = "bad_trace_";
-char title_stats[100] = "chaotic_trace_stats.txt";
+char title_stats[100] = "chaotic_trace_time_stats.txt";
 char title_remove[100] = "rm -rf bad_trace_";
 
 int main(int argc, char* argv[]){
@@ -44,11 +44,11 @@ int main(int argc, char* argv[]){
     r->rand_seed = index;
 
     for (int i = 0; i < nbodies; i++){
-      double Om_rand = reb_random_uniform(r, 0, 2 * M_PI);
-      double f_rand = reb_random_uniform(r, 0, 2 * M_PI);
-      //if (i == 2){
-      //  sma += reb_random_uniform(r, -1e-12, 1e-12);
-      //}
+      double Om_rand = 0.0;//reb_random_uniform(r, 0, 2 * M_PI);
+      double f_rand = 0.0;//reb_random_uniform(r, 0, 2 * M_PI);
+      if (i == 2){
+        sma += reb_random_uniform(r, -1e-12, 1e-12);
+      }
       reb_add_fmt(r, "m a e inc Omega f hash", planet_m, sma, 0.05, (double)i * M_PI / 180., Om_rand, f_rand, i+1);
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]){
     }
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->dt = min*0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
+    r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->track_energy_offset = 1;
     reb_configure_box(r, 1000., 1, 1, 1);
