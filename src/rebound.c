@@ -687,7 +687,7 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
         if (pthread_mutex_init(&(r->server_data->mutex), NULL)){
             reb_simulation_error(r,"Mutex creation failed.");
         }
-        int ret_create = pthread_create(&(r->server_data->server_thread),NULL,start_server,r->server_data);
+        int ret_create = pthread_create(&(r->server_data->server_thread),NULL,reb_server_start,r->server_data);
         if (ret_create){
             reb_simulation_error(r, "Error creating server thread.");
         }

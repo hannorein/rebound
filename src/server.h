@@ -1,10 +1,12 @@
 /**
- * @file 	server.h
- * @brief 	Webserver for visualization
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @file    server.c
+ * @brief   Opens a webserver to allow for platform independent visualization.
+ * @author  Hanno Rein <hanno@hanno-rein.de>
+ * @details These functions provide real time visualizations
+ * using OpenGL. Part of the code is by Dave O'Hallaron, Carnegie Mellon (tiny.c).
  * 
- * @section 	LICENSE
- * Copyright (c) 2023 Hanno Rein
+ * @section LICENSE
+ * Copyright (c) 2023 Hanno Rein, Dave O'Hallaron, Carnegie Mellon
  *
  * This file is part of rebound.
  *
@@ -24,5 +26,5 @@
  */
 #ifndef _SERVER_H
 #define _SERVER_H
-void* start_server(void* args);
+void* reb_server_start(void* args);
 #endif // _SERVER_H

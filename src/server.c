@@ -1,6 +1,28 @@
-/*
- * tiny.c - a minimal HTTP server
- *          Dave O'Hallaron, Carnegie Mellon
+/**
+ * @file    server.c
+ * @brief   Opens a webserver to allow for platform independent visualization.
+ * @author  Hanno Rein <hanno@hanno-rein.de>
+ * @details These functions provide real time visualizations
+ * using OpenGL. Part of the code is by Dave O'Hallaron, Carnegie Mellon (tiny.c).
+ * 
+ * @section LICENSE
+ * Copyright (c) 2023 Hanno Rein, Dave O'Hallaron, Carnegie Mellon
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 #include <stdio.h>
@@ -17,24 +39,18 @@
 
 #define BUFSIZE 1024
 
-extern char **environ; /* the environment */
-
-/*
- * cerror - returns an error message to the client
- */
-void cerror(FILE *stream, char *cause, char *errno,
-        char *shortmsg, char *longmsg) {
+static void reb_server_cerror(FILE *stream, char *cause, char *errno, char *shortmsg, char *longmsg) {
     fprintf(stream, "HTTP/1.1 %s %s\n", errno, shortmsg);
     fprintf(stream, "Content-type: text/html\n");
     fprintf(stream, "\n");
-    fprintf(stream, "<html><title>Tiny Error</title>");
+    fprintf(stream, "<html><title>REBOUND Webserver Error</title>");
     fprintf(stream, "<body bgcolor=""ffffff"">\n");
     fprintf(stream, "%s: %s\n", errno, shortmsg);
     fprintf(stream, "<p>%s: %s\n", longmsg, cause);
-    fprintf(stream, "<hr><em>The Tiny Web server</em>\n");
+    fprintf(stream, "<hr><em>REBOUND Webserver</em>\n");
 }
 
-void* start_server(void* args){
+void* reb_server_start(void* args){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
     struct reb_server_data* data = (struct reb_server_data*)args;
@@ -104,7 +120,7 @@ void* start_server(void* args){
         /* get the HTTP request line */
         char* request = fgets(buf, BUFSIZE, stream);
         if (!request){
-            cerror(stream, method, "501", "Not Implemented", "Tiny did not get request");
+            reb_server_cerror(stream, method, "501", "Not Implemented", "REBOUND Webserver did not get request");
             fclose(stream);
             close(childfd);
             continue;
@@ -112,9 +128,9 @@ void* start_server(void* args){
 
         sscanf(buf, "%s %s %s\n", method, uri, version);
 
-        /* tiny only supports the GET method */
+        /* only support the GET method */
         if (strcasecmp(method, "GET")) {
-            cerror(stream, method, "501", "Not Implemented", "Tiny does not implement this method");
+            reb_server_cerror(stream, method, "501", "Not Implemented", "REBOUND Webserver does not implement this method");
             fclose(stream);
             close(childfd);
             continue;
@@ -128,7 +144,7 @@ void* start_server(void* args){
         }
 
         fprintf(stream, "HTTP/1.1 200 OK\n");
-        fprintf(stream, "Server: Tiny Web Server\n");
+        fprintf(stream, "Server: REBOUND Webserver\n");
         //fprintf(stream, "Access-Control-Allow-Origin: *\n");
         //fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
         fprintf(stream, "Content-type: text/html\n"); // Always using the same content type, even for binary data.
