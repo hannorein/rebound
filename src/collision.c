@@ -142,7 +142,7 @@ void reb_collision_search(struct reb_simulation* const r){
                         }
                         if (r->integrator==REB_INTEGRATOR_TRACE){
                           // if collision, TRACE automatically accepts the step
-                          r->ri_tr.collision = 1;
+                          r->ri_tr.force_accept = 1;
                         }
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;

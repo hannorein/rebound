@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e7*2*M_PI;
+double tmax = 1e5*2*M_PI;
 int nbodies=3;
 
 char title[100] = "bad_trace_";
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]){
     r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->track_energy_offset = 1;
-    reb_configure_box(r, 1000., 1, 1, 1);
+    reb_configure_box(r, 10000., 1, 1, 1);
     r->boundary = REB_BOUNDARY_OPEN;
     //r->heartbeat  = heartbeat;
 
@@ -100,8 +100,16 @@ int main(int argc, char* argv[]){
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
+    int surviving_particles = 0;
+    for (unsigned int i = 1; i < nbodies+1; i++){
+        struct reb_particle* p = reb_get_particle_by_hash(r, i);
+        if (p != NULL){
+          surviving_particles++;
+        }
+    }
+
     FILE* tf = fopen(title_stats, "a");
-    fprintf(tf, "%d,%d,%e,%e\n", index, r->N - 1, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
+    printf("%d,%d,%e,%e,%f\n", index, surviving_particles, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent, r->t);
     fclose(tf);
 
     //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
@@ -114,7 +122,7 @@ void heartbeat(struct reb_simulation* r){
     if (reb_output_check(r, 10.*2.*M_PI)){
         reb_output_timing(r, tmax);
     }
-
+/*
     if (reb_output_check(r, 10. * 2.*M_PI)){
       FILE* f = fopen(title, "a");
       fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
@@ -135,5 +143,6 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
+    */
 
 }

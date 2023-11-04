@@ -227,7 +227,7 @@ struct reb_simulation_integrator_trace {
 
     int** current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
-    unsigned int collision; // Checks for collision during BS step
+    unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 
     unsigned int print; // for debugging. Get rid of this at some point.
 };

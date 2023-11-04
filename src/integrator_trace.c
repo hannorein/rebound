@@ -480,7 +480,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 
     r->gravity = REB_GRAVITY_TRACE;
     ri_tr->mode = 0;
-    ri_tr->collision = 0;
+    ri_tr->force_accept = 0;
     reb_integrator_trace_inertial_to_dh(r);
 
     // Clear encounter maps
@@ -597,7 +597,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
     // Check for new close_encounters
-    if (reb_integrator_trace_Fcond(r) && !ri_tr->collision){
+    if (reb_integrator_trace_Fcond(r) && !ri_tr->force_accept){
       // REJECT STEP
       // reset simulation and try again with new timestep
       for (int i=0; i<N; i++){
