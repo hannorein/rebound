@@ -701,6 +701,9 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 #else
         usleep(1000);
 #endif 
+        if (reb_sigint== 1){ // cancel while paused
+            r->status = REB_STATUS_SIGINT;
+        }
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
     if (reb_simulation_error_message_waiting(r)){
