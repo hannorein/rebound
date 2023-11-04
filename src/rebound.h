@@ -1077,7 +1077,6 @@ struct reb_display_data {
     struct reb_particle* p_jh_copy;
     uint64_t N_allocated;
     uint64_t N_allocated_whfast;
-    unsigned int opengl_enabled;
     double scale;
     double mouse_scale;
     double mouse_x;

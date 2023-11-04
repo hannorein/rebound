@@ -690,7 +690,6 @@ void reb_simulation_init(struct reb_simulation* r){
 
 #ifdef SERVER
     reb_display_init_data(r);
-    r->display_data->opengl_enabled = 1;
     int ret_create = pthread_create(&(r->display_data->server_thread),NULL,start_server,r);
     if (ret_create){
         reb_simulation_error(r, "Error creating server thread.");
@@ -861,14 +860,12 @@ static void* reb_simulation_integrate_raw(void* args){
 #endif 
 #ifdef OPENGL
         if (r->display_data){
-            if (r->display_data->opengl_enabled){ 
-                // Note: Mutex is not FIFO.
-                // Allow time for mutex to lock in display.c before it is relocked here.
-                while (r->display_data->need_copy == 1){
-                    usleep(10);
-                }
-                pthread_mutex_lock(&(r->display_data->mutex)); 
+            // Note: Mutex is not FIFO.
+            // Allow time for mutex to lock in display.c before it is relocked here.
+            while (r->display_data->need_copy == 1){
+                usleep(10);
             }
+            pthread_mutex_lock(&(r->display_data->mutex)); 
         }
 #endif // OPENGL
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -879,7 +876,7 @@ static void* reb_simulation_integrate_raw(void* args){
         }
 #ifdef OPENGL
         if (r->display_data){
-            if (r->display_data->opengl_enabled){ pthread_mutex_unlock(&(r->display_data->mutex)); }
+            pthread_mutex_unlock(&(r->display_data->mutex));
         }
 #endif // OPENGL
         if (r->usleep > 0){
@@ -905,9 +902,6 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     switch (r->visualization){
         case REB_VISUALIZATION_NONE:
             {
-                if (r->display_data){
-                    r->display_data->opengl_enabled = 0;
-                }
                 reb_simulation_integrate_raw(&thread_info);
             }
             break;
@@ -917,13 +911,11 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
 #ifdef __EMSCRIPTEN__
                 if (r->display_data==NULL){
                     reb_display_init_data(r);
-                    r->display_data->opengl_enabled = 1;
                     reb_display_init(r); // Will return. Display routines running in animation_loop.
                 }
                 reb_simulation_integrate_raw(&thread_info);
 #else
                 reb_display_init_data(r);
-                r->display_data->opengl_enabled = 1;
 
                 r->display_data->compute_thread;
                 if (pthread_create(&r->display_data->compute_thread,NULL,reb_simulation_integrate_raw,&thread_info)){

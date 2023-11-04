@@ -23,7 +23,6 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 
     if (first){
         reb_display_init_data(r);
-        r->display_data->opengl_enabled = 1;
         reb_display_init(r); // Will return. Display routines running in animation_loop.
     }
     first = 0;
