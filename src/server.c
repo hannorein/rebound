@@ -129,8 +129,10 @@ void* start_server(void* args){
 
         fprintf(stream, "HTTP/1.1 200 OK\n");
         fprintf(stream, "Server: Tiny Web Server\n");
-        fprintf(stream, "Access-Control-Allow-Origin: *\n");
-        fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
+        //fprintf(stream, "Access-Control-Allow-Origin: *\n");
+        //fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
+        fprintf(stream, "Content-type: text/html\n"); // Always using the same content type, even for binary data.
+        fprintf(stream, "\r\n");
         if (!strcasecmp(uri, "/simulation")) {
             char* bufp = NULL;
             size_t sizep;
@@ -139,18 +141,12 @@ void* start_server(void* args){
             reb_simulation_save_to_stream(r, &bufp,&sizep);
             data->need_copy = 0;
             pthread_mutex_unlock(&(data->mutex));
-            //fprintf(stream, "Content-length: %d\n", (int)sizep);
-            //fprintf(stream, "Content-type: application/octet-stream\n");
-            fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "\r\n");
             fflush(stream);
             fwrite(bufp, 1, sizep, stream);
             free(bufp);
         }else if (!strncasecmp(uri, "/keyboard/",10)) {
             int key = 0;
             sscanf(uri, "/keyboard/%d", &key);
-            fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "\r\n");
             switch (key){
                 case 'Q':
                     data->r->status = REB_STATUS_USER;
@@ -175,25 +171,22 @@ void* start_server(void* args){
             struct stat sbuf;
             if (stat("rebound.html", &sbuf) < 0) {
                 printf("Unable to find rebound.html\n");
-                fprintf(stream, "Content-type: text/html\n");
-                fprintf(stream, "\r\n");
                 fflush(stream);
                 fprintf(stream, "<h1>Unable to find rebound.html.</h1>\n");
                 fprintf(stream, "The server was unable to find rebound.html.\n");
                 fprintf(stream, "Download rebound.html from github and place it in the same directory as your rebound executable.\n");
             }else{
-                fprintf(stream, "Content-type: text/html\n");
-                fprintf(stream, "\r\n");
                 fflush(stream);
                 int fd = open("rebound.html", O_RDONLY);
                 void* p = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
                 fwrite(p, 1, sbuf.st_size, stream);
                 munmap(p, sbuf.st_size);
             }
+        }else if (!strcasecmp(uri, "/favicon.ico")) {
+            fflush(stream);
+            fprintf(stream, "favicon.ico not found.\n");
         }else{
             printf("Not sure what to do with URI: %s\n",uri);
-            fprintf(stream, "Content-type: text/html\n");
-            fprintf(stream, "\r\n");
             fflush(stream);
             fprintf(stream, "<h1>Not sure what to do!</h1>\n");
         }

@@ -12,9 +12,7 @@ int first = 1;
 void newCallback(struct reb_simulation* r);
 
 void downloadSucceeded(emscripten_fetch_t *fetch) {
-    //printf("Finished downloading %llu bytes from URL %s.\n", fetch->numBytes, fetch->url);
     struct reb_simulation* r = fetch->userData;
-    // The data is now available at fetch->data[0] through fetch->data[fetch->numBytes-1];
 
     FILE* fin = reb_fmemopen((void*)fetch->data, fetch->numBytes, "r");
     enum reb_simulation_binary_error_codes* warnings;
@@ -34,7 +32,7 @@ void downloadSucceeded(emscripten_fetch_t *fetch) {
 }
 
 void downloadFailed(emscripten_fetch_t *fetch) {
-    printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
+    printf("Requesting  %s failed (status code: %d). Server might have shut down.\n", fetch->url, fetch->status);
     emscripten_fetch_close(fetch); // Also free data on failure.
 }
 void newCallback(struct reb_simulation* r){

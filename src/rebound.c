@@ -312,7 +312,7 @@ void reb_simulation_free(struct reb_simulation* const r){
         void* retval = 0;
         pthread_join(r->server_data->server_thread, &retval);
         if (retval==PTHREAD_CANCELED){
-            printf("Server thread cancelled.\n");
+            printf("\nREBOUND Webserver shut down.\n");
         }else{
             printf("An error occured while cancelling server thread.\n");
         }
