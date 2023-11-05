@@ -92,7 +92,7 @@ void* reb_server_start(void* args){
             (const void *)&optval , sizeof(int));
 
     /* bind port to socket */
-    memset((char *) &serveraddr, sizeof(serveraddr), 0);
+    memset((char *) &serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);

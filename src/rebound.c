@@ -311,8 +311,8 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
     }
-#if defined(OPENGL) && !defined(_WIN32)
-    // Visualization is not support on Windows
+#ifdef OPENGL
+    // OpenGL is not support on Windows
     if(r->display_data){
         pthread_mutex_destroy(&(r->display_data->mutex));
         reb_simulation_free(r->display_data->r_copy);
@@ -320,8 +320,9 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
         free(r->display_data->orbit_data);
         free(r->display_data); // TODO: Free other pointers in display_data
     }
-#endif // _WIN32
-#if defined(SERVER) && !defined(_WIN32)
+#endif //OPENGL
+#ifdef SERVER
+    // Server is not supported on Windows
     if (r->server_data){
         int ret_cancel = pthread_cancel(r->server_data->server_thread);
         if (ret_cancel==ESRCH){
@@ -678,9 +679,6 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
 #endif // OPENMP
 
 #ifdef SERVER
-#ifdef _WIN32
-    printf("Server not supported on windows.\n");
-#else // _WIN32
     if (server_port){
         r->server_data = calloc(sizeof(struct reb_server_data),1);
         r->server_data->r = r;
@@ -693,7 +691,6 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
             reb_simulation_error(r, "Error creating server thread.");
         }
     }
-#endif // _WIN32
 #endif // SERVER
 }
 
@@ -875,7 +872,17 @@ static void* reb_simulation_integrate_raw(void* args){
             }
             pthread_mutex_lock(&(r->display_data->mutex)); 
         }
-#endif // OPENGL
+#endif //OPENGL
+#ifdef SERVER
+        if (r->server_data){
+            // Note: Mutex is not FIFO.
+            // Allow time for mutex to lock in display.c before it is relocked here.
+            while (r->server_data->need_copy == 1){
+                usleep(10);
+            }
+            pthread_mutex_lock(&(r->server_data->mutex)); 
+        }
+#endif //SERVER
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_simulation_step(r); 
         reb_run_heartbeat(r);
@@ -886,7 +893,12 @@ static void* reb_simulation_integrate_raw(void* args){
         if (r->display_data){
             pthread_mutex_unlock(&(r->display_data->mutex));
         }
-#endif // OPENGL
+#endif //OPENGL
+#ifdef SERVER
+        if (r->server_data){
+            pthread_mutex_unlock(&(r->server_data->mutex));
+        }
+#endif //SERVER
         if (r->usleep > 0){
             usleep(r->usleep);
         }
