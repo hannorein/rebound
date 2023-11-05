@@ -27,7 +27,7 @@
 #include <string.h>
 #ifdef _WIN32
 #define strtok_r strtok_s
-#define REB_RAND_MAX 4294967295  // UINT_MAX
+#define REB_RAND_MAX 2147483647  // INT_MAX
 #else // Linux and MacOS
 #define REB_RAND_MAX RAND_MAX
 #endif // _WIN32
@@ -46,7 +46,7 @@
 
 
 unsigned int reb_tools_get_rand_seed(){
-	struct timeval tim;
+	struct reb_timeval tim;
 	gettimeofday(&tim, NULL);
 	return tim.tv_usec + getpid();
 }

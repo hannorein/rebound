@@ -78,7 +78,7 @@ void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
 }
 void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -167,7 +167,7 @@ void reb_simulation_step(struct reb_simulation* const r){
     PROFILING_STOP(PROFILING_CAT_COLLISION)
     
     // Update walltime
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     r->walltime += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
     // Update step counter
@@ -322,6 +322,9 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     }
 #endif //OPENGL
 #ifdef SERVER
+#ifdef _WIN32
+    printf("TODO! Implement free on windows.\n");
+#else // _WIN32
     // Server is not supported on Windows
     if (r->server_data){
         int ret_cancel = pthread_cancel(r->server_data->server_thread);
@@ -334,6 +337,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
             printf("An error occured while cancelling server thread.\n");
         }
     }
+#endif // _WIN32
 #endif //SERVER
     reb_tree_delete(r);
     if (r->gravity_cs){
@@ -683,6 +687,10 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
         r->server_data = calloc(sizeof(struct reb_server_data),1);
         r->server_data->r = r;
         r->server_data->port = server_port;
+#ifdef _WIN32
+        r->server_data->mutex = CreateMutex(NULL, FALSE, NULL);
+        HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)reb_server_start, r->server_data, 0, NULL);
+#else // _WIN32
         if (pthread_mutex_init(&(r->server_data->mutex), NULL)){
             reb_simulation_error(r,"Mutex creation failed.");
         }
@@ -690,6 +698,7 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
         if (ret_create){
             reb_simulation_error(r, "Error creating server thread.");
         }
+#endif // _WIN32
     }
 #endif // SERVER
 }
@@ -880,7 +889,11 @@ static void* reb_simulation_integrate_raw(void* args){
             while (r->server_data->need_copy == 1){
                 usleep(10);
             }
+#ifdef _WIN32
+            WaitForSingleObject(r->server_data->mutex, INFINITE);
+#else // _WIN32
             pthread_mutex_lock(&(r->server_data->mutex)); 
+#endif // _WIN32
         }
 #endif //SERVER
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -896,7 +909,11 @@ static void* reb_simulation_integrate_raw(void* args){
 #endif //OPENGL
 #ifdef SERVER
         if (r->server_data){
+#ifdef _WIN32
+            ReleaseMutex(r->server_data->mutex);
+#else // _WIN32
             pthread_mutex_unlock(&(r->server_data->mutex));
+#endif // _WIN32
         }
 #endif //SERVER
         if (r->usleep > 0){
@@ -977,17 +994,28 @@ int reb_check_fp_contract(){
 
 void PyInit_librebound() {};
 
-// Source: https://git.musl-libc.org/cgit/musl/tree/src/prng/rand_r.c
-static unsigned temper(unsigned x) {
-    x ^= x>>11;
-    x ^= x<<7 & 0x9D2C5680;
-    x ^= x<<15 & 0xEFC60000;
-    x ^= x>>18;
-    return x;
-}
+// Source: https://codebrowser.dev/glibc/glibc/stdlib/rand_r.c.html 
+int rand_r(unsigned int *seed) {
+     unsigned int next = *seed;
+     int result;
 
-int rand_r(unsigned *seed) {
-    return temper(*seed = *seed * 1103515245 + 12345)/2;
+     next *= 1103515245;
+     next += 12345;
+     result = (unsigned int) (next / 65536) % 2048;
+
+     next *= 1103515245;
+     next += 12345;
+     result <<= 10;
+     result ^= (unsigned int) (next / 65536) % 1024;
+
+     next *= 1103515245;
+     next += 12345;
+     result <<= 10;
+     result ^= (unsigned int) (next / 65536) % 1024;
+
+     *seed = next;
+
+     return result;
 }
 
 
@@ -1025,7 +1053,7 @@ int asprintf(char **strp, const char *fmt, ...) {
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <stdint.h> // portable: uint64_t   MSVC: __int64
-int gettimeofday(struct timeval * tp, struct timezone * tzp)
+int gettimeofday(struct reb_timeval * tp, struct timezone * tzp)
 {
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
     // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
