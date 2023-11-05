@@ -353,10 +353,8 @@ void* reb_server_start(void* args){
             continue;
         }
         
-        printf("URI: %s\n",uri);
 
         if (!strcasecmp(uri, "/simulation")) {
-            printf("sending sim\n");
             char* bufp = NULL;
             size_t sizep;
             data->need_copy = 1;
@@ -409,6 +407,7 @@ void* reb_server_start(void* args){
             }
         }else{
             reb_server_cerror(clientS, "Unsupported request.");
+            printf("URI: %s\n",uri);
             continue;
         }
 

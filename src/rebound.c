@@ -994,17 +994,28 @@ int reb_check_fp_contract(){
 
 void PyInit_librebound() {};
 
-// Source: https://git.musl-libc.org/cgit/musl/tree/src/prng/rand_r.c
-static unsigned temper(unsigned x) {
-    x ^= x>>11;
-    x ^= x<<7 & 0x9D2C5680;
-    x ^= x<<15 & 0xEFC60000;
-    x ^= x>>18;
-    return x;
-}
+// Source: https://codebrowser.dev/glibc/glibc/stdlib/rand_r.c.html 
+int rand_r(unsigned int *seed) {
+     unsigned int next = *seed;
+     int result;
 
-int rand_r(unsigned *seed) {
-    return temper(*seed = *seed * 1103515245 + 12345)/2;
+     next *= 1103515245;
+     next += 12345;
+     result = (unsigned int) (next / 65536) % 2048;
+
+     next *= 1103515245;
+     next += 12345;
+     result <<= 10;
+     result ^= (unsigned int) (next / 65536) % 1024;
+
+     next *= 1103515245;
+     next += 12345;
+     result <<= 10;
+     result ^= (unsigned int) (next / 65536) % 1024;
+
+     *seed = next;
+
+     return result;
 }
 
 
