@@ -26,10 +26,10 @@ if sys.platform == 'darwin':
     config_vars['LDSHARED'] = config_vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
 if sys.platform == 'win32':
-    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE']
+    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
 else:
     # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
+    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
 
 # Option to disable FMA in CLANG. 
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
@@ -56,6 +56,7 @@ libreboundmodule = Extension('librebound',
                                 'src/integrator_sei.c',
                                 'src/integrator.c',
                                 'src/gravity.c',
+                                'src/server.c',
                                 'src/boundary.c',
                                 'src/display.c',
                                 'src/collision.c',

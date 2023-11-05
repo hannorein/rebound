@@ -71,7 +71,7 @@ ifeq ($(FFTW), 1)
 	LIB+= -lfftw3
 endif
 
-ifeq ($(SERVER), 1)
+ifneq ($(SERVER), 0)
 PREDEF+= -DSERVER
 endif
 

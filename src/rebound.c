@@ -462,7 +462,7 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
 
 struct reb_simulation* reb_simulation_create(){
     struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
-    reb_simulation_init(r, 1234);
+    reb_simulation_init(r);
     return r;
 }
 
@@ -533,7 +533,7 @@ void reb_clear_pre_post_pointers(struct reb_simulation* const r){
     r->post_timestep_modifications  = NULL;
 }
 
-void reb_simulation_init(struct reb_simulation* r, int server_port){
+void reb_simulation_init(struct reb_simulation* r){
     r->rand_seed = reb_tools_get_rand_seed();
     reb_simulation_reset_temporary_pointers(r);
     reb_simulation_reset_function_pointers(r);
@@ -681,25 +681,38 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
 #ifdef OPENMP
     printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
 #endif // OPENMP
+}
 
+int reb_simulation_start_server(struct reb_simulation* r, int port){    
 #ifdef SERVER
-    if (server_port){
+    if (port){
+        if (r->server_data){
+            reb_simulation_error(r,"Server already started.");
+            return -1;
+        }
         r->server_data = calloc(sizeof(struct reb_server_data),1);
         r->server_data->r = r;
-        r->server_data->port = server_port;
+        r->server_data->port = port;
 #ifdef _WIN32
         r->server_data->mutex = CreateMutex(NULL, FALSE, NULL);
         HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)reb_server_start, r->server_data, 0, NULL);
 #else // _WIN32
         if (pthread_mutex_init(&(r->server_data->mutex), NULL)){
             reb_simulation_error(r,"Mutex creation failed.");
+            return -1;
         }
         int ret_create = pthread_create(&(r->server_data->server_thread),NULL,reb_server_start,r->server_data);
         if (ret_create){
             reb_simulation_error(r, "Error creating server thread.");
+            return -1;
         }
 #endif // _WIN32
+        return 0;
+    }else{
+        return -1;
     }
+#else // SERVER
+    return -1;
 #endif // SERVER
 }
 

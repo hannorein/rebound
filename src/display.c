@@ -442,7 +442,7 @@ void reb_render_frame(void* p){
     struct reb_simulation* r_copy = r->display_data->r_copy;
     if (!r_copy){
         data->r_copy = calloc(1,sizeof(struct reb_simulation));
-        reb_simulation_init(data->r_copy, 0); // port 0 = no server
+        reb_simulation_init(data->r_copy);
         r_copy = data->r_copy;
     }
     

@@ -17,6 +17,7 @@ void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_start_server(r, 1234);
     // Setup constants
     r->opening_angle2    = .5;                    // This determines the precission of the tree code gravity calculation.
     r->integrator            = REB_INTEGRATOR_SEI;
