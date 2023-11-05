@@ -26,12 +26,20 @@
  */
 
 #include <stdio.h>
+#ifdef _MSC_VER 
+//not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
 #ifndef _WIN32
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
 #include <netinet/in.h>
+#else // _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #endif // _WIN32
 #include <stdlib.h>
 #include <string.h>
@@ -53,9 +61,18 @@ static void reb_server_cerror(FILE *stream, char *cause, char *errno, char *shor
 }
 
 void* reb_server_start(void* args){
-#ifndef _WIN32
+//#ifndef _WIN32
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+
+#ifdef _WIN32
+    WSADATA d;
+    if (WSAStartup(MAKEWORD(2, 2), &d)) {
+        fprintf(stderr, "Failed to initialize.\n");
+        return PTHREAD_CANCELED;
+    }
+#endif // _WIN32
+
     struct reb_server_data* data = (struct reb_server_data*)args;
     struct reb_simulation* r = data->r;
 
@@ -86,7 +103,7 @@ void* reb_server_start(void* args){
             (const void *)&optval , sizeof(int));
 
     /* bind port to socket */
-    bzero((char *) &serveraddr, sizeof(serveraddr));
+    memset((char *) &serveraddr, sizeof(serveraddr), 0);
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);
@@ -197,10 +214,14 @@ void* reb_server_start(void* args){
                 fprintf(stream, "Download rebound.html from github and place it in the same directory as your rebound executable.\n");
             }else{
                 fflush(stream);
+#ifndef _WIN32
                 int fd = open("rebound.html", O_RDONLY);
                 void* p = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
                 fwrite(p, 1, sbuf.st_size, stream);
                 munmap(p, sbuf.st_size);
+#else //_WIN32
+            fprintf(stream, "Not yet implemented.\n");
+#endif //_WIN32
             }
         }else if (!strcasecmp(uri, "/favicon.ico")) {
             fflush(stream);
@@ -217,7 +238,9 @@ void* reb_server_start(void* args){
 
     }
     printf("Server shutting down...\n");
-#else // _WIN32
-    printf("Server not supported on windows.\n");
-#endif // _WIN32
+    return PTHREAD_CANCELED;
+//#else // _WIN32
+//    printf("Server not supported on windows.\n");
+//    return PTHREAD_CANCELED;
+//#endif // _WIN32
 }
