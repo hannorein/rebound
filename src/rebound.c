@@ -322,6 +322,9 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     }
 #endif //OPENGL
 #ifdef SERVER
+#ifdef _WIN32
+    printf("TODO! Implement free on windows.\n");
+#else // _WIN32
     // Server is not supported on Windows
     if (r->server_data){
         int ret_cancel = pthread_cancel(r->server_data->server_thread);
@@ -334,6 +337,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
             printf("An error occured while cancelling server thread.\n");
         }
     }
+#endif // _WIN32
 #endif //SERVER
     reb_tree_delete(r);
     if (r->gravity_cs){
@@ -679,6 +683,9 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
 #endif // OPENMP
 
 #ifdef SERVER
+#ifdef _WIN32
+    printf("TODO! Implement server on windows.\n");
+#else // _WIN32
     if (server_port){
         r->server_data = calloc(sizeof(struct reb_server_data),1);
         r->server_data->r = r;
@@ -691,6 +698,7 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
             reb_simulation_error(r, "Error creating server thread.");
         }
     }
+#endif // _WIN32
 #endif // SERVER
 }
 
@@ -880,7 +888,11 @@ static void* reb_simulation_integrate_raw(void* args){
             while (r->server_data->need_copy == 1){
                 usleep(10);
             }
+#ifdef _WIN32
+            printf("Need to implement mutex on windows\n");
+#else // _WIN32
             pthread_mutex_lock(&(r->server_data->mutex)); 
+#endif // _WIN32
         }
 #endif //SERVER
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -896,7 +908,11 @@ static void* reb_simulation_integrate_raw(void* args){
 #endif //OPENGL
 #ifdef SERVER
         if (r->server_data){
+#ifdef _WIN32
+            printf("Need to implement mutex on windows\n");
+#else // _WIN32
             pthread_mutex_unlock(&(r->server_data->mutex));
+#endif // _WIN32
         }
 #endif //SERVER
         if (r->usleep > 0){
