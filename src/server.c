@@ -51,17 +51,6 @@
 
 #define BUFSIZE 1024
 
-static void reb_server_cerror(FILE *stream, char *cause, char *errno, char *shortmsg, char *longmsg) {
-    fprintf(stream, "HTTP/1.1 %s %s\n", errno, shortmsg);
-    fprintf(stream, "Content-type: text/html\n");
-    fprintf(stream, "\n");
-    fprintf(stream, "<html><title>REBOUND Webserver Error</title>");
-    fprintf(stream, "<body bgcolor=""ffffff"">\n");
-    fprintf(stream, "%s: %s\n", errno, shortmsg);
-    fprintf(stream, "<p>%s: %s\n", longmsg, cause);
-    fprintf(stream, "<hr><em>REBOUND Webserver</em>\n");
-}
-
 char* reb_server_header =
         "HTTP/1.1 200 OK\n"
         "Server: REBOUND Webserver\n"
@@ -98,16 +87,43 @@ int sendBytes(SOCKET s, void *buffer, int buflen){
 
     return total;
 }
-
 #endif // _WIN32
 
+
+#ifdef _WIN32
+static void reb_server_cerror(SOCKET clientS, char cause[]){
+#else //_WIN32
+static void reb_server_cerror(FILE *stream, char *cause){
+#endif //_WIN32
+    char* buf = NULL;
+    asprintf(&buf,  "HTTP/1.1 501 Not Implemented\n"
+                    "Content-type: text/html\n"
+                    "\n"
+                    "<html><title>REBOUND Webserver Error</title>"
+                    "<body>\n"
+                    "<h1>Error</h1>\n"
+                    "<p>%s</p>\n"
+                    "<hr><em>REBOUND Webserver</em>\n"
+                    "</body></html>\n"
+                    , cause);
+    printf("\nREBOUND Webserver error: %s\n", cause);
+#ifdef _WIN32
+    sendBytes(clientS, buf, strlen(buf));
+    closesocket(clientS); // close the Client Socket now that our Work is Complete.
+#else //_WIN32
+    fwrite(buf, 1, strlen(buf), stream);
+#endif //_WIN32
+    free(buf);
+}
+
+
 void* reb_server_start(void* args){
+    struct reb_server_data* data = (struct reb_server_data*)args;
+    struct reb_simulation* r = data->r;
 #ifndef _WIN32
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
-    struct reb_server_data* data = (struct reb_server_data*)args;
-    struct reb_simulation* r = data->r;
 
     /* variables for connection management */
     int parentfd;          /* parent socket */
@@ -174,7 +190,7 @@ void* reb_server_start(void* args){
         /* get the HTTP request line */
         char* request = fgets(buf, BUFSIZE, stream);
         if (!request){
-            reb_server_cerror(stream, method, "501", "Not Implemented", "REBOUND Webserver did not get request");
+            reb_server_cerror(stream, method, "501", "Not Implemented");
             fclose(stream);
             close(childfd);
             continue;
@@ -183,7 +199,7 @@ void* reb_server_start(void* args){
 
         /* only support the GET method */
         if (strcasecmp(method, "GET")) {
-            reb_server_cerror(stream, method, "501", "Not Implemented", "REBOUND Webserver does not implement this method");
+            reb_server_cerror(stream, method, "501", "Not Implemented");
             fclose(stream);
             close(childfd);
             continue;
@@ -279,15 +295,10 @@ void* reb_server_start(void* args){
     struct sockaddr_in server;
     SOCKET s;
     SOCKET clientS;
-    int iResult;
-    const char message[BUFSIZE] =
-        "HTTP/1.1 200 OK\n"
-        "Server: REBOUND Webserver\n"
-        "Content-type: text/html\n"
-        "\r\n"
-        "Hello\n"
-        ;
-    char reply[BUFSIZE] = { 0 };
+    char request[BUFSIZE];
+    char method[BUFSIZE];
+    char uri[BUFSIZE];
+    char version[BUFSIZE];
 
     // Simple. Start WSA(Windows Sockets API). If the return answer is not 0. It means error so therefore,
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -298,7 +309,7 @@ void* reb_server_start(void* args){
     printf("Windows Socket API Started\n");
 
     // Create a Network Socket
-    s = socket(AF_INET, SOCK_STREAM, NULL);
+    s = socket(AF_INET, SOCK_STREAM, 0);
     // If the Socket is Invalid or a Socket Error Occurs
     if (s == SOCKET_ERROR) {
         printf("Socket Error\n");
@@ -311,35 +322,76 @@ void* reb_server_start(void* args){
     server.sin_port = htons(1234); // Defining PORT
     InetPton(AF_INET, _T("0.0.0.0"), &server.sin_addr); // Defining The Network Address to Run the Server on
 
-    iResult = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
-    if (iResult == SOCKET_ERROR) {
+    int ret_bind = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
+    if (ret_bind) {
         printf("Bind Error\n");
         exit(1);
     }
 
     printf("listening\n");
-    //std::cout << "Listening on : 0.0.0.0:80" << std::endl; // Tell the User we Started Listening.
-    iResult = listen(s, AF_INET); // Then Actually Start Listening for incoming Connections.
+    int ret_listen = listen(s, AF_INET);
+    if (ret_listen){
+        printf("Listen error\n");
+        exit(1);
+    }
 
-    /*
-       The Program will start to listen for incoming connections and will do so until
-       Someone Connects.
-       */
 
     while(1){
-        clientS = accept(s, NULL, NULL); // Accept a Connection on a new Socket made for the Client.
-        if (clientS == SOCKET_ERROR) { // if Accepting Connection is a Error
+        clientS = accept(s, NULL, NULL);
+        if (clientS == SOCKET_ERROR) {
             printf("Accept Failed!\n");
             exit(1);
-        } else {
-            recv(clientS, reply, sizeof(reply), NULL); // Just in case if the Client sends something, We Receive it.
+        } 
+        // Receive request. Ideally we should check for new line and read more bytes if needed.
+        recv(clientS, request, BUFSIZE, 0);
+
+        sscanf(request, "%s %s %s\n", method, uri, version);
+
+        /* only support the GET method */
+        if (strcasecmp(method, "GET")) {
+            reb_server_cerror(clientS, "Method not Implemented");
+            continue;
+        }
         
-            char method[BUFSIZE];
-            char uri[BUFSIZE];
-            char version[BUFSIZE];
-            sscanf(reply, "%s %s %s\n", method, uri, version);
-            printf("method uri %s %s  \n", method, uri);
-            printf( "A Client Connected.\n");
+        printf("URI: %s\n",uri);
+
+        if (!strcasecmp(uri, "/simulation")) {
+            printf("sending sim\n");
+            char* bufp = NULL;
+            size_t sizep;
+            data->need_copy = 1;
+            //pthread_mutex_lock(&(data->mutex));
+            reb_simulation_save_to_stream(r, &bufp,&sizep);
+            data->need_copy = 0;
+            //pthread_mutex_unlock(&(data->mutex));
+            //fflush(stream);
+            sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+            sendBytes(clientS, bufp, sizep);
+            free(bufp);
+        }else if (!strncasecmp(uri, "/keyboard/",10)) {
+            //int key = 0;
+            //sscanf(uri, "/keyboard/%d", &key);
+            //switch (key){
+            //    case 'Q':
+            //        data->r->status = REB_STATUS_USER;
+            //        fprintf(stream, "ok.\n");
+            //        break;
+            //    case ' ':
+            //        if (data->r->status == REB_STATUS_PAUSED){
+            //            printf("Resume.\n");
+            //            data->r->status = REB_STATUS_RUNNING;
+            //        }else{
+            //            printf("Pause.\n");
+            //            data->r->status = REB_STATUS_PAUSED;
+            //        }
+            //        fprintf(stream, "ok.\n");
+            //        break;
+            //    default:
+            //        fprintf(stream, "Unknown key received: %d\n",key);
+            //        break;
+            //}
+            //fflush(stream);
+        }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             FILE *f = fopen("rebound.html", "rb");
             if (f){
                 fseek(f, 0, SEEK_END);
@@ -348,13 +400,18 @@ void* reb_server_start(void* args){
                 char *buf = malloc(fsize);
                 fread(buf, fsize, 1, f);
                 fclose(f);
-                send(clientS, reb_server_header, strlen(reb_server_header), NULL); 
-                send(clientS, buf, fsize, NULL); 
+                sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                sendBytes(clientS, buf, fsize); 
                 free(buf);
             }else{
-                printf("rebound.html not found\n");
+                reb_server_cerror(clientS, "File rebound.html not found.");
+                continue;
             }
+        }else{
+            reb_server_cerror(clientS, "Unsupported request.");
+            continue;
         }
+
 
         closesocket(clientS); // close the Client Socket now that our Work is Complete.
     }
