@@ -27,12 +27,16 @@
 
 struct reb_simulation;
 
-/**
- * @brief This function initializes OpenGL and starts the run loop.
- * @param data A struct containing all the data needed by the visualization.
- */
 void reb_display_init(struct reb_simulation* const r);
 
 void reb_display_init_data(struct reb_simulation* const r);
 
+#ifdef OPENGL
+#ifdef __EMSCRIPTEN__
+// Only needed for emscripten client
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods);
+#endif // __EMSCRIPTEN__
+#endif // OPENGL
 #endif

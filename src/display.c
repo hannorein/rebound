@@ -330,29 +330,8 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
         }
     }
 }
-#ifdef __EMSCRIPTEN__
-static void downloadSucceeded(emscripten_fetch_t *fetch) {
-    emscripten_fetch_close(fetch); // Free data associated with the fetch.
-}
 
-static void downloadFailed(emscripten_fetch_t *fetch) {
-    printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
-    emscripten_fetch_close(fetch); // Also free data on failure.
-}
-void send_key(int key){
-    emscripten_fetch_attr_t attr;
-    emscripten_fetch_attr_init(&attr);
-    strcpy(attr.requestMethod, "GET");
-    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
-    attr.onsuccess = downloadSucceeded;
-    attr.onerror = downloadFailed;
-    char buffer[1024];
-    sprintf(buffer, "http://localhost:1234/keyboard/%d", key);
-    emscripten_fetch(&attr, buffer);
-}
-#endif // __EMSCRIPTEN__
-
-static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
+void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_keyboard\n");
@@ -366,9 +345,6 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 break;
             case 'Q':
                 data->r->status = REB_STATUS_USER;
-#ifdef __EMSCRIPTEN__
-                send_key(key);
-#endif //__EMSCRIPTEN__
                 break;
             case ' ':
                 if (data->r->status == REB_STATUS_PAUSED){
@@ -378,9 +354,6 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                     printf("Pause.\n");
                     data->r->status = REB_STATUS_PAUSED;
                 }
-#ifdef __EMSCRIPTEN__
-                send_key(key);
-#endif //__EMSCRIPTEN__
                 break;
             case 'S':
                 data->spheres = (data->spheres+1)%3;
