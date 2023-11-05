@@ -28,7 +28,7 @@ else
 $(LIBREBOUND): $(OBJECTS)
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) /D_USRDLL /D_WINDLL ws2_32.lib $(OBJECTS) /link /DLL /OUT:$@ 
+	$(CC) /D_USRDLL /D_WINDLL $(OBJECTS) /link /DLL /OUT:$@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."

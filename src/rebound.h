@@ -51,16 +51,15 @@
 #include <math.h>
 
 #ifdef _WIN32
-//typedef struct timeval {
-//    int64_t tv_sec;
-//    int64_t tv_usec;
-//} timeval;
+typedef struct timeval {
+    int64_t tv_sec;
+    int64_t tv_usec;
+} timeval;
 int gettimeofday(struct timeval * tp, struct timezone * tzp);
 int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
 #include <io.h>
 #define _TIMEVAL_DEFINED
-#include "winpthreads.h"
 #else // Linux and MacOS
 #include <sys/time.h>
 #include <unistd.h>
@@ -1065,8 +1064,10 @@ struct reb_server_data {
     struct reb_simulation* r_copy;
     int port;
     int need_copy;
+#ifndef _WIN32
     pthread_mutex_t mutex;          // Mutex to allow for copying
     pthread_t server_thread;
+#endif // _WIN32
 };
 
 struct reb_display_data {

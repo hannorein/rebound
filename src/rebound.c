@@ -303,7 +303,25 @@ static void set_dp7_null(struct reb_dp7 * dp){
 }
 
 void reb_simulation_free(struct reb_simulation* const r){
-#ifdef SERVER
+    reb_simulation_free_pointers(r);
+    free(r);
+}
+
+void reb_simulation_free_pointers(struct reb_simulation* const r){
+    if (r->simulationarchive_filename){
+        free(r->simulationarchive_filename);
+    }
+#if defined(OPENGL) && !defined(_WIN32)
+    // Visualization is not support on Windows
+    if(r->display_data){
+        pthread_mutex_destroy(&(r->display_data->mutex));
+        reb_simulation_free(r->display_data->r_copy);
+        free(r->display_data->particle_data);
+        free(r->display_data->orbit_data);
+        free(r->display_data); // TODO: Free other pointers in display_data
+    }
+#endif // _WIN32
+#if defined(SERVER) && !defined(_WIN32)
     if (r->server_data){
         int ret_cancel = pthread_cancel(r->server_data->server_thread);
         if (ret_cancel==ESRCH){
@@ -316,25 +334,7 @@ void reb_simulation_free(struct reb_simulation* const r){
         }
     }
 #endif //SERVER
-    reb_simulation_free_pointers(r);
-    free(r);
-}
-
-void reb_simulation_free_pointers(struct reb_simulation* const r){
-    if (r->simulationarchive_filename){
-        free(r->simulationarchive_filename);
-    }
     reb_tree_delete(r);
-#ifndef _WIN32
-    // Visualization is not support on Windows
-    if(r->display_data){
-        pthread_mutex_destroy(&(r->display_data->mutex));
-        reb_simulation_free(r->display_data->r_copy);
-        free(r->display_data->particle_data);
-        free(r->display_data->orbit_data);
-        free(r->display_data); // TODO: Free other pointers in display_data
-    }
-#endif // _WIN32
     if (r->gravity_cs){
         free(r->gravity_cs  );
     }
@@ -678,6 +678,9 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
 #endif // OPENMP
 
 #ifdef SERVER
+#ifdef _WIN32
+    printf("Server not supported on windows.\n");
+#else // _WIN32
     if (server_port){
         r->server_data = calloc(sizeof(struct reb_server_data),1);
         r->server_data->r = r;
@@ -690,6 +693,7 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
             reb_simulation_error(r, "Error creating server thread.");
         }
     }
+#endif // _WIN32
 #endif // SERVER
 }
 

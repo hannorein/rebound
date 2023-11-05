@@ -37,9 +37,6 @@
 #include <sys/socket.h>
 #include <sys/mman.h>
 #include <netinet/in.h>
-#else // _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #endif // _WIN32
 #include <stdlib.h>
 #include <string.h>
@@ -61,17 +58,9 @@ static void reb_server_cerror(FILE *stream, char *cause, char *errno, char *shor
 }
 
 void* reb_server_start(void* args){
-//#ifndef _WIN32
+#ifndef _WIN32
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
-#ifdef _WIN32
-    WSADATA d;
-    if (WSAStartup(MAKEWORD(2, 2), &d)) {
-        fprintf(stderr, "Failed to initialize.\n");
-        return PTHREAD_CANCELED;
-    }
-#endif // _WIN32
 
     struct reb_server_data* data = (struct reb_server_data*)args;
     struct reb_simulation* r = data->r;
@@ -239,8 +228,8 @@ void* reb_server_start(void* args){
     }
     printf("Server shutting down...\n");
     return PTHREAD_CANCELED;
-//#else // _WIN32
-//    printf("Server not supported on windows.\n");
-//    return PTHREAD_CANCELED;
-//#endif // _WIN32
+#else // _WIN32
+    printf("Server not supported on windows.\n");
+    return NULL;
+#endif // _WIN32
 }
