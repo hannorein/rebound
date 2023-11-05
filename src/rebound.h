@@ -30,6 +30,8 @@
 #define _LP64
 #endif
 #ifdef _WIN32
+#define _WINSOCKAPI_ //stops windows.h including winsock.h
+#include <windows.h>
 #define REB_RESTRICT
 #define DLLEXPORT __declspec(dllexport)
 #define __restrict__
@@ -51,16 +53,17 @@
 #include <math.h>
 
 #ifdef _WIN32
-typedef struct timeval {
+typedef struct reb_timeval {
     int64_t tv_sec;
     int64_t tv_usec;
-} timeval;
-int gettimeofday(struct timeval * tp, struct timezone * tzp);
+} reb_timeval;
+int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
 int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
 #include <io.h>
 #define _TIMEVAL_DEFINED
 #else // Linux and MacOS
+#define reb_timeval timeval
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -1064,10 +1067,14 @@ struct reb_server_data {
     struct reb_simulation* r_copy;
     int port;
     int need_copy;
-#ifndef _WIN32
+#ifdef SERVER
+#ifdef _WIN32
+    HANDLE mutex;          // Mutex to allow for copying
+#else // _WIN32
     pthread_mutex_t mutex;          // Mutex to allow for copying
     pthread_t server_thread;
 #endif // _WIN32
+#endif // SERVER
 };
 
 struct reb_display_data {

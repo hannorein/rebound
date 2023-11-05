@@ -31,7 +31,16 @@
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
 #endif
-#ifndef _WIN32
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <tchar.h>
+
+// Buffer 
+#define Buffer 1500
+// A Pragma comment. Loading Library 
+#pragma comment(lib, "ws2_32.lib")
+#else // _WIN32
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -228,8 +237,92 @@ void* reb_server_start(void* args){
     }
     printf("Server shutting down...\n");
     return PTHREAD_CANCELED;
+
 #else // _WIN32
-    printf("Server not supported on windows.\n");
+
+
+    WSADATA wsa;
+    struct sockaddr_in server;
+    SOCKET s;
+    SOCKET clientS;
+    int iResult;
+    const char message[Buffer] =
+        "HTTP/1.1 200 OK\n"
+        "Server: REBOUND Webserver\n"
+        "Content-type: text/html\n"
+        "\r\n"
+        "Hello\n"
+        ;
+    char reply[Buffer] = { 0 };
+
+    // Simple. Start WSA(Windows Sockets API). If the return answer is not 0. It means error so therefore,
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        //std::cerr << "WinsocK Failed" << std::endl; // Print out this on the Screen.
+        getchar(); // Pause Console
+        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+    }
+
+    printf( "Windows Socket API Started\n");//
+
+    // Create a Network Socket
+    s = socket(AF_INET, SOCK_STREAM, NULL);
+    // If the Socket is Invalid or a Socket Error Occurs
+    if (s == SOCKET_ERROR)
+    {
+        //std::cerr << "Socket Error : " << WSAGetLastError() << std::endl;
+        getchar(); // Pause Console
+        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+    }
+    else if (s == INVALID_SOCKET) {
+        //std::cerr << "Socket Error : " << WSAGetLastError() << std::endl;
+        getchar(); // Pause Console
+        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+    }
+
+    printf("Socket Created\n");
+
+    server.sin_family = AF_INET; // Using AF_INET Address Family.
+    server.sin_port = htons(1234); // Defining PORT
+    InetPton(AF_INET, _T("0.0.0.0"), &server.sin_addr); // Defining The Network Address to Run the Server on
+
+    iResult = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
+    if (iResult == SOCKET_ERROR) // If Bind gives Error
+    {
+        //std::cerr << "Bind Error " << WSAGetLastError() << std::endl;
+        getchar(); // Pause Console
+        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+    }
+
+    printf("listening\n");
+    //std::cout << "Listening on : 0.0.0.0:80" << std::endl; // Tell the User we Started Listening.
+    iResult = listen(s, AF_INET); // Then Actually Start Listening for incoming Connections.
+
+    /*
+       The Program will start to listen for incoming connections and will do so until
+       Someone Connects.
+       */
+
+    while(1){
+        clientS = accept(s, NULL, NULL); // Accept a Connection on a new Socket made for the Client.
+        if (clientS == SOCKET_ERROR) { // if Accepting Connection is a Error
+                                       //std::cerr << "Accept FAiled!" << WSAGetLastError() << std::endl;
+            getchar(); // Pause Console
+            exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+        }
+        else {
+            printf( "A Client Connected. Sending a Message and closing Connection\n");
+            send(clientS, message, strlen(message), NULL); // Send Client a Message
+        }
+
+        recv(clientS, reply, sizeof(reply), NULL); // Just in case if the Client sends something, We Receive it.
+        printf("closing1\n");
+
+        closesocket(clientS); // close the Client Socket now that our Work is Complete.
+        printf("closing2\n");
+    }
+    WSACleanup(); // Clean Windows Socket API.
+    printf("closing3\n");
+
     return NULL;
 #endif // _WIN32
 }

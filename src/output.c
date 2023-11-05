@@ -236,12 +236,12 @@ double profiling_time_initial   = 0;
 double profiling_timing_initial = 0;
 double profiling_time_final     = 0;
 void profiling_start(void){
-    struct timeval tim;
+    struct reb_timeval tim;
     gettimeofday(&tim, NULL);
     profiling_time_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
 }
 void profiling_stop(int cat){
-    struct timeval tim;
+    struct reb_timeval tim;
     gettimeofday(&tim, NULL);
     profiling_time_final = tim.tv_sec+(tim.tv_usec/1000000.0);
     profiling_time_sum[cat] += profiling_time_final - profiling_time_initial;
@@ -270,7 +270,7 @@ void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
 #else
     int N_tot = N;
 #endif
-    struct timeval tim;
+    struct reb_timeval tim;
     gettimeofday(&tim, NULL);
     double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
     if (r->output_timing_last==-1){
@@ -301,7 +301,7 @@ void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
     }
 #ifdef PROFILING
     if (profiling_timing_initial==0){
-        struct timeval tim;
+        struct reb_timeval tim;
         gettimeofday(&tim, NULL);
         profiling_timing_initial = tim.tv_sec+(tim.tv_usec/1000000.0);
     }

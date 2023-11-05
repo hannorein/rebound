@@ -46,7 +46,7 @@
 
 
 unsigned int reb_tools_get_rand_seed(){
-	struct timeval tim;
+	struct reb_timeval tim;
 	gettimeofday(&tim, NULL);
 	return tim.tv_usec + getpid();
 }

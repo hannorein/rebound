@@ -78,7 +78,7 @@ void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
 }
 void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 
     // A 'DKD'-like integrator will do the first 'D' part.
@@ -167,7 +167,7 @@ void reb_simulation_step(struct reb_simulation* const r){
     PROFILING_STOP(PROFILING_CAT_COLLISION)
     
     // Update walltime
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     r->walltime += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
     // Update step counter
@@ -683,13 +683,14 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
 #endif // OPENMP
 
 #ifdef SERVER
-#ifdef _WIN32
-    printf("TODO! Implement server on windows.\n");
-#else // _WIN32
     if (server_port){
         r->server_data = calloc(sizeof(struct reb_server_data),1);
         r->server_data->r = r;
         r->server_data->port = server_port;
+#ifdef _WIN32
+        r->server_data->mutex = CreateMutex(NULL, FALSE, NULL);
+        HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)reb_server_start, r->server_data, 0, NULL);
+#else // _WIN32
         if (pthread_mutex_init(&(r->server_data->mutex), NULL)){
             reb_simulation_error(r,"Mutex creation failed.");
         }
@@ -697,8 +698,8 @@ void reb_simulation_init(struct reb_simulation* r, int server_port){
         if (ret_create){
             reb_simulation_error(r, "Error creating server thread.");
         }
-    }
 #endif // _WIN32
+    }
 #endif // SERVER
 }
 
@@ -889,7 +890,7 @@ static void* reb_simulation_integrate_raw(void* args){
                 usleep(10);
             }
 #ifdef _WIN32
-            printf("Need to implement mutex on windows\n");
+            WaitForSingleObject(r->server_data->mutex, INFINITE);
 #else // _WIN32
             pthread_mutex_lock(&(r->server_data->mutex)); 
 #endif // _WIN32
@@ -909,7 +910,7 @@ static void* reb_simulation_integrate_raw(void* args){
 #ifdef SERVER
         if (r->server_data){
 #ifdef _WIN32
-            printf("Need to implement mutex on windows\n");
+            ReleaseMutex(r->server_data->mutex);
 #else // _WIN32
             pthread_mutex_unlock(&(r->server_data->mutex));
 #endif // _WIN32
@@ -1041,7 +1042,7 @@ int asprintf(char **strp, const char *fmt, ...) {
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <stdint.h> // portable: uint64_t   MSVC: __int64
-int gettimeofday(struct timeval * tp, struct timezone * tzp)
+int gettimeofday(struct reb_timeval * tp, struct timezone * tzp)
 {
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
     // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)

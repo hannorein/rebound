@@ -116,7 +116,7 @@ static void inline mm_stiefel_Gs03_avx512(__m512d * Gs0, __m512d * Gs1, __m512d 
 // Performs one full Kepler step
 static void inline reb_whfast512_kepler_step(const struct reb_simulation* const r, const double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_particle_avx512 * restrict p512  = r->ri_whfast512.p_jh;
@@ -237,7 +237,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     p512->y = ny;
     p512->z = nz;
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -265,7 +265,7 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
@@ -451,7 +451,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
     }
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -460,7 +460,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
@@ -558,7 +558,7 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
     
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -566,7 +566,7 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
 
 static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
@@ -626,7 +626,7 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
     
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -778,7 +778,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
 // Performs one complete jump step
 static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
@@ -823,7 +823,7 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
     p_jh->z = _mm512_fmadd_pd(sumz, pf512, p_jh->z); 
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_jump += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -832,7 +832,7 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
 // Performs one full centre of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     const unsigned int N_systems = ri_whfast512->N_systems;
@@ -842,7 +842,7 @@ static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
         r->ri_whfast512.p_jh0[s].z += _dt*r->ri_whfast512.p_jh0[s].vz;
     }
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_com += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
