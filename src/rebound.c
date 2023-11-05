@@ -942,6 +942,10 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     return r->status;
 }
 
+size_t reb_simulation_struct_size(){
+    // For unit tests to check if python struct has same size
+    return sizeof(struct reb_simulation);
+}
 int reb_check_fp_contract(){
     // Checks if floating point contractions are on. 
     // If so, this will prevent unit tests from passing
