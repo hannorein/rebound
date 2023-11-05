@@ -367,27 +367,28 @@ void* reb_server_start(void* args){
             sendBytes(clientS, bufp, sizep);
             free(bufp);
         }else if (!strncasecmp(uri, "/keyboard/",10)) {
-            //int key = 0;
-            //sscanf(uri, "/keyboard/%d", &key);
-            //switch (key){
-            //    case 'Q':
-            //        data->r->status = REB_STATUS_USER;
+            int key = 0;
+            sscanf(uri, "/keyboard/%d", &key);
+            switch (key){
+                case 'Q':
+                    data->r->status = REB_STATUS_USER;
             //        fprintf(stream, "ok.\n");
-            //        break;
-            //    case ' ':
-            //        if (data->r->status == REB_STATUS_PAUSED){
-            //            printf("Resume.\n");
-            //            data->r->status = REB_STATUS_RUNNING;
-            //        }else{
-            //            printf("Pause.\n");
-            //            data->r->status = REB_STATUS_PAUSED;
-            //        }
+                    break;
+                case ' ':
+                    if (data->r->status == REB_STATUS_PAUSED){
+                        printf("Resume.\n");
+                        data->r->status = REB_STATUS_RUNNING;
+                    }else{
+                        printf("Pause.\n");
+                        data->r->status = REB_STATUS_PAUSED;
+                    }
             //        fprintf(stream, "ok.\n");
-            //        break;
-            //    default:
-            //        fprintf(stream, "Unknown key received: %d\n",key);
-            //        break;
-            //}
+                    break;
+                default:
+                    reb_server_cerror(clientS, "Unknown key received.");
+                    continue;
+                    break;
+            }
             //fflush(stream);
         }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             FILE *f = fopen("rebound.html", "rb");
