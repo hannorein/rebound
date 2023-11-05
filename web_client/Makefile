@@ -1,2 +1,5 @@
 all:
-	emcc -O3 -I../../src/ ../../src/*.c problem.c -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sFETCH -sSINGLE_FILE --shell-file ../../docs/c_examples/shell_rebound.html -o ../shearing_sheet/rebound.html
+	emcc -O3 -I../src/ ../src/*.c problem.c -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sFETCH -sSINGLE_FILE --shell-file ../docs/c_examples/shell_rebound.html -o rebound.html
+
+clean:
+	rm rebound.html

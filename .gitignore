@@ -12,6 +12,7 @@ Info.plist
 *.pyc
 *.pdf
 *.bin
+*.dSYM
 nbody
 .DS_Store
 error.txt
