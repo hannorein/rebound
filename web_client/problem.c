@@ -27,7 +27,7 @@ void send_key(int key){
     attr.onsuccess = request_key_succeeded;
     attr.onerror = request_failed;
     char buffer[1024];
-    sprintf(buffer, "http://localhost:1234/keyboard/%d", key);
+    sprintf(buffer, "/keyboard/%d", key);
     emscripten_fetch(&attr, buffer);
 }
 
@@ -83,7 +83,7 @@ void request_frame_from_server(struct reb_simulation* r){
     attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
     attr.onsuccess = request_frame_succeeded;
     attr.onerror = request_failed;
-    emscripten_fetch(&attr, "http://localhost:1234/simulation");
+    emscripten_fetch(&attr, "/simulation");
 
 }
 
