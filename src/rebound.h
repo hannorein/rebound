@@ -51,14 +51,16 @@
 #include <math.h>
 
 #ifdef _WIN32
-typedef struct timeval {
-    int64_t tv_sec;
-    int64_t tv_usec;
-} timeval;
+//typedef struct timeval {
+//    int64_t tv_sec;
+//    int64_t tv_usec;
+//} timeval;
 int gettimeofday(struct timeval * tp, struct timezone * tzp);
 int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
 #include <io.h>
+#define _TIMEVAL_DEFINED
+#include "winpthreads.h"
 #else // Linux and MacOS
 #include <sys/time.h>
 #include <unistd.h>

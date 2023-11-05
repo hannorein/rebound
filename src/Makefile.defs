@@ -30,11 +30,11 @@ endif
 	EXEREBOUND=rebound.exe
 	RM=del
 	ifeq (, $(shell copy))
-		LINKORCOPYLIBREBOUND=cp ../../src/librebound.* . & cp ../../src/rebound.h .
-		LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . & cp src/rebound.h .
+		LINKORCOPYLIBREBOUND=cp ../../src/librebound.* . & cp ../../src/rebound.h . & cp ../../src/winpthreads.h .
+		LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . & cp src/rebound.h . & cp src/winpthreads.h .
 	else
-		LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . & copy ..\..\src\rebound.h .
-		LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . & copy src\rebound.h .
+		LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . & copy ..\..\src\rebound.h . & copy ..\..\src\winpthreads.h .
+		LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . & copy src\rebound.h . & cp src\winpthreads.h .
 	endif
 	CCPROBLEM=$(CC) $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
 endif
