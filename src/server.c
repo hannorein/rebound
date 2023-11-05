@@ -25,6 +25,8 @@
  *
  */
 
+#ifdef SERVER
+
 #include <stdio.h>
 #ifdef _MSC_VER 
 //not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw
@@ -190,7 +192,7 @@ void* reb_server_start(void* args){
         /* get the HTTP request line */
         char* request = fgets(buf, BUFSIZE, stream);
         if (!request){
-            reb_server_cerror(stream, method, "501", "Not Implemented");
+            reb_server_cerror(stream, "Did not get request.");
             fclose(stream);
             close(childfd);
             continue;
@@ -199,7 +201,7 @@ void* reb_server_start(void* args){
 
         /* only support the GET method */
         if (strcasecmp(method, "GET")) {
-            reb_server_cerror(stream, method, "501", "Not Implemented");
+            reb_server_cerror(stream, "Onlt GET is implemented");
             fclose(stream);
             close(childfd);
             continue;
@@ -419,3 +421,6 @@ void* reb_server_start(void* args){
     return NULL;
 #endif // _WIN32
 }
+
+
+#endif // SERVER

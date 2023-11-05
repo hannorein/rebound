@@ -12,7 +12,7 @@ ifneq ($(OS), Windows_NT)
 	CCPROBLEM=$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) $< -L. -lrebound $(LIB) -o $(EXEREBOUND)
 else
 ifeq ($(OPENGL), 1)
-$(warning OpenGL currently not supported on Windows. Setting OPENGL=0)
+$(warning OpenGL not supported on Windows. Setting OPENGL=0)
 	OPENGL=0
 endif
 ifeq ($(MPI), 1)
@@ -69,6 +69,10 @@ endif
 ifeq ($(FFTW), 1)
 	PREDEF+= -DFFTW
 	LIB+= -lfftw3
+endif
+
+ifeq ($(SERVER), 1)
+PREDEF+= -DSERVER
 endif
 
 ifeq ($(OPENGL), 1)

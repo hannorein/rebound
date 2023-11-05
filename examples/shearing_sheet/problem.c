@@ -76,7 +76,6 @@ int main(int argc, char* argv[]) {
         pt.m         = particle_mass;     // kg
         reb_simulation_add(r, pt);
         mass += particle_mass;
-    printf("%f\n", pt.x);
     }
     reb_simulation_integrate(r, INFINITY);
     reb_simulation_free(r);
