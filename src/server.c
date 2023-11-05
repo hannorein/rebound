@@ -35,10 +35,6 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <tchar.h>
-
-// Buffer 
-#define Buffer 1500
-// A Pragma comment. Loading Library 
 #pragma comment(lib, "ws2_32.lib")
 #else // _WIN32
 #include <unistd.h>
@@ -65,6 +61,45 @@ static void reb_server_cerror(FILE *stream, char *cause, char *errno, char *shor
     fprintf(stream, "<p>%s: %s\n", longmsg, cause);
     fprintf(stream, "<hr><em>REBOUND Webserver</em>\n");
 }
+
+char* reb_server_header =
+        "HTTP/1.1 200 OK\n"
+        "Server: REBOUND Webserver\n"
+      //"Access-Control-Allow-Origin: *\n"
+      //"Cross-Origin-Opener-Policy: cross-origin\n"
+        "Content-type: text/html\n"
+        "\r\n";
+
+#ifdef _WIN32
+int sendBytes(SOCKET s, void *buffer, int buflen){
+    int total = 0;
+    char *pbuf = (char*) buffer;
+    while (buflen > 0) {
+        int iResult = send(s, pbuf, buflen, 0);
+        if (iResult < 0) {
+            if (WSAGetLastError() == WSAEWOULDBLOCK) {
+                // optionally use select() to wait for the
+                // socket to have more space to write before
+                // calling send() again...
+                continue;
+            }
+
+            printf("send error: %d\n", WSAGetLastError());
+            return SOCKET_ERROR;
+        } else if (iResult == 0) {
+            printf("disconnected\n");
+            return 0;
+        } else {
+            pbuf += iResult;
+            buflen -= iResult;
+            total += iResult;
+        }
+    }
+
+    return total;
+}
+
+#endif // _WIN32
 
 void* reb_server_start(void* args){
 #ifndef _WIN32
@@ -246,14 +281,14 @@ void* reb_server_start(void* args){
     SOCKET s;
     SOCKET clientS;
     int iResult;
-    const char message[Buffer] =
+    const char message[BUFSIZE] =
         "HTTP/1.1 200 OK\n"
         "Server: REBOUND Webserver\n"
         "Content-type: text/html\n"
         "\r\n"
         "Hello\n"
         ;
-    char reply[Buffer] = { 0 };
+    char reply[BUFSIZE] = { 0 };
 
     // Simple. Start WSA(Windows Sockets API). If the return answer is not 0. It means error so therefore,
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
@@ -267,16 +302,9 @@ void* reb_server_start(void* args){
     // Create a Network Socket
     s = socket(AF_INET, SOCK_STREAM, NULL);
     // If the Socket is Invalid or a Socket Error Occurs
-    if (s == SOCKET_ERROR)
-    {
-        //std::cerr << "Socket Error : " << WSAGetLastError() << std::endl;
-        getchar(); // Pause Console
-        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
-    }
-    else if (s == INVALID_SOCKET) {
-        //std::cerr << "Socket Error : " << WSAGetLastError() << std::endl;
-        getchar(); // Pause Console
-        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+    if (s == SOCKET_ERROR) {
+        printf("Socket Error\n");
+        exit(1);
     }
 
     printf("Socket Created\n");
@@ -286,10 +314,8 @@ void* reb_server_start(void* args){
     InetPton(AF_INET, _T("0.0.0.0"), &server.sin_addr); // Defining The Network Address to Run the Server on
 
     iResult = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
-    if (iResult == SOCKET_ERROR) // If Bind gives Error
-    {
-        //std::cerr << "Bind Error " << WSAGetLastError() << std::endl;
-        getchar(); // Pause Console
+    if (iResult == SOCKET_ERROR) {
+        printf("Bind Error\n");
         exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
     }
 
@@ -308,21 +334,31 @@ void* reb_server_start(void* args){
                                        //std::cerr << "Accept FAiled!" << WSAGetLastError() << std::endl;
             getchar(); // Pause Console
             exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
-        }
-        else {
-            printf( "A Client Connected. Sending a Message and closing Connection\n");
-            send(clientS, message, strlen(message), NULL); // Send Client a Message
-        }
-
+        } else {
         recv(clientS, reply, sizeof(reply), NULL); // Just in case if the Client sends something, We Receive it.
-        printf("closing1\n");
+        
+            sscanf(buf, "%s %s %s\n", method, uri, version);
+            printf( "A Client Connected.\n");
+            FILE *f = fopen("rebound.html", "rb");
+            if (f){
+                printf("no file\n");
+                fseek(f, 0, SEEK_END);
+                long fsize = ftell(f);
+                fseek(f, 0, SEEK_SET);
+                char *buf = malloc(fsize);
+                fread(buf, fsize, 1, f);
+                fclose(f);
+                send(clientS, reb_server_header, strlen(reb_server_header), NULL); 
+                send(clientS, buf, fsize, NULL); 
+                free(buf);
+            }else{
+                printf("rebound.html not found\n");
+            }
+        }
 
         closesocket(clientS); // close the Client Socket now that our Work is Complete.
-        printf("closing2\n");
     }
-    WSACleanup(); // Clean Windows Socket API.
-    printf("closing3\n");
-
+    WSACleanup();
     return NULL;
 #endif // _WIN32
 }
