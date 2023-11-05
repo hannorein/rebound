@@ -179,7 +179,6 @@ void* reb_server_start(void* args){
             close(childfd);
             continue;
         }
-
         sscanf(buf, "%s %s %s\n", method, uri, version);
 
         /* only support the GET method */
@@ -292,12 +291,11 @@ void* reb_server_start(void* args){
 
     // Simple. Start WSA(Windows Sockets API). If the return answer is not 0. It means error so therefore,
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        //std::cerr << "WinsocK Failed" << std::endl; // Print out this on the Screen.
-        getchar(); // Pause Console
-        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+        printf("Winsock failed");
+        exit(1);
     }
 
-    printf( "Windows Socket API Started\n");//
+    printf("Windows Socket API Started\n");
 
     // Create a Network Socket
     s = socket(AF_INET, SOCK_STREAM, NULL);
@@ -316,7 +314,7 @@ void* reb_server_start(void* args){
     iResult = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
     if (iResult == SOCKET_ERROR) {
         printf("Bind Error\n");
-        exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+        exit(1);
     }
 
     printf("listening\n");
@@ -331,17 +329,19 @@ void* reb_server_start(void* args){
     while(1){
         clientS = accept(s, NULL, NULL); // Accept a Connection on a new Socket made for the Client.
         if (clientS == SOCKET_ERROR) { // if Accepting Connection is a Error
-                                       //std::cerr << "Accept FAiled!" << WSAGetLastError() << std::endl;
-            getchar(); // Pause Console
-            exit(1); // Exit Program, Note that in Computing, 1 = True, 0 = False. So 0 or 1 can also be entered as, exit(1);
+            printf("Accept Failed!\n");
+            exit(1);
         } else {
-        recv(clientS, reply, sizeof(reply), NULL); // Just in case if the Client sends something, We Receive it.
+            recv(clientS, reply, sizeof(reply), NULL); // Just in case if the Client sends something, We Receive it.
         
-            sscanf(buf, "%s %s %s\n", method, uri, version);
+            char method[BUFSIZE];
+            char uri[BUFSIZE];
+            char version[BUFSIZE];
+            sscanf(reply, "%s %s %s\n", method, uri, version);
+            printf("method uri %s %s  \n", method, uri);
             printf( "A Client Connected.\n");
             FILE *f = fopen("rebound.html", "rb");
             if (f){
-                printf("no file\n");
                 fseek(f, 0, SEEK_END);
                 long fsize = ftell(f);
                 fseek(f, 0, SEEK_SET);
