@@ -56,10 +56,11 @@ void request_frame_from_server(struct reb_simulation* r);
 void request_frame_succeeded(emscripten_fetch_t *fetch) {
     struct reb_simulation* r = fetch->userData;
 
+    if (first){
     FILE* fin = reb_fmemopen((void*)fetch->data, fetch->numBytes, "r");
-    enum reb_simulation_binary_error_codes* warnings;
-    reb_input_fields(r, fin, warnings);
-    fclose(fin);
+    enum reb_simulation_binary_error_codes warnings;
+    reb_input_fields(r, fin, &warnings);
+    }
 
     if (first){
         r->display_data = calloc(1, sizeof(struct reb_display_data));
@@ -70,8 +71,8 @@ void request_frame_succeeded(emscripten_fetch_t *fetch) {
     first = 0;
     emscripten_fetch_close(fetch); // Free data associated with the fetch.
 
-    emscripten_sleep(1000./120.);
-    request_frame_from_server(r);
+    //emscripten_sleep(1000./120.);
+    //request_frame_from_server(r);
 }
 
 

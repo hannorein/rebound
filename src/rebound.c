@@ -381,63 +381,6 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     }
 }
 
-void reb_simulation_reset_temporary_pointers(struct reb_simulation* const r){
-    // Note: this will not clear the particle array.
-    r->N_allocated_gravity_cs    = 0;
-    r->gravity_cs           = NULL;
-    r->N_allocated_collisions    = 0;
-    r->collisions           = NULL;
-    r->extras               = NULL;
-    r->messages             = NULL;
-    // ********** Lookup Table
-    r->particle_lookup_table = NULL;
-    r->N_lookup = 0;
-    r->N_allocated_lookup = 0;
-    // ********** WHFAST
-    r->ri_whfast.N_allocated    = 0;
-    r->ri_whfast.N_allocated_tmp= 0;
-    r->ri_whfast.p_jh           = NULL;
-    r->ri_whfast.p_temp         = NULL;
-    r->ri_whfast.keep_unsynchronized = 0;
-    // ********** IAS15
-    r->ri_ias15.N_allocated      = 0;
-    set_dp7_null(&(r->ri_ias15.g));
-    set_dp7_null(&(r->ri_ias15.b));
-    set_dp7_null(&(r->ri_ias15.csb));
-    set_dp7_null(&(r->ri_ias15.e));
-    set_dp7_null(&(r->ri_ias15.br));
-    set_dp7_null(&(r->ri_ias15.er));
-    r->ri_ias15.at          = NULL;
-    r->ri_ias15.x0          = NULL;
-    r->ri_ias15.v0          = NULL;
-    r->ri_ias15.a0          = NULL;
-    r->ri_ias15.csx         = NULL;
-    r->ri_ias15.csv         = NULL;
-    r->ri_ias15.csa0        = NULL;
-    r->ri_ias15.at          = NULL;
-    r->ri_ias15.N_allocated_map      = 0;
-    r->ri_ias15.map         = NULL;
-    // ********** MERCURIUS
-    r->ri_mercurius.N_allocated = 0;
-    r->ri_mercurius.N_allocated_additional_forces = 0;
-    r->ri_mercurius.N_allocated_dcrit = 0;
-    r->ri_mercurius.dcrit = NULL;
-    r->ri_mercurius.particles_backup = NULL;
-    r->ri_mercurius.particles_backup_additional_forces = NULL;
-    r->ri_mercurius.encounter_map = NULL;
-    // ********** JANUS
-    r->ri_janus.N_allocated = 0;
-    r->ri_janus.p_int = NULL;
-    r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
-    r->ri_janus.order = 6;
-    r->ri_janus.scale_pos = 1e-16;
-    r->ri_janus.scale_vel = 1e-16;
-    // ********** ODEs
-    r->odes = NULL;
-    r->N_odes = 0;
-    r->N_allocated_odes = 0;
-}
-
 int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
     int wasnotnull = 0;
     if (r->coefficient_of_restitution ||
@@ -473,7 +416,6 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     size_t sizep;
     reb_simulation_save_to_stream(r, &bufp,&sizep);
     
-    reb_simulation_reset_temporary_pointers(r_copy);
     reb_simulation_reset_function_pointers(r_copy);
     r_copy->simulationarchive_filename = NULL;
     
@@ -536,7 +478,6 @@ void reb_clear_pre_post_pointers(struct reb_simulation* const r){
 
 void reb_simulation_init(struct reb_simulation* r){
     r->rand_seed = reb_tools_get_rand_seed();
-    reb_simulation_reset_temporary_pointers(r);
     reb_simulation_reset_function_pointers(r);
     r->t        = 0; 
     r->G        = 1;
@@ -646,6 +587,12 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_mercurius.encounter_N = 0;
     r->ri_mercurius.r_crit_hill = 3;
     
+    // ********** JANUS
+    r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
+    r->ri_janus.order = 6;
+    r->ri_janus.scale_pos = 1e-16;
+    r->ri_janus.scale_vel = 1e-16;
+    
     // ********** EOS
     r->ri_eos.n = 2;
     r->ri_eos.phi0 = REB_EOS_LF;
@@ -654,7 +601,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_eos.is_synchronized = 1;
     
     
-    // ********** NS
+    // ********** BS
     reb_integrator_bs_reset(r);
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
