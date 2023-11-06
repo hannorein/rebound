@@ -279,7 +279,8 @@ void* reb_server_start(void* args){
                 munmap(p, sbuf.st_size);
             }
         }else if (!strcasecmp(uri, "/favicon.ico")) {
-            reb_server_cerror(stream, "Favicon not found.");
+                fwrite(reb_server_header_png, 1, strlen(reb_server_header_png), stream);
+                fwrite(reb_favicon_png,1, reb_favicon_len, stream);
         }else{
             reb_server_cerror(stream, "Unsupported URI.");
         }
