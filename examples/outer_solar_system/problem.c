@@ -62,8 +62,8 @@ int main(int argc, char* argv[]) {
 
     // Setup constants
     const double k = 0.01720209895; // Gaussian constant
-    r->dt = 40;            // in days
-    r->G = k * k;            // These are the same units as used by the mercury6 code.
+    r->dt = 40;                     // in days
+    r->G = k * k;                   // These are the same units as used by the mercury6 code.
     r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call integrator_synchronize() before outputs.
     r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
 
@@ -93,7 +93,8 @@ int main(int argc, char* argv[]) {
     double e_initial = reb_simulation_energy(r);
 
     // Start integration
-    reb_simulation_integrate(r, tmax);
+    reb_simulation_integrate(r, INFINITY);  // Runs forever
+    //reb_simulation_integrate(r, tmax);      // Integrates only to tmax
 
     double e_final = reb_simulation_energy(r);
     reb_simulation_free(r);
