@@ -197,6 +197,17 @@ class Simulation(Structure):
             raise RuntimeError("An error occured while starting webserver.")
 
 
+    def widget(self, port=1234, host="localhost", size=(500,500)):
+        port = int(port)
+        if self._server_data:
+            if self._server_data.contents.port != port:
+                raise RuntimeError("Server is running already on port %d but port %d was requested."%(self._server_data.contents.port, port))
+        else:
+            self.start_server(port=port)
+        from IPython.display import IFrame
+        width, height = size
+        display(IFrame("http://"+host+":"+"%d"%port, width, height))
+
     def cite(self):
         """
         Generate citations
@@ -1408,6 +1419,16 @@ from .integrators.mercurius import IntegratorMercurius
 from .variation import Variation
 
 # Setting up fields after class definition (because of self-reference)
+
+class ServerData(Structure):
+    _fields_ = [
+            ("r", POINTER(Simulation)),
+            ("r_copy", POINTER(Simulation)),
+            ("port", c_int),
+            ("need_copy", c_int),
+            # other fields not needed.
+            ]
+
 Simulation._fields_ = [
                 ("t", c_double),
                 ("G", c_double),
@@ -1445,10 +1466,11 @@ Simulation._fields_ = [
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
                 ("_display_data", c_void_p), # not needed from python
-                ("_server_data", c_void_p),  # not needed from python
+                ("_server_data", POINTER(ServerData)),
                 ("track_energy_offset", c_int),
                 ("energy_offset", c_double),
                 ("walltime", c_double),
+                ("walltime_last_step", c_double),
                 ("python_unit_t",c_uint32),
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),

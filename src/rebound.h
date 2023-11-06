@@ -472,6 +472,7 @@ struct reb_simulation {
     int track_energy_offset;        // 0 (default): do not track energy offset due to merging/lost particles, 1: track offset
     double energy_offset;           // Only used if track_energy_offset = 1
     double walltime;                // Cumulative walltime of entire integration.
+    double walltime_last_step;      // Wall time of last step.
     uint32_t python_unit_l;         // Only used for when working with units in python.
     uint32_t python_unit_m;         // Only used for when working with units in python.
     uint32_t python_unit_t;         // Only used for when working with units in python.

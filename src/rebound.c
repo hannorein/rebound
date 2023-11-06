@@ -169,7 +169,8 @@ void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime
     struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
-    r->walltime += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+    r->walltime_last_step = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+    r->walltime += r->walltime_last_step;
     // Update step counter
     r->steps_done++; // This also counts failed IAS15 steps
 }

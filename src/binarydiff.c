@@ -235,8 +235,8 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
             fields_differ = 1;
         }
         if(fields_differ){
-            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "walltime")!=0){
-                // Ignore the walltime and field, but only for the return value (print it out)
+            if (strncmp(reb_binary_field_descriptor_for_type(field1.type).name, "walltime",8)!=0){
+                // Ignore the walltime fields, but only for the return value (print it out)
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
             }
