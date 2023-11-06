@@ -85,7 +85,7 @@ next_field:
             if (fd.type==field.type){
                 // Read simple data types
                 if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
-                        || fd.dtype == REB_UINT32 || fd.dtype == REB_LONG 
+                        || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
                         || fd.dtype == REB_ULONG || fd.dtype == REB_ULONGLONG 
                         || fd.dtype == REB_PARTICLE || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D ){
                     char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;

@@ -91,7 +91,7 @@ static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char*
         case REB_UINT32:
             asprintf(&newbuf,"%" PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
             break;
-        case REB_LONG:
+        case REB_INT64:
             asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
             break;
         case REB_ULONG:

@@ -1157,9 +1157,9 @@ struct reb_binary_field_descriptor {
         REB_INT = 1,
         REB_UINT = 2,
         REB_UINT32 = 3,
-        REB_LONG = 4,
+        REB_INT64 = 4,
         REB_ULONG = 5,
-        REB_ULONGLONG = 6,          // TODO Cleanup
+        // REB_ULONGLONG = 6,        // No longer used. Using explicit lengths instead.
         REB_VEC3D = 7,
         REB_PARTICLE = 8,
         REB_POINTER = 9,

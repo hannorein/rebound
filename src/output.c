@@ -78,7 +78,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 32, REB_INT,          "collision_resolve_keep_sorted",offsetof(struct reb_simulation, collision_resolve_keep_sorted), 0, 0},
     { 33, REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0},
     { 34, REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0},
-    { 36, REB_LONG,         "collisions_log_n",              offsetof(struct reb_simulation, collisions_log_n), 0, 0},
+    { 36, REB_INT64,         "collisions_log_n",              offsetof(struct reb_simulation, collisions_log_n), 0, 0},
     { 37, REB_INT,          "calculate_megno",              offsetof(struct reb_simulation, calculate_megno), 0, 0},
     { 38, REB_DOUBLE,       "megno_Ys",                     offsetof(struct reb_simulation, megno_Ys), 0, 0},
     { 39, REB_DOUBLE,       "megno_Yss",                    offsetof(struct reb_simulation, megno_Yss), 0, 0},
@@ -86,7 +86,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 41, REB_DOUBLE,       "megno_var_t",                  offsetof(struct reb_simulation, megno_var_t), 0, 0},
     { 42, REB_DOUBLE,       "megno_mean_t",                 offsetof(struct reb_simulation, megno_mean_t), 0, 0},
     { 43, REB_DOUBLE,       "megno_mean_Y",                 offsetof(struct reb_simulation, megno_mean_Y), 0, 0},
-    { 44, REB_LONG,         "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0},
+    { 44, REB_INT64,         "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0},
     { 47, REB_DOUBLE,       "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval), 0, 0},
     { 102, REB_DOUBLE,      "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0},
     { 48, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0},
@@ -430,7 +430,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                dtype == REB_LONG || dtype == REB_ULONG || dtype == REB_ULONGLONG ||
+                dtype == REB_INT64 || dtype == REB_ULONG || dtype == REB_ULONGLONG ||
                 dtype == REB_PARTICLE || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
@@ -448,7 +448,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
                 case REB_UINT32: 
                     field.size = sizeof(uint32_t);
                     break;
-                case REB_LONG:
+                case REB_INT64:
                     field.size = sizeof(int64_t);
                     break;
                 case REB_ULONG:
