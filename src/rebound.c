@@ -303,13 +303,32 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
         free(r->simulationarchive_filename);
     }
 #ifdef OPENGL
-    // OpenGL is not support on Windows
     if(r->display_data){
+        // Waiting for visualization to shut down.
+        if (r->display_data->window){ // Not needed under normal circumstances
+            usleep(100);
+        }
+        if (r->display_data->window){ // still running?
+            printf("Waiting for OpenGL visualization to shut down...\n");
+            while(r->display_data->window){
+                usleep(100);
+            }
+        }
         pthread_mutex_destroy(&(r->display_data->mutex));
-        reb_simulation_free(r->display_data->r_copy);
-        free(r->display_data->particle_data);
-        free(r->display_data->orbit_data);
-        free(r->display_data); // TODO: Free other pointers in display_data
+        if (r->display_data->r_copy){
+            reb_simulation_free(r->display_data->r_copy);
+            r->display_data->r_copy = NULL;
+        }
+        if (r->display_data->particle_data){
+            free(r->display_data->particle_data);
+            r->display_data->particle_data = NULL;
+        }
+        if (r->display_data->orbit_data){
+            free(r->display_data->orbit_data);
+            r->display_data->orbit_data = NULL;
+        }
+        free(r->display_data);
+        r->display_data = NULL;
     }
 #endif //OPENGL
 #ifdef SERVER
@@ -911,7 +930,6 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     }
 
     reb_display_init(r); // Display routines need to run on main thread. Will not return until r->status<0.
-
     if (pthread_join(r->display_data->compute_thread,NULL)){
         reb_simulation_error(r, "Error joining compute thread.");
     }

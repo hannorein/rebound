@@ -262,7 +262,6 @@ static void reb_display_resize(GLFWwindow* window, int x, int y){
         printf("Error accessing data in reb_display_resize\n");
         return;
     }
-    reb_render_frame(data);
 }
 
 static void reb_display_cursor(GLFWwindow* window, double x, double y){
@@ -413,7 +412,6 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 }
                 break;
         }
-        reb_render_frame(data);
     }
 }
 
@@ -441,8 +439,7 @@ void reb_render_frame(void* p){
 
     struct reb_simulation* r_copy = r->display_data->r_copy;
     if (!r_copy){
-        data->r_copy = calloc(1,sizeof(struct reb_simulation));
-        reb_simulation_init(data->r_copy);
+        data->r_copy = reb_simulation_create();
         r_copy = data->r_copy;
     }
     
@@ -1222,6 +1219,15 @@ void reb_display_init(struct reb_simulation * const r){
         }
     }
     glfwDestroyWindow(window);
+    data->window = NULL;
+    // Destroy particle buffers
+    if (data->N_allocated){
+        data->N_allocated = 0;
+        free(data->particle_data);
+        free(data->orbit_data);
+        data->particle_data = NULL;
+        data->orbit_data = NULL;
+    }
     glfwTerminate();
 #endif
 }
