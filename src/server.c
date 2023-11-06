@@ -201,25 +201,18 @@ void* reb_server_start(void* args){
 
         /* only support the GET method */
         if (strcasecmp(method, "GET")) {
-            reb_server_cerror(stream, "Onlt GET is implemented");
+            reb_server_cerror(stream, "Only GET is implemented.");
             fclose(stream);
             close(childfd);
             continue;
         }
            
-
         /* read (and ignore) the HTTP headers */
         fgets(buf, BUFSIZE, stream);
         while(strcmp(buf, "\r\n")) {
             fgets(buf, BUFSIZE, stream);
         }
 
-        fprintf(stream, "HTTP/1.1 200 OK\n");
-        fprintf(stream, "Server: REBOUND Webserver\n");
-        //fprintf(stream, "Access-Control-Allow-Origin: *\n");
-        //fprintf(stream, "Cross-Origin-Opener-Policy: cross-origin\n");
-        fprintf(stream, "Content-type: text/html\n"); // Always using the same content type, even for binary data.
-        fprintf(stream, "\r\n");
         if (!strcasecmp(uri, "/simulation")) {
             char* bufp = NULL;
             size_t sizep;
@@ -228,7 +221,7 @@ void* reb_server_start(void* args){
             reb_simulation_save_to_stream(r, &bufp,&sizep);
             data->need_copy = 0;
             pthread_mutex_unlock(&(data->mutex));
-            fflush(stream);
+            fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
             fwrite(bufp, 1, sizep, stream);
             free(bufp);
         }else if (!strncasecmp(uri, "/keyboard/",10)) {
@@ -237,6 +230,7 @@ void* reb_server_start(void* args){
             switch (key){
                 case 'Q':
                     data->r->status = REB_STATUS_USER;
+                    fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
                     fprintf(stream, "ok.\n");
                     break;
                 case ' ':
@@ -247,42 +241,32 @@ void* reb_server_start(void* args){
                         printf("Pause.\n");
                         data->r->status = REB_STATUS_PAUSED;
                     }
+                    fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
                     fprintf(stream, "ok.\n");
                     break;
                 default:
-                    fprintf(stream, "Unknown key received: %d\n",key);
+                    reb_server_cerror(stream, "Unsupported key received.");
                     break;
             }
-            fflush(stream);
         }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             struct stat sbuf;
             if (stat("rebound.html", &sbuf) < 0) {
-                printf("Unable to find rebound.html\n");
-                fflush(stream);
-                fprintf(stream, "<h1>Unable to find rebound.html.</h1>\n");
-                fprintf(stream, "The server was unable to find rebound.html.\n");
-                fprintf(stream, "Download rebound.html from github and place it in the same directory as your rebound executable.\n");
+                reb_server_cerror(stream, "rebound.html not found in current directory. Try `make rebuund.html`.");
             }else{
-                fflush(stream);
-#ifndef _WIN32
+                fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
                 int fd = open("rebound.html", O_RDONLY);
                 void* p = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
                 fwrite(p, 1, sbuf.st_size, stream);
                 munmap(p, sbuf.st_size);
-#else //_WIN32
-            fprintf(stream, "Not yet implemented.\n");
-#endif //_WIN32
             }
         }else if (!strcasecmp(uri, "/favicon.ico")) {
-            fflush(stream);
-            fprintf(stream, "favicon.ico not found.\n");
+            reb_server_cerror(stream, "Favicon not found.");
         }else{
-            printf("Not sure what to do with URI: %s\n",uri);
-            fflush(stream);
-            fprintf(stream, "<h1>Not sure what to do!</h1>\n");
+            reb_server_cerror(stream, "Unsupported URI.");
         }
 
         /* clean up */
+        fflush(stream);
         fclose(stream);
         close(childfd);
 
@@ -302,27 +286,20 @@ void* reb_server_start(void* args){
     char uri[BUFSIZE];
     char version[BUFSIZE];
 
-    // Simple. Start WSA(Windows Sockets API). If the return answer is not 0. It means error so therefore,
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        printf("Winsock failed");
+        printf("Winsock startup failed");
         exit(1);
     }
 
-    printf("Windows Socket API Started\n");
-
-    // Create a Network Socket
     s = socket(AF_INET, SOCK_STREAM, 0);
-    // If the Socket is Invalid or a Socket Error Occurs
     if (s == SOCKET_ERROR) {
         printf("Socket Error\n");
         exit(1);
     }
 
-    printf("Socket Created\n");
-
-    server.sin_family = AF_INET; // Using AF_INET Address Family.
-    server.sin_port = htons(1234); // Defining PORT
-    InetPton(AF_INET, _T("0.0.0.0"), &server.sin_addr); // Defining The Network Address to Run the Server on
+    server.sin_family = AF_INET;
+    server.sin_port = htons(data->port);
+    InetPton(AF_INET, _T("0.0.0.0"), &server.sin_addr);
 
     int ret_bind = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
     if (ret_bind) {
@@ -330,13 +307,13 @@ void* reb_server_start(void* args){
         exit(1);
     }
 
-    printf("listening\n");
     int ret_listen = listen(s, AF_INET);
     if (ret_listen){
         printf("Listen error\n");
         exit(1);
     }
-
+    
+    printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
 
     while(1){
         clientS = accept(s, NULL, NULL);
@@ -355,16 +332,14 @@ void* reb_server_start(void* args){
             continue;
         }
         
-
         if (!strcasecmp(uri, "/simulation")) {
             char* bufp = NULL;
             size_t sizep;
             data->need_copy = 1;
-            //pthread_mutex_lock(&(data->mutex));
+            //pthread_mutex_lock(&(data->mutex)); TODO!!
             reb_simulation_save_to_stream(r, &bufp,&sizep);
             data->need_copy = 0;
             //pthread_mutex_unlock(&(data->mutex));
-            //fflush(stream);
             sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
             sendBytes(clientS, bufp, sizep);
             free(bufp);
@@ -374,7 +349,6 @@ void* reb_server_start(void* args){
             switch (key){
                 case 'Q':
                     data->r->status = REB_STATUS_USER;
-            //        fprintf(stream, "ok.\n");
                     break;
                 case ' ':
                     if (data->r->status == REB_STATUS_PAUSED){
@@ -384,14 +358,12 @@ void* reb_server_start(void* args){
                         printf("Pause.\n");
                         data->r->status = REB_STATUS_PAUSED;
                     }
-            //        fprintf(stream, "ok.\n");
                     break;
                 default:
                     reb_server_cerror(clientS, "Unknown key received.");
                     continue;
                     break;
             }
-            //fflush(stream);
         }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             FILE *f = fopen("rebound.html", "rb");
             if (f){
@@ -405,7 +377,7 @@ void* reb_server_start(void* args){
                 sendBytes(clientS, buf, fsize); 
                 free(buf);
             }else{
-                reb_server_cerror(clientS, "File rebound.html not found.");
+                reb_server_cerror(clientS, "rebound.html not found in current directory. Try `make rebuund.html`.");
                 continue;
             }
         }else{
@@ -414,8 +386,7 @@ void* reb_server_start(void* args){
             continue;
         }
 
-
-        closesocket(clientS); // close the Client Socket now that our Work is Complete.
+        closesocket(clientS);
     }
     WSACleanup();
     return NULL;
