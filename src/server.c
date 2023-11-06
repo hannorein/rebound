@@ -177,7 +177,10 @@ void* reb_server_start(void* args){
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);
     if (bind(data->socket, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
-        printf("Error opening binding port %d. Port might be in use.\n", data->port);
+        char error_msg[BUFSIZE];
+        snprintf(error_msg, BUFSIZE, "Error binding to port %d. Port might be in use.\n", data->port);
+        reb_simulation_error(r, error_msg);
+        data->ready = -1;
         return PTHREAD_CANCELED;
     }
 
@@ -323,8 +326,11 @@ void* reb_server_start(void* args){
 
     int ret_bind = bind(data->socket, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
     if (ret_bind) {
-        printf("Bind error\n");
-        exit(1);
+        char error_msg[BUFSIZE];
+        snprintf(error_msg, BUFSIZE, "Error binding to port %d. Port might be in use.\n", data->port);
+        reb_simulation_error(r, error_msg);
+        data->ready = -1;
+        return 1;
     }
 
     int ret_listen = listen(data->socket, AF_INET);

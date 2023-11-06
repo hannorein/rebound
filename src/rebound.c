@@ -195,6 +195,7 @@ void reb_message(struct reb_simulation* const r, char type, const char* const ms
             fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
         }
     }else{
+        // TODO: Should be protected by MUTEX
         if (r->messages==NULL){
             r->messages = calloc(reb_N_max_messages,sizeof(char*));
         }
@@ -667,11 +668,11 @@ int reb_simulation_start_server(struct reb_simulation* r, int port){
         }
 #endif // _WIN32
         int maxwait = 100;
-        while (!r->server_data->ready && maxwait){
+        while (r->server_data->ready==0 && maxwait){
             usleep(10000);
             maxwait--;
         }
-        if (!r->server_data->ready){
+        if (r->server_data->ready==0){
             reb_simulation_warning(r, "Server did not start immediately. This might just take a little bit longer.");
         }
         return 0;
