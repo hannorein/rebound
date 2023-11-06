@@ -30,6 +30,7 @@
 #define _LP64
 #endif
 #ifdef _WIN32
+#include <WinSock2.h>
 #define _WINSOCKAPI_ //stops windows.h including winsock.h
 #include <windows.h>
 #define REB_RESTRICT
@@ -92,6 +93,8 @@ DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.
 DLLEXPORT extern const char* reb_version_str; ///< Version string.
 DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
 DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
+DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
+DLLEXPORT extern const unsigned int reb_favicon_len;
 DLLEXPORT extern const int reb_max_messages_length;
 DLLEXPORT extern const int reb_N_max_messages;
 extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
@@ -1072,6 +1075,7 @@ struct reb_server_data {
     int need_copy;
 #ifdef SERVER
 #ifdef _WIN32
+    SOCKET socket;
     HANDLE mutex;          // Mutex to allow for copying
 #else // _WIN32
     pthread_mutex_t mutex;          // Mutex to allow for copying

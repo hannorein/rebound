@@ -34,7 +34,6 @@
 #define strcasecmp _stricmp
 #endif
 #ifdef _WIN32
-#include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <tchar.h>
 #include <io.h>
@@ -56,16 +55,21 @@
 
 #define BUFSIZE 1024
 
-char* reb_server_header =
+const char* reb_server_header =
         "HTTP/1.1 200 OK\n"
         "Server: REBOUND Webserver\n"
       //"Access-Control-Allow-Origin: *\n"
       //"Cross-Origin-Opener-Policy: cross-origin\n"
         "Content-type: text/html\n"
         "\r\n";
+const char* reb_server_header_png =
+        "HTTP/1.1 200 OK\n"
+        "Server: REBOUND Webserver\n"
+        "Content-type: image/png\n"
+        "\r\n";
 
 #ifdef _WIN32
-int sendBytes(SOCKET s, void *buffer, int buflen){
+int sendBytes(SOCKET s, const void * buffer, int buflen){
     int total = 0;
     char *pbuf = (char*) buffer;
     while (buflen > 0) {
@@ -294,7 +298,6 @@ void* reb_server_start(void* args){
 
     WSADATA wsa;
     struct sockaddr_in server;
-    SOCKET s;
     SOCKET clientS;
     char request[BUFSIZE];
     char method[BUFSIZE];
@@ -306,9 +309,9 @@ void* reb_server_start(void* args){
         exit(1);
     }
 
-    s = socket(AF_INET, SOCK_STREAM, 0);
-    if (s == SOCKET_ERROR) {
-        printf("Socket Error\n");
+    data->socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (data->socket == INVALID_SOCKET) {
+        printf("Socket error\n");
         exit(1);
     }
 
@@ -316,13 +319,13 @@ void* reb_server_start(void* args){
     server.sin_port = htons(data->port);
     InetPton(AF_INET, _T("0.0.0.0"), &server.sin_addr);
 
-    int ret_bind = bind(s, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
+    int ret_bind = bind(data->socket, (struct sockaddr*)&server, sizeof(server)); // binding the Host Address and Port Number
     if (ret_bind) {
-        printf("Bind Error\n");
+        printf("Bind error\n");
         exit(1);
     }
 
-    int ret_listen = listen(s, AF_INET);
+    int ret_listen = listen(data->socket, AF_INET);
     if (ret_listen){
         printf("Listen error\n");
         exit(1);
@@ -331,9 +334,8 @@ void* reb_server_start(void* args){
     printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
 
     while(1){
-        clientS = accept(s, NULL, NULL);
-        if (clientS == SOCKET_ERROR) {
-            printf("Accept Failed!\n");
+        clientS = accept(data->socket, NULL, NULL);
+        if (clientS == INVALID_SOCKET) { // Accept will fail if main thread is closing socket.
             exit(1);
         } 
         // Receive request. Ideally we should check for new line and read more bytes if needed.
@@ -395,6 +397,9 @@ void* reb_server_start(void* args){
                 reb_server_cerror(clientS, "rebound.html not found in current directory. Try `make rebuund.html`.");
                 continue;
             }
+        }else if (!strcasecmp(uri, "/favicon.ico")) {
+                sendBytes(clientS, reb_server_header_png, strlen(reb_server_header_png)); 
+                sendBytes(clientS, reb_favicon_png, reb_favicon_len); 
         }else{
             reb_server_cerror(clientS, "Unsupported request.");
             printf("URI: %s\n",uri);
