@@ -193,8 +193,7 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_start_server.restype = c_int
         ret_value = clibrebound.reb_simulation_start_server(byref(self), c_int(port))
-        if ret_value!=0:
-            raise RuntimeError("An error occured while starting webserver.")
+        self.process_messages()
 
 
     def widget(self, port=1234, host="localhost", size=(500,500)):
@@ -1426,6 +1425,7 @@ class ServerData(Structure):
             ("r_copy", POINTER(Simulation)),
             ("port", c_int),
             ("need_copy", c_int),
+            ("ready", c_int),
             # other fields not needed.
             ]
 

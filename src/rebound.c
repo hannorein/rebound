@@ -336,6 +336,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #ifdef _WIN32
         closesocket(r->server_data->socket); // Will cause thread to exit.
 #else // _WIN32
+        close(r->server_data->socket); // Will cause thread to exit.
         int ret_cancel = pthread_cancel(r->server_data->server_thread);
         if (ret_cancel==ESRCH){
             printf("Did not find server thread while trying to cancel it.\n");
@@ -665,11 +666,21 @@ int reb_simulation_start_server(struct reb_simulation* r, int port){
             return -1;
         }
 #endif // _WIN32
+        int maxwait = 100;
+        while (!r->server_data->ready && maxwait){
+            usleep(10000);
+            maxwait--;
+        }
+        if (!r->server_data->ready){
+            reb_simulation_warning(r, "Server did not start immediately. This might just take a little bit longer.");
+        }
         return 0;
     }else{
+        reb_simulation_error(r, "Cannot start server. Invalid port.");
         return -1;
     }
 #else // SERVER
+    reb_simulation_error(r, "REBOUND has been compiled without SERVER support.");
     return -1;
 #endif // SERVER
 }

@@ -147,7 +147,6 @@ void* reb_server_start(void* args){
 
 
     /* variables for connection management */
-    int parentfd;          /* parent socket */
     int childfd;           /* child socket */
     unsigned int clientlen;         /* byte size of client's address */
     struct hostent *hostp; /* client host info */
@@ -163,13 +162,13 @@ void* reb_server_start(void* args){
     char version[BUFSIZE]; /* request method */
 
     /* open socket descriptor */
-    parentfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (parentfd < 0)
+    data->socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (data->socket < 0)
         reb_exit("ERROR opening socket");
 
     /* allows us to restart server immediately */
     optval = 1;
-    setsockopt(parentfd, SOL_SOCKET, SO_REUSEADDR,
+    setsockopt(data->socket, SOL_SOCKET, SO_REUSEADDR,
             (const void *)&optval , sizeof(int));
 
     /* bind port to socket */
@@ -177,13 +176,13 @@ void* reb_server_start(void* args){
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons((unsigned short)data->port);
-    if (bind(parentfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
+    if (bind(data->socket, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
         printf("Error opening binding port %d. Port might be in use.\n", data->port);
         return PTHREAD_CANCELED;
     }
 
     /* get us ready to accept connection requests */
-    if (listen(parentfd, 5) < 0) /* allow 5 requests to queue up */
+    if (listen(data->socket, 5) < 0) /* allow 5 requests to queue up */
         reb_exit("ERROR on listen");
 
     printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
@@ -194,9 +193,11 @@ void* reb_server_start(void* args){
     clientlen = sizeof(clientaddr);
     while (1) {
         /* wait for a connection request */
-        childfd = accept(parentfd, (struct sockaddr *) &clientaddr, &clientlen);
-        if (childfd < 0)
-            reb_exit("ERROR on accept");
+        data->ready = 1;
+        childfd = accept(data->socket, (struct sockaddr *) &clientaddr, &clientlen);
+        if (childfd < 0) { // Accept will fail if main thread is closing socket.
+            return 1;
+        }
 
         /* determine who sent the message */
         hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr,
@@ -335,9 +336,10 @@ void* reb_server_start(void* args){
     printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
 
     while(1){
+        data->ready = 1;
         clientS = accept(data->socket, NULL, NULL);
         if (clientS == INVALID_SOCKET) { // Accept will fail if main thread is closing socket.
-            exit(1);
+            return 1;
         } 
         // Receive request. Ideally we should check for new line and read more bytes if needed.
         recv(clientS, request, BUFSIZE, 0);

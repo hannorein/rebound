@@ -1073,11 +1073,13 @@ struct reb_server_data {
     struct reb_simulation* r_copy;
     int port;
     int need_copy;
+    int ready;
 #ifdef SERVER
 #ifdef _WIN32
     SOCKET socket;
     HANDLE mutex;          // Mutex to allow for copying
 #else // _WIN32
+    int socket;
     pthread_mutex_t mutex;          // Mutex to allow for copying
     pthread_t server_thread;
 #endif // _WIN32
