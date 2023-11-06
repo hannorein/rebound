@@ -468,7 +468,6 @@ void reb_render_frame(void* p){
     }
 
     // prepare data (incl orbit calculation)
-    if (r_copy->N==0) return;
     if (r_copy->N > data->N_allocated){
         data->N_allocated = r_copy->N;
         data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
