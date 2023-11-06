@@ -37,6 +37,9 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <tchar.h>
+#include <io.h>
+#define F_OK 0
+#define access _access
 #pragma comment(lib, "ws2_32.lib")
 #else // _WIN32
 #include <unistd.h>
@@ -122,6 +125,18 @@ static void reb_server_cerror(FILE *stream, char *cause){
 void* reb_server_start(void* args){
     struct reb_server_data* data = (struct reb_server_data*)args;
     struct reb_simulation* r = data->r;
+
+    if (access("rebound.html", F_OK)) {
+        reb_simulation_warning(r, "File rebound.html not found in current directory. Attempting to download it from github.");
+        char curl_cmd[] = "curl -s --output rebound.html https://gist.githubusercontent.com/hannorein/8ad8abc9bb5d2a76cf8da2b104ef8c79/raw/ce41328f2121b9a4d4578cb592684f4c276ba9ed/rebound.html";
+        system(curl_cmd);
+        if (access("rebound.html", F_OK)) {
+            reb_simulation_warning(r, "Automatic download failed. Manually download the file from github and place it in the current directory to enable browser based visualization.");
+        }else{
+            printf("Success: rebound.html downloaded.\n");
+        }
+    }
+
 #ifndef _WIN32
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
