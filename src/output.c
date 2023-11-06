@@ -429,9 +429,9 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
     while (reb_binary_field_descriptor_list[i].dtype!=REB_FIELD_END){
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
-        if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_UINT64 ||
-                dtype == REB_PARTICLE || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
+        if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
+                || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
+                || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
@@ -450,9 +450,6 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
                     break;
                 case REB_INT64:
                     field.size = sizeof(int64_t);
-                    break;
-                case REB_UINT64:
-                    field.size = sizeof(uint64_t);
                     break;
                 case REB_UINT64:
                     field.size = sizeof(uint64_t);

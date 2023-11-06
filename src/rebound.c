@@ -293,16 +293,6 @@ void reb_mpi_finalize(struct reb_simulation* const r){
 }
 #endif // MPI
 
-static void set_dp7_null(struct reb_dp7 * dp){
-    dp->p0 = NULL;
-    dp->p1 = NULL;
-    dp->p2 = NULL;
-    dp->p3 = NULL;
-    dp->p4 = NULL;
-    dp->p5 = NULL;
-    dp->p6 = NULL;
-}
-
 void reb_simulation_free(struct reb_simulation* const r){
     reb_simulation_free_pointers(r);
     free(r);

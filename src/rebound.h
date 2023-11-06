@@ -1155,11 +1155,11 @@ struct reb_binary_field_descriptor {
     enum {
         REB_DOUBLE = 0,
         REB_INT = 1,
-        REB_UINT = 2,
+        REB_UINT = 2,                // Same as UINT32
         REB_UINT32 = 3,
         REB_INT64 = 4,
         REB_UINT64 = 5,
-        // REB_UINT64 = 6,        // No longer used. Using explicit lengths instead.
+        // REB_ULONGLONG = 6,        // No longer used. Using explicit lengths instead.
         REB_VEC3D = 7,
         REB_PARTICLE = 8,
         REB_POINTER = 9,
