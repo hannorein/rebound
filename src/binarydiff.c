@@ -94,7 +94,7 @@ static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char*
         case REB_INT64:
             asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
             break;
-        case REB_ULONG:
+        case REB_UINT64:
             asprintf(&newbuf,"%" PRIu64,*(uint64_t*)(pointer));
             break;
         case REB_UINT64:

@@ -110,7 +110,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 69, REB_DOUBLE,       "ri_ias15.epsilon",             offsetof(struct reb_simulation, ri_ias15.epsilon), 0, 0},
     { 70, REB_DOUBLE,       "ri_ias15.min_dt",              offsetof(struct reb_simulation, ri_ias15.min_dt), 0, 0},
     { 71, REB_UINT,         "ri_ias15.adaptive_mode",       offsetof(struct reb_simulation, ri_ias15.adaptive_mode), 0, 0},
-    { 72, REB_ULONG,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded), 0, 0},
+    { 72, REB_UINT64,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration)},
     { 87, REB_OTHER,        "functionpointers", 0, 0, 0},
@@ -430,7 +430,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                dtype == REB_INT64 || dtype == REB_ULONG || dtype == REB_UINT64 ||
+                dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_UINT64 ||
                 dtype == REB_PARTICLE || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
@@ -451,7 +451,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
                 case REB_INT64:
                     field.size = sizeof(int64_t);
                     break;
-                case REB_ULONG:
+                case REB_UINT64:
                     field.size = sizeof(uint64_t);
                     break;
                 case REB_UINT64:
