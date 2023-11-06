@@ -148,9 +148,9 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 132, REB_UINT32,      "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0},
     { 133, REB_VEC3D,       "ri_mercurius.com_pos",         offsetof(struct reb_simulation, ri_mercurius.com_pos), 0, 0},
     { 134, REB_VEC3D,       "ri_mercurius.com_vel",         offsetof(struct reb_simulation, ri_mercurius.com_vel), 0, 0},
-    { 135, REB_ULONGLONG,   "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0},
-    { 136, REB_ULONGLONG,   "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0},
-    { 137, REB_ULONGLONG,   "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0},
+    { 135, REB_UINT64,   "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0},
+    { 136, REB_UINT64,   "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0},
+    { 137, REB_UINT64,   "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0},
     { 140, REB_UINT,        "ri_saba.safe_mode",            offsetof(struct reb_simulation, ri_saba.safe_mode), 0, 0},
     { 141, REB_UINT,        "ri_saba.is_synchronized",      offsetof(struct reb_simulation, ri_saba.is_synchronized), 0, 0},
     { 143, REB_UINT,        "ri_whfast.corrector2",         offsetof(struct reb_simulation, ri_whfast.corrector2), 0, 0},
@@ -430,7 +430,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32 ||
-                dtype == REB_INT64 || dtype == REB_ULONG || dtype == REB_ULONGLONG ||
+                dtype == REB_INT64 || dtype == REB_ULONG || dtype == REB_UINT64 ||
                 dtype == REB_PARTICLE || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));
@@ -454,7 +454,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
                 case REB_ULONG:
                     field.size = sizeof(uint64_t);
                     break;
-                case REB_ULONGLONG:
+                case REB_UINT64:
                     field.size = sizeof(uint64_t);
                     break;
                 case REB_VEC3D:
