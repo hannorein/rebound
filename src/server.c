@@ -175,7 +175,7 @@ void* reb_server_start(void* args){
     memset((char *) &serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serveraddr.sin_port = htons((unsigned short)data->port);
+    serveraddr.sin_port = htons(data->port);
     if (bind(data->socket, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
         char error_msg[BUFSIZE];
         snprintf(error_msg, BUFSIZE, "Error binding to port %d. Port might be in use.\n", data->port);
@@ -199,7 +199,7 @@ void* reb_server_start(void* args){
         data->ready = 1;
         childfd = accept(data->socket, (struct sockaddr *) &clientaddr, &clientlen);
         if (childfd < 0) { // Accept will fail if main thread is closing socket.
-            return 1;
+            return PTHREAD_CANCELED;
         }
 
         /* determine who sent the message */

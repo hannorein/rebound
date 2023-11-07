@@ -196,13 +196,20 @@ class Simulation(Structure):
         self.process_messages()
 
 
-    def widget(self, port=1234, host="localhost", size=(500,500)):
-        port = int(port)
-        if self._server_data:
-            if self._server_data.contents.port != port:
-                raise RuntimeError("Server is running already on port %d but port %d was requested."%(self._server_data.contents.port, port))
-        else:
-            self.start_server(port=port)
+    def widget(self, port=None, host="localhost", size=(500,500)):
+        if port is not None:
+            port = int(port)
+            if self._server_data:
+                if self._server_data.contents.port != port:
+                    raise RuntimeError("Server is running already on port %d but port %d was requested."%(self._server_data.contents.port, port))
+        if not self._server_data:
+            if port is not None:
+                self.start_server(port=port)
+            else:
+                self.start_server()
+        if not self._server_data:
+            raise RuntimeError("Server did not start up immediately. Try again in a few seconds.")
+        port = int(self._server_data.contents.port)
         from IPython.display import IFrame
         width, height = size
         display(IFrame("http://"+host+":"+"%d"%port, width, height))
