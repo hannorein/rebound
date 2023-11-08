@@ -10,6 +10,25 @@
 
 int first = 1;
 
+EM_JS(void, reb_hide_console, (int hide), {
+    var output = document.getElementById("output");
+    if (output){
+        if (hide){
+        output.style.display = "none";
+        }else{
+        output.style.display = "block";
+        }
+    }
+    var container = document.getElementById("container");
+    if (container){
+        if (hide){
+            container.style.height = "100%";
+        }else{
+            container.style.height = "80%";
+        }
+    }
+});
+
 static void request_key_succeeded(emscripten_fetch_t *fetch) {
     emscripten_fetch_close(fetch); // Free data associated with the fetch.
 }
@@ -68,6 +87,7 @@ void request_frame_succeeded(emscripten_fetch_t *fetch) {
         r->display_data->r = r;
         reb_display_init(r); // Will return. Display routines running in animation_loop.
         glfwSetKeyCallback(r->display_data->window, reb_display_keyboard_passthrough);
+        reb_hide_console(1);
     }
     r->display_data->connection_status = 1;
     first = 0;
