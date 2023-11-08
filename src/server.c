@@ -60,6 +60,9 @@
 const char* reb_server_header =
         "HTTP/1.1 200 OK\n"
         "Server: REBOUND Webserver\n"
+        "Cache-Control: no-cache, no-store, must-revalidate\n"
+        "Pragma: no-cache\n"
+        "Expires: 0\n"
       //"Access-Control-Allow-Origin: *\n"
       //"Cross-Origin-Opener-Policy: cross-origin\n"
         "Content-type: text/html\n"
