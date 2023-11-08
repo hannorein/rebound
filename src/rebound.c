@@ -170,6 +170,13 @@ void reb_simulation_step(struct reb_simulation* const r){
     struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     r->walltime_last_step = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+    r->walltime_last_steps_sum += r->walltime_last_step;
+    r->walltime_last_steps_N +=1;
+    if (r->walltime_last_steps_sum > 0.1){
+       r->walltime_last_steps = r->walltime_last_steps_sum/r->walltime_last_steps_N;
+       r->walltime_last_steps_sum =0;
+       r->walltime_last_steps_N = 0;
+    }
     r->walltime += r->walltime_last_step;
     // Update step counter
     r->steps_done++; // This also counts failed IAS15 steps
@@ -681,7 +688,9 @@ int reb_simulation_start_server(struct reb_simulation* r, int port){
         return -1;
     }
 #else // SERVER
+#ifndef SERVERHIDEWARNING
     reb_simulation_error(r, "REBOUND has been compiled without SERVER support.");
+#endif // SERVERHIDEWARNING
     return -1;
 #endif // SERVER
 }

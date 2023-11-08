@@ -734,35 +734,35 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
     }
     if (!data->pause){
         reb_render_frame(data);
-    }
-    reb_overlay_hide(!data->onscreentext);
-    if (data->onscreentext){ 
-        char str[10240] = "\0";
-        char line[1024];
-        sprintf(line,"<div class=\"reboundlogo\"></div>REBOUND v%s<br />",reb_version_str);
-        strlcat(str, line, 10240);
-        if (data->connection_status>=0){
-            if (data->r_copy->status == REB_STATUS_RUNNING){
-                sprintf(line, "Simulation is running<br />");
-            }else if (data->r_copy->status == REB_STATUS_PAUSED){
-                sprintf(line, "Simulation is paused<br />");
-            }else if (data->r_copy->status == REB_STATUS_SUCCESS){
-                sprintf(line, "Simulation finished<br />");
-            }else if (data->r_copy->status > 0){
-                sprintf(line, "Simulation error occured<br />");
+        reb_overlay_hide(!data->onscreentext);
+        if (data->onscreentext){ 
+            char str[10240] = "\0";
+            char line[1024];
+            sprintf(line,"<div class=\"reboundlogo\"></div>REBOUND v%s<br />",reb_version_str);
+            strlcat(str, line, 10240);
+            if (data->connection_status>=0){
+                if (data->r_copy->status == REB_STATUS_RUNNING){
+                    sprintf(line, "Simulation is running<br />");
+                }else if (data->r_copy->status == REB_STATUS_PAUSED){
+                    sprintf(line, "Simulation is paused<br />");
+                }else if (data->r_copy->status == REB_STATUS_SUCCESS){
+                    sprintf(line, "Simulation finished<br />");
+                }else if (data->r_copy->status > 0){
+                    sprintf(line, "Simulation error occured<br />");
+                }
+                strlcat(str, line, 10240);
+                sprintf(line, "N = %d<br />",data->r_copy->N);
+                strlcat(str, line, 10240);
+                sprintf(line, "t = %g<br />",data->r_copy->t);
+                strlcat(str, line, 10240);
+                sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
+                strlcat(str, line, 10240);
+                reb_overlay_update(str, data->r_copy->status);
+            }else{
+                sprintf(line, "Unable to connect to server. Server might have shut down.");
+                strlcat(str, line, 10240);
+                reb_overlay_update(str, 10);
             }
-            strlcat(str, line, 10240);
-            sprintf(line, "N = %d<br />",data->r_copy->N);
-            strlcat(str, line, 10240);
-            sprintf(line, "t = %3g<br />",data->r_copy->t);
-            strlcat(str, line, 10240);
-            sprintf(line, "steps/s = %.2f<br />",1./data->r_copy->walltime_last_step);
-            strlcat(str, line, 10240);
-            reb_overlay_update(str, data->r_copy->status);
-        }else{
-            sprintf(line, "Unable to connect to server. Server might have shut down.");
-            strlcat(str, line, 10240);
-            reb_overlay_update(str, 10);
         }
     }
     return EM_TRUE;

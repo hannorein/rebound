@@ -476,6 +476,9 @@ struct reb_simulation {
     double energy_offset;           // Only used if track_energy_offset = 1
     double walltime;                // Cumulative walltime of entire integration.
     double walltime_last_step;      // Wall time of last step.
+    double walltime_last_steps;     // Average wall time of last step (updated every 0.1s).
+    double walltime_last_steps_sum;
+    int walltime_last_steps_N;
     uint32_t python_unit_l;         // Only used for when working with units in python.
     uint32_t python_unit_m;         // Only used for when working with units in python.
     uint32_t python_unit_t;         // Only used for when working with units in python.
