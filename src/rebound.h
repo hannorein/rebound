@@ -1102,6 +1102,9 @@ struct reb_display_data {
     pthread_mutex_t mutex;          // Mutex to allow for copying
     pthread_t compute_thread;
 #endif // _WIN32
+#ifdef __EMSCRIPTEN__
+    int connection_status;
+#endif
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running
     int wire;                       // Shows/hides orbit wires.

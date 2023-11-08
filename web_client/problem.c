@@ -15,6 +15,8 @@ static void request_key_succeeded(emscripten_fetch_t *fetch) {
 }
 
 void request_failed(emscripten_fetch_t *fetch) {
+    struct reb_simulation* r = fetch->userData;
+    r->display_data->connection_status = -1;
     printf("Requesting %s failed (status code: %d). Server might have shut down.\n", fetch->url, fetch->status);
     emscripten_fetch_close(fetch); // Also free data on failure.
 }
@@ -67,6 +69,7 @@ void request_frame_succeeded(emscripten_fetch_t *fetch) {
         reb_display_init(r); // Will return. Display routines running in animation_loop.
         glfwSetKeyCallback(r->display_data->window, reb_display_keyboard_passthrough);
     }
+    r->display_data->connection_status = 1;
     first = 0;
     emscripten_fetch_close(fetch); // Free data associated with the fetch.
 

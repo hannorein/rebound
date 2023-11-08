@@ -253,11 +253,13 @@ void profiling_stop(int cat){
 // fflush does not work in emscripten. Workaround.
 EM_JS(void, reb_remove_last_line, (), {
     var output = document.getElementById("output");
-    const lastIndex1 = output.value.lastIndexOf("\n");
-    const lastIndex2 = output.value.lastIndexOf("\n",lastIndex1-1);
-    const lastIndexNtot = output.value.lastIndexOf("N_tot=");
-    if(lastIndex1>0 && lastIndex2<lastIndexNtot){
-        output.value = output.value.substring(0, lastIndex2+1);
+    if (output){
+        const lastIndex1 = output.value.lastIndexOf("\n");
+        const lastIndex2 = output.value.lastIndexOf("\n",lastIndex1-1);
+        const lastIndexNtot = output.value.lastIndexOf("N_tot=");
+        if(lastIndex1>0 && lastIndex2<lastIndexNtot){
+            output.value = output.value.substring(0, lastIndex2+1);
+        }
     }
 });
 #endif

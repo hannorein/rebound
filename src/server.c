@@ -287,6 +287,7 @@ void* reb_server_start(void* args){
                 fwrite(reb_favicon_png,1, reb_favicon_len, stream);
         }else{
             reb_server_cerror(stream, "Unsupported URI.");
+            printf("UR: %s\n", uri);
         }
 
         /* clean up */

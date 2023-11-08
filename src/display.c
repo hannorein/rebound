@@ -64,6 +64,35 @@ EM_JS(int, canvas_get_width, (), {
 EM_JS(int, canvas_get_height, (), {
   return document.getElementById("canvas").scrollHeight;
 });
+
+EM_JS(void, reb_overlay_update, (const char* text, int status), {
+    var overlaytext = document.getElementById("overlaytext");
+    if (overlaytext){
+        overlaytext.innerHTML = UTF8ToString(text);
+    }
+    var overlay = document.getElementById("overlay");
+    if (overlay){
+        if (status==-3){ // Pause
+            overlay.style.backgroundColor = "rgba(100.0, 100.0, 0.0, 0.5)";
+        }else if (status==0){ // Finished.
+            overlay.style.backgroundColor = "rgba(0.0, 255.0, 0.0, 0.5)";
+        }else if (status==10){ // Connection error.
+            overlay.style.backgroundColor = "rgba(255.0, 0.0, 0.0, 0.5)";
+        }else{
+            overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        }
+    }
+
+});
+EM_JS(void, reb_overlay_hide, (int hide), {
+    var overlay = document.getElementById("overlay");
+    if (hide){
+        overlay.style.display = "none";
+    }else{
+        overlay.style.display = "block";
+    }
+
+});
 #else
 #define reb_glVertexAttribDivisor glVertexAttribDivisor
 #define reb_glDrawArraysInstanced glDrawArraysInstanced
@@ -606,6 +635,7 @@ void reb_render_frame(void* p){
             glBindVertexArray(0);
         }
     }}}
+#ifndef __EMSCRIPTEN__
     if (data->onscreentext){ // On screen text
         glUseProgram(data->simplefont_shader_program);
         glBindVertexArray(data->simplefont_shader_vao);
@@ -671,6 +701,7 @@ void reb_render_frame(void* p){
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D,0);
     }
+#endif // __EMSCRIPTEN__
     if (data->onscreenhelp){ // On screen help
         glUseProgram(data->simplefont_shader_program);
         glBindVertexArray(data->simplefont_shader_vao);
@@ -703,6 +734,36 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
     }
     if (!data->pause){
         reb_render_frame(data);
+    }
+    reb_overlay_hide(!data->onscreentext);
+    if (data->onscreentext){ 
+        char str[10240] = "\0";
+        char line[1024];
+        sprintf(line,"<div class=\"reboundlogo\"></div>REBOUND v%s<br />",reb_version_str);
+        strlcat(str, line, 10240);
+        if (data->connection_status>=0){
+            if (data->r_copy->status == REB_STATUS_RUNNING){
+                sprintf(line, "Simulation is running<br />");
+            }else if (data->r_copy->status == REB_STATUS_PAUSED){
+                sprintf(line, "Simulation is paused<br />");
+            }else if (data->r_copy->status == REB_STATUS_SUCCESS){
+                sprintf(line, "Simulation finished<br />");
+            }else if (data->r_copy->status > 0){
+                sprintf(line, "Simulation error occured<br />");
+            }
+            strlcat(str, line, 10240);
+            sprintf(line, "N = %d<br />",data->r_copy->N);
+            strlcat(str, line, 10240);
+            sprintf(line, "t = %3g<br />",data->r_copy->t);
+            strlcat(str, line, 10240);
+            sprintf(line, "steps/s = %.2f<br />",1./data->r_copy->walltime_last_step);
+            strlcat(str, line, 10240);
+            reb_overlay_update(str, data->r_copy->status);
+        }else{
+            sprintf(line, "Unable to connect to server. Server might have shut down.");
+            strlcat(str, line, 10240);
+            reb_overlay_update(str, 10);
+        }
     }
     return EM_TRUE;
 }
