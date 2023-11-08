@@ -20,7 +20,7 @@ do
         mkdir -p $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/
         echo "Compiling... "
         if [ $OPENGL -eq 1 ]; then
-            emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY --shell-file docs/c_examples/shell_rebound.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
+            emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY --shell-file web_client/shell_rebound.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
         else
             emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -sSTACK_SIZE=655360 -sASYNCIFY -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
         fi
