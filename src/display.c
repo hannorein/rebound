@@ -519,7 +519,7 @@ void reb_render_frame(void* p){
         data->particle_data[i].vz = (float)p.vz;
         data->particle_data[i].r  = (float)p.r;
     }
-    if (data->wire){
+    if (data->wire && r_copy->N>1){
         struct reb_particle com = r_copy->particles[0];
         for (unsigned int i=1;i<r_copy->N;i++){
             struct reb_particle p = r_copy->particles[i];

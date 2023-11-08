@@ -26,5 +26,4 @@
  */
 #ifndef _SERVER_H
 #define _SERVER_H
-void* reb_server_start(void* args);
 #endif // _SERVER_H
