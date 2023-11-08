@@ -459,9 +459,6 @@ int reb_simulation_start_server(struct reb_simulation* r, int port){
         }
         if (r->server_data->ready==0){
             reb_simulation_warning(r, "Server did not start immediately. This might just take a little bit longer.");
-        }else{
-            // give socket a little but of time to open.
-            usleep(10000);
         }
         return 0;
     }else{
