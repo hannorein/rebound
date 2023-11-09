@@ -82,7 +82,20 @@ EM_JS(void, reb_overlay_update, (const char* text, int status), {
             overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
         }
     }
-
+});
+EM_JS(void, reb_overlay_help_set_text, (const char* text), {
+    var overlaytext = document.getElementById("overlaytext-help");
+    if (overlaytext){
+        overlaytext.innerHTML = UTF8ToString(text);
+    }
+});
+EM_JS(void, reb_overlay_help_hide, (int hide), {
+    var overlay = document.getElementById("overlay-help");
+    if (hide){
+        overlay.style.display = "none";
+    }else{
+        overlay.style.display = "block";
+    }
 });
 EM_JS(void, reb_overlay_hide, (int hide), {
     var overlay = document.getElementById("overlay");
@@ -102,7 +115,7 @@ void reb_render_frame(void* p);
 static void reb_display_set_default_scale(struct reb_simulation* const r);
                 
 static const char* onscreenhelp[] = { 
-                "REBOUND OPENGL mouse and keyboard commands",
+                "REBOUND mouse and keyboard commands",
                 "----------------------------------------------------",
                 " To rotate the view, simply drag the simulation",
                 " with the mouse. To zoom in, press the shift key ",
@@ -124,7 +137,7 @@ static const char* onscreenhelp[] = {
                 " c       | Toggle clear screen after each time-step",
                 " m       | Toggle multisampling",
                 " w       | Draw orbits as wires",
-                " t       | Show/hide logo, time, timestep and number ",
+                " t       | Show/hide logo, time, timestep and number",
                 "         | of particles.",
                 "----------------------------------------------------"
 };
@@ -378,7 +391,8 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 if (data->r->status == REB_STATUS_PAUSED){
                     printf("Resume.\n");
                     data->r->status = REB_STATUS_RUNNING;
-                }else{
+                }
+                if (data->r->status == REB_STATUS_RUNNING || data->r->status == REB_STATUS_LAST_STEP){
                     printf("Pause.\n");
                     data->r->status = REB_STATUS_PAUSED;
                 }
@@ -701,7 +715,6 @@ void reb_render_frame(void* p){
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D,0);
     }
-#endif // __EMSCRIPTEN__
     if (data->onscreenhelp){ // On screen help
         glUseProgram(data->simplefont_shader_program);
         glBindVertexArray(data->simplefont_shader_vao);
@@ -720,6 +733,7 @@ void reb_render_frame(void* p){
             reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
     }
+#endif // __EMSCRIPTEN__
 
     glfwSwapBuffers(data->window);
     glfwPollEvents();
@@ -746,7 +760,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 }else if (data->r_copy->status == REB_STATUS_PAUSED){
                     sprintf(line, "Simulation is paused<br />");
                 }else if (data->r_copy->status == REB_STATUS_SUCCESS){
-                    sprintf(line, "Simulation finished<br />");
+                    sprintf(line, "Simulation ready<br />");
                 }else if (data->r_copy->status > 0){
                     sprintf(line, "Simulation error occured<br />");
                 }
@@ -757,11 +771,21 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 strlcat(str, line, 10240);
                 sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
                 strlcat(str, line, 10240);
+                strlcat(str, "Press h for help.<br />", 10240);
                 reb_overlay_update(str, data->r_copy->status);
             }else{
-                sprintf(line, "Unable to connect to server. Server might have shut down.");
+                sprintf(line, "Unable to connect. Server might have shut down.");
                 strlcat(str, line, 10240);
                 reb_overlay_update(str, 10);
+            }
+        }
+        reb_overlay_help_hide(!data->onscreenhelp);
+        if (data->onscreenhelp){ 
+            char str[10240] = "\0";
+            for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
+                strlcat(str, onscreenhelp[i], 10240);
+                strlcat(str, "<br />", 10240);
+                reb_overlay_help_set_text(str);
             }
         }
     }

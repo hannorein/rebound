@@ -529,7 +529,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->exit_max_distance    = 0;    
     r->max_radius0    = 0.;   
     r->max_radius1    = 0.;   
-    r->status       = REB_STATUS_RUNNING;
+    r->status       = REB_STATUS_SUCCESS;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;
     r->gravity_ignore_terms    = 0;

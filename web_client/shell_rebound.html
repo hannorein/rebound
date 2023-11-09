@@ -63,24 +63,41 @@
           overflow: hidden;
           display: block;
       }
-      #overlay {
+      #overlay, #overlay-help {
           container-type: inline-size;
-          width: 2em;
           position: absolute;
           padding: 5px;
           color: #fff;
-          top: 5px;
-          left: 5px;
-          z-index: 10;
           border-radius: 5px;
           border: solid 1px;
           resize: horizontal;
           overflow: hidden;
-          font-size: 7cqw;
           font-family: 'Lucida Console', Monaco, monospace;
       }
+      #overlay {
+          top: 5px;
+          width: 2em;
+          left: 5px;
+          z-index: 10;
+          font-size: 7cqw;
+      }
+      #overlay-help {
+          top: 50%;
+          width: 10em;
+          left: 50%;
+          transform:translate(-50%, -50%);
+          z-index: 20;
+          font-size: 3.2cqw;
+          display: none;
+      }
+
       #overlaytext {
           font-size: 7cqw;
+      }
+      #overlaytext-help {
+          white-space: pre-wrap;
+          font-size: 3.2cqw;
+          background-color: rgba(0, 0, 0, 0.5);
       }
 
 
@@ -92,6 +109,10 @@
           <div id="overlay">
               <div id="overlaytext">
                   REBOUND
+              </div>
+          </div>
+          <div id="overlay-help">
+              <div id="overlaytext-help">
               </div>
           </div>
       </div>
