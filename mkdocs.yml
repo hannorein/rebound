@@ -36,6 +36,7 @@ nav:
       - simulationarchive.md
       - chaos.md
       - binaryformat.md
+      - namingconvention.md
       - c_randomsamplingfunctions.md
       - c_outputfunctions.md
       - miscellaneous.md
