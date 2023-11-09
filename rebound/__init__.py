@@ -8,7 +8,7 @@ import platform
 from ctypes import cdll, c_char_p
 
 # Find suffix
-if platform.system()=="Windows" and sys.version_info.major<=3 and sys.version_info.minor<3.8:
+if platform.system()=="Windows" and sys.version_info.major<=3 and sys.version_info.minor<8:
     # Using distutils.sysconfig instead of sysconfig because 
     # of a bug in Python < 3.8 on windows
     import distutils.sysconfig as sysconfig
