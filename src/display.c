@@ -391,8 +391,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 if (data->r->status == REB_STATUS_PAUSED){
                     printf("Resume.\n");
                     data->r->status = REB_STATUS_RUNNING;
-                }
-                if (data->r->status == REB_STATUS_RUNNING || data->r->status == REB_STATUS_LAST_STEP){
+                }else if (data->r->status == REB_STATUS_RUNNING || data->r->status == REB_STATUS_LAST_STEP){
                     printf("Pause.\n");
                     data->r->status = REB_STATUS_PAUSED;
                 }
