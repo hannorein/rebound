@@ -60,7 +60,7 @@ class TestVariationalRescale(unittest.TestCase):
         sim.add(m=0.000285, a=7.2, M=0.871, omega=1.616, e=0.12)
         sim.move_to_com()
 
-        sim.init_megno()
+        sim.init_megno(seed=1)
         sim2 = sim.copy()
         sim2.var_config[0].lrescale = -1
 
