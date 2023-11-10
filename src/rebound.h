@@ -1214,6 +1214,7 @@ struct reb_binary_field { // This structure is used to save and load binary file
 };
 
 DLLEXPORT void reb_simulation_init(struct reb_simulation* r); // Used internally and by python. Should not be called by the user.
+DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r); // Used by REBOUNDx
 DLLEXPORT void reb_simulation_update_tree(struct reb_simulation* const r);
 DLLEXPORT int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf); // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
 DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contraction are enabled. 0 otherwise.
