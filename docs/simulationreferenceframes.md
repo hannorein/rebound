@@ -31,7 +31,7 @@ You can also move a simulation to the center-of-mass frame, the inertial frame w
     ```c
     struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    reb_simulation_simulatio_move_to_com(r);
+    reb_simulation_move_to_com(r);
     ```
 === "Python"
     ```python
