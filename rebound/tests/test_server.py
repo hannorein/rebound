@@ -43,7 +43,7 @@ class TestServer(unittest.TestCase):
             f.write(teststring )
         sim = rebound.Simulation()
         sim.start_server(port=1234)
-        self.assertEqual(sim._status, 0)
+        sim._status = -1;
         contents = urllib.request.urlopen("http://localhost:1234/keyboard/32")
         self.assertEqual(sim._status, -3)
 

@@ -265,7 +265,7 @@ void* reb_server_start(void* args){
                     if (data->r->status == REB_STATUS_PAUSED){
                         printf("Resume.\n");
                         data->r->status = REB_STATUS_RUNNING;
-                    }else{
+                    }else if (data->r->status == REB_STATUS_RUNNING){
                         printf("Pause.\n");
                         data->r->status = REB_STATUS_PAUSED;
                     }
@@ -377,19 +377,24 @@ void* reb_server_start(void* args){
             free(bufp);
         }else if (!strncasecmp(uri, "/keyboard/",10)) {
             int key = 0;
+            const char* ok = "ok.";
             sscanf(uri, "/keyboard/%d", &key);
             switch (key){
                 case 'Q':
                     data->r->status = REB_STATUS_USER;
+                    sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                    sendBytes(clientS, ok, strlen(ok));
                     break;
                 case ' ':
                     if (data->r->status == REB_STATUS_PAUSED){
                         printf("Resume.\n");
                         data->r->status = REB_STATUS_RUNNING;
-                    }else{
+                    }else if (data->r->status == REB_STATUS_RUNNING){
                         printf("Pause.\n");
                         data->r->status = REB_STATUS_PAUSED;
                     }
+                    sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                    sendBytes(clientS, ok, strlen(ok));
                     break;
                 default:
                     reb_server_cerror(clientS, "Unknown key received.");
