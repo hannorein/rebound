@@ -18,17 +18,23 @@ double tmax = 40.;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     // Setup constants
     r->dt             = 1e-4;        // initial timestep.
-    r->integrator        = REB_INTEGRATOR_IAS15;
+    r->integrator     = REB_INTEGRATOR_IAS15;
     r->gravity        = REB_GRAVITY_NONE;
 
     // Setup callback function for velocity dependent forces.
-    r->additional_forces     = additional_forces;
+    r->additional_forces = additional_forces;
     r->force_is_velocity_dependent = 1;
     // Setup callback function for outputs.
-    r->heartbeat        = heartbeat;
-    r->usleep        = 10000;        // Slow down integration (for visualization only)
+    r->heartbeat   = heartbeat;
+    // Slow down integration (for visualization only)
+    r->usleep = 10000;  
     
     struct reb_particle p = {0}; 
     p.m      = 0;    // massless
