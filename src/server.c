@@ -152,10 +152,9 @@ void* reb_server_start(void* args){
 
 
     /* variables for connection management */
-    int childfd;           /* child socket */
-    unsigned int clientlen;         /* byte size of client's address */
-    struct hostent *hostp; /* client host info */
-    int optval;            /* flag value for setsockopt */
+    int childfd;                   /* child socket */
+    unsigned int clientlen;        /* byte size of client's address */
+    int optval;                    /* flag value for setsockopt */
     struct sockaddr_in serveraddr; /* server's addr */
     struct sockaddr_in clientaddr; /* client addr */
 
@@ -206,12 +205,6 @@ void* reb_server_start(void* args){
         if (childfd < 0) { // Accept will fail if main thread is closing socket.
             return PTHREAD_CANCELED;
         }
-
-        /* determine who sent the message */
-        hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr,
-                sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-        if (hostp == NULL)
-            reb_exit("ERROR on gethostbyaddr");
 
         /* open the child socket descriptor as a stream */
         if ((stream = fdopen(childfd, "r+")) == NULL)
