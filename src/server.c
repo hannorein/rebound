@@ -43,6 +43,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #else // _WIN32
 #include <unistd.h>
+#include <errno.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
@@ -473,6 +474,30 @@ int reb_simulation_start_server(struct reb_simulation* r, int port){
     return -1;
 #endif // SERVER
 }
+
+void reb_simulation_stop_server(struct reb_simulation* r){    
+#ifdef SERVER
+    if (r==NULL) return;
+    if (r->server_data){
+#ifdef _WIN32
+        closesocket(r->server_data->socket); // Will cause thread to exit.
+#else // _WIN32
+        close(r->server_data->socket); // Will cause thread to exit.
+        int ret_cancel = pthread_cancel(r->server_data->server_thread);
+        if (ret_cancel==ESRCH){
+            printf("Did not find server thread while trying to cancel it.\n");
+        }
+        void* retval = 0;
+        pthread_join(r->server_data->server_thread, &retval);
+        if (retval!=PTHREAD_CANCELED){
+            printf("An error occured while cancelling server thread.\n");
+        }
+#endif // _WIN32
+        free(r->server_data);
+        r->server_data = NULL;
+    }
+}
+#endif //SERVER
 
 
 

@@ -640,6 +640,8 @@ DLLEXPORT void reb_simulation_configure_box(struct reb_simulation* const r, cons
 
 // Start webserver for visualization. Returns 0 on success.
 DLLEXPORT int reb_simulation_start_server(struct reb_simulation* r, int port);
+// Stop webserver.
+DLLEXPORT void reb_simulation_stop_server(struct reb_simulation* r);
 
 // Errors, warnings
 

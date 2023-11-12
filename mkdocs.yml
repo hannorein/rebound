@@ -10,7 +10,7 @@ nav:
     - quickstart_installation.md
     - quickstart_firstexample.md
     - quickstart_whereto.md
-  - "API":
+  - "API Documentation":
     - api.md
     - "Simulation":
       - simulation.md

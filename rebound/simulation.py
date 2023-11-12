@@ -189,10 +189,20 @@ class Simulation(Structure):
 
     def start_server(self, port=1234):
         """
-        Start webserver on specified port.
+        Start webserver on specified port. 
+        The default port is 1234.
+        You can access a running server by opening a web browser
+        at http://localhost:1234 or http://127.0.0.1:1234
         """
         clibrebound.reb_simulation_start_server.restype = c_int
         ret_value = clibrebound.reb_simulation_start_server(byref(self), c_int(port))
+        self.process_messages()
+    
+    def stop_server(self, port=1234):
+        """
+        Stop the webserver.
+        """
+        ret_value = clibrebound.reb_simulation_stop_server(byref(self))
         self.process_messages()
 
 

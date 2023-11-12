@@ -340,25 +340,8 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     }
 #endif //OPENGL
 #ifdef SERVER
-    if (r->server_data){
-#ifdef _WIN32
-        closesocket(r->server_data->socket); // Will cause thread to exit.
-#else // _WIN32
-        close(r->server_data->socket); // Will cause thread to exit.
-        int ret_cancel = pthread_cancel(r->server_data->server_thread);
-        if (ret_cancel==ESRCH){
-            printf("Did not find server thread while trying to cancel it.\n");
-        }
-        void* retval = 0;
-        pthread_join(r->server_data->server_thread, &retval);
-        if (retval!=PTHREAD_CANCELED){
-            printf("An error occured while cancelling server thread.\n");
-        }
-#endif // _WIN32
-        free(r->server_data);
-        r->server_data = NULL;
-    }
-#endif //SERVER
+    reb_simulation_stop_server(r);
+#endif // SERVER
     reb_tree_delete(r);
     if (r->gravity_cs){
         free(r->gravity_cs  );
