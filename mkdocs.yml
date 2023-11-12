@@ -30,6 +30,8 @@ nav:
       - collisions.md
       - boundaryconditions.md
       - gravity.md
+    - "Visualization":
+      - visualization.md
     - "Other concepts":
       - units.md
       - orbitalelements.md
@@ -133,7 +135,6 @@ nav:
     - "Visualization":
       - ipython_examples/WebGLVisualization.ipynb
       - ipython_examples/OrbitPlot.ipynb
-      - ipython_examples/ScreenshotsAndMoviesWithWebGL.ipynb
     - "Removing particles":
       - c_examples/removing_particles_from_simulation.md
       - ipython_examples/EscapingParticles.ipynb
