@@ -91,5 +91,8 @@ int main(int argc, char* argv[]){
 
     r->particles[1].hash = reb_hash("earth");
     printf("Sun's x position = %f\n", reb_simulation_particle_by_hash(r, 0)->x);
+
+
+    reb_simulation_free(r);
 }
 

@@ -131,6 +131,7 @@ nav:
       - c_examples/shearing_sheet_mpi.md
       - c_examples/shearing_sheet_diagnostics.md
       - c_examples/overstability.md
+      - c_examples/thermalhysteresis.md
       - ipython_examples/SaturnsRings.ipynb
     - "Visualization":
       - ipython_examples/WebGLVisualization.ipynb

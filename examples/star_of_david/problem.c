@@ -15,6 +15,12 @@
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Starting the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     r->integrator = REB_INTEGRATOR_IAS15;
     r->dt = -1;
     r->usleep = 10000;   // Slowing down integrator (for visualization only)
@@ -43,4 +49,6 @@ int main(int argc, char* argv[]){
     reb_simulation_move_to_com(r);
 
     reb_simulation_integrate(r, INFINITY);
+
+    reb_simulation_free(r);
 }
