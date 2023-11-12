@@ -89,13 +89,21 @@ EM_JS(void, reb_overlay_help_set_text, (const char* text), {
         overlaytext.innerHTML = UTF8ToString(text);
     }
 });
-EM_JS(void, reb_overlay_help_hide, (int hide), {
-    var overlay = document.getElementById("overlay-help");
-    if (hide){
-        overlay.style.display = "none";
-    }else{
-        overlay.style.display = "block";
+EM_JS(int, reb_overlay_help_show, (int show), {
+    var overlaytoggle = document.getElementById("overlay-toggle");
+    if (overlaytoggle){
+        if (overlaytoggle.innerHTML == "1"){
+            overlaytoggle.innerHTML = "";
+            show = !show;
+        }
     }
+    var overlayhelp = document.getElementById("overlay-help");
+    if (show){
+        overlayhelp.style.display = "block";
+    }else{
+        overlayhelp.style.display = "none";
+    }
+    return show;
 });
 EM_JS(void, reb_overlay_hide, (int hide), {
     var overlay = document.getElementById("overlay");
@@ -770,7 +778,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 strlcat(str, line, 10240);
                 sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
                 strlcat(str, line, 10240);
-                strlcat(str, "Press h for help.<br />", 10240);
+                strlcat(str, "Press h or click for help<br />", 10240);
                 reb_overlay_update(str, data->r_copy->status);
             }else{
                 sprintf(line, "Unable to connect. Server might have shut down.");
@@ -778,7 +786,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 reb_overlay_update(str, 10);
             }
         }
-        reb_overlay_help_hide(!data->onscreenhelp);
+        data->onscreenhelp = reb_overlay_help_show(data->onscreenhelp);
         if (data->onscreenhelp){ 
             char str[10240] = "\0";
             for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){

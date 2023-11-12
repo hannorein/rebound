@@ -76,10 +76,10 @@
       }
       #overlay {
           top: 5px;
-          width: 2em;
+          width: 2.2em;
           left: 5px;
           z-index: 10;
-          font-size: 7cqw;
+          font-size: 6.5cqw;
       }
       #overlay-help {
           top: 50%;
@@ -89,15 +89,15 @@
           z-index: 20;
           font-size: 3.2cqw;
           display: none;
+          background-color: rgba(0, 0, 0, 0.75);
       }
 
       #overlaytext {
-          font-size: 7cqw;
+          font-size: 6.5cqw;
       }
       #overlaytext-help {
           white-space: pre-wrap;
           font-size: 3.2cqw;
-          background-color: rgba(0, 0, 0, 0.5);
       }
 
 
@@ -106,7 +106,7 @@
   <body>
       <div id="container">
           <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
-          <div id="overlay">
+          <div id="overlay" onclick="document.getElementById('overlay-toggle').innerHTML='1'; console.log('no');">
               <div id="overlaytext">
                   REBOUND
               </div>
@@ -116,6 +116,8 @@
               </div>
           </div>
       </div>
+      <div id="overlay-toggle" style="display: none;"></div>
+
       <textarea id="output" rows="8"></textarea>
 
     <script type='text/javascript'>
