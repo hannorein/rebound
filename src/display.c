@@ -515,8 +515,9 @@ void reb_render_frame(void* p){
     }
 
     // prepare data (incl orbit calculation)
-    if (r_copy->N > data->N_allocated){
-        data->N_allocated = r_copy->N;
+    const int N_real = r_copy->N - r_copy->N_var;
+    if (N_real > data->N_allocated){
+        data->N_allocated = N_real;
         data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
         data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
         // Resize memory if needed
@@ -530,7 +531,7 @@ void reb_render_frame(void* p){
     reb_simulation_synchronize(r_copy);
        
     // Update data on GPU 
-    for (unsigned int i=0;i<r_copy->N;i++){
+    for (unsigned int i=0;i<N_real;i++){
         struct reb_particle p = r_copy->particles[i];
         data->particle_data[i].x  = (float)p.x;
         data->particle_data[i].y  = (float)p.y;
@@ -540,9 +541,9 @@ void reb_render_frame(void* p){
         data->particle_data[i].vz = (float)p.vz;
         data->particle_data[i].r  = (float)p.r;
     }
-    if (data->wire && r_copy->N>1){
+    if (data->wire && N_real>1){
         struct reb_particle com = r_copy->particles[0];
-        for (unsigned int i=1;i<r_copy->N;i++){
+        for (unsigned int i=1;i<N_real;i++){
             struct reb_particle p = r_copy->particles[i];
             data->orbit_data[i-1].x  = (float)com.x;
             data->orbit_data[i-1].y  = (float)com.y;
@@ -557,12 +558,12 @@ void reb_render_frame(void* p){
             com = reb_particle_com_of_pair(p,com);
         }
     }
-    if (r_copy->N>0){
+    if (N_real>0){
         // Fill memory (but not resize)
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_particle_opengl), data->particle_data);
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, (r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
     }
 
     // Do actual drawing
@@ -609,7 +610,7 @@ void reb_render_frame(void* p){
                 glUseProgram(data->sphere_shader_program);
                 glBindVertexArray(data->sphere_shader_particle_vao);
                 glUniformMatrix4fv(data->sphere_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, data->r_copy->N);
+                reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, N_real);
                 glBindVertexArray(0);
                 glDisable(GL_DEPTH_TEST);
             }
@@ -620,7 +621,7 @@ void reb_render_frame(void* p){
                 glBindVertexArray(data->point_shader_particle_vao);
                 glUniform4f(data->point_shader_color_location, 1.,1.,0.,0.8);
                 glUniformMatrix4fv(data->point_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArrays(GL_POINTS, 0, data->r_copy->N);
+                glDrawArrays(GL_POINTS, 0, N_real);
                 glBindVertexArray(0);
             }
             if (data->wire){
@@ -628,7 +629,7 @@ void reb_render_frame(void* p){
                 glUseProgram(data->orbit_shader_program);
                 glBindVertexArray(data->orbit_shader_particle_vao);
                 glUniformMatrix4fv(data->orbit_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, data->r_copy->N-1);
+                reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, N_real-1);
                 glBindVertexArray(0);
             }
         }
@@ -1329,7 +1330,7 @@ static void reb_display_set_default_scale(struct reb_simulation* const r){
     if (r->root_size==-1){  
         r->display_data->scale = 0.;
         const struct reb_particle* p = r->particles;
-        for (unsigned int i=0;i<r->N;i++){
+        for (unsigned int i=0;i<r->N-r->N_var;i++){
             const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
             r->display_data->scale = MAX(r->display_data->scale, _r);
         }

@@ -35,12 +35,17 @@ void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     // Setup constants
-    r->dt         = 10;            // initial timestep (in days)
+    r->dt             = 10;            // initial timestep (in days)
     //r->integrator    = IAS15;
-    r->integrator    = REB_INTEGRATOR_WHFAST;
-    const double k    = 0.01720209895;    // Gaussian constant 
-    r->G        = k*k;            // These are the same units that mercury6 uses
+    r->integrator     = REB_INTEGRATOR_WHFAST;
+    const double k    = 0.01720209895; // Gaussian constant 
+    r->G              = k*k;           // These are the same units that mercury6 uses
 
     // Initial conditions
     for (int i=0;i<3;i++){
@@ -62,14 +67,11 @@ int main(int argc, char* argv[]) {
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1000.*r->dt)){
-        reb_simulation_output_timing(r, tmax);
-    }
-    if (reb_simulation_output_check(r, 362.)){
-        // Output the time and the MEGNO to the screen and a file.
+    if (reb_simulation_output_check(r, 100.*362.)){
+        // Output the time and the MEGNO to the screen and a file every 100 years.
         FILE* f = fopen("Y.txt","a+b");
         fprintf(f,"        %.20e     %.20e\n",r->t, reb_simulation_megno(r));
-        //printf("        %.20e     %.20e\n",r->t, reb_simulation_megno(r));
+        printf(" t= %.2e   MEGNO = %.2e\n",r->t, reb_simulation_megno(r));
         fclose(f);
     }
 }
