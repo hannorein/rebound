@@ -146,7 +146,7 @@ make
 !!! note inline end Note
     The native Windows support for REBOUND is relatively new. Several features are currently not supported on native Windows builds: OpenMP, MPI, OpenGL, and AVX512. Please [file a bug report on github](https://github.com/hannorein/rebound/issues) if you require any of these featured or if you encounter any other problems. 
 
-Since version 3.28, you can also run REBOUND natively on Windows. You need to install make and the Microsoft Visual Studio compiler. Once you have downloaded the source code of REBOUND, open the Developer Command Prompt for VS or the Windows PowerShell on your system and go to the REBOUND source code. Then, compile and run a simple C-example with the following commands:
+Since version 3.28, you can also run REBOUND natively on Windows. You need to install make and enable the Microsoft Visual Studio compiler. Once you have downloaded the source code of REBOUND, open the Developer Command Prompt for VS or the Windows PowerShell on your system and go to the REBOUND source code. Then, compile and run a simple C-example with the following commands:
 ```bash
 cd examples
 cd simplest
