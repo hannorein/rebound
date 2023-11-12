@@ -23,29 +23,35 @@ void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
     r->opening_angle2    = .5;                    // This determines the precission of the tree code gravity calculation.
-    r->integrator            = REB_INTEGRATOR_SEI;
-    r->boundary            = REB_BOUNDARY_SHEAR;
-    r->gravity            = REB_GRAVITY_TREE;
-    r->collision            = REB_COLLISION_TREE;
+    r->integrator        = REB_INTEGRATOR_SEI;
+    r->boundary          = REB_BOUNDARY_SHEAR;
+    r->gravity           = REB_GRAVITY_TREE;
+    r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = collision_resolve_hardsphere_pullaway;
-    double OMEGA             = 0.00013143527;    // 1/s
-    r->ri_sei.OMEGA         = OMEGA;
-    r->G                 = 6.67428e-11;        // N / (1e-5 kg)^2 m^2
-    r->softening             = 0.1;            // m
-    r->dt                 = 1e-3*2.*M_PI/OMEGA;    // s
-    r->heartbeat            = heartbeat;    // function pointer for heartbeat
+    double OMEGA         = 0.00013143527;       // 1/s
+    r->ri_sei.OMEGA      = OMEGA;
+    r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
+    r->softening         = 0.1;                 // m
+    r->dt                = 1e-3*2.*M_PI/OMEGA;  // s
+    r->heartbeat         = heartbeat;           // function pointer for heartbeat
     // This example uses two root boxes in the x and y direction. 
     // Although not necessary in this case, it allows for the parallelization using MPI. 
     // See Rein & Liu for a description of what a root box is in this context.
-    double surfacedensity         = 400;             // kg/m^2
-    double particle_density        = 400;            // kg/m^3
-    double particle_radius_min     = 1;            // m
-    double particle_radius_max     = 4;            // m
-    double particle_radius_slope     = -3;    
-    double boxsize             = 100;            // m
-    if (argc>1){                        // Try to read boxsize from command line
+    double surfacedensity          = 400;      // kg/m^2
+    double particle_density        = 400;      // kg/m^3
+    double particle_radius_min     = 1;        // m
+    double particle_radius_max     = 4;        // m
+    double particle_radius_slope   = -3;    
+    double boxsize                 = 100;      // m
+    if (argc>1){                               // Try to read boxsize from command line
         boxsize = atof(argv[1]);
     }
     reb_simulation_configure_box(r, boxsize, 2, 2, 1);

@@ -17,7 +17,13 @@
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_simulation_create_from_file("ss-2020-03-03.bin", 0);
+    struct reb_simulation* r = reb_simulation_create_from_file("ss-2023-11-12.bin", 0);
+    
+    // Starting the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
     r->integrator   = REB_INTEGRATOR_WHFAST;
@@ -35,7 +41,12 @@ int main(int argc, char* argv[]){
         reb_simulation_add(r, p); 
     }
     reb_simulation_move_to_com(r);
+
+    // Integrate forever
     reb_simulation_integrate(r, INFINITY);
+
+    // cleanup
+    reb_simulation_free(r);
 }
 
 void heartbeat(struct reb_simulation* r){

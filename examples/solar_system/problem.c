@@ -58,20 +58,21 @@ double tmax;
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
     
-    // This allows you to connect to the simulation using
-    // a web browser. Simply go to http://localhost:1234
+    // Starting the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
     reb_simulation_start_server(r, 1234);
-    
+
     // Setup constants
-    r->dt             = 4;                // in days
-    tmax            = 7.3e10;            // 200 Myr
-    r->G            = 1.4880826e-34;        // in AU^3 / kg / day^2.
-    r->ri_whfast.safe_mode     = 0;        // Turn off safe mode. Need to call reb_simulation_synchronize() before outputs. 
-    r->ri_whfast.corrector     = 11;        // 11th order symplectic corrector
-    r->integrator        = REB_INTEGRATOR_WHFAST;
-    r->heartbeat        = heartbeat;
-    r->exact_finish_time = 1; // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
-    //r->integrator        = REB_INTEGRATOR_IAS15;        // Alternative non-symplectic integrator
+    r->dt                   = 4;             // in days
+    tmax                    = 7.3e10;        // 200 Myr
+    r->G                    = 1.4880826e-34; // in AU^3 / kg / day^2.
+    r->ri_whfast.safe_mode  = 0;             // Turn off safe mode. Need to call reb_simulation_synchronize() before outputs. 
+    r->ri_whfast.corrector  = 11;            // 11th order symplectic corrector
+    r->integrator           = REB_INTEGRATOR_WHFAST;
+    r->heartbeat            = heartbeat;
+    r->exact_finish_time    = 1;     // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
+    //r->integrator         = REB_INTEGRATOR_IAS15;        // Alternative non-symplectic integrator
 
     // Initial conditions
     for (int i=0;i<10;i++){

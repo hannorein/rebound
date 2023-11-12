@@ -6,8 +6,9 @@
  * to distribute the work of the gravity and collision modules
  * to other nodes. You can enable OpenGL with MPI, but this 
  * is a feature that might not work in all environments. 
+ * You can turn on OpenGL in the Makefile.
  * How to configure and submit an MPI job varies significantly
- * depnding on your cluster architecture. To test MPI on your
+ * depending on your cluster architecture. To test MPI on your
  * local computer, simply type make && mpirun -np 4 rebound.
  */
 #include <stdio.h>
@@ -24,25 +25,25 @@ int main(int argc, char* argv[]) {
     // Setup constants
     r->opening_angle2    = .5;                    // This determines the precission of the tree code gravity calculation.
     r->integrator        = REB_INTEGRATOR_SEI;
-    r->boundary            = REB_BOUNDARY_SHEAR;
-    r->gravity            = REB_GRAVITY_TREE;
-    r->collision        = REB_COLLISION_TREE;
+    r->boundary          = REB_BOUNDARY_SHEAR;
+    r->gravity           = REB_GRAVITY_TREE;
+    r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     double OMEGA         = 0.00013143527;    // 1/s
-    r->ri_sei.OMEGA     = OMEGA;
+    r->ri_sei.OMEGA      = OMEGA;
     r->G                 = 6.67428e-11;        // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;            // m
-    r->dt                 = 1e-3*2.*M_PI/OMEGA;    // s
-    r->heartbeat        = heartbeat;    // function pointer for heartbeat
+    r->dt                = 1e-3*2.*M_PI/OMEGA;    // s
+    r->heartbeat         = heartbeat;    // function pointer for heartbeat
     // This example uses two root boxes in the x and y direction. 
     // Although not necessary in this case, it allows for the parallelization using MPI. 
     // See Rein & Liu for a description of what a root box is in this context.
-    double surfacedensity         = 400;             // kg/m^2
-    double particle_density        = 400;            // kg/m^3
+    double surfacedensity          = 400;          // kg/m^2
+    double particle_density        = 400;          // kg/m^3
     double particle_radius_min     = 1;            // m
     double particle_radius_max     = 4;            // m
     double particle_radius_slope     = -3;    
-    double boxsize             = 100;            // m
+    double boxsize             = 100;              // m
     if (argc>1){                        // Try to read boxsize from command line
         boxsize = atof(argv[1]);
     }
