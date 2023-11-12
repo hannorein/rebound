@@ -10,12 +10,14 @@ def run(*args, **kwargs):
         cname = problemc.split("/")[1]
         with open("docs/c_examples/"+cname+".md","w") as fd:
             will_output = 0
-            opengl=0
+            livepreview=1
             try:
                 with open("examples/"+cname+"/Makefile","r") as mfd:
                     Makefile = mfd.read()
-                    if "export OPENGL=1" in Makefile:
-                        opengl=1
+                    if "export MPI=1" in Makefile:
+                        livepreview=0
+                    if "export OPENMP=1" in Makefile:
+                        livepreview=0
             except:
                 print("Warning: Makefile error in "+problemc)
             
@@ -32,7 +34,7 @@ def run(*args, **kwargs):
                     if will_output>1:
                         if will_output == 2:
                             line = "   # "+line[3:].strip() + " (C)\n"
-                            if opengl == 1:
+                            if livepreview == 1:
                                 line += "!!! example \"Try it out this example!\"\n"
                                 line += "    REBOUND has been compiled with emscripten to WebAssembly.\n"
                                 line += "    This lets you run this example interactively from within your browser at almost native speed.\n"

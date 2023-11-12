@@ -24,9 +24,6 @@ jobs:
         with:
           name: web_client
           path: web_client/rebound.html
-      - name: Compile all C examples (OPENGL=1)
+      - name: Compile all C examples
         run: |
-          bash docs/c_examples/compile_emcc.bash 1 0
-      - name: Compile all C examples (OPENGL=0)
-        run: |
-          bash docs/c_examples/compile_emcc.bash 0 0
+          bash docs/c_examples/compile_emcc.bash 0
