@@ -22,13 +22,18 @@ double tmax = 1e6;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     // Setup constants
-    r->integrator        = REB_INTEGRATOR_IAS15;
-    r->dt             = 1e-4;    // Initial timestep.
-    r->N_active        = 2;     // Only the star and the planet are massive.
-    r->additional_forces     = force_radiation;
-    r->heartbeat         = heartbeat;
-    r->usleep        = 5000;            // Slow down integration (for visualization only)
+    r->integrator           = REB_INTEGRATOR_IAS15;
+    r->dt                   = 1e-4;      // Initial timestep.
+    r->N_active             = 2;         // Only the star and the planet are massive.
+    r->additional_forces    = force_radiation;
+    r->heartbeat            = heartbeat;
+    r->usleep               = 5000;      // Slow down integration (for visualization only)
     
     // Star
     struct reb_particle star = {0};
@@ -46,10 +51,10 @@ int main(int argc, char* argv[]){
     
 
     // Dust particles
-    while(r->N<3){     // Three particles in total (star, planet, dust particle) 
+    while(r->N<3){          // Three particles in total (star, planet, dust particle) 
         struct reb_particle p = {0}; 
-        p.m  = 0;        // massless
-        double _r = 0.001;    // distance from planet planet
+        p.m  = 0;           // massless
+        double _r = 0.001;  // distance from planet planet
         double v = sqrt(r->G*planet.m/_r);
         p.x  = _r;
         p.vy = v;

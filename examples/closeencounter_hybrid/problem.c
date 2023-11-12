@@ -16,10 +16,15 @@ double e_init; // initial energy
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     r->dt = 0.0012*2.*M_PI;                
     r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->ri_mercurius.r_crit_hill = 3;            // By default the switching radius is three times the hill radius
-    r->heartbeat  = heartbeat;
+    r->heartbeat = heartbeat;
 
     struct reb_particle star = {0};
     star.m = 1;

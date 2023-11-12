@@ -17,10 +17,15 @@ void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
-    r->dt         = 0.01*2.*M_PI;        // initial timestep
-    r->integrator     = REB_INTEGRATOR_IAS15;
-    r->heartbeat      = heartbeat;
-    r->usleep    = 10000;        // Slow down integration (for visualization only)
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
+    r->dt           = 0.01*2.*M_PI;     // initial timestep
+    r->integrator   = REB_INTEGRATOR_IAS15;
+    r->heartbeat    = heartbeat;
+    r->usleep       = 10000;            // Slow down integration (for visualization only)
 
     // Add star
     struct reb_particle star = {0};
@@ -30,8 +35,8 @@ int main(int argc, char* argv[]){
     // Add planets
     int N_planets = 7;
     for (int i=0;i<N_planets;i++){
-        double a = 1.+(double)i/(double)(N_planets-1);        // semi major axis
-        double v = sqrt(1./a);                     // velocity (circular orbit)
+        double a = 1.+(double)i/(double)(N_planets-1);   // semi major axis
+        double v = sqrt(1./a);                           // velocity (circular orbit)
         struct reb_particle planet = {0};
         planet.m = 1e-4; 
         planet.x = a; 
