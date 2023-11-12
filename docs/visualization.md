@@ -84,13 +84,13 @@ Make sure you close the server if you want to re-use the port the server is usin
     ```c
     reb_simulation_stop_server(r);  // This stop the server.
     reb_simulation_free(r);         // This also stop the server if it's still running.
-
     ```
+
 === "Python"
     ```python
     sim.stop_server(port=1234)      # This stops the server.
     del sim                         # This also stops the server if it's still running.
-
+    ```
 
 ## Connecting to remote servers
 
@@ -103,6 +103,12 @@ ssh username@remotecomputer -L 1234:localhost:1234
 ```
 
 You can then connect to the visualization as usual by pointing your browser to http://localhost:1234.
+
+## Disabling web server
+
+Although REBOUND is compiled with the web server capability by default, no web server is started until you call `reb_simulation_start_server()` or `sim.start_sever()`.
+You can also disable the web server capability completely if you want.
+To do that set `export SERVER=0` in the Makefile.
 
 ## Security and resource considerations
 The built-in REBOUND web server provides a quick and easy way to visualize simulations. 
