@@ -17,15 +17,20 @@ int N_border;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
-    // Setup constants
-    r->dt             = 1e-1;    
-    r->gravity        = REB_GRAVITY_NONE;
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
+    // Setup modules and constants
+    r->dt                = 1e-1;    
+    r->gravity           = REB_GRAVITY_NONE;
     r->integrator        = REB_INTEGRATOR_LEAPFROG;
-    r->collision        = REB_COLLISION_TREE;
-    r->boundary        = REB_BOUNDARY_PERIODIC;
+    r->collision         = REB_COLLISION_TREE;
+    r->boundary          = REB_BOUNDARY_PERIODIC;
     // Override default collision handling to account for border particles
-    r->collision_resolve     = collision_resolve_hardsphere_withborder;
-    r->heartbeat        = heartbeat;
+    r->collision_resolve = collision_resolve_hardsphere_withborder;
+    r->heartbeat         = heartbeat;
     reb_simulation_configure_box(r, 20., 1, 1, 4);
     
     r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;     

@@ -13,14 +13,18 @@
 #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double tmax = 1.6e4;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     // Setup constants
-    r->dt             = M_PI*1e-2;     // initial timestep
-    r->integrator        = REB_INTEGRATOR_IAS15;
-    r->heartbeat        = heartbeat;
+    r->dt           = M_PI*1e-2;     // initial timestep
+    r->integrator   = REB_INTEGRATOR_IAS15;
+    r->heartbeat    = heartbeat;
 
     // Initial conditions
     
@@ -49,14 +53,14 @@ int main(int argc, char* argv[]){
     
     remove("orbits.txt");        // delete previous output file
 
-    reb_simulation_integrate(r, tmax);
+    reb_simulation_integrate(r, INFINITY);
 
     reb_simulation_free(r);
 }
 
 void heartbeat(struct reb_simulation* r){
-    if(reb_simulation_output_check(r, 20.*M_PI)){        // outputs to the screen
-        reb_simulation_output_timing(r, tmax);
+    if(reb_simulation_output_check(r, 20.*M_PI)){       // outputs to the screen
+        reb_simulation_output_timing(r, 0);
     }
     if(reb_simulation_output_check(r, 12.)){            // outputs to a file
         reb_simulation_output_orbits(r, "orbits.txt");

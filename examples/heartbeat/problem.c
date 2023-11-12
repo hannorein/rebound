@@ -28,5 +28,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "a e", 1., 0.); // We can also add a particle using the reb_simulation_add_fmt function.
 
     reb_simulation_integrate(r,100.);
+
+    reb_simulation_free(r);
 }
 
