@@ -11,6 +11,11 @@
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+    
     // Setup constants
     r->integrator    = REB_INTEGRATOR_LEAPFROG;
     r->gravity    = REB_GRAVITY_BASIC;

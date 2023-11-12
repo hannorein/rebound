@@ -12,14 +12,19 @@
 
 int main(int argc, char* argv[]){
     struct reb_simulation* const r = reb_simulation_create();
-    // Setup constants
-    r->dt             = 1e-3;
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
+    // Setup modules and constants
+    r->dt                = 1e-3;
     r->integrator        = REB_INTEGRATOR_LEAPFROG;
-    r->boundary        = REB_BOUNDARY_PERIODIC;
-    r->collision        = REB_COLLISION_DIRECT;
+    r->boundary          = REB_BOUNDARY_PERIODIC;
+    r->collision         = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;
-    r->gravity        = REB_GRAVITY_NONE;
-    r->usleep        = 5000;            // Slow down integration (for visualization only)
+    r->gravity           = REB_GRAVITY_NONE;
+    r->usleep            = 5000;      // Slow down integration (for visualization only)
     
     reb_simulation_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
     r->N_ghost_x = 1; 

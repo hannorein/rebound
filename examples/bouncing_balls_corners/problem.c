@@ -13,14 +13,19 @@
 extern double coefficient_of_restitution; 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
-    // Setup constants
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
-    r->gravity    = REB_GRAVITY_BASIC;
-    r->collision    = REB_COLLISION_TREE;
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+    
+    // Setup modules and constants
+    r->integrator  = REB_INTEGRATOR_LEAPFROG;
+    r->gravity     = REB_GRAVITY_BASIC;
+    r->collision   = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
-    r->dt         = 1e-3;
+    r->dt          = 1e-3;
     r->boundary    = REB_BOUNDARY_PERIODIC;
-    r->usleep    = 1000;            // Slow down integration (for visualization only)
+    r->usleep     = 1000;            // Slow down integration (for visualization only)
     reb_simulation_configure_box(r,3.,1,1,1);
     
     // Initial conditions
