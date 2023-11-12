@@ -496,8 +496,8 @@ void reb_simulation_stop_server(struct reb_simulation* r){
         free(r->server_data);
         r->server_data = NULL;
     }
-}
 #endif //SERVER
+}
 
 
 
