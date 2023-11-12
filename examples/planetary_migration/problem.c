@@ -26,14 +26,20 @@ void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_WHFAST;
-    //r->integrator    = REB_INTEGRATOR_IAS15;
-    r->dt         = 1e-2*2.*M_PI;        // in year/(2*pi)
-    r->additional_forces = migration_forces;     //Set function pointer to add dissipative forces.
-    r->heartbeat = heartbeat;  
+    r->integrator           = REB_INTEGRATOR_WHFAST;
+    //r->integrator         = REB_INTEGRATOR_IAS15;
+    r->dt                   = 1e-2*2.*M_PI;        // in year/(2*pi)
+    r->additional_forces    = migration_forces;     //Set function pointer to add dissipative forces.
+    r->heartbeat            = heartbeat;  
     r->force_is_velocity_dependent = 1;
-    tmax        = 2.0e4*2.*M_PI;    // in year/(2*pi)
+    tmax                    = 2.0e4*2.*M_PI;    // in year/(2*pi)
 
     // Initial conditions
     // Parameters are those of Lee & Peale 2002, Figure 4. 
@@ -57,7 +63,7 @@ int main(int argc, char* argv[]){
     tau_e = calloc(sizeof(double),r->N);
 
     tau_a[2] = 2.*M_PI*20000.0;    // Migration timescale of planet 2 is 20000 years.
-    tau_e[2] = 2.*M_PI*200.0;     // Eccentricity damping timescale is 200 years (K=100). 
+    tau_e[2] = 2.*M_PI*200.0;      // Eccentricity damping timescale is 200 years (K=100). 
 
     reb_simulation_move_to_com(r);          
 

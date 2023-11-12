@@ -16,10 +16,15 @@ void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     r->dt                   = 0.01*2.*M_PI;                // initial timestep
     r->integrator           = REB_INTEGRATOR_IAS15;
     r->collision            = REB_COLLISION_DIRECT;
-    r->collision_resolve    = reb_collision_resolve_merge;        // Choose merger collision routine.
+    r->collision_resolve    = reb_collision_resolve_merge; // Choose merger collision routine.
     r->heartbeat            = heartbeat;
 
     struct reb_particle star = {0};
@@ -30,17 +35,17 @@ int main(int argc, char* argv[]){
     // Add planets
     int N_planets = 7;
     for (int i=0;i<N_planets;i++){
-        double a = 1.+(double)i/(double)(N_planets-1);        // semi major axis in AU
-        double v = sqrt(1./a);                     // velocity (circular orbit)
+        double a = 1.+(double)i/(double)(N_planets-1);   // semi major axis in AU
+        double v = sqrt(1./a);                           // velocity (circular orbit)
         struct reb_particle planet = {0};
         planet.m = 1e-4; 
-        planet.r = 4e-2;                     // radius in AU (it is unphysically large in this example)
-        planet.last_collision = 0;                // The first time particles can collide with each other
+        planet.r = 4e-2;                                 // radius in AU (it is unphysically large in this example)
+        planet.last_collision = 0;                       // The first time particles can collide with each other
         planet.x = a; 
         planet.vy = v;
         reb_simulation_add(r, planet); 
     }
-    reb_simulation_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    reb_simulation_move_to_com(r);                       // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     reb_simulation_integrate(r, INFINITY);
 }

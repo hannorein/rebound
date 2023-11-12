@@ -15,14 +15,20 @@ void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* const r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
-    r->gravity    = REB_GRAVITY_TREE;
-    r->boundary    = REB_BOUNDARY_OPEN;
-    r->opening_angle2    = 1.5;        // This constant determines the accuracy of the tree code gravity estimate.
-    r->G         = 1;        
-    r->softening     = 0.02;        // Gravitational softening length
-    r->dt         = 3e-2;        // Timestep
+    r->integrator       = REB_INTEGRATOR_LEAPFROG;
+    r->gravity          = REB_GRAVITY_TREE;
+    r->boundary         = REB_BOUNDARY_OPEN;
+    r->opening_angle2   = 1.5;          // This constant determines the accuracy of the tree code gravity estimate.
+    r->G                = 1;            // Gravitational constant
+    r->softening        = 0.02;         // Gravitational softening length
+    r->dt               = 3e-2;         // Timestep
     const double boxsize = 10.2;
     reb_simulation_configure_box(r,boxsize,1,1,1);
 

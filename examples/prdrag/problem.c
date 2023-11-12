@@ -18,14 +18,20 @@ double tmax = 1e5;
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // setup constants
-    r->dt                 = 1e-3;            // initial timestep
-    r->integrator            = REB_INTEGRATOR_IAS15;
-    r->ri_ias15.epsilon         = 1e-4;            // accuracy parameter
-    r->N_active            = 1;             // the star is the only massive particle
-    r->force_is_velocity_dependent    = 1;
-    r->additional_forces        = radiation_forces;    // setup callback function for velocity dependent forces
-    r->heartbeat            = heartbeat;
+    r->dt                           = 1e-3;             // initial timestep
+    r->integrator                   = REB_INTEGRATOR_IAS15;
+    r->ri_ias15.epsilon             = 1e-4;             // accuracy parameter
+    r->N_active                     = 1;                // the star is the only massive particle
+    r->force_is_velocity_dependent  = 1;
+    r->additional_forces            = radiation_forces; // setup callback function for velocity dependent forces
+    r->heartbeat                    = heartbeat;
     
     // star is at rest at origin
     struct reb_particle star = {0};
@@ -52,11 +58,11 @@ int main(int argc, char* argv[]){
 void radiation_forces(struct reb_simulation* r){
     struct reb_particle* particles = r->particles;
     const int N = r->N;
-    const struct reb_particle star = particles[0];                // cache
+    const struct reb_particle star = particles[0];    // cache
 #pragma omp parallel for
     for (int i=0;i<N;i++){
-        const struct reb_particle p = particles[i];             // cache
-        if (p.m!=0.) continue;                         // only dust particles feel radiation forces
+        const struct reb_particle p = particles[i];   // cache
+        if (p.m!=0.) continue;                        // only dust particles feel radiation forces
         const double prx  = p.x-star.x;
         const double pry  = p.y-star.y;
         const double prz  = p.z-star.z;

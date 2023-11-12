@@ -5,7 +5,7 @@
 #    brew install libomp
 # Alternatively use a compiler which supports OpenMP out of the box (gcc) and
 # uncomment the following line:
-# export CC=gcc
+#export CC=gcc
 
 ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang"), 1)
 export OPENMPCLANG=1
@@ -14,7 +14,8 @@ export OPENMP=1
 endif
 
 
-export OPENGL=0
+export OPENGL=0  	# Set this to 1 to enable OpenGL
+export SERVER=1		# Set this to 1 to enable the visualization web server
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for

@@ -67,4 +67,6 @@ int main(int argc, char* argv[]){
     printf("Omega = %.16e\n", o.Omega);
     printf("omega = %.16e\n", o.omega);
     printf("f = %.16e\n", o.f);
+
+    reb_simulation_free(r);
 }

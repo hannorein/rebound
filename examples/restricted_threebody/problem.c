@@ -14,6 +14,13 @@ void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    // You can turn orbits on and off by pressing `w`.
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
     r->integrator   = REB_INTEGRATOR_WHFAST;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;

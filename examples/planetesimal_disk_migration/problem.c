@@ -24,9 +24,17 @@ int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, str
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
     
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    // The particles are tiny in this example. To see them
+    // on the screen press `s` to change their plotting style.
+    reb_simulation_start_server(r, 1234);
+
+    
     // Simulation Setup
     r->integrator    = REB_INTEGRATOR_MERCURIUS;
-    r->heartbeat    = heartbeat;
+    r->heartbeat     = heartbeat;
     // Test particle type 1 allows massive particles to feel the gravity of testparticles.
     // However, test particles will not feel the gravity from other test particles.
     r->testparticle_type = 1;
@@ -38,7 +46,7 @@ int main(int argc, char* argv[]){
     r->collision_resolve_keep_sorted = 1;
     
     // Boundaries
-    r->boundary    = REB_BOUNDARY_OPEN;
+    r->boundary = REB_BOUNDARY_OPEN;
     const double boxsize = 6;
     reb_simulation_configure_box(r,boxsize,2,2,1);
     

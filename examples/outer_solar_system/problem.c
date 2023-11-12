@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
     
     // This allows you to connect to the simulation using
-    // a web browser. Simply go to http://localhost:1234
+    // a web browser by pointing it to http://localhost:1234
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
@@ -97,6 +97,8 @@ int main(int argc, char* argv[]) {
     //reb_simulation_integrate(r, tmax);      // Integrates only to tmax
 
     double e_final = reb_simulation_energy(r);
+
+    // Cleanup
     reb_simulation_free(r);
     printf("\nDone. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
 }
