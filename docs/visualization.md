@@ -18,7 +18,7 @@ To circumvent most of the issues, REBOUND uses an un-conventional approach: it a
 Web browsers have the advantage of being readily available on all operating systems.
 And because they implement open standards (HTML, JS, WebAssembly, WebGL) they are unlikely to break compatibility with REBOUND any time soon.
 
-To get data from a simulation to a web browser, **REBOUND comes with its own built-in web server!**. 
+To get data from a simulation to a web browser, **REBOUND comes with its own built-in web server!**
 In fact, every simulation can have its own web server. 
 After starting a web server, it sits idle in a separate thread until you decide to use it.
 When a simulation is deallocated, the server is stopped. 
@@ -38,14 +38,14 @@ The following code shows how to start the server:
     ```
 
 By default, the server opens port 1234 on your computer. 
-Now all you have to do to see the visualization is to open your browser and go to http://localhost1234 or http://127.0.0.1.
+Now all you have to do to see the visualization is to open your browser and go to [http://localhost1234](http://localhost1234) or [http://127.0.0.1](http://127.0.0.1).
 
-In the background, the REBOUND web server accepts your requests and serves you a `rebound.html` file which includes all the code required to visualize a simulation using WebGL. 
+When you open the page the REBOUND web server accepts your request and serves you a `rebound.html` file which includes all the code required to visualize a simulation using WebGL. 
 The cool thing is, the visualization code is just REBOUND itself, compiled to WebAssembler using emscripten. 
 So the visualization that you see in your web browser is exactly the same as the one you see when compiling REBOUND with the `OPENGL=1` option but without all the hassles associated with using OpenGL/glut/GLFW libraries.
 
 You can generate (compile) a `rebound.html` file yourself. The code for that is in the directory `web_client/`. 
-But to do that you would need to do download an install emscripten. 
+But to do that you would need to download and install emscripten. 
 To help you out when connection to the REBOUND web server, REBOUND first looks for a `rebound.html` file in the current directly. 
 If it doesn't find it, then it downloads a pre-compiled file from GitHub.
 This should work seamlessly in the background, so you might not even notice.
@@ -53,13 +53,14 @@ This should work seamlessly in the background, so you might not even notice.
 Now, after REBOUND served the visualization code to your web browser, it needs to be able to send simulation data to the browser.
 This is done by packing up the simulation as binary data in the form of a Simulationarchive. 
 This data is then sent to your browser via HTTP whenever your browser requests a new frame for the visualization.
+This can be up to 60 times per second.
 The REBOUND version running in your browser then reconstructs the full simulation using the Simulationarchive data.
 
 You can also send simple commands back from the browser to the server.
 For example, by pressing the space bar you can pause and un-pause the integration.
 You can press `q` to terminate the integration. 
 Commands that only affect the visualization (for example you can press `w` to show/hide orbits) are not sent back to the main simulation on the server.
-For all keyboard commands available, press `h` and a help window will show up on screen.
+For all keyboard commands available, press `h`. A help window will show up on screen.
 
 
 ## Widget in jupyter notebooks
@@ -67,11 +68,13 @@ Instead of opening a new browser window for the visualization, you can also incl
 
 ```python
 sim = rebound.Simulation()
-sim.widget(size=(400,400), port=1234)
+sim.widget(size=(400,400))
 ```
 
-This starts the server and the shows an iframe in your current notebook. 
+This automatically starts the web server and the shows an iframe in your current notebook. 
 The iframe is simply showing the contents of http://localhost:1234.
+You can connect multiple browser windows to the same simulation. 
+So in addition to having the widget directly in your notebook, you can also go to [http://localhost:1234](http://localhost:1234) to see the visualization.
 
 
 
@@ -82,8 +85,8 @@ Make sure you close the server if you want to re-use the port the server is usin
 
 === "C"
     ```c
-    reb_simulation_stop_server(r);  // This stop the server.
-    reb_simulation_free(r);         // This also stop the server if it's still running.
+    reb_simulation_stop_server(r);  // This stops the server.
+    reb_simulation_free(r);         // This also stops the server if it's still running.
     ```
 
 === "Python"
@@ -112,11 +115,14 @@ To do that set `export SERVER=0` in the Makefile.
 
 ## Security and resource considerations
 The built-in REBOUND web server provides a quick and easy way to visualize simulations. 
-It is not intended to be exposed to the public internet because a malicious person might be able to gain access to your computer.
+It is not intended to be exposed to the public internet because someone might be able to gain access to your computer.
 
-Note that the visualization uses a considerable amount of CPU resources. You might want to disable it if you no longer use it.
+Note that the visualization uses a considerable amount of CPU resources. You might want to disable it (stop the server) if you no longer use it.
 
-Depending on your simulation (e.g. for simulations with a large number of particles), the communication between the REBOUND web server and your browser might use a lot of bandwidth and a lot of HTTP requests. 
-There are in principle better ways to stream data from a server to a client, for example using WebSockets.
-A future version of REBOUND might optimize the CPU and bandwidth usage.
+!!! info inline end "Future optimizations"
+    There are in principle better ways to stream data from a server to a client, for example using WebSockets.
+    A future version of REBOUND might optimize the CPU and bandwidth usage.
+
+Depending on your simulation (e.g. for simulations with a large number of particles), the communication between the REBOUND web server and your browser might use a lot of bandwidth and a lot of HTTP requests (up to 60 requests per second). 
+
 
