@@ -2,7 +2,7 @@
 
 source emsdk/emsdk_env.sh
 READTHEDOCS_OUTPUT="${READTHEDOCS_OUTPUT:-.}"
-OPTIMI="${2:-3}"
+OPTIMI="${1:-3}"
     
 echo "Compiling C examples with emscripten."
 echo "Output dir: $READTHEDOCS_OUTPUT"
