@@ -38,6 +38,15 @@ with open("setup.py") as f:
     with open("setup.py", "w") as f:
         f.writelines(setuplines)
 
+with open("web_client/shell_console_rebound.html") as f:
+    reboundlines = f.readlines()
+    for i,l in enumerate(reboundlines):
+        if "<!-- VERSIONLINE -->" in l:
+            reboundlines[i] = "                  REBOUND v" + reboundversion + "  <!-- VERSIONLINE -->\n"
+
+    with open("web_client/shell_console_rebound.html", "w") as f:
+        f.writelines(reboundlines)
+
 shortversion = reboundversion
 while shortversion[-1] != '.':
     shortversion = shortversion[:-1]
