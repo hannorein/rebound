@@ -39,7 +39,7 @@
 #include "integrator_sei.h"
 
 
-static void operator_H012(double dt, const struct reb_simulation_integrator_sei ri_sei, struct reb_particle* p);
+static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p);
 static void operator_phi1(double dt, struct reb_particle* p);
 
 
@@ -67,7 +67,7 @@ void reb_integrator_sei_part1(struct reb_simulation* const r){
 	if (r->ri_sei.lastdt!=r->dt){
         reb_integrator_sei_init(r);
 	}
-	const struct reb_simulation_integrator_sei ri_sei = r->ri_sei;
+	const struct reb_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_H012(r->dt, ri_sei, &(particles[i]));
@@ -78,7 +78,7 @@ void reb_integrator_sei_part1(struct reb_simulation* const r){
 void reb_integrator_sei_part2(struct reb_simulation* r){
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
-	const struct reb_simulation_integrator_sei ri_sei = r->ri_sei;
+	const struct reb_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(r->dt, &(particles[i]));
@@ -103,7 +103,7 @@ void reb_integrator_sei_reset(struct reb_simulation* r){
  * @param dt Timestep
  * @param ri_sei Integrator struct
  */
-static void operator_H012(double dt, const struct reb_simulation_integrator_sei ri_sei, struct reb_particle* p){
+static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p){
 		
 	// Integrate vertical motion
 	const double zx = p->z * ri_sei.OMEGAZ;

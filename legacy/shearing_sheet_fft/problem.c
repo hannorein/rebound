@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 	int ngrid 			= 64;
-	root_nx = ngrid; root_ny = ngrid; root_nz = ngrid/2;
+	N_root_x = ngrid; N_root_y = ngrid; N_root_z = ngrid/2;
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]){
 #endif
 			double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 			pt.m 		= particle_mass; 	// kg
-			reb_add(r, pt);
+			reb_simulation_add(r, pt);
 			mass += particle_mass;
 		}
 #ifdef MPI
@@ -114,8 +114,8 @@ double coefficient_of_restitution_bridges(double v){
 }
 
 void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(10.0*dt)){
-		reb_output_timing();
+	if (reb_simulation_output_check(10.0*dt)){
+		reb_simulation_output_timing();
 	}
 }
 

@@ -8,7 +8,7 @@ import platform
 from ctypes import cdll, c_char_p
 
 # Find suffix
-if platform.system()=="Windows":
+if platform.system()=="Windows" and sys.version_info.major<=3 and sys.version_info.minor<8:
     # Using distutils.sysconfig instead of sysconfig because 
     # of a bug in Python < 3.8 on windows
     import distutils.sysconfig as sysconfig
@@ -65,7 +65,7 @@ except:
     pass
 
 # Exceptions
-class SimulationError(Exception):
+class GenericError(Exception):
     """The simulation exited with a generic error."""
     pass
 
@@ -76,7 +76,7 @@ class Encounter(Exception):
 
 class Collision(Exception):
     """The simulation exited because a collision has been detected.
-    You may want to search for which particles have a lastcollision time equal to the simulation time."""
+    You may want to search for which particles have a last_collision time equal to the simulation time."""
     pass
 
 class Escape(Exception):
@@ -93,14 +93,13 @@ class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
 
-from .tools import hash, mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
-from .simulation import Simulation, Orbit, Variation, reb_simulation_integrator_saba, reb_simulation_integrator_whfast, reb_simulation_integrator_sei, reb_simulation_integrator_mercurius, reb_simulation_integrator_ias15, ODE, Rotation, Vec3d, _Vec3d, binary_field_descriptor_list
+from .hash import hash
+from .tools import mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
+from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic
+from .rotation import Rotation
+from .orbit import Orbit
 from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
-from .simulationarchive import SimulationArchive
+from .simulationarchive import Simulationarchive
 
-class InterruptiblePool:
-    def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
-        raise RuntimeError("InterruptiblePool is deprecated. Use the multiprocess module instead.")
-
-__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "SimulationArchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "SimulationError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "InterruptiblePool","Variation", "reb_simulation_integrator_whfast", "reb_simulation_integrator_ias15", "reb_simulation_integrator_saba", "reb_simulation_integrator_sei","reb_simulation_integrator_mercurius", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical","binary_field_descriptor_list"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Simulationarchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "GenericError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "Variation", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]

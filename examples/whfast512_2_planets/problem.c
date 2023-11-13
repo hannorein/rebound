@@ -34,16 +34,16 @@ double all_ss_mass[3] = {
 };
 
 struct reb_simulation* setup_single(){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     for (int i = 0; i < 3; i++){
         struct reb_particle p = {
             .m = all_ss_mass[i],
             .x = all_ss_pos[i][0], .y = all_ss_pos[i][1], .z = all_ss_pos[i][2],
             .vx = all_ss_vel[i][0], .vy = all_ss_vel[i][1], .vz = all_ss_vel[i][2]
         };
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
     return r;
 }
 
@@ -71,14 +71,14 @@ double run(int use_whfast512){
     if (use_whfast512){ 
         gettimeofday(&time_beginning,NULL);
         // One simulation with all 4x2 = 8 planets.
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         r->exact_finish_time = 0;
         r->dt = 5.0/365.25*2*M_PI; // 5 days
         r->G = 1.;
         r->force_is_velocity_dependent = 0; 
         // Tell WHFast512 how many systems we are integrating in parallel.
         // This parameter can be either 1, 2, or 4.
-        r->ri_whfast512.systems_N = 4;
+        r->ri_whfast512.N_systems = 4;
         for (int s = 0; s < 4; s++){
             struct reb_simulation* r_single = setup_single();
             // We're adding a small perturbation to each simulation so they are
@@ -87,17 +87,17 @@ double run(int use_whfast512){
             // is the timestep.
             r_single->particles[1].x += 1e-14*s; 
             for (int i=0; i<r_single->N; i++){
-                reb_add(r, r_single->particles[i]);
+                reb_simulation_add(r, r_single->particles[i]);
             }
-            reb_free_simulation(r_single);
+            reb_simulation_free(r_single);
         }
         r->integrator = REB_INTEGRATOR_WHFAST512;
-        int err = reb_integrate(r,  tmax);
+        int err = reb_simulation_integrate(r,  tmax);
         if (err>0){
             printf("An error occured during the integration.\n");
             exit(EXIT_FAILURE);
         }
-        reb_free_simulation(r);
+        reb_simulation_free(r);
         gettimeofday(&time_end,NULL);
     }else{
         // Without WHFast512 we need to integrate 4 simulations one after the other
@@ -111,12 +111,12 @@ double run(int use_whfast512){
             r->integrator = REB_INTEGRATOR_WHFAST;
             r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
             r->particles[1].x += 1e-14*s; 
-            int err = reb_integrate(r,  tmax);
+            int err = reb_simulation_integrate(r,  tmax);
             if (err>0){
                 printf("An error occured during the integration.\n");
                 exit(EXIT_FAILURE);
             }
-            reb_free_simulation(r);
+            reb_simulation_free(r);
         }
         gettimeofday(&time_end,NULL);
     }

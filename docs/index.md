@@ -23,7 +23,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines
-* Different modules are easily interchangeable at runtime
+* Different modules are easily interchangeable at run-time
 
 ## Contributors
 
@@ -57,7 +57,7 @@ There are several papers describing the functionality of REBOUND.
 
 5. Rein & Tamayo 2016 (Monthly Notices of the Royal Astronomical Society, Volume 459, Issue 3, p.2275-2285) develop the framework for second order variational equations. <https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R>
 
-6. Rein & Tamayo 2017 (Monthly Notices of the Royal Astronomical Society, Volume 467, Issue 2, p.2377-2383) describes the Simulation Archive for exact reproducibility of N-body simulations. <https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.2377R>
+6. Rein & Tamayo 2017 (Monthly Notices of the Royal Astronomical Society, Volume 467, Issue 2, p.2377-2383) describes the Simulationarchive for exact reproducibility of N-body simulations. <https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.2377R>
 
 7. Rein & Tamayo 2018 (Monthly Notices of the Royal Astronomical Society, Volume 473, Issue 3, p.3351–3357) describes the integer based JANUS integrator. <https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.3351R>
 
@@ -67,7 +67,7 @@ There are several papers describing the functionality of REBOUND.
 
 10. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
 
-## Acknowledgments
+## Acknowledgements
 
 If you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation.
 please cite REBOUND.

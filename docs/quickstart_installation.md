@@ -5,21 +5,21 @@
 ## Choosing between C and Python
 
 You can use either C or Python when working with REBOUND.
-Which programming language you want to use depends on your taste and your specific application. In short: 
+Which programming language you want to use depends on your preference and your specific application. In short: 
 
 - If you want to set up a planetary system, visualize data with matplotlib, and integrate your simulation with one of the built-in integrators then use the Python version. It's quick and easy to use. 
-- If you want to run large simulations with millions of particles, develop your own integrator, use OpenGL visualizations, or make use of the distributed tree code, then use the C version. C gives you the best performance and direct access to all the internals.
+- If you want to run large simulations with millions of particles, develop your own integrator, use the distributed tree code with MPI, OpenMP parallelization, or OpenGL visualization, then use the C version. C gives you the best performance and direct access to all the REBOUND internals.
 
 !!! Note
     All the computationally expensive parts of REBOUND are written in C. So even if you use the Python version, your simulation will run very efficiently.
-    If you want to extend REBOUND, for example to include an additional non-gravitational force, you can do that in both C or Python. For complicated force routines, a C implementation of your function would most likely be significantly faster.  
+    If you want to extend REBOUND, for example to include an additional non-gravitational force, you can do that in both C or Python. However, for complicated force routines, a C implementation of your function would most likely be significantly faster.  
 
 
 ## Installation via pip
 !!! info inline end "Python Wheels"
     Starting with REBOUND version 3.28, we provide Python Wheels for REBOUND. 
     This makes installing REBOUND easier on a wide variety of systems. 
-    For optimal performance, you can compiling REBOUND yourself with the specific optimizations flags for your system turned on manually.
+    For optimal performance, you can compile REBOUND yourself with optimizations flags that specifically target your system.
 
 
 If you just want to try out REBOUND or don't plan to modify it in any way, then the easiest way to install the python version of REBOUND is [pip](https://pypi.org) (the Package Installer for Python). Simply type the following command into a terminal:
@@ -55,7 +55,7 @@ You should now be able to import REBOUND from python.
 
 ### Examples
 
-If you look at any of the examples in the `examples/` subdirectories, you'll see one
+If you look at any of the examples in the `examples/` sub-directories, you'll see one
 `problem.c` file and one `Makefile`. All the REBOUND code itself is in the
 `src/` directory. This setup keeps the different projects nicely separated from the shared REBOUND code.
 To compile one of the examples, go to the example's directory and type `make`. 
@@ -67,10 +67,12 @@ This triggers the following tasks:
 2.  Next, the Makefile in the `src/` directory gets called. This compiles
     the entire REBOUND code into a shared library.
 3.  It then creates a symbolic link from the current directory to the
-    location of the shared library is located.
+    location of the shared library in the `src/` directory. (On Windows
+    the  Makefile simply copies the shared library instead of making a symbolic link)
 4.  Finally, it compiles your own code, the `problem.c` file and links it to the REBOUND shared library.
 
-You can execute your program with `./rebound`. After you edited either the `problem.c` file or any file in the `src/` directory, you can simply type `make` again to recompile your program. 
+You can execute your program with `./rebound` (or `rebound.exe` on Windows). 
+After you edit either the `problem.c` file or any file in the `src/` directory, you can simply type `make` again to recompile your program. 
 If you change any of the environment variables, clean the build directory first, by executing `make clean`.
 
 ### Your own project
@@ -92,11 +94,13 @@ You might nevertheless run into problems. Some of the most common issues are:
 -   **Missing compilers.** Make sure you have a C compiler installed. If
     you are using a Mac, install the Xcode package which you can
     download for free on the App Store. Make sure the command line tools 
-    are installed.
+    are installed. if you are on Windows, make sure you install the 
+    compilers that come with Visual studio (`cl.exe`) and have them available
+    in your current command prompt (use the *Developer Command Prompt for VS*).
 -   **Missing glfw3 library.** You can compile REBOUND with support for
-    real-time OpenGL visualizations. This requires the glfw3 library. If
-    you are on a Mac, then the easiest way to install the glfw3 library
-    is with homebrew:
+    real-time OpenGL visualizations. This is an optional feature that 
+    requires the glfw3 library. If you are on a Mac, then the easiest 
+    way to install the glfw3 library is with homebrew:
     `brew tap homebrew/versions && brew install glfw3`. If you are on
     Linux, you can install it with your package manager, for example
     with `sudo apt-get install libglfw3-dev`. Alternatively, you can
@@ -105,13 +109,19 @@ You might nevertheless run into problems. Some of the most common issues are:
     again. Note that on some systems the `glfw` library is called
     `glfw3` instead. In that case, change `-lglfw` to `-lglfw3` 
     in the file `src/Makefile.defs`.
--   **Issue with march=native.** Some users have reported issues related
-    to the compiler flag `-march=native` which tries to optimize the
+-   **Compiler optimizations.** By default, REBOUND does not use the
+    compiler flag `-march=native` which tries to optimize the
     code for the native architecture. If you want to have the 
     most optimized code, add the `-march=native` or `-mtune=native` flag
     in the file `src/Makefile.defs`. If you use the python version, you
     can add compiler flags to `setup.py`. This might improve performance
     significantly.
+-   **Floating point contractions.** Some compilers (e.g. clang) optimize code by
+    contracting certain floating point operations (e.g. a multiplication
+    and an addition become one fused multiply-add instruction). This improves performance but might prevent you from 
+    reproducing results exactly. You can turn off fused multiply-add instruction with the
+    `-ffp-contract=off` compiler flag. If you use the python version, you can set the
+    `FFP_CONTRACT_OFF` environment variable before installing REBOUND.
 
 
 ## Running REBOUND on Windows
@@ -146,7 +156,7 @@ make
 !!! note inline end Note
     The native Windows support for REBOUND is relatively new. Several features are currently not supported on native Windows builds: OpenMP, MPI, OpenGL, and AVX512. Please [file a bug report on github](https://github.com/hannorein/rebound/issues) if you require any of these featured or if you encounter any other problems. 
 
-Since version 3.28, you can also run REBOUND natively on Windows. You need to install make and the Microsoft Visual Studio compiler. Once you have downloaded the source code of REBOUND, open the Developer Command Prompt for VS or the Windows PowerShell on your system and go to the REBOUND source code. Then, compile and run a simple C-example with the following commands:
+Since version 3.28, you can also run REBOUND natively on Windows. You need to install make and enable the Microsoft Visual Studio compiler. Once you have downloaded the source code of REBOUND, open the Developer Command Prompt for VS or the Windows PowerShell on your system and go to the REBOUND source code. Then, compile and run a simple C-example with the following commands:
 ```bash
 cd examples
 cd simplest

@@ -36,7 +36,7 @@ class TestPostTimestepModifications(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "mercurius"
         sim.dt = 0.01
-        sim.ri_mercurius.hillfac = 100000 # make sure encounter happens
+        sim.ri_mercurius.r_crit_hill = 100000 # make sure encounter happens
         sim.add(m=1)
         sim.add(m=1e-3,a=1)
         sim.add(m=1e-3,a=5)

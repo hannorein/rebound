@@ -9,10 +9,10 @@ sim.add( m=1e-3, a=1., e=0.1 ) # Planet 1
 sim.add( a=1.4, e=0.1 )       # Massless test particle
 
 # Output orbits in Jacobi coordinates
-for o in sim.calculate_orbits(): print(o)
+for o in sim.orbits(): print(o)
 
 # Output orbits in Heliocentric coordinates
-for o in sim.calculate_orbits(primary=sim.particles[0]): print(o)
+for o in sim.orbits(primary=sim.particles[0]): print(o)
 
 # Output cartesian coordinates
 for p in sim.particles: 

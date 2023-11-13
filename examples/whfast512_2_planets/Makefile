@@ -1,5 +1,6 @@
 export AVX512=1
 export OPENGL=0
+export SERVER=0
 export OPT=-march=native
 include ../../src/Makefile.defs
 

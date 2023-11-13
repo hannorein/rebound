@@ -20,7 +20,7 @@ class TestOrbitalElements(unittest.TestCase):
         with self.assertRaises(ValueError):
             sim.add(a=-1, e=2.2, f=3.)
     
-    def test_calculate_orbit_errors(self):
+    def test_orbit_errors(self):
         sim = rebound.Simulation()
         sim.add()
         sim.add(x=1.)
@@ -345,7 +345,7 @@ class TestOrbitalElements(unittest.TestCase):
             sim = rebound.Simulation()
             sim.add(m=1.234)
             sim.add(m=0.0002345, x=x, y=y, z=z, vx=vx, vy=vy, vz=vz)
-            o = sim.calculate_orbits()[0]
+            o = sim.orbits()[0]
             sim.add(primary=sim.particles[0], m=sim.particles[1].m, a=o.a, l=o.l, h=o.pal_h, k=o.pal_k, ix=o.pal_ix, iy=o.pal_iy)
             
             d = 2.e-14 # abs error tolerance

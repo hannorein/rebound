@@ -7,13 +7,13 @@ This could be the time at which you want to create the next output, or a very lo
 In those cases use this syntax:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation, set timestep ...
-    reb_integrate(r, 100.); // integrate until t=100.
+    reb_simulation_integrate(r, 100.); // integrate until t=100.
     ```
     If you want to integrate indefinitely, you can use
     ```c
-    reb_integrate(r, INFINITY); 
+    reb_simulation_integrate(r, INFINITY); 
     ```
 === "Python"
     ```python
@@ -31,10 +31,10 @@ This allows REBOUND to maintain a constant timestep throughout the integration.
 The following code shows you how to do that.
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation, set timestep ...
     r->exact_finish_time = 0;
-    reb_integrate(r, 100.); // integrate until t=100. or a bit further
+    reb_simulation_integrate(r, 100.); // integrate until t=100. or a bit further
     ```
 === "Python"
     ```python
@@ -46,7 +46,7 @@ The following code shows you how to do that.
 If you want to stop a current integration after the current timestep, for example from within the heartbeat function, you can call:
 === "C"
     ```c
-    reb_stop(r); 
+    reb_simulation_stop(r); 
     ```
 === "Python"
     sim.stop()
@@ -60,9 +60,9 @@ Note that you might need to manually synchronize the simulation afterwards if yo
 Rather than integrating up to a fixed time, you can also advance the simulation by a single timestep:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation, set timestep ...
-    reb_step(r);
+    reb_simulation_step(r);
     ```
 === "Python"
     ```python
@@ -75,9 +75,9 @@ Rather than integrating up to a fixed time, you can also advance the simulation 
 And finally, you can ask REBOUND to advance the simulation by a finite number of steps.
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation, set timestep ...
-    reb_steps(r, 100); // 100 steps
+    reb_simulation_steps(r, 100); // 100 steps
     ```
 === "Python"
     ```python
@@ -92,7 +92,7 @@ You can manually 'synchronize' the simulation by calling
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
     reb_synchronize(r); 
     ```

@@ -116,7 +116,7 @@ static void inline mm_stiefel_Gs03_avx512(__m512d * Gs0, __m512d * Gs1, __m512d 
 // Performs one full Kepler step
 static void inline reb_whfast512_kepler_step(const struct reb_simulation* const r, const double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_particle_avx512 * restrict p512  = r->ri_whfast512.p_jh;
@@ -237,7 +237,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     p512->y = ny;
     p512->z = nz;
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -265,10 +265,10 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
     
     __m512d x_j =  p_jh->x;
@@ -451,7 +451,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
     }
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -460,10 +460,10 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
     
     __m512d x_j =  p_jh->x;
@@ -558,7 +558,7 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
     
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -566,10 +566,10 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
 
 static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, double dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
     
     __m512d x_j =  p_jh->x;
@@ -626,7 +626,7 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
     
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -637,11 +637,11 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
 // Convert inertial coordinates to democratic heliocentric coordinates
 // Note: this is only called at the beginning. Speed is not a concern.
 static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
-    const unsigned int systems_N = ri_whfast512->systems_N;
-    const unsigned int p_per_system = 8/systems_N;
-    const unsigned int N_per_system = r->N/systems_N;
+    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int p_per_system = 8/N_systems;
+    const unsigned int N_per_system = r->N/N_systems;
 
     // Layout (2x 3 planet systems)
     //                    0    1  2  3   4    5  6  7
@@ -660,7 +660,7 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
     double vx[8];
     double vy[8];
     double vz[8];
-    for (unsigned s=0;s<systems_N;s++){
+    for (unsigned s=0;s<N_systems;s++){
         double mtot = 0;
         double x0 = 0; // center of mass
         double y0 = 0;
@@ -718,12 +718,12 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
 // Convert democratic heliocentric coordinates to inertial coordinates
 // Note: this is only called at the end. Speed is not a concern.
 static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
-    const unsigned int systems_N = ri_whfast512->systems_N;
-    const unsigned int p_per_system = 8/systems_N;
-    const unsigned int N_per_system = r->N/systems_N;
+    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int p_per_system = 8/N_systems;
+    const unsigned int N_per_system = r->N/N_systems;
     
     double m[8];
     double x[8];
@@ -740,7 +740,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
     _mm512_storeu_pd(&vy, p_jh->vy);
     _mm512_storeu_pd(&vz, p_jh->vz);
 
-    for (unsigned s=0;s<systems_N;s++){
+    for (unsigned s=0;s<N_systems;s++){
         double x0s = 0;
         double y0s = 0;
         double z0s = 0;
@@ -778,10 +778,10 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
 // Performs one complete jump step
 static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_simulation_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
     double m0 = r->particles[0].m;
     
@@ -791,7 +791,7 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
     __m512d sumy = _mm512_mul_pd(p_jh->m, p_jh->vy);
     __m512d sumz = _mm512_mul_pd(p_jh->m, p_jh->vz);
 
-    if (ri_whfast512->systems_N == 1){
+    if (ri_whfast512->N_systems == 1){
         sumx = _mm512_add_pd(_mm512_shuffle_pd(sumx, sumx, 0x55), sumx); // Swapping neighbouring elements
         sumx = _mm512_add_pd(_mm512_permutex_pd(sumx, _MM_PERM_ABCD), sumx);
         sumx = _mm512_add_pd(_mm512_shuffle_f64x2(sumx,sumx, 78), sumx); // 78 is _MM_SHUFFLE(1,0,3,2), changed for icx
@@ -803,7 +803,7 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
         sumz = _mm512_add_pd(_mm512_shuffle_pd(sumz, sumz, 0x55), sumz);
         sumz = _mm512_add_pd(_mm512_permutex_pd(sumz, _MM_PERM_ABCD), sumz);
         sumz = _mm512_add_pd(_mm512_shuffle_f64x2(sumz,sumz, 78), sumz);
-    }else if (ri_whfast512->systems_N == 2){
+    }else if (ri_whfast512->N_systems == 2){
         sumx = _mm512_add_pd(_mm512_shuffle_pd(sumx, sumx, 0x55), sumx); // Swapping neighbouring elements
         sumx = _mm512_add_pd(_mm512_permutex_pd(sumx, _MM_PERM_ABCD), sumx);
 
@@ -812,7 +812,7 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
 
         sumz = _mm512_add_pd(_mm512_shuffle_pd(sumz, sumz, 0x55), sumz);
         sumz = _mm512_add_pd(_mm512_permutex_pd(sumz, _MM_PERM_ABCD), sumz);
-    }else if (ri_whfast512->systems_N == 4){
+    }else if (ri_whfast512->N_systems == 4){
         sumx = _mm512_add_pd(_mm512_shuffle_pd(sumx, sumx, 0x55), sumx); // Swapping neighbouring elements
         sumy = _mm512_add_pd(_mm512_shuffle_pd(sumy, sumy, 0x55), sumy);
         sumz = _mm512_add_pd(_mm512_shuffle_pd(sumz, sumz, 0x55), sumz);
@@ -823,25 +823,26 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
     p_jh->z = _mm512_fmadd_pd(sumz, pf512, p_jh->z); 
 
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_jump += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
 }
 
-// Performs one full centre of mass step (H_0)
+// Performs one full center of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
 #ifdef PROF
-    struct timeval time_beginning;
+    struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    for (int s=0; s<r->ri_whfast512.systems_N; s++){
+    const unsigned int N_systems = ri_whfast512->N_systems;
+    for (int s=0; s<N_systems; s++){
         r->ri_whfast512.p_jh0[s].x += _dt*r->ri_whfast512.p_jh0[s].vx;
         r->ri_whfast512.p_jh0[s].y += _dt*r->ri_whfast512.p_jh0[s].vy;
         r->ri_whfast512.p_jh0[s].z += _dt*r->ri_whfast512.p_jh0[s].vz;
     }
 #ifdef PROF
-    struct timeval time_end;
+    struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_com += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
@@ -849,10 +850,10 @@ static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
 
 // Precalculate various constants and put them in 512 bit vectors.
 void static recalculate_constants(struct reb_simulation* r){
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    const unsigned int systems_N = ri_whfast512->systems_N;
-    const unsigned int p_per_system = 8/systems_N;
-    const unsigned int N_per_system = r->N/systems_N;
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int p_per_system = 8/N_systems;
+    const unsigned int N_per_system = r->N/N_systems;
     half = _mm512_set1_pd(0.5); 
     one = _mm512_add_pd(half, half); 
     two = _mm512_add_pd(one, one); 
@@ -863,7 +864,7 @@ void static recalculate_constants(struct reb_simulation* r){
     for (int i=0;i<8;i++){
         M[i] = r->particles[0].m; // for when N<8
     }
-    for (int s=0; s<systems_N; s++){
+    for (int s=0; s<N_systems; s++){
         for (int p=0; p<p_per_system; p++){ // loop over all planets
             M[s*p_per_system+p] = r->particles[s*N_per_system].m;
         }
@@ -884,7 +885,7 @@ void static recalculate_constants(struct reb_simulation* r){
         _gr_prefac[i] = 0; // for when N<8
         _gr_prefac2[i] = 0;
     }
-    for (int s=0; s<systems_N; s++){
+    for (int s=0; s<N_systems; s++){
         double m0 = r->particles[s*N_per_system].m;
         for (int p=1; p<N_per_system; p++){
             _gr_prefac[s*p_per_system+(p-1)] = 6.*m0*m0/(c*c);
@@ -899,73 +900,73 @@ void static recalculate_constants(struct reb_simulation* r){
 
 // Main integration routine
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     const double dt = r->dt;
     
-    if (ri_whfast512->allocated_N==0){
+    if (ri_whfast512->N_allocated==0){
         // Check if all assumptions are satisfied.
         // Note: These are not checked every timestep. 
         // So it is possible for the user to screw things up.
         if (r->dt<=0.0){
-            reb_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
-            r->status = REB_EXIT_ERROR;
+            reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N_var!=0){
-            reb_error(r, "WHFast512 does not support variational particles.");
-            r->status = REB_EXIT_ERROR;
+            reb_simulation_error(r, "WHFast512 does not support variational particles.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->exact_finish_time!=0){
-            reb_error(r, "WHFast512 requires exact_finish_time=0.");
-            r->status = REB_EXIT_ERROR;
+            reb_simulation_error(r, "WHFast512 requires exact_finish_time=0.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
-        if (r->N>9 && ri_whfast512->systems_N == 1) {
-            reb_error(r, "WHFast512 supports a maximum of 9 particles when systems_N is set to 1.");
-            r->status = REB_EXIT_ERROR;
+        if (r->N>9 && ri_whfast512->N_systems == 1) {
+            reb_simulation_error(r, "WHFast512 supports a maximum of 9 particles when N_systems is set to 1.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
-        if (r->N>10 && ri_whfast512->systems_N == 2) {
-            reb_error(r, "WHFast512 supports a maximum of 10 particles when systems_N is set to 2.");
-            r->status = REB_EXIT_ERROR;
+        if (r->N>10 && ri_whfast512->N_systems == 2) {
+            reb_simulation_error(r, "WHFast512 supports a maximum of 10 particles when N_systems is set to 2.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
-        if (r->N>12 && ri_whfast512->systems_N == 4) {
-            reb_error(r, "WHFast512 supports a maximum of 12 particles when systems_N is set to 4.");
-            r->status = REB_EXIT_ERROR;
+        if (r->N>12 && ri_whfast512->N_systems == 4) {
+            reb_simulation_error(r, "WHFast512 supports a maximum of 12 particles when N_systems is set to 4.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
-        if (ri_whfast512->systems_N != 1 && ri_whfast512->systems_N !=2 && ri_whfast512->systems_N != 4){
-            reb_error(r, "WHFast512 supports 1, 2, or 4 systems only.");
-            r->status = REB_EXIT_ERROR;
+        if (ri_whfast512->N_systems != 1 && ri_whfast512->N_systems !=2 && ri_whfast512->N_systems != 4){
+            reb_simulation_error(r, "WHFast512 supports 1, 2, or 4 systems only.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
-        if (r->N % ri_whfast512->systems_N != 0){
-            reb_error(r, "Number of particles must be a multiple of ri_whfast512.systems_N.");
-            r->status = REB_EXIT_ERROR;
+        if (r->N % ri_whfast512->N_systems != 0){
+            reb_simulation_error(r, "Number of particles must be a multiple of ri_whfast512.N_systems.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->G!=1.0){
-            reb_error(r, "WHFast512 requires units in which G=1. Please rescale your system.");
-            r->status = REB_EXIT_ERROR;
+            reb_simulation_error(r, "WHFast512 requires units in which G=1. Please rescale your system.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->N_active!=-1 && r->N_active!=r->N){
-            reb_error(r, "WHFast512 does not support test particles.");
-            r->status = REB_EXIT_ERROR;
+            reb_simulation_error(r, "WHFast512 does not support test particles.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         ri_whfast512->p_jh = aligned_alloc(64,sizeof(struct reb_particle_avx512));
         if (!ri_whfast512->p_jh){
-            reb_error(r, "WHFast512 was not able to allocate memory.");
-            r->status = REB_EXIT_ERROR;
+            reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         if (r->exit_min_distance || r->exit_max_distance){
-            reb_warning(r, "You are using WHFast512 together with the flags exit_min_distance and/or exit_max_distance. With the current implementation, these flags will only check the last synchronized positions. In addition they might slow down WHFast512 significantly. If you need to use these flags, please open an issue on GitHub for further advice.");
+            reb_simulation_warning(r, "You are using WHFast512 together with the flags exit_min_distance and/or exit_max_distance. With the current implementation, these flags will only check the last synchronized positions. In addition they might slow down WHFast512 significantly. If you need to use these flags, please open an issue on GitHub for further advice.");
         }
-        ri_whfast512->allocated_N=1;
+        ri_whfast512->N_allocated=1;
         ri_whfast512->recalculate_constants = 1;
         r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
     }
@@ -994,11 +995,11 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         reb_whfast512_jump_step(r, dt);
     }
 
-    if (ri_whfast512->systems_N==1){
+    if (ri_whfast512->N_systems==1){
         reb_whfast512_interaction_step_8planets(r, dt);
-    }else if (ri_whfast512->systems_N==2){
+    }else if (ri_whfast512->N_systems==2){
         reb_whfast512_interaction_step_4planets(r, dt);
-    }else if (ri_whfast512->systems_N==4){
+    }else if (ri_whfast512->N_systems==4){
         reb_whfast512_interaction_step_2planets(r, dt);
     }
 
@@ -1016,18 +1017,19 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 #else // AVX512
 // Dummy function when AVX512 is not available
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
-    reb_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
-    r->status = REB_EXIT_ERROR;
+    reb_simulation_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
+    r->status = REB_STATUS_GENERIC_ERROR;
 }
 #endif // AVX512
 
 // Synchronization routine. Called every time an output is needed.
 void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     if (ri_whfast512->is_synchronized == 0){
+        const unsigned int N_systems = ri_whfast512->N_systems;
 #ifdef AVX512
         struct reb_particle_avx512* sync_pj = NULL;
-        struct reb_particle sync_pj0 = {0};
+        struct reb_particle sync_pj0[4];
         if (ri_whfast512->recalculate_constants){ 
             // Needed if no step has ever been done before (like SA)
             recalculate_constants(r);
@@ -1035,14 +1037,18 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
         if (ri_whfast512->keep_unsynchronized){
             sync_pj = aligned_alloc(64,sizeof(struct reb_particle_avx512));
             memcpy(sync_pj,ri_whfast512->p_jh, sizeof(struct reb_particle_avx512));
-            sync_pj0 = ri_whfast512->p_jh0[0];
+            for (int s=0; s<N_systems; s++){
+                sync_pj0[s] = ri_whfast512->p_jh0[s];
+            }
         }
         reb_whfast512_kepler_step(r, r->dt/2.);    
         reb_whfast512_com_step(r, r->dt/2.);
         democraticheliocentric_to_inertial_posvel(r);
         if (ri_whfast512->keep_unsynchronized){
             memcpy(ri_whfast512->p_jh, sync_pj, sizeof(struct reb_particle_avx512));
-            ri_whfast512->p_jh0[0] = sync_pj0;
+            for (int s=0; s<N_systems; s++){
+                ri_whfast512->p_jh0[s] = sync_pj0[s];
+            }
             free(sync_pj);
         }else{
             ri_whfast512->is_synchronized = 1;
@@ -1050,14 +1056,16 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
 #else // No AVX512 available
       // Using WHFast as a workaround.
       // Not bit-wise reproducible. 
-        struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-        if (ri_whfast512->systems_N !=1){
-            reb_warning(r, "Synchronization using WHFast not implemented for systems_N != 1.");
+        struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+        if (ri_whfast512->N_systems !=1){
+            reb_simulation_warning(r, "Synchronization using WHFast not implemented for N_systems != 1.");
             return;
         }
-        reb_warning(r, "WHFast512 is not available. Synchronization is provided using WHFast and is not bit-compatible to WHFast512.");
+        reb_simulation_warning(r, "WHFast512 is not available. Synchronization is provided using WHFast and is not bit-compatible to WHFast512.");
         reb_integrator_whfast_init(r);
-        ri_whfast->p_jh[0] = ri_whfast512->p_jh0[0];
+        for (int s=0; s<N_systems; s++){
+            ri_whfast->p_jh[s] = ri_whfast512->p_jh0[s];
+        }
         for (unsigned int i=1;i<r->N;i++){
             ri_whfast->p_jh[i].m = ri_whfast512->p_jh->m[i-1];
             ri_whfast->p_jh[i].x = ri_whfast512->p_jh->x[i-1];
@@ -1079,12 +1087,12 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
 // Free memory and reset all constants.
 // This needs to be called when the timestep, the number of particles, masses, etc are changed, 
 void reb_integrator_whfast512_reset(struct reb_simulation* const r){
-    struct reb_simulation_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    if (ri_whfast512->allocated_N){
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    if (ri_whfast512->N_allocated){
         free(ri_whfast512->p_jh);
     }
     ri_whfast512->p_jh = NULL;
-    ri_whfast512->allocated_N = 0;
+    ri_whfast512->N_allocated = 0;
     ri_whfast512->gr_potential = 0;
     ri_whfast512->is_synchronized = 1;
     ri_whfast512->keep_unsynchronized = 0;

@@ -64,7 +64,7 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
     // Calculate gravity using standard gravity routine
     r->gravity_ignore_terms = 2;
     r->gravity = REB_GRAVITY_BASIC;
-    reb_update_acceleration(r);
+    reb_simulation_update_acceleration(r);
     if (v!=0.){
         reb_calculate_and_apply_jerk(r,v);
     }
@@ -222,7 +222,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                 particles[0].vz    += prefactj*dz;
             }
         }
-        for (int v=0;v<r->var_config_N;v++){
+        for (int v=0;v<r->N_var_config;v++){
             struct reb_variational_configuration const vc = r->var_config[v];
             if (vc.order==1){
                 //////////////////
@@ -361,7 +361,7 @@ static void reb_integrator_eos_drift_shell1(struct reb_simulation* const r, doub
 }
 
 static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, double _dt){
-    struct reb_simulation_integrator_eos* const reos = &(r->ri_eos);
+    struct reb_integrator_eos* const reos = &(r->ri_eos);
     const int n = reos->n;
     const double dt = _dt/n;
     reb_integrator_eos_preprocessor(r, dt, reos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
@@ -536,7 +536,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
 
 void reb_integrator_eos_part1(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC){
-        reb_warning(r,"EOS only supports the BASIC gravity routine.");
+        reb_simulation_warning(r,"EOS only supports the BASIC gravity routine.");
     }
     // No force calculation needed between part1 and part2 of the integrator. 
     // eos_interaction() routine will set r->gravity to BASIC later. 
@@ -545,7 +545,7 @@ void reb_integrator_eos_part1(struct reb_simulation* r){
 }
 
 void reb_integrator_eos_part2(struct reb_simulation* const r){
-    struct reb_simulation_integrator_eos* const reos = &(r->ri_eos);
+    struct reb_integrator_eos* const reos = &(r->ri_eos);
     const double dt = r->dt;
 
     double dtfac = 1.;
@@ -685,7 +685,7 @@ void reb_integrator_eos_part2(struct reb_simulation* const r){
 }
 
 void reb_integrator_eos_synchronize(struct reb_simulation* r){
-    struct reb_simulation_integrator_eos* const reos = &(r->ri_eos);
+    struct reb_integrator_eos* const reos = &(r->ri_eos);
     const double dt = r->dt;
     if (reos->is_synchronized == 0){
         switch(reos->phi0){

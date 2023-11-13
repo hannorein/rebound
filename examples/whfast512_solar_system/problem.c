@@ -80,7 +80,7 @@ double run(int use_whfast512){
     struct timeval time_beginning;
     struct timeval time_end;
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->dt = 5.0/365.25*2*M_PI; // 5 days
     r->G = 1.;
@@ -103,15 +103,15 @@ double run(int use_whfast512){
             .x = all_ss_pos[i][0], .y = all_ss_pos[i][1], .z = all_ss_pos[i][2],
             .vx = all_ss_vel[i][0], .vy = all_ss_vel[i][1], .vz = all_ss_vel[i][2]
         };
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
 
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
 
 
     gettimeofday(&time_beginning,NULL);
     double tmax = 2.*M_PI*1e6; // 1 Myr
-    int err = reb_integrate(r,  tmax);
+    int err = reb_simulation_integrate(r,  tmax);
     if (err>0){
         printf("An error occured during the integration.\n");
         exit(EXIT_FAILURE);

@@ -122,7 +122,7 @@ class TestCollisions(unittest.TestCase):
         sim.collision  = "tree"
         sim.collision_resolve = "hardsphere"
         def cor_remove_both(r, c):
-            r.contents.collisions_Nlog += 1
+            r.contents.collisions_log_n += 1
             return 3
         sim.collision_resolve = cor_remove_both
         
@@ -133,7 +133,7 @@ class TestCollisions(unittest.TestCase):
         sim.dt = 0.001
         with self.assertRaises(rebound.NoParticles):
             sim.integrate(1000.)
-        self.assertEqual(sim.collisions_Nlog,5)
+        self.assertEqual(sim.collisions_log_n,5)
     
     def test_direct_remove_both(self):
         sim = rebound.Simulation()
@@ -143,7 +143,7 @@ class TestCollisions(unittest.TestCase):
         sim.boundary   = "open"
         sim.collision  = "direct"
         def cor_remove_both(r, c):
-            r.contents.collisions_Nlog += 1
+            r.contents.collisions_log_n += 1
             return 3
         sim.collision_resolve = cor_remove_both
         
@@ -154,7 +154,7 @@ class TestCollisions(unittest.TestCase):
         sim.dt = 0.001
         with self.assertRaises(rebound.NoParticles):
             sim.integrate(1000.)
-        self.assertEqual(sim.collisions_Nlog,5)
+        self.assertEqual(sim.collisions_log_n,5)
 
     def test_tree_remove_one(self):
         sim = rebound.Simulation()
@@ -165,7 +165,7 @@ class TestCollisions(unittest.TestCase):
         sim.gravity    = "tree"
         sim.collision  = "tree"
         def cor_remove_both(r, c):
-            r.contents.collisions_Nlog += 1
+            r.contents.collisions_log_n += 1
             return random.randint(1,3)
         sim.collision_resolve = cor_remove_both
         
@@ -186,7 +186,7 @@ class TestCollisions(unittest.TestCase):
         sim.boundary   = "open"
         sim.collision  = "direct"
         def cor_remove_both(r, c):
-            r.contents.collisions_Nlog += 1
+            r.contents.collisions_log_n += 1
             return random.randint(1,3)
         sim.collision_resolve = cor_remove_both
        

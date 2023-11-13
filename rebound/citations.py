@@ -245,7 +245,7 @@ archivePrefix = {arXiv},
 
 
     if sim.simulationarchive_auto_interval!=0 or sim.simulationarchive_auto_walltime!=0 or sim.simulationarchive_auto_step!=0:
-        txt += """The SimulationArchive format was used to store fully reproducible simulation data \citep{reboundsa}. """
+        txt += """The Simulationarchive format was used to store fully reproducible simulation data \citep{reboundsa}. """
         bib += """@ARTICLE{reboundsa,
        author = {{Rein}, Hanno and {Tamayo}, Daniel},
         title = "{A new paradigm for reproducing and analyzing N-body simulations of planetary systems}",

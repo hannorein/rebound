@@ -62,11 +62,11 @@ void reb_boundary_check(struct reb_simulation* const r){
 				}
 				if (removep==1){
                     if(r->track_energy_offset){
-                        double Ei = reb_tools_energy(r);
-                        reb_remove(r, i,1);
-                        r->energy_offset += Ei - reb_tools_energy(r);
+                        double Ei = reb_simulation_energy(r);
+                        reb_simulation_remove_particle(r, i,1);
+                        r->energy_offset += Ei - reb_simulation_energy(r);
                     } else {
-                    reb_remove(r, i,0); // keepSorted=0 by default in C version
+                    reb_simulation_remove_particle(r, i,0); // keep_sorted=0 by default in C version
                     }
                     if (r->tree_root==NULL){
                         i--; // need to recheck the particle that replaced the removed one
@@ -143,54 +143,54 @@ void reb_boundary_check(struct reb_simulation* const r){
 	}
 }
 
-static const struct reb_ghostbox nan_ghostbox = {.shiftx = 0, .shifty = 0, .shiftz = 0, .shiftvx = 0, .shiftvy = 0, .shiftvz = 0};
+static const struct reb_vec6d nan_ghostbox = {.x = 0, .y = 0, .z = 0, .vx = 0, .vy = 0, .vz = 0};
 
-struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k){
+struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k){
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:
 		{
-			struct reb_ghostbox gb;
-			gb.shiftx = r->boxsize.x*(double)i;
-			gb.shifty = r->boxsize.y*(double)j;
-			gb.shiftz = r->boxsize.z*(double)k;
-			gb.shiftvx = 0;
-			gb.shiftvy = 0;
-			gb.shiftvz = 0;
+			struct reb_vec6d gb;
+			gb.x = r->boxsize.x*(double)i;
+			gb.y = r->boxsize.y*(double)j;
+			gb.z = r->boxsize.z*(double)k;
+			gb.vx = 0;
+			gb.vy = 0;
+			gb.vz = 0;
 			return gb;
 		}
 		case REB_BOUNDARY_SHEAR:
 		{
 			const double OMEGA = r->ri_sei.OMEGA;
-			struct reb_ghostbox gb;
+			struct reb_vec6d gb;
 			// Ghostboxes habe a finite velocity.
-			gb.shiftvx = 0.;
-			gb.shiftvy = -1.5*(double)i*OMEGA*r->boxsize.x;
-			gb.shiftvz = 0.;
+			gb.vx = 0.;
+			gb.vy = -1.5*(double)i*OMEGA*r->boxsize.x;
+			gb.vz = 0.;
 			// The shift in the y direction is time dependent. 
 			double shift;
 			if (i==0){
-				shift = -fmod(gb.shiftvy*r->t,r->boxsize.y); 
+				shift = -fmod(gb.vy*r->t,r->boxsize.y); 
 			}else{
 				if (i>0){
-					shift = -fmod(gb.shiftvy*r->t-r->boxsize.y/2.,r->boxsize.y)-r->boxsize.y/2.; 
+					shift = -fmod(gb.vy*r->t-r->boxsize.y/2.,r->boxsize.y)-r->boxsize.y/2.; 
 				}else{
-					shift = -fmod(gb.shiftvy*r->t+r->boxsize.y/2.,r->boxsize.y)+r->boxsize.y/2.; 
+					shift = -fmod(gb.vy*r->t+r->boxsize.y/2.,r->boxsize.y)+r->boxsize.y/2.; 
 				}	
 			}
-			gb.shiftx = r->boxsize.x*(double)i;
-			gb.shifty = r->boxsize.y*(double)j-shift;
-			gb.shiftz = r->boxsize.z*(double)k;
+			gb.x = r->boxsize.x*(double)i;
+			gb.y = r->boxsize.y*(double)j-shift;
+			gb.z = r->boxsize.z*(double)k;
 			return gb;
 		}
 		case REB_BOUNDARY_PERIODIC:
 		{
-			struct reb_ghostbox gb;
-			gb.shiftx = r->boxsize.x*(double)i;
-			gb.shifty = r->boxsize.y*(double)j;
-			gb.shiftz = r->boxsize.z*(double)k;
-			gb.shiftvx = 0;
-			gb.shiftvy = 0;
-			gb.shiftvz = 0;
+			struct reb_vec6d gb;
+			gb.x = r->boxsize.x*(double)i;
+			gb.y = r->boxsize.y*(double)j;
+			gb.z = r->boxsize.z*(double)k;
+			gb.vx = 0;
+			gb.vy = 0;
+			gb.vz = 0;
 			return gb;
 		}
 		default:

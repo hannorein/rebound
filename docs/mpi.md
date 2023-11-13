@@ -27,11 +27,11 @@ export CC=mpicc
 After creating the simulation structure, you need to initialize the tree structure:
 
 ``` c
-struct reb_simulation* r = reb_create_simulation();
+struct reb_simulation* r = reb_simulation_create();
 r->gravity          = REB_GRAVITY_TREE;
 r->collision        = REB_COLLISION_TREE;
 // other configuration options
-reb_configure_box(r, boxsize, 2, 2, 1);
+reb_simulation_configure_box(r, boxsize, 2, 2, 1);
 ```    
 
 The number of root trees needs to be an integer multiple of the number of MPI processes.
@@ -50,13 +50,13 @@ Once the simulation is done terminates the MPI execution environment and cleanup
 
 ``` c
 reb_mpi_finalize(r);
-reb_free_simulation(r);
+reb_simulation_free(r);
 ```
 
 How to submit and run parallel jobs depends on your computing cluster. Please contact your cluster administrator if you have questions about this.
 
 ## Support
 In general, using REBOUND with MPI requires a lot more work on the user's side to make thing work. 
-Many features are currently not compatible with MPI, or require some extra thought, for example binary input/output and SimulationArchives.
+Many features are currently not compatible with MPI, or require some extra thought, for example binary input/output and Simulationarchives.
 If you would like to use a features with MPI that is currently not supported, or you have any other questions regarding MPI and REBOUND, please [open an issue on GitHub](https://github.com/hannorein/rebound/issues).
 

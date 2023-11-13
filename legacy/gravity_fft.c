@@ -6,7 +6,7 @@
  * @details 	This is a 2D FFT poisson solver for periodic and shearing sheet boxes.
  * 		It has not been well tested yet, so use with caution.
  *		Furthermore, it is not parallelized yet.
- *		The number of grid points is set by root_nx and root_ny. 
+ *		The number of grid points is set by N_root_x and N_root_y. 
  *
  * 
  * @section LICENSE
@@ -84,7 +84,7 @@ void reb_calculate_acceleration(void){
 	}
 	if (integrator == SEI){
 		struct ghostbox gb = boundaries_get_ghostbox(1,0,0);
-		shift_shear = gb.shifty;
+		shift_shear = gb.y;
 	}
 	gravity_fft_p2grid();
 	
@@ -107,8 +107,8 @@ void reb_calculate_acceleration(void){
 			// (the k=0 is set to zero by renormalization...)
 			if ( k[i] == 0.0 ) k[i] = 1.0; 
 		}
-		double q0 = - 2.0 * M_PI * density[2*i] / (k[i] * root_nx * root_ny);
-		double q1 = - 2.0 * M_PI * density[2*i+1] / (k[i] * root_nx * root_ny);
+		double q0 = - 2.0 * M_PI * density[2*i] / (k[i] * N_root_x * N_root_y);
+		double q1 = - 2.0 * M_PI * density[2*i+1] / (k[i] * N_root_x * N_root_y);
 		double sinkxt = sin(kxt[i] * dx);
 		double sinky  = sin(ky[i] * dy);
 		fx[2*i]		=   q1 * sinkxt / dx;		// Real part of Fx
@@ -135,18 +135,18 @@ void reb_calculate_acceleration(void){
 void gravity_fft_init(void) {
 
 	// dimension definition
-	grid_NX_COMPLEX	= root_nx;		
-	grid_NY_COMPLEX	= (root_ny / 2 + 1);
+	grid_NX_COMPLEX	= N_root_x;		
+	grid_NY_COMPLEX	= (N_root_y / 2 + 1);
 	grid_NCOMPLEX	= grid_NX_COMPLEX * grid_NY_COMPLEX;
-	dx		= boxsize.x / root_nx;		
-	dy		= boxsize.y / root_ny;	
+	dx		= boxsize.x / N_root_x;		
+	dy		= boxsize.y / N_root_y;	
 	
 	// Array allocation
 	kx  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	ky  = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
 	if (integrator == SEI){
 		kxt = (double *) fftw_malloc( sizeof(double) * grid_NCOMPLEX);
-		w1d = (double *) fftw_malloc( sizeof(double) * root_ny * 2 );
+		w1d = (double *) fftw_malloc( sizeof(double) * N_root_y * 2 );
 	}else{
 		kxt = kx; 	// No time dependent wave vectors.
 	}
@@ -176,11 +176,11 @@ void gravity_fft_init(void) {
 	}
 	
 	// Init ffts (use in place fourier transform for efficient memory usage)
-	r2cfft = fftw_plan_dft_r2c_2d( root_nx, root_ny, density, (fftw_complex*)density, FFTW_MEASURE);
-	c2rfft = fftw_plan_dft_c2r_2d( root_nx, root_ny, (fftw_complex*)density, density, FFTW_MEASURE);
+	r2cfft = fftw_plan_dft_r2c_2d( N_root_x, N_root_y, density, (fftw_complex*)density, FFTW_MEASURE);
+	c2rfft = fftw_plan_dft_c2r_2d( N_root_x, N_root_y, (fftw_complex*)density, density, FFTW_MEASURE);
 	if (integrator == SEI){
-		for1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_FORWARD, FFTW_MEASURE);
-		bac1dfft = fftw_plan_dft_1d(root_ny, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_BACKWARD, FFTW_MEASURE);
+		for1dfft = fftw_plan_dft_1d(N_root_y, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_FORWARD, FFTW_MEASURE);
+		bac1dfft = fftw_plan_dft_1d(N_root_y, (fftw_complex*)w1d, (fftw_complex*)w1d, FFTW_BACKWARD, FFTW_MEASURE);
 	}
 }
 
@@ -195,18 +195,18 @@ double W(double x){
 void gravity_fft_remap(double* wi, const double direction) {
 	double phase, rew, imw;
 	
-	for(int i = 0 ; i < root_nx ; i++) {
-		for(int j = 0 ; j < root_ny ; j++) {
-			w1d[ 2 * j ] = wi[j + (root_ny + 2) * i];		// w1d is supposed to be a complex array. 
+	for(int i = 0 ; i < N_root_x ; i++) {
+		for(int j = 0 ; j < N_root_y ; j++) {
+			w1d[ 2 * j ] = wi[j + (N_root_y + 2) * i];		// w1d is supposed to be a complex array. 
 			w1d[ 2 * j + 1 ] = 0.0;
 		}
 		
 		// Transform w1d, which will be stored in w2d
 		fftw_execute(for1dfft);
 					
-		for(int j = 0 ; j < root_ny ; j++) {
+		for(int j = 0 ; j < N_root_y ; j++) {
 			// phase = ky * (-shift_shear)
-			phase =  - direction * (2.0 * M_PI) / boxsize.y * ((j + (root_ny / 2)) % root_ny - root_ny / 2) * shift_shear * ((double) i) / ((double) root_nx);
+			phase =  - direction * (2.0 * M_PI) / boxsize.y * ((j + (N_root_y / 2)) % N_root_y - N_root_y / 2) * shift_shear * ((double) i) / ((double) N_root_x);
 			
 			rew = w1d[2 * j];
 			imw = w1d[2 * j + 1];
@@ -217,7 +217,7 @@ void gravity_fft_remap(double* wi, const double direction) {
 			w1d[2 * j + 1] = rew * sin(phase) + imw * cos(phase);
 			
 			// Throw the Nyquist Frequency (should be useless anyway)
-			if(j==root_ny/2) {
+			if(j==N_root_y/2) {
 				w1d[2 * j    ] =0.0;
 				w1d[2 * j + 1] = 0.0;
 			}
@@ -225,8 +225,8 @@ void gravity_fft_remap(double* wi, const double direction) {
 		
 		fftw_execute(bac1dfft);
 		
-		for(int j = 0 ; j < root_ny ; j++) {
-			wi[j + (root_ny + 2) * i] = w1d[ 2 * j ] / root_ny;
+		for(int j = 0 ; j < N_root_y ; j++) {
+			wi[j + (N_root_y + 2) * i] = w1d[ 2 * j ] / N_root_y;
 		}
 	}
 }
@@ -234,7 +234,7 @@ void gravity_fft_remap(double* wi, const double direction) {
 void gravity_fft_p2grid(void){
 		
 	// clean the current density
-	for(int i = 0 ; i < root_nx * (root_ny + 2) ; i++) {
+	for(int i = 0 ; i < N_root_x * (N_root_y + 2) ; i++) {
 		density_r[i] = 0.0;			// density is used to store the surface density
 	}
 	
@@ -242,8 +242,8 @@ void gravity_fft_p2grid(void){
 		struct reb_particle p = particles[i];
 		// I'm sorry to say I have to keep these traps. Something's wrong if these traps are called.
 		
-		int x = (int) floor((p.x / boxsize.x + 0.5) * root_nx);
-		int y = (int) floor((p.y / boxsize.y + 0.5) * root_ny);
+		int x = (int) floor((p.x / boxsize.x + 0.5) * N_root_x);
+		int y = (int) floor((p.y / boxsize.y + 0.5) * N_root_y);
 		
 		// Formally, pos.x is in the interval [-size/2 , size/2 [. Therefore, x and y should be in [0 , grid_NJ-1]
 		
@@ -264,15 +264,15 @@ void gravity_fft_p2grid(void){
 		int xp1Target = xp1;
 		int xm1Target = xm1;
 		
-		int ym1_xm1Target = (ym1 + root_ny) % root_ny;
+		int ym1_xm1Target = (ym1 + N_root_y) % N_root_y;
 		int ym1_xTarget   = ym1_xm1Target;
 		int ym1_xp1Target = ym1_xm1Target;
 		
-		int y_xm1Target = y % root_ny;
+		int y_xm1Target = y % N_root_y;
 		int y_xTarget   = y_xm1Target;
 		int y_xp1Target = y_xm1Target;
 		
-		int yp1_xm1Target = yp1 % root_ny;
+		int yp1_xm1Target = yp1 % N_root_y;
 		int yp1_xTarget   = yp1_xm1Target;
 		int yp1_xp1Target = yp1_xm1Target;
 		
@@ -283,63 +283,63 @@ void gravity_fft_p2grid(void){
 		// This is only an **approximate** mapping
 		// one should use an exact interpolation scheme here (Fourier like).
 		
-		if(xp1Target>=root_nx) {
-			xp1Target -= root_nx;							// X periodicity
-			y_xp1Target = y_xp1Target + round((shift_shear/boxsize.y) * root_ny);
-			y_xp1Target = (y_xp1Target + root_ny) % root_ny;		// Y periodicity
-			yp1_xp1Target = yp1_xp1Target + round((shift_shear/boxsize.y) * root_ny);
-			yp1_xp1Target = (yp1_xp1Target + root_ny) % root_ny;
-			ym1_xp1Target = ym1_xp1Target + round((shift_shear/boxsize.y) * root_ny);
-			ym1_xp1Target = (ym1_xp1Target + root_ny) % root_ny;
+		if(xp1Target>=N_root_x) {
+			xp1Target -= N_root_x;							// X periodicity
+			y_xp1Target = y_xp1Target + round((shift_shear/boxsize.y) * N_root_y);
+			y_xp1Target = (y_xp1Target + N_root_y) % N_root_y;		// Y periodicity
+			yp1_xp1Target = yp1_xp1Target + round((shift_shear/boxsize.y) * N_root_y);
+			yp1_xp1Target = (yp1_xp1Target + N_root_y) % N_root_y;
+			ym1_xp1Target = ym1_xp1Target + round((shift_shear/boxsize.y) * N_root_y);
+			ym1_xp1Target = (ym1_xp1Target + N_root_y) % N_root_y;
 		}
 		
 		if(xm1Target<0) {
-			xm1Target += root_nx;
-			y_xm1Target = y_xm1Target - round((shift_shear/boxsize.x) * root_ny);
-			y_xm1Target = (y_xm1Target + root_ny) % root_ny;		// Y periodicity
-			yp1_xm1Target = yp1_xm1Target - round((shift_shear/boxsize.x) * root_ny);
-			yp1_xm1Target = (yp1_xm1Target + root_ny) % root_ny;
-			ym1_xm1Target = ym1_xm1Target - round((shift_shear/boxsize.x) * root_ny);
-			ym1_xm1Target = (ym1_xm1Target + root_ny) % root_ny;
+			xm1Target += N_root_x;
+			y_xm1Target = y_xm1Target - round((shift_shear/boxsize.x) * N_root_y);
+			y_xm1Target = (y_xm1Target + N_root_y) % N_root_y;		// Y periodicity
+			yp1_xm1Target = yp1_xm1Target - round((shift_shear/boxsize.x) * N_root_y);
+			yp1_xm1Target = (yp1_xm1Target + N_root_y) % N_root_y;
+			ym1_xm1Target = ym1_xm1Target - round((shift_shear/boxsize.x) * N_root_y);
+			ym1_xm1Target = (ym1_xm1Target + N_root_y) % N_root_y;
 		}
 
 		// Distribute density to the 9 nearest cells
 		
-		tx = ((double)xm1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)ym1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xm1Target + ym1_xm1Target] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)xm1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)ym1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xm1Target + ym1_xm1Target] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)x   +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)ym1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xTarget   + ym1_xTarget] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)x   +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)ym1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xTarget   + ym1_xTarget] += q0 * W(tx/dx)*W(ty/dy); 
 		
-		tx = ((double)xp1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)ym1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xp1Target + ym1_xp1Target] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)xp1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)ym1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xp1Target + ym1_xp1Target] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)xm1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)y   +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xm1Target + y_xm1Target  ] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)xm1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)y   +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xm1Target + y_xm1Target  ] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)x   +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)y   +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xTarget   + y_xTarget  ] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)x   +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)y   +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xTarget   + y_xTarget  ] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)xp1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)y   +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xp1Target + y_xp1Target  ] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)xp1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)y   +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xp1Target + y_xp1Target  ] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)xm1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)yp1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xm1Target + yp1_xm1Target] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)xm1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)yp1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xm1Target + yp1_xm1Target] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)x   +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)yp1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xTarget   + yp1_xTarget] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)x   +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)yp1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xTarget   + yp1_xTarget] += q0 * W(tx/dx)*W(ty/dy); 
 
-		tx = ((double)xp1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p.x;
-		ty = ((double)yp1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p.y;
-		density_r[(root_ny+2) * xp1Target + yp1_xp1Target] += q0 * W(tx/dx)*W(ty/dy); 
+		tx = ((double)xp1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p.x;
+		ty = ((double)yp1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p.y;
+		density_r[(N_root_y+2) * xp1Target + yp1_xp1Target] += q0 * W(tx/dx)*W(ty/dy); 
 	}
 }
 
@@ -348,8 +348,8 @@ void gravity_fft_grid2p(struct reb_particle* p){
 	
 	// I'm sorry to say I have to keep these traps. Something's wrong if these traps are called.
 		
-	int x = (int) floor((p->x / boxsize.x + 0.5) * root_nx);
-	int y = (int) floor((p->y / boxsize.y + 0.5) * root_ny);
+	int x = (int) floor((p->x / boxsize.x + 0.5) * N_root_x);
+	int y = (int) floor((p->y / boxsize.y + 0.5) * N_root_y);
 		
 	// Formally, pos.x is in the interval [-size/2 , size/2 [. Therefore, x and y should be in [0 , grid_NJ-1]
 		
@@ -370,15 +370,15 @@ void gravity_fft_grid2p(struct reb_particle* p){
 	int xp1Target = xp1;
 	int xm1Target = xm1;
 	
-	int ym1_xm1Target = (ym1 + root_ny) % root_ny;
+	int ym1_xm1Target = (ym1 + N_root_y) % N_root_y;
 	int ym1_xTarget   = ym1_xm1Target;
 	int ym1_xp1Target = ym1_xm1Target;
 		
-	int y_xm1Target = y % root_ny;
+	int y_xm1Target = y % N_root_y;
 	int y_xTarget   = y_xm1Target;
 	int y_xp1Target = y_xm1Target;
 		
-	int yp1_xm1Target = yp1 % root_ny;
+	int yp1_xm1Target = yp1 % N_root_y;
 	int yp1_xTarget   = yp1_xm1Target;
 	int yp1_xp1Target = yp1_xm1Target;
 
@@ -389,80 +389,80 @@ void gravity_fft_grid2p(struct reb_particle* p){
 	// This is only an **approximate** mapping
 	// one should use an exact interpolation scheme here (Fourier like).
 		
-	if(xp1Target>=root_nx) {
-		xp1Target -= root_nx;							// X periodicity
-		y_xp1Target = y_xp1Target + round((shift_shear/boxsize.y) * root_ny);
-		y_xp1Target = (y_xp1Target + root_ny) % root_ny;			// Y periodicity
-		yp1_xp1Target = yp1_xp1Target + round((shift_shear/boxsize.y) * root_ny);
-		yp1_xp1Target = (yp1_xp1Target + root_ny) % root_ny;
-		ym1_xp1Target = ym1_xp1Target + round((shift_shear/boxsize.y) * root_ny);
-		ym1_xp1Target = (ym1_xp1Target + root_ny) % root_ny;
+	if(xp1Target>=N_root_x) {
+		xp1Target -= N_root_x;							// X periodicity
+		y_xp1Target = y_xp1Target + round((shift_shear/boxsize.y) * N_root_y);
+		y_xp1Target = (y_xp1Target + N_root_y) % N_root_y;			// Y periodicity
+		yp1_xp1Target = yp1_xp1Target + round((shift_shear/boxsize.y) * N_root_y);
+		yp1_xp1Target = (yp1_xp1Target + N_root_y) % N_root_y;
+		ym1_xp1Target = ym1_xp1Target + round((shift_shear/boxsize.y) * N_root_y);
+		ym1_xp1Target = (ym1_xp1Target + N_root_y) % N_root_y;
 	}
 		
 	if(xm1Target<0) {
-		xm1Target += root_nx;
-		y_xm1Target = y_xm1Target - round((shift_shear/boxsize.y) * root_ny);
-		y_xm1Target = (y_xm1Target + root_ny) % root_ny;			// Y periodicity
-		yp1_xm1Target = yp1_xm1Target - round((shift_shear/boxsize.y) * root_ny);
-		yp1_xm1Target = (yp1_xm1Target + root_ny) % root_ny;
-		ym1_xm1Target = ym1_xm1Target - round((shift_shear/boxsize.y) * root_ny);
-		ym1_xm1Target = (ym1_xm1Target + root_ny) % root_ny;
+		xm1Target += N_root_x;
+		y_xm1Target = y_xm1Target - round((shift_shear/boxsize.y) * N_root_y);
+		y_xm1Target = (y_xm1Target + N_root_y) % N_root_y;			// Y periodicity
+		yp1_xm1Target = yp1_xm1Target - round((shift_shear/boxsize.y) * N_root_y);
+		yp1_xm1Target = (yp1_xm1Target + N_root_y) % N_root_y;
+		ym1_xm1Target = ym1_xm1Target - round((shift_shear/boxsize.y) * N_root_y);
+		ym1_xm1Target = (ym1_xm1Target + N_root_y) % N_root_y;
 	}
 
 
-	tx = ((double)xm1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)ym1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)xm1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)ym1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 
-	p->ax += fx[(root_ny+2) * xm1Target + ym1_xm1Target] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xm1Target + ym1_xm1Target] * W(-tx/dx)*W(-ty/dy);
+	p->ax += fx[(N_root_y+2) * xm1Target + ym1_xm1Target] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xm1Target + ym1_xm1Target] * W(-tx/dx)*W(-ty/dy);
 
-	tx = ((double)x   +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)ym1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)x   +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)ym1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 	
-	p->ax += fx[(root_ny+2) * xTarget   + ym1_xTarget] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xTarget   + ym1_xTarget] * W(-tx/dx)*W(-ty/dy);
+	p->ax += fx[(N_root_y+2) * xTarget   + ym1_xTarget] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xTarget   + ym1_xTarget] * W(-tx/dx)*W(-ty/dy);
 	
-	tx = ((double)xp1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)ym1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)xp1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)ym1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 	
-	p->ax += fx[(root_ny+2) * xp1Target + ym1_xp1Target] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xp1Target + ym1_xp1Target] * W(-tx/dx)*W(-ty/dy);
+	p->ax += fx[(N_root_y+2) * xp1Target + ym1_xp1Target] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xp1Target + ym1_xp1Target] * W(-tx/dx)*W(-ty/dy);
 
-	tx = ((double)xm1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)y   +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)xm1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)y   +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 	
-	p->ax += fx[(root_ny+2) * xm1Target + y_xm1Target  ] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xm1Target + y_xm1Target  ] * W(-tx/dx)*W(-ty/dy);
+	p->ax += fx[(N_root_y+2) * xm1Target + y_xm1Target  ] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xm1Target + y_xm1Target  ] * W(-tx/dx)*W(-ty/dy);
 
-	tx = ((double)x   +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)y   +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)x   +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)y   +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 
-	p->ax += fx[(root_ny+2) * xTarget   + y_xTarget  ] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xTarget   + y_xTarget  ] * W(-tx/dx)*W(-ty/dy); 
+	p->ax += fx[(N_root_y+2) * xTarget   + y_xTarget  ] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xTarget   + y_xTarget  ] * W(-tx/dx)*W(-ty/dy); 
 
-	tx = ((double)xp1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)y   +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)xp1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)y   +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 	
-	p->ax += fx[(root_ny+2) * xp1Target + y_xp1Target  ] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xp1Target + y_xp1Target  ] * W(-tx/dx)*W(-ty/dy); 
+	p->ax += fx[(N_root_y+2) * xp1Target + y_xp1Target  ] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xp1Target + y_xp1Target  ] * W(-tx/dx)*W(-ty/dy); 
 
-	tx = ((double)xm1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)yp1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)xm1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)yp1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 
-	p->ax += fx[(root_ny+2) * xm1Target + yp1_xm1Target] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xm1Target + yp1_xm1Target] * W(-tx/dx)*W(-ty/dy);  
+	p->ax += fx[(N_root_y+2) * xm1Target + yp1_xm1Target] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xm1Target + yp1_xm1Target] * W(-tx/dx)*W(-ty/dy);  
 
-	tx = ((double)x   +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)yp1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)x   +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)yp1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 
-	p->ax += fx[(root_ny+2) * xTarget   + yp1_xTarget] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xTarget   + yp1_xTarget] * W(-tx/dx)*W(-ty/dy);  
+	p->ax += fx[(N_root_y+2) * xTarget   + yp1_xTarget] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xTarget   + yp1_xTarget] * W(-tx/dx)*W(-ty/dy);  
 
-	tx = ((double)xp1 +0.5) * boxsize.x / root_nx -0.5*boxsize.x - p->x;
-	ty = ((double)yp1 +0.5) * boxsize.y / root_ny -0.5*boxsize.y - p->y;
+	tx = ((double)xp1 +0.5) * boxsize.x / N_root_x -0.5*boxsize.x - p->x;
+	ty = ((double)yp1 +0.5) * boxsize.y / N_root_y -0.5*boxsize.y - p->y;
 
-	p->ax += fx[(root_ny+2) * xp1Target + yp1_xp1Target] * W(-tx/dx)*W(-ty/dy);
-	p->ay += fy[(root_ny+2) * xp1Target + yp1_xp1Target] * W(-tx/dx)*W(-ty/dy);  
+	p->ax += fx[(N_root_y+2) * xp1Target + yp1_xp1Target] * W(-tx/dx)*W(-ty/dy);
+	p->ay += fy[(N_root_y+2) * xp1Target + yp1_xp1Target] * W(-tx/dx)*W(-ty/dy);  
 	
 }
 

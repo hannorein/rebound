@@ -71,7 +71,7 @@ class TestParticleInSimulation(unittest.TestCase):
         self.assertAlmostEqual(ps[1].vy,1.000499875062461,delta=1e-15)
         self.assertAlmostEqual(ps[2].vy,0.7081066347613374,delta=1e-15)
         self.assertAlmostEqual(ps[3].vy,0.5783504759643414,delta=1e-15)
-        o = self.sim.calculate_orbits(jacobi_masses=True)
+        o = self.sim.orbits(jacobi_masses=True)
         self.assertAlmostEqual(o[0].a,1.,delta=1e-15)
         self.assertAlmostEqual(o[1].a,2.,delta=1e-15)
         self.assertAlmostEqual(o[2].a,3.,delta=1e-15)
@@ -117,7 +117,7 @@ class TestParticleInSimulation(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.sim.add(a=-3.,e=1.4,f=3.1)
    
-    def test_sim_calculate_orbits(self):
+    def test_sim_orbits(self):
         self.sim.add(m=1.)
         self.sim.add(m=1.e-3, a=1.,e=0.2,inc=0.3)
         self.sim.add(m=1.e-3, a=2.,e=0.2,inc=0.3)
@@ -129,13 +129,13 @@ class TestParticleInSimulation(unittest.TestCase):
         self.assertAlmostEqual(ps[2].e,0.2,delta=1e-15)
         self.assertAlmostEqual(ps[2].inc,0.3,delta=1e-15)
 
-    def test_calculate_orbits(self):
+    def test_orbits(self):
         self.sim.add(m=1.)
         self.sim.add(a=1.)
         p = self.sim.particles
         with self.assertRaises(ValueError):
-            p[0].calculate_orbit()
-        o = p[1].calculate_orbit()
+            p[0].orbit()
+        o = p[1].orbit()
         string = o.__str__()
         self.assertGreater(len(string),20)
         self.assertAlmostEqual(o.a,1.,delta=1e-15)
@@ -160,27 +160,27 @@ class TestParticleInSimulation(unittest.TestCase):
         self.assertAlmostEqual(p[1].theta,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].T,0.,delta=1e-15)
     
-    def test_calculate_orbits_errors(self):
+    def test_orbits_errors(self):
         self.sim.add()
         self.sim.add(x=1)
         with self.assertRaises(ValueError):
-            self.sim.particles[1].orbit
+            self.sim.particles[1].orbit()
 
-    def test_calculate_orbits_errors2(self):
+    def test_orbits_errors2(self):
         self.sim.add(m=1)
         p1 = rebound.Particle(simulation=self.sim, a=1,m=0.1)
         self.sim.add(p1)
         with self.assertRaises(ValueError):
-            self.sim.particles[1].calculate_orbit(primary=p1)
+            self.sim.particles[1].orbit(primary=p1)
     
-    def test_calculate_orbits_errors3(self):
+    def test_orbits_errors3(self):
         p1 = rebound.Particle(m=1.,x=1.,vy=0.4)
         p2 = rebound.Particle(m=1.,x=4.,vy=2.4)
         with self.assertRaises(ValueError):
-            p2.calculate_orbit()
+            p2.orbit()
         with self.assertRaises(ValueError):
-            p2.calculate_orbit(primary=p1)
-        p2.calculate_orbit(primary=p1,G=1.)
+            p2.orbit(primary=p1)
+        p2.orbit(primary=p1,G=1.)
         
 
 class TestParticleOperators(unittest.TestCase):

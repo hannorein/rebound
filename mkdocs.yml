@@ -10,7 +10,7 @@ nav:
     - quickstart_installation.md
     - quickstart_firstexample.md
     - quickstart_whereto.md
-  - "API":
+  - "API Documentation":
     - api.md
     - "Simulation":
       - simulation.md
@@ -30,6 +30,8 @@ nav:
       - collisions.md
       - boundaryconditions.md
       - gravity.md
+    - "Visualization":
+      - visualization.md
     - "Other concepts":
       - units.md
       - orbitalelements.md
@@ -47,7 +49,7 @@ nav:
       - "Just getting started":
         - c_examples/simplest.md
         - c_examples/heartbeat.md
-        - c_examples/reb_add_fmt.md
+        - c_examples/reb_simulation_add_fmt.md
         - ipython_examples/Churyumov-Gerasimenko.ipynb
         - ipython_examples/WHFast.ipynb
         - c_examples/solar_system.md
@@ -87,12 +89,12 @@ nav:
         - ipython_examples/HighOrderSymplectic.ipynb
         - ipython_examples/EmbeddedOperatorSplittingMethods.ipynb
         - ipython_examples/PoincareSurfaceOfSection.ipynb
-    - "Checkpoints and Simulation Archive":
+    - "Checkpoints and Simulationarchive":
       - ipython_examples/Checkpoints.ipynb
       - c_examples/simulationarchive.md
       - c_examples/restarting_simulation.md
-      - ipython_examples/SimulationArchive.ipynb
-      - ipython_examples/SimulationArchiveRestart.ipynb
+      - ipython_examples/Simulationarchive.ipynb
+      - ipython_examples/SimulationarchiveRestart.ipynb
     - "Variational equations":
       - c_examples/variational_equations.md
       - ipython_examples/VariationalEquations.ipynb
@@ -130,11 +132,11 @@ nav:
       - c_examples/shearing_sheet_mpi.md
       - c_examples/shearing_sheet_diagnostics.md
       - c_examples/overstability.md
+      - c_examples/thermalhysteresis.md
       - ipython_examples/SaturnsRings.ipynb
     - "Visualization":
       - ipython_examples/WebGLVisualization.ipynb
       - ipython_examples/OrbitPlot.ipynb
-      - ipython_examples/ScreenshotsAndMoviesWithWebGL.ipynb
     - "Removing particles":
       - c_examples/removing_particles_from_simulation.md
       - ipython_examples/EscapingParticles.ipynb

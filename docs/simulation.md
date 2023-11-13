@@ -9,14 +9,14 @@ It's the one structure you will work with most when using REBOUND.
 
 
 === "C"
-    The `reb_create_simulation()` function allocate memory for a `reb_simulation` structure and also initialize all variables to their default value.
+    The `reb_simulation_create()` function allocate memory for a `reb_simulation` structure and also initialize all variables to their default value.
     If you want to avoid a memory leak, you need to free the simulation when you no longer need it.
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... do work ... 
-    reb_free_simulation(r);
+    reb_simulation_free(r);
     ```
-    The call to `reb_free_simulation()` frees all data associated with the simulation such as particles.
+    The call to `reb_simulation_free()` frees all data associated with the simulation such as particles.
     It will also free the memory for the simulation structure itself.
 
 === "Python"
@@ -51,9 +51,9 @@ There are several instances where you need to initialize a simulation's root box
 Initializing root boxes is done after the simulation is created:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     double size = 100.;
-    reb_configure_box(r, size, 1, 2, 3);
+    reb_simulation_configure_box(r, size, 1, 2, 3);
     ```
 === "Python"
     ```python

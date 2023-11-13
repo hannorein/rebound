@@ -18,7 +18,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=b55b684008d1e1168ec6e13e1b03563a5155a73e" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=83a37abbe983272aef6ea984d5daac7d4c2f3bfc" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -26,10 +26,10 @@ if sys.platform == 'darwin':
     config_vars['LDSHARED'] = config_vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
 if sys.platform == 'win32':
-    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE']
+    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
 else:
     # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
+    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
 
 # Option to disable FMA in CLANG. 
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
@@ -56,6 +56,7 @@ libreboundmodule = Extension('librebound',
                                 'src/integrator_sei.c',
                                 'src/integrator.c',
                                 'src/gravity.c',
+                                'src/server.c',
                                 'src/boundary.c',
                                 'src/display.c',
                                 'src/collision.c',
@@ -82,7 +83,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='3.28.4',
+    version='4.0.0',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",

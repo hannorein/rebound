@@ -16,17 +16,19 @@ void heartbeat(struct reb_simulation* r){
 }
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->dt = 0.1;
     r->heartbeat = heartbeat;
-    r->exact_finish_time = 1; // Finish exactly at tmax in reb_integrate(). Default is already 1.
+    r->exact_finish_time = 1; // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
 
     struct reb_particle p1 = {0}; // always initizialize a struct with this syntax to ensure all variables are set to 0.
     p1.m = 1.;
-    reb_add(r, p1);  // reb_add makes a copy of the particle and adds it to the simulation.
+    reb_simulation_add(r, p1);  // reb_simulation_add makes a copy of the particle and adds it to the simulation.
     
-    reb_add_fmt(r, "a e", 1., 0.); // We can also add a particle using the reb_add_fmt function.
+    reb_simulation_add_fmt(r, "a e", 1., 0.); // We can also add a particle using the reb_simulation_add_fmt function.
 
-    reb_integrate(r,100.);
+    reb_simulation_integrate(r,100.);
+
+    reb_simulation_free(r);
 }
 

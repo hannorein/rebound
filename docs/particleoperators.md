@@ -6,8 +6,8 @@ In the code blow, the particle's position and velocity coordinates, and its mass
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt(r, "m x vx", 1., 1., 1.);
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m x vx", 1., 1., 1.);
     reb_particle_imul(&(r->particles[0]), 2.);
     ```
 === "Python"
