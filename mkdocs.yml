@@ -135,7 +135,6 @@ nav:
       - c_examples/thermalhysteresis.md
       - ipython_examples/SaturnsRings.ipynb
     - "Visualization":
-      - ipython_examples/WebGLVisualization.ipynb
       - ipython_examples/OrbitPlot.ipynb
     - "Removing particles":
       - c_examples/removing_particles_from_simulation.md
