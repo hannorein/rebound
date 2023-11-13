@@ -138,7 +138,7 @@ void* reb_server_start(void* args){
 
     if (access("rebound.html", F_OK)) {
         reb_simulation_warning(r, "File rebound.html not found in current directory. Attempting to download it from github.");
-        char curl_cmd[] = "curl -s --output rebound.html https://gist.githubusercontent.com/hannorein/8ad8abc9bb5d2a76cf8da2b104ef8c79/raw/ce41328f2121b9a4d4578cb592684f4c276ba9ed/rebound.html";
+        char curl_cmd[] = "curl -L -s --output rebound.html https://github.com/hannorein/rebound/releases/latest/download/rebound.html";
         system(curl_cmd);
         if (access("rebound.html", F_OK)) {
             reb_simulation_warning(r, "Automatic download failed. Manually download the file from github and place it in the current directory to enable browser based visualization.");
