@@ -1146,7 +1146,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
             struct reb_variational_configuration const vc = r->var_config[v];
             struct reb_particle* const particles_var1 = particles + vc.index;
             const int index = vc.index;
-            // Centre of mass
+            // Center of mass
             p_j[index].x += r->dt/2.*p_j[index].vx;
             p_j[index].y += r->dt/2.*p_j[index].vy;
             p_j[index].z += r->dt/2.*p_j[index].vz;

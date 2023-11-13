@@ -25,7 +25,7 @@ Most likely, it will drift away from the origin.
 Therefore, if you require outputs in the heliocentric frame, call `move_to_hel` before you create an output. 
 Variational equations are not affected by this operation.
 
-## Centre-of-mass frame
+## Center-of-mass frame
 You can also move a simulation to the center-of-mass frame, the inertial frame where the center-of-mass is at the origin. 
 === "C"
     ```c
