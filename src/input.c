@@ -290,7 +290,9 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
         reb_input_process_warnings(NULL, warnings);
     }
     reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
-    reb_simulationarchive_free(sa);
+    if (sa){
+        reb_simulationarchive_free(sa);
+    }
     r = reb_input_process_warnings(r, warnings);
     return r;
 }

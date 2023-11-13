@@ -165,7 +165,9 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
     if (sa->version<2){
         // Version 1 no longer supported
         free(sa->filename);
+        sa->filename = NULL;
         fclose(sa->inf);
+        sa->inf = NULL;
         *warnings |= REB_SIMULATION_BINARY_ERROR_OLD;
         return;
     }else{
@@ -223,10 +225,13 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                 // Everything looks normal so far. Attempt to read next blob
                 struct reb_simulationarchive_blob blob = {0};
                 size_t r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
-                if (r3!=1){ // Next snapshot is definitly corrupted. Assume current might also be.
+                int next_blob_is_corrupted = 0;
+                if (r3!=1){ // Next snapshot is definitly corrupted. 
+                            // Assume we have reached the end of the file. 
+                            // Won't be able to do checksum. 
                     if (debug) printf("SA Error. Error while reading next blob.\n");
-                    read_error = 1;
-                    break;
+                    next_blob_is_corrupted = 1;
+                    *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
                 }
                 if (i>0){
                     // Checking the offsets. Acts like a checksum.
@@ -239,7 +244,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                 }
                 // All tests passed. Accept current snapshot. Increase blob count.
                 sa->nblobs = i+1;
-                if (blob.offset_next==0){
+                if (blob.offset_next==0 || next_blob_is_corrupted){
                     // Last blob. 
                     if (debug) printf("SA Reached final blob.\n");
                     break;
@@ -255,9 +260,13 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                     *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
                 }else{
                     fclose(sa->inf);
+                    sa->inf = NULL;
                     free(sa->filename);
+                    sa->filename = NULL;
                     free(sa->t);
+                    sa->t = NULL;
                     free(sa->offset);
+                    sa->offset = NULL;
                     free(sa);
                     *warnings |= REB_SIMULATION_BINARY_ERROR_SEEK;
                     return;
