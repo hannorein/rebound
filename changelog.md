@@ -5,13 +5,13 @@ This changelog only includes the most important changes in recent updates. For a
 ## Version 4.x
 
 ### Version 4.0.0
-* Major API changes! Many function and variable names have changed. They now adhere to a coherent naming convention. If you have used a previous version of REBOUND, you will need to change your code. See the naming convention section in the documentation for more information.
-* New visualization module! Previously, the use of OpenGL visualization required the installation of GLFW which led to problems on various operating systems. The new visualization module no longer requires ANY dependencies and is compatible with MacOS, Linux, and Windows. It works by opening a local web server to which you can point your browser to. In your web browser, an emscripten compiled version of REBOUND handles the visualization in WebGL while constantly updating simulation data over HTTP. You can use ssh and port forwarding to visualize simulations on remote servers. Note: the HTTP server is neither secure nor efficient. Do not expose the server to the internet.
-* OpenGL for all the examples has been turned off by default to avoid users getting stuck at this step. To turn on OPENGL simply change the flag in the Makefile.
+* Major API changes! Many function and variable names have changed so that they follow a coherent naming convention. If you have used a previous version of REBOUND, you will need to change your code. See the naming convention section in the documentation for more information.
+* New visualization module! Previously, the use of OpenGL visualization required the installation of GLFW which led to problems on various operating systems. The new visualization module no longer requires ANY dependencies and is compatible with MacOS, Linux, and Windows. It works by opening a local web server to which you can point your browser to. In your web browser, an emscripten compiled version of REBOUND handles the visualization in WebGL while constantly updating simulation data over HTTP. You can use ssh and port forwarding to visualize simulations on remote servers. Check out the documentation for more details on this new module.
+* OpenGL for all the examples has been turned off by default so that new users don't get stuck at this step. To turn on OPENGL simply change the flag in the Makefile.
 * Added emscripten support. All C examples including those using OpenGL visualization can now be compiled with emscripten and run from within the browser. Among other things, this allows you to run all C examples directly on readthedocs.org - no download or installation required.
 * Removed race condition in OpenGL visualization which allows the visualization to run much smoother.
 * `reb_random` functions now callable with `r=NULL`. In that case the time and PID is used as a seed.
-* Removed support for Simulationarchives with version 2.
+* Removed support for Simulationarchives with version 2. Added some additional support for reading corrupt/old archives.
 * Fixed memory leak in `reb_simulation_copy`.
 * Consistent integer sizes for 32/64bit. Includes padding for `reb_particle`.
 
