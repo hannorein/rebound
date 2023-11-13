@@ -139,7 +139,7 @@ static const char* onscreenhelp[] = {
                 " g       | Toggle ghost boxes",
                 " r       | Reset view. Press multiple times to ",
                 "         | change orientation",
-                " x/X     | Move to a coordinate system centred ",
+                " x/X     | Move to a coordinate system centerd ",
                 "         | on a particle (note: does not work if", 
                 "         | particle array is resorted)",
                 " c       | Toggle clear screen after each time-step",

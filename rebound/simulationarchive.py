@@ -274,7 +274,7 @@ class Simulationarchive(Structure):
                  coordinates are shifted. If `origin` is an integer
                  then the particle with that index is used as the
                  origin. if `origin` is equal to `com`, then the 
-                 centre of mass is used as the origin. 
+                 center of mass is used as the origin. 
 
 
         Examples

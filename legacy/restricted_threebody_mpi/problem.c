@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
 	
 	int _N = 40000;
 
-	// Move to centre of mass frame (otherwise planet and star drift out of box)
+	// Move to center of mass frame (otherwise planet and star drift out of box)
 	double com_x  = (star.x*star.m  + planet.x*planet.m) /(star.m+planet.m);
 	double com_y  = (star.y*star.m  + planet.y*planet.m) /(star.m+planet.m);
 	double com_z  = (star.z*star.m  + planet.z*planet.m) /(star.m+planet.m);

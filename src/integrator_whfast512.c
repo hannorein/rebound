@@ -829,7 +829,7 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
 #endif
 }
 
-// Performs one full centre of mass step (H_0)
+// Performs one full center of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
 #ifdef PROF
     struct reb_timeval time_beginning;

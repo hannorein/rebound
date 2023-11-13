@@ -53,7 +53,7 @@ The following function allows you to calculate the orbital elements of a particl
     struct reb_orbit o =  reb_orbit_from_particle(r->G, r->particles[1], r->particles[0]);
     printf("a=%f e=%f\n", o.a, o.e);
     ```
-    The last argument of the `reb_orbit_from_particle` function is the primary particle, i.e. the star or the centre of mass. 
+    The last argument of the `reb_orbit_from_particle` function is the primary particle, i.e. the star or the center of mass. 
 === "Python"
     ```python
     sim = rebound.Simulation()

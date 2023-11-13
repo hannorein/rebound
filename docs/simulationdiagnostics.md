@@ -29,8 +29,8 @@ You can calculate the angular momentum of a simulation using the following funct
     ```
 
 ## Centre-of-mass
-You can calculate the centre-of-mass of a simulation using the functions below. 
-The return value is particle object with mass, position, and velocity reflecting those of the centre-of-mass.
+You can calculate the center-of-mass of a simulation using the functions below. 
+The return value is particle object with mass, position, and velocity reflecting those of the center-of-mass.
 
 === "C"
     ```c

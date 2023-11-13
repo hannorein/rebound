@@ -233,7 +233,7 @@ struct reb_integrator_mercurius {
     struct reb_particle* REB_RESTRICT particles_backup; //  contains coordinates before Kepler step for encounter prediction
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // contains coordinates before Kepler step for encounter prediction
     int* encounter_map;             // Map to represent which particles are integrated with ias15
-    struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
+    struct reb_vec3d com_pos;       // Used to keep track of the center of mass during the timestep
     struct reb_vec3d com_vel;
 };
 
@@ -695,7 +695,7 @@ DLLEXPORT void reb_simulation_synchronize(struct reb_simulation* r);
 
 // Move the simulation to the heliocentric frame (particle with index 0 will be at the origin and at rest after calling this function).
 DLLEXPORT void reb_simulation_move_to_hel(struct reb_simulation* const r);
-// Move the simultion to the centre of mass frame (the centre of mass will be at the origin and at rest after calling this function).
+// Move the simultion to the center of mass frame (the center of mass will be at the origin and at rest after calling this function).
 DLLEXPORT void reb_simulation_move_to_com(struct reb_simulation* const r);
 // Multiply x,y,z,vx,vy,vz of each particle in r with given scalars.
 DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel);

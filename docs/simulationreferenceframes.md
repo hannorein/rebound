@@ -26,7 +26,7 @@ Therefore, if you require outputs in the heliocentric frame, call `move_to_hel` 
 Variational equations are not affected by this operation.
 
 ## Centre-of-mass frame
-You can also move a simulation to the centre-of-mass frame, the inertial frame where the centre-of-mass is at the origin. 
+You can also move a simulation to the center-of-mass frame, the inertial frame where the center-of-mass is at the origin. 
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
@@ -40,8 +40,8 @@ You can also move a simulation to the centre-of-mass frame, the inertial frame w
     r.move_to_com()
     ```
 !!! Important
-    If you are not in the centre-of-mass frame, the centre-of-mass will and all the particles will slowly drift away from the origin. 
+    If you are not in the center-of-mass frame, the center-of-mass will and all the particles will slowly drift away from the origin. 
     This has important consequences for long-term integrations. 
     If the particles are far away from the origin, you might increase the numerical errors due to finite floating point precision. 
-    By moving to the centre-of-mass frame after setting up all the particles, you avoid these issues.
+    By moving to the center-of-mass frame after setting up all the particles, you avoid these issues.
 

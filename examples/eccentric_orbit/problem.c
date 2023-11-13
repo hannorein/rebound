@@ -3,7 +3,7 @@
  *
  * This example uses the IAS15 integrator to simulate
  * a very eccentric planetary orbit. The integrator
- * automatically adjusts the timestep so that the pericentre passages
+ * automatically adjusts the timestep so that the pericenter passages
  * are resolved with high accuracy.
  */
 #include <stdio.h>
