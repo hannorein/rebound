@@ -10,8 +10,8 @@ OpenMP parallelization is implemented. If OpenMP is turned on, the scaling is $O
 ## Compensated
 `REB_GRAVITY_COMPENSATED`
 
-This routine also uses direct summation but in addition makes use of compensated summation to minimize roundoff errors. 
-There are only a few special cases where the roundoff error in force calculations has a dominant effect. In most cases, the basic gravity routine is faster and equally accurate.
+This routine also uses direct summation but in addition makes use of compensated summation to minimize round-off errors. 
+There are only a few special cases where the round-off error in force calculations has a dominant effect. In most cases, the basic gravity routine is faster and equally accurate.
 
 ## Tree
 `REB_GRAVITY_TREE`          

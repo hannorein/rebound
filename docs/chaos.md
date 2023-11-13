@@ -68,17 +68,17 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
     There are different definitions of the LCN which might differ by a factor of order unity.
     Here, we're following Eq. 24 of [Cincotta and Simo (2000)](https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html).
 
-## Rescaling of variational equations 
+## Re-scaling of variational equations 
 
 !!! Important
     This is a new feature, first implemented in version 3.21
 
-REBOUND will automatically rescale first order variational equation once any coordinate of a variational particle becomes larger than $10^{100}$. 
+REBOUND will automatically re-scale first order variational equation once any coordinate of a variational particle becomes larger than $10^{100}$. 
 This is only possible for first order variational equations because they are linear. 
-It is not possible to rescale second order equations. 
+It is not possible to re-scale second order equations. 
 For the calculation of MEGNO, all this is done behind the scenes and no user intervention is needed.
 However, should you be interested in the actual value of the variational particles, for example to calculate a Lyapunov exponent manually, then you need to take the value of the `lrescale` variable into account. 
-This variable contains the natural logarithm of all rescaling factors that have been applied throughout the integration to a given set of variational particles.
+This variable contains the natural logarithm of all re-scaling factors that have been applied throughout the integration to a given set of variational particles.
 
 === "C"
     ```c

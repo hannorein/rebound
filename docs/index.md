@@ -23,7 +23,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
 * No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
 * Comes with standard ASCII or binary output routines
-* Different modules are easily interchangeable at runtime
+* Different modules are easily interchangeable at run-time
 
 ## Contributors
 
@@ -67,7 +67,7 @@ There are several papers describing the functionality of REBOUND.
 
 10. Javaheri, Rein & Tamayo 2023 (in prep) describes the WHFast512 integrator which uses AVX512 instructions.
 
-## Acknowledgments
+## Acknowledgements
 
 If you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation.
 please cite REBOUND.

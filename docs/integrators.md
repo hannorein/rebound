@@ -209,7 +209,7 @@ All other members of the `reb_integrator_whfast` structure are for internal use 
 The Gragg-Bulirsch-Stoer integrator (short BS for Bulirsch-Stoer) is an adaptive integrator which uses Richardson extrapolation and the modified midpoint method to obtain solutions to ordinary differential equations.
 
 The version in REBOUND is based on the method described in Hairer, Norsett, and Wanner 1993 (see section II.9, page 224ff), specifically the JAVA implementation available in the [Hipparchus package](https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java). The Hipparchus as well as the REBOUND version are adaptive in both the timestep and the order of the method for optimal performance. 
-The BS implementation in REBOUND can integrate first and second orer variational equations. 
+The BS implementation in REBOUND can integrate first and second order variational equations. 
 
 The BS integrator is particularly useful for short integrations where only medium accuracy is required. For long integrations a symplectic integrator such as WHFast performs better. For high accuracy integrations the IAS15 integrator performs better. Because BS is adaptive, it can handle close encounters. Currently a collision search is only performed after every timestep, i.e. not after a sub-timestep.
 

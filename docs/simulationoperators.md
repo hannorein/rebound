@@ -48,7 +48,7 @@ For example, you can run two simulations with different timesteps and then subtr
 These operations will fail if the number of particles are not the same in `r1` and `r2`.
 
 You can also multiply a simulation with two scalars, one for the position and one for the velocity coordinates.
-This can come in handy when rescaling a simulation
+This can come in handy when re-scaling a simulation
 
 === "C"
     ```c

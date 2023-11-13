@@ -60,7 +60,7 @@ The following code automatically creates a Simulationarchive snapshot after a fi
     ```
 !!! Info
     This method is in general more reliable than the interval method.
-    The reason is that the number of timesteps is an integer valuem whereas the time is a floating point number.
+    The reason is that the number of timesteps is an integer value whereas the time is a floating point number.
     If you run long simulations, you might encounter issues with finite floating point precision.
     This only affects very high accuracy simulation where you want to make sure the outputs occur exactly at the right timestep. 
 

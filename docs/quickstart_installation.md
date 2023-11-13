@@ -55,7 +55,7 @@ You should now be able to import REBOUND from python.
 
 ### Examples
 
-If you look at any of the examples in the `examples/` subdirectories, you'll see one
+If you look at any of the examples in the `examples/` sub-directories, you'll see one
 `problem.c` file and one `Makefile`. All the REBOUND code itself is in the
 `src/` directory. This setup keeps the different projects nicely separated from the shared REBOUND code.
 To compile one of the examples, go to the example's directory and type `make`. 

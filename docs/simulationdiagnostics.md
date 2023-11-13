@@ -28,9 +28,9 @@ You can calculate the angular momentum of a simulation using the following funct
     Lx, Ly, Lz = sim.angular_momentum()
     ```
 
-## Center-of-mass
-You can calculate the center-of-mass of a simulation using the functions below. 
-The return value is particle object with mass, position, and velocity reflecting those of the center-of-mass.
+## Centre-of-mass
+You can calculate the centre-of-mass of a simulation using the functions below. 
+The return value is particle object with mass, position, and velocity reflecting those of the centre-of-mass.
 
 === "C"
     ```c

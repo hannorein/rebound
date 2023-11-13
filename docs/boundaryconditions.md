@@ -77,8 +77,8 @@ The following code sets up two rings of ghost boxes in the x and y directions.
 See [Rein & Liu](https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.128R/abstract) for details on the ghost box implementation.
 
 You might encounter the `reb_vec6d` structure in various parts of the code, for example in function related to gravity calculation and collision detection. 
-It often contains the relative position and velocity of a ghostbox.
-If there are no ghostboxes used, then all elements of this structure will be zero.
+It often contains the relative position and velocity of a ghost-box.
+If there are no ghost-boxes used, then all elements of this structure will be zero.
 
 ## Shear
 ![Shearing sheet](img/shear.png)

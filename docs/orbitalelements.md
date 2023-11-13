@@ -8,7 +8,7 @@ The following image illustrated the most important angles used.
 In REBOUND the reference direction is the positive x direction, the reference plane
 is the xy plane.
 
-![Orbital elements](img/orbit.png "Image from wikipedia. CC-BY-SA-3.")
+![Orbital elements](img/orbit.png "Image from Wikipedia. CC-BY-SA-3.")
 
 ## Orbit structure 
 
@@ -19,7 +19,7 @@ Variable name   | Description
 `h`             | specific angular momentum
 `P`             | orbital period (negative if hyperbolic)
 `n`             | mean motion    (negative if hyperbolic)
-`a`             | semimajor axis
+`a`             | semi-major axis
 `e`             | eccentricity
 `inc`           | inclination
 `Omega`         | longitude of ascending node

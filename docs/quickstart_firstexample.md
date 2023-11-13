@@ -41,7 +41,7 @@ Now we can integrate the particles forward in time using the default integrator 
 sim.integrate(100.)
 ```
 
-Finally, let us output the cartesian coordinates and the orbital parameters at the end of the simulation:
+Finally, let us output the Cartesian coordinates and the orbital parameters at the end of the simulation:
 
 ```python
 for p in sim.particles:
@@ -61,7 +61,7 @@ Go to this directory with
 cd examples/simplest/
 ```
 
-Then have a look at the source code in the `problem.c` file. First, we include the REBOUND header file which contains all the public function prototype and dataype definitions for REBOUND:
+Then have a look at the source code in the `problem.c` file. First, we include the REBOUND header file which contains all the public function prototype and datatype definitions for REBOUND:
 
 ```c
 #include "rebound.h"
@@ -89,7 +89,7 @@ We then integrate the simulation for 100 time units with the default integrator 
 reb_simulation_integrate(r,100.);
 ```
 
-After the integration is done, we can output the cartesian coordinates and the orbital parameters:
+After the integration is done, we can output the Cartesian coordinates and the orbital parameters:
 
 ```c
 for (int i=0; i<r->N; i++){

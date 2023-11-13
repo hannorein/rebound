@@ -41,7 +41,7 @@ By default, the server opens port 1234 on your computer.
 Now all you have to do to see the visualization is to open your browser and go to [http://localhost1234](http://localhost1234) or [http://127.0.0.1](http://127.0.0.1).
 
 When you open the page the REBOUND web server accepts your request and serves you a `rebound.html` file which includes all the code required to visualize a simulation using WebGL. 
-The cool thing is, the visualization code is just REBOUND itself, compiled to WebAssembler using emscripten. 
+The cool thing is, the visualization code is just REBOUND itself, compiled to WebAssembly using emscripten. 
 So the visualization that you see in your web browser is exactly the same as the one you see when compiling REBOUND with the `OPENGL=1` option but without all the hassles associated with using OpenGL/glut/GLFW libraries.
 
 You can generate (compile) a `rebound.html` file yourself. The code for that is in the directory `web_client/`. 
@@ -63,8 +63,8 @@ Commands that only affect the visualization (for example you can press `w` to sh
 For all keyboard commands available, press `h`. A help window will show up on screen.
 
 
-## Widget in jupyter notebooks
-Instead of opening a new browser window for the visualization, you can also include a visualization widget in your jupyter notebook.
+## Widget in Jupyter notebooks
+Instead of opening a new browser window for the visualization, you can also include a visualization widget in your Jupyter notebook.
 
 ```python
 sim = rebound.Simulation()
