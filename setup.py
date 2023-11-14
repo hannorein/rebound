@@ -18,7 +18,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=4a39e0d97a4df8bd8e0db53b25d5b3d03630b245" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=4df2b4603058e7d767aee9c26b586b55a5f4de65" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -83,7 +83,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='4.0.0',
+    version='4.0.1',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -113,7 +113,7 @@ setup(name='rebound',
         'Programming Language :: Python :: 3',
     ],
     keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
-    packages=['rebound'],
+    packages=['rebound', 'rebound.integrators'],
     package_data = {'rebound':['rebound.h']},
     install_requires=[],
     tests_require=["numpy","matplotlib"],

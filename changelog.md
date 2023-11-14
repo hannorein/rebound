@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.0.1
+* Include missing python packages
+
 ### Version 4.0.0
 * Major API changes and new features! If you have used a previous version of REBOUND, then you will need to update your code. If you have trouble with the migration, open a GitHub issue!
 * Many function and variable names have changed. They now follow a coherent naming convention. See the naming convention section in the documentation for more information.
