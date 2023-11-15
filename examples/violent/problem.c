@@ -21,7 +21,7 @@ int ind;
 int nparticles;
 
 char title[100] = "violent_ias15/redo_chaotic_ias15_";
-char title_stats[100] = "redo_chaotic_trace_time_stats";
+char title_stats[100] = "redo_chaotic_mercurius_time_stats";
 char title_remove[100] = "rm -rf violent_ias15/redo_chaotic_ias15_";
 
 int main(int argc, char* argv[]){
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    r->integrator = REB_INTEGRATOR_TRACE;
+    r->integrator = REB_INTEGRATOR_MERCURIUS;
     //r->integrator = REB_INTEGRATOR_BS;
     //r->ri_ias15.adaptive_mode = 2;
     r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
