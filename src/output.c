@@ -174,9 +174,13 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 161, REB_INT,         "ri_bs.previousRejected",       offsetof(struct reb_simulation, ri_bs.previousRejected), 0, 0},
     { 162, REB_INT,         "ri_bs.targetIter",             offsetof(struct reb_simulation, ri_bs.targetIter), 0, 0},
     // TLu which fields are needed?
+    // May have to manually re-add the switching functions? MERCURIUS does not save them...
     { 165, REB_DOUBLE,      "ri_tr.hillfac",                offsetof(struct reb_simulation, ri_tr.hillfac), 0, 0},
     { 166, REB_DOUBLE,      "ri_tr.peri",                   offsetof(struct reb_simulation, ri_tr.peri), 0, 0},
     { 167, REB_DOUBLE,      "ri_tr.vfac_p",                 offsetof(struct reb_simulation, ri_tr.vfac_p), 0, 0},
+    // Don't think these are needed...
+    { 168, REB_VEC3D,       "ri_tr.com_pos",         offsetof(struct reb_simulation, ri_tr.com_pos), 0, 0},
+    { 169, REB_VEC3D,       "ri_tr.com_vel",         offsetof(struct reb_simulation, ri_tr.com_vel), 0, 0},
 //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse.
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},

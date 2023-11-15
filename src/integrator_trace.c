@@ -52,6 +52,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     const double dxi  = r->particles[i].x;  // in dh
     const double dyi  = r->particles[i].y;
     const double dzi  = r->particles[i].z;
+
     const double dvxi = r->particles[i].vx - r->particles[0].vx;
     const double dvyi = r->particles[i].vy - r->particles[0].vy;
     const double dvzi = r->particles[i].vz - r->particles[0].vz;
@@ -59,6 +60,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     const double v2i = dvxi*dvxi + dvyi*dvyi + dvzi*dvzi;
 
     const double GMi = r->G*(m0+r->particles[i].m);
+
     const double ai = GMi*_ri / (2.*GMi - _ri*v2i);
 
     //struct reb_orbit o1 = reb_tools_particle_to_orbit(r->G, r->particles[i], r->particles[0]);
@@ -71,6 +73,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     const double dxj  = r->particles[j].x;  // in dh
     const double dyj  = r->particles[j].y;
     const double dzj  = r->particles[j].z;
+
     const double dvxj = r->particles[j].vx - r->particles[0].vx;
     const double dvyj = r->particles[j].vy - r->particles[0].vy;
     const double dvzj = r->particles[j].vz - r->particles[0].vz;
@@ -78,6 +81,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     const double v2j = dvxj*dvxj + dvyj*dvyj + dvzj*dvzj;
 
     const double GMj = r->G*(m0+r->particles[j].m);
+
     const double aj = GMj*_rj / (2.*GMj - _rj*v2j);
 
     //struct reb_orbit o2 = reb_tools_particle_to_orbit(r->G, r->particles[j], r->particles[0]);
