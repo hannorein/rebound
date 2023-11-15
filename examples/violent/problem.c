@@ -20,9 +20,9 @@ int first_ejected = 999;
 int ind;
 int nparticles;
 
-char title[100] = "violent_ias15/redo_chaotic_ias15_";
-char title_stats[100] = "redo_chaotic_mercurius_time_stats";
-char title_remove[100] = "rm -rf violent_ias15/redo_chaotic_ias15_";
+char title[100] = "bad_bs_";
+char title_stats[100] = "redo_chaotic_bs_time_stats";
+char title_remove[100] = "rm -rf bad_bs_";
 
 int main(int argc, char* argv[]){
 
@@ -67,10 +67,10 @@ int main(int argc, char* argv[]){
         }
     }
 
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = REB_INTEGRATOR_BS;
     //r->integrator = REB_INTEGRATOR_BS;
     //r->ri_ias15.adaptive_mode = 2;
-    r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
+    //r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
     //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     r->track_energy_offset = 1;
     reb_configure_box(r, 10000., 1, 1, 1);
@@ -78,13 +78,13 @@ int main(int argc, char* argv[]){
     r->heartbeat  = heartbeat;
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-/*
+
     if (r->heartbeat != NULL){
       system(title_remove);
       FILE* f = fopen(title, "w");
       //FILE* f = fopen("test.txt", "w");
       fprintf(f, "# Seed: %d\n", ind);
-      fprintf(f, "t,E");
+      fprintf(f, "t,E,sx,sy,sz,comx,comy,comz");
       for (int i = 1; i < nbodies+1; i++){
         //fprintf(f, ",a%d,x%d,y%d,z%d,vx%d,vy%d,vz%d",i,i,i,i,i,i,i);
         fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]){
       fprintf(f, "\n");
       fclose(f);
     }
-*/
+
     e_init = reb_tools_energy(r);
     nparticles = r->N;
     clock_t begin = clock();
@@ -151,12 +151,13 @@ void heartbeat(struct reb_simulation* r){
       }
     }
     */
-/*
+
     if (reb_output_check(r, 10. * 2.*M_PI)){
 
       FILE* f = fopen(title, "a");
-      fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init));
       struct reb_particle* sun = &r->particles[0];
+      struct reb_particle com = reb_get_com(r);
+      fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init), sun->x,sun->y,sun->z,com.x,com.y,com.z);
 
       for (unsigned int i = 1; i < nbodies+1; i++){
         struct reb_particle* p = reb_get_particle_by_hash(r, i);
@@ -171,5 +172,5 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
-*/
+
 }
