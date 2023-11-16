@@ -47,16 +47,35 @@ int main(int argc, char* argv[]){
 
     r->rand_seed = ind;
 
-    for (int i = 0; i < nbodies; i++){
-      if (i == 2){
-        add = reb_random_uniform(r, -1e-12, 1e-12);
-        sma += add;
-      }
+    double xs[3] = {4.750000e+00,6.243350e+00,8.204764e+00};
+    double vys[3] = {4.703868e-01,4.110230e-01,3.590980e-01};
+    double vzs[3] = {0.0, 7.166600e-03,1.251747e-02};
 
+    for (int i = 0; i < nbodies; i++){
+      //if (i == 2){
+      //  add = reb_random_uniform(r, -1e-12, 1e-12);
+      //  sma += add;
+      //}
+
+      // Used this to calculate values
+      /*
       reb_add_fmt(r, "m a e inc hash", planet_m, sma, 0.05, (double)i * M_PI / 180., i+1);
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
       sma = num/denom;
+      */
+
+      struct reb_particle p = {0};
+      p.m = planet_m;
+      p.x = xs[i];
+      if (i == 2){
+        add = reb_random_uniform(r, -1e-12, 1e-12);
+        p.x += add;
+      }
+      p.vy = vys[i];
+      p.vz = vzs[i];
+      p.hash = i+1;
+      reb_add(r, p);
     }
 
     struct reb_particle* sun = &r->particles[0];
@@ -83,7 +102,7 @@ int main(int argc, char* argv[]){
     if (r->heartbeat != NULL){
       system(title_remove);
       FILE* f = fopen(title, "w");
-      fprintf(f, "# Seed: %d\n", ind);
+      fprintf(f, "# Seed: %d,%e\n", ind, add);
       fprintf(f, "t,E,sx,sy,sz");
       for (int i = 1; i < nbodies+1; i++){
         fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
