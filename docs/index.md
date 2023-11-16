@@ -6,24 +6,23 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 ## Features
 
+
+* No dependencies on external libraries.
+* Runs natively on Linux, MacOS, and Windows. 
 * Symplectic integrators ([WHFast](integrators/#whfast), [SEI](integrators/#sei), [LEAPFROG](integrators/#leapfrog), [EOS](integrators/#embedded-operator-splitting-method-eos))
-* High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
 * Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
+* High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
 * High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
+* Can integrate arbitrary user-defined ODEs that are coupled to N-body dynamics for tides, spin, etc
 * Support for collisional/granular dynamics, various collision detection routines
-* The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
-* REBOUND runs natively on Linux, MacOS, and Windows. 
-* REBOUND has no dependencies on external libraries (the use of OpenGL/glfw3 for visualization is optional)
+* The computationally intensive parts of the code are written entirely in C, conforming to the ISO standard C99, and can be used as a thread-safe shared library
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
-* Extensive set of example problems in both C and Python
-* Real-time, 3D OpenGL visualization (C version)
+* Real-time, 3D visualization, for both C and Python.
+* Extensive set of example problems for both C and Python. You can run examples directly from your browser without the need to download or install anything.
 * Parallelized [WHFast512](integrators/#whfast512) integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with [MPI](mpi/) is supported for some special use cases only (using an essential tree for gravity and collisions)
 * The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
-* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
-* Comes with standard ASCII or binary output routines
-* Different modules are easily interchangeable at run-time
 
 ## Contributors
 
