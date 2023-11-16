@@ -20,9 +20,9 @@ int first_ejected = 999;
 int ind;
 int nparticles;
 
-char title[100] = "bad_bs_";
+char title[100] = "machine_indep_test_grace_";
 char title_stats[100] = "redo_chaotic_bs_time_stats";
-char title_remove[100] = "rm -rf bad_bs_";
+char title_remove[100] = "rm -rf machine_indep_test_grace_";
 
 int main(int argc, char* argv[]){
 
@@ -35,6 +35,7 @@ int main(int argc, char* argv[]){
     double planet_m = 9.55e-4;
 
     double sma = 5.;
+    double add = 0.;
     double delta= 2.5;
 
     ind = 0;
@@ -48,8 +49,10 @@ int main(int argc, char* argv[]){
 
     for (int i = 0; i < nbodies; i++){
       if (i == 2){
-        sma += reb_random_uniform(r, -1e-12, 1e-12);
+        add = reb_random_uniform(r, -1e-12, 1e-12);
+        sma += add;
       }
+
       reb_add_fmt(r, "m a e inc hash", planet_m, sma, 0.05, (double)i * M_PI / 180., i+1);
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
@@ -67,11 +70,9 @@ int main(int argc, char* argv[]){
         }
     }
 
-    r->integrator = REB_INTEGRATOR_BS;
-    //r->integrator = REB_INTEGRATOR_BS;
-    //r->ri_ias15.adaptive_mode = 2;
+    r->integrator = REB_INTEGRATOR_IAS15;
     //r->dt = min * 0.05;//7.108147e-01;//min * 0.010123456;//0.059331635924546614;
-    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    r->ri_ias15.adaptive_mode=2;
     r->track_energy_offset = 1;
     reb_configure_box(r, 10000., 1, 1, 1);
     r->boundary = REB_BOUNDARY_OPEN;
@@ -82,13 +83,10 @@ int main(int argc, char* argv[]){
     if (r->heartbeat != NULL){
       system(title_remove);
       FILE* f = fopen(title, "w");
-      //FILE* f = fopen("test.txt", "w");
       fprintf(f, "# Seed: %d\n", ind);
-      fprintf(f, "t,E,sx,sy,sz,comx,comy,comz");
+      fprintf(f, "t,E,sx,sy,sz");
       for (int i = 1; i < nbodies+1; i++){
-        //fprintf(f, ",a%d,x%d,y%d,z%d,vx%d,vy%d,vz%d",i,i,i,i,i,i,i);
         fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
-        //fprintf(f, ",hash%d,d%d,ej%d",i,i,i);
       }
 
       fprintf(f, "\n");
@@ -102,19 +100,11 @@ int main(int argc, char* argv[]){
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    int surviving_particles = 0;
-    for (unsigned int i = 1; i < nbodies+1; i++){
-        struct reb_particle* p = reb_get_particle_by_hash(r, i);
-        if (p != NULL){
-          surviving_particles++;
-        }
-    }
-
+/*
     FILE* tf = fopen(title_stats, "a");
     fprintf(tf, "%d,%d,%e,%e,%f,%d\n", ind, surviving_particles, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent, r->t,r->N);
     fclose(tf);
-
-    //printf("Total: %d\nInit Peri No Flag: %d\nInit Peri Flag: %d\nNo Flags:%d\nFlagged Peri:%d\nFlagged CE:%d\n", r->ri_tr.delta_Ks[0], r->ri_tr.delta_Ks[1], r->ri_tr.delta_Ks[2], r->ri_tr.delta_Ks[3], r->ri_tr.delta_Ks[4], r->ri_tr.delta_Ks[5]);
+*/
     reb_free_simulation(r);
 }
 
@@ -157,7 +147,7 @@ void heartbeat(struct reb_simulation* r){
       FILE* f = fopen(title, "a");
       struct reb_particle* sun = &r->particles[0];
       struct reb_particle com = reb_get_com(r);
-      fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init), sun->x,sun->y,sun->z,com.x,com.y,com.z);
+      fprintf(f, "%e,%e", r->t, fabs((reb_tools_energy(r) - e_init) / e_init), sun->x,sun->y,sun->z);
 
       for (unsigned int i = 1; i < nbodies+1; i++){
         struct reb_particle* p = reb_get_particle_by_hash(r, i);
