@@ -79,9 +79,16 @@ If you have trouble installing or using REBOUND, please open an issue on github 
 
 There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw .
 
-## Additional Physics
-To easily incorporate additional physics into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
+## Related projects
 
+### Additional physics
+To easily incorporate additional physics modules such as migration forces, GR effects and spin into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
+
+### Analytical and semianalytical tools
+If you're interested in comparing numerical simulations to analytical and semianalytical tools for celestial mechanics, see Celmech at https://github.com/shadden/celmech
+
+### Ephemeris-quality integrations of test particles
+To generate ephemeris-quality integrations of test particles in the Solar System with a precision on par with JPL's small body integrator, see ASSIST at https://github.com/matthewholman/assist
 
 ## Papers
 
