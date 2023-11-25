@@ -319,6 +319,54 @@ class TestTrace(unittest.TestCase):
         if sys.maxsize > 2**32: # 64 bit
             self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
+    # TLu additional tests
+    def test_chaotic_exchange(self):
+        def get_sim():
+            sim = rebound.Simulation()
+            mstar = 1
+            mjup = 0.01 / (mstar - 0.01)
+            a = 5.2
+            e = 0.0
+            sim.add(mstar)
+            # Setup using xyz instead of orbital elements for
+            # machine independent test
+            sim.add(m=mjup,x=0.90000, y=0.00000, vx=0.00000, vy=1.10360)
+            sim.add(m=0.0001, x=-1.17676, y=-0.05212, vx=0.22535, vy=-0.90102)
+            sim.move_to_com()
+            sim.dt = 0.034
+            return sim
+
+        sim = get_sim()
+        sim.integrator = "trace"
+        E0 = sim.energy()
+        start=datetime.now()
+        sim.integrate(2000)
+        time_trace = (datetime.now()-start).total_seconds()
+        dE_trace = abs((sim.energy() - E0)/E0)
+
+        sim = get_sim()
+        sim.integrator = "ias15"
+        start=datetime.now()
+        sim.integrate(2000)
+        time_ias15 = (datetime.now()-start).total_seconds()
+        dE_ias15 = abs((sim.energy() - E0)/E0)
+
+        sim = get_sim()
+        sim.integrator = "whfast"
+        start=datetime.now()
+        sim.integrate(2000)
+        time_whfast = (datetime.now()-start).total_seconds()
+        dE_whfast = abs((sim.energy() - E0)/E0)
+
+        # Note: precision might vary on machine as initializations use cos/sin
+        # and are therefore machine dependent.
+        self.assertLess(dE_trace,4e-6)              # reasonable precision for trace
+        self.assertLess(dE_trace/dE_whfast,1e-4)    # at least 1e4 times better than whfast
+        self.assertLess(time_trace,time_ias15) # faster than ias15
+        if sys.maxsize > 2**32: # 64 bit
+            self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
+
+
 
 if __name__ == "__main__":
     unittest.main()

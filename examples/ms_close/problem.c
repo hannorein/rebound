@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
     // Saturn
     double sm = 2.857e-4;
     double sa = 9.58;
-    double se = 0.9999;
+    double se = 0.99;
     double omse = 1. - se;
     double si = M_PI / 2.;
 
@@ -39,9 +39,9 @@ int main(int argc, char* argv[]){
     //const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
+    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
     //r->ri_tr.S_peri = reb_integrator_trace_peri_switch_default;
-    //r->ri_tr.vfac_p = 16.0;
+    //r->ri_tr.vfac_p = 32.0;
 
     r->dt = 0.15*2.*M_PI;
     r->heartbeat = heartbeat;
@@ -51,27 +51,32 @@ int main(int argc, char* argv[]){
     reb_add_fmt(r, "m a e", jm, ja, je);
 
     //r->dt = orb.P / 15.12345;
-    reb_add_fmt(r, "primary m a e inc pomega f", star, sm, sa, se, si, M_PI/2, M_PI);
+    reb_add_fmt(r, "primary m a e inc pomega f", star, sm, sa, se, si, M_PI/2, 0.);
     struct reb_orbit orb = reb_tools_particle_to_orbit(r->G, r->particles[2], r->particles[0]);
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
     r->heartbeat  = heartbeat;
     e_init = reb_tools_energy(r);
     system("rm -rf energy_fdot.txt");
-    FILE* f = fopen("energy_fdot.txt","w");
+    //FILE* f = fopen("energy_wh.txt","w");
     //fprintf(f, "t,sf,stauf,jf,jtauf\n");
 
-    reb_integrate(r, 1000*M_PI*11.86);
+    reb_integrate(r, 300*2*M_PI*29.4);
     //reb_integrate(r, orb.P * 3.);
     //reb_integrate(r,2. *M_PI*11.86);
     //reb_integrate(r, 1277.);
     //err = reb_tools_energy(r);
-    //printf("%e\n", emax);
+    printf("%e\n", emax);
     reb_free_simulation(r);
 }
 
 
 void heartbeat(struct reb_simulation* r){
+    double err = fabs((reb_tools_energy(r) - e_init) / e_init);
+    if (err > emax){
+      emax = err;
+    }
+  //fprintf(f,"%e %e\n",r->t, (e - e_init) / e_init);
     //if (reb_output_check(r, 10.*2.*M_PI)){
     //    reb_output_timing(r, 0);
     //}

@@ -13,6 +13,7 @@ void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
 int Nparticles = 999;
+double tmax = 6 * M_PI;
 // accretion of the moon
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
@@ -30,6 +31,7 @@ int main(int argc, char* argv[]){
     reb_add(r, earth);
 
     r->rand_seed = 1;
+    r->heartbeat = heartbeat;
     // Test particles
     for (unsigned int i = 0; i < Nparticles; i++){
       double m = reb_random_uniform(r, 3.2e-7, 3.2e-4);
@@ -42,11 +44,14 @@ int main(int argc, char* argv[]){
 
     e_init = reb_tools_energy(r);
     printf("Initial Energy: %e\n", e_init);
-    reb_integrate(r, 6 * M_PI);
+    reb_integrate(r, tmax);
     printf("Final Energy: %e\n", reb_tools_energy(r));
     printf("Conservation: %f\n", (reb_tools_energy(r) - e_init) / e_init);
     reb_free_simulation(r);
 }
 
 void heartbeat(struct reb_simulation* r){
+  if (reb_output_check(r, 10.*2.*M_PI)){
+      reb_output_timing(r, tmax);
+  }
 }
