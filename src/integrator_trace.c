@@ -52,15 +52,16 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     const double dxi  = r->particles[i].x;  // in dh
     const double dyi  = r->particles[i].y;
     const double dzi  = r->particles[i].z;
-
+/*
     const double dvxi = r->particles[i].vx - r->particles[0].vx;
     const double dvyi = r->particles[i].vy - r->particles[0].vy;
     const double dvzi = r->particles[i].vz - r->particles[0].vz;
-    const double _ri = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
-    const double v2i = dvxi*dvxi + dvyi*dvyi + dvzi*dvzi;
-    const double GMi = r->G*(m0+r->particles[i].m);
+    */
+    const double ai = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
+    //const double v2i = dvxi*dvxi + dvyi*dvyi + dvzi*dvzi;
+    //const double GMi = r->G*(m0+r->particles[i].m);
 
-    double ai = _ri;//GMi*_ri / (2.*GMi - _ri*v2i);
+    //double ai = _ri;//GMi*_ri / (2.*GMi - _ri*v2i);
     // if particle unbound, just use distance
     /*
     if (ai < 0){
@@ -75,15 +76,16 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
     const double dxj  = r->particles[j].x;  // in dh
     const double dyj  = r->particles[j].y;
     const double dzj  = r->particles[j].z;
+    /*
     const double dvxj = r->particles[j].vx - r->particles[0].vx;
     const double dvyj = r->particles[j].vy - r->particles[0].vy;
     const double dvzj = r->particles[j].vz - r->particles[0].vz;
+*/
+    const double aj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
+    //const double v2j = dvxj*dvxj + dvyj*dvyj + dvzj*dvzj;
+    //const double GMj = r->G*(m0+r->particles[j].m);
 
-    const double _rj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
-    const double v2j = dvxj*dvxj + dvyj*dvyj + dvzj*dvzj;
-    const double GMj = r->G*(m0+r->particles[j].m);
-
-    const double aj = _rj;//GMj*_rj / (2.*GMj - _rj*v2j);
+    //const double aj = _rj;//GMj*_rj / (2.*GMj - _rj*v2j);
 
     // if particle unbound, just use distance
     /*
@@ -99,27 +101,6 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, int i
   const double dz = r->particles[i].z - r->particles[j].z;
   const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-  // This stuff seems unimportant...
-  /*
-  // Interaction hamiltonian
-  const double hi = (r->G * r->particles[j].m * r->particles[i].m) / d;
-
-  // Kepler Hamiltonian i
-  const double hki = (v2i / (r->particles[i].m * r->particles[i].m)) / (2 * r->particles[i].m) - ((r->G * r->particles[0].m * r->particles[i].m) / _ri);
-  const double hkj = (v2j / (r->particles[j].m * r->particles[j].m)) / (2 * r->particles[j].m) - ((r->G * r->particles[0].m * r->particles[j].m) / _ri);
-  //if (ri_tr->print){
-  //  printf("Hamiltonians at %f for %d %d: %e %e\n", r->t, i, j, hi/hki, hi/hkj);
-  //}
-
-  if ((ai <= 0.0 || aj <= 0.0) && (hi/hki > 5e-15 || hi/hkj > 5e-15)){
-    if (hi/hki > 5e-15 || hi/hkj > 5e-15){
-      return -1.0;
-    }
-    else{
-      return 1.0;
-    }
-  }
-  */
 
   // Use traditional switching function
   double dcritmax = MAX(dcriti,dcritj);
@@ -634,6 +615,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     r->t+=r->dt;
     r->dt_last_done = r->dt;
     ri_tr->mode = 0;
+    
     r->gravity = REB_GRAVITY_TRACE; // Is this needed?
     reb_integrator_trace_dh_to_inertial(r);
 }
