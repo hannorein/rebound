@@ -15,7 +15,7 @@ void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
 double tmax = 1e7*2*M_PI;
-int nbodies=3;
+int nbodies=4;
 int first_ejected = 999;
 int ind;
 int nparticles;
@@ -25,7 +25,7 @@ int ej2 = 1;
 int ej3 = 1;
 
 //char title[100] = "merc_timestamps/merc_ts_";
-char title_stats[100] = "delta4_stats/trace_delta4_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "delta4_stats/trace_delta4_4part_stats";//"merc_timestamps/mercurius_first_ejection";
 //char title_remove[100] = "rm -rf merc_timestamps/merc_ts_";
 
 int main(int argc, char* argv[]){
@@ -57,16 +57,16 @@ int main(int argc, char* argv[]){
     //double vzs[3] = {0.0, 7.166600e-03,1.251747e-02};
 
     // Delta = 4
-    double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
-    double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
-    double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
+    //double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
+    //double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
+    //double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
 
     for (int i = 0; i < nbodies; i++){
-      /*
-      //if (i == 2){
-      //  add = reb_random_uniform(r, -1e-12, 1e-12);
-      //  sma += add;
-      //}
+
+      if (i == 2){
+        add = reb_random_uniform(r, -1e-12, 1e-12);
+        sma += add;
+      }
 
       // Used this to calculate values
 
@@ -76,9 +76,9 @@ int main(int argc, char* argv[]){
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
       sma = num/denom;
-      */
 
 
+/*
       struct reb_particle p = {0};
       p.m = planet_m;
       p.x = xs[i];
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
       p.vz = vzs[i];
       p.hash = i+1;
       reb_add(r, p);
-
+*/
     }
 
     struct reb_particle* sun = &r->particles[0];
