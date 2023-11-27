@@ -2,10 +2,7 @@
  * @file 	integrator.c
  * @brief 	Integration schemes.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
+ * @details	This file manages the different integration scheme.  
  * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein
