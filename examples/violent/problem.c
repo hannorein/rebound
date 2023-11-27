@@ -24,9 +24,9 @@ int ej1 = 1;
 int ej2 = 1;
 int ej3 = 1;
 
-//char title[100] = "merc_timestamps/merc_ts_";
-char title_stats[100] = "delta4_stats/ias15_delta4_stats";//"merc_timestamps/mercurius_first_ejection";
-//char title_remove[100] = "rm -rf merc_timestamps/merc_ts_";
+char title[100] = "timestamps/ias15_ts_";
+char title_stats[100] = "timestamps/ias15_first_ejection";//"merc_timestamps/mercurius_first_ejection";
+char title_remove[100] = "rm -rf timestamps/ias15_ts_";
 
 int main(int argc, char* argv[]){
 
@@ -44,8 +44,8 @@ int main(int argc, char* argv[]){
 
     ind = 0;
     if (argc == 2){
-      //strcat(title, argv[1]);
-      //strcat(title_remove, argv[1]);
+      strcat(title, argv[1]);
+      strcat(title_remove, argv[1]);
       ind = atoi(argv[1]);
     }
 
@@ -114,20 +114,20 @@ int main(int argc, char* argv[]){
     r->heartbeat  = heartbeat;
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-/*
+
     if (r->heartbeat != NULL){
       system(title_remove);
       FILE* f = fopen(title, "w");
       fprintf(f, "# Seed: %d,%.20e\n", ind, add);
-      fprintf(f, "t,E,sx,sy,sz");
+      fprintf(f, "t,E");
       for (int i = 1; i < nbodies+1; i++){
-        fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
+        fprintf(f, ",a%d,e%d,i%d",i,i,i);
       }
 
       fprintf(f, "\n");
       fclose(f);
     }
-  */
+
 
     e_init = reb_tools_energy(r);
     nparticles = r->N;
@@ -138,11 +138,11 @@ int main(int argc, char* argv[]){
 
     // printf("\n%f\n", fabs(reb_tools_energy(r) - e_init)/e_init);
 
-
+/*
     FILE* tf = fopen(title_stats, "a");
     fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
     fclose(tf);
-
+*/
     reb_free_simulation(r);
 }
 
@@ -189,7 +189,7 @@ void heartbeat(struct reb_simulation* r){
 
     // Time to first ejection
     // Always track
-    /*
+
     if (first_ejected == 999){ // ejection has not happened yet
       for (unsigned int i = 1; i < nbodies+1; i++){
           struct reb_particle* p = reb_get_particle_by_hash(r, i);
@@ -228,6 +228,6 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
-*/
+
 
 }
