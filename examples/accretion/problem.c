@@ -16,14 +16,14 @@ double e_init; // initial energy
 int Nparticles = 1000;
 double tmax = 2. * 1e3 * M_PI;
 
-char title[100] = "accretion";
-char title_remove[100] = "rm -rf accretion";
+char title[100] = "trace_accretion";
+char title_remove[100] = "rm -rf trace_accretion";
 
-char remove_snapshots[100] = "rm -rf *snapshot_*";
-char snapshot_1[100] = "snapshot_1";
-char snapshot_2[100] = "snapshot_2";
-char snapshot_3[100] = "snapshot_3";
-char snapshot_4[100] = "snapshot_4";
+char remove_snapshots[100] = "rm -rf *trace_snapshot_*";
+char snapshot_1[100] = "trace_snapshot_1";
+char snapshot_2[100] = "trace_snapshot_2";
+char snapshot_3[100] = "trace_snapshot_3";
+char snapshot_4[100] = "trace_snapshot_4";
 
 double snap1_time = 0.0;
 double snap2_time = 10.0 * 2 * M_PI;
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     //r->integrator = REB_INTEGRATOR_BS;
 
-    r->dt = 0.003 / 10.56789;
+    r->dt = 0.1;//0.003 / 10.56789;
     r->integrator = REB_INTEGRATOR_TRACE;
     //r->softening = 3e-8;
     r->collision            = REB_COLLISION_DIRECT;
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
     // Initialize masses
     struct reb_particle earth = {0};
     earth.m = 1;
-    double earth_r = 0.00592; // in units of Roche radius
+    double earth_r = 1./2.9;//0.00592; // in units of Roche radius
     earth.r = earth_r;
     reb_add(r, earth);
 
@@ -122,9 +122,9 @@ int main(int argc, char* argv[]){
 }
 
 void heartbeat(struct reb_simulation* r){
-  if (reb_output_check(r, 0.01*2.*M_PI)){
-      reb_output_timing(r, tmax);
-  }
+  //if (reb_output_check(r, 0.01*2.*M_PI)){
+  //    reb_output_timing(r, tmax);
+  //}
 
   if (snap2 && r->t > snap2_time){
     struct reb_particle* e = &r->particles[0];
