@@ -16,8 +16,8 @@ double e_init; // initial energy
 int Nparticles = 1000;
 double tmax = 2. * 1e3 * M_PI;
 
-char title[100] = "trace_accretion";
-char title_remove[100] = "rm -rf trace_accretion";
+char title[100] = "trace_accretion_nc";
+char title_remove[100] = "rm -rf trace_accretion_nc";
 
 char remove_snapshots[100] = "rm -rf *trace_snapshot_*";
 char snapshot_1[100] = "trace_snapshot_1";
@@ -39,8 +39,8 @@ int main(int argc, char* argv[]){
     r->dt = 0.1;//0.003 / 10.56789;
     r->integrator = REB_INTEGRATOR_TRACE;
     //r->softening = 3e-8;
-    r->collision            = REB_COLLISION_DIRECT;
-    r->collision_resolve    = reb_collision_resolve_merge;
+    //r->collision            = REB_COLLISION_DIRECT;
+    //r->collision_resolve    = reb_collision_resolve_merge;
 
     // Initialize masses
     struct reb_particle earth = {0};
@@ -73,11 +73,11 @@ int main(int argc, char* argv[]){
     //printf("%f\n", mtot/lunar_mass);
     //printf("%f\n", rad_tot/Nparticles);
     system(title_remove);
-    system(remove_snapshots);
+    // system(remove_snapshots);
     //exit(1);
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-
+/*
     struct reb_particle* e = &r->particles[0];
 
     FILE* f = fopen(snapshot_1,"a");
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]){
       fprintf(f, "%f,%f,%f\n",p->m,r,dz);
     }
     fclose(f);
-
+*/
 
     e_init = reb_tools_energy(r);
     printf("Initial Energy: %e\n", e_init);
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]){
     printf("Conservation: %f\n", (reb_tools_energy(r) - e_init) / e_init);
     printf("Final N: %d\n", r->N);
     printf("Time Spent: %f\n", time_spent);
-
+/*
     FILE* f4 = fopen(snapshot_4,"a");
     for (unsigned int i = 1; i < r->N; i++){
       struct reb_particle* p = &r->particles[i];
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]){
       fprintf(f4, "%f,%f,%f\n",p->m,r,dz);
     }
     fclose(f4);
-
+*/
     reb_free_simulation(r);
 }
 
@@ -125,7 +125,7 @@ void heartbeat(struct reb_simulation* r){
   //if (reb_output_check(r, 0.01*2.*M_PI)){
   //    reb_output_timing(r, tmax);
   //}
-
+/*
   if (snap2 && r->t > snap2_time){
     struct reb_particle* e = &r->particles[0];
     snap2 = 0;
@@ -159,10 +159,10 @@ void heartbeat(struct reb_simulation* r){
     }
     fclose(f);
   }
-
-  if (reb_output_check(r, 10. * 2.*M_PI)){
+*/
+  if (reb_output_check(r, 1. * 2.*M_PI)){
     FILE* f = fopen(title,"a");
-    fprintf(f, "%f,%d\n", r->t, r->N-1);
+    fprintf(f, "%f,%e,%d\n", r->t, fabs((reb_tools_energy(r) - e_init) / e_init), r->N-1);
     fclose(f);
   }
 }
