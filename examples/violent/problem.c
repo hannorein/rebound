@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e7*2*M_PI;
+double tmax = 1e2;//1e7*2*M_PI;
 int nbodies=3;
 int first_ejected = 999;
 int ind;
@@ -25,7 +25,7 @@ int ej2 = 1;
 int ej3 = 1;
 
 char title[100] = "timestamps/ias15_ts_";
-char title_stats[100] = "timestamps/ias15_first_ejection";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "ias15_efficiency";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_ts_";
 
 int main(int argc, char* argv[]){
@@ -43,10 +43,11 @@ int main(int argc, char* argv[]){
     double delta= 4.;
 
     ind = 0;
-    if (argc == 2){
-      strcat(title, argv[1]);
-      strcat(title_remove, argv[1]);
+    if (argc == 3){
+      //strcat(title, argv[1]);
+      //strcat(title_remove, argv[1]);
       ind = atoi(argv[1]);
+      nbodies = atoi(argv[2]);
     }
 
     r->rand_seed = ind;
@@ -57,12 +58,12 @@ int main(int argc, char* argv[]){
     //double vzs[3] = {0.0, 7.166600e-03,1.251747e-02};
 
     // Delta = 4
-    double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
-    double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
-    double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
+    //double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
+    //double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
+    //double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
 
     for (int i = 0; i < nbodies; i++){
-/*
+
       if (i == 2){
         add = reb_random_uniform(r, -1e-12, 1e-12);
         sma += add;
@@ -76,9 +77,9 @@ int main(int argc, char* argv[]){
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
       sma = num/denom;
-*/
 
 
+/*
       struct reb_particle p = {0};
       p.m = planet_m;
       p.x = xs[i];
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]){
       p.vz = vzs[i];
       p.hash = i+1;
       reb_add(r, p);
-
+*/
     }
 
     struct reb_particle* sun = &r->particles[0];
@@ -114,7 +115,7 @@ int main(int argc, char* argv[]){
     r->heartbeat  = heartbeat;
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-
+/*
     if (r->heartbeat != NULL){
       system(title_remove);
       FILE* f = fopen(title, "w");
@@ -127,7 +128,7 @@ int main(int argc, char* argv[]){
       fprintf(f, "\n");
       fclose(f);
     }
-
+*/
 
     e_init = reb_tools_energy(r);
     nparticles = r->N;
@@ -138,11 +139,12 @@ int main(int argc, char* argv[]){
 
     // printf("\n%f\n", fabs(reb_tools_energy(r) - e_init)/e_init);
 
-/*
+
     FILE* tf = fopen(title_stats, "a");
-    fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
+    //fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
+    fprintf(tf, "%d,%d,%e,%e\n", ind, nbodies, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
     fclose(tf);
-*/
+
     reb_free_simulation(r);
 }
 
@@ -189,7 +191,7 @@ void heartbeat(struct reb_simulation* r){
 
     // Time to first ejection
     // Always track
-
+/*
     if (first_ejected == 999){ // ejection has not happened yet
       for (unsigned int i = 1; i < nbodies+1; i++){
           struct reb_particle* p = reb_get_particle_by_hash(r, i);
@@ -228,6 +230,6 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
-
+*/
 
 }
