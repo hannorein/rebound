@@ -23,7 +23,7 @@ char remove_snapshots[100] = "rm -rf *trace_snapshot_*";
 char snapshot_1[100] = "trace_snapshot_1";
 char snapshot_2[100] = "trace_snapshot_2";
 char snapshot_3[100] = "trace_snapshot_3";
-char snapshot_4[100] = "trace_snapshot_4";
+char snapshot_4[100] = "trace_final_orbit_snapshot_4";
 
 double snap1_time = 0.0;
 double snap2_time = 10.0 * 2 * M_PI;
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     reb_add(r, earth);
 
     r->rand_seed = 1;
-    r->heartbeat = heartbeat;
+    //r->heartbeat = heartbeat;
 
     double lunar_mass = 0.0123;
 
@@ -72,14 +72,13 @@ int main(int argc, char* argv[]){
     }
     //printf("%f\n", mtot/lunar_mass);
     //printf("%f\n", rad_tot/Nparticles);
-    system(title_remove);
+    //system(title_remove);
     // system(remove_snapshots);
     //exit(1);
 
     reb_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-/*
-    struct reb_particle* e = &r->particles[0];
 
+/*
     FILE* f = fopen(snapshot_1,"a");
     for (unsigned int i = 1; i < r->N; i++){
       struct reb_particle* p = &r->particles[i];
@@ -104,20 +103,22 @@ int main(int argc, char* argv[]){
     printf("Conservation: %f\n", (reb_tools_energy(r) - e_init) / e_init);
     printf("Final N: %d\n", r->N);
     printf("Time Spent: %f\n", time_spent);
-/*
+
     FILE* f4 = fopen(snapshot_4,"a");
+    struct reb_particle* e = &r->particles[0];
     for (unsigned int i = 1; i < r->N; i++){
       struct reb_particle* p = &r->particles[i];
+      struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *e);
 
       double dx = p->x - e->x;
       double dy = p->y - e->y;
       double dz = p->z - e->z;
 
       double r = sqrt(dx*dx+dy*dy);
-      fprintf(f4, "%f,%f,%f\n",p->m,r,dz);
+      fprintf(f4, "%f,%f,%f,%f,%f,%f\n",p->m,r,dz,o.a,o.e,o.inc);
     }
     fclose(f4);
-*/
+
     reb_free_simulation(r);
 }
 
