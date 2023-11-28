@@ -101,11 +101,26 @@
           white-space: pre-wrap;
           font-size: 3.2cqw;
       }
+      #startSimulation {
+          background: #000;
+          width:      100%;
+          height:     100%;
+          z-index:    50;
+          top:        0;
+          left:       0;
+          position:   fixed;
+          color:      #fff;
+          display: flex;
+  justify-content: center;
+  align-items: center;
+          font-family:'Lucida Console', Monaco, monospace;
+      }
 
 
     </style>
   </head>
   <body>
+      <div id="startSimulation" onclick="Module.callMain([]); this.remove();"><div class="reboundlogo"></div>Click to start REBOUND simulation.</div>
       <div id="container">
           <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
           <div id="overlay" onclick="document.getElementById('overlay-toggle').innerHTML='1'; console.log('no');">
@@ -126,6 +141,11 @@
 
     <script type='text/javascript'>
       var Module = {
+          noInitialRun: true,
+          onRuntimeInitialized: function() {
+              // Should only enable click to start here
+              //console.log("onRuntimeInitialized\n");
+          },
         print: (function() {
           var element = document.getElementById('output');
           //if (element) element.value = ''; // clear browser cache
