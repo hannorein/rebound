@@ -74,7 +74,7 @@ EM_JS(void, reb_overlay_update, (const char* text, int status), {
     if (overlay){
         if (status==-3){ // Pause
             overlay.style.backgroundColor = "rgba(100.0, 100.0, 0.0, 0.5)";
-        }else if (status==0){ // Finished.
+        }else if (status==0 || status==5){ // Finished.
             overlay.style.backgroundColor = "rgba(0.0, 255.0, 0.0, 0.5)";
         }else if (status==10){ // Connection error.
             overlay.style.backgroundColor = "rgba(255.0, 0.0, 0.0, 0.5)";
@@ -769,6 +769,8 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                     sprintf(line, "Simulation is paused<br />");
                 }else if (data->r_copy->status == REB_STATUS_SUCCESS){
                     sprintf(line, "Simulation ready<br />");
+                }else if (data->r_copy->status == REB_STATUS_USER){
+                    sprintf(line, "Simulation canceled<br />");
                 }else if (data->r_copy->status > 0){
                     sprintf(line, "Simulation error occured<br />");
                 }
