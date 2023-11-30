@@ -47,6 +47,15 @@ with open("web_client/shell_console_rebound.html") as f:
     with open("web_client/shell_console_rebound.html", "w") as f:
         f.writelines(reboundlines)
 
+with open("web_client/shell_rebound.html") as f:
+    reboundlines = f.readlines()
+    for i,l in enumerate(reboundlines):
+        if "<!-- VERSIONLINE -->" in l:
+            reboundlines[i] = "                  REBOUND v" + reboundversion + "  <!-- VERSIONLINE -->\n"
+
+    with open("web_client/shell_rebound.html", "w") as f:
+        f.writelines(reboundlines)
+
 shortversion = reboundversion
 while shortversion[-1] != '.':
     shortversion = shortversion[:-1]
