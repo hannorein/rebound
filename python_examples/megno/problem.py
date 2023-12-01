@@ -38,7 +38,7 @@ def simulation(par):
         warnings.simplefilter("always")
         sim.integrate(1e3*2.*np.pi)
 
-    return [sim.calculate_megno(),1./(sim.calculate_lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
+    return [sim.megno(),1./(sim.lyapunov()*2.*np.pi)] # returns MEGNO and Lypunov timescale in years
 
 
 ### Setup grid and run many simulations in parallel
@@ -52,9 +52,13 @@ for _e in e:
 
 simulation((8,0.))
 # Run simulations in parallel
-pool = rebound.InterruptiblePool()    # Number of threads default to the number of CPUs on the system
-print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
-res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
+try:
+    from multiprocess import Pool
+except:
+    raise RuntimeError("Please install the multiprocess module with `pip install multiprocess`.")
+with Pool() as pool:
+    print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
+    res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
 megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)             # clip arrays to plot saturated 
 lyaptimescale = np.clip(np.absolute(res[:,1].reshape((N,N))),1e1,1e5)
 

@@ -27,7 +27,7 @@
 
 
 void run_sim(){
-    struct reb_simulation* const r = reb_create_simulation();
+    struct reb_simulation* const r = reb_simulation_create();
     // Setup constants
     r->integrator    = REB_INTEGRATOR_LEAPFROG;
     r->gravity    = REB_GRAVITY_BASIC;
@@ -37,7 +37,7 @@ void run_sim(){
     r->softening     = 0.02;        // Gravitational softening length
     r->dt         = 3e-2;        // Timestep
     const double boxsize = 10.2;
-    reb_configure_box(r,boxsize,1,1,1);
+    reb_simulation_configure_box(r,boxsize,1,1,1);
 
     // Setup particles
     double disc_mass = 2e-1;    // Total disc mass
@@ -45,7 +45,7 @@ void run_sim(){
     // Initial conditions
     struct reb_particle star = {0};
     star.m         = 1;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
     for (int i=0;i<N;i++){
         struct reb_particle pt = {0};
         double a    = reb_random_powerlaw(r, boxsize/10.,boxsize/2./1.2,-1.5);
@@ -59,11 +59,11 @@ void run_sim(){
         pt.vy         = -vkep * cos(phi);
         pt.vz         = 0;
         pt.m         = disc_mass/(double)N;
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
     }
 
-    reb_integrate(r, 1.0);
-    reb_free_simulation(r);
+    reb_simulation_integrate(r, 1.0);
+    reb_simulation_free(r);
 }
 
 int main(int argc, char* argv[]){

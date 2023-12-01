@@ -29,11 +29,11 @@ int main(int argc, char* argv[]) {
     reb_particle_irotate(&p, r1); // irotate means rotate in place
 
     // You can also rotate all the particles in a simulation:
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt(r, "m", 1.);                // Central object
-    reb_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.);                // Central object
+    reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
     reb_simulation_irotate(r, r1);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 
     // You can chain rotations by multiplying them together.
     // Note that the order of rotations matters, just like
@@ -57,14 +57,14 @@ int main(int argc, char* argv[]) {
     double omega = 0.345;
     struct reb_rotation r_orbit = reb_rotation_init_orbit(Omega, inc, omega);
     
-    r = reb_create_simulation();
-    reb_add_fmt(r, "m", 1.);          // Central object
-    reb_add_fmt(r, "a e", 1., 0.001); // orbit in the xy plane 
-    reb_add_fmt(r, "a e Omega inc omega ", 1., 0.001, Omega, inc, omega); // 3d orbit
+    r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.);          // Central object
+    reb_simulation_add_fmt(r, "a e", 1., 0.001); // orbit in the xy plane 
+    reb_simulation_add_fmt(r, "a e Omega inc omega ", 1., 0.001, Omega, inc, omega); // 3d orbit
     reb_particle_irotate(&r->particles[1], r_orbit);  
     printf("particle[1] = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[1].vx, r->particles[1].vy, r->particles[1].vz);
     printf("particle[2] = %.5f %.5f %.5f   %.5f %.5f %.5f\n", r->particles[2].x, r->particles[2].y, r->particles[2].z, r->particles[2].vx, r->particles[2].vy, r->particles[2].vz);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 
     
     // REBOUND also comes with a built-in constructor that generates a rotation

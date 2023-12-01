@@ -39,9 +39,9 @@ int main(int argc, char* argv[]){
     //const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
-    //r->ri_tr.S_peri = reb_integrator_trace_peri_switch_default;
-    //r->ri_tr.vfac_p = 32.0;
+    //r->ri_trace.S_peri = reb_integrator_trace_switch_fdot_peri;
+    //r->ri_trace.S_peri = reb_integrator_trace_peri_switch_default;
+    //r->ri_trace.vfac_p = 32.0;
 
     r->dt = 0.15*2.*M_PI;
     r->heartbeat = heartbeat;

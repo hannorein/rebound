@@ -59,12 +59,11 @@
     break;        
 
 
-void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_input_binary_messages* warnings){
+void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
     struct reb_binary_field field;
     // A few fields need special treatment. Find their descriptors first.
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
     struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
-    struct reb_binary_field_descriptor fd_sa_size_first = reb_binary_field_descriptor_for_name("simulationarchive_size_first");
     struct reb_binary_field_descriptor fd_functionpointers = reb_binary_field_descriptor_for_name("functionpointers");
     
 next_field:
@@ -86,9 +85,9 @@ next_field:
             if (fd.type==field.type){
                 // Read simple data types
                 if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
-                        || fd.dtype == REB_UINT32 || fd.dtype == REB_LONG 
-                        || fd.dtype == REB_ULONG || fd.dtype == REB_ULONGLONG 
-                        || fd.dtype == REB_PARTICLE || fd.dtype == REB_VEC3D ){
+                        || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
+                        || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
+                        || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D ){
                     char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                     fread(pointer, field.size, 1, inf);
                     goto next_field;
@@ -96,19 +95,19 @@ next_field:
                 // Read a pointer data type. 
                 // 1) reallocate memory
                 // 2) read data into memory
-                // 3) set allocated_N variable
+                // 3) set N_allocated variable
                 if (fd.dtype == REB_POINTER || fd.dtype == REB_POINTER_ALIGNED){
                     if (field.size % reb_binary_field_descriptor_list[i].element_size){
-                        reb_warning(r, "Inconsistent size encountered in binary field.");
+                        reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
                     }
                     char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                     if (fd.dtype == REB_POINTER_ALIGNED){
                         if (*(char**)pointer) free(*(char**)pointer);
-#ifndef _WIN32
-                        *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
-#else // _WIN32
-      // WHFast512 not supported on Windows!
+#if defined(_WIN32) || !defined(AVX512)
+                        // WHFast512 not supported on Windows!
                         *(char**)pointer = malloc(sizeof(struct reb_particle_avx512));
+#else 
+                        *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
 #endif // _WIN32
                     }else{ // normal malloc
                         *(char**)pointer = realloc(*(char**)pointer, field.size);
@@ -123,7 +122,7 @@ next_field:
                 // Special datatype for ias15. Similar to REB_POINTER. 
                 if (fd.dtype == REB_DP7){
                     if (field.size % reb_binary_field_descriptor_list[i].element_size){
-                        reb_warning(r, "Inconsistent size encountered in binary field.");
+                        reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
                     }
                     char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                     struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
@@ -164,24 +163,19 @@ next_field:
             r->max_radius1 = max_radius[1];
             goto next_field;
         }
-        if (field.type == fd_sa_size_first.type){
-            // simulationarchive_size_first was manually written. reading it manually here.
-            fread(&r->simulationarchive_size_first, field.size,1,inf);
-            goto next_field;
-        }
         if (field.type == fd_functionpointers.type){
             // Warning for when function pointers were used. 
             // No effect on simulation.
             int fpwarn;
             fread(&fpwarn, field.size,1,inf);
             if (fpwarn && warnings){
-                *warnings |= REB_INPUT_BINARY_WARNING_POINTERS;
+                *warnings |= REB_SIMULATION_BINARY_WARNING_POINTERS;
             }
             goto next_field;
         }
         if (field.type == fd_header.type){
             // Check header.
-            long objects = 0;
+            int64_t objects = 0;
             const size_t bufsize = 64 - sizeof(struct reb_binary_field);
             char readbuf[64], curvbuf[64];
             const char* header = "REBOUND Binary File. Version: ";
@@ -189,114 +183,116 @@ next_field:
 
             objects += fread(readbuf,sizeof(char),bufsize,inf);
             if (objects < 1){
-                *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+                *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
             }else{
                 // Note: following compares version, but ignores githash.
                 if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                    *warnings |= REB_INPUT_BINARY_WARNING_VERSION;
+                    *warnings |= REB_SIMULATION_BINARY_WARNING_VERSION;
                 }
             }
             goto next_field;
         }
 
         // We should never get here. If so, it's an unknown field type.
-        *warnings |= REB_INPUT_BINARY_WARNING_FIELD_UNKOWN;
+        *warnings |= REB_SIMULATION_BINARY_WARNING_FIELD_UNKOWN;
         int err = fseek(inf, field.size, SEEK_CUR);
         if (err){
             // Even worse, can't seek to end of field.
-            *warnings |= REB_INPUT_BINARY_WARNING_CORRUPTFILE;
+            *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
         }
     } 
 
 finish_fields:
     // Some final initialization
-    for (unsigned int l=0;l<r->var_config_N;l++){
+    for (unsigned int l=0;l<r->N_var_config;l++){
         r->var_config[l].sim = r;
     }
-    r->allocated_N = r->N; // This used to be different. Now only saving N.
-    for (unsigned int l=0;l<r->allocated_N;l++){
+    r->N_allocated = r->N; // This used to be different. Now only saving N.
+    for (unsigned int l=0;l<r->N_allocated;l++){
         r->particles[l].c = NULL;
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
     }
     reb_tree_delete(r);
     if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-        for (unsigned int l=0;l<r->allocated_N;l++){
+        for (unsigned int l=0;l<r->N_allocated;l++){
             reb_tree_add_particle_to_tree(r, l);
         }
     }
     if (r->ri_ias15.at){ 
         // Assume that all arrays were saved whenever ri_ias15.at was saved.
         // Only 3*N entries got saved. 
-        r->ri_ias15.allocated_N = 3*r->N;
+        r->ri_ias15.N_allocated = 3*r->N;
     }
     r->ri_whfast512.recalculate_constants = 1;
 }
 
-struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_input_binary_messages warnings){
-    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
-        reb_error(r,"Cannot read binary file. Check filename and file contents.");
+struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings){
+    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+        reb_simulation_error(r,"Cannot read binary file. Check filename and file contents.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_INPUT_BINARY_WARNING_VERSION){
-        reb_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
+    if (warnings & REB_SIMULATION_BINARY_WARNING_VERSION){
+        reb_simulation_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
     }
-    if (warnings & REB_INPUT_BINARY_WARNING_POINTERS){
-        reb_warning(r,"You have to reset function pointers after creating a reb_simulation struct with a binary file.");
+    if (warnings & REB_SIMULATION_BINARY_WARNING_POINTERS){
+        reb_simulation_warning(r,"You have to reset function pointers after creating a reb_simulation struct with a binary file.");
     }
-    if (warnings & REB_INPUT_BINARY_WARNING_PARTICLES){
-        reb_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
+    if (warnings & REB_SIMULATION_BINARY_WARNING_PARTICLES){
+        reb_simulation_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
     }
-    if (warnings & REB_INPUT_BINARY_ERROR_FILENOTOPEN){
-        reb_error(r,"Error while reading binary file (file was not open).");
+    if (warnings & REB_SIMULATION_BINARY_ERROR_FILENOTOPEN){
+        reb_simulation_error(r,"Error while reading binary file (file was not open).");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_INPUT_BINARY_ERROR_OUTOFRANGE){
-        reb_error(r,"Index out of range.");
+    if (warnings & REB_SIMULATION_BINARY_ERROR_OUTOFRANGE){
+        reb_simulation_error(r,"Index out of range.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_INPUT_BINARY_ERROR_SEEK){
-        reb_error(r,"Error while trying to seek file.");
+    if (warnings & REB_SIMULATION_BINARY_ERROR_SEEK){
+        reb_simulation_error(r,"Error while trying to seek file.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_INPUT_BINARY_WARNING_FIELD_UNKOWN){
-        reb_warning(r,"Unknown field found in binary file.");
+    if (warnings & REB_SIMULATION_BINARY_WARNING_FIELD_UNKOWN){
+        reb_simulation_warning(r,"Unknown field found in binary file.");
     }
-    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
-        reb_error(r,"Cannot read binary file. Check filename and file contents.");
+    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+        reb_simulation_error(r,"Cannot read binary file. Check filename and file contents.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_INPUT_BINARY_ERROR_OLD){
-        reb_error(r,"Reading old SimulationArchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3");
+    if (warnings & REB_SIMULATION_BINARY_ERROR_OLD){
+        reb_simulation_error(r,"Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_INPUT_BINARY_WARNING_CORRUPTFILE){
-        reb_warning(r,"The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it.");
+    if (warnings & REB_SIMULATION_BINARY_WARNING_CORRUPTFILE){
+        reb_simulation_warning(r,"The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it.");
     }
     return r;
 }
 
-struct reb_simulation* reb_create_simulation_from_binary(char* filename){
-    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r = reb_create_simulation();
+struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot){
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    struct reb_simulation* r = reb_simulation_create();
     
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
-    reb_read_simulationarchive_with_messages(sa, filename, NULL, &warnings);
-    if (warnings & REB_INPUT_BINARY_ERROR_NOFILE){
+    reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
+    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
         return NULL;
     }else{
         reb_input_process_warnings(NULL, warnings);
     }
-    reb_create_simulation_from_simulationarchive_with_messages(r, sa, -1, &warnings);
-    reb_close_simulationarchive(sa);
+    reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
+    if (sa){
+        reb_simulationarchive_free(sa);
+    }
     r = reb_input_process_warnings(r, warnings);
     return r;
 }

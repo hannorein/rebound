@@ -31,8 +31,8 @@ int main(int argc, char* argv[]){
     r->collision_resolve    = reb_collision_resolve_merge;        // Choose merger collision routine.
     r->ri_ias15.adaptive_mode = 2;
     //r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    //r->ri_tr.S_peri = reb_integrator_trace_switch_fdot_peri;
-    //r->ri_tr.vfac_p = 16.0;
+    //r->ri_trace.S_peri = reb_integrator_trace_switch_fdot_peri;
+    //r->ri_trace.vfac_p = 16.0;
 
     // Initialize masses
     struct reb_particle earth = {0};

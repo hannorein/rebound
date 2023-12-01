@@ -60,13 +60,13 @@ struct reb_treecell {
   * @details The tree needs to be updated when particles move, this function does that.
   * @param r Rebound simulation to operate on
   */
-void reb_tree_update(struct reb_simulation* const r);
+void reb_simulation_update_tree(struct reb_simulation* const r);
 
 /**
-  * @brief The wrap function calls reb_tree_update_gravity_data_in_cell() for each tree.
+  * @brief The wrap function calls reb_simulation_update_tree_gravity_data_in_cell() for each tree.
   * @param r Rebound simulation to operate on
   */
-void reb_tree_update_gravity_data(struct reb_simulation* const r);
+void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r);
 
 /**
   * @brief The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the tree. 

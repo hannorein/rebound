@@ -11,6 +11,7 @@ include src/integrator_eos.c
 include src/integrator_janus.c
 include src/integrator.c
 include src/gravity.c
+include src/server.c
 include src/collision.c
 include src/boundary.c
 include src/binarydiff.c
@@ -19,6 +20,7 @@ include src/input.c
 include src/display.c
 include src/rebound.c
 include src/tools.c
+include src/fmemopen.c
 include src/rotations.c
 include src/derivatives.c
 include src/particle.c
@@ -38,9 +40,11 @@ include src/integrator.h
 include src/collision.h
 include src/boundary.h
 include src/gravity.h
+include src/server.h
 include src/tree.h
 include src/tree.c
 include src/tools.h
+include src/fmemopen.h
 include src/rotations.h
 include src/derivatives.h
 include src/particle.h

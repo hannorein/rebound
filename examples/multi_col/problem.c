@@ -53,8 +53,8 @@ int main(int argc, char* argv[]){
     r->dt = (8. / 365.) * 2. * M_PI;
     //}
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_tr.hillfac = 4.;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_tr.peri = 0.01;
+    r->ri_trace.hillfac = 4.;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+    r->ri_trace.peri = 0.01;
     r->N_active = 2;
     r->visualization= REB_VISUALIZATION_NONE;
     //r->heartbeat  = heartbeat;

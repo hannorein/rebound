@@ -61,8 +61,8 @@ class TestTrace(unittest.TestCase):
             sim.integrate(1000)
             self.assertEqual(1,len(w))
 
-        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o1 = sim.particles[1].orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].orbit(primary=sim.particles[0])
 
 
         sim = rebound.Simulation()
@@ -80,8 +80,8 @@ class TestTrace(unittest.TestCase):
             sim.integrate(1000)
             self.assertEqual(1,len(w))
 
-        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o3 = sim.particles[1].orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].orbit(primary=sim.particles[0])
 
         self.assertLess(abs(o1.e-o4.e),2e-16)
         self.assertLess(abs(o2.e-o3.e),2e-16)
@@ -101,8 +101,8 @@ class TestTrace(unittest.TestCase):
 
         sim.integrate(1000)
 
-        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o1 = sim.particles[1].orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].orbit(primary=sim.particles[0])
 
 
         sim = rebound.Simulation()
@@ -117,8 +117,8 @@ class TestTrace(unittest.TestCase):
 
         sim.integrate(1000)
 
-        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o3 = sim.particles[1].orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].orbit(primary=sim.particles[0])
 
         self.assertLess(abs(o1.e-o4.e),2e-13)
         self.assertLess(abs(o2.e-o3.e),9e-14)
@@ -146,7 +146,7 @@ class TestTrace(unittest.TestCase):
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
         sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
         mtot0= sum([p.m for p in sim.particles])
-        com0 = sim.calculate_com()
+        com0 = sim.com()
         N0 = sim.N
 
         sim.integrator = "trace"
@@ -157,7 +157,7 @@ class TestTrace(unittest.TestCase):
 
         E0 = sim.energy()
         sim.integrate(1)
-        com1 = sim.calculate_com()
+        com1 = sim.com()
         self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
         self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
         self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
@@ -222,7 +222,7 @@ class TestTrace(unittest.TestCase):
         sim.add(m=1.,r=1.)
         sim.add(m=1e-3,r=1.e-3,a=0.5)
         mtot0 = sum([p.m for p in sim.particles])
-        com0 = sim.calculate_com()
+        com0 = sim.com()
         N0 = sim.N
 
         sim.integrator = "trace"
@@ -233,7 +233,7 @@ class TestTrace(unittest.TestCase):
 
         E0 = sim.energy()
         sim.integrate(1)
-        com1 = sim.calculate_com()
+        com1 = sim.com()
         self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
         self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
         self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
@@ -250,7 +250,7 @@ class TestTrace(unittest.TestCase):
         sim.add(m=1e-4,r=1.4e-3,x=1.,vx=-0.4) # falling onto the star
         sim.add(m=1e-5,r=1.6e-4,a=1.5,e=0.1)
         mtot0 = sum([p.m for p in sim.particles])
-        com0 = sim.calculate_com()
+        com0 = sim.com()
         N0 = sim.N
 
         sim.integrator = "trace"
@@ -261,7 +261,7 @@ class TestTrace(unittest.TestCase):
 
         E0 = sim.energy()
         sim.integrate(1)
-        com1 = sim.calculate_com()
+        com1 = sim.com()
         self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
         self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
         self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
@@ -327,7 +327,7 @@ class TestTrace(unittest.TestCase):
             mjup = 0.01 / (mstar - 0.01)
             a = 5.2
             e = 0.0
-            sim.add(mstar)
+            sim.add(m=mstar)
             # Setup using xyz instead of orbital elements for
             # machine independent test
             sim.add(m=mjup,x=0.90000, y=0.00000, vx=0.00000, vy=1.10360)

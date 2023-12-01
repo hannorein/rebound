@@ -72,8 +72,8 @@ int main(int argc, char* argv[]){
 
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_tr.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_tr.peri = 0.01;
+    r->ri_trace.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+    r->ri_trace.peri = 0.01;
 
 //    r->integrator = REB_INTEGRATOR_MERCURIUS;
 //    r->ri_mercurius.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023

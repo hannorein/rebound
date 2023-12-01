@@ -2,11 +2,8 @@
  * @file 	integrator.c
  * @brief 	Integration schemes.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the leap-frog integration scheme.
- * This scheme is second order accurate, symplectic and well suited for
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
- *
+ * @details	This file manages the different integration scheme.  
+ * 
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein
  *
@@ -82,7 +79,7 @@ void reb_integrator_part1(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_TRACE:
 			reb_integrator_trace_part1(r);
-		break;
+            break;
 		default:
 			break;
 	}
@@ -132,20 +129,19 @@ void reb_integrator_part2(struct reb_simulation* r){
 	}
 
     // Integrate other ODEs
-		// TLu changed condition for this - look into further. For now TRACE just does not support additional ODEs, which definitely needs to be fixed.
-    if (r->integrator != REB_INTEGRATOR_BS && r->odes_N && r->integrator != REB_INTEGRATOR_TRACE && r->integrator != REB_INTEGRATOR_MERCURIUS){
+    if (r->integrator != REB_INTEGRATOR_BS && r->N_odes){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
-            reb_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
+            reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
             r->ode_warnings = 1;
         }
 
         double dt = r->dt_last_done;
         double t = r->t - r->dt_last_done; // Note: floating point inaccuracy
         double forward = (dt>0.) ? 1. : -1.;
-        r->ri_bs.firstOrLastStep = 1;
+        r->ri_bs.first_or_last_step = 1;
         while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
             if (reb_sigint== 1){
-                r->status = REB_EXIT_SIGINT;
+                r->status = REB_STATUS_SIGINT;
                 return;
             }
             if (r->ri_bs.dt_proposed !=0.){
@@ -153,7 +149,7 @@ void reb_integrator_part2(struct reb_simulation* r){
                 dt = fabs(r->ri_bs.dt_proposed);
                 if (dt > max_dt){ // Don't overshoot N-body timestep
                     dt = max_dt;
-                    r->ri_bs.firstOrLastStep = 1;
+                    r->ri_bs.first_or_last_step = 1;
                 }
                 dt *= forward;
             }
@@ -165,8 +161,8 @@ void reb_integrator_part2(struct reb_simulation* r){
     }
 
 }
-
-void reb_integrator_synchronize(struct reb_simulation* r){
+	
+void reb_simulation_synchronize(struct reb_simulation* r){
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_synchronize(r);
@@ -216,7 +212,7 @@ void reb_integrator_init(struct reb_simulation* r){
 	}
 }
 
-void reb_integrator_reset(struct reb_simulation* r){
+void reb_simulation_reset_integrator(struct reb_simulation* r){
 	r->integrator = REB_INTEGRATOR_IAS15;
 	r->gravity_ignore_terms = 0;
 	reb_integrator_ias15_reset(r);
@@ -232,7 +228,7 @@ void reb_integrator_reset(struct reb_simulation* r){
 	reb_integrator_trace_reset(r);
 }
 
-void reb_update_acceleration(struct reb_simulation* r){
+void reb_simulation_update_acceleration(struct reb_simulation* r){
 	// This should probably go elsewhere
 	PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 	PROFILING_START()
@@ -240,25 +236,24 @@ void reb_update_acceleration(struct reb_simulation* r){
 	if (r->N_var){
 		reb_calculate_acceleration_var(r);
 	}
-	/*
 	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0)){
         // For Mercurius:
         // Additional forces are only calculated in the kick step, not during close encounter
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
-            if(r->N>r->ri_mercurius.allocated_N_additionalforces){
-                r->ri_mercurius.particles_backup_additionalforces = realloc(r->ri_mercurius.particles_backup_additionalforces, r->N*sizeof(struct reb_particle));
-                r->ri_mercurius.allocated_N_additionalforces = r->N;
+            if(r->N>r->ri_mercurius.N_allocated_additional_forces){
+                r->ri_mercurius.particles_backup_additional_forces = realloc(r->ri_mercurius.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+                r->ri_mercurius.N_allocated_additional_forces = r->N;
             }
-            memcpy(r->ri_mercurius.particles_backup_additionalforces,r->particles,r->N*sizeof(struct reb_particle));
+            memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
         }
 
         r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
-            struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additionalforces;
+            struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additional_forces;
             for (unsigned int i=0;i<r->N;i++){
                 particles[i].x = backup[i].x;
                 particles[i].y = backup[i].y;
@@ -269,7 +264,6 @@ void reb_update_acceleration(struct reb_simulation* r){
             }
         }
     }
-		*/
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }

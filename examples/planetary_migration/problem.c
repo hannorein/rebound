@@ -25,45 +25,51 @@ void migration_forces(struct reb_simulation* r);
 void heartbeat(struct reb_simulation* r);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_WHFAST;
-    //r->integrator    = REB_INTEGRATOR_IAS15;
-    r->dt         = 1e-2*2.*M_PI;        // in year/(2*pi)
-    r->additional_forces = migration_forces;     //Set function pointer to add dissipative forces.
-    r->heartbeat = heartbeat;  
+    r->integrator           = REB_INTEGRATOR_WHFAST;
+    //r->integrator         = REB_INTEGRATOR_IAS15;
+    r->dt                   = 1e-2*2.*M_PI;        // in year/(2*pi)
+    r->additional_forces    = migration_forces;     //Set function pointer to add dissipative forces.
+    r->heartbeat            = heartbeat;  
     r->force_is_velocity_dependent = 1;
-    tmax        = 2.0e4*2.*M_PI;    // in year/(2*pi)
+    tmax                    = 2.0e4*2.*M_PI;    // in year/(2*pi)
 
     // Initial conditions
     // Parameters are those of Lee & Peale 2002, Figure 4. 
     struct reb_particle star = {0};
     star.m  = 0.32;            // This is a sub-solar mass star
-    reb_add(r, star); 
+    reb_simulation_add(r, star); 
     
     struct reb_particle p1 = {0};    // Planet 1
     p1.x     = 0.5;
     p1.m      = 0.56e-3;
     p1.vy     = sqrt(r->G*(star.m+p1.m)/p1.x);
-    reb_add(r, p1); 
+    reb_simulation_add(r, p1); 
     
     struct reb_particle p2 = {0};    // Planet 2
     p2.x     = 1;
     p2.m      = 1.89e-3;
     p2.vy     = sqrt(r->G*(star.m+p2.m)/p2.x);
-    reb_add(r, p2); 
+    reb_simulation_add(r, p2); 
 
     tau_a = calloc(sizeof(double),r->N);
     tau_e = calloc(sizeof(double),r->N);
 
     tau_a[2] = 2.*M_PI*20000.0;    // Migration timescale of planet 2 is 20000 years.
-    tau_e[2] = 2.*M_PI*200.0;     // Eccentricity damping timescale is 200 years (K=100). 
+    tau_e[2] = 2.*M_PI*200.0;      // Eccentricity damping timescale is 200 years (K=100). 
 
-    reb_move_to_com(r);          
+    reb_simulation_move_to_com(r);          
 
     remove("orbits.txt"); // delete previous output file
 
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 }
 
 void migration_forces(struct reb_simulation* r){
@@ -108,17 +114,17 @@ void migration_forces(struct reb_simulation* r){
                 p->az += -dvz*prefac1 + (hx*dy-hy*dx)*prefac2;
             }
         }
-        com = reb_get_com_of_pair(com,particles[i]);
+        com = reb_particle_com_of_pair(com,particles[i]);
     }
 }
 
 void heartbeat(struct reb_simulation* r){
-    if(reb_output_check(r, 20.*M_PI)){
-        reb_output_timing(r, tmax);
+    if(reb_simulation_output_check(r, 20.*M_PI)){
+        reb_simulation_output_timing(r, tmax);
     }
-    if(reb_output_check(r, 40.)){
-        reb_integrator_synchronize(r);
-        reb_output_orbits(r,"orbits.txt");
-        reb_move_to_com(r); 
+    if(reb_simulation_output_check(r, 40.)){
+        reb_simulation_synchronize(r);
+        reb_simulation_output_orbits(r,"orbits.txt");
+        reb_simulation_move_to_com(r); 
     }
 }

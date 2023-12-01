@@ -154,12 +154,12 @@ for N in [1,2]:
     for coordinates in coordinatelist:
         for N_active in [-1]+list(range(1,N+2)):
             test_method = create_whfast_testparticle(coordinates,N, N_active)
-            test_method.__name__ = "test_whfast_testparticle_N%d_Nactive%d_"%(N,N_active)+coordinates
+            test_method.__name__ = "test_whfast_testparticle_N%d_N_active%d_"%(N,N_active)+coordinates
             setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
             
         for N_active in [-1]+list(range(3,N+4)):
             test_method = create_whfast_testparticle_withplanet(coordinates,N, N_active)
-            test_method.__name__ = "test_whfast_testparticle_withplanet_N%d_Nactive%d_"%(N,N_active)+coordinates
+            test_method.__name__ = "test_whfast_testparticle_withplanet_N%d_N_active%d_"%(N,N_active)+coordinates
             setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
         test_method = create_whfast_massivetestparticle(coordinates,N)
         test_method.__name__ = "test_whfast_massivetestparticle_N%d_"%(N)+coordinates
@@ -168,11 +168,11 @@ for N in [1,2]:
 for coordinates in coordinatelist:
     for N_active in [-1,1]:
         test_method = create_whfast_testparticletype1(coordinates, N_active)
-        test_method.__name__ = "test_whfast_testparticletype1_Nactive%d_"%(N_active)+coordinates
+        test_method.__name__ = "test_whfast_testparticletype1_N_active%d_"%(N_active)+coordinates
         setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
     for N_active in [-1,3]:
         test_method = create_whfast_testparticletype1_withplanet(coordinates, N_active)
-        test_method.__name__ = "test_whfast_testparticletype1_withplanet_Nactive%d_"%(N_active)+coordinates
+        test_method.__name__ = "test_whfast_testparticletype1_withplanet_N_active%d_"%(N_active)+coordinates
         setattr(TestIntegratorWHFastTestParticle, test_method.__name__, test_method)
 
 if __name__ == "__main__":

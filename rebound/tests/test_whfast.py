@@ -104,8 +104,8 @@ class TestIntegratorWHFast(unittest.TestCase):
             sim.integrate(1000)
             self.assertEqual(1,len(w))
         
-        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o1 = sim.particles[1].orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].orbit(primary=sim.particles[0])
         
 
         sim = rebound.Simulation()
@@ -124,8 +124,8 @@ class TestIntegratorWHFast(unittest.TestCase):
             sim.integrate(1000)
             self.assertEqual(1,len(w))
         
-        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o3 = sim.particles[1].orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].orbit(primary=sim.particles[0])
 
         self.assertLess(abs(o1.e-o4.e),2e-16)
         self.assertLess(abs(o2.e-o3.e),2e-16)
@@ -146,8 +146,8 @@ class TestIntegratorWHFast(unittest.TestCase):
 
         sim.integrate(1000)
         
-        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o1 = sim.particles[1].orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].orbit(primary=sim.particles[0])
         
 
         sim = rebound.Simulation()
@@ -163,8 +163,8 @@ class TestIntegratorWHFast(unittest.TestCase):
 
         sim.integrate(1000)
         
-        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o3 = sim.particles[1].orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].orbit(primary=sim.particles[0])
 
         self.assertLess(abs(o1.e-o4.e),4e-14)
         self.assertLess(abs(o2.e-o3.e),1e-13)
@@ -187,8 +187,8 @@ class TestIntegratorWHFast(unittest.TestCase):
 
         sim.integrate(1000)
         
-        o1 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o2 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o1 = sim.particles[1].orbit(primary=sim.particles[0])
+        o2 = sim.particles[2].orbit(primary=sim.particles[0])
         
 
         sim = rebound.Simulation()
@@ -202,8 +202,8 @@ class TestIntegratorWHFast(unittest.TestCase):
 
         sim.integrate(1000)
         
-        o3 = sim.particles[1].calculate_orbit(primary=sim.particles[0])
-        o4 = sim.particles[2].calculate_orbit(primary=sim.particles[0])
+        o3 = sim.particles[1].orbit(primary=sim.particles[0])
+        o4 = sim.particles[2].orbit(primary=sim.particles[0])
 
         self.assertLess(abs(o1.e-o3.e),2e-16)
         self.assertLess(abs(o2.e-o4.e),2e-16)

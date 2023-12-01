@@ -86,12 +86,23 @@ static const double w[8] = {0.03125, 0.18535815480297927854072897280718075447981
 
 // Machine independent implementation of pow(*,1./7.)
 static double sqrt7(double a){
+    // Without scaling, this is only accurate for arguments in [1e-7, 1e2]
+    // With scaling: [1e-14, 1e8]
+    double scale = 1;
+    while(a<1e-7 && isnormal(a)){
+        scale *= 0.1;
+        a *= 1e7;
+    }
+    while(a>1e2 && isnormal(a)){
+        scale *= 10;
+        a *= 1e-7;
+    }
     double x = 1.;
     for (int k=0; k<20;k++){  // A smaller number should be ok too.
         double x6 = x*x*x*x*x*x;
         x += (a/x6-x)/7.;
     }
-    return x;
+    return x*scale;
 }
 
 static void free_dp7(struct reb_dp7* dp7){
@@ -155,11 +166,11 @@ static inline void add_cs(double* p, double* csp, double inp){
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
     unsigned int N3;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-        N3 = 3*r->ri_mercurius.encounterN;// mercurius close encounter
-    }else{
+        N3 = 3*r->ri_mercurius.encounter_N;// mercurius close encounter
+    }else{ 
         N3 = 3*r->N;
     }
-    if (N3 > r->ri_ias15.allocated_N) {
+    if (N3 > r->ri_ias15.N_allocated) {
         realloc_dp7(&(r->ri_ias15.g),N3);
         realloc_dp7(&(r->ri_ias15.b),N3);
         realloc_dp7(&(r->ri_ias15.csb),N3);
@@ -180,14 +191,14 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
             csx[i] = 0;
             csv[i] = 0;
         }
-        r->ri_ias15.allocated_N = N3;
+        r->ri_ias15.N_allocated = N3;
     }
-    if (N3/3 > r->ri_ias15.map_allocated_N){
+    if (N3/3 > r->ri_ias15.N_allocated_map){
         r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*(N3/3));
         for (unsigned int i=0;i<N3/3;i++){
             r->ri_ias15.map[i] = i;
         }
-        r->ri_ias15.map_allocated_N = N3/3;
+        r->ri_ias15.N_allocated_map = N3/3;
     }
 
 }
@@ -200,10 +211,10 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     int N;
     int* map; // this map allow for integrating only a selection of particles
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
-        N = r->ri_mercurius.encounterN;
+        N = r->ri_mercurius.encounter_N;
         map = r->ri_mercurius.encounter_map;
         if (map==NULL){
-            reb_error(r, "Cannot access MERCURIUS map from IAS15.");
+            reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
             return 0;
         }
     }else{
@@ -211,17 +222,17 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         map = r->ri_ias15.map; // identity map
     }
     const int N3 = 3*N;
-
-    // reb_update_acceleration(); // Not needed. Forces are already calculated in main routine.
-
-    double* restrict const csx = r->ri_ias15.csx;
-    double* restrict const csv = r->ri_ias15.csv;
-    double* restrict const csa0 = r->ri_ias15.csa0;
-    double* restrict const at = r->ri_ias15.at;
-    double* restrict const x0 = r->ri_ias15.x0;
-    double* restrict const v0 = r->ri_ias15.v0;
-    double* restrict const a0 = r->ri_ias15.a0;
-    struct reb_vec3d* gravity_cs = r->gravity_cs;
+    
+    // reb_simulation_update_acceleration(); // Not needed. Forces are already calculated in main routine.
+    
+    double* restrict const csx = r->ri_ias15.csx; 
+    double* restrict const csv = r->ri_ias15.csv; 
+    double* restrict const csa0 = r->ri_ias15.csa0; 
+    double* restrict const at = r->ri_ias15.at; 
+    double* restrict const x0 = r->ri_ias15.x0; 
+    double* restrict const v0 = r->ri_ias15.v0; 
+    double* restrict const a0 = r->ri_ias15.a0; 
+    struct reb_vec3d* gravity_cs = r->gravity_cs; 
     const struct reb_dpconst7 g  = dpcast(r->ri_ias15.g);
     const struct reb_dpconst7 e  = dpcast(r->ri_ias15.e);
     const struct reb_dpconst7 b  = dpcast(r->ri_ias15.b);
@@ -302,7 +313,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             r->ri_ias15.iterations_max_exceeded++;
             const int integrator_iterations_warning = 10;
             if (r->ri_ias15.iterations_max_exceeded==integrator_iterations_warning ){
-                reb_warning(r, "At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
+                reb_simulation_warning(r, "At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
             }
             break;                              // Quit predictor corrector loop
         }
@@ -352,7 +363,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }
 
 
-            reb_update_acceleration(r);             // Calculate forces at interval n
+            reb_simulation_update_acceleration(r);             // Calculate forces at interval n
             if (r->calculate_megno){
                 integrator_megno_thisdt += w[n] * r->t * reb_tools_megno_deltad_delta(r);
             }
@@ -550,35 +561,45 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
-        }else{ // adaptive_mode == 2 (New adaptive timestepping method)
+        }else{ // adaptive_mode >= 2 (New adaptive timestepping method)
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){
                 double a0i = 0; //accelertation at beginning of timestep
-                double ai = 0;  //accalaeration at end of timestep
-                double ji = 0;  //jerk
-                double si = 0;  //snap
+                double y2 = 0;  //accalaeration at end of timestep
+                double y3 = 0;  //jerk
+                double y4 = 0;  //snap
+                double y5 = 0; // crackle
+                // All of the above are squared.
                 for(unsigned int k=3*i;k<3*(i+1);k++) {
                     a0i += a0[k]*a0[k];
                     double tmp = a0[k] + b.p0[k] + b.p1[k] + b.p2[k] + b.p3[k] + b.p4[k] + b.p5[k] + b.p6[k];
-                    ai += tmp*tmp;
+                    y2 += tmp*tmp;
                     tmp = b.p0[k] + 2.* b.p1[k] + 3.* b.p2[k] + 4.* b.p3[k] + 5.* b.p4[k] + 6.* b.p5[k] + 7.* b.p6[k];
-                    ji += tmp*tmp;
+                    y3 += tmp*tmp;
                     tmp = 2.* b.p1[k] + 6.* b.p2[k] + 12.* b.p3[k] + 20.* b.p4[k] + 30.* b.p5[k] + 42.* b.p6[k];
-                    si += tmp*tmp;
+                    y4 += tmp*tmp;
+                    tmp = 6.* b.p2[k] + 24.* b.p3[k] + 60.* b.p4[k] + 120.* b.p5[k] + 210.* b.p6[k];
+                    y5 += tmp*tmp;
                 }
                 if (!isnormal(a0i)){
                     // Skipp particles which do not experience any acceleration or
                     // have acceleration which is inf or Nan.
                     continue;
                 }
-                double timescale2 = 1./(ji/ai+sqrt(si/ai));
+                double timescale2 = 0;
+                if (r->ri_ias15.adaptive_mode==2){
+                    timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
+                }else if (r->ri_ias15.adaptive_mode==3){ // adaptive_mode==3
+                    timescale2 = (sqrt(y2*y4)+y3) / (sqrt(y3*y5)+y4); // A85
+                }
+
                 if (isnormal(timescale2) && timescale2<min_timescale2){
                     min_timescale2 = timescale2;
                 }
             }
             if (isnormal(min_timescale2)){
                 // Numerical factor below is there to match timestep to that of adaptive_mode==0 and default epsilon
-                dt_new = sqrt(min_timescale2*2) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0);
+                dt_new = sqrt(min_timescale2) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0);
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
@@ -750,7 +771,7 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){
 }
 void reb_integrator_ias15_clear(struct reb_simulation* r){
-    const int N3 = r->ri_ias15.allocated_N;
+    const int N3 = r->ri_ias15.N_allocated;
     if (N3){
         clear_dp7(&(r->ri_ias15.g),N3);
         clear_dp7(&(r->ri_ias15.e),N3);
@@ -770,8 +791,8 @@ void reb_integrator_ias15_clear(struct reb_simulation* r){
 }
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){
-    r->ri_ias15.allocated_N  = 0;
-    r->ri_ias15.map_allocated_N  = 0;
+    r->ri_ias15.N_allocated  = 0;
+    r->ri_ias15.N_allocated_map  = 0;
     free_dp7(&(r->ri_ias15.g));
     free_dp7(&(r->ri_ias15.e));
     free_dp7(&(r->ri_ias15.b));

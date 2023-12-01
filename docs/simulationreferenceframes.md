@@ -9,9 +9,9 @@ REBOUND has several built-in functions to do that.
 Here is how you can move the simulation to the heliocentric frame.
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    reb_move_to_hel(r);
+    reb_simulation_move_to_hel(r);
     ```
 === "Python"
     ```python
@@ -29,9 +29,9 @@ Variational equations are not affected by this operation.
 You can also move a simulation to the center-of-mass frame, the inertial frame where the center-of-mass is at the origin. 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
     ```
 === "Python"
     ```python

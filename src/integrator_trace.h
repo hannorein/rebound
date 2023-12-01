@@ -4,7 +4,7 @@
  * @author 	Hanno Rein
  *
  * @section 	LICENSE
- * Copyright (c) 2017 Hanno Rein
+ * Copyright (c) 2023 Tiger Lu
  *
  * This file is part of rebound.
  *
@@ -32,11 +32,9 @@ void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r); ///< Interna
 void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Internal in-place coordinate transformation
 
 // Switching functions
-double reb_integrator_trace_peri_switch_default(const struct reb_simulation* const r, int j); // TLu
-double reb_integrator_trace_switch_fdot_peri(const struct reb_simulation* const r, int j);
-double reb_integrator_trace_switch_vdiff_peri(const struct reb_simulation* const r, int j);
+double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, const unsigned int j);
+double reb_integrator_trace_switch_fdot_peri(struct reb_simulation* const r, const unsigned int j);
+double reb_integrator_trace_switch_vdiff_peri(struct reb_simulation* const r, const unsigned int j);
 
-//double reb_integrator_trace_switch_default(const struct reb_simulation* const r, int i, int j); // TLu
-double reb_integrator_trace_switch_velocity(const struct reb_simulation* const r, int i, int j);
-//struct reb_vec3d reb_integrator_trace_switch_default(const struct reb_simulation* const r, int i, int j); // TLu
+double reb_integrator_trace_switch_velocity(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 #endif

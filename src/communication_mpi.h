@@ -46,7 +46,7 @@
  * Each buffer is an array with the number of elements being equal
  * to the number of nodes. 
  * The number of particles/cells that have to be send to every other
- * node is saved in particles_send_N/tree_essential_send_N. The number
+ * node is saved in N_particles_send/N_tree_essential_send. The number
  * are different every time and have to be communicated to the other 
  * nodes before the actual communication of the particles/cells.
  * @{

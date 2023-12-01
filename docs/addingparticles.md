@@ -13,11 +13,11 @@ The following code shows an example on how to add particles this way:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct reb_particle p = {0};
     p.m = 1.;
     p.x = 1.;
-    reb_add(r, p);
+    reb_simulation_add(r, p);
     ```
     !!! Important
         The `= {0}` syntax above ensures that the struct is initialized with zeros.
@@ -36,21 +36,21 @@ The following code shows an example on how to add particles this way:
 
 You can also use orbital parameters to initialize the particle object.
 === "C"
-    In C, this is done by calling the `reb_tools_orbit_to_particle` function. Its arguments are gravitational constant, primary object, mass, semi-major axis, eccentricity, inclination, longitude of ascending node, argument of pericenter, and true anomaly. 
+    In C, this is done by calling the `reb_particle_from_orbit` function. Its arguments are gravitational constant, primary object, mass, semi-major axis, eccentricity, inclination, longitude of ascending node, argument of pericenter, and true anomaly. 
     It returns an initialized particle object which you can then add to the simulation.
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct reb_particle primary = {0};
     primary.m = 1;
-    reb_add(r, primary);
-    struct reb_particle planet = reb_tools_orbit_to_particle(r->G, primary, 1e-3, 1., 0., 0., 0., 0., 0.);
-    reb_add(r, planet);
+    reb_simulation_add(r, primary);
+    struct reb_particle planet = reb_particle_from_orbit(r->G, primary, 1e-3, 1., 0., 0., 0., 0., 0.);
+    reb_simulation_add(r, planet);
     ```
 
     You can also the coordinates described by [Pal 2009](https://ui.adsabs.harvard.edu/abs/2009MNRAS.396.1737P/abstract) to initialize orbits using the following function:
 
     ```c
-    struct reb_particle reb_tools_pal_to_particle(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
+    struct reb_particle reb_particle_from_pal(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
     ``` 
     Here, `lambda` is the longitude, `h` is $e\cos(\omega)$, `k` is $e\sin(\omega)$, `ix` and `iy` are the x and y components of the inclination respectively. 
 
@@ -75,34 +75,34 @@ You can also use orbital parameters to initialize the particle object.
 ## Convenience functions
 By far the easiest way to add particles to REBOUND is to use a convenience function.
 === "C"
-    In C, the function is called `reb_add_fmt` and has the following syntax:
+    In C, the function is called `reb_simulation_add_fmt` and has the following syntax:
     ```c
-    void reb_add_fmt(struct reb_simulation* r, const char* fmt, ...);
+    void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...);
     ```
     This is a [variadic function](https://en.cppreference.com/w/c/variadic) which takes a variable number of arguments similar to the `printf` function.
     The following code shows how this function is used.
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt(r, "m", 1.0);                // star at origin with mass 1
-    reb_add_fmt(r, "m a", 1e-3, 1.0);        // planet with mass 1e-3 and semi-major axis 1
-    reb_add_fmt(r, "m a e", 1e-3, 2.0, 0.1); // planet with mass 1e-3, semi-major axis 2, and eccentricity 0.1
-    reb_add_fmt(r, "m x vy", 1e-6, 1., 1.);  // planet with mass 1e-6, cartesian coordinates
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.0);                // star at origin with mass 1
+    reb_simulation_add_fmt(r, "m a", 1e-3, 1.0);        // planet with mass 1e-3 and semi-major axis 1
+    reb_simulation_add_fmt(r, "m a e", 1e-3, 2.0, 0.1); // planet with mass 1e-3, semi-major axis 2, and eccentricity 0.1
+    reb_simulation_add_fmt(r, "m x vy", 1e-6, 1., 1.);  // planet with mass 1e-6, cartesian coordinates
     ```
 
     The first argument is the simulation to which you want to add the particle.
     The second argument is a format string and it determines how many other arguments the function expects.
 
     !!! Danger
-        You need to pass exactly the right number of arguments to `reb_add_fmt` as indicated by your format string. 
+        You need to pass exactly the right number of arguments to `reb_simulation_add_fmt` as indicated by your format string. 
         Each argument also has to be the right type (mostly double floating point numbers).
         The latter is particularly important. If you call the function like this:
         ```c
-        reb_add_fmt(r, "m a", 1, 1);
+        reb_simulation_add_fmt(r, "m a", 1, 1);
         ```
         then the arguments are integers, not doubles. This can lead to unexpected behaviour that is very difficult to debug.
         The correct way to call the function is by making sure the arguments are doubles (by adding a `.`):
         ```c
-        reb_add_fmt(r, "m a", 1.0, 1.0);
+        reb_simulation_add_fmt(r, "m a", 1.0, 1.0);
         ```
 
     The following parameters are supported:

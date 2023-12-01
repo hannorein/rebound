@@ -47,22 +47,22 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY);
 /**
  * @brief Init random number generator based on time and process id.
  */
-void reb_tools_init_srand(struct reb_simulation* r);
+unsigned int reb_tools_get_rand_seed();
 
 /**
  * @brief Convert angles for orbit routines
  */
-double reb_tools_M_to_E(double e, double M);
+double reb_M_to_E(double e, double M);
 
 /**
  * @brief Convert angles for orbit routines
  */
-double reb_tools_M_to_f(double e, double M);
+double reb_M_to_f(double e, double M);
 
 /**
  * @brief Convert angles for orbit routines
  */
-double reb_tools_E_to_f(double e, double M);
+double reb_E_to_f(double e, double M);
 
 /**
  * @brief Kepler solver in Pal coordinates

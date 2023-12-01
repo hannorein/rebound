@@ -12,7 +12,7 @@
  *
  * The example also works with the WHFAST symplectic integrator. We turn
  * off safe-mode to allow fast and accurate simulations with the symplectic
- * corrector. If an output is required, you need to call ireb_integrator_synchronize()
+ * corrector. If an output is required, you need to call ireb_simulation_synchronize()
  * before accessing the particle structure.
  */
 #include <stdio.h>
@@ -49,16 +49,21 @@ double ss_mass[6] =
      0.0  // Pluto
 };
 
-double tmax = 7.3e7;
+double tmax = 7.3e8;
 
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
+    
+    // This allows you to connect to the simulation using
+    // a web browser by pointing it to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
     const double k = 0.01720209895; // Gaussian constant
-    r->dt = 40;            // in days
-    r->G = k * k;            // These are the same units as used by the mercury6 code.
+    r->dt = 40;                     // in days
+    r->G = k * k;                   // These are the same units as used by the mercury6 code.
     r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call integrator_synchronize() before outputs.
     r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
 
@@ -78,24 +83,28 @@ int main(int argc, char* argv[]) {
         p.vy = ss_vel[i][1];
         p.vz = ss_vel[i][2];
         p.m = ss_mass[i];
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
 
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
 
     r->N_active = r->N - 1; // Pluto is treated as a test-particle.
 
-    double e_initial = reb_tools_energy(r);
+    double e_initial = reb_simulation_energy(r);
 
     // Start integration
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, INFINITY);  // Runs forever
+    //reb_simulation_integrate(r, tmax);      // Integrates only to tmax
 
-    double e_final = reb_tools_energy(r);
-    printf("Done. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
+    double e_final = reb_simulation_energy(r);
+
+    // Cleanup
+    reb_simulation_free(r);
+    printf("\nDone. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
 }
 
 void heartbeat(struct reb_simulation* const r) {
-    if (reb_output_check(r, 10000000.)) {
-        reb_output_timing(r, tmax);
+    if (reb_simulation_output_check(r, 40000000.)) {
+        reb_simulation_output_timing(r, tmax);
     }
 }

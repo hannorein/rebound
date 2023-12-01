@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v3.28.1-green.svg?style=flat)](https://rebound.readthedocs.org)
+[![Version](https://img.shields.io/badge/rebound-v4.0.1-green.svg?style=flat)](https://rebound.readthedocs.org)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
 [![Paper](https://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat)](https://arxiv.org/abs/1110.4876)
@@ -23,23 +23,28 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 ## Features
 
-* Symplectic integrators (WHFast, SEI, LEAPFROG, EOS)
-* High order symplectic integrators for integrating planetary systems (SABA, WH Kernel methods)
-* Hybrid symplectic integrators for planetary dynamics with close encounters (MERCURIUS)
-* High accuracy non-symplectic integrators with adaptive time-stepping (IAS15, Gragg-Bulirsch-Stoer)
+* No dependencies on external libraries.
+* Runs natively on Linux, MacOS, and Windows. 
+* Symplectic integrators WHFast, SEI, LEAPFROG, EOS.
+* Hybrid symplectic integrators for planetary dynamics with close encounters MERCURIUS
+* High order symplectic integrators for integrating planetary systems SABA, WH Kernel methods.
+* High accuracy non-symplectic integrator with adaptive time-stepping IAS15.
 * Can integrate arbitrary user-defined ODEs that are coupled to N-body dynamics for tides, spin, etc
 * Support for collisional/granular dynamics, various collision detection routines
-* The code is written entirely in C, conforms to the ISO standard C99 and can be used as a thread-safe shared library
+* The computationally intensive parts of the code are written entirely in C, conforming to the ISO standard C99, and can be used as a thread-safe shared library
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
-* Extensive set of example problems in both C and Python
-* Real-time, 3D OpenGL visualization (C version)
+* Real-time, 3D visualization, for both C and Python.
+* Extensive set of example problems for both C and Python. You can run examples directly from your browser without the need to download or install anything.
+* Parallelized WHFast512 integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with MPI is supported for some special use cases only (using an essential tree for gravity and collisions)
-* No dependencies on external libraries (use of OpenGL/glfw3 for visualization is optional)
-* The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
-* No configuration is needed to run any of the example problems. Just type `make && ./rebound` in the problem directory to run them
-* Comes with standard ASCII or binary output routines
-* Different modules are easily interchangeable at runtime
+* The code is 100% open-source. All features are included in the public repository on github.
+
+## Try out REBOUND 
+
+You can try out REBOUND without installing it. 
+Simply head over to [readthedocs.org](https://rebound.readthedocs.io/en/latest/examples/).
+All the C examples have been compiled with emscripten and can run directly in your browser.
 
 ## One minute installation
 
@@ -74,9 +79,16 @@ If you have trouble installing or using REBOUND, please open an issue on github 
 
 There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw .
 
-## Additional Physics
-To easily incorporate additional physics into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
+## Related projects
 
+### Additional physics
+To easily incorporate additional physics modules such as migration forces, GR effects and spin into your REBOUND simulations, see REBOUNDx at https://github.com/dtamayo/reboundx
+
+### Analytical and semianalytical tools
+If you're interested in comparing numerical simulations to analytical and semianalytical tools for celestial mechanics, see Celmech at https://github.com/shadden/celmech
+
+### Ephemeris-quality integrations of test particles
+To generate ephemeris-quality integrations of test particles in the Solar System with a precision on par with JPL's small body integrator, see ASSIST at https://github.com/matthewholman/assist
 
 ## Papers
 
@@ -92,7 +104,7 @@ There are several papers describing the functionality of REBOUND.
 
 5. Rein & Tamayo 2016 (Monthly Notices of the Royal Astronomical Society, Volume 459, Issue 3, p.2275-2285) develop the framework for second order variational equations. <https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R>
 
-6. Rein & Tamayo 2017 (Monthly Notices of the Royal Astronomical Society, Volume 467, Issue 2, p.2377-2383) describes the Simulation Archive for exact reproducibility of N-body simulations. <https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.2377R>
+6. Rein & Tamayo 2017 (Monthly Notices of the Royal Astronomical Society, Volume 467, Issue 2, p.2377-2383) describes the Simulationarchive for exact reproducibility of N-body simulations. <https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.2377R>
 
 7. Rein & Tamayo 2018 (Monthly Notices of the Royal Astronomical Society, Volume 473, Issue 3, p.3351–3357) describes the integer based JANUS integrator. <https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.3351R>
 

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>REBOUND Visualization</title>
+    <style>
+      body {
+          font-family: arial;
+          margin: 0;
+          padding: none;
+          background: #000;
+      }
+
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      div.emscripten { text-align: center; }      
+      
+      #output {
+          position: absolute;
+          top: 80%;
+          left: 0px;
+          margin: 0px;
+          width: 100%;
+          height: 20%;
+          overflow: hidden;
+          display: block;
+          border: 0px;
+          padding: 0px;
+          padding-left: 1em;
+          padding-right: 1em;
+          box-sizing: border-box;
+          background-color: black;
+          color: white;
+          font-family: 'Lucida Console', Monaco, monospace;
+          outline: none;
+      }
+
+      .reboundlogo{
+          position: relative;
+          top: 0.15em;
+          float: left;
+          width: 1em;
+          height: 1em;
+          margin-right: 0.5em;
+      }
+      .reboundlogofull{
+          width: 2em;
+          height: 2em;
+          margin-right: 1.5em;
+      }
+      
+      .reboundlogo, .reboundlogofull{
+          -webkit-filter: invert(1);
+          filter: invert(1);
+          background-size: contain;
+          background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAElklEQVRYCZ2We4hVVRSHr5NO4iN7aGY+uj7yCULlf4aRmEVEQ5CSTJFlDmVGmkMw6TQpIv2RWRFFWTFIhZUE5h9R2lgWZopmMlQojGmYQjRO+ag0p77vzpzbufuec+/VH3zn7rX2Ovvss/ba+9wemcrVj9CZcAtcDyNhAHRCOxyEb6EFNsNJKKseZSMymVHELIFa6A/H4GpYC/uhFziRYTAFxkIHvAFr4ChckC7mrpXwF/h29TACBsIf8CKE8oWccAOcghPQBI51XhpO9A74HRZBOEAjvr9hKsRVjTEPfoB/wYk7CcdyzIo0magjsAt8myT5INf6N7gRfPO74QD8Ax/CdKiCcbAPDsMEKKlr6XWNnf138B6sglngusd1KcZWMBO7wXs2wiQIZew2+BlcxrziRdgH7zfQCdvhErCwxsAQ8AF7YQO8A77RneDbXgTK+z6GL8EdYa1EcjwnfA6mgbVVoNVYpjRcKyc5FGZDMxhzBhzsLDghM3c/mIEOcLJmxkm8AnNgMGShHSzuAo3H8oa6Am+yYaY+Ax8i78IgiFRN4wZYCOvAujCrTnoTfAC+/WjIq5nWj9Az70lvPEqXAy6F+8B1tW5qIElm8Bp4DFohmvjrtHNyX5+GBV1m7lrF1bTeBreCNaDuANMeT+EA7LfAtV0FUT3QLJIvWA+OcRIszsyDYEquAFPZCG3gTB00Sp8Pcf1Na7x4MXN6gKvjuCQuQynV0en4tQathz3wNFi1FtELMBWc4XBYBt5gfz9I0ww6jHH7llpOX8Bt3gz5t7UIV4OZCDUfh5mQu8LOwL4Z2yV9OfCHprujVadp2wmTNRLk/j0Kr8En4NZKWgLced1Dy+Wbl/cUN5bgOqHb1FoHaWqgw8CrwCI0/joop+cIsNDc4kl6CKeTzKX1kaQIfL3hF1jT3a99HBq77VI/fsBc521QlRDosp6z40/wcElSDU5PMNdLuVxfgetcTtbUw2Axz0kIvhzfaSdwDIYmBOi6F7bDAY1uaU+B6shR4vdr+t6H5RDGj8F3CHJnuW8Vqj8Oq3lx0DED2zpIK9ogPDMRh5/o2qDDYm7WVwemK36e6/cE9EHh59U4i2cuVCq/kGYu0hAaTsoMZ64E68CzOq4mjF8hPFrdgj9BVJg0y2o2EZ4h47sjF/HrDvGgy+lNrvuhV5eZu27g2hKz482PMLbGHWXanp4+sAF8hs9aC3lZEFb4gryn63guCIr1PUPb70KYnVhIUXMTni/AneGzRkOBPDjc41kwzUfgWUjS7Titj3FJnSk+0+5/Ar8VK5Ni+uK0MneBa2PK0g6cgfSdhblQqW4i0Ek7fu+0m4bR0Qafg1X6JKRpNx1vp3UGfr8nn8JhGBH0FZmj8BwEZ/tEUe//jiaaHeB5UUoT6NwHhyDaBaXic33O0pusicchKWVZ/J4fVnaS+uB8Ck6BZ4DZPS85wArwNDR1yyALcT2P4RlSE3NmaS8Fi9iHW0fVcMHKcuerYPV6ArbCOlgO9eBDOmEHfA/GmLmXoOx6u90qlWs9E6aD/wdGwmVgrbRDG+yBFtgCTqys/gMaRhK0mwKA+wAAAABJRU5ErkJggg==');
+
+      }
+
+      #canvas {
+          width: 100%;
+          height: 100%;
+          position: relative;
+      }
+      #container {
+          border: 0px none; 
+          background-color: black;
+          position: absolute;
+          margin: auto;
+          margin: auto;
+          width: 100%;
+
+          height: 80%;
+          overflow: hidden;
+          display: block;
+      }
+      #overlay, #overlay-help {
+          container-type: inline-size;
+          position: absolute;
+          padding: 5px;
+          color: #fff;
+          border-radius: 5px;
+          border: solid 1px;
+          resize: horizontal;
+          overflow: hidden;
+          font-family: 'Lucida Console', Monaco, monospace;
+      }
+      #overlay {
+          top: 5px;
+          width: 2.2em;
+          left: 5px;
+          z-index: 10;
+          font-size: 6.5cqw;
+      }
+      #overlay-help {
+          top: 50%;
+          width: 10em;
+          left: 50%;
+          transform:translate(-50%, -50%);
+          z-index: 20;
+          font-size: 3.2cqw;
+          display: none;
+          background-color: rgba(0, 0, 0, 0.75);
+      }
+
+      #overlaytext {
+          font-size: 6.5cqw;
+      }
+      #overlaytext-help {
+          white-space: pre-wrap;
+          font-size: 3.2cqw;
+      }
+      #clickToStartBanner {
+          background: #000;
+          width:      100%;
+          height:     100%;
+          z-index:    50;
+          top:        0;
+          left:       0;
+          position:   fixed;
+          color:      #fff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-family:'Lucida Console', Monaco, monospace;
+      }
+
+
+    </style>
+  </head>
+  <body>
+      <div id="clickToStartBanner" onclick="if (reboundRuntimeInitialized == true){Module.callMain([]); this.remove();}"><div class="reboundlogofull"></div><div id="loadingtext">Loading ...</div></div>
+      <div id="container">
+          <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+          <div id="overlay" onclick="document.getElementById('overlay-toggle').innerHTML='1'; console.log('no');">
+              <div id="overlaytext">
+                  <div class="reboundlogo"></div>
+                  REBOUND v4.0.1  <!-- VERSIONLINE -->
+              </div>
+          </div>
+          <div id="overlay-help">
+              <div id="overlaytext-help">
+              </div>
+          </div>
+      </div>
+      <div id="overlay-toggle" style="display: none;"></div>
+
+      <textarea id="output" rows="8">Console output:
+
+</textarea>
+
+    <script type='text/javascript'>
+        var reboundRuntimeInitialized = false;
+        var Module = {
+            noInitialRun: false,
+            onRuntimeInitialized: function() {
+                var element = document.getElementById('loadingtext');
+                reboundRuntimeInitialized = true;
+                if (Module.noInitialRun){
+                    element.innerHTML = "Click to start REBOUND simulation.";
+                }else{
+                    var clickToStartBanner = document.getElementById('clickToStartBanner');
+                    clickToStartBanner.remove();
+                }
+            },
+            print: (function() {
+                var element = document.getElementById('output');
+                //if (element) element.value = ''; // clear browser cache
+                return function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                    console.log(text);
+                    if (element) {
+                        element.value += text + "\n";
+                        element.scrollTop = element.scrollHeight; // focus on bottom
+                    }
+                };
+            })(),
+            canvas: (() => {
+                var canvas = document.getElementById('canvas');
+
+                // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+                // application robust, you may want to override this behavior before shipping!
+                // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+                canvas.addEventListener("webglcontextlost", (e) => { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+                return canvas;
+            })(),
+            setStatus: (text) => {
+                if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+                if (text === Module.setStatus.last.text) return;
+                var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                    var now = Date.now();
+                    if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+                    Module.setStatus.last.time = now;
+                    Module.setStatus.last.text = text;
+                    if (m) {
+                        text = m[1];
+                    } else {
+                    }
+            },
+            totalDependencies: 0,
+            monitorRunDependencies: (left) => {
+                this.totalDependencies = Math.max(this.totalDependencies, left);
+                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+            }
+        };
+        Module.setStatus('Downloading...');
+        window.onerror = (event) => {
+            // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+            Module.setStatus('Exception thrown, see JavaScript console');
+            Module.setStatus = (text) => {
+                if (text) console.error('[post-exception status] ' + text);
+            };
+        };
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

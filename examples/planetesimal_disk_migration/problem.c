@@ -22,11 +22,19 @@ double E0;
 int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c);
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    // The particles are tiny in this example. To see them
+    // on the screen press `s` to change their plotting style.
+    reb_simulation_start_server(r, 1234);
+
     
     // Simulation Setup
     r->integrator    = REB_INTEGRATOR_MERCURIUS;
-    r->heartbeat    = heartbeat;
+    r->heartbeat     = heartbeat;
     // Test particle type 1 allows massive particles to feel the gravity of testparticles.
     // However, test particles will not feel the gravity from other test particles.
     r->testparticle_type = 1;
@@ -38,9 +46,9 @@ int main(int argc, char* argv[]){
     r->collision_resolve_keep_sorted = 1;
     
     // Boundaries
-    r->boundary    = REB_BOUNDARY_OPEN;
+    r->boundary = REB_BOUNDARY_OPEN;
     const double boxsize = 6;
-    reb_configure_box(r,boxsize,2,2,1);
+    reb_simulation_configure_box(r,boxsize,2,2,1);
     
     srand(12);
     double m_earth = 3.003e-6;
@@ -53,24 +61,24 @@ int main(int argc, char* argv[]){
     struct reb_particle star = {0};
     star.m         = 1;
     star.r        = 0.005;        // Radius of particle is in AU!
-    reb_add(r, star);
+    reb_simulation_add(r, star);
     
     // Planet 1 - inner massive planet to scatter planetesimals out
     {
         double a=a_scat_planet, m=m_neptune, e=0, inc=reb_random_normal(r, 0.00001);
         struct reb_particle p = {0};
-        p = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
+        p = reb_particle_from_orbit(r->G, star, m, a, e, inc, 0, 0, 0);
         p.r = 0.000467;
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
     
     // Planet 2 - outer smaller planet to migrate in the disk
     {
         double a=a_mig_planet, m=2.3*m_earth, e=0, inc=reb_random_normal(r, 0.00001);
         struct reb_particle p = {0};
-        p = reb_tools_orbit_to_particle(r->G, star, m, a, e, inc, 0, 0, 0);
+        p = reb_particle_from_orbit(r->G, star, m, a, e, inc, 0, 0, 0);
         p.r = 0.0000788215;
-        reb_add(r, p);
+        reb_simulation_add(r, p);
     }
     
     r->N_active = r->N;
@@ -91,17 +99,17 @@ int main(int argc, char* argv[]){
         double Omega = reb_random_uniform(r, 0,2.*M_PI);
         double apsis = reb_random_uniform(r, 0,2.*M_PI);
         double phi     = reb_random_uniform(r, 0,2.*M_PI);
-        pt = reb_tools_orbit_to_particle(r->G, star, r->testparticle_type?planetesimal_mass:0., a, e, inc, Omega, apsis, phi);
+        pt = reb_particle_from_orbit(r->G, star, r->testparticle_type?planetesimal_mass:0., a, e, inc, Omega, apsis, phi);
         pt.r         = 0.00000934532;
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
     }
 
-    reb_move_to_com(r);
-    E0 = reb_tools_energy(r);
+    reb_simulation_move_to_com(r);
+    E0 = reb_simulation_energy(r);
     
     // Integrate!
-    reb_integrate(r, INFINITY);
-    reb_free_simulation(r);
+    reb_simulation_integrate(r, INFINITY);
+    reb_simulation_free(r);
 }
 
 int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c){
@@ -116,15 +124,15 @@ int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, str
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_output_check(r, 100.*r->dt)){
+    if (reb_simulation_output_check(r, 100.*r->dt)){
         //relative energy error
-        double E = reb_tools_energy(r);
+        double E = reb_simulation_energy(r);
         double relE = fabs((E-E0)/E0);
         
         //get orbital elements
         struct reb_particle p = r->particles[2];
         struct reb_particle star = r->particles[0];
-        struct reb_orbit o = reb_tools_particle_to_orbit(r->G,p,star);
+        struct reb_orbit o = reb_orbit_from_particle(r->G,p,star);
         
         printf("a2=%f,dE=%e,N=%d\n",o.a,relE,r->N);
     }

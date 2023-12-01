@@ -5,7 +5,7 @@
 #    brew install libomp
 # Alternatively use a compiler which supports OpenMP out of the box (gcc) and
 # uncomment the following line:
-# export CC=gcc
+#export CC=gcc
 
 ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang"), 1)
 export OPENMPCLANG=1
@@ -14,7 +14,8 @@ export OPENMP=1
 endif
 
 
-export OPENGL=0
+export OPENGL=0  	# Set this to 1 to enable OpenGL
+export SERVER=1		# Set this to 1 to enable the visualization web server
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for
@@ -40,3 +41,11 @@ clean:
 	@echo "Cleaning up local directory ..."
 	@-$(RM) $(LIBREBOUND)
 	@-$(RM) $(EXEREBOUND)
+
+rebound_webgl.html: problem.c
+	@echo "Compiling problem.c with emscripten (WebGL enabled)..."
+	emcc -O3 -I../../src/ ../../src/*.c problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sSINGLE_FILE -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file ../../web_client/shell_rebound_webgl.html -o rebound_webgl.html
+
+rebound_console.html: problem.c
+	@echo "Compiling problem.c with emscripten (WebGL disabled)..."
+	emcc -O3 -I../../src/ ../../src/*.c problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -sASYNCIFY -sSINGLE_FILE -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file ../../web_client/shell_rebound_console.html -o rebound_console.html

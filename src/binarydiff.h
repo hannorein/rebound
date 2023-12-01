@@ -25,6 +25,17 @@
 #ifndef _BINARYDIFF_H
 #define _BINARYDIFF_H
 
+// Compares two simulations, stores difference in buffer.
+//
+// output_option:
+// - If set to 0, differences are written to bufp in the form of reb_binary_field structs. 
+// - If set to 1, differences are printed on the screen. 
+// - If set to 2, only the return value indicates any differences.
+// - If set to 3, differences are written to bufp in a human readable form.
+//
+// returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
+
+int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 
 
 #endif // _BINARYDIFF_H
