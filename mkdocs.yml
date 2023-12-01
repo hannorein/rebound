@@ -49,7 +49,7 @@ nav:
       - "Just getting started":
         - c_examples/simplest.md
         - c_examples/heartbeat.md
-        - c_examples/reb_simulation_add_fmt.md
+        - c_examples/reb_add_fmt.md
         - ipython_examples/Churyumov-Gerasimenko.ipynb
         - ipython_examples/WHFast.ipynb
         - c_examples/solar_system.md
