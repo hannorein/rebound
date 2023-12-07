@@ -286,7 +286,7 @@ class OrbitPlot:
                         pprimary = p.jacobi_com
                     else:
                         pprimary = self._primary
-                    o = p.calculate_orbit(primary = pprimary)
+                    o = p.orbit(primary = pprimary)
                     newp = Particle(a=o.a, f=0., inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=p.m, primary=pprimary, simulation=self.sim)
                     periastrons.append([[getattr(prim,projection[0])+offset_x, getattr(prim,projection[1])+offset_y], 
                                         [getattr(newp,projection[0])+offset_x, getattr(newp,projection[1])+offset_y]])

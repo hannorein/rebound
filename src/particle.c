@@ -45,67 +45,66 @@
 extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
-static void reb_add_local(struct reb_simulation* const r, struct reb_particle pt){
+static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
 	if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
-		reb_error(r,"Particle outside of box boundaries. Did not add particle.");
+		reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
 		return;
 	}
-	while (r->allocated_N<=r->N){
-		r->allocated_N = r->allocated_N ? r->allocated_N * 2 : 128;
-		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->allocated_N);
+	while (r->N_allocated<=r->N){
+		r->N_allocated = r->N_allocated ? r->N_allocated * 2 : 128;
+		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->N_allocated);
 	}
 
 	r->particles[r->N] = pt;
 	r->particles[r->N].sim = r;
 	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
         if (r->root_size==-1){
-            reb_error(r,"root_size is -1. Make sure you call reb_configure_box() before using a tree based gravity or collision solver.");
+            reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
             return;
         }
         if(fabs(pt.x)>r->boxsize.x/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
-            reb_error(r,"Cannot add particle outside of simulation box.");
+            reb_simulation_error(r,"Cannot add particle outside of simulation box.");
             return;
         }
 		reb_tree_add_particle_to_tree(r, r->N);
 	}
 	(r->N)++;
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-        struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+        struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
         if (r->ri_mercurius.mode==0){ //WHFast part
-            rim->recalculate_dcrit_this_timestep       = 1;
+            rim->recalculate_r_crit_this_timestep       = 1;
             rim->recalculate_coordinates_this_timestep = 1;
         }else{  // IAS15 part
             reb_integrator_ias15_reset(r);
-            if (rim->dcrit_allocated_N<r->N){
+            if (rim->N_allocated_dcrit<r->N){
                 rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
-                rim->dcrit_allocated_N = r->N;
+                rim->N_allocated_dcrit = r->N;
             }
             rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
-            if (rim->allocated_N<r->N){
+            if (rim->N_allocated<r->N){
                 rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
                 rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*r->N);
-                rim->allocated_N = r->N;
+                rim->N_allocated = r->N;
             }
-            rim->encounter_map[rim->encounterN] = r->N-1;
-            rim->encounterN++;
-            if (r->N_active==-1){
+            rim->encounter_map[rim->encounter_N] = r->N-1;
+            rim->encounter_N++;
+            if (r->N_active==-1){ 
                 // If global N_active is not set, then all particles are active, so the new one as well.
-                // Otherwise, assume we're adding non active particle.
-                rim->encounterNactive++;
+                // Otherwise, assume we're adding non active particle. 
+                rim->encounter_N_active++;
             }
         }
     }
-		if (r->integrator == REB_INTEGRATOR_TRACE){
-        struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
-        if (r->ri_tr.mode==1){ // BS part
-					reb_error(r,"TRACE does not support adding particles mid-timestep\n");
-					return;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        if (r->ri_trace.mode==1){ // BS part
+            reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
+            return;
         }
     }
 }
 
-void reb_add(struct reb_simulation* const r, struct reb_particle pt){
+void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
 #ifndef COLLISIONS_NONE
 	if (pt.r>=r->max_radius0){
 		r->max_radius1 = r->max_radius0;
@@ -123,9 +122,9 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 #endif // GRAVITY_GRAPE
 #ifdef MPI
 	int rootbox = reb_get_rootbox_for_particle(r, pt);
-	int root_n_per_node = r->root_n/r->mpi_num;
-	int proc_id = rootbox/root_n_per_node;
-    	const unsigned int N_active = (r->N_active==-1)?r->N: (unsigned int)r->N_active;
+	int N_root_per_node = r->N_root/r->mpi_num;
+	int proc_id = rootbox/N_root_per_node;
+    const unsigned int N_active = (r->N_active==-1)?r->N: (unsigned int)r->N_active;
 	if (proc_id != r->mpi_id && r->N >= N_active){
 		// Add particle to array and send them to proc_id later.
 		reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
@@ -133,7 +132,7 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	}
 #endif // MPI
 	// Add particle to local partical array.
-	reb_add_local(r, pt);
+	reb_simulation_add_local(r, pt);
 }
 
 int reb_particle_check_testparticles(struct reb_simulation* const r){
@@ -155,14 +154,14 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
 	if (r->root_size==-1) return 0;
-	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->root_nx)%r->root_nx;
-	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->root_ny)%r->root_ny;
-	int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->root_nz)%r->root_nz;
-	int index = (k*r->root_ny+j)*r->root_nx+i;
+	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
+	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
+	int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
+	int index = (k*r->N_root_y+j)*r->N_root_x+i;
 	return index;
 }
 
-int reb_get_particle_index(struct reb_particle* p){
+int reb_simulation_particle_index(struct reb_particle* p){
 	struct reb_simulation* r = p->sim;
 	int i = 0;
 	const int N = r->N;
@@ -216,9 +215,9 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
     int N_hash = 0;
     int zerohash = -1;
     for(unsigned int i=0; i<r->N; i++){
-        if(N_hash >= r->allocated_N_lookup){
-            r->allocated_N_lookup = r->allocated_N_lookup ? r->allocated_N_lookup * 2 : 128;
-            r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->allocated_N_lookup);
+        if(N_hash >= r->N_allocated_lookup){
+            r->N_allocated_lookup = r->N_allocated_lookup ? r->N_allocated_lookup * 2 : 128;
+            r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->N_allocated_lookup);
         }
         if(particles[i].hash == 0){ // default hash (0) special case
             if (zerohash == -1){    // first zero hash
@@ -241,8 +240,8 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
     qsort(r->particle_lookup_table, r->N_lookup, sizeof(*r->particle_lookup_table), compare_hash); // only sort the first N_lookup entries that are initialized.
 }
 
-struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
-    struct reb_particle* p;
+struct reb_particle* reb_simulation_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
+    struct reb_particle* p; 
     p = reb_search_lookup_table(r, hash);
     if (p == NULL){
         reb_update_particle_lookup_table(r);
@@ -257,9 +256,9 @@ struct reb_particle* reb_get_particle_by_hash(struct reb_simulation* const r, ui
     return p;
 }
 
-struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
+struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* const r, uint32_t hash){
 #ifdef MPI
-    struct reb_particle* p = reb_get_particle_by_hash(r, hash);
+    struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
     int found = p==0?0:1;
     int found_sum = 0;
     MPI_Allreduce(&found, &found_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
@@ -267,7 +266,7 @@ struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const
         return reb_particle_nan();
     }
     if (found_sum > 1){
-        reb_error(r, "Multiple particles with same hash found.");
+        reb_simulation_error(r, "Multiple particles with same hash found.");
     }
     int root;
     int mayberoot = found ? r->mpi_id : 0;
@@ -280,7 +279,7 @@ struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const
     MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
     return ph;
 #else // MPI
-    struct reb_particle* p = reb_get_particle_by_hash(r, hash);
+    struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
     if (p==0){
         return reb_particle_nan();
     }else{
@@ -289,20 +288,20 @@ struct reb_particle reb_get_remote_particle_by_hash(struct reb_simulation* const
 #endif // MPI
 }
 
-void reb_remove_all(struct reb_simulation* const r){
+void reb_simulation_remove_all_particles(struct reb_simulation* const r){
 	r->N 		= 0;
-	r->allocated_N 	= 0;
+	r->N_allocated 	= 0;
 	r->N_active 	= -1;
 	r->N_var 	= 0;
 	free(r->particles);
 	r->particles 	= NULL;
 }
 
-int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
+int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted){
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-        keepSorted = 1; // Force keepSorted for hybrid integrator
-        struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
-        if (rim->dcrit_allocated_N>0 && index<(int)rim->dcrit_allocated_N){
+        keep_sorted = 1; // Force keep_sorted for hybrid integrator
+        struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+        if (rim->N_allocated_dcrit>0 && index<(int)rim->N_allocated_dcrit){
             for (unsigned int i=0;i<r->N-1;i++){
                 if ((int)i>=index){
                     rim->dcrit[i] = rim->dcrit[i+1];
@@ -311,10 +310,10 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         }
         reb_integrator_ias15_reset(r);
         if (r->ri_mercurius.mode==1){
-            struct reb_simulation_integrator_mercurius* rim = &(r->ri_mercurius);
+            struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
-            for (unsigned int i=0;i<rim->encounterN;i++){
+            for (unsigned int i=0;i<rim->encounter_N;i++){
                 if (after_to_be_removed_particle == 1){
                     rim->encounter_map[i-1] = rim->encounter_map[i] - 1;
                 }
@@ -323,50 +322,50 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
                     after_to_be_removed_particle = 1;
                 }
             }
-            if (encounter_index<(int)rim->encounterNactive){
-                rim->encounterNactive--;
+            if (encounter_index<(int)rim->encounter_N_active){
+                rim->encounter_N_active--;
             }
-            rim->encounterN--;
+            rim->encounter_N--;
         }
     }
 
-		if (r->integrator == REB_INTEGRATOR_TRACE){
-        keepSorted = 1; // Force keepSorted for hybrid integrator
-				struct reb_simulation_integrator_trace* ri_tr = &(r->ri_tr);
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        keep_sorted = 1; // Force keepSorted for hybrid integrator
+        struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         reb_integrator_bs_reset(r);
-        if (r->ri_tr.mode==1){
-						// Only removed mid-timestep if collision - BS Step!
-						// Need to fix current_Ks still, and double check logic
+        if (r->ri_trace.mode==1){
+            // Only removed mid-timestep if collision - BS Step!
+            // Need to fix current_Ks still, and double check logic
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
-            for (int i=0;i<ri_tr->encounterN;i++){
+            for (int i=0;i<ri_trace->encounterN;i++){
                 if (after_to_be_removed_particle == 1){
-                    ri_tr->encounter_map[i-1] = ri_tr->encounter_map[i] - 1;
-										// ri_tr->encounter_map_internal[i-1] = ri_tr->encounter_map_internal[i] - 1; // Don't think we need this since we auto accept collisions
+                    ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
+                    // ri_trace->encounter_map_internal[i-1] = ri_trace->encounter_map_internal[i] - 1; // Don't think we need this since we auto accept collisions
                 }
-                if (ri_tr->encounter_map[i]==index){
+                if (ri_trace->encounter_map[i]==index){
                     encounter_index = i;
                     after_to_be_removed_particle = 1;
                 }
             }
 
-						// reshuffle current_Ks. Check logic on this
-						for (unsigned int i = 1; i < r->N-1; i++){
-							if (i < index){
-								for (unsigned int j = index+1; j < r->N; j++){
-										ri_tr->current_Ks[i][j-1] = ri_tr->current_Ks[i][j];
-								}
-							}
-							else{
-								for (unsigned int j = i+1; j < r->N-1; j++){
-										ri_tr->current_Ks[i][j] = ri_tr->current_Ks[i+1][j+1];
-								}
-							}
-						}
-            if (encounter_index<ri_tr->encounterNactive){
-                ri_tr->encounterNactive--;
+            // reshuffle current_Ks. Check logic on this
+            for (unsigned int i = 1; i < r->N-1; i++){
+                if (i < index){
+                    for (unsigned int j = index+1; j < r->N; j++){
+                        ri_trace->current_Ks[i][j-1] = ri_trace->current_Ks[i][j];
+                    }
+                }
+                else{
+                    for (unsigned int j = i+1; j < r->N-1; j++){
+                        ri_trace->current_Ks[i][j] = ri_trace->current_Ks[i+1][j+1];
+                    }
+                }
             }
-            ri_tr->encounterN--;
+            if (encounter_index<ri_trace->encounterNactive){
+                ri_trace->encounterNactive--;
+            }
+            ri_trace->encounterN--;
         }
     }
 
@@ -375,20 +374,20 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
         if(r->free_particle_ap){
             r->free_particle_ap(&r->particles[index]);
         }
-		reb_warning(r, "Last particle removed.");
+		reb_simulation_warning(r, "Last particle removed.");
 		return 1;
 	}
 	if (index >= (int)r->N || index < 0){
 		char warning[1024];
         sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
-		reb_error(r, warning);
+		reb_simulation_error(r, warning);
 		return 0;
 	}
 	if (r->N_var){
-		reb_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
+		reb_simulation_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
 		return 0;
 	}
-	if(keepSorted){
+	if(keep_sorted){
 	    r->N--;
         if(r->free_particle_ap){
             r->free_particle_ap(&r->particles[index]);
@@ -400,7 +399,7 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 			r->particles[j] = r->particles[j+1];
 		}
         if (r->tree_root){
-		    reb_error(r, "REBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.");
+		    reb_simulation_error(r, "REBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.");
 		    return 0;
         }
 	}else{
@@ -422,15 +421,15 @@ int reb_remove(struct reb_simulation* const r, int index, int keepSorted){
 	return 1;
 }
 
-int reb_remove_by_hash(struct reb_simulation* const r, uint32_t hash, int keepSorted){
-    struct reb_particle* p = reb_get_particle_by_hash(r, hash);
+int reb_simulation_remove_particle_by_hash(struct reb_simulation* const r, uint32_t hash, int keep_sorted){
+    struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
     if(p == NULL){
-		reb_error(r,"Particle to be removed not found in simulation.  Did not remove particle.");
+		reb_simulation_error(r,"Particle to be removed not found in simulation.  Did not remove particle.");
         return 0;
     }
     else{
-        int index = reb_get_particle_index(p);
-        return reb_remove(r, index, keepSorted);
+        int index = reb_simulation_particle_index(p);
+        return reb_simulation_remove_particle(r, index, keep_sorted);
     }
 }
 
@@ -484,7 +483,7 @@ struct reb_particle reb_particle_nan(void){
     p.az = nan("");
     p.m = nan("");
     p.r = nan("");
-    p.lastcollision = nan("");
+    p.last_collision = nan("");
     p.c = NULL;
     p.hash = 0;
     p.ap = NULL;

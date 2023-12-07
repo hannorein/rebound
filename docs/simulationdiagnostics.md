@@ -5,8 +5,8 @@ You can calculate the total energy (kinetic plus potential energy) of a simulati
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    double energy = reb_tools_energy(r);
+    struct reb_simulation* r = reb_simulation_create();
+    double energy = reb_simulation_energy(r);
     ```
 === "Python"
     ```python
@@ -19,8 +19,8 @@ You can calculate the angular momentum of a simulation using the following funct
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    struct reb_vec3d angular_momentum = reb_tools_angular_momentum(r);
+    struct reb_simulation* r = reb_simulation_create();
+    struct reb_vec3d angular_momentum = reb_simulation_angular_momentum(r);
     ```
 === "Python"
     ```python
@@ -34,15 +34,15 @@ The return value is particle object with mass, position, and velocity reflecting
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    struct reb_particle com = reb_get_com(r);
+    struct reb_particle com = reb_simulation_com(r);
     ```
     You can also return the center-of-mass for particles with indices in a given range.
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
-    struct reb_particle com = reb_get_com_range(r, 6, 9);
+    struct reb_particle com = reb_simulation_com_range(r, 6, 9);
     ```
     In the above example, the particles 6, 7, and 8 are included in the calculation.
 
@@ -50,6 +50,6 @@ The return value is particle object with mass, position, and velocity reflecting
     ```python
     sim = rebound.Simulation()
     # ... setup simulation ...
-    com = sim.calculate_com()
+    com = sim.com()
     ```
 

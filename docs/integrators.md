@@ -25,7 +25,7 @@ However, you can also set it explicitly:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_IAS15;
     ```
 
@@ -35,7 +35,7 @@ However, you can also set it explicitly:
     sim.integrator = "ias15"
     ```
 
-The setting for IAS15 are stored in the `reb_simulation_integrator_ias15` structure.
+The setting for IAS15 are stored in the `reb_integrator_ias15` structure. 
 
 `epsilon` (`double`)
 :   IAS15 is an adaptive integrator. It chooses its timesteps automatically. This parameter controls the accuracy of the integrator. The default value is $10^{-9}$. Setting this parameter to 0 turns off adaptive timestepping and a constant timestep will is used. Turning off adaptive time-stepping is rarely useful.
@@ -48,7 +48,7 @@ The setting for IAS15 are stored in the `reb_simulation_integrator_ias15` struct
     The following code sets the smallest timestep to $10^{-3}$ time units:
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         r->ri_ias15.min_dt = 1e-3;
         ```
 
@@ -81,7 +81,7 @@ Because WHFast is not an adaptive integrator, you also need to set a timestep.
 Typically, this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem.
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_WHFAST;
     r->dt = 0.1;
     ```
@@ -94,7 +94,7 @@ Typically, this should be a small fraction (a few percent) of the smallest dynam
     ```
 
 
-The setting for WHFast are stored in the `reb_simulation_integrator_whfast` structure, which itself is part of the simulation structure.
+The setting for WHFast are stored in the `reb_integrator_whfast` structure, which itself is part of the simulation structure. 
 
 `unsigned int corrector`
 :   This variable turns on/off different first symplectic correctors for WHFast.
@@ -203,13 +203,13 @@ The setting for WHFast are stored in the `reb_simulation_integrator_whfast` stru
 `unsigned int keep_unsynchronized`
 :   This flag determines if the inertial coordinates generated are discarded in subsequent timesteps (cached Jacobi/heliocentric/WHDS coordinates are used instead). The default is 0. Set this flag to 1 if you require outputs and bit-wise reproducibility
 
-All other members of the `reb_simulation_integrator_whfast` structure are for internal use only.
+All other members of the `reb_integrator_whfast` structure are for internal use only.
 
 ## Gragg-Bulirsch-Stoer (BS)
 The Gragg-Bulirsch-Stoer integrator (short BS for Bulirsch-Stoer) is an adaptive integrator which uses Richardson extrapolation and the modified midpoint method to obtain solutions to ordinary differential equations.
 
-The version in REBOUND is based on the method described in Hairer, Norsett, and Wanner 1993 (see section II.9, page 224ff), specifically the JAVA implementation available in the [Hipparchus package](https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java). The Hipparchus as well as the REBOUND version are adaptive in both the timestep and the order of the method for optimal performance.
-The BS implementation in REBOUND can integrate first and second orer variational equations.
+The version in REBOUND is based on the method described in Hairer, Norsett, and Wanner 1993 (see section II.9, page 224ff), specifically the JAVA implementation available in the [Hipparchus package](https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java). The Hipparchus as well as the REBOUND version are adaptive in both the timestep and the order of the method for optimal performance. 
+The BS implementation in REBOUND can integrate first and second order variational equations. 
 
 The BS integrator is particularly useful for short integrations where only medium accuracy is required. For long integrations a symplectic integrator such as WHFast performs better. For high accuracy integrations the IAS15 integrator performs better. Because BS is adaptive, it can handle close encounters. Currently a collision search is only performed after every timestep, i.e. not after a sub-timestep.
 
@@ -217,7 +217,7 @@ The following code enables the BS integrator and sets both the relative and abso
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_BS;
     r->ri_bs.eps_rel = 1e-4;
     r->ri_bs.eps_abs = 1e-4;
@@ -262,7 +262,7 @@ The following code sets up a REBOUND simulation in which a harmonic oscillator i
 === "C"
     ```c
     void derivatives(struct reb_ode* const ode, double* const yDot, const double* const y, const double t){
-        struct reb_orbit o = reb_tools_particle_to_orbit(ode->r->G, ode->r->particles[1], ode->r->particles[0]);
+        struct reb_orbit o = reb_orbit_from_particle(ode->r->G, ode->r->particles[1], ode->r->particles[0]);
         const double omega = 1;
         double forcing = sin(o.f);
         yDot[0] = y[1];
@@ -270,13 +270,13 @@ The following code sets up a REBOUND simulation in which a harmonic oscillator i
     }
 
     void run(){
-        struct reb_simulation* r = reb_create_simulation();
-        reb_add_fmt(r, "m", 1.);
-        reb_add_fmt(r, "m a e", 1e-3, 1., 0.1);
+        struct reb_simulation* r = reb_simulation_create();
+        reb_simulation_add_fmt(r, "m", 1.);
+        reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1);
 
         r->integrator = REB_INTEGRATOR_BS;
 
-        struct reb_ode* ho = reb_create_ode(r,2);   // Add an ODE with 2 dimensions
+        struct reb_ode* ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions
         ho->derivatives = derivatives;              // Right hand side of the ODE
         ho->y[0] = 1;                               // Initial conditions
         ho->y[1] = 0;
@@ -318,19 +318,19 @@ The MERCURIUS implementation is described in [Rein et al 2019](https://ui.adsabs
 The following code enables MERCURIUS and sets the critical radius to 4 Hill radii
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->ri_mercurius.hillfac = 4.;
+    r->ri_mercurius.r_crit_hill = 4.;
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
     sim.integrator = "mercurius"
-    sim.ri_mercurius.hillfac = 4.
+    sim.ri_mercurius.r_crit_hill = 4.
     ```
 
-The `reb_simulation_integrator_mercurius` structure contains the configuration and data structures used by the hybrid symplectic MERCURIUS integrator.
+The `reb_integrator_mercurius` structure contains the configuration and data structures used by the hybrid symplectic MERCURIUS integrator.
 
 `double (*L) (const struct reb_simulation* const r, double d, double dcrit)`
 :   This is a function pointer to the force switching function.
@@ -373,8 +373,8 @@ The `reb_simulation_integrator_mercurius` structure contains the configuration a
 
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
-        r->ri_mercurius.L = reb_integrator_mercurius_L_infinity;
+        struct reb_simulation* r = reb_simulation_create();
+        r->ri_mercurius.L = reb_integrator_mercurius_L_infinity; 
         ```
 
     === "Python"
@@ -383,8 +383,8 @@ The `reb_simulation_integrator_mercurius` structure contains the configuration a
         sim.ri_mercurius.L = "infinity"
         ```
 
-`double hillfac`
-:   The critical switchover radii of particles are calculated automatically based on multiple criteria. One criterion calculates the Hill radius of particles and then multiplies it with the `hillfac` parameter. The parameter is in units of the Hill radius. The default value is 3.
+`double r_crit_hill`
+:   The critical switchover radii of particles are calculated automatically based on multiple criteria. One criterion calculates the Hill radius of particles and then multiplies it with the `r_crit_hill` parameter. The parameter is in units of the Hill radius. The default value is 3. 
 
 `unsigned int recalculate_coordinates_this_timestep`
 :   Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. After a single timestep, the flag gets set back to 0. If one changes a particle manually after a timestep, then one needs to set this flag to 1 before the next timestep.
@@ -408,17 +408,17 @@ The following code enables TRACE and sets the critical radius to 4 Hill radii
     ```c
     struct reb_simulation* r = reb_create_simulation();
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_tr.hillfac = 4.;
+    r->ri_trace.hillfac = 4.;
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
     sim.integrator = "trace"
-    sim.ri_tr.hillfac = 4.
+    sim.ri_trace.hillfac = 4.
     ```
 
-The `reb_simulation_integrator_trace` structure contains the configuration and data structures used by the hybrid symplectic TRACE integrator.
+The `reb_integrator_trace` structure contains the configuration and data structures used by the hybrid symplectic TRACE integrator.
 
 `double (*L) (const struct reb_simulation* const r, double d, double dcrit)`
 :   This is a function pointer to the force switching function.
@@ -477,7 +477,7 @@ The `reb_simulation_integrator_trace` structure contains the configuration and d
 `unsigned int recalculate_coordinates_this_timestep`
 :   Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. After a single timestep, the flag gets set back to 0. If one changes a particle manually after a timestep, then one needs to set this flag to 1 before the next timestep.
 
-`unsigned int recalculate_dcrit_this_timestep`
+`unsigned int recalculate_r_crit_this_timestep`
 :   Setting this flag to one will recalculate the critical switchover distances dcrit at the beginning of the next timestep. After one timestep, the flag gets set back to 0. If you want to recalculate `dcrit` at every timestep, you also need to set this flag to 1 before every timestep.
 
 `unsigned int safe_mode`
@@ -492,7 +492,7 @@ Different correctors can be selected.
 In addition, the following methods with various generalized orders are supported: SABA(8,4,4), SABA(8,6,4), SABA(10,6,4).
 See [Rein, Tamayo & Brown 2019](https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract) for details on how these methods work.
 
-The `reb_simulation_integrator_saba` structure contains the configuration and data structures used by the SABA integrator family.
+The `reb_integrator_saba` structure contains the configuration and data structures used by the SABA integrator family.
 
 `unsigned int type`
 :   This parameter specifies which SABA integrator type is used.
@@ -525,7 +525,7 @@ The `reb_simulation_integrator_saba` structure contains the configuration and da
 
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         r->integrator = REB_INTEGRATOR_SABA;
         r->ri_saba.type = REB_SABA_10_6_4;
         ```
@@ -558,7 +558,7 @@ It is described in [Rein & Tamayo 2018](https://ui.adsabs.harvard.edu/abs/2018MN
 The following code shows how to enable JANUS and set the length and velocity scales.
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_JANUS;
     r->ri_janus.scale_pos = 1e-10;
     r->ri_janus.scale_vel = 1e-10;
@@ -573,7 +573,7 @@ The following code shows how to enable JANUS and set the length and velocity sca
     ```
 
 
-The `reb_simulation_integrator_janus` structure contains the configuration and data structures used by the bib-wise reversible JANUS integrator.
+The `reb_integrator_janus` structure contains the configuration and data structures used by the bib-wise reversible JANUS integrator.
 
 `double scale_pos`
 :   Scale of the problem. Positions get divided by this number before the conversion to an integer. Default: $10^{-16}$.
@@ -593,7 +593,7 @@ All other members of this structure are only for internal use and should not be 
 ## Embedded Operator Splitting Method (EOS)
 This is the Embedded Operator Splitting (EOS) methods described in [Rein 2019](https://ui.adsabs.harvard.edu/abs/2020MNRAS.492.5413R/abstract).
 
-The `reb_simulation_integrator_eos` structure contains the configuration and data structures used by EOS.
+The `reb_integrator_eos` structure contains the configuration and data structures used by EOS.
 
 `unsigned int phi0`
 :   Outer operator splitting scheme (see below for options)
@@ -627,7 +627,7 @@ Numerical value | Constant name         | Description
 The following code shows how to enable EOS and set the embedded methods.
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_EOS;
     r->ri_eos.phi0 = REB_EOS_LF4;
     r->ri_eos.phi1 = REB_EOS_LF4;
@@ -651,13 +651,13 @@ This is the standard leap frog integrator. It is second order and symplectic. No
 ## Symplectic Epicycle Integrator (SEI)
 `REB_INTEGRATOR_SEI`          
 
-Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011. The `reb_simulation_integrator_sei` structure contains the configuration and data structures used by the Symplectic Epicycle Integrator (SEI).
+Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011. The `reb_integrator_sei` structure contains the configuration and data structures used by the Symplectic Epicycle Integrator (SEI).
 
 `double OMEGA`
 :   Epicyclic/orbital frequency. This can be set as follows:
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         r->integrator = REB_INTEGRATOR_SEI;
         r->ri_sei.OMEGA = 1.0;
         ```
@@ -681,7 +681,7 @@ Sometimes it might make sense to simply not advance any particle positions or ve
 Here is how to do that:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_NONE;
     ```
 
@@ -706,8 +706,8 @@ It is using Single Instruction Multiple Data (SIMD) parallelism and 512-bit Adva
     ```bash
     cat /proc/cpuinfo | grep avx512
     ```
-
-    Note that you can read SimulationArchives of simulations which used WHFast512 on machines that do not support AVX512 instruction.
+    
+    Note that you can read Simulationarchives of simulations which used WHFast512 on machines that do not support AVX512 instruction.
     If a synchronization is required, it will be performed with the standard WHFast integrator.
 
 
@@ -750,7 +750,7 @@ Once you have compiled REBOUND with AVX512 enabled, you can use WHFast512 like a
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->integrator = REB_INTEGRATOR_WHFAST512;
     ```
 
@@ -761,25 +761,31 @@ Once you have compiled REBOUND with AVX512 enabled, you can use WHFast512 like a
     ```
 
 See also [this example](c_examples/whfast512_solar_system) on how to use WHFast512.
+If you are interested in integrating 2 or 4 planet systems in parallel, see [this example](c_examples/whfast512_2_planets).
 
 To allow for the best performance, WHFast512 has certain limitations that WHFast does not have.
 
-- The number of particles cannot exceed 9 (1 star and 8 planets) and needs to be constant.
-- The gravitational constant needs to be exactly equal to 1. Note that you can always [rescale](../units/) your system such that G=1.
-- The integrator always combines the first and last drift step (`safe_mode=0` for WHFast).
-- No variational or test particles are supported (although a particle can have mass 0).
+- The number of particles cannot exceed 9 (1 star and 8 planets) and needs to be constant. 
+- Although you can use WHFast512 with any number of planets (up to 8), the performance is best if the system has either 2, 4, or 8 planets. 
+- The gravitational constant needs to be exactly equal to 1. Note that you can always [rescale](../units/) your system such that G=1. 
+- The integrator always combines the first and last drift step (`safe_mode=0` for WHFast). 
+- No variational or test particles are supported (although a particle can have mass 0). 
 - MEGNO and other chaos indicators are not supported.
 - WHFast512 always uses democratic heliocentric coordinates. Jacobi coordinates are not supported.
-- The timestep needs to be constant and the `exact_finish_time` flag needs to be set to 0. To change the timestep, first synchronize the simulation, then call `reb_integrator_reset()`.
-- The masses of all particles need to be constant. To change the masses, first synchronize the simulation, then call `reb_integrator_reset()`.
+- The timestep needs to be constant and the `exact_finish_time` flag needs to be set to 0. To change the timestep, first synchronize the simulation, then call `reb_simulation_reset_integrator()`.
+- The masses of all particles need to be constant. To change the masses, first synchronize the simulation, then call `reb_simulation_reset_integrator()`.
 - Additional forces (other than the GR potential) and REBOUNDx are not supported.
 
 
-The setting for WHFast512 are stored in the `reb_simulation_integrator_whfast512` structure, which itself is part of the simulation structure.
+The setting for WHFast512 are stored in the `reb_integrator_whfast512` structure, which itself is part of the simulation structure. 
 The following settings are available:
 
 `unsigned int keep_unsynchronized`
-:   This flag determines if democratic heliocentric coordinates are re-used after subsequent calls to `reb_integrate()`. The default is 0. This makes WHFast512 recalculate democratic heliocentric coordinates at the beginning of each `reb_integrate()` call. Set this flag to 1 if you want to continue an integration using unsynchronized democratic heliocentric coordinates. This is useful if you require outputs (and therefore synchronization) but don't want the integration to be affected by the output to allow for bit-wise reproducibility.
+:   This flag determines if democratic heliocentric coordinates are re-used after subsequent calls to `reb_simulation_integrate()`. The default is 0. This makes WHFast512 recalculate democratic heliocentric coordinates at the beginning of each `reb_simulation_integrate()` call. Set this flag to 1 if you want to continue an integration using unsynchronized democratic heliocentric coordinates. This is useful if you require outputs (and therefore synchronization) but don't want the integration to be affected by the output to allow for bit-wise reproducibility.
 
 `unsigned int gr_potential`
-:   This flag determines if an additional $1/r^2$ potential is included in the force calculation. The default is 0. Set to 1 to turn on the potential. This can be used to mimic general relativistic precession. Note that this feature assumes [units](../units/) of AU and year/2pi.
+:   This flag determines if an additional $1/r^2$ potential is included in the force calculation. The default is 0. Set to 1 to turn on the potential. This can be used to mimic general relativistic precession. Note that this feature assumes [units](../units/) of AU and year/2pi. 
+
+`unsigned int N_systems`
+:   This flag determines how many systems are integrated in parallel. Possible values are 1, 2, or 4.  By default this is set to 1 which means WHFast512 is integrating only one system at a time. If your system has fewer than 5 planets, then you can use WHFast512 to integrate 2 systems in parallel. If your system has fewer than 3 planets, then you can use WHFast512 to integrate 4 systems in parallel. If multiple systems are integrated at the same time, particles must be added in the following order: Star 1, Planet, Planet, Star 2, Planet, Planet, ... For more information see the [this example](c_examples/whfast512_2_planets).
+

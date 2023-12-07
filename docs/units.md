@@ -11,9 +11,9 @@ As an example, suppose we use $G=1$, have a central object of mass $M$, and a te
 This scenario can be setup with the following code:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt("m", 1.);
-    reb_add_fmt("a", 1.);
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt("m", 1.);
+    reb_simulation_add_fmt("a", 1.);
     ```
 === "Python"
     ```python
@@ -30,7 +30,7 @@ $$
 We can confirm this by calculating the orbital period with REBOUND:
 === "C"
     ```c
-    struct reb_orbit o = reb_tools_particle_to_orbit(r->G, r->particles[1], r->particles[0]);
+    struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[1], r->particles[0]);
     printf("P=%f\n", o.P);
     ```
 === "Python"
@@ -56,7 +56,7 @@ If you prefer to change the value of $G$, you can!
 The following example sets $G$ to its value in SI units:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->G = 6.6743e-11; //  m^3 / kg s^2
     ```
 === "Python"

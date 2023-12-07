@@ -8,8 +8,8 @@ For example, you can keep a record of your initial conditions by simply making a
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    struct reb_simulation* r_copy = reb_copy_simulation(r);
+    struct reb_simulation* r = reb_simulation_create();
+    struct reb_simulation* r_copy = reb_simulation_copy(r);
     ```
 === "Python"
     ```python
@@ -27,8 +27,8 @@ For example:
 
 === "C"
     ```c
-    struct reb_simulation* r1 = reb_create_simulation();
-    struct reb_simulation* r2 = reb_create_simulation();
+    struct reb_simulation* r1 = reb_simulation_create();
+    struct reb_simulation* r2 = reb_simulation_create();
     // ... setup simulations ...
     reb_simulation_isub(r1, r2);
     reb_simulation_iadd(r1, r2);
@@ -48,11 +48,11 @@ For example, you can run two simulations with different timesteps and then subtr
 These operations will fail if the number of particles are not the same in `r1` and `r2`.
 
 You can also multiply a simulation with two scalars, one for the position and one for the velocity coordinates.
-This can come in handy when rescaling a simulation
+This can come in handy when re-scaling a simulation
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation ...
     reb_simulation_imul(r, 2., 3.,);
     ```
@@ -68,20 +68,20 @@ In the above the position coordinates of all particles are multiplied by 2, all 
 You can compare if simulations are equal to each other using the following syntax:
 === "C"
     ```c
-    struct reb_simulation* r1 = reb_create_simulation();
-    struct reb_simulation* r2 = reb_create_simulation();
+    struct reb_simulation* r1 = reb_simulation_create();
+    struct reb_simulation* r2 = reb_simulation_create();
     // ... setup simulations ...
-    if (reb_diff_simulations(r1, r2, 2)){
+    if (reb_simulation_diff(r1, r2, 2)){
         // Simulations are NOT equal
     }
     ```
     For debugging purposes, it can be useful to print out the differences. 
     This is done by passing `1` as the last argument:
     ```c
-    struct reb_simulation* r1 = reb_create_simulation();
-    struct reb_simulation* r2 = reb_create_simulation();
+    struct reb_simulation* r1 = reb_simulation_create();
+    struct reb_simulation* r2 = reb_simulation_create();
     // ... setup simulations ...
-    reb_diff_simulations(r1, r2, 1); // prints out diferences
+    reb_simulation_diff(r1, r2, 1); // prints out diferences
     ```
 === "Python"
     ```python

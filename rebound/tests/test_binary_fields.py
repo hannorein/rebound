@@ -1,9 +1,10 @@
 import rebound
+import rebound.binary_field_descriptor
 import unittest
 
 class TestBinaryFields(unittest.TestCase):
     def test_unique(self):
-        l = rebound.binary_field_descriptor_list()
+        l = rebound.binary_field_descriptor.binary_field_descriptor_list()
         types = []
         names = []
         for i in l:

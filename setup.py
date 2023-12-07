@@ -1,6 +1,7 @@
 try:
     from setuptools import setup, Extension
 except ImportError:
+    # Legacy distutils import. No longer available on Pyton > 3.12
     from distutils.core import setup, Extension
 from codecs import open
 import os
@@ -17,19 +18,18 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=16a5533523572c9cb0b5fd5aa4067c6222aa1add" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=4df2b4603058e7d767aee9c26b586b55a5f4de65" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
-    from distutils import sysconfig
-    vars = sysconfig.get_config_vars()
-    vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
+    config_vars = sysconfig.get_config_vars()
+    config_vars['LDSHARED'] = config_vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
 if sys.platform == 'win32':
-    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE']
+    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
 else:
     # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-fPIC']
+    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
 
 # Option to disable FMA in CLANG.
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
@@ -57,10 +57,12 @@ libreboundmodule = Extension('librebound',
                                 'src/integrator_sei.c',
                                 'src/integrator.c',
                                 'src/gravity.c',
+                                'src/server.c',
                                 'src/boundary.c',
                                 'src/display.c',
                                 'src/collision.c',
                                 'src/tools.c',
+                                'src/fmemopen.c',
                                 'src/rotations.c',
                                 'src/derivatives.c',
                                 'src/tree.c',
@@ -82,7 +84,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='3.28.1',
+    version='4.0.1',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -112,7 +114,7 @@ setup(name='rebound',
         'Programming Language :: Python :: 3',
     ],
     keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
-    packages=['rebound'],
+    packages=['rebound', 'rebound.integrators'],
     package_data = {'rebound':['rebound.h']},
     install_requires=[],
     tests_require=["numpy","matplotlib"],

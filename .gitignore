@@ -12,6 +12,7 @@ Info.plist
 *.pyc
 *.pdf
 *.bin
+*.dSYM
 nbody
 .DS_Store
 error.txt
@@ -33,11 +34,14 @@ venv/
 dist/
 build/
 src/rebound
+src/*.wasm
+src/*.js
+src/*.html
 .ipynb_checkpoints
 ipython_examples/*.png
 others/*.tar.gz
 others/*.tar
-docs/c_examples
+docs/c_examples/*.md
 problems/
 .vscode/
 *.pete

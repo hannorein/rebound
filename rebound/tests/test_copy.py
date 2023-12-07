@@ -12,7 +12,7 @@ class TestCopy(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.integrate(42.)
-        sim.save("test.bin")
+        sim.save_to_file("test.bin")
         
 
         sim_copy = sim.copy()

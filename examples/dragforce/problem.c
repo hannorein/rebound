@@ -17,30 +17,36 @@ void heartbeat(struct reb_simulation* const r);
 double tmax = 40.;
 
 int main(int argc, char* argv[]){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the visualization web server.
+    // Point your browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+   
     // Setup constants
     r->dt             = 1e-4;        // initial timestep.
-    r->integrator        = REB_INTEGRATOR_IAS15;
+    r->integrator     = REB_INTEGRATOR_IAS15;
     r->gravity        = REB_GRAVITY_NONE;
 
     // Setup callback function for velocity dependent forces.
-    r->additional_forces     = additional_forces;
+    r->additional_forces = additional_forces;
     r->force_is_velocity_dependent = 1;
     // Setup callback function for outputs.
-    r->heartbeat        = heartbeat;
-    r->usleep        = 10000;        // Slow down integration (for visualization only)
+    r->heartbeat   = heartbeat;
+    // Slow down integration (for visualization only)
+    r->usleep = 10000;  
     
     struct reb_particle p = {0}; 
     p.m      = 0;    // massless
     p.x     = 1;
     p.vx     = -1;
-    reb_add(r, p); 
+    reb_simulation_add(r, p); 
 
     // Delete previous output
     remove("r.txt");    
 
     // Do the integration
-    reb_integrate(r, tmax);
+    reb_simulation_integrate(r, tmax);
 }
 
 void additional_forces(struct reb_simulation* const r){
@@ -57,8 +63,8 @@ void additional_forces(struct reb_simulation* const r){
 
 void heartbeat(struct reb_simulation* const r){
     // Output some information to the screen every 100th timestep
-    if(reb_output_check(r, 100.*r->dt)){
-        reb_output_timing(r, tmax);
+    if(reb_simulation_output_check(r, 100.*r->dt)){
+        reb_simulation_output_timing(r, tmax);
     }
     // Output the particle position to a file every timestep.
     const struct reb_particle* const particles = r->particles;

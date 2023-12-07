@@ -1,35 +1,14 @@
-from ctypes import c_uint32, c_uint, c_ulong, c_char_p, c_double, byref
-from . import clibrebound
+from ctypes import c_uint32, c_uint, c_uint64, c_char_p, c_double, byref
 import sys
 import rebound
-
-def hash(key):
-    hash_types = c_uint32, c_uint, c_ulong
-    PY3 = sys.version_info[0] == 3
-    if PY3:
-        string_types = str,
-        int_types = int,
-    else:
-        string_types = basestring,
-        int_types = int, long,
-   
-    if isinstance(key, int_types):
-        return c_uint32(key)
-    elif isinstance(key, hash_types):
-        return key
-    elif isinstance(key, string_types):
-        clibrebound.reb_hash.restype = c_uint32
-        return c_uint32(clibrebound.reb_hash(c_char_p(key.encode('ascii'))))
-    else:
-        raise AttributeError("Need to pash hash an integer or string.")
 
 def mod2pi(x):
     try:
         x = float(x)
     except:
         ValueError("Argument of mod2pi needs to be a float.")
-    clibrebound.reb_tools_mod2pi.restype = c_double
-    return clibrebound.reb_tools_mod2pi(c_double(x))
+    clibrebound.reb_mod2pi.restype = c_double
+    return clibrebound.reb_mod2pi(c_double(x))
 
 def M_to_f(e, M):
     try:
@@ -37,8 +16,8 @@ def M_to_f(e, M):
         M = float(M)
     except:
         ValueError("Arguments of M_to_f need to be floats.")
-    clibrebound.reb_tools_M_to_f.restype = c_double
-    return clibrebound.reb_tools_M_to_f(c_double(e), c_double(M))
+    clibrebound.reb_M_to_f.restype = c_double
+    return clibrebound.reb_M_to_f(c_double(e), c_double(M))
 
 def E_to_f(e, E):
     try:
@@ -46,8 +25,8 @@ def E_to_f(e, E):
         E = float(E)
     except:
         ValueError("Arguments of E_to_f need to be floats.")
-    clibrebound.reb_tools_E_to_f.restype = c_double
-    return clibrebound.reb_tools_E_to_f(c_double(e), c_double(E))
+    clibrebound.reb_E_to_f.restype = c_double
+    return clibrebound.reb_E_to_f(c_double(e), c_double(E))
 
 def M_to_E(e, M):
     try:
@@ -55,8 +34,8 @@ def M_to_E(e, M):
         M = float(M)
     except:
         ValueError("Arguments of M_to_E need to be floats.")
-    clibrebound.reb_tools_M_to_E.restype = c_double
-    return clibrebound.reb_tools_M_to_E(c_double(e), c_double(M))
+    clibrebound.reb_M_to_E.restype = c_double
+    return clibrebound.reb_M_to_E(c_double(e), c_double(M))
 
 def spherical_to_xyz(magnitude=1., theta=0., phi=0.):
     """Initialize Cartesian vector from its magnitude and two spherical angles theta (polar angle measured from z) and phi (azimuthal angle measured from x)
@@ -74,7 +53,7 @@ def spherical_to_xyz(magnitude=1., theta=0., phi=0.):
     -------
     List of [x,y,z] components
     """ 
-    clibrebound.reb_tools_spherical_to_xyz.restype = rebound._Vec3d
+    clibrebound.reb_tools_spherical_to_xyz.restype = rebound.Vec3dBasic
     xyz = clibrebound.reb_tools_spherical_to_xyz(c_double(magnitude), c_double(theta), c_double(phi))
     return rebound.Vec3d(xyz)
 
@@ -96,3 +75,4 @@ def xyz_to_spherical(vector):
     clibrebound.reb_tools_xyz_to_spherical(rebound.Vec3d(vector)._vec3d, byref(magnitude), byref(theta), byref(phi))
     return magnitude.value, theta.value, phi.value
 
+from . import clibrebound

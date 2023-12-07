@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tools.h"
@@ -33,7 +32,7 @@
 #include "binarydiff.h"
 
 
-int reb_diff_particles(struct reb_particle p1, struct reb_particle p2){
+int reb_particle_diff(struct reb_particle p1, struct reb_particle p2){
     int differ = 0;
     differ = differ || (p1.x != p2.x);
     differ = differ || (p1.y != p2.y);
@@ -46,15 +45,9 @@ int reb_diff_particles(struct reb_particle p1, struct reb_particle p2){
     differ = differ || (p1.az != p2.az);
     differ = differ || (p1.m != p2.m);
     differ = differ || (p1.r != p2.r);
-    differ = differ || (p1.lastcollision != p2.lastcollision);
+    differ = differ || (p1.last_collision != p2.last_collision);
     differ = differ || (p1.hash != p2.hash);
     return differ;
-}
-
-// Wrapper for backwards compatibility
-void reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep){
-    // Ignores return value
-    reb_binary_diff_with_options(buf1, size1, buf2, size2, bufp, sizep, 0);
 }
 
 struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type){
@@ -96,16 +89,13 @@ static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char*
             asprintf(&newbuf,"%u",*(unsigned int*)(pointer));
             break;
         case REB_UINT32:
-            asprintf(&newbuf,"%"PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
+            asprintf(&newbuf,"%" PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
             break;
-        case REB_LONG:
-            asprintf(&newbuf,"%ld",*(long*)(pointer));
+        case REB_INT64:
+            asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
             break;
-        case REB_ULONG:
-            asprintf(&newbuf,"%lu",*(unsigned long*)(pointer));
-            break;
-        case REB_ULONGLONG:
-            asprintf(&newbuf,"%llu",*(unsigned long long*)(pointer));
+        case REB_UINT64:
+            asprintf(&newbuf,"%" PRIu64,*(uint64_t*)(pointer));
             break;
         default:
             asprintf(&newbuf,"(%zu bytes, values not printed)", dsize);
@@ -120,7 +110,7 @@ static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char*
     free(newbuf);
 }
 
-int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
+int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
     if (!buf1 || !buf2 || size1<64 || size2<64){
         printf("Cannot read input buffers.\n");
         return 0;
@@ -231,7 +221,7 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
-                    fields_differ |= reb_diff_particles(pb1[i],pb2[i]);
+                    fields_differ |= reb_particle_diff(pb1[i],pb2[i]);
                 }
             }else{
                 if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
@@ -242,15 +232,8 @@ int reb_binary_diff_with_options(char* buf1, size_t size1, char* buf2, size_t si
             fields_differ = 1;
         }
         if(fields_differ){
-            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "simulationarchive_size_first")==0){
-                // Ignore the_size_first field for the return value.
-                // Typically we do not care about this field when comparing simulations.
-                pos1 += field1.size;
-                pos2 += field2.size;
-                continue;
-            }
-            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "walltime")!=0){
-                // Ignore the walltime and field, but only for the return value (print it out)
+            if (strncmp(reb_binary_field_descriptor_for_type(field1.type).name, "walltime",8)!=0){
+                // Ignore the walltime fields, but only for the return value (print it out)
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
             }

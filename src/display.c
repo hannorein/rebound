@@ -31,6 +31,7 @@
 #include <pthread.h>
 #endif // _WIN32
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include "rebound.h"
 #include "display.h"
@@ -48,11 +49,81 @@
 #include "glad.h"
 #include <GLFW/glfw3.h>
 
-static void reb_display(GLFWwindow* window);
+#ifdef __EMSCRIPTEN__
+#include <emscripten/fetch.h>
+// Need to use emscripten_ version of these functions because types are wrong otherwise
+void emscripten_glVertexAttribDivisor(GLuint index, GLuint divisor);
+void emscripten_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
+#define reb_glVertexAttribDivisor emscripten_glVertexAttribDivisor
+#define reb_glDrawArraysInstanced emscripten_glDrawArraysInstanced
+
+// Getting size from canvas element
+EM_JS(int, canvas_get_width, (), {
+  return document.getElementById("canvas").scrollWidth;
+});
+EM_JS(int, canvas_get_height, (), {
+  return document.getElementById("canvas").scrollHeight;
+});
+
+EM_JS(void, reb_overlay_update, (const char* text, int status), {
+    var overlaytext = document.getElementById("overlaytext");
+    if (overlaytext){
+        overlaytext.innerHTML = UTF8ToString(text);
+    }
+    var overlay = document.getElementById("overlay");
+    if (overlay){
+        if (status==-3){ // Pause
+            overlay.style.backgroundColor = "rgba(100.0, 100.0, 0.0, 0.5)";
+        }else if (status==0 || status==5){ // Finished.
+            overlay.style.backgroundColor = "rgba(0.0, 255.0, 0.0, 0.5)";
+        }else if (status==10){ // Connection error.
+            overlay.style.backgroundColor = "rgba(255.0, 0.0, 0.0, 0.5)";
+        }else{
+            overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        }
+    }
+});
+EM_JS(void, reb_overlay_help_set_text, (const char* text), {
+    var overlaytext = document.getElementById("overlaytext-help");
+    if (overlaytext){
+        overlaytext.innerHTML = UTF8ToString(text);
+    }
+});
+EM_JS(int, reb_overlay_help_show, (int show), {
+    var overlaytoggle = document.getElementById("overlay-toggle");
+    if (overlaytoggle){
+        if (overlaytoggle.innerHTML == "1"){
+            overlaytoggle.innerHTML = "";
+            show = !show;
+        }
+    }
+    var overlayhelp = document.getElementById("overlay-help");
+    if (show){
+        overlayhelp.style.display = "block";
+    }else{
+        overlayhelp.style.display = "none";
+    }
+    return show;
+});
+EM_JS(void, reb_overlay_hide, (int hide), {
+    var overlay = document.getElementById("overlay");
+    if (hide){
+        overlay.style.display = "none";
+    }else{
+        overlay.style.display = "block";
+    }
+
+});
+#else
+#define reb_glVertexAttribDivisor glVertexAttribDivisor
+#define reb_glDrawArraysInstanced glDrawArraysInstanced
+#endif
+
+void reb_render_frame(void* p);
 static void reb_display_set_default_scale(struct reb_simulation* const r);
                 
 static const char* onscreenhelp[] = { 
-                "REBOUND OPENGL mouse and keyboard commands",
+                "REBOUND mouse and keyboard commands",
                 "----------------------------------------------------",
                 " To rotate the view, simply drag the simulation",
                 " with the mouse. To zoom in, press the shift key ",
@@ -68,22 +139,29 @@ static const char* onscreenhelp[] = {
                 " g       | Toggle ghost boxes",
                 " r       | Reset view. Press multiple times to ",
                 "         | change orientation",
-                " x/X     | Move to a coordinate system centred ",
+                " x/X     | Move to a coordinate system centerd ",
                 "         | on a particle (note: does not work if", 
                 "         | particle array is resorted)",
                 " c       | Toggle clear screen after each time-step",
                 " m       | Toggle multisampling",
                 " w       | Draw orbits as wires",
-                " t       | Show/hide logo, time, timestep and number ",
+                " t       | Show/hide logo, time, timestep and number",
                 "         | of particles.",
                 "----------------------------------------------------"
 };
 
 
 static void matscale(float mat[16], float s){
-    mat[0] = s; mat[1] = 0.; mat[2] = 0.; mat[3] = 0.; 
-    mat[4] = 0.; mat[5] = s; mat[6] = 0.; mat[7] = 0.; 
+    mat[0] = s; mat[1] = 0.; mat[2] = 0.; mat[3] = 0.;
+    mat[4] = 0.; mat[5] = s; mat[6] = 0.; mat[7] = 0.;
     mat[8] = 0.; mat[9] = 0.; mat[10] = s; mat[11] = 0.;
+    mat[12] = 0.; mat[13] = 0.; mat[14] = 0.; mat[15] = 1.;
+}
+
+static void matscale3(float mat[16], float s[3]){
+    mat[0] = s[0]; mat[1] = 0.; mat[2] = 0.; mat[3] = 0.;
+    mat[4] = 0.; mat[5] = s[1]; mat[6] = 0.; mat[7] = 0.;
+    mat[8] = 0.; mat[9] = 0.; mat[10] = s[2]; mat[11] = 0.;
     mat[12] = 0.; mat[13] = 0.; mat[14] = 0.; mat[15] = 1.;
 }
 
@@ -166,7 +244,7 @@ static unsigned int linkProgram(int prog){
     
     GLint logLength;
     glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
-    if (logLength > 0) {
+    if (logLength > 1) { // 0 should work - bug in emscripten?
         GLchar *log = (GLchar *)malloc(logLength);
         glGetProgramInfoLog(prog, logLength, &logLength, log);
         printf("\n\n%s\n\n",log);
@@ -216,20 +294,32 @@ static int loadShader(const char* vert_source, const char* frag_source){
 }
 
 static void reb_glfw_error_callback(int error, const char* description){
-        fprintf(stderr, "GLFW Error: %s\n", description);
+    fprintf(stderr, "GLFW Error: %s\n", description);
 }
 
 static void reb_display_mouse_button(GLFWwindow* window, int button, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_mouse_button\n");
+        return;
+    }
     data->mouse_action = action;
 }
 
 static void reb_display_resize(GLFWwindow* window, int x, int y){
-    reb_display(window);
+    struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_resize\n");
+        return;
+    }
 }
 
 static void reb_display_cursor(GLFWwindow* window, double x, double y){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_cursor\n");
+        return;
+    }
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     if (data->mouse_action==GLFW_RELEASE){
@@ -242,6 +332,7 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
         // New drag event
         data->mouse_x = x;
         data->mouse_y = y;
+        data->mouse_scale = data->scale;
         return;
     }
     if (data->mouse_action==GLFW_PRESS){
@@ -277,18 +368,24 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
             data->view = reb_rotation_mul(data->view,rot_dx);
         }else{
             // Zoom
-            float dx = 3.*(x-data->mouse_x)/width;
-            float dy = 3.*(y-data->mouse_y)/height;
-            data->mouse_x = x;
-            data->mouse_y = y;
-            data->scale *= (1.+dx+dy);
+            float ix = data->mouse_x/width-0.5;
+            float iy = data->mouse_y/height-0.5;
+            float ir = sqrt(ix*ix + iy*iy);
+            float nx = x/width-0.5;
+            float ny = y/height-0.5;
+            float nr = sqrt(nx*nx + ny*ny);
+            data->scale = data->mouse_scale*ir/nr;
 
         }
     }
 }
 
-static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
+void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_keyboard\n");
+        return;
+    }
     data->key_mods = mods;
     if (action==GLFW_PRESS){
         switch(key){
@@ -296,15 +393,15 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 data->onscreenhelp = !data->onscreenhelp;
                 break;
             case 'Q':
-                data->r->status = REB_EXIT_USER;
+                data->r->status = REB_STATUS_USER;
                 break;
             case ' ':
-                if (data->r->status == REB_RUNNING_PAUSED){
+                if (data->r->status == REB_STATUS_PAUSED){
                     printf("Resume.\n");
-                    data->r->status = REB_RUNNING;
-                }else{
+                    data->r->status = REB_STATUS_RUNNING;
+                }else if (data->r->status == REB_STATUS_RUNNING || data->r->status == REB_STATUS_LAST_STEP){
                     printf("Pause.\n");
-                    data->r->status = REB_RUNNING_PAUSED;
+                    data->r->status = REB_STATUS_PAUSED;
                 }
                 break;
             case 'S':
@@ -365,27 +462,120 @@ static void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int 
                 }
                 break;
         }
-        reb_display(window);
     }
 }
 
-static void reb_display(GLFWwindow* window){
-    struct reb_display_data* data = glfwGetWindowUserPointer(window);
+// Actual rendering
+// Makes a copy of the simulation first.
+void reb_render_frame(void* p){
+    struct reb_display_data* data = (struct reb_display_data*)p;
+    struct reb_simulation* r = data->r;
     if (!data){
-        // No user pointer available
-        return;
-    }
-    if (data->pause){
+        printf("reb_display_data undefinded in reb_render_frame().\n");
         return;
     }
     int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
+#ifdef __EMSCRIPTEN__
+    // Need to query canvas size using JS, set window size, then read framebuffer size.
+    width = canvas_get_width();
+    height = canvas_get_height();
+    int cwidth, cheight;
+    glfwGetWindowSize(data->window, &cwidth, &cheight);
+    if (cwidth!=width || cheight !=height){
+        glfwSetWindowSize(data->window, width, height);
+    }
+#endif
+    glfwGetFramebufferSize(data->window, &width, &height);
+
+    struct reb_simulation* r_copy = r->display_data->r_copy;
+    if (!r_copy){
+        data->r_copy = reb_simulation_create();
+        r_copy = data->r_copy;
+    }
+    
+    // lock mutex for update
+    data->need_copy = 1;
+    int wait_count = 0;
+    const int wait_count_max = 10;
+    int ret_try = EBUSY;
+    while (wait_count<wait_count_max && ret_try){// wait at most one frame.
+        ret_try = pthread_mutex_trylock(&data->mutex);
+        if (ret_try){ // not locked
+            usleep(1./120.*1e6/wait_count_max); 
+            wait_count++;
+        }
+    }
+
+    if (!ret_try){
+        // Copy if lock obtained. Otherwise use old data.
+        enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+        reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
+        data->need_copy = 0;
+        pthread_mutex_unlock(&(data->mutex));  
+    }
+
+    // prepare data (incl orbit calculation)
+    const int N_real = r_copy->N - r_copy->N_var;
+    if (N_real > data->N_allocated){
+        data->N_allocated = N_real;
+        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
+        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
+        // Resize memory if needed
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+    }
+
+    // this only does something for WHFAST
+    reb_simulation_synchronize(r_copy);
+       
+    // Update data on GPU 
+    for (unsigned int i=0;i<N_real;i++){
+        struct reb_particle p = r_copy->particles[i];
+        data->particle_data[i].x  = (float)p.x;
+        data->particle_data[i].y  = (float)p.y;
+        data->particle_data[i].z  = (float)p.z;
+        data->particle_data[i].vx = (float)p.vx;
+        data->particle_data[i].vy = (float)p.vy;
+        data->particle_data[i].vz = (float)p.vz;
+        data->particle_data[i].r  = (float)p.r;
+    }
+    if (data->wire && N_real>1){
+        struct reb_particle com = r_copy->particles[0];
+        for (unsigned int i=1;i<N_real;i++){
+            struct reb_particle p = r_copy->particles[i];
+            data->orbit_data[i-1].x  = (float)com.x;
+            data->orbit_data[i-1].y  = (float)com.y;
+            data->orbit_data[i-1].z  = (float)com.z;
+            struct reb_orbit o = reb_orbit_from_particle(r_copy->G, p,com);
+            data->orbit_data[i-1].a = (float)o.a;
+            data->orbit_data[i-1].e = (float)o.e;
+            data->orbit_data[i-1].f = (float)o.f;
+            data->orbit_data[i-1].omega = (float)o.omega;
+            data->orbit_data[i-1].Omega = (float)o.Omega;
+            data->orbit_data[i-1].inc = (float)o.inc;
+            com = reb_particle_com_of_pair(p,com);
+        }
+    }
+    if (N_real>0){
+        // Fill memory (but not resize)
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_particle_opengl), data->particle_data);
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+    }
+
+    // Do actual drawing
     double ratio = (double)width/(double)height;
     glViewport(0,0,width,height);
     if (data->clear){
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
     }
+
+#ifndef __EMSCRIPTEN__
     glPointSize(15.*data->retina);
+#endif
    
     // Precalculate matricies 
     float projection[16];
@@ -398,7 +588,7 @@ static void reb_display(GLFWwindow* window){
     float tmp2[16];
     float tmp3[16];
     if (data->reference>=0){
-        struct reb_particle p = data->particles_copy[data->reference];
+        struct reb_particle p = data->r_copy->particles[data->reference];
         mattranslate(tmp2,-p.x,-p.y,-p.z);
         rotation2mat(data->view,tmp1);
         matmult(tmp1,tmp2,view);
@@ -406,12 +596,12 @@ static void reb_display(GLFWwindow* window){
         rotation2mat(data->view,view);
     }
     
-    for (int i=-data->ghostboxes*data->r_copy->nghostx;i<=data->ghostboxes*data->r_copy->nghostx;i++){
-    for (int j=-data->ghostboxes*data->r_copy->nghosty;j<=data->ghostboxes*data->r_copy->nghosty;j++){
-    for (int k=-data->ghostboxes*data->r_copy->nghostz;k<=data->ghostboxes*data->r_copy->nghostz;k++){
-        struct reb_ghostbox gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
+    for (int i=-data->ghostboxes*data->r_copy->N_ghost_x;i<=data->ghostboxes*data->r_copy->N_ghost_x;i++){
+    for (int j=-data->ghostboxes*data->r_copy->N_ghost_y;j<=data->ghostboxes*data->r_copy->N_ghost_y;j++){
+    for (int k=-data->ghostboxes*data->r_copy->N_ghost_z;k<=data->ghostboxes*data->r_copy->N_ghost_z;k++){
+        struct reb_vec6d gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
         { // Particles
-            mattranslate(tmp2,gb.shiftx,gb.shifty,gb.shiftz);
+            mattranslate(tmp2,gb.x,gb.y,gb.z);
             matmult(view,tmp2,tmp1);
             matmult(projection,tmp1,tmp2);
             if(data->spheres>0){
@@ -420,7 +610,7 @@ static void reb_display(GLFWwindow* window){
                 glUseProgram(data->sphere_shader_program);
                 glBindVertexArray(data->sphere_shader_particle_vao);
                 glUniformMatrix4fv(data->sphere_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, data->r_copy->N);
+                reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, N_real);
                 glBindVertexArray(0);
                 glDisable(GL_DEPTH_TEST);
             }
@@ -431,7 +621,7 @@ static void reb_display(GLFWwindow* window){
                 glBindVertexArray(data->point_shader_particle_vao);
                 glUniform4f(data->point_shader_color_location, 1.,1.,0.,0.8);
                 glUniformMatrix4fv(data->point_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArrays(GL_POINTS, 0, data->r_copy->N);
+                glDrawArrays(GL_POINTS, 0, N_real);
                 glBindVertexArray(0);
             }
             if (data->wire){
@@ -439,7 +629,7 @@ static void reb_display(GLFWwindow* window){
                 glUseProgram(data->orbit_shader_program);
                 glBindVertexArray(data->orbit_shader_particle_vao);
                 glUniformMatrix4fv(data->orbit_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, data->r_copy->N-1);
+                reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, N_real-1);
                 glBindVertexArray(0);
             }
         }
@@ -447,20 +637,27 @@ static void reb_display(GLFWwindow* window){
             glUseProgram(data->box_shader_program);
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
                 glBindVertexArray(data->box_shader_cross_vao);
+                matscale(tmp1,data->scale);
             }else{
                 glBindVertexArray(data->box_shader_box_vao);
+                float boxsize[3] = {data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.};
+                matscale3(tmp1,boxsize);
             }
             glUniform4f(data->box_shader_color_location, 1.,0.,0.,1.);
-            matscale(tmp1,data->r_copy->boxsize_max/2.);
-            mattranslate(tmp2,gb.shiftx,gb.shifty,gb.shiftz);
+            mattranslate(tmp2,gb.x,gb.y,gb.z);
             matmult(tmp2,tmp1,tmp3);
             matmult(view,tmp3,tmp1);
             matmult(projection,tmp1,tmp2);
             glUniformMatrix4fv(data->box_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-            glDrawArrays(GL_LINES, 0, 24);
+            if (data->r_copy->boundary == REB_BOUNDARY_NONE){
+                glDrawArrays(GL_LINES, 0, 6);
+            }else{
+                glDrawArrays(GL_LINES, 0, 24);
+            }
             glBindVertexArray(0);
         }
     }}}
+#ifndef __EMSCRIPTEN__
     if (data->onscreentext){ // On screen text
         glUseProgram(data->simplefont_shader_program);
         glBindVertexArray(data->simplefont_shader_vao);
@@ -468,6 +665,7 @@ static void reb_display(GLFWwindow* window){
         glUniform1i(glGetUniformLocation(data->simplefont_shader_program, "tex"), 0);
         glUniform2f(data->simplefont_shader_pos_location, -0.96,-0.72);
         glUniform1f(data->simplefont_shader_aspect_location, 1.9);
+        glUniform1f(data->simplefont_shader_screen_aspect_location, 1./ratio);
         glUniform1f(data->simplefont_shader_scale_location, 0.01);
         glBindBuffer(GL_ARRAY_BUFFER, data->simplefont_shader_charval_buffer);
         float val[200] = {0.};
@@ -475,42 +673,42 @@ static void reb_display(GLFWwindow* window){
             int j = convertLine(reb_logo[i],val);
             glUniform1f(data->simplefont_shader_ypos_location, (float)i);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-            glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
         
         char str[256];
         int ypos = 0;
         glUniform2f(data->simplefont_shader_pos_location, -0.70,-269./350.);
-        glUniform1f(data->simplefont_shader_aspect_location, 1.4545);
+        glUniform1f(data->simplefont_shader_aspect_location, 1.4);
         glUniform1f(data->simplefont_shader_scale_location, 16./350.);
         
         glUniform1f(data->simplefont_shader_ypos_location, ypos++);
         sprintf(str,"REBOUND v%s",reb_version_str);
         int j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
-        if (data->r_copy->status == REB_RUNNING){
+        if (data->r_copy->status == REB_STATUS_RUNNING){
             sprintf(str, "Simulation is running  ");
-        }else if (data->r_copy->status == REB_RUNNING_PAUSED){
+        }else if (data->r_copy->status == REB_STATUS_PAUSED){
             sprintf(str, "Simulation is paused   ");
         }
         glUniform1f(data->simplefont_shader_ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
         sprintf(str, "Press h for help ");
         glUniform1f(data->simplefont_shader_ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
         sprintf(str, "N = %d ",data->r_copy->N);
         glUniform1f(data->simplefont_shader_ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
         glUniform1f(data->simplefont_shader_ypos_location, ypos++);
         if (data->r_copy->integrator==REB_INTEGRATOR_SEI){
@@ -520,7 +718,7 @@ static void reb_display(GLFWwindow* window){
         }
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D,0);
@@ -532,6 +730,7 @@ static void reb_display(GLFWwindow* window){
         glUniform1i(glGetUniformLocation(data->simplefont_shader_program, "tex"), 0);
         glUniform2f(data->simplefont_shader_pos_location, -0.67,0.7);
         glUniform1f(data->simplefont_shader_aspect_location, 1.4);
+        glUniform1f(data->simplefont_shader_screen_aspect_location, 1./ratio);
         glUniform1f(data->simplefont_shader_scale_location, 0.035);
         glBindBuffer(GL_ARRAY_BUFFER, data->simplefont_shader_charval_buffer);
         float val[200] = {0.};
@@ -539,50 +738,113 @@ static void reb_display(GLFWwindow* window){
             int j = convertLine(onscreenhelp[i],val);
             glUniform1f(data->simplefont_shader_ypos_location, (float)i);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-            glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
     }
+#endif // __EMSCRIPTEN__
 
-    glfwSwapBuffers(window);
-    return;
+    glfwSwapBuffers(data->window);
+    glfwPollEvents();
 }
 
-
+#ifdef __EMSCRIPTEN__
+EM_BOOL reb_render_frame_emscripten(double time, void* p){
+    struct reb_simulation* r = (struct reb_simulation*)p;
+    struct reb_display_data* data = r->display_data;
+    if (!data){
+        return EM_TRUE;
+    }
+    if (!data->pause){
+        reb_render_frame(data);
+        reb_overlay_hide(!data->onscreentext);
+        if (data->onscreentext){ 
+            char str[10240] = "\0";
+            char line[1024];
+            sprintf(line,"<div class=\"reboundlogo\"></div>REBOUND v%s<br />",reb_version_str);
+            strlcat(str, line, 10240);
+            if (data->connection_status>=0){
+                if (data->r_copy->status == REB_STATUS_RUNNING){
+                    sprintf(line, "Simulation is running<br />");
+                }else if (data->r_copy->status == REB_STATUS_PAUSED){
+                    sprintf(line, "Simulation is paused<br />");
+                }else if (data->r_copy->status == REB_STATUS_SUCCESS){
+                    sprintf(line, "Simulation ready<br />");
+                }else if (data->r_copy->status == REB_STATUS_USER){
+                    sprintf(line, "Simulation canceled<br />");
+                }else if (data->r_copy->status > 0){
+                    sprintf(line, "Simulation error occured<br />");
+                }
+                strlcat(str, line, 10240);
+                sprintf(line, "N = %d<br />",data->r_copy->N);
+                strlcat(str, line, 10240);
+                sprintf(line, "t = %g<br />",data->r_copy->t);
+                strlcat(str, line, 10240);
+                sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
+                strlcat(str, line, 10240);
+                strlcat(str, "Press h or click for help<br />", 10240);
+                reb_overlay_update(str, data->r_copy->status);
+            }else{
+                sprintf(line, "Unable to connect. Server might have shut down.");
+                strlcat(str, line, 10240);
+                reb_overlay_update(str, 10);
+            }
+        }
+        data->onscreenhelp = reb_overlay_help_show(data->onscreenhelp);
+        if (data->onscreenhelp){ 
+            char str[10240] = "\0";
+            for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
+                strlcat(str, onscreenhelp[i], 10240);
+                strlcat(str, "<br />", 10240);
+                reb_overlay_help_set_text(str);
+            }
+        }
+    }
+    return EM_TRUE;
+}
+#endif
 
 void reb_display_init(struct reb_simulation * const r){
     struct reb_display_data* data = r->display_data;
     if (!glfwInit()){
-        reb_error(r, "GLFW initialization failed.");
+        reb_simulation_error(r, "GLFW initialization failed.");
         return;
     }
 
     glfwSetErrorCallback(reb_glfw_error_callback);
+#ifdef __EMSCRIPTEN__
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+#else
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#endif
 
     GLFWwindow*  window = glfwCreateWindow(700, 700, "rebound", NULL, NULL);
     if (!window){
-        reb_error(r,"GLFW window creation failed.");
+        reb_simulation_error(r,"GLFW window creation failed.");
         return;
     }
 
     glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    glfwSwapInterval(1);
     
     glfwSetWindowUserPointer(window,data); 
 
     // Default parameters
+    reb_display_set_default_scale(r);
     { // Check if we have a retina display
         int wwidth, wheight, fwidth, fheight;
         glfwGetWindowSize(window, &wwidth, &wheight);
         glfwGetFramebufferSize(window, &fwidth, &fheight);
         data->retina = (double)fwidth/(double)wwidth;
     }
-    data->spheres       = 0; 
+    if (data->r->max_radius0 > 0.0){
+        data->spheres       = 1; 
+    }else{
+        data->spheres       = 0; 
+    }
     data->pause         = 0; 
     data->multisample = 1; 
     if (data->r->integrator==REB_INTEGRATOR_WHFAST){
@@ -595,8 +857,7 @@ void reb_display_init(struct reb_simulation * const r){
     data->ghostboxes    = 0; 
     data->reference     = -1;
     data->view.r        = 1.;
-    data->p_jh_copy      = NULL;
-    data->allocated_N_whfast = 0;
+    data->window        = window;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
@@ -604,7 +865,9 @@ void reb_display_init(struct reb_simulation * const r){
     glfwSetCursorPosCallback(window, reb_display_cursor);
     glfwSetWindowSizeCallback(window, reb_display_resize);
     glDepthMask(GL_TRUE);
+#ifndef __EMSCRIPTEN__
     glEnable(GL_MULTISAMPLE); 
+#endif
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBlendEquation(GL_FUNC_ADD);
@@ -623,32 +886,40 @@ void reb_display_init(struct reb_simulation * const r){
         glBindTexture(GL_TEXTURE_2D,data->simplefont_tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        float color[] = {1.,0.,0.,1.}; // This is black, given we use a red texture
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 256,256, 0, GL_RED, GL_UNSIGNED_BYTE, image);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image);
         glBindTexture(GL_TEXTURE_2D,0);
     }
 
     {
         const char* vertex_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
             "in vec2 vp;\n"
             "in float charpos;\n"
             "uniform float scale;\n"
             "uniform float aspect;\n"
+            "uniform float screen_aspect;\n"
             "uniform float ypos;\n"
             "uniform vec2 pos;\n"
             "in vec2 charval;\n"
             "in vec2 texcoord;\n"
             "out vec2 Texcoord;\n"
             "void main() {\n"
-            "  gl_Position = vec4(pos,0.,0.)+vec4(scale*(vp.x+charpos/aspect+charpos/16.),scale*(vp.y-ypos),0., 1.);\n"
+            "  gl_Position = vec4(pos.x*screen_aspect,pos.y,0.,0.)+vec4(screen_aspect*scale*(vp.x+charpos/aspect+charpos/16.),scale*(vp.y-ypos),0., 1.);\n"
             "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
             "}\n";
         const char* fragment_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
+            "precision highp float;"
             "out vec4 outcolor;\n"
             "uniform sampler2D tex;\n"
             "in vec2 Texcoord;\n"
@@ -661,21 +932,32 @@ void reb_display_init(struct reb_simulation * const r){
         data->simplefont_shader_pos_location = glGetUniformLocation(data->simplefont_shader_program, "pos");
         data->simplefont_shader_scale_location = glGetUniformLocation(data->simplefont_shader_program, "scale");
         data->simplefont_shader_aspect_location = glGetUniformLocation(data->simplefont_shader_program, "aspect");
+        data->simplefont_shader_screen_aspect_location = glGetUniformLocation(data->simplefont_shader_program, "screen_aspect");
     }
     
     {
         const char* vertex_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
             "in vec3 vp;\n"
             "uniform mat4 mvp;\n"
             "uniform vec4 vc;\n"
             "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
+            " gl_PointSize = 15.0f;\n"
             "  color = vc;\n"
             "}\n";
         const char* fragment_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
+            "precision highp float;"
             "in vec4 color;\n"
             "out vec4 outcolor;\n"
             "void main() {\n"
@@ -698,7 +980,11 @@ void reb_display_init(struct reb_simulation * const r){
 
     {
         const char* vertex_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
             "in vec3 vp;\n"
             "uniform mat4 mvp;\n"
             "uniform vec4 vc;\n"
@@ -708,7 +994,12 @@ void reb_display_init(struct reb_simulation * const r){
             "  color = vc;\n"
             "}\n";
         const char* fragment_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
+            "precision highp float;"
             "in vec4 color;\n"
             "out vec4 outcolor;\n"
             "void main() {\n"
@@ -722,7 +1013,11 @@ void reb_display_init(struct reb_simulation * const r){
     
     {
         const char* vertex_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
             "in vec3 vp;\n"
             "in float sr;\n"
             "in vec3 sp;\n"
@@ -733,7 +1028,12 @@ void reb_display_init(struct reb_simulation * const r){
             "  normal = vp;\n"
             "}\n";
         const char* fragment_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
+            "precision highp float;"
             "out vec4 outcolor;\n"
             "in vec3 normal;\n"
             "void main() {\n"
@@ -748,7 +1048,11 @@ void reb_display_init(struct reb_simulation * const r){
     
     {
         const char* vertex_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
             "in vec3 focus;\n"
             "in vec3 aef;\n"
             "in vec3 omegaOmegainc;\n"
@@ -782,7 +1086,12 @@ void reb_display_init(struct reb_simulation * const r){
             "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
             "}\n";
         const char* fragment_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
             "#version 330\n"
+#endif
+            "precision highp float;"
             "out vec4 outcolor;\n"
             "in float lin;\n"
             "void main() {\n"
@@ -805,7 +1114,6 @@ void reb_display_init(struct reb_simulation * const r){
     glEnableVertexAttribArray(simplefont_shader_charval_location);
     GLuint simplefont_shader_charpos_location = glGetAttribLocation(data->simplefont_shader_program,"charpos");
     glEnableVertexAttribArray(simplefont_shader_charpos_location);
-    
     float simplefont_data[] = {
         0., 0., 0., 1., 
         0., 1., 0., 0.0,
@@ -835,10 +1143,10 @@ void reb_display_init(struct reb_simulation * const r){
     glBufferData(GL_ARRAY_BUFFER, 200*sizeof(float), NULL,GL_DYNAMIC_DRAW);
     glVertexAttribPointer(simplefont_shader_charval_location, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, NULL);
 
-    glVertexAttribDivisor(sfvp, 0); 
-    glVertexAttribDivisor(sftexcoordp, 0); 
-    glVertexAttribDivisor(simplefont_shader_charpos_location,1);
-    glVertexAttribDivisor(simplefont_shader_charval_location,1);
+    reb_glVertexAttribDivisor(sfvp, 0); 
+    reb_glVertexAttribDivisor(sftexcoordp, 0); 
+    reb_glVertexAttribDivisor(simplefont_shader_charpos_location,1);
+    reb_glVertexAttribDivisor(simplefont_shader_charval_location,1);
 
     glBindVertexArray(0);
 
@@ -853,6 +1161,7 @@ void reb_display_init(struct reb_simulation * const r){
     GLuint particle_buffer;
     glGenBuffers(1, &particle_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
+    data->particle_buffer = particle_buffer;
     
     glVertexAttribPointer(pvp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, NULL);
     glBindVertexArray(0);
@@ -864,7 +1173,7 @@ void reb_display_init(struct reb_simulation * const r){
     GLuint cvp = glGetAttribLocation(data->box_shader_program,"vp");
     glEnableVertexAttribArray(cvp);
     
-    float cross_data[] = {
+    float cross_data[18] = {
         -0.04,0.,0., +0.04,0.,0., 0.,-0.04,0., 0.,+0.04,0., 0.,0.,-0.04, 0.,0.,+0.04,
     };
     GLuint cross_buffer;
@@ -934,10 +1243,10 @@ void reb_display_init(struct reb_simulation * const r){
     glVertexAttribPointer(ssp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, NULL);
     glVertexAttribPointer(ssr, 1, GL_FLOAT, GL_FALSE, sizeof(float)*7, (void*)(sizeof(float)*6));
 
-    glVertexAttribDivisor(svp, 0); 
-    glVertexAttribDivisor(data->sphere_shader_mvp_location, 0); 
-    glVertexAttribDivisor(ssp, 1);
-    glVertexAttribDivisor(ssr, 1);
+    reb_glVertexAttribDivisor(svp, 0); 
+    reb_glVertexAttribDivisor(data->sphere_shader_mvp_location, 0); 
+    reb_glVertexAttribDivisor(ssp, 1);
+    reb_glVertexAttribDivisor(ssr, 1);
     
     glBindVertexArray(0);
 
@@ -971,60 +1280,59 @@ void reb_display_init(struct reb_simulation * const r){
     GLuint orbit_buffer;
     glGenBuffers(1, &orbit_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
+    data->orbit_buffer = orbit_buffer;
     glVertexAttribPointer(ofocusp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, NULL);
     glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
     glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
 
-    glVertexAttribDivisor(olintwopip, 0); 
-    glVertexAttribDivisor(data->orbit_shader_mvp_location, 0); 
-    glVertexAttribDivisor(ofocusp, 1);
-    glVertexAttribDivisor(oaefp, 1);
-    glVertexAttribDivisor(oomegaOmegaincp, 1);
+    GLuint divisor = 0;
+    reb_glVertexAttribDivisor(olintwopip, divisor); 
+    reb_glVertexAttribDivisor(data->orbit_shader_mvp_location, 0); 
+    reb_glVertexAttribDivisor(ofocusp, 1);
+    reb_glVertexAttribDivisor(oaefp, 1);
+    reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
     
     glBindVertexArray(0);
 
 
 
     // Main display loop
+#ifdef __EMSCRIPTEN__
+    // Will return 
+    emscripten_request_animation_frame_loop(reb_render_frame_emscripten, r);
+#else
+    glfwSwapInterval(1);
+
     while(!glfwWindowShouldClose(window) && r->status<0){
-        // lock mutex for update
-        pthread_mutex_lock(&(data->mutex));    
-        int size_changed = reb_display_copy_data(r);
-        pthread_mutex_unlock(&(data->mutex));  
-
-        // prepare data (incl orbit calculation)
-        reb_display_prepare_data(r, data->wire);
-
-        // Copy data to GPU
-        if (size_changed){ // reallocated GPU memory
-            glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-            glBufferData(GL_ARRAY_BUFFER, data->allocated_N*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
-            glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-            glBufferData(GL_ARRAY_BUFFER, data->allocated_N*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+        double t0 = glfwGetTime();
+        if (!data->pause){
+            reb_render_frame(data);
         }
-        glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data->r_copy->N*sizeof(struct reb_particle_opengl), data->particle_data);
-        glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, (data->r_copy->N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
-
-        // Do actual drawing
-        reb_display(window);
-        glfwPollEvents();
+        while (glfwGetTime()-t0 < 1.0/120.) { // Maxframerate 120Hz
+            usleep(10);
+            glfwPollEvents();
+        }
     }
     glfwDestroyWindow(window);
-    glfwTerminate();
-    if (data->r->status<0){
-        data->r->status = REB_EXIT_USER; 
+    data->window = NULL;
+    // Destroy particle buffers
+    if (data->N_allocated){
+        data->N_allocated = 0;
+        free(data->particle_data);
+        free(data->orbit_data);
+        data->particle_data = NULL;
+        data->orbit_data = NULL;
     }
+    glfwTerminate();
+#endif
 }
-#endif // OPENGL
 
 static void reb_display_set_default_scale(struct reb_simulation* const r){
     // Need a scale for visualization
     if (r->root_size==-1){  
         r->display_data->scale = 0.;
         const struct reb_particle* p = r->particles;
-        for (unsigned int i=0;i<r->N;i++){
+        for (unsigned int i=0;i<r->N-r->N_var;i++){
             const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
             r->display_data->scale = MAX(r->display_data->scale, _r);
         }
@@ -1037,102 +1345,6 @@ static void reb_display_set_default_scale(struct reb_simulation* const r){
     }
 }
 
+#endif // OPENGL
 
-void reb_display_init_data(struct reb_simulation* const r){
-#ifndef _WIN32
-    if (r->display_data==NULL){
-        r->display_data = calloc(sizeof(struct reb_display_data),1);
-        r->display_data->r = r;
-        if (pthread_mutex_init(&(r->display_data->mutex), NULL)){
-            reb_error(r,"Mutex creation failed.");
-        }
-        reb_display_set_default_scale(r);
-    }
-#else // _WIN32
-    reb_error(r,"Visualizations not supported on Windows.");
-#endif // _WIN32
-}
-
-int reb_display_copy_data(struct reb_simulation* const r){
-    if (r->N==0) return 0;
-    struct reb_display_data* data = r->display_data;
-    int size_changed = 0;
-    if (r->N>data->allocated_N){
-        size_changed = 1;
-        data->allocated_N = r->N;
-        data->r_copy = realloc(data->r_copy,sizeof(struct reb_simulation));
-        data->particles_copy = realloc(data->particles_copy,r->N*sizeof(struct reb_particle));
-        data->particle_data = realloc(data->particle_data, data->allocated_N*sizeof(struct reb_particle_opengl));
-        data->orbit_data = realloc(data->orbit_data, data->allocated_N*sizeof(struct reb_orbit_opengl));
-    }
-    memcpy(data->r_copy, r, sizeof(struct reb_simulation));
-    memcpy(data->particles_copy, r->particles, sizeof(struct reb_particle)*r->N);
-    data->r_copy->particles = data->particles_copy;
-    if (
-            (r->integrator==REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized==0)
-       )
-       {
-        if (r->ri_whfast.allocated_N > data->allocated_N_whfast){
-            size_changed = 1;
-            data->allocated_N_whfast = r->ri_whfast.allocated_N;
-            data->p_jh_copy = realloc(data->p_jh_copy,data->allocated_N_whfast*sizeof(struct reb_particle));
-        }
-        memcpy(data->p_jh_copy, r->ri_whfast.p_jh, data->allocated_N_whfast*sizeof(struct reb_particle));
-    }
-    data->r_copy->ri_whfast.p_jh= data->p_jh_copy;
-    
-    return size_changed;
-}
-
-void reb_display_prepare_data(struct reb_simulation* const r, int orbits){
-    if (r->N==0) return;
-    struct reb_display_data* data = r->display_data;
-    struct reb_simulation* const r_copy = data->r_copy;
-
-    // this only does something for WHFAST
-    reb_integrator_synchronize(r_copy);
-       
-    // Update data on GPU 
-    for (unsigned int i=0;i<r_copy->N;i++){
-        struct reb_particle p = r_copy->particles[i];
-        data->particle_data[i].x  = (float)p.x;
-        data->particle_data[i].y  = (float)p.y;
-        data->particle_data[i].z  = (float)p.z;
-        data->particle_data[i].vx = (float)p.vx;
-        data->particle_data[i].vy = (float)p.vy;
-        data->particle_data[i].vz = (float)p.vz;
-        data->particle_data[i].r  = (float)p.r;
-    }
-    if (orbits){
-        struct reb_particle com = r_copy->particles[0];
-        for (unsigned int i=1;i<r_copy->N;i++){
-            struct reb_particle p = r_copy->particles[i];
-            data->orbit_data[i-1].x  = (float)com.x;
-            data->orbit_data[i-1].y  = (float)com.y;
-            data->orbit_data[i-1].z  = (float)com.z;
-            struct reb_orbit o = reb_tools_particle_to_orbit(r_copy->G, p,com);
-            data->orbit_data[i-1].a = (float)o.a;
-            data->orbit_data[i-1].e = (float)o.e;
-            data->orbit_data[i-1].f = (float)o.f;
-            data->orbit_data[i-1].omega = (float)o.omega;
-            data->orbit_data[i-1].Omega = (float)o.Omega;
-            data->orbit_data[i-1].inc = (float)o.inc;
-            com = reb_get_com_of_pair(p,com);
-        }
-    }
-}
-
-
-
-void reb_check_for_display_heartbeat(struct reb_simulation* const r){
-    if (r->display_heartbeat){                          // Display Heartbeat
-        struct timeval tim;
-        gettimeofday(&tim, NULL);
-        unsigned long milis = (tim.tv_sec+(tim.tv_usec/1000000.0))*1000;
-        if (r->display_clock==0 || (milis - r->display_clock)>25){
-            r->display_clock = milis;
-            r->display_heartbeat(r); 
-        }
-    }
-}
 

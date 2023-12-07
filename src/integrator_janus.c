@@ -143,7 +143,7 @@ static void to_double(struct reb_particle* ps, struct reb_particle_int* psi, uns
 }
 
 static void drift(struct reb_simulation* r, double dt, double scale_pos, double scale_vel){
-    struct reb_simulation_integrator_janus* ri_janus = &(r->ri_janus);
+    struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     for(unsigned int i=0; i<N; i++){
         ri_janus->p_int[i].x += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vx*scale_vel/scale_pos) ;
@@ -153,7 +153,7 @@ static void drift(struct reb_simulation* r, double dt, double scale_pos, double 
 }
 
 static void kick(struct reb_simulation* r, double dt, double scale_vel){
-    struct reb_simulation_integrator_janus* ri_janus = &(r->ri_janus);
+    struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     for(unsigned int i=0; i<N; i++){
         ri_janus->p_int[i].vx += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].ax/scale_vel) ;
@@ -164,13 +164,13 @@ static void kick(struct reb_simulation* r, double dt, double scale_vel){
 
 void reb_integrator_janus_part1(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
-    struct reb_simulation_integrator_janus* ri_janus = &(r->ri_janus);
+    struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     const double dt = r->dt;
     const double scale_vel  = ri_janus->scale_vel;
     const double scale_pos  = ri_janus->scale_pos;
-    if (ri_janus->allocated_N != N){
-        ri_janus->allocated_N = N;
+    if (ri_janus->N_allocated != N){
+        ri_janus->N_allocated = N;
         ri_janus->p_int = realloc(ri_janus->p_int, sizeof(struct reb_particle_int)*N);
         ri_janus->recalculate_integer_coordinates_this_timestep = 1;
     }
@@ -199,7 +199,7 @@ void reb_integrator_janus_part1(struct reb_simulation* r){
             break;
         default:
             s = s1odr2;
-            reb_error(r,"Order not supported in JANUS.");
+            reb_simulation_error(r,"Order not supported in JANUS.");
     }
 
     drift(r,gg(s,0)*dt/2.,scale_pos,scale_vel);
@@ -207,7 +207,7 @@ void reb_integrator_janus_part1(struct reb_simulation* r){
 }
 
 void reb_integrator_janus_part2(struct reb_simulation* r){
-    struct reb_simulation_integrator_janus* ri_janus = &(r->ri_janus);
+    struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     const double scale_vel  = ri_janus->scale_vel;
     const double scale_pos  = ri_janus->scale_pos;
@@ -232,14 +232,14 @@ void reb_integrator_janus_part2(struct reb_simulation* r){
             break;
         default:
             s = s1odr2;
-            reb_error(r,"Order not supported in JANUS.");
+            reb_simulation_error(r,"Order not supported in JANUS.");
     }
    
     kick(r,gg(s,0)*dt, scale_vel);
     for (unsigned int i=1; i<s.stages; i++){
         drift(r,(gg(s,i-1)+gg(s,i))*dt/2.,scale_pos,scale_vel);
         to_double(r->particles, r->ri_janus.p_int, N, scale_pos, scale_vel); 
-        reb_update_acceleration(r);
+        reb_simulation_update_acceleration(r);
         kick(r,gg(s,i)*dt, scale_vel);
     }
     drift(r,gg(s,s.stages-1)*dt/2.,scale_pos,scale_vel);
@@ -252,14 +252,14 @@ void reb_integrator_janus_part2(struct reb_simulation* r){
 }
 
 void reb_integrator_janus_synchronize(struct reb_simulation* r){
-    if (r->ri_janus.allocated_N==r->N){
+    if (r->ri_janus.N_allocated==r->N){
         to_double(r->particles, r->ri_janus.p_int, r->N, r->ri_janus.scale_pos, r->ri_janus.scale_vel); 
     }
 }
 
 void reb_integrator_janus_reset(struct reb_simulation* r){
-    struct reb_simulation_integrator_janus* const ri_janus = &(r->ri_janus);
-    ri_janus->allocated_N = 0;
+    struct reb_integrator_janus* const ri_janus = &(r->ri_janus);
+    ri_janus->N_allocated = 0;
     ri_janus->recalculate_integer_coordinates_this_timestep = 0;
     ri_janus->order = 2;
     ri_janus->scale_pos = 1e-16;

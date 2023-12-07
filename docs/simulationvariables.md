@@ -2,7 +2,7 @@
 The following example shows how to access variables in the simulation structure.  
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->G = 1.0;             // Set the gravitational constant
     printf("%f\n", r->t);   // print current simulation time
     ```
@@ -42,15 +42,15 @@ To keep the documentation concise, variables which are only intended for interna
 
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         r->integrator = REB_INTEGRATOR_LEAPFROG; // uses fixed timestep
         r->dt = 10;
         r->exact_finish_time = 0;
-        reb_integrate(r, 15);
+        reb_simulation_integrate(r, 15);
         printf("%f\n", r->t);     // will print 20
         
         r->exact_finish_time = 1; // default
-        reb_integrate(r, 25);
+        reb_simulation_integrate(r, 25);
         printf("%f\n", r->t);     // will print 25
         ```
 
@@ -82,7 +82,7 @@ To keep the documentation concise, variables which are only intended for interna
             printf("%f\n",r->t);
         }
         int main(int argc, char* argv[]) {
-            struct reb_simulation* r = reb_create_simulation();
+            struct reb_simulation* r = reb_simulation_create();
             r->heartbeat = heartbeat;
             // ...
         }
@@ -155,7 +155,7 @@ To keep the documentation concise, variables which are only intended for interna
     
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
+        struct reb_simulation* r = reb_simulation_create();
         // ... setup simulation, add particles ...
         r->particles[0].x = 1;
         ```
@@ -192,10 +192,10 @@ To keep the documentation concise, variables which are only intended for interna
     The following example sets up a simulation with two active particles and one massless test-particle.
     === "C"
         ```c
-        struct reb_simulation* r = reb_create_simulation();
-        reb_add_fmt(r, "m", 1.0);
-        reb_add_fmt(r, "m a", 1e-3, 1.0);
-        reb_add_fmt(r, "m a", 0.0, 2.0);
+        struct reb_simulation* r = reb_simulation_create();
+        reb_simulation_add_fmt(r, "m", 1.0);
+        reb_simulation_add_fmt(r, "m a", 1e-3, 1.0);
+        reb_simulation_add_fmt(r, "m a", 0.0, 2.0);
         r->N_active = 2;
         ```
 
@@ -220,7 +220,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c int N_var`                 
 :   Total number of variational particles. Default: 0.
 
-`#!c int var_config_N`          
+`#!c int N_var_config`          
 :   Number of variational particle configurations. Default: 0.
 
 
@@ -248,7 +248,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c double collisions_plog`    
 :   This variable keeps track of momentum exchange during collisions. This can be used to calculate collisional viscosity in ring systems.
 
-`#!c long collisions_Nlog`      
+`#!c long collisions_log_n`      
 :   This variable keeps track of the number of collisions that have occurred. This can be used to calculate statistical quantities of collisional systems.
 
 `#!c double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v)`
@@ -270,7 +270,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c double usleep`             
 :   Sleep this number of microseconds after each timestep. This can be useful for slowing down the simulation, for example for rendering visualizations.  
 
-`#!c int nghostx, nghosty,  nghostz`               
+`#!c int N_ghost_x, N_ghost_y,  N_ghost_z`               
 :   Number of ghost-boxes in x, y, and z directions. 
 
 `#!c unsigned int rand_seed`    
@@ -297,18 +297,18 @@ The [gravity solvers](gravity.md), [collision detection algorithms](collisions.m
 The following variables in the simulation structure contain the configuration for the individual integrators. 
 They are described on their own [separate page](integrators.md). 
 
-`#!c struct reb_simulation_integrator_sei ri_sei`
+`#!c struct reb_integrator_sei ri_sei`
 
-`#!c struct reb_simulation_integrator_whfast ri_whfast`
+`#!c struct reb_integrator_whfast ri_whfast`
 
-`#!c struct reb_simulation_integrator_saba ri_saba`
+`#!c struct reb_integrator_saba ri_saba`
 
-`#!c struct reb_simulation_integrator_ias15 ri_ias15`
+`#!c struct reb_integrator_ias15 ri_ias15`
 
-`#!c struct reb_simulation_integrator_mercurius ri_mercurius`
+`#!c struct reb_integrator_mercurius ri_mercurius`
 
-`#!c struct reb_simulation_integrator_janus ri_janus`
+`#!c struct reb_integrator_janus ri_janus`
 
-`#!c struct reb_simulation_integrator_eos ri_eos`
+`#!c struct reb_integrator_eos ri_eos`
 
 

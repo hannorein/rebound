@@ -9,7 +9,7 @@ Because this is the default setting, you don't need to do anything if you don't 
 Nevertheless, here is the syntax to set this manually:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     r->boundary = REB_BOUNDARY_NONE;
     ```
 
@@ -26,8 +26,8 @@ The syntax is as follows:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_configure_box(r, 10., 1, 1, 1); # confine the simulation to a box of size 10
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_configure_box(r, 10., 1, 1, 1); # confine the simulation to a box of size 10
     r->boundary = REB_BOUNDARY_OPEN;
     ```
 
@@ -45,8 +45,8 @@ The syntax is as follows:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_configure_box(r, 10., 1, 2, 3); # confine the simulation to a box of size 10x20x30
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_configure_box(r, 10., 1, 2, 3); # confine the simulation to a box of size 10x20x30
     r->boundary = reb_boundary_periodic;
     ```
 
@@ -64,9 +64,9 @@ The following code sets up two rings of ghost boxes in the x and y directions.
 
 === "C"
     ```c
-    r->nghostx = 2;
-    r->nghosty = 2;
-    r->nghostz = 0;
+    r->N_ghost_x = 2;
+    r->N_ghost_y = 2;
+    r->N_ghost_z = 0;
     ```
 
 === "python"
@@ -76,9 +76,9 @@ The following code sets up two rings of ghost boxes in the x and y directions.
 
 See [Rein & Liu](https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.128R/abstract) for details on the ghost box implementation.
 
-You might encounter the `reb_ghostbox` structure in various parts of the code, for example in function related to gravity calculation and collision detection. 
-It contains the relative position and velocity of a ghostbox.
-If there are no ghostboxes used, then all elements of this structure will be zero.
+You might encounter the `reb_vec6d` structure in various parts of the code, for example in function related to gravity calculation and collision detection. 
+It often contains the relative position and velocity of a ghost-box.
+If there are no ghost-boxes used, then all elements of this structure will be zero.
 
 ## Shear
 ![Shearing sheet](img/shear.png)
@@ -91,8 +91,8 @@ For more information on how to setup simulations of planetary rings in REBOUND, 
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_configure_box(r, 10., 1, 1, 1); 
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_configure_box(r, 10., 1, 1, 1); 
     r->OMEGA = 1.0;
     r->boundary = REB_BOUNDARY_SHEAR;
     ```

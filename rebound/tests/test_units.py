@@ -40,7 +40,7 @@ class TestUnits(unittest.TestCase):
     def test_units_restore(self):
         units = ["au", "msun", "yr2pi"]
         self.sim.units = units 
-        self.sim.save("test.bin")
+        self.sim.save_to_file("test.bin",delete_file=True)
         sim2 = rebound.Simulation("test.bin")
         for i in ["length","time","mass"]:
             self.assertEqual(sim2.units[i], self.sim.units[i])

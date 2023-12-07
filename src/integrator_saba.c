@@ -125,15 +125,15 @@ static const double reb_saba_cc[4] = {
     
 
 static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
-    struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+    struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_j = ri_whfast->p_jh;
 	struct reb_particle* const particles = r->particles;
     const unsigned int N = r->N;
     switch (r->ri_saba.type/0x100){
         case 1: // modified kick
             // Calculate normal kick
-            reb_transformations_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
-            reb_update_acceleration(r);
+            reb_particles_transform_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
+            reb_simulation_update_acceleration(r);
             // Calculate jerk
             reb_whfast_calculate_jerk(r);
 
@@ -148,16 +148,16 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
         case 2: // lazy corrector
             {
             // Need temporary array to store old positions
-            if (ri_whfast->allocated_Ntemp != N){
-                ri_whfast->allocated_Ntemp = N;
+            if (ri_whfast->N_allocated_tmp != N){
+                ri_whfast->N_allocated_tmp = N;
                 ri_whfast->p_temp = realloc(ri_whfast->p_temp,sizeof(struct reb_particle)*N);
             }
             struct reb_particle* p_temp = ri_whfast->p_temp;
 
             // Calculate normal kick
-            reb_transformations_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
-            reb_update_acceleration(r);
-            reb_transformations_inertial_to_jacobi_acc(particles, p_j, particles, N, N);
+            reb_particles_transform_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
+            reb_simulation_update_acceleration(r);
+            reb_particles_transform_inertial_to_jacobi_acc(particles, p_j, particles, N, N);
 
             // make copy of original positions and accelerations
             memcpy(p_temp,p_j,r->N*sizeof(struct reb_particle));
@@ -171,9 +171,9 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
             }
            
             // recalculate kick 
-            reb_transformations_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
-            reb_update_acceleration(r);
-            reb_transformations_inertial_to_jacobi_acc(particles, p_j, particles, N, N);
+            reb_particles_transform_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
+            reb_simulation_update_acceleration(r);
+            reb_particles_transform_inertial_to_jacobi_acc(particles, p_j, particles, N, N);
 
             const double prefact = cc*r->dt*12.;
             for (unsigned int i=1;i<N;i++){
@@ -194,30 +194,30 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
 }
 
 void reb_integrator_saba_part1(struct reb_simulation* const r){
-    struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-    struct reb_simulation_integrator_saba* const ri_saba = &(r->ri_saba);
+    struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+    struct reb_integrator_saba* const ri_saba = &(r->ri_saba);
     const int type = ri_saba->type;
-    if (r->var_config_N>0){
-        reb_error(r, "Variational particles are not supported in the SABA integrator.");
+    if (r->N_var_config>0){
+        reb_simulation_error(r, "Variational particles are not supported in the SABA integrator.");
         return; 
     }
     if (ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
-        reb_error(r, "SABA integrator requires ri_whfast.coordinates to be set to Jacobi coordinates.");
+        reb_simulation_error(r, "SABA integrator requires ri_whfast.coordinates to be set to Jacobi coordinates.");
         return; 
     }
     if (ri_saba->keep_unsynchronized==1 && ri_saba->safe_mode==1){
-        reb_error(r, "ri_saba->keep_unsynchronized == 1 is not compatible with safe_mode. Must set ri_saba->safe_mode = 0.");
+        reb_simulation_error(r, "ri_saba->keep_unsynchronized == 1 is not compatible with safe_mode. Must set ri_saba->safe_mode = 0.");
     }
     if (type!=0x0 && type!=0x1 && type!=0x2 && type!=0x3 &&
             type!=0x100 && type!=0x101 && type!=0x102 && type!=0x103 &&
             type!=0x200 && type!=0x201 && type!=0x202 && type!=0x203 &&
             type!=0x4 && type!=0x5 && type!=0x6 &&
             type!=0x7 && type!=0x8 && type!=0x9 ){
-        reb_error(r, "Invalid SABA integrator type used.");
+        reb_simulation_error(r, "Invalid SABA integrator type used.");
         return; 
     }
     if (type>=0x100){
-        // Force Jacobi terms to be calculated in reb_update_acceleration if corrector is used
+        // Force Jacobi terms to be calculated in reb_simulation_update_acceleration if corrector is used
         r->gravity = REB_GRAVITY_JACOBI;
     }else{
         // Otherwise can do either way
@@ -258,8 +258,8 @@ void reb_integrator_saba_part1(struct reb_simulation* const r){
 }
 
 void reb_integrator_saba_synchronize(struct reb_simulation* const r){
-    struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-    struct reb_simulation_integrator_saba* const ri_saba = &(r->ri_saba);
+    struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+    struct reb_integrator_saba* const ri_saba = &(r->ri_saba);
     int type = ri_saba->type;
         struct reb_particle* sync_pj  = NULL;
         if (ri_saba->keep_unsynchronized){
@@ -275,7 +275,7 @@ void reb_integrator_saba_synchronize(struct reb_simulation* const r){
             reb_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);
             reb_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
         }
-        reb_transformations_jacobi_to_inertial_posvel(r->particles, ri_whfast->p_jh, r->particles, N, N);
+        reb_particles_transform_jacobi_to_inertial_posvel(r->particles, ri_whfast->p_jh, r->particles, N, N);
         if (ri_saba->keep_unsynchronized){
             memcpy(r->ri_whfast.p_jh,sync_pj,r->N*sizeof(struct reb_particle));
             free(sync_pj);
@@ -286,8 +286,8 @@ void reb_integrator_saba_synchronize(struct reb_simulation* const r){
 }
 
 void reb_integrator_saba_part2(struct reb_simulation* const r){
-    struct reb_simulation_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-    struct reb_simulation_integrator_saba* const ri_saba = &(r->ri_saba);
+    struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
+    struct reb_integrator_saba* const ri_saba = &(r->ri_saba);
     struct reb_particle* restrict const particles = r->particles;
     const int type = ri_saba->type;
     const int stages = reb_saba_stages(type);
@@ -314,8 +314,8 @@ void reb_integrator_saba_part2(struct reb_simulation* const r){
             if (j>(stages-1)/2){
                 i = stages-j-1;
             }
-            reb_transformations_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N);
-            reb_update_acceleration(r);
+            reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N);
+            reb_simulation_update_acceleration(r);
             reb_whfast_interaction_step(r, reb_saba_d[type%0x100][i]*r->dt);
         }
     } 
@@ -336,7 +336,7 @@ void reb_integrator_saba_part2(struct reb_simulation* const r){
 }
     
 void reb_integrator_saba_reset(struct reb_simulation* const r){
-    struct reb_simulation_integrator_saba* const ri_saba = &(r->ri_saba);
+    struct reb_integrator_saba* const ri_saba = &(r->ri_saba);
     ri_saba->type = REB_SABA_10_6_4;
     ri_saba->safe_mode = 1;
     ri_saba->is_synchronized = 1;

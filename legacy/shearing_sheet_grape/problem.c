@@ -67,8 +67,8 @@ int main(int argc, char* argv[]){
 	OMEGA 				= 0.00013143527;	// 1/s
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
-	root_nx = 10; root_ny = 1; root_nz = 1;
-	nghostx = 1; nghosty = 1; nghostz = 0; 			// Use two one ring (+cutoff, see below)
+	N_root_x = 10; N_root_y = 1; N_root_z = 1;
+	N_ghost_x = 1; N_ghost_y = 1; N_ghost_z = 0; 			// Use two one ring (+cutoff, see below)
 	double surfacedensity 		= 400; 			// kg/m^2
 	double particle_density		= 400;			// kg/m^3
 	double particle_radius_min 	= 1;			// m
@@ -112,12 +112,12 @@ int main(int argc, char* argv[]){
 #endif
 		double		particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
 		pt.m 		= particle_mass; 	// kg
-		reb_add(r, pt);
+		reb_simulation_add(r, pt);
 		mass += particle_mass;
 	}
 }
 
-void reb_output_ascii_mod(char* filename){
+void reb_simulation_output_ascii_mod(char* filename){
 #ifdef MPI
 	char filename_mpi[1024];
 	sprintf(filename_mpi,"%s_%d",filename,mpi_id);
@@ -137,11 +137,11 @@ void reb_output_ascii_mod(char* filename){
 }
 
 void heartbeat(struct reb_simulation* r){
-	if (reb_output_check(1e-1*2.*M_PI/OMEGA)){
-		reb_output_timing();
+	if (reb_simulation_output_check(1e-1*2.*M_PI/OMEGA)){
+		reb_simulation_output_timing();
 	}
-	if (reb_output_check(.2*M_PI/OMEGA)){
-		reb_output_ascii_mod("ascii.txt");
+	if (reb_simulation_output_check(.2*M_PI/OMEGA)){
+		reb_simulation_output_ascii_mod("ascii.txt");
 	}
 }
 

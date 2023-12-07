@@ -1,6 +1,6 @@
 /**
  * @file 	simulationarchive.h
- * @brief 	Tools for creating and readin a Simulation Archive binary file.
+ * @brief 	Tools for creating and readin a Simulationarchive binary file.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -30,8 +30,8 @@
 struct reb_simulation;
 struct reb_particles;
 
-void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulation Archive.
-void reb_read_simulationarchive_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_input_binary_messages* warnings); ///< Internal function to read one snapshot from a simulation archive.
+void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.
+void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_simulation_binary_error_codes* warnings); ///< Internal function to read one snapshot from a simulationarchive.
 
 
 #endif 	// SIMULATIONARCHIVE_H

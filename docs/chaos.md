@@ -7,9 +7,9 @@ If you want to use a chaos indicator in REBOUND, first add all the particles to 
 Then, initialize the variational particles and MEGNO variables with
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init(r);
+    reb_simulation_init_megno(r);
     ```
 === "Python"
     ```python
@@ -26,9 +26,9 @@ See the discussion on [random sampling](c_randomsamplingfunctions.md) for more d
 If you want to have reproducible result, you can specify the seed manually:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init_seed(r, 0); // 0 is the initial seed
+    reb_simulation_init_megno_seed(r, 0); // 0 is the initial seed
     ```
 === "Python"
     ```python
@@ -42,12 +42,12 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init_seed(r);
+    reb_simulation_init_megno_seed(r);
     // ... integrate ...
-    printf("MEGNO = %f\n", reb_tools_calculate_megno(r));
-    printf("LCN = %f\n", reb_tools_calculate_lyapunov(r));
+    printf("MEGNO = %f\n", reb_simulation_megno(r));
+    printf("LCN = %f\n", reb_simulation_lyapunov(r));
     ```
 === "Python"
     ```python
@@ -56,7 +56,7 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
     sim.init_megno()
     # ... integrate ...
     print("MEGNO", sim.calculate_megno())
-    print("LCN", sim.calculate_lyapunov())
+    print("LCN", sim.lyapunov())
     ```
 !!! Note
     Using chaos indicators is not always straightforward. 
@@ -68,23 +68,23 @@ To print out the MEGNO value or the largest Lyapunov characteristic number (LCN)
     There are different definitions of the LCN which might differ by a factor of order unity.
     Here, we're following Eq. 24 of [Cincotta and Simo (2000)](https://aas.aanda.org/articles/aas/abs/2000/20/h1686/h1686.html).
 
-## Rescaling of variational equations 
+## Re-scaling of variational equations 
 
 !!! Important
     This is a new feature, first implemented in version 3.21
 
-REBOUND will automatically rescale first order variational equation once any coordinate of a variational particle becomes larger than $10^{100}$. 
+REBOUND will automatically re-scale first order variational equation once any coordinate of a variational particle becomes larger than $10^{100}$. 
 This is only possible for first order variational equations because they are linear. 
-It is not possible to rescale second order equations. 
+It is not possible to re-scale second order equations. 
 For the calculation of MEGNO, all this is done behind the scenes and no user intervention is needed.
 However, should you be interested in the actual value of the variational particles, for example to calculate a Lyapunov exponent manually, then you need to take the value of the `lrescale` variable into account. 
-This variable contains the natural logarithm of all rescaling factors that have been applied throughout the integration to a given set of variational particles.
+This variable contains the natural logarithm of all re-scaling factors that have been applied throughout the integration to a given set of variational particles.
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_tools_megno_init_seed(r);
+    reb_simulation_init_megno_seed(r);
     // ... integrate ...
     struct reb_variational_configuration* vc = &(r->var_config[0]);
     double log_x = log(r->particles[vc->index].x) + vc->lrescale; // log of x coordinate of variational particle

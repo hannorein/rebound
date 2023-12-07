@@ -6,9 +6,9 @@ You can remove all particles with the following code:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     // ... add particles ...
-    reb_remove_all(r);
+    reb_simulation_remove_all_particles(r);
     ```
 === "Python"
     ```python
@@ -21,13 +21,13 @@ Each particle in a REBOUND simulation can be uniquely identified with its positi
 You can remove a particle using this index as shown in the following code:
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt(r, "m", 1.); // star, index=0
-    reb_add_fmt(r, "a", 1.); // planet 1, index=1
-    reb_add_fmt(r, "a", 2.); // planet 2, index=2
-    reb_remove(r, 1, 1); // removes planet 1 (index 1)
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.); // star, index=0
+    reb_simulation_add_fmt(r, "a", 1.); // planet 1, index=1
+    reb_simulation_add_fmt(r, "a", 2.); // planet 2, index=2
+    reb_simulation_remove_particle(r, 1, 1); // removes planet 1 (index 1)
     ```
-    The first argument of `reb_remove` is the simulation from which you want to remove the particle.
+    The first argument of `reb_simulation_remove_particle` is the simulation from which you want to remove the particle.
     The second argument is the index of the particle.
     The third argument determines if you want to keep the particle array sorted.
     In most cases you want to (set the argument to 1). 
@@ -43,7 +43,7 @@ You can remove a particle using this index as shown in the following code:
     sim.add(a=2.) // planet 2, index=2
     sim.remove(1)
     ```
-    The `remove` function accepts an optional argument `keepSorted`. 
+    The `remove` function accepts an optional argument `keep_sorted`. 
     It determines if you want to keep the particle array sorted.
     In most cases you want to (set the argument to `True`, the default). 
     For simulation with many particles (millions), this might be slow. In that case set this argument to `False`.
@@ -55,16 +55,16 @@ If a particle has a hash, you can remove it as shown here:
 
 === "C"
     ```c
-    struct reb_simulation* r = reb_create_simulation();
-    reb_add_fmt(r, "m", 1.); 
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.); 
     r->particles[0].hash = reb_hash("star");
-    reb_add_fmt(r, "a", 1.); 
+    reb_simulation_add_fmt(r, "a", 1.); 
     r->particles[1].hash = reb_hash("planet1");
-    reb_add_fmt(r, "a", 2.); 
+    reb_simulation_add_fmt(r, "a", 2.); 
     r->particles[2].hash = reb_hash("planet2");
-    reb_remove_by_hash(r, reb_hash("planet1"), 1);
+    reb_simulation_remove_particle_by_hash(r, reb_hash("planet1"), 1);
     ```
-    The syntax of the function is the same as for `reb_remove` except you pass the hash instead of the index.
+    The syntax of the function is the same as for `reb_simulation_remove_particle` except you pass the hash instead of the index.
 
 === "Python"
     ```python

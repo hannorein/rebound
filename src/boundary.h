@@ -40,7 +40,7 @@ void reb_boundary_check(struct reb_simulation* r);
  * @param j Index in y direction.
  * @param k Index in z direction.
  */
-struct reb_ghostbox reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k);
+struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k);
 
 /**
  * @details Return 1 if a particle is in the box, 0 otherwise.

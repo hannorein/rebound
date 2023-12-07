@@ -27,7 +27,13 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 void heartbeat(struct reb_simulation* const r);
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
+    
+    // Start the REBOUND visualization server. This
+    // allows you to visualize the simulation by pointing 
+    // your web browser to http://localhost:1234
+    reb_simulation_start_server(r, 1234);
+
     // Setup constants
     r->opening_angle2     = .5;                 // This determines the precission of the tree code gravity calculation.
     r->integrator         = REB_INTEGRATOR_SEI;
@@ -50,10 +56,10 @@ int main(int argc, char* argv[]) {
     double particle_radius_max    = 4;          // m
     double particle_radius_slope  = -3;    
     double boxsize                = 100;        // m
-    reb_configure_box(r, boxsize, 2, 2, 1);
-    r->nghostx = 2;
-    r->nghosty = 2;
-    r->nghostz = 0;
+    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+    r->N_ghost_x = 2;
+    r->N_ghost_y = 2;
+    r->N_ghost_z = 0;
     
     // Use Bridges et al coefficient of restitution.
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
@@ -80,10 +86,10 @@ int main(int argc, char* argv[]) {
         pt.r         = radius;                        // m
         double        particle_mass = particle_density*4./3.*M_PI*radius*radius*radius;
         pt.m         = particle_mass;     // kg
-        reb_add(r, pt);
+        reb_simulation_add(r, pt);
         mass += particle_mass;
     }
-    reb_integrate(r, INFINITY);
+    reb_simulation_integrate(r, INFINITY);
 }
 
 double mean_normal_geometric_optical_depth(const struct reb_simulation* const r){
@@ -152,7 +158,7 @@ double collisional_viscosity(const struct reb_simulation* const r){
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
         printf("Midplane FF=  %5.3f\t",midplane_fillingfactor(r));
         printf("Mean normal tau=  %5.3f \t",mean_normal_geometric_optical_depth(r));
         struct reb_vec3d Q = velocity_dispersion(r);
