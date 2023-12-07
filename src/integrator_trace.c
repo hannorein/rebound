@@ -1,6 +1,6 @@
 /**
  * @file    integrator_trace.c
- * @brief   TRACE 
+ * @brief   TRACE
  * @author  Tiger Lu
  *
  * @section LICENSE
@@ -394,10 +394,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
         }
     }
 
-    //for (unsigned int i = 0; i<r->N; i++){
-    //  printf("%f %d %e %e %e %e %e\n", r->t, i, r->particles[i].m, r->particles[i].x, r->particles[i].y, r->particles[i].vx, r->particles[i].vy);
-    //}
-
     r->t = old_t;
     r->dt = old_dt;
     ri_trace->mode = 0;
@@ -414,7 +410,7 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_part1(struct reb_simulation* r){
-    //printf("TRACE part 1\n");
+  struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[1], r->particles[0]);
     if (r->N_var_config){
         reb_simulation_warning(r,"TRACE does not work with variational equations.");
     }
@@ -548,15 +544,13 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     ri_trace->encounterN = 1;
     ri_trace->current_L = 0;
 
-    //printf("Initial: %f\n", r->particles[2].vx);
-
     for (int i = 0; i < N; i++){
         for (unsigned int j = i + 1; j < N; j++){
             ri_trace->current_Ks[i][j] = 0;
         }
     }
 
-    reb_integrator_trace_Fcond(r); // return value ignored. 
+    reb_integrator_trace_Fcond(r); // return value ignored.
     if (ri_trace->current_L){ //more efficient way to check if we need to redo this...
                            // Pericenter close encounter detected. We integrate the entire simulation with BS
         ri_trace->encounter_map_internal[0] = 1;
@@ -566,8 +560,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         }
         ri_trace->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
     }
-
-
     reb_integrator_trace_interaction_step(r, r->dt/2.);
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_kepler_step(r, r->dt); // always accept this
