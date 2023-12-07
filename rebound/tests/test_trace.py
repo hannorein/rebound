@@ -323,14 +323,10 @@ class TestTrace(unittest.TestCase):
     def test_chaotic_exchange(self):
         def get_sim():
             sim = rebound.Simulation()
-            mstar = 1
-            mjup = 0.01 / (mstar - 0.01)
-            a = 5.2
-            e = 0.0
-            sim.add(m=mstar)
             # Setup using xyz instead of orbital elements for
             # machine independent test
-            sim.add(m=mjup,x=0.90000, y=0.00000, vx=0.00000, vy=1.10360)
+            sim.add(m=1)
+            sim.add(m=1,x=0.90000, y=0.00000, vx=0.00000, vy=1.10360)
             sim.add(m=0.0001, x=-1.17676, y=-0.05212, vx=0.22535, vy=-0.90102)
             sim.move_to_com()
             sim.dt = 0.034
