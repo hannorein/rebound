@@ -25,7 +25,7 @@ int ej2 = 1;
 int ej3 = 1;
 
 char title[100] = "bad_bs_restart";
-char title_stats[100] = "1209_bs_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "1209_trace_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs_restart";
 
 int main(int argc, char* argv[]){
@@ -110,8 +110,8 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_BS;
-    //r->dt = min * 0.05;
+    r->integrator = REB_INTEGRATOR_TRACE;
+    r->dt = min * 0.05;
     // r->ri_ias15.adaptive_mode=2;
     //r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
