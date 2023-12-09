@@ -410,7 +410,6 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_part1(struct reb_simulation* r){
-  struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[1], r->particles[0]);
     if (r->N_var_config){
         reb_simulation_warning(r,"TRACE does not work with variational equations.");
     }

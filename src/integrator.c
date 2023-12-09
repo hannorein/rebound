@@ -162,6 +162,8 @@ void reb_integrator_part2(struct reb_simulation* r){
         }
     }
 
+		// Need to reset timestep???
+
 }
 
 void reb_simulation_synchronize(struct reb_simulation* r){

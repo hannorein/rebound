@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e3*2*M_PI;
+double tmax = 1e2*2*M_PI;
 int nbodies=3;
 int first_ejected = 999;
 int ind;
@@ -25,18 +25,18 @@ int ej2 = 1;
 int ej3 = 1;
 
 char title[100] = "bad_bs_restart";
-char title_stats[100] = "ias15_efficiency";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "1209_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs_restart";
 
 int main(int argc, char* argv[]){
 
     // Initialize masses
-    /*
-    struct reb_simulation* r = reb_create_simulation();
+
+    struct reb_simulation* r = reb_simulation_create();
     struct reb_particle star = {0};
     star.m = 1;
     star.r = 0.005;
-    reb_add(r, star);
+    reb_simulation_add(r, star);
     double planet_m = 9.55e-4;
 
     double sma = 5.;
@@ -64,36 +64,35 @@ int main(int argc, char* argv[]){
     double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
 
     add = reb_random_uniform(r, -1e-12, 1e-12);
-    //printf("\n%d %e\n", ind, add);
 
     for (int i = 0; i < nbodies; i++){
-
-      if (i == 2){
+      /*
+      if (i == nbodies-1){
         sma += add;
       }
 
       // Used this to calculate values
 
       //printf("%f\n", sma);
-/*
+
       reb_add_fmt(r, "m a e inc hash", planet_m, sma, 0.05, (double)i * M_PI / 180., i+1);
       double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
       double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
       sma = num/denom;
-
+      */
 
 
       struct reb_particle p = {0};
       p.m = planet_m;
       p.x = xs[i];
-      if (i == 2){
-        add = reb_random_uniform(r, -1e-12, 1e-12);
+      if (i == nbodies - 1){
+        //add = reb_random_uniform(r, -1e-12, 1e-12);
         p.x += add;
       }
       p.vy = vys[i];
       p.vz = vzs[i];
       p.hash = i+1;
-      reb_add(r, p);
+      reb_simulation_add(r, p);
 
     }
 
@@ -101,33 +100,31 @@ int main(int argc, char* argv[]){
     double min = INFINITY;
 
     for (int i = 1; i < nbodies+1; i++){
-        struct reb_particle* p = reb_get_particle_by_hash(r, i);
+        struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
         //printf("%d %e %e %e\n", i, p->x, p->vy, p->vz);
-        struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
+        struct reb_orbit o = reb_orbit_from_particle(r->G, *p, *sun);
         if (abs(o.P) < min){
           min = o.P;
         }
     }
 
-    reb_move_to_com(r);
+    reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_BS;
+    r->integrator = REB_INTEGRATOR_IAS15;
     //r->ri_bs.eps_rel = 1e-10;
     //r->ri_bs.eps_abs = 1e-10;
     //r->dt = min * 0.05;
-    //r->ri_ias15.adaptive_mode=2;
-    r->exact_finish_time = 0;
+    r->ri_ias15.adaptive_mode=2;
+    //r->exact_finish_time = 0;
+    r->exit_max_distance = 1e4;
     r->track_energy_offset = 1;
-    reb_configure_box(r, 10000., 1, 1, 1);
-    r->boundary = REB_BOUNDARY_OPEN;
-*/
-
     //r->heartbeat  = heartbeat;               // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
-    struct reb_simulation* r = reb_create_simulation_from_binary("bad_bs_new.bin");
-    r->heartbeat  = heartbeat;
-    r->ri_bs.eps_rel = 1e-11;
-    r->ri_bs.eps_abs = 1e-11;
+    //struct reb_simulation* r = reb_create_simulation_from_binary("bad_bs_new.bin");
+    //struct reb_simulationarchive* archive = reb_simulationarchive_create_from_file("bad_bs_new.bin");
+    //struct reb_simulation* r = reb_simulation_create_from_simulationarchive(archive, 0); // snapshot with index 12
+    //r->ri_bs.eps_rel = 1e-11;
+    //r->ri_bs.eps_abs = 1e-11;
 
     if (r->heartbeat != NULL){
       system(title_remove);
@@ -143,23 +140,45 @@ int main(int argc, char* argv[]){
     }
 
 
-    e_init = reb_tools_energy(r);
-    nparticles = r->N;
+    e_init = reb_simulation_energy(r);
     clock_t begin = clock();
-    reb_integrate(r, 	r->t+1e2);
-    //reb_output_binary(r, "bad_bs_new.bin");
+
+    while (r->t < tmax){
+       int retval = reb_simulation_integrate(r, tmax);
+       if (retval == REB_STATUS_ESCAPE){
+          // Track energy offset
+          double Ei = reb_simulation_energy(r);
+
+          // Find and remove the particle
+          for (int i = 1; i < r->N; i++){
+              struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
+              if (p != NULL){
+                double dx = p->x;
+                double dy = p->y;
+                double dz = p->z;
+                double d2 = dx*dx+dy*dy+dz*dz;
+
+                if (d2>r->exit_max_distance * r->exit_max_distance){
+                    reb_simulation_remove_particle_by_hash(r, i, 1);
+                }
+              }
+          }
+          r->energy_offset += Ei - reb_simulation_energy(r);
+
+          // move to COM
+          reb_simulation_move_to_com(r);
+       }
+    }
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    //printf("\n%e\n", fabs(reb_tools_energy(r) - e_init)/e_init);
 
-/*
     FILE* tf = fopen(title_stats, "a");
-    //fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
-    fprintf(tf, "%d,%d,%e,%e\n", ind, nbodies, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
+    fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs(reb_simulation_energy(r) - e_init)/e_init, time_spent);
+    //fprintf(tf, "%d,%d,%e,%e\n", ind, nbodies, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
     fclose(tf);
-*/
-    reb_free_simulation(r);
+
+    reb_simulation_free(r);
 }
 
 
@@ -167,7 +186,7 @@ void heartbeat(struct reb_simulation* r){
     // remove particles if needed
 
     if (r->N < nparticles){
-      reb_move_to_com(r);
+      reb_simulation_move_to_com(r);
       nparticles = r->N;
     }
 
@@ -204,8 +223,8 @@ void heartbeat(struct reb_simulation* r){
     }
     */
 
-    if (reb_output_check(r, 1000.*2.*M_PI)){
-        reb_output_timing(r, tmax);
+    if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
+        reb_simulation_output_timing(r, tmax);
     }
 
     // Time to first ejection
@@ -233,13 +252,13 @@ void heartbeat(struct reb_simulation* r){
 
       FILE* f = fopen(title, "a");
       struct reb_particle* sun = &r->particles[0];
-      struct reb_particle com = reb_get_com(r);
-      fprintf(f, "%e,%e,%f,%f,%f", r->t, fabs((reb_tools_energy(r) - e_init) / e_init),sun->x,sun->y,sun->z);
+      struct reb_particle com = reb_simulation_com(r);
+      fprintf(f, "%e,%e,%f,%f,%f", r->t, fabs((reb_simulation_energy(r) - e_init) / e_init),sun->x,sun->y,sun->z);
 
       for (unsigned int i = 1; i < nbodies+1; i++){
-        struct reb_particle* p = reb_get_particle_by_hash(r, i);
+        struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
         if (p != NULL){
-          struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *p, *sun);
+          struct reb_orbit o = reb_orbit_from_particle(r->G, *p, *sun);
           fprintf(f, ",%f,%f,%f,%f,%f,%f", o.a, o.e, o.inc, p->x,p->y,p->z);
         }
         else{

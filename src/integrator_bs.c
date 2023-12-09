@@ -494,8 +494,13 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     // return 1 if step was successful
     //        0 if rejected
     //
+
+    // TRACE: mode = 1, integrate nbody only. Mode = 0, integrate everything except nbody (for additional forces). Do not update time
+    // Loop from start to finish, set variables here for TRACE
+
+
     struct reb_integrator_bs* ri_bs = &r->ri_bs;
-    
+
     if (ri_bs->sequence==NULL){
         allocate_sequence_arrays(r);
     }
@@ -661,10 +666,10 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                             ri_bs->target_iter -= 1;
                                         }
                                         dt = ri_bs->optimal_step[ri_bs->target_iter];
-#if DEBUG
-                                        printf("O");
-                                        //printf(" %f, %d, %e\n", dt, ri_bs->targetIter, ratio);
-#endif
+
+                                        #if DEBUG
+                                                                printf(" e%d %f", ri_bs->target_iter, dt);
+                                        #endif
                                     }
                                 }
                             }
@@ -682,9 +687,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                 if (error > ratio * ratio) {
                                     // we don't expect to converge on next iteration
                                     // we reject the step immediately
-#if DEBUG
-                                    printf("o");
-#endif
                                     reject = 1;
                                     loop = 0;
                                     if ((ri_bs->target_iter > 1) &&
@@ -693,15 +695,15 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                         --ri_bs->target_iter;
                                     }
                                     dt = ri_bs->optimal_step[ri_bs->target_iter];
+                                    #if DEBUG
+                                                                        printf("o%d %f ", ri_bs->target_iter, dt);
+                                    #endif
                                 }
                             }
                             break;
 
                         case 1 : // one past target
                             if (error > 1.0) {
-#if DEBUG
-                                printf("e");
-#endif
                                 reject = 1;
                                 if ((ri_bs->target_iter > 1) &&
                                         (ri_bs->cost_per_time_unit[ri_bs->target_iter - 1] <
@@ -709,6 +711,10 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                     --ri_bs->target_iter;
                                 }
                                 dt = ri_bs->optimal_step[ri_bs->target_iter];
+
+                                #if DEBUG
+                                                                printf(" e%d %f", ri_bs->target_iter, dt);
+                                #endif
                             }
                             loop = 0;
                             break;
@@ -727,10 +733,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
 
     if (! reject) {
-#if DEBUG
-        printf(".");
-        //exit(1);
-#endif
         // Swap arrays
         for (int s=0; s < Ns; s++){
             double* y_tmp = odes[s]->y;
@@ -787,6 +789,12 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             ri_bs->target_iter = optimalIter;
 
         }
+
+        #if DEBUG
+                // Accepted
+                printf(" .%d %f ", ri_bs->target_iter, dt);
+                //exit(1);
+        #endif
     }
 
     dt = fabs(dt);
@@ -824,7 +832,7 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
         r->N_allocated_odes += 32;
         r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->N_allocated_odes);
     }
-    
+
     r->odes[r->N_odes] = ode;
     r->N_odes += 1;
 
@@ -884,13 +892,13 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
             ri_bs->nbody_ode = NULL;
         }
     }
-    if (ri_bs->nbody_ode == NULL){ 
+    if (ri_bs->nbody_ode == NULL){
         ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
         ri_bs->nbody_ode->derivatives = nbody_derivatives;
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->first_or_last_step = 1;
     }
-    
+
     for (int s=0; s < r->N_odes; s++){
         if (r->odes[s]->needs_nbody){
             ri_bs->user_ode_needs_nbody = 1;
@@ -978,7 +986,7 @@ void reb_ode_free(struct reb_ode* ode){
 
 void reb_integrator_bs_reset(struct reb_simulation* r){
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
-    
+
     // Delete nbody ode but not others
     if (ri_bs->nbody_ode){
         reb_ode_free(ri_bs->nbody_ode);
@@ -997,19 +1005,19 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->cost_per_time_unit = NULL;
     free(ri_bs->optimal_step);
     ri_bs->optimal_step = NULL;
-    
+
     r->ri_bs.N_allocated_map  = 0;
     free(r->ri_bs.map);
     r->ri_bs.map =  NULL;
-    
-    
+
+
     // Default settings
     ri_bs->eps_abs          = 1e-8;
     ri_bs->eps_rel          = 1e-8;
     ri_bs->max_dt           = 0;
-    ri_bs->min_dt           = 0; 
+    ri_bs->min_dt           = 0;
     ri_bs->first_or_last_step  = 1;
     ri_bs->previous_rejected = 0;
     ri_bs->target_iter       = 0;
-        
+
 }
