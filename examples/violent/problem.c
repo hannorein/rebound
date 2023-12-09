@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e2*2*M_PI;
+double tmax = 1e7*2*M_PI;
 int nbodies=3;
 int first_ejected = 999;
 int ind;
@@ -25,7 +25,7 @@ int ej2 = 1;
 int ej3 = 1;
 
 char title[100] = "bad_bs_restart";
-char title_stats[100] = "1209_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "1209_mercurius_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs_restart";
 
 int main(int argc, char* argv[]){
@@ -110,11 +110,9 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_IAS15;
-    //r->ri_bs.eps_rel = 1e-10;
-    //r->ri_bs.eps_abs = 1e-10;
-    //r->dt = min * 0.05;
-    r->ri_ias15.adaptive_mode=2;
+    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->dt = min * 0.05;
+    // r->ri_ias15.adaptive_mode=2;
     //r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
     r->track_energy_offset = 1;
