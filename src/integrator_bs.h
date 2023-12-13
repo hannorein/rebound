@@ -2,7 +2,7 @@
  * @file 	integrator_bs.h
  * @brief 	Interface for numerical particle integrator
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * 
+ *
  * @section 	LICENSE
  * Copyright (c) 2021 Hanno Rein
  *
@@ -30,4 +30,5 @@ void reb_integrator_bs_synchronize(struct reb_simulation* r);    ///< Internal f
 void reb_integrator_bs_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_bs_reset_struct(struct reb_integrator_bs* ri_bs);
 int reb_integrator_bs_step(struct reb_simulation* r, double dt);
+void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t); // TRACE needs this maybe
 #endif

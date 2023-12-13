@@ -130,8 +130,8 @@ void reb_integrator_part2(struct reb_simulation* r){
 
     // Integrate other ODEs
 		double old_dt = r->dt;
-    if (r->integrator != REB_INTEGRATOR_BS && r->N_odes){
-
+		// This is tricky. TRACE only makes the BS ODE
+    if (r->integrator != REB_INTEGRATOR_BS && r->N_odes && (r->integrator != REB_INTEGRATOR_TRACE || r->N_odes > 1)){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
             reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
             r->ode_warnings = 1;
@@ -166,7 +166,9 @@ void reb_integrator_part2(struct reb_simulation* r){
 			exit(1);
 		}
 
-		// Need to reset timestep???
+		//exit(1);
+
+		// Need to reset timestep??? seems to be getting reset... find out where.
 
 }
 

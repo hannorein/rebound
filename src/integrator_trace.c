@@ -50,22 +50,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
         const double dxi  = r->particles[i].x;  // in dh
         const double dyi  = r->particles[i].y;
         const double dzi  = r->particles[i].z;
-        /*
-           const double dvxi = r->particles[i].vx - r->particles[0].vx;
-           const double dvyi = r->particles[i].vy - r->particles[0].vy;
-           const double dvzi = r->particles[i].vz - r->particles[0].vz;
-           */
         const double ai = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
-        //const double v2i = dvxi*dvxi + dvyi*dvyi + dvzi*dvzi;
-        //const double GMi = r->G*(m0+r->particles[i].m);
-
-        //double ai = _ri;//GMi*_ri / (2.*GMi - _ri*v2i);
-        // if particle unbound, just use distance
-        /*
-           if (ai < 0){
-           ai = _ri;
-           }
-           */
         dcriti = ri_trace->hillfac*ai*cbrt(r->particles[i].m/(3.*m0));
     }
 
@@ -74,23 +59,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
         const double dxj  = r->particles[j].x;  // in dh
         const double dyj  = r->particles[j].y;
         const double dzj  = r->particles[j].z;
-        /*
-           const double dvxj = r->particles[j].vx - r->particles[0].vx;
-           const double dvyj = r->particles[j].vy - r->particles[0].vy;
-           const double dvzj = r->particles[j].vz - r->particles[0].vz;
-           */
         const double aj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
-        //const double v2j = dvxj*dvxj + dvyj*dvyj + dvzj*dvzj;
-        //const double GMj = r->G*(m0+r->particles[j].m);
-
-        //const double aj = _rj;//GMj*_rj / (2.*GMj - _rj*v2j);
-
-        // if particle unbound, just use distance
-        /*
-           if (aj < 0){
-           aj = _rj;
-           }
-           */
         dcritj = ri_trace->hillfac*aj*cbrt(r->particles[j].m/(3.*m0));
     }
 
@@ -150,12 +119,10 @@ double reb_integrator_trace_switch_fdot_peri(struct reb_simulation* const r, con
     // Failsafe - use velocity dependent condition
     double f_vel = d / sqrt(3. * v2 + (r->G * (r->particles[0].m + r->particles[j].m) / d));
     double fcond_vel = (f_vel/r->dt) - 1.;
+    //printf("%d %f\n", j, fcond_vel);
 
     // if one is violated both are
     double fcond = MIN(fcond_peri, fcond_vel);
-    //if (fcond < 0.0){
-    //  printf("%f %d %f %f\n", r->t, j, fcond_peri, fcond_vel);
-    //}
     return fcond;
 }
 
@@ -452,6 +419,22 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_trace->S_peri = reb_integrator_trace_switch_fdot_peri;
     }
 
+    // Set nbody ODE here to know if we need to integrate other ODEs in step one.
+    if (r->ri_bs.nbody_ode == NULL){
+        r->ri_bs.nbody_index = r->N_odes;
+        r->ri_bs.nbody_ode = reb_ode_create(r, r->N*3*2);
+        r->ri_bs.nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
+        r->ri_bs.nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
+        r->ri_bs.first_or_last_step = 1;
+    }
+
+    // I can't think of a better way to do this, but TRACE needs to kill needs_nbody for each additional ODE
+    if (r->N_odes > 1){
+      for (int s=0; s < r->N_odes; s++){
+        r->odes[s]->needs_nbody = 0;
+      }
+    }
+
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = 0;
     ri_trace->force_accept = 0;
@@ -552,6 +535,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_Fcond(r); // return value ignored.
     if (ri_trace->current_L){ //more efficient way to check if we need to redo this...
                            // Pericenter close encounter detected. We integrate the entire simulation with BS
+        //printf("\nDetected peri CE\n");
         ri_trace->encounter_map_internal[0] = 1;
         ri_trace->encounterN = N;
         for (int i = 1; i < N; i++){
