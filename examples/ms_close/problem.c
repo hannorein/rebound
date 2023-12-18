@@ -18,7 +18,6 @@ double tmax = 3000.*2*M_PI*29.4;
 
 const double k = 1.; // Constants for the Harmonic Oscillator
 const double m = 10000000.;
-struct reb_ode* ho;
 
 void derivatives(struct reb_ode* const ode, double* const yDot, const double* const y, const double t){
     const double omega = sqrt(k/m);
@@ -51,16 +50,16 @@ int main(int argc, char* argv[]){
     //const double tau_f_j = 2 * M_PI * sqrt((ja * ja * ja * jmse * jmse * jmse) / (r->G * star.m * (1 + je)));
     //const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
 
-    r->integrator = REB_INTEGRATOR_IAS15;
+    r->integrator = REB_INTEGRATOR_TRACE;
     //r->dt = 0.15 * 2 * M_PI;
     r->ri_ias15.adaptive_mode=2;
 
-    struct reb_ode* ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions
-    ho->derivatives = derivatives;              // Right hand side of the ODE
-    ho->y[0] = 1;                               // Initial conditions
-    ho->y[1] = 0;
+    //struct reb_ode* ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions
+    //ho->derivatives = derivatives;              // Right hand side of the ODE
+    //ho->y[0] = 1;                               // Initial conditions
+    //ho->y[1] = 0;
 
-    //r->dt = 0.15*2.*M_PI;
+    r->dt = 0.15*2.*M_PI;
     r->heartbeat = heartbeat;
 
 

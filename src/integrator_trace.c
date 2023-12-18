@@ -50,8 +50,8 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
         const double dxi  = r->particles[i].x;  // in dh
         const double dyi  = r->particles[i].y;
         const double dzi  = r->particles[i].z;
-        const double ai = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
-        dcriti = ri_trace->hillfac*ai*cbrt(r->particles[i].m/(3.*m0));
+        const double di = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
+        dcriti = ri_trace->hillfac*di*cbrt(r->particles[i].m/(3.*m0));
     }
 
     if (r->particles[j].m != 0){
@@ -59,8 +59,8 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
         const double dxj  = r->particles[j].x;  // in dh
         const double dyj  = r->particles[j].y;
         const double dzj  = r->particles[j].z;
-        const double aj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
-        dcritj = ri_trace->hillfac*aj*cbrt(r->particles[j].m/(3.*m0));
+        const double dj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
+        dcritj = ri_trace->hillfac*dj*cbrt(r->particles[j].m/(3.*m0));
     }
 
     const double dx = r->particles[i].x - r->particles[j].x;
@@ -93,6 +93,7 @@ double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, 
 double reb_integrator_trace_switch_fdot_peri(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double vfacp = ri_trace->vfac_p;
+    const double pratio = ri_trace->pratio;
 
     const double dx = r->particles[j].x;
     const double dy = r->particles[j].y;
@@ -119,10 +120,36 @@ double reb_integrator_trace_switch_fdot_peri(struct reb_simulation* const r, con
     // Failsafe - use velocity dependent condition
     double f_vel = d / sqrt(3. * v2 + (r->G * (r->particles[0].m + r->particles[j].m) / d));
     double fcond_vel = (f_vel/r->dt) - 1.;
-    //printf("%d %f\n", j, fcond_vel);
+
+    // Compare Jump and Kepler steps.
+    // Probably a better way to do this than recalculating every time.
+    // If TP type 1, use r->N. Else, use N_active.
+    const int N_active = r->N_active==-1?r->N:r->N_active;
+    const int N = r->testparticle_type==0 ? N_active: r->N;
+
+    double px0=0., py0=0., pz0=0.;
+    double mtot = r->particles[0].m;
+    for (unsigned int i=1;i<N;i++){
+        px0 += r->particles[i].vx*r->particles[i].m;
+        py0 += r->particles[i].vy*r->particles[i].m;
+        pz0 += r->particles[i].vz*r->particles[i].m;
+        mtot += r->particles[i].m;
+    }
+
+    const double pjx = (r->particles[j].vx * r->particles[j].m) - (r->particles[j].m / mtot) * px0;
+    const double pjy = (r->particles[j].vy * r->particles[j].m) - (r->particles[j].m / mtot) * py0;
+    const double pjz = (r->particles[j].vz * r->particles[j].m) - (r->particles[j].m / mtot) * pz0;
+    const double p02 = px0 * px0 + py0*py0+pz0*pz0;
+    const double pj2 = pjx * pjx + pjy * pjy + pjz * pjz;
+    const double hj = p02 / (2. * r->particles[0].m);
+
+    // Kepler
+    const double hk = pj2 / (2 * r->particles[j].m) - ((r->G * r->particles[0].m * r->particles[j].m) / d);
+    double fcond_ratio = pratio - (hj / hk); // Negative if jump step > kepler step
 
     // if one is violated both are
-    double fcond = MIN(fcond_peri, fcond_vel);
+    //double fcond = MIN(fcond_peri, fcond_vel);
+    double fcond = MIN(fcond_peri, fcond_ratio);
     return fcond;
 }
 
@@ -147,6 +174,7 @@ double reb_integrator_trace_switch_vdiff_peri(struct reb_simulation* const r, co
 }
 
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
+    //printf("Swapped to DH at %f\n", r->t);
     struct reb_particle* restrict const particles = r->particles;
     struct reb_vec3d com_pos = {0};
     struct reb_vec3d com_vel = {0};
@@ -179,6 +207,7 @@ void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
 }
 
 void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
+    //printf("Swapped to inertial at %f\n", r->t);
     struct reb_particle* restrict const particles = r->particles;
     struct reb_particle temp = {0};
     const int N = r->N;
@@ -377,6 +406,7 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_part1(struct reb_simulation* r){
+    //printf("Start: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
     if (r->N_var_config){
         reb_simulation_warning(r,"TRACE does not work with variational equations.");
     }
@@ -438,7 +468,10 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = 0;
     ri_trace->force_accept = 0;
+
+    //printf("Start: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
     reb_integrator_trace_inertial_to_dh(r);
+    //printf("Post Transform TO: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
 
     // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
@@ -467,10 +500,11 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
     }
 
     // Check for pericenter CE
-    // test particles cannot have pericenter CEs
-    for (int j = 1; j < Nactive; j++){
+    // test particles cannot have pericenter CEs OR CAN THEY?? Need to resolve pericenter
+    for (int j = 1; j < N; j++){
         double fcond_peri = _switch_peri(r, j);
         if (fcond_peri < 0.0 && ri_trace->current_L == 0){
+            //printf("Peri cond detected\n");
             ri_trace->current_L = 1;
             new_c = 1;
 
@@ -479,6 +513,7 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
             }
         }
     }
+    //exit(1);
 
     // Body-body
     // there cannot be TP-TP CEs
@@ -533,6 +568,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     }
 
     reb_integrator_trace_Fcond(r); // return value ignored.
+    ri_trace->current_L = 1;
     if (ri_trace->current_L){ //more efficient way to check if we need to redo this...
                            // Pericenter close encounter detected. We integrate the entire simulation with BS
         //printf("\nDetected peri CE\n");
@@ -543,6 +579,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         }
         ri_trace->encounterNactive = ((r->N_active==-1)?r->N:r->N_active);
     }
+
     reb_integrator_trace_interaction_step(r, r->dt/2.);
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_kepler_step(r, r->dt); // always accept this
@@ -550,6 +587,18 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
+    /*
+    reb_integrator_trace_kepler_step(r, r->dt/2.);
+    printf("Post Kepler: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
+    reb_integrator_trace_jump_step(r, r->dt/2.);
+    printf("Post Jump: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
+    reb_integrator_trace_interaction_step(r, r->dt);
+    printf("Post Interaction: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
+    reb_integrator_trace_jump_step(r, r->dt/2.);
+    printf("Post Jump: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
+    reb_integrator_trace_kepler_step(r, r->dt/2.);
+    printf("Post Kepler: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
+    */
     // Check for new close_encounters
     if (reb_integrator_trace_Fcond(r) && !ri_trace->force_accept){
         // REJECT STEP
@@ -582,6 +631,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     ri_trace->mode = 0;
 
     r->gravity = REB_GRAVITY_TRACE; // Is this needed?
+
     reb_integrator_trace_dh_to_inertial(r);
 }
 

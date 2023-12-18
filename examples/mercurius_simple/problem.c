@@ -68,7 +68,7 @@ int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
 //    r->integrator = REB_INTEGRATOR_BS;
 
-    r->dt = (8./365.) * 2. *M_PI;
+    r->dt = (8./365.) * 2. * M_PI;
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_trace.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_trace.peri = 0.01;

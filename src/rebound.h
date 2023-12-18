@@ -245,6 +245,7 @@ struct reb_integrator_trace {
     double hillfac;
     double peri; // TLu check for close pericenter passage
     double vfac_p;
+    double pratio;
 
     // Internal use
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
