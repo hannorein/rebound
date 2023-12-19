@@ -1,10 +1,52 @@
 import rebound
 import unittest
+import numpy as np
+import math
 import os
 import sys
 import warnings
 import rebound.data as data
 from datetime import datetime
+
+def chaotic_exchange_sim():
+    sim = rebound.Simulation()
+    # Setup using xyz instead of orbital elements for
+    # machine independent test
+
+    star_m = 1;
+    jup_m = 0.01 / (star_m - 0.01);
+
+    jup_a = 5.2;
+    jup_e = 0.0;
+    star_x = -(jup_m / (star_m + jup_m)) * (jup_a * (1 + jup_e));
+    star_vy = -(jup_m / (star_m + jup_m)) * np.sqrt(((star_m + jup_m) / jup_a) * ((1 - jup_e) / (1 + jup_e)));
+
+    jup_x = (star_m / (star_m + jup_m)) * (jup_a * (1 + jup_e));
+    jup_vy = (star_m / (star_m + jup_m)) * np.sqrt(((star_m + jup_m) / jup_a) * ((1 - jup_e) / (1 + jup_e)));
+
+    t_x = 4.42;
+    t_vy = 0.0072 * (365.25) * (1 / (2 * np.pi))
+
+    sim = rebound.Simulation()
+    sim.add(m=star_m, x=star_x, vy=star_vy)
+    sim.add(m=jup_m, x=jup_x, vy = jup_vy)
+    sim.add(m=0, x=t_x + star_x, vy = t_vy + star_vy)
+    return sim
+
+def pericenter_sim():
+    sim = rebound.Simulation()
+    sun = rebound.Particle(m=1.)
+    sim.add(sun)
+    sim.add(primary=sun, m=9.55e-4, a=5.2)
+    sim.add(primary=sun, m=2.857e-4, a=9.58,e=0.99,inc=math.pi/2.)
+    sim.move_to_com()
+    return sim
+
+def derivatives_ho(ode, yDot, y, t):
+    m = 1.
+    k = 100.
+    yDot[0] = y[1]
+    yDot[1] = -k/m*y[0]
 
 class TestTrace(unittest.TestCase):
 
@@ -320,50 +362,106 @@ class TestTrace(unittest.TestCase):
             self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
     # TLu additional tests
-    '''
     def test_chaotic_exchange(self):
-        def get_sim():
-            sim = rebound.Simulation()
-            # Setup using xyz instead of orbital elements for
-            # machine independent test
-            sim.add(m=1)
-            sim.add(m=1,x=0.90000, y=0.00000, vx=0.00000, vy=1.10360)
-            sim.add(m=0.0001, x=-1.17676, y=-0.05212, vx=0.22535, vy=-0.90102)
-            sim.move_to_com()
-            sim.dt = 0.034
-            return sim
+        def jacobi(sim):
+            ps = sim.particles
+            star = ps[0]
+            planet = ps[1]
+            particle = ps[2]
+            rstar = np.array(star.xyz)
+            rplanet = np.array(planet.xyz)
+            r = np.array(particle.xyz)
+            v = np.array(particle.vxyz)
 
-        sim = get_sim()
+            KE = 0.5 * v@v # test particle kinetic energy
+            mu1 = sim.G * star.m
+            mu2 = sim.G * planet.m
+            r1 = r-rstar
+            r2 = r-rplanet
+            PE = -1*mu1/np.sqrt(r1@r1) - mu2/np.sqrt(r2@r2) # test particle potential energy
+
+            lz = np.cross(r,v)[-1]
+
+            CJ = 2 * planet.n * lz - 2 * (KE + PE) # jacobi constant
+            return CJ
+
+        sim = chaotic_exchange_sim()
         sim.integrator = "trace"
-        E0 = sim.energy()
+        sim.dt = (8./365.)*2.*math.pi
+        E0 = jacobi(sim)
         start=datetime.now()
-        sim.integrate(2000)
+        sim.integrate(5000.)
         time_trace = (datetime.now()-start).total_seconds()
-        dE_trace = abs((sim.energy() - E0)/E0)
+        dE_trace = abs((jacobi(sim) - E0)/E0)
 
-        sim = get_sim()
+        sim = chaotic_exchange_sim()
         sim.integrator = "ias15"
         start=datetime.now()
-        sim.integrate(2000)
+        sim.integrate(5000.)
         time_ias15 = (datetime.now()-start).total_seconds()
-        dE_ias15 = abs((sim.energy() - E0)/E0)
+        dE_ias15 = abs((jacobi(sim) - E0)/E0)
 
-        sim = get_sim()
-        sim.integrator = "whfast"
-        start=datetime.now()
-        sim.integrate(2000)
-        time_whfast = (datetime.now()-start).total_seconds()
-        dE_whfast = abs((sim.energy() - E0)/E0)
-
-        # Note: precision might vary on machine as initializations use cos/sin
-        # and are therefore machine dependent.
-        self.assertLess(dE_trace,4e-6)              # reasonable precision for trace
-        self.assertLess(dE_trace/dE_whfast,1e-4)    # at least 1e4 times better than whfast
+        self.assertLess(dE_trace,1e-5)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
-        if sys.maxsize > 2**32: # 64 bit
-            self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
-'''
+    def test_pericenter(self):
+
+        sim = pericenter_sim()
+        sim.integrator = "ias15"
+        start_ias15=datetime.now()
+        sim.integrate(3000.)
+        time_ias15 = (datetime.now()-start_ias15).total_seconds()
+
+        sim = pericenter_sim()
+        sim.integrator = "trace"
+        sim.dt = 0.15 * 2 * math.pi
+        E0 = sim.energy()
+        start_trace=datetime.now()
+        sim.integrate(3000.)
+        time_trace = (datetime.now()-start_trace).total_seconds()
+        dE_trace = abs((sim.energy() - E0)/E0)
+
+        self.assertLess(dE_trace,1e-3)              # reasonable precision for trace
+        self.assertLess(time_trace,time_ias15) # faster than ias15
+
+    def test_independent_ho(self):
+        # Tests if TRACE correctly integrates independent HO when BS is triggered
+        sim = chaotic_exchange_sim()
+        sim.integrator='trace'
+        sim.dt = (8./365.)*2.*math.pi
+
+        ode_ho = sim.create_ode(length=2)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1.
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-9) # One order of magnitude higher than BS? Probably timestep
+        self.assertLess(math.fabs(ode_ho.y[1]),2e-8)
+
+    def test_trace_simulationarchive(self):
+        sim = chaotic_exchange_sim()
+        sim.integrator = "trace"
+        sim.dt = (8./365.)*2.*math.pi
+        sim.hillfac = 5 # change rcrit
+        sim.save_to_file("test.bin", step=10,delete_file=True)
+        sim.integrate(1000.,exact_finish_time=0)
+
+        sim = None
+        sim = rebound.Simulation("test.bin")
+        sim.integrate(2000.,exact_finish_time=0)
+        x1 = sim.particles[1].x
+
+
+        sim = chaotic_exchange_sim()
+        sim.integrator = "trace"
+        sim.dt = (8./365.)*2.*math.pi
+        sim.hillfac = 5
+        sim.integrate(2000.,exact_finish_time=0)
+        x0 = sim.particles[1].x
+
+        self.assertEqual(x0,x1)
 
 if __name__ == "__main__":
     unittest.main()

@@ -572,6 +572,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             continue;
           }
         }
+
         //printf("s: %d\n", s);
 
 
@@ -937,11 +938,11 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     ode->needs_nbody = 1;
 
     // try just killing this for TRACE. But what if you make the ODE before setting TRACE?
-    /*
+
     if (r->integrator == REB_INTEGRATOR_TRACE){
       ode->needs_nbody = 0;
     }
-    */
+
 
 
     ode->N_allocated = length;

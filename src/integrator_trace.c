@@ -341,7 +341,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     //reb_integrator_bs_reset(r);
 
     r->dt = _dt; // start with a small timestep.
-                 //printf("BEGIN!!! %f %f ", r->t, r->dt);
 
     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
         // In case of overshoot
@@ -448,7 +447,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     if (ri_trace->S_peri == NULL){
         ri_trace->S_peri = reb_integrator_trace_switch_fdot_peri;
     }
-
+/*
     // Set nbody ODE here to know if we need to integrate other ODEs in step one.
     if (r->ri_bs.nbody_ode == NULL){
         r->ri_bs.nbody_index = r->N_odes;
@@ -464,6 +463,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         r->odes[s]->needs_nbody = 0;
       }
     }
+*/
 
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = 0;
@@ -501,10 +501,9 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
 
     // Check for pericenter CE
     // test particles cannot have pericenter CEs OR CAN THEY?? Need to resolve pericenter
-    for (int j = 1; j < N; j++){
+    for (int j = 1; j < Nactive; j++){
         double fcond_peri = _switch_peri(r, j);
         if (fcond_peri < 0.0 && ri_trace->current_L == 0){
-            //printf("Peri cond detected\n");
             ri_trace->current_L = 1;
             new_c = 1;
 
@@ -541,7 +540,8 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
                     ri_trace->current_Ks[i][j] = 1;
                     new_c = 1;
                     //if (ri_trace->print){
-                    //  printf("New CE at %f detected between %d %d\n", r->t,i, j);
+                    //printf("New CE at %f detected between %d %d\n", r->t,i, j);
+                    //exit(1);
                     //}
                 }
             }
@@ -568,7 +568,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     }
 
     reb_integrator_trace_Fcond(r); // return value ignored.
-    ri_trace->current_L = 1;
+
     if (ri_trace->current_L){ //more efficient way to check if we need to redo this...
                            // Pericenter close encounter detected. We integrate the entire simulation with BS
         //printf("\nDetected peri CE\n");
@@ -587,18 +587,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
-    /*
-    reb_integrator_trace_kepler_step(r, r->dt/2.);
-    printf("Post Kepler: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
-    reb_integrator_trace_jump_step(r, r->dt/2.);
-    printf("Post Jump: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
-    reb_integrator_trace_interaction_step(r, r->dt);
-    printf("Post Interaction: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
-    reb_integrator_trace_jump_step(r, r->dt/2.);
-    printf("Post Jump: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
-    reb_integrator_trace_kepler_step(r, r->dt/2.);
-    printf("Post Kepler: %e %e %e %e %e %e\n", r->particles[1].x,r->particles[1].y,r->particles[1].z,r->particles[1].vx,r->particles[1].vy,r->particles[1].vz);
-    */
     // Check for new close_encounters
     if (reb_integrator_trace_Fcond(r) && !ri_trace->force_accept){
         // REJECT STEP
