@@ -77,9 +77,12 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
     return fcond;
 }
 
-double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, const unsigned int j){
+double reb_integrator_trace_peri_switch_distance(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double peri = ri_trace->peri;
+    const double peri = ri_trace->peri_distance;
+    if (peri == 0.0){
+      reb_simulation_warning(r,"Pericenter condition not set. Set with r->ri_trace.peri_distance=");
+    }
 
     const double dx = r->particles[0].x - r->particles[j].x;
     const double dy = r->particles[0].y - r->particles[j].y;
@@ -90,17 +93,17 @@ double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, 
     return fcond_peri;
 }
 
-double reb_integrator_trace_switch_fdot_peri(struct reb_simulation* const r, const unsigned int j){
+
+double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double vfacp = ri_trace->vfac_p;
-    const double pratio = ri_trace->pratio;
+    const double pfdot = ri_trace->peri_fdot;
+    const double pdist = ri_trace->peri_distance;
 
     const double dx = r->particles[j].x;
     const double dy = r->particles[j].y;
     const double dz = r->particles[j].z;
     const double d2 = dx*dx + dy*dy + dz*dz;
     const double d = sqrt(d2);
-    //printf("%d %f\n", j, d);
 
     const double dvx = r->particles[j].vx - r->particles[0].vx;
     const double dvy = r->particles[j].vy - r->particles[0].vy;
@@ -115,62 +118,19 @@ double reb_integrator_trace_switch_fdot_peri(struct reb_simulation* const r, con
     // This only works for bound orbits!
     const double fdot = h / (d2);
     const double peff = (2 * M_PI / fdot); // effective period
-    double fcond_peri = (peff / r->dt) - vfacp;
+    double fcond_peri = (peff / r->dt) - pfdot;
 
     // Failsafe - use velocity dependent condition
-    double f_vel = d / sqrt(3. * v2 + (r->G * (r->particles[0].m + r->particles[j].m) / d));
-    double fcond_vel = (f_vel/r->dt) - 1.;
+    //double f_vel = d / sqrt(3. * v2 + (r->G * (r->particles[0].m + r->particles[j].m) / d));
+    //double fcond_vel = (f_vel/r->dt) - 1.;
 
-    // Compare Jump and Kepler steps.
-    // Probably a better way to do this than recalculating every time.
-    // If TP type 1, use r->N. Else, use N_active.
-    const int N_active = r->N_active==-1?r->N:r->N_active;
-    const int N = r->testparticle_type==0 ? N_active: r->N;
-
-    double px0=0., py0=0., pz0=0.;
-    double mtot = r->particles[0].m;
-    for (unsigned int i=1;i<N;i++){
-        px0 += r->particles[i].vx*r->particles[i].m;
-        py0 += r->particles[i].vy*r->particles[i].m;
-        pz0 += r->particles[i].vz*r->particles[i].m;
-        mtot += r->particles[i].m;
+    // Failsafe: use pericenter pericenter distance
+    double fcond_dist = 0.0;
+    if (pdist > 0.0){
+        fcond_dist = d - pdist;
     }
 
-    const double pjx = (r->particles[j].vx * r->particles[j].m) - (r->particles[j].m / mtot) * px0;
-    const double pjy = (r->particles[j].vy * r->particles[j].m) - (r->particles[j].m / mtot) * py0;
-    const double pjz = (r->particles[j].vz * r->particles[j].m) - (r->particles[j].m / mtot) * pz0;
-    const double p02 = px0 * px0 + py0*py0+pz0*pz0;
-    const double pj2 = pjx * pjx + pjy * pjy + pjz * pjz;
-    const double hj = p02 / (2. * r->particles[0].m);
-
-    // Kepler
-    const double hk = pj2 / (2 * r->particles[j].m) - ((r->G * r->particles[0].m * r->particles[j].m) / d);
-    double fcond_ratio = pratio - (hj / hk); // Negative if jump step > kepler step
-
-    // if one is violated both are
-    //double fcond = MIN(fcond_peri, fcond_vel);
-    double fcond = MIN(fcond_peri, fcond_ratio);
-    return fcond;
-}
-
-double reb_integrator_trace_switch_vdiff_peri(struct reb_simulation* const r, const unsigned int j){
-    struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[j], r->particles[0]);
-    if (o.a < 0.0){
-        return 1.; //unbound orbits have no pericenter approach
-    }
-    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double vfacp = ri_trace->vfac_p;
-
-    const double dvx = r->particles[j].vx;
-    const double dvy = r->particles[j].vy;
-    const double dvz = r->particles[j].vz;
-    const double dv = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
-
-    const double vcirc = sqrt(r->G * (r->particles[0].m + r->particles[j].m) / o.a);
-    const double vdiff = dv / vcirc;
-    double fcond_peri = vfacp - vdiff;
-
-    return fcond_peri;
+    return MIN(fcond_peri, fcond_dist);
 }
 
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
@@ -445,9 +405,9 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     }
 
     if (ri_trace->S_peri == NULL){
-        ri_trace->S_peri = reb_integrator_trace_switch_fdot_peri;
+        ri_trace->S_peri = reb_integrator_trace_peri_switch_default;
     }
-/*
+
     // Set nbody ODE here to know if we need to integrate other ODEs in step one.
     if (r->ri_bs.nbody_ode == NULL){
         r->ri_bs.nbody_index = r->N_odes;
@@ -463,7 +423,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         r->odes[s]->needs_nbody = 0;
       }
     }
-*/
+
 
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = 0;
@@ -485,7 +445,6 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
-    //int print = ri_trace->print;
 
     int new_c = 0; // New CEs
 
@@ -631,7 +590,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounterN = 0;
     r->ri_trace.encounterNactive = 0;
     r->ri_trace.hillfac = 4; // TLu changed to Hernandez (2023)
-    r->ri_trace.vfac_p = 16.;
+    r->ri_trace.peri_fdot = 16.;
+    r->ri_trace.peri_distance = 0.;
 
     //r->ri_trace.peri = 0.; // TLu changed to Hernandez (2023)
     // Internal arrays (only used within one timestep)

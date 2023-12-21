@@ -243,9 +243,8 @@ struct reb_integrator_trace {
     double (*S_peri) (struct reb_simulation* const r, const unsigned int j);
 
     double hillfac;
-    double peri; // TLu check for close pericenter passage
-    double vfac_p;
-    double pratio;
+    double peri_fdot;
+    double peri_distance;
 
     // Internal use
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
@@ -268,8 +267,6 @@ struct reb_integrator_trace {
     int** current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_L; // TLu tracking L for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
-
-    unsigned int print; // for debugging. Get rid of this at some point.
 };
 
 // Symplectic Epicycle Integrator SEI (Rein & Tremaine 2011)

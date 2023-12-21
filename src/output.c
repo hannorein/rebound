@@ -174,9 +174,10 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 162, REB_INT,         "ri_bs.target_iter",             offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
     // TLu which fields are needed?
     // May have to manually re-add the switching functions? MERCURIUS does not save them...
+    { 163, REB_INT,         "ri_bs.nbody_index",             offsetof(struct reb_simulation, ri_bs.nbody_index), 0, 0},
     { 165, REB_DOUBLE,      "ri_trace.hillfac",                offsetof(struct reb_simulation, ri_trace.hillfac), 0, 0},
-    { 166, REB_DOUBLE,      "ri_trace.peri",                   offsetof(struct reb_simulation, ri_trace.peri), 0, 0},
-    { 167, REB_DOUBLE,      "ri_trace.vfac_p",                 offsetof(struct reb_simulation, ri_trace.vfac_p), 0, 0},
+    { 166, REB_DOUBLE,      "ri_trace.peri_fdot",                   offsetof(struct reb_simulation, ri_trace.peri_fdot), 0, 0},
+    { 167, REB_DOUBLE,      "ri_trace.peri_distance",                 offsetof(struct reb_simulation, ri_trace.peri_distance), 0, 0},
     // Don't think these are needed...
     { 168, REB_VEC3D,       "ri_trace.com_pos",         offsetof(struct reb_simulation, ri_trace.com_pos), 0, 0},
     { 169, REB_VEC3D,       "ri_trace.com_vel",         offsetof(struct reb_simulation, ri_trace.com_vel), 0, 0},
@@ -440,7 +441,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
         int dtype = reb_binary_field_descriptor_list[i].dtype;
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
-                || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
+                || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE
                 || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
             struct reb_binary_field field;
             memset(&field,0,sizeof(struct reb_binary_field));

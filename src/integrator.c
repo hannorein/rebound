@@ -163,10 +163,6 @@ void reb_integrator_part2(struct reb_simulation* r){
             }
         }
     }
-		if (r->dt != old_dt){
-			printf("Fix dt! %f %f\n", r->dt, old_dt);
-			exit(1);
-		}
 
 		//printf("\nOne Step Error: %e\n", fabs((reb_simulation_energy(r) - e_init) / e_init));
 		//exit(1);

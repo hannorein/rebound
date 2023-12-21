@@ -600,9 +600,8 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_trace.mode = 0;
     r->ri_trace.encounterN = 0;
     r->ri_trace.hillfac = 4.;
-    r->ri_trace.peri = 1.;
-    r->ri_trace.vfac_p = 16.;
-    r->ri_trace.pratio = 1.;
+    r->ri_trace.peri_fdot = 16.;
+    r->ri_trace.peri_distance = 0.;
     r->ri_trace.force_accept = 0;
 
     // ********** EOS
