@@ -788,8 +788,9 @@ static void* reb_simulation_integrate_raw(void* args){
     if (r->testparticle_hidewarnings==0 && reb_particle_check_testparticles(r)){
         reb_simulation_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
-
-    r->status = REB_STATUS_RUNNING;
+    if (r->status != REB_STATUS_PAUSED){ // Allow simulation to be paused initially
+        r->status = REB_STATUS_RUNNING;
+    }
     reb_run_heartbeat(r);
 #ifdef __EMSCRIPTEN__
     double t0 = emscripten_performance_now();

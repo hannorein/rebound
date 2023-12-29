@@ -11,6 +11,9 @@ def run(*args, **kwargs):
         with open("docs/c_examples/"+cname+".md","w") as fd:
             will_output = 0
             livepreview=1
+            # Manual exception for file viewer
+            if "_viewer" in cname:
+                livepreview=0
             try:
                 with open("examples/"+cname+"/Makefile","r") as mfd:
                     Makefile = mfd.read()
