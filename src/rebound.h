@@ -251,13 +251,14 @@ struct reb_integrator_trace {
     unsigned int encounterN;        // Number of particles currently having an encounter
     unsigned int encounterNactive;  // Number of active particles currently having an encounter
 
-    unsigned int allocatedN;
-    unsigned int allocatedN_additionalforces;
+    unsigned int N_allocated;
+    unsigned int N_allocated_additional_forces;
 
     unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
     struct reb_particle* REB_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
-    struct reb_particle* REB_RESTRICT particles_backup_try; //  TLu contains coordinates after initial try
+    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  TLu contains coordinates before kepler step
+    struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
 
     int* encounter_map;             // Map to represent which particles are integrated with BS
     int* encounter_map_internal;

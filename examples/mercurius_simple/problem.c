@@ -11,31 +11,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-/*
-double jacobi(struct reb_simulation* r){
-  // Jacobi constant for the restricted 3-body problem
-  // r needs to be interpreted in the rotating frame
-  struct reb_particle* sun = &r->particles[0];
-  struct reb_particle* jup = &r->particles[1];
-  struct reb_particle* test = &r->particles[2];
-
-  struct reb_orbit o = reb_tools_particle_to_orbit(r->G, *jup, *sun);
-
-  struct reb_vec3d x = {.x = test->x, .y=test->y, .z=test->z};
-  struct reb_vec3d v = {.x = test->vx, .y=test->vy, .z=test->vz};
-
-  double kinetic = 0.5 * reb_vec3d_length_squared(v);
-
-  double d0 = sqrt(reb_vec3d_length_squared((struct reb_vec3d){.x = test->x - sun->x, .y = test->y - sun->y, .z =test->z - sun->z}));
-  double d1 = sqrt(reb_vec3d_length_squared((struct reb_vec3d){.x = test->x - jup->x, .y = test->y - jup->y, .z =test->z - jup->z}));
-
-  struct reb_vec3d omega = {.x=0, .y=0, .z= (r->G * (sun->m + jup->m) / (o.a * o.a * o.a))};
-
-  double phi_eff = -((r->G * sun->m) / d0) - ((r->G * jup->m) / d1) - 0.5 * reb_vec3d_length_squared(reb_vec3d_cross(omega, x));
-  return kinetic + phi_eff;
-
-}
-*/
+double tmax = 5000. * 11.86 * 2. * M_PI;
 double jacobi_dh(struct reb_simulation* r){
   // Jacobi constant for the restricted 3-body problem
   // r needs to be interpreted in the rotating frame
@@ -72,6 +48,8 @@ int main(int argc, char* argv[]){
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_trace.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
     r->ri_trace.peri = 0.01;
+    //r->ri_bs.eps_abs          = 1e-11;
+    //r->ri_bs.eps_rel          = 1e-11;
 
     r->N_active = 2;
 
@@ -84,12 +62,12 @@ int main(int argc, char* argv[]){
     // velocities
     double a = 5.2;
     double e = 0.0;
-    star.x = -(jup.m / (star.m + jup.m)) * (a * (1 + e));
-    star.vy = -(jup.m / (star.m + jup.m)) * sqrt((r->G * (star.m + jup.m) / a) * ((1 - e) / (1 + e)));
+    star.x = 0.0;//-(jup.m / (star.m + jup.m)) * (a * (1 + e));
+    star.vy = 0.0;//-(jup.m / (star.m + jup.m)) * sqrt((r->G * (star.m + jup.m) / a) * ((1 - e) / (1 + e)));
     reb_simulation_add(r, star);
 
-    jup.x = (star.m / (star.m + jup.m)) * (a * (1 + e));
-    jup.vy = (star.m / (star.m + jup.m)) * sqrt((r->G * (star.m + jup.m) / a) * ((1 - e) / (1 + e)));
+    jup.x = a;//(star.m / (star.m + jup.m)) * (a * (1 + e));
+    jup.vy = sqrt((r->G * (star.m + jup.m) / a) * ((1 - e) / (1 + e)));//(star.m / (star.m + jup.m)) * sqrt((r->G * (star.m + jup.m) / a) * ((1 - e) / (1 + e)));
     reb_simulation_add(r, jup);
 
     // Test particle
@@ -108,15 +86,15 @@ int main(int argc, char* argv[]){
     system("rm -rf energy_new.txt");
     //FILE* f = fopen("energy.txt","w");
 
-    reb_simulation_integrate(r, 5000. * 11.86 * 2. * M_PI);
+    reb_simulation_integrate(r, tmax);
     reb_simulation_free(r);
 }
 
 void heartbeat(struct reb_simulation* r){
-    //if (reb_simulation_output_check(r, 10.*2.*M_PI)){
-    //    reb_output_timing(r, 0);
-    //}
-    if (reb_simulation_output_check(r, 10. * 2.*M_PI)){
+    if (reb_simulation_output_check(r, 10.*2.*M_PI)){
+        reb_simulation_output_timing(r, tmax);
+    }
+    //if (reb_simulation_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
         FILE* f = fopen("energy_new.txt","a");
 
@@ -124,5 +102,5 @@ void heartbeat(struct reb_simulation* r){
         //printf("%f\n", (e-e_init)/e_init);
         fprintf(f,"%e %e %e %e %e %e %e %e %e %e %e\n",r->t, (e-e_init)/e_init, r->particles[0].x, r->particles[0].y, r->particles[0].z, r->particles[1].x, r->particles[1].y, r->particles[1].z, r->particles[2].x, r->particles[2].y, r->particles[2].z);
         fclose(f);
-    }
+    //}
 }

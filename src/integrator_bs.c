@@ -411,6 +411,7 @@ void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot
       // Kepler Step
       // This is only for pericenter approach
       if (r->ri_trace.current_L){
+        //printf("Pericenter\n");
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
             py += r->particles[i].vy*r->particles[i].m;
@@ -1024,21 +1025,15 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
 
     }
 
-    //printf("Initial: %f %f %f %f %f %f %f %f\n", y[6],y[7],y[9],y[10],y[12],y[13],y[15],y[16]);
+    //printf("Timestep: %e\n", r->dt);
     int success = reb_integrator_bs_step(r, r->dt);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
-        //printf("SUCCESS\n");
-    }
-    else{
-      //printf("FAILURE\n");
     }
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
-    //printf("Final: %f %f %f %f %f %f %f %f\n", r->particles[1].x,r->particles[1].y,r->particles[1].vx,r->particles[1].vy,r->particles[2].x,r->particles[2].y,r->particles[2].vx,r->particles[2].vy);
-    //exit(1);
 }
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){

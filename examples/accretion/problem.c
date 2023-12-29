@@ -34,10 +34,10 @@ int snap3=1;
 // accretion of the moon
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
-    r->integrator = REB_INTEGRATOR_IAS15;
-    r->ri_ias15.adaptive_mode=2;
+    r->integrator = REB_INTEGRATOR_TRACE;
+    //r->ri_ias15.adaptive_mode=2;
 
-    //r->dt = 0.1;//0.003 / 10.56789;
+    r->dt = 0.1;//0.003 / 10.56789;
     //r->integrator = REB_INTEGRATOR_IAS15;
     //r->softening = 3e-8;
     r->collision            = REB_COLLISION_DIRECT;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]){
       mtot += m;
       double rad = pow(m, 1./3.) * 1.185 * earth_r;
       rad_tot += rad;
-      double a = reb_random_powerlaw(r, earth_r, 1.5, 1.);
+      double a = reb_random_powerlaw(r, earth_r, 1.5, -1.);
       double e = reb_random_uniform(r, 0., 0.95);
       double inc = reb_random_uniform(r, 0, 50. * M_PI / 180.);
       double Omega = reb_random_uniform(r, 0, 2 * M_PI);
@@ -127,7 +127,7 @@ void heartbeat(struct reb_simulation* r){
   if (reb_output_check(r, 0.01*2.*M_PI)){
       reb_output_timing(r, tmax);
   }
-/*
+
   if (snap2 && r->t > snap2_time){
     struct reb_particle* e = &r->particles[0];
     snap2 = 0;
@@ -161,7 +161,7 @@ void heartbeat(struct reb_simulation* r){
     }
     fclose(f);
   }
-  */
+
   //if (r->t < 10. * 2 * M_PI){
 
   if (reb_output_check(r, 0.1)){

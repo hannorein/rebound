@@ -139,7 +139,7 @@ archivePrefix = {arXiv},
 }
 """
 
-    
+
     if sim.integrator == "mercurius":
         txt += """The simulations were integrated using the hybrid symplectic MERCURIUS integrator \citep{reboundmercurius}. """
         bib += """@ARTICLE{reboundmercurius,
@@ -160,6 +160,16 @@ archivePrefix = {arXiv},
  primaryClass = {astro-ph.EP},
        adsurl = {https://ui.adsabs.harvard.edu/abs/2019MNRAS.485.5490R},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+"""
+
+    if sim.integrator == "trace":
+        txt += """The simulations were integrated using the hybrid time-reversible TRACE integrator \citep{reboundtrace}. """
+        bib += """@ARTICLE{reboundtrace,
+       author = {{Lu}, Tiger and {Hernandez}, David M. and {Rein}, Hanno},
+        title = "{TRACE: a Time Reversible Algorithm for Close Encounters}",
+      journal = {\mnras},
+      pubstate = {in prep}
 }
 """
 
@@ -204,7 +214,7 @@ archivePrefix = {arXiv},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 """
-    
+
     if sim.integrator == "saba":
         txt += """The simulations were integrated using the SABA Integrator \citep{reboundhighorder,saba}. """
         bib += """@ARTICLE{reboundhighorder,

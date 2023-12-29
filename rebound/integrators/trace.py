@@ -27,21 +27,21 @@ class IntegratorTRACE(ctypes.Structure):
 
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, hillfac={3}, >'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.is_synchronized, self.hillfac)
+        return '<{0}.{1} object at {2}, hillfac={3}, peri_fdot=={4},peri_distance={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.hillfac, self.peri_fdot, self.peri_distance)
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
-                ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
+                ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint)),
                 ("hillfac", ctypes.c_double),
-                ("pfdot", ctypes.c_double),
-                ("pratio", ctypes.c_double),
+                ("peri_fdot", ctypes.c_double),
                 ("peri_distance", ctypes.c_double),
                 ("mode", ctypes.c_uint),
                 ("_encounterN", ctypes.c_uint),
                 ("_encounterNactive", ctypes.c_uint),
-                ("_allocated_N", ctypes.c_uint),
-                ("_allocated_N_additionalforces", ctypes.c_uint),
+                ("N_allocated", ctypes.c_uint),
+                ("N_allocated_additionalforces", ctypes.c_uint),
                 ("_particles_backup", ctypes.POINTER(Particle)),
-                ("_particles_backup_try", ctypes.POINTER(Particle)),
+                ("_particles_backup_kepler", ctypes.POINTER(Particle)),
+                ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
                 ("_encounter_map", ctypes.POINTER(ctypes.c_int)),
                 ("_encounter_map_internal", ctypes.POINTER(ctypes.c_int)),
                 ("_com_pos", Vec3dBasic),
@@ -67,12 +67,12 @@ class IntegratorTRACE(ctypes.Structure):
     @S_peri.setter
     def S_peri(self, func):
         if func == "default":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACELF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACECF)
         elif func == "distance":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_distance,TRACELF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_distance,TRACECF)
         else:
-            self._S_perifp = TRACELF(func) # what is this
+            self._S_perifp = TRACECF(func) # what is this
             self._S_peri = self._S_perifp
 
-TRACEKF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_double, ctypes.c_double)
-TRACELF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_double)
+TRACEKF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
+TRACECF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint)

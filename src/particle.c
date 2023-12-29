@@ -89,9 +89,9 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             }
             rim->encounter_map[rim->encounter_N] = r->N-1;
             rim->encounter_N++;
-            if (r->N_active==-1){ 
+            if (r->N_active==-1){
                 // If global N_active is not set, then all particles are active, so the new one as well.
-                // Otherwise, assume we're adding non active particle. 
+                // Otherwise, assume we're adding non active particle.
                 rim->encounter_N_active++;
             }
         }
@@ -241,7 +241,7 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
 }
 
 struct reb_particle* reb_simulation_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
-    struct reb_particle* p; 
+    struct reb_particle* p;
     p = reb_search_lookup_table(r, hash);
     if (p == NULL){
         reb_update_particle_lookup_table(r);

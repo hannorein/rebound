@@ -14,7 +14,7 @@ void heartbeat(struct reb_simulation* r);
 double e_init; // initial energy
 double err;
 double emax = 0.0;
-double tmax = 3000.*2*M_PI*29.4;
+double tmax = 300. * 2. * M_PI * 29.4;
 
 const double k = 1.; // Constants for the Harmonic Oscillator
 const double m = 10000000.;
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
     // Saturn
     double sm = 2.857e-4;
     double sa = 9.58;
-    double se = 0.999;
+    double se = 0.99;
     double omse = 1. - se;
     double si = M_PI / 2.;
 
@@ -51,15 +51,18 @@ int main(int argc, char* argv[]){
     //const double tau_f_s = 2 * M_PI * sqrt((sa * sa * sa * omse * omse * omse) / (r->G * star.m * (1 + se)));
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    //r->dt = 0.15 * 2 * M_PI;
-    r->ri_ias15.adaptive_mode=2;
+    r->dt = 0.15 * 2 * M_PI;
+    //r->ri_bs.eps_rel = 1e-11;            // Relative tolerance
+    //r->ri_bs.eps_abs = 1e-11;            // Absolute tolerance
+    //r->ri_ias15.adaptive_mode=2;
+    r->ri_trace.pfdot=1000.;
 
     //struct reb_ode* ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions
     //ho->derivatives = derivatives;              // Right hand side of the ODE
     //ho->y[0] = 1;                               // Initial conditions
     //ho->y[1] = 0;
 
-    r->dt = 0.15*2.*M_PI;
+    //r->dt = 0.15*2.*M_PI;
     r->heartbeat = heartbeat;
 
 
@@ -67,7 +70,9 @@ int main(int argc, char* argv[]){
     reb_simulation_add_fmt(r, "m a e", jm, ja, je);
 
     //r->dt = orb.P / 15.12345;
-    reb_simulation_add_fmt(r, "primary m a e inc pomega f", star, sm, sa, se, si, M_PI/2, 0.0);
+    reb_simulation_add_fmt(r, "primary m a e inc omega", star, sm, sa, se, si, M_PI/2.);
+
+
     struct reb_orbit orb = reb_orbit_from_particle(r->G, r->particles[2], r->particles[0]);
 
     reb_simulation_move_to_com(r);                // This makes sure the planetary systems stays within the computational domain and doesn't drift.
@@ -75,6 +80,7 @@ int main(int argc, char* argv[]){
     r->exact_finish_time=0;
     e_init = reb_simulation_energy(r);
     system("rm -rf ho.txt");
+    system("rm -rf energy_fdot.txt");
 
     FILE* f = fopen("ho.txt","a");
     while(r->t<tmax){
@@ -95,7 +101,7 @@ void heartbeat(struct reb_simulation* r){
 
     //if (reb_output_check(r, 10. * 2.*M_PI)){
         // Once per 4 days, output the relative energy error to a text file
-        /*
+
         double err = fabs((reb_simulation_energy(r) - e_init) / e_init);
         if (err > emax){
           emax = err;
@@ -134,6 +140,6 @@ void heartbeat(struct reb_simulation* r){
         //reb_integrator_synchronize(r);
         //printf("\n Jacobi: %e\n", e);
     //}
-    */
+
 
 }
