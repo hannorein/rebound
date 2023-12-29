@@ -4,6 +4,12 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.0.2
+* Fixes an issue where the default Makefiles included white spaces after the SERVER and OPENGL variable definitions. This caused the main Makefile to ignore these settings.
+* Added `key_callback` function for customizing user interaction in visualizations.
+* Added `simulationarchive_viewer` example.
+* Included `-sGL_ENABLE_GET_PROC_ADDRESS` flag that is now needed for the latest version of emscripten.
+
 ### Version 4.0.1
 * Include missing python packages
 
