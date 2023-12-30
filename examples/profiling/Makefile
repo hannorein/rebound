@@ -29,7 +29,7 @@ clean:
 
 rebound_webgl.html: problem.c
 	@echo "Compiling problem.c with emscripten (WebGL enabled)..."
-	emcc -O3 -I../../src/ ../../src/*.c problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -sGL_ENABLE_GET_PROC_ADDRESS=1 -s FULL_ES3=1 -sASYNCIFY -sSINGLE_FILE -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file ../../web_client/shell_rebound_webgl.html -o rebound_webgl.html
+	emcc -O3 -I../../src/ ../../src/*.c problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sSINGLE_FILE -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file ../../web_client/shell_rebound_webgl.html -o rebound_webgl.html
 
 rebound_console.html: problem.c
 	@echo "Compiling problem.c with emscripten (WebGL disabled)..."
