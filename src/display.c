@@ -45,9 +45,6 @@
 
 #ifdef OPENGL
 #include "simplefont.h"
-#define GLFW_INCLUDE_NONE
-#include "glad.h"
-#include <GLFW/glfw3.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/fetch.h>
@@ -841,7 +838,10 @@ void reb_display_init(struct reb_simulation * const r){
     }
 
     glfwMakeContextCurrent(window);
+
+#ifndef __EMSCRIPTEN__
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+#endif // __EMSCRIPTEN__
     
     glfwSetWindowUserPointer(window,data); 
 

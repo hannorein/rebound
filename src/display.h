@@ -25,18 +25,28 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#ifdef OPENGL
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#define GL_GLEXT_PROTOTYPES
+#define EGL_EGLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+#else // __EMSCRIPTEN__
+#define GLFW_INCLUDE_NONE
+#include "glad.h"
+#endif // __EMSCRIPTEN__
+#include <GLFW/glfw3.h>
+
 struct reb_simulation;
 
 void reb_display_init(struct reb_simulation* const r);
 
 void reb_display_init_data(struct reb_simulation* const r);
 
-#ifdef OPENGL
 #ifdef __EMSCRIPTEN__
-// Only needed for emscripten client
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods);
 #endif // __EMSCRIPTEN__
+
 #endif // OPENGL
 #endif
