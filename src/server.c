@@ -249,11 +249,13 @@ void* reb_server_start(void* args){
         }else if (!strncasecmp(uri, "/keyboard/",10)) {
             int key = 0;
             sscanf(uri, "/keyboard/%d", &key);
+            data->need_copy = 1;
             pthread_mutex_lock(&(data->mutex));
             int skip_default_keys = 0;
             if (r->key_callback){
                 skip_default_keys = r->key_callback(r, key);
             } 
+            data->need_copy = 0;
             pthread_mutex_unlock(&(data->mutex));
             if (!skip_default_keys){
                 switch (key){
@@ -385,9 +387,13 @@ void* reb_server_start(void* args){
             const char* ok = "ok.";
             sscanf(uri, "/keyboard/%d", &key);
             int skip_default_keys = 0;
+            data->need_copy = 1;
+            //pthread_mutex_lock(&(data->mutex)); TODO!!
             if (r->key_callback){
                 skip_default_keys = r->key_callback(r, key);
             } 
+            data->need_copy = 0;
+            //pthread_mutex_unlock(&(data->mutex));
             if (!skip_default_keys){
                 switch (key){
                     case 'Q':
