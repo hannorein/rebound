@@ -14,18 +14,13 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e7*2*M_PI;
+double tmax = 1e6*2*M_PI;
 int nbodies=3;
 int first_ejected = 999;
 int ind;
-int nparticles;
-
-int ej1 = 1;
-int ej2 = 1;
-int ej3 = 1;
 
 char title[100] = "bad_bs_restart";
-char title_stats[100] = "1231_trace_stats_p01";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "1231_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs_restart";
 
 int main(int argc, char* argv[]){
@@ -54,14 +49,14 @@ int main(int argc, char* argv[]){
     r->rand_seed = ind;
 
     // Delta = 2.5
-    //double xs[3] = {4.750000e+00,6.243350e+00,8.204764e+00};
-    //double vys[3] = {4.703868e-01,4.110230e-01,3.590980e-01};
-    //double vzs[3] = {0.0, 7.166600e-03,1.251747e-02};
+    double xs[3] = {4.750000e+00,6.243350e+00,8.204764e+00};
+    double vys[3] = {4.703868e-01,4.110230e-01,3.590980e-01};
+    double vzs[3] = {0.0, 7.166600e-03,1.251747e-02};
 
     // Delta = 4
-    double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
-    double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
-    double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
+    //double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
+    //double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
+    //double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
 
     add = reb_random_uniform(r, -1e-12, 1e-12);
 
@@ -110,10 +105,10 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.peri_crit_distance = 0.1;
-    r->dt = min * 0.05;
-    //r->ri_ias15.adaptive_mode = 2;
+    r->integrator = REB_INTEGRATOR_IAS15;
+    //r->ri_trace.peri_crit_distance = 0.1;
+    //r->dt = min * 0.05;
+    r->ri_ias15.adaptive_mode = 2;
     r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
     r->track_energy_offset = 1;
@@ -145,12 +140,15 @@ int main(int argc, char* argv[]){
     while (r->t < tmax){
        int retval = reb_simulation_integrate(r, tmax);
        if (retval == REB_STATUS_ESCAPE){
+          //printf("Ejecting\n");
           // Track energy offset
           double Ei = reb_simulation_energy(r);
 
           // Find and remove the particle
           for (int i = 1; i < nbodies+1; i++){
+
               struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
+              //printf("Query %d\n", i);
               if (p != NULL){
                 double dx = p->x;
                 double dy = p->y;
@@ -159,6 +157,7 @@ int main(int argc, char* argv[]){
 
                 if (d2>r->exit_max_distance * r->exit_max_distance){
                     reb_simulation_remove_particle_by_hash(r, i, 1);
+                    //printf("Ejected %d\n", i);
                 }
               }
           }
@@ -183,44 +182,6 @@ int main(int argc, char* argv[]){
 
 void heartbeat(struct reb_simulation* r){
     // remove particles if needed
-
-//    if (r->N < nparticles){
-//      reb_simulation_move_to_com(r);
-//      nparticles = r->N;
-//    }
-
-    //if (fabs((reb_tools_energy(r) - e_init) / e_init) > 1e-2){
-    //  printf("\nbad\n");
-    //  exit(1);
-    //}
-
-
-    // particles not ejected yet
-    /*
-    if (ej1){
-        struct reb_particle* p = reb_get_particle_by_hash(r, 1);
-        double d = sqrt(p->x*p->x+p->y*p->y+p->z*p->z);
-        if (d > 10000.){
-            ej1 = 0;
-        }
-    }
-
-    if (ej2){
-        struct reb_particle* p = reb_get_particle_by_hash(r, 2);
-        double d = sqrt(p->x*p->x+p->y*p->y+p->z*p->z);
-        if (d > 10000.){
-            ej2 = 0;
-        }
-    }
-
-    if (ej3){
-        struct reb_particle* p = reb_get_particle_by_hash(r, 3);
-        double d = sqrt(p->x*p->x+p->y*p->y+p->z*p->z);
-        if (d > 10000.){
-            ej3 = 0;
-        }
-    }
-    */
 
     if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
         reb_simulation_output_timing(r, tmax);
