@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_init; // initial energy
-double tmax = 1e6*2*M_PI;
+double tmax = 1e7*2*M_PI;
 int nbodies=3;
 int first_ejected = 999;
 int ind;
@@ -25,7 +25,7 @@ int ej2 = 1;
 int ej3 = 1;
 
 char title[100] = "bad_bs_restart";
-char title_stats[100] = "1231_trace_stats_p05";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "1231_trace_stats_p01";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs_restart";
 
 int main(int argc, char* argv[]){
@@ -111,11 +111,10 @@ int main(int argc, char* argv[]){
     reb_simulation_move_to_com(r);
 
     r->integrator = REB_INTEGRATOR_TRACE;
-    //r->ri_trace.S_peri = reb_integrator_trace_peri_switch_distance;
-    r->ri_trace.peri_crit_distance = 0.5;
+    r->ri_trace.peri_crit_distance = 0.1;
     r->dt = min * 0.05;
     //r->ri_ias15.adaptive_mode = 2;
-    //r->exact_finish_time = 0;
+    r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
     r->track_energy_offset = 1;
     //r->heartbeat  = heartbeat;               // This makes sure the planetary systems stays within the computational domain and doesn't drift.
@@ -143,17 +142,14 @@ int main(int argc, char* argv[]){
     e_init = reb_simulation_energy(r);
     clock_t begin = clock();
 
-    int track_bodies = r->N;
-
     while (r->t < tmax){
        int retval = reb_simulation_integrate(r, tmax);
        if (retval == REB_STATUS_ESCAPE){
-          //printf("\nEjecting Particle!\n");
           // Track energy offset
           double Ei = reb_simulation_energy(r);
 
           // Find and remove the particle
-          for (int i = 1; i < track_bodies; i++){
+          for (int i = 1; i < nbodies+1; i++){
               struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
               if (p != NULL){
                 double dx = p->x;
@@ -161,11 +157,8 @@ int main(int argc, char* argv[]){
                 double dz = p->z;
                 double d2 = dx*dx+dy*dy+dz*dz;
 
-                //printf("Particle %d at d=%f\n", i, sqrt(d2));
-
                 if (d2>r->exit_max_distance * r->exit_max_distance){
                     reb_simulation_remove_particle_by_hash(r, i, 1);
-                    //printf("Removed Particle %d\n", i);
                 }
               }
           }
@@ -173,14 +166,10 @@ int main(int argc, char* argv[]){
 
           // move to COM
           reb_simulation_move_to_com(r);
-          track_bodies -= 1;
        }
     }
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    //struct reb_particle com = reb_simulation_com(r);
-    //printf("COM: %f %f %f\n", com.x, com.y, com.z);
 
     FILE* tf = fopen(title_stats, "a");
     fprintf(tf, "%d,%d,%e,%e,%f\n", ind, r->N-1, fabs(reb_simulation_energy(r) - e_init)/e_init, time_spent, r->t/(2*M_PI));
