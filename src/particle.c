@@ -338,7 +338,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             // Need to fix current_Ks still, and double check logic
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
-            for (int i=0;i<ri_trace->encounterN;i++){
+            for (int i=0;i<ri_trace->encounter_N;i++){
                 if (after_to_be_removed_particle == 1){
                     ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
                     // ri_trace->encounter_map_internal[i-1] = ri_trace->encounter_map_internal[i] - 1; // Don't think we need this since we auto accept collisions
@@ -362,10 +362,10 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
                     }
                 }
             }
-            if (encounter_index<ri_trace->encounterNactive){
-                ri_trace->encounterNactive--;
+            if (encounter_index<ri_trace->encounter_N_active){
+                ri_trace->encounter_N_active--;
             }
-            ri_trace->encounterN--;
+            ri_trace->encounter_N--;
         }
     }
 

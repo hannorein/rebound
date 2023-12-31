@@ -848,19 +848,16 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         // Kepler Step
                         {
                             const double m0 = r->particles[0].m;
-                            const int encounterN = r->ri_trace.encounterN;
-                            const int encounterNactive = r->ri_trace.encounterNactive;
+                            const int encounter_N = r->ri_trace.encounter_N;
+                            const int encounter_N_active = r->ri_trace.encounter_N_active;
                             int* map = r->ri_trace.encounter_map;
-                            //int pr = r->ri_trace.print;
-                            //int current_L = r->ri_trace.current_L;
         #ifndef OPENMP
                             particles[0].ax = 0; // map[0] is always 0
                             particles[0].ay = 0;
                             particles[0].az = 0;
 
                             // Acceleration due to star
-                            //printf("Stellar accel\n");
-                            for (int i=1; i<encounterN; i++){
+                            for (int i=1; i<encounter_N; i++){
                                 int mi = map[i];
                                 const double x = particles[mi].x;
                                 const double y = particles[mi].y;
@@ -870,17 +867,15 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mi].ax    = prefact*x;
                                 particles[mi].ay    = prefact*y;
                                 particles[mi].az    = prefact*z;
-                                //printf("%d %e %e %e\n", particles[mi].ax, particles[mi].ay, particles[mi].az);
                             }
 
                             // We're in a heliocentric coordinate system.
                             // The star feels no acceleration
                             // Interactions between active-active
-                            if (encounterNactive > 2){ // if two or less, no active-active planets
-                              for (int i=2; i<encounterNactive; i++){
+                            if (encounter_N_active > 2){ // if two or less, no active-active planets
+                              for (int i=2; i<encounter_N_active; i++){
                                   int mi = map[i];
                                   for (int j=1; j<i; j++){
-                                    //printf("%d %d\n", i, j);
                                       int mj = map[j];
                                       int current_K = r->ri_trace.current_Ks[mj][mi];
                                       if (current_K){ // Only need to calculate if CE
@@ -905,10 +900,10 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             }
 
                             // Interactions between active-testparticle
-                            const int startitestp = MAX(encounterNactive,2);
-                            for (int i=startitestp; i<encounterN; i++){
+                            const int startitestp = MAX(encounter_N_active,2);
+                            for (int i=startitestp; i<encounter_N; i++){
                                 int mi = map[i];
-                                for (int j=1; j<encounterNactive; j++){
+                                for (int j=1; j<encounter_N_active; j++){
                                     int mj = map[j];
                                     int current_K = r->ri_trace.current_Ks[mj][mi];
                                     if (current_K){
@@ -923,7 +918,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                       particles[mi].az    += prefactj*dz;
 
                                     if (_testparticle_type){
-                                      //printf("Shouldn't happen\n");
                                         double prefacti = prefact*particles[mi].m;
                                         particles[mj].ax    += prefacti*dx;
                                         particles[mj].ay    += prefacti*dy;
@@ -939,7 +933,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             // We're in a heliocentric coordinate system.
                             // The star feels no acceleration
         #pragma omp parallel for schedule(guided)
-                            for (int i=1; i<encounterN; i++){
+                            for (int i=1; i<encounter_N; i++){
                                 int mi = map[i];
                                 particles[mi].ax = 0;
                                 particles[mi].ay = 0;
@@ -953,7 +947,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mi].ax    += prefact*x;
                                 particles[mi].ay    += prefact*y;
                                 particles[mi].az    += prefact*z;
-                                for (int j=1; j<encounterNactive; j++){
+                                for (int j=1; j<encounter_N_active; j++){
                                     if (i==j) continue;
                                     int mj = map[j];
                                     const double dx = x - particles[mj].x;
@@ -968,12 +962,12 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             }
                             if (_testparticle_type){
         #pragma omp parallel for schedule(guided)
-                            for (int i=1; i<encounterNactive; i++){
+                            for (int i=1; i<encounter_N_active; i++){
                                 int mi = map[i];
                                 const double x = particles[mi].x;
                                 const double y = particles[mi].y;
                                 const double z = particles[mi].z;
-                                for (int j=encounterNactive; j<encounterN; j++){
+                                for (int j=encounter_N_active; j<encounter_N; j++){
                                     int mj = map[j];
                                     const double dx = x - particles[mj].x;
                                     const double dy = y - particles[mj].y;

@@ -300,7 +300,7 @@ class TestTrace(unittest.TestCase):
         sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
-        sim.ri_trace.peri_distance=0.2
+        sim.ri_trace.peri_crit_distance=0.2
 
         E0 = sim.energy()
         sim.integrate(1)

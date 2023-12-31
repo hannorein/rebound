@@ -242,18 +242,17 @@ struct reb_integrator_trace {
     double (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
     double (*S_peri) (struct reb_simulation* const r, const unsigned int j);
 
-    double hillfac;
-    double peri_fdot;
-    double peri_distance;
+    double r_crit_hill;
+    double peri_crit_fdot;
+    double peri_crit_distance;
 
     // Internal use
-    unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
-    unsigned int encounterN;        // Number of particles currently having an encounter
-    unsigned int encounterNactive;  // Number of active particles currently having an encounter
+    unsigned int mode;              // 0 if WH is operating, 1 if BS is operating.
+    unsigned int encounter_N;        // Number of particles currently having an encounter
+    unsigned int encounter_N_active;  // Number of active particles currently having an encounter
 
     unsigned int N_allocated;
     unsigned int N_allocated_additional_forces;
-
     unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
     struct reb_particle* REB_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
@@ -266,7 +265,7 @@ struct reb_integrator_trace {
     struct reb_vec3d com_vel;
 
     int** current_Ks; // TLu tracking K for the entire timestep
-    unsigned int current_L; // TLu tracking L for the entire timestep
+    unsigned int current_C; // TLu tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 

@@ -169,15 +169,14 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 157, REB_DOUBLE,      "ri_bs.eps_rel",                offsetof(struct reb_simulation, ri_bs.eps_rel), 0, 0},
     { 158, REB_DOUBLE,      "ri_bs.min_dt",                 offsetof(struct reb_simulation, ri_bs.min_dt), 0, 0},
     { 159, REB_DOUBLE,      "ri_bs.max_dt",                 offsetof(struct reb_simulation, ri_bs.max_dt), 0, 0},
-    { 160, REB_INT,         "ri_bs.first_or_last_step",        offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
+    { 160, REB_INT,         "ri_bs.first_or_last_step",      offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
     { 161, REB_INT,         "ri_bs.previous_rejected",       offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
     { 162, REB_INT,         "ri_bs.target_iter",             offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
     // TLu which fields are needed?
-    // May have to manually re-add the switching functions? MERCURIUS does not save them...
     { 163, REB_INT,         "ri_bs.nbody_index",             offsetof(struct reb_simulation, ri_bs.nbody_index), 0, 0},
-    { 165, REB_DOUBLE,      "ri_trace.hillfac",                offsetof(struct reb_simulation, ri_trace.hillfac), 0, 0},
-    { 166, REB_DOUBLE,      "ri_trace.peri_fdot",                   offsetof(struct reb_simulation, ri_trace.peri_fdot), 0, 0},
-    { 167, REB_DOUBLE,      "ri_trace.peri_distance",                 offsetof(struct reb_simulation, ri_trace.peri_distance), 0, 0},
+    { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",                offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
+    { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",                   offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
+    { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",                 offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
     // Don't think these are needed...
     { 168, REB_VEC3D,       "ri_trace.com_pos",         offsetof(struct reb_simulation, ri_trace.com_pos), 0, 0},
     { 169, REB_VEC3D,       "ri_trace.com_vel",         offsetof(struct reb_simulation, ri_trace.com_vel), 0, 0},

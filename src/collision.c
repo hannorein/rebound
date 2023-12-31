@@ -68,7 +68,7 @@ void reb_collision_search(struct reb_simulation* const r){
             // All other collisions in encounter step/
             Ninner = 1;
         }else{
-            N = r->ri_trace.encounterN;
+            N = r->ri_trace.encounter_N;
             Ninner = N;
             trace_map = r->ri_trace.encounter_map;
         }

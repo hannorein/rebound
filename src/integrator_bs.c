@@ -93,7 +93,7 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
     int N;
     int* map;
     if (r->integrator == REB_INTEGRATOR_TRACE){
-      N = r->ri_trace.encounterN;
+      N = r->ri_trace.encounter_N;
       map = r->ri_trace.encounter_map;
       if (map==NULL){
         reb_simulation_error(r, "Cannot access TRACE map from BS.");
@@ -406,11 +406,11 @@ void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot
         return;
       }
 
-      N = r->ri_trace.encounterN;
+      N = r->ri_trace.encounter_N;
 
       // Kepler Step
       // This is only for pericenter approach
-      if (r->ri_trace.current_L){
+      if (r->ri_trace.current_C){
         //printf("Pericenter\n");
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
@@ -510,7 +510,7 @@ static void allocate_sequence_arrays(struct reb_simulation* r){
     // From IAS15 code
     int N;
     if (r->integrator == REB_INTEGRATOR_TRACE){
-      N = r->ri_trace.encounterN;
+      N = r->ri_trace.encounter_N;
     }else{
       N = r->N;
     }
@@ -983,8 +983,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     }
 
     if (r->integrator == REB_INTEGRATOR_TRACE){
-      //nbody_length = r->ri_trace.encounterN*3*2; // Not quite correct yet - need to fix for multiple pairs of CEs
-      N = ri_trace->encounterN;
+      N = ri_trace->encounter_N;
       map = ri_trace->encounter_map;
     }else{
       N = r->N;
@@ -1025,7 +1024,6 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
 
     }
 
-    //printf("Timestep: %e\n", r->dt);
     int success = reb_integrator_bs_step(r, r->dt);
     if (success){
         r->t += r->dt;

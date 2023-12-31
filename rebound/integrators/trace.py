@@ -1,5 +1,5 @@
-
 import ctypes
+from ctypes import cast
 
 from .. import clibrebound
 from ..simulation import Simulation
@@ -12,33 +12,36 @@ class IntegratorTRACE(ctypes.Structure):
     It controls the behaviour of the TRACE integrator.  See Lu et al. (2023)
     for more details.
 
-    :ivar float hillfac:
+    :ivar float r_crit_hill:
         Switching radius in units of the modified hill radius.
-    :ivar float pfdot:
+    :ivar float peri_crit_fdot:
         Pericenter switching condition: rate of change of true anomaly in units of 1/timestep.
-    :ivar float pratio:
-        Pericenter switching condition: ratio between jump and kepler steps
+    :ivar float peri_crit_distance:
+        Pericenter switching condition: heliocentric distance
 
     Example usage:
 
     >>> sim = rebound.Simulation()
     >>> sim.integrator = "trace"
-    >>> sim.ri_trace.hillfac = 4.
+    >>> sim.ri_trace.r_crit_hill = 4
+    >>> sim.ri_trace.peri_crit_fdot = 16
+    >>> sim.ri_trace.peri_crit_distance = 1
 
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, hillfac={3}, peri_fdot=={4},peri_distance={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.hillfac, self.peri_fdot, self.peri_distance)
+        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_crit_fdot=={4},peri_crit_distance={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_crit_fdot, self.peri_crit_distance)
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint)),
-                ("hillfac", ctypes.c_double),
-                ("peri_fdot", ctypes.c_double),
-                ("peri_distance", ctypes.c_double),
+                ("r_crit_hill", ctypes.c_double),
+                ("peri_crit_fdot", ctypes.c_double),
+                ("peri_crit_distance", ctypes.c_double),
                 ("mode", ctypes.c_uint),
-                ("_encounterN", ctypes.c_uint),
-                ("_encounterNactive", ctypes.c_uint),
-                ("N_allocated", ctypes.c_uint),
-                ("N_allocated_additionalforces", ctypes.c_uint),
+                ("_encounter_N", ctypes.c_uint),
+                ("_encounter_N_active", ctypes.c_uint),
+                ("_tponly_encounter", ctypes.c_uint),
+                ("_N_allocated", ctypes.c_uint),
+                ("_N_allocated_additionalforces", ctypes.c_uint),
                 ("_particles_backup", ctypes.POINTER(Particle)),
                 ("_particles_backup_kepler", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
@@ -47,8 +50,8 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),
-                ("current_L", ctypes.c_uint),
-                ("force_accept", ctypes.c_uint),
+                ("_current_C", ctypes.c_uint),
+                ("_force_accept", ctypes.c_uint),
                 ]
     @property
     def S(self):
@@ -58,7 +61,7 @@ class IntegratorTRACE(ctypes.Structure):
         if func == "default":
             self._S = cast(clibrebound.reb_integrator_trace_switch_default,TRACEKF)
         else:
-            self._Sfp = TRACEKF(func) # what is this
+            self._Sfp = TRACEKF(func)
             self._S = self._Sfp
 
     @property
@@ -70,8 +73,10 @@ class IntegratorTRACE(ctypes.Structure):
             self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACECF)
         elif func == "distance":
             self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_distance,TRACECF)
+        elif func == "none":
+            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_none,TRACECF)
         else:
-            self._S_perifp = TRACECF(func) # what is this
+            self._S_perifp = TRACECF(func)
             self._S_peri = self._S_perifp
 
 TRACEKF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)

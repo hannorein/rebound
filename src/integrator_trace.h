@@ -34,6 +34,7 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Interna
 // Switching functions
 double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, const unsigned int j);
 double reb_integrator_trace_peri_switch_distance(struct reb_simulation* const r, const unsigned int j);
+double reb_integrator_trace_peri_switch_none(struct reb_simulation* const r, const unsigned int j);
 
 double reb_integrator_trace_switch_velocity(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 #endif
