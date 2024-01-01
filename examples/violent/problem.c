@@ -20,7 +20,7 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "bad_bs";
-char title_stats[100] = "11_bs_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "11_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs";
 
 int main(int argc, char* argv[]){
@@ -105,10 +105,10 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_BS;
+    r->integrator = REB_INTEGRATOR_IAS15;
     //r->ri_trace.peri_crit_distance = 0.1;
     //r->dt = min * 0.05;
-    //r->ri_ias15.adaptive_mode = 2;
+    r->ri_ias15.adaptive_mode = 2;
     r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
     r->track_energy_offset = 1;
