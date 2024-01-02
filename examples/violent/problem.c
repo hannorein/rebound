@@ -19,9 +19,9 @@ int nbodies=3;
 int first_ejected = 999;
 int ind;
 
-char title[100] = "bad_bs";
+char title[100] = "~/palmer_scratch/results/timestamps/ias15_stats_";
 char title_stats[100] = "11_ias15_ejections";//"merc_timestamps/mercurius_first_ejection";
-char title_remove[100] = "rm -rf bad_bs";
+char title_remove[100] = "rm -rf ~/palmer_scratch/results/timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
 
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
       system(title_remove);
       FILE* f = fopen(title, "w");
       //fprintf(f, "# Seed: %d,%.20e\n", ind, add);
-      fprintf(f, "t,E,sx,sy,sz");
+      fprintf(f, "t");
       for (int i = 1; i < nbodies+1; i++){
         fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
       }
@@ -170,9 +170,9 @@ int main(int argc, char* argv[]){
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    FILE* fs = fopen(title_stats, "a");
-    fprintf(fs, "%d,%d,%e\n", ind, -1, r->t);
-    fclose(fs);
+    //FILE* fs = fopen(title_stats, "a");
+    //fprintf(fs, "%d,%d,%e\n", ind, -1, r->t);
+    //fclose(fs);
 
     //FILE* tf = fopen(title_stats, "a");
     //fprintf(tf, "%d,%d,%e,%e,%.20e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent, add);
@@ -193,7 +193,7 @@ void heartbeat(struct reb_simulation* r){
 
     // Time to first ejection
     // Always track
-
+/*
     if (first_ejected == 999){ // ejection has not happened yet
       for (unsigned int i = 1; i < nbodies+1; i++){
           struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
@@ -210,14 +210,15 @@ void heartbeat(struct reb_simulation* r){
         exit(1);
       }
     }
+*/
 
-/*
     if (reb_simulation_output_check(r, 10. * 2.*M_PI)){
 
       FILE* f = fopen(title, "a");
       struct reb_particle* sun = &r->particles[0];
 
-      fprintf(f, "%e,%e,%f,%f,%f", r->t, fabs((reb_simulation_energy(r) - e_init) / e_init),sun->x,sun->y,sun->z);
+      //fprintf(f, "%e,%e,%f,%f,%f", r->t, fabs((reb_simulation_energy(r) - e_start) / e_start),sun->x,sun->y,sun->z);
+      fprintf(f, "%f", r->t);
 
       for (unsigned int i = 1; i < nbodies+1; i++){
         struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
@@ -232,6 +233,6 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
-*/
+
 
 }
