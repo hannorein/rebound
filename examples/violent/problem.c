@@ -19,9 +19,9 @@ int nbodies=3;
 int first_ejected = 999;
 int ind;
 
-char title[100] = "~/palmer_scratch/results/timestamps/ias15_stats_";
+char title[100] = "timestamps/ias15_stats_";
 char title_stats[100] = "11_ias15_ejections";//"merc_timestamps/mercurius_first_ejection";
-char title_remove[100] = "rm -rf ~/palmer_scratch/results/timestamps/ias15_stats_";
+char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
 
@@ -212,7 +212,7 @@ void heartbeat(struct reb_simulation* r){
     }
 */
 
-    if (reb_simulation_output_check(r, 10. * 2.*M_PI)){
+    if (reb_simulation_output_check(r, 10000. * 2.*M_PI)){
 
       FILE* f = fopen(title, "a");
       struct reb_particle* sun = &r->particles[0];
