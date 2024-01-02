@@ -20,7 +20,7 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "bad_bs";
-char title_stats[100] = "11_trace_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "11_ias15_ejections";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf bad_bs";
 
 int main(int argc, char* argv[]){
@@ -105,14 +105,14 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.peri_crit_distance = 0.1;
-    r->dt = min * 0.05;
-    //r->ri_ias15.adaptive_mode = 2;
+    r->integrator = REB_INTEGRATOR_IAS15;
+    //r->ri_trace.peri_crit_distance = 0.1;
+    //r->dt = min * 0.05;
+    r->ri_ias15.adaptive_mode = 2;
     r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
     r->track_energy_offset = 1;
-    //r->heartbeat  = heartbeat;               // This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    r->heartbeat  = heartbeat;               // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     //struct reb_simulation* r = reb_create_simulation_from_binary("bad_bs_new.bin");
     //struct reb_simulationarchive* archive = reb_simulationarchive_create_from_file("bad_bs_new.bin");
@@ -170,11 +170,15 @@ int main(int argc, char* argv[]){
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-    FILE* tf = fopen(title_stats, "a");
-    fprintf(tf, "%d,%d,%e,%e,%.20e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent, add);
+    FILE* fs = fopen(title_stats, "a");
+    fprintf(fs, "%d,%d,%e\n", ind, -1, r->t);
+    fclose(fs);
+
+    //FILE* tf = fopen(title_stats, "a");
+    //fprintf(tf, "%d,%d,%e,%e,%.20e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent, add);
     //printf("%d,%d,%e,%e,%f\n", ind, r->N-1, fabs(reb_simulation_energy(r) - e_init)/e_init, time_spent, r->t/(2*M_PI));
     //fprintf(tf, "%d,%d,%e,%e\n", ind, nbodies, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
-    fclose(tf);
+    //fclose(tf);
 
     reb_simulation_free(r);
 }
@@ -183,16 +187,16 @@ int main(int argc, char* argv[]){
 void heartbeat(struct reb_simulation* r){
     // remove particles if needed
 
-    if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
-        reb_simulation_output_timing(r, tmax);
-    }
+    //if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
+    //    reb_simulation_output_timing(r, tmax);
+    //}
 
     // Time to first ejection
     // Always track
-/*
+
     if (first_ejected == 999){ // ejection has not happened yet
       for (unsigned int i = 1; i < nbodies+1; i++){
-          struct reb_particle* p = reb_get_particle_by_hash(r, i);
+          struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
           if (p == NULL){ // first ejected particle
             first_ejected = i;
             //printf("First Ejected: %d\n", i);
@@ -201,12 +205,12 @@ void heartbeat(struct reb_simulation* r){
       }
       if (first_ejected != 999){ // if detected ejection
         FILE* fs = fopen(title_stats, "a");
-        printf(title_stats);
         fprintf(fs, "%d,%d,%e\n", ind, first_ejected, r->t);
         fclose(fs);
+        exit(1);
       }
     }
-*/
+
 /*
     if (reb_simulation_output_check(r, 10. * 2.*M_PI)){
 
