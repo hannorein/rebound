@@ -16,14 +16,14 @@ double e_init; // initial energy
 int Nparticles = 10000;
 double tmax = 1e3;
 
-char title[100] = "ias15_accretion";
-char title_remove[100] = "rm -rf ias15_accretion";
+char title[100] = "trace_accretion";
+char title_remove[100] = "rm -rf trace_accretion";
 
 char remove_snapshots[100] = "rm -rf *kokubo_trace_snapshot_*";
 char snapshot_1[100] = "kokubo_trace_snapshot_1";
 char snapshot_2[100] = "kokubo_trace_snapshot_2";
 char snapshot_3[100] = "kokubo_trace_snapshot_3";
-char snapshot_4[100] = "kokubo_trace_final_orbit_snapshot_4";
+char snapshot_4[100] = "kokubo_trace_snapshot_4";
 
 double snap1_time = 0.0;
 double snap2_time = 30.0 * 2 * M_PI;
@@ -35,7 +35,7 @@ int snap3=1;
 // accretion of the moon
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = REB_INTEGRATOR_TRACE;
     //r->ri_ias15.adaptive_mode=2;
 
     r->dt = 0.1;//0.003 / 10.56789;
@@ -49,6 +49,7 @@ int main(int argc, char* argv[]){
     earth.m = 1;
     double earth_r = 1./2.9;//0.00592; // in units of Roche radius
     earth.r = earth_r;
+    r->ri_trace.peri_crit_distance = earth.r;
     reb_simulation_add(r, earth);
 
     r->rand_seed = 1;
@@ -75,8 +76,8 @@ int main(int argc, char* argv[]){
       double f = reb_random_uniform(r, 0, 2 * M_PI);
       reb_simulation_add_fmt(r, "primary m r a e inc Omega omega f", earth, m, rad, a, e, inc, Omega, omega, f);
     }
-    printf("%f\n", mtot/lunar_mass);
-    printf("%f\n", rad_tot/Nparticles);
+    //printf("%f\n", mtot/lunar_mass);
+    //printf("%f\n", rad_tot/Nparticles);
     //exit(1);
     system(title_remove);
     system(remove_snapshots);
@@ -94,7 +95,7 @@ int main(int argc, char* argv[]){
       double dz = p->z - earth.z;
 
       double r = sqrt(dx*dx+dy*dy);
-      fprintf(f, "%f,%f,%f\n",p->m,r,dz);
+      fprintf(f, "%e,%f,%f\n",p->m,r,dz);
     }
     fclose(f);
 
@@ -108,7 +109,7 @@ int main(int argc, char* argv[]){
     //printf("Final Energy: %e\n", reb_simulation_energy(r));
     //printf("Conservation: %f\n", (reb_simulation_energy(r) - e_init) / e_init);
     //printf("Final N: %d\n", r->N);
-    printf("Time Spent: %f\n", time_spent);
+    //printf("Time Spent: %f\n", time_spent);
 
     FILE* f4 = fopen(snapshot_4,"a");
     struct reb_particle* e = &r->particles[0];
@@ -121,7 +122,7 @@ int main(int argc, char* argv[]){
       double dz = p->z - e->z;
 
       double r = sqrt(dx*dx+dy*dy);
-      fprintf(f4, "%f,%f,%f,%f,%f,%f\n",p->m,r,dz,o.a,o.e,o.inc);
+      fprintf(f4, "%e,%f,%f,%f,%f,%f\n",p->m,r,dz,o.a,o.e,o.inc);
     }
     fclose(f4);
 
@@ -145,7 +146,7 @@ void heartbeat(struct reb_simulation* r){
       double dz = p->z - e->z;
 
       double r = sqrt(dx*dx+dy*dy);
-      fprintf(f, "%f,%f,%f\n",p->m,r,dz);
+      fprintf(f, "%e,%f,%f\n",p->m,r,dz);
     }
     fclose(f);
   }
@@ -162,7 +163,7 @@ void heartbeat(struct reb_simulation* r){
       double dz = p->z - e->z;
 
       double r = sqrt(dx*dx+dy*dy);
-      fprintf(f, "%f,%f,%f\n",p->m,r,dz);
+      fprintf(f, "%e,%f,%f\n",p->m,r,dz);
     }
     fclose(f);
   }
