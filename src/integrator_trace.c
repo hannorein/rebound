@@ -108,7 +108,6 @@ double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, 
     const double dvx = r->particles[j].vx - r->particles[0].vx;
     const double dvy = r->particles[j].vy - r->particles[0].vy;
     const double dvz = r->particles[j].vz - r->particles[0].vz;
-    const double v2 = dvx * dvx + dvy * dvy + dvz * dvz;
 
     const double hx = (dy*dvz - dz*dvy);  // specific angular momentum vector
     const double hy = (dz*dvx - dx*dvz);
@@ -307,13 +306,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
         r->particles[0].vz = 0;
 
         reb_integrator_bs_part2(r);
-
-        struct reb_particle s = r->particles[0];
-        struct reb_particle t = r->particles[2];
-        double dx = t.x - s.x;
-        double dy = t.y - s.y;
-        double dz = t.z - s.z;
-        double d = sqrt(dx*dx+dy*dy+dz*dz);
 
         reb_collision_search(r);
 
