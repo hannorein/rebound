@@ -8,7 +8,6 @@
 #include <string.h>
 #include <time.h>
 #include "rebound.h"
-#include "integrator_trace.h"
 #include "particle.h"
 
 void heartbeat(struct reb_simulation* r);

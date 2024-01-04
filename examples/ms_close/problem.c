@@ -7,7 +7,6 @@
 //#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
-#include "integrator_trace.h"
 
 void heartbeat(struct reb_simulation* r);
 
