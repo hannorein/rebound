@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
     //r->ri_bs.eps_rel = 1e-11;            // Relative tolerance
     //r->ri_bs.eps_abs = 1e-11;            // Absolute tolerance
     //r->ri_ias15.adaptive_mode=2;
-    r->ri_trace.pfdot=1000.;
+    r->ri_trace.peri_crit_fdot=16.;
 
     //struct reb_ode* ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions
     //ho->derivatives = derivatives;              // Right hand side of the ODE
