@@ -46,8 +46,8 @@ int main(int argc, char* argv[]){
 
     r->dt = (8./365.) * 2. * M_PI;
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.hillfac = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
-    r->ri_trace.peri = 0.01;
+    r->ri_trace.r_crit_hill = 4;            // By default the switching radius is 4 times the hill radius, from Hernandez 2023
+    r->ri_trace.peri_crit_distance = 0.01;
     //r->ri_bs.eps_abs          = 1e-11;
     //r->ri_bs.eps_rel          = 1e-11;
 
