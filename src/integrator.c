@@ -44,10 +44,8 @@
 #include "integrator_bs.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
-double e_init;
 
 void reb_integrator_part1(struct reb_simulation* r){
-	e_init = reb_simulation_energy(r);
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_part1(r);
@@ -163,11 +161,6 @@ void reb_integrator_part2(struct reb_simulation* r){
             }
         }
     }
-
-		//printf("\nOne Step Error: %e\n", fabs((reb_simulation_energy(r) - e_init) / e_init));
-		//exit(1);
-
-		// Need to reset timestep??? seems to be getting reset... find out where.
 
 }
 
