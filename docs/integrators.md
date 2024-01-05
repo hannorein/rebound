@@ -59,7 +59,12 @@ The setting for IAS15 are stored in the `reb_integrator_ias15` structure.
         ```
 
 `adaptive_mode` `(unsigned int`)
-:   This flag determines how the relative acceleration error is estimated. The previous name of this flag was `epsilon_global`. If set to 1, IAS15 estimates the fractional error via `max(acceleration_error)/max(acceleration)` where the maximum is taken over all particles. If set to 0, the fractional error is estimates via `max(acceleration_error/acceleration)`.
+:   This flag determines how the adaptive timestep is chosen. The previous name of this flag was `epsilon_global`. 
+    The default is 2 which corresponds to the timestep criterion described in Pham, Rein, and Spiegel (2024). 
+    This should be optimal in almost all cases.
+    If set to 0, the fractional error is estimated via `max(acceleration_error/acceleration)` and the timestep criterion of Rein and Spiegel (2015) is used. 
+    If set to 1, IAS15 estimates the fractional error via `max(acceleration_error)/max(acceleration)` where the maximum is taken over all particles. As before, the timestep criterion of Rein and Spiegel (2015) is used. This was the default until January 2024. 
+    If set to 3, then the criterion of [Aarseth 1985](https://ui.adsabs.harvard.edu/abs/1985IAUS..113..251A/abstract) is used.
 
 All other members of this structure are only for internal IAS15 use.
 

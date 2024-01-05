@@ -572,7 +572,7 @@ void reb_simulation_init(struct reb_simulation* r){
     // ********** IAS15
     r->ri_ias15.epsilon         = 1e-9;
     r->ri_ias15.min_dt      = 0;
-    r->ri_ias15.adaptive_mode = 1; // default is old mode for now
+    r->ri_ias15.adaptive_mode = 2; // new default since January 2024
     r->ri_ias15.iterations_max_exceeded = 0;    
     
     // ********** SEI
