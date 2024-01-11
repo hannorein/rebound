@@ -16,12 +16,16 @@
  #include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
-double tmax = 1e7 * 2 * M_PI;
+double tmax = 10. * 1e6 * 2 * M_PI;
 clock_t begin;
 clock_t end;
 double e_init;
-char title[100] = "ias15_nt";
-char title_remove[100] = "rm -rf ias15_nt";
+
+//char title[100] = "wh_nt_dh";
+//char title_remove[100] = "rm -rf wh_nt_dh";
+
+char title[100] = "trace_nt";
+char title_remove[100] = "rm -rf trace_nt";
 
 double obl(struct reb_vec3d v1, struct reb_vec3d v2){
   return acos(reb_vec3d_dot(v1,v2) / (sqrt(reb_vec3d_length_squared(v1)) * sqrt(reb_vec3d_length_squared(v2))));
@@ -31,8 +35,12 @@ int main(int argc, char* argv[]){
     // Setup constants
     struct reb_simulation* sim = reb_simulation_create();
     //sim->dt             = 2*M_PI*1.;     // initial timestep
-    sim->integrator        = REB_INTEGRATOR_IAS15;
-    sim->ri_ias15.adaptive_mode=2;
+    sim->integrator        = REB_INTEGRATOR_TRACE;
+    sim->ri_trace.r_crit_hill = 0.;
+    sim->ri_trace.peri_crit_fdot = 100.;
+    //sim->integrator = REB_INTEGRATOR_WHFAST;
+    //sim->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    //sim->ri_ias15.adaptive_mode=2;
     sim->heartbeat        = heartbeat;
 
     // Initial conditions Naoz et al 2016 Figure 16
@@ -49,10 +57,9 @@ int main(int argc, char* argv[]){
     reb_simulation_add_fmt(sim, "m r a e", planet_m, planet_r, planet_a, planet_e);
 
     struct reb_orbit o = reb_orbit_from_particle(sim->G, sim->particles[1], sim->particles[0]);
-    sim->dt = o.P/50.12345;
+    sim->dt = o.P/10.12345;
     //sim->ri_trace.S_peri = reb_integrator_trace_peri_switch_default;
-    //sim->ri_trace.peri_distance = 1.;
-    //sim->ri_trace.pfdot=1000.;
+    //sim->ri_trace.peri_crit_distance = 0.5;
     //sim->ri_bs.eps_rel = 1e-11;            // Relative tolerance
     //sim->ri_bs.eps_abs = 1e-11;            // Absolute tolerance
     sim->exact_finish_time=0;
@@ -61,7 +68,7 @@ int main(int argc, char* argv[]){
     double perturber_mass = 10. * 9.55e-4;
     double perturber_a  = 50.;
     double perturber_e = 0.52;
-    double perturber_inc = 65. * M_PI/180.;
+    double perturber_inc = 85. * M_PI/180.;
     double perturber_omega = 0.;
 
     reb_simulation_add_fmt(sim, "m a e inc omega", perturber_mass, perturber_a, perturber_e, perturber_inc, perturber_omega);
