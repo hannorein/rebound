@@ -99,6 +99,9 @@ class Orbit(ctypes.Structure):
         """
         return "<rebound.Orbit instance, a={0} e={1} inc={2} Omega={3} omega={4} f={5}>".format(str(self.a),str(self.e), str(self.inc), str(self.Omega), str(self.omega), str(self.f))
     
+    def __repr__(self):
+        return "<rebound.Orbit instance, a={0} e={1} inc={2} Omega={3} omega={4} f={5}>".format(str(self.a),str(self.e), str(self.inc), str(self.Omega), str(self.omega), str(self.f))
+
     @property 
     def E(self):
         return M_to_E(self.e, self.M)
