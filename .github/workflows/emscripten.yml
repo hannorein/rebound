@@ -1,0 +1,29 @@
+name: REBOUND (emscripten)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    name: Compiling with emscripten
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Download and install emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          emsdk/emsdk install latest
+          emsdk/emsdk activate latest
+      - name: Compile web client
+        run: |
+          bash web_client/compile.bash
+      - name: Archive web client
+        uses: actions/upload-artifact@v3
+        with:
+          name: web_client
+          path: web_client/rebound.html
+      - name: Compile all C examples
+        run: |
+          bash docs/c_examples/compile_emcc.bash 0
