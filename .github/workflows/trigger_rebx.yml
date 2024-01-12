@@ -1,6 +1,8 @@
 name: Trigger REBOUNDx CI
 
-on: [push, pull_request]
+on:
+  release:
+    types: [published]
 
 jobs:
   build:
