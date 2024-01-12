@@ -19,7 +19,7 @@ jobs:
           path: rebound
       - uses: actions/checkout@v4
         with:
-          repository: dtamayp/reboundx
+          repository: dtamayo/reboundx
           path: reboundx
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
