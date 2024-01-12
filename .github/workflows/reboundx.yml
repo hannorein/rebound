@@ -17,6 +17,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: rebound
+      - uses: actions/checkout@v4
+        with:
+          repository: dtamayp/reboundx
+          path: reboundx
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -25,14 +29,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-          pip install -r requirements.txt
-          pip install multiprocess
+          pip install -r rebound/requirements.txt
+          pip install -r reboundx/requirements.txt
       - name: Build REBOUND package
         run: pip install ./rebound
       - name: Build REBOUNDx package
-        run: |
-          git clone https://github.com/dtamayo/reboundx .
-          pip install --no-build-isolation -e . -v
+        run: pip install ./reboundx --no-build-isolation -e . -v
       - name: Run REBOUNDx unit tests
         run: |
+          cd reboundx
           python -m unittest discover -s reboundx/test/ -v
