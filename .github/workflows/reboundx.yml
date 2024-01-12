@@ -30,7 +30,9 @@ jobs:
       - name: Build REBOUNDx package
         run: |
           git clone https://github.com/dtamayo/reboundx
-          pip install -e ./reboundx
+          cd reboundx
+          pip install -e .
       - name: Run REBOUNDx unit tests
         run: |
-          python -m unittest discover -s reboundx/reboundx/test/ -v
+          cd reboundx
+          python -m unittest discover -s reboundx/test/ -v
