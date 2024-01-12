@@ -15,7 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        path: ./rebound
+        with:
+          path: rebound
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
