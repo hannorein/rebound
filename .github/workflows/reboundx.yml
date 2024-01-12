@@ -28,13 +28,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest
+          pip install pytest wheel setuptools
           pip install -r rebound/requirements.txt
           pip install -r reboundx/requirements.txt
       - name: Build REBOUND package
         run: pip install ./rebound
       - name: Build REBOUNDx package
-        run: pip install ./reboundx --no-build-isolation -e . -v
+        run: pip install --no-build-isolation -e ./reboundx -v
       - name: Run REBOUNDx unit tests
         run: |
           cd reboundx
