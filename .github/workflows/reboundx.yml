@@ -31,7 +31,7 @@ jobs:
         run: |
           git clone https://github.com/dtamayo/reboundx
           cd reboundx
-          pip install -e .
+          pip install --no-build-isolation -e . -v
       - name: Run REBOUNDx unit tests
         run: |
           cd reboundx
