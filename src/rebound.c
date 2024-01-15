@@ -599,8 +599,8 @@ void reb_simulation_init(struct reb_simulation* r){
     // ********** TRACE
     r->ri_trace.mode = 0;
     r->ri_trace.encounter_N = 0;
-    r->ri_trace.r_crit_hill = 4.;
-    r->ri_trace.peri_crit_fdot = 16.;
+    r->ri_trace.r_crit_hill = 3.;
+    r->ri_trace.peri_crit_fdot = 17.;
     r->ri_trace.peri_crit_distance = 0.; // User should set this to appropriate value for system, but not strictly needed
     r->ri_trace.force_accept = 0;
 

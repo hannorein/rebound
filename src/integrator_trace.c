@@ -60,6 +60,7 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
         const double dyj  = r->particles[j].y;
         const double dzj  = r->particles[j].z;
         const double dj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
+        //struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[j], r->particles[0]);
         dcritj = ri_trace->r_crit_hill*dj*cbrt(r->particles[j].m/(3.*m0));
     }
 
@@ -67,6 +68,9 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
     const double dy = r->particles[i].y - r->particles[j].y;
     const double dz = r->particles[i].z - r->particles[j].z;
     const double d = sqrt(dx*dx + dy*dy + dz*dz);
+
+    //printf("\n%f %f %f\n", d, dcriti, dcritj);
+    //exit(1);
 
 
     // Use traditional switching function
@@ -117,11 +121,17 @@ double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, 
     // This only works for bound orbits!
     const double fdot = h / (d2);
     const double peff = (2 * M_PI / fdot); // effective period
-    double fcond_peri = (peff / r->dt) - pfdot;
+    double fcond_peri = peff - pfdot * r->dt;
 
     // Failsafe: use pericenter pericenter distance
     double fcond_dist = d - pdist;
-
+/*
+    if (j==1 && fcond_peri < 0.0){
+      struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[j], r->particles[0]);
+      //printf("Peri Flagged: %f %f %f\n", r->t, o.f, fdot);
+      exit(1);
+    }
+*/
     return MIN(fcond_peri, fcond_dist);
 }
 
@@ -429,6 +439,105 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     ri_trace->encounter_map_internal[0] = 1;
 }
 
+void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
+    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    const int N = r->N;
+    const int Nactive = r->N_active==-1?r->N:r->N_active;
+
+    // Switching functions
+    double (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
+    double (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
+
+    if (r->testparticle_type == 1){
+        ri_trace->tponly_encounter = 0; // testparticles affect massive particles
+    }else{
+        ri_trace->tponly_encounter = 1;
+    }
+
+    // Check for pericenter CE
+    for (int j = 1; j < Nactive; j++){
+        if (_switch_peri(r, j) < 0.0){
+            ri_trace->current_C = 1;
+            if (j < Nactive){ // Two massive particles have a close encounter
+                ri_trace->tponly_encounter = 0;
+            }
+        }
+    }
+
+    // Body-body
+    // there cannot be TP-TP CEs
+    for (int i = 1; i < Nactive; i++){
+        for (int j = i + 1; j < N; j++){
+            if (_switch(r, i, j) < 0.0){
+                ri_trace->current_Ks[i][j] = 1;
+                if (ri_trace->encounter_map_internal[i] == 0){
+                    ri_trace->encounter_map_internal[i] = i;
+                    ri_trace->encounter_N++;
+                }
+                if (ri_trace->encounter_map_internal[j] == 0){
+                    ri_trace->encounter_map_internal[j] = j;
+                    ri_trace->encounter_N++;
+                }
+
+                if (j < Nactive){ // Two massive particles have a close encounter
+                    ri_trace->tponly_encounter = 0;
+                }
+            }
+        }
+    }
+}
+
+double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
+    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    const int N = r->N;
+    const int Nactive = r->N_active==-1?r->N:r->N_active;
+    int new_c = 0; // New CEs
+
+    // Switching functions
+    double (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
+    double (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
+
+    // Check for pericenter CE
+    if (ri_trace->current_C == 0){
+      for (int j = 1; j < Nactive; j++){
+          if (_switch_peri(r, j) < 0.0){
+              ri_trace->current_C = 1;
+              new_c = 1;
+
+              if (j < Nactive){ // Two massive particles have a close encounter
+                  ri_trace->tponly_encounter = 0;
+              }
+          }
+      }
+    }
+
+    // Body-body
+    // there cannot be TP-TP CEs
+    for (int i = 1; i < Nactive; i++){
+        for (int j = i + 1; j < N; j++){
+            if (ri_trace->current_Ks[i][j] == 0){
+              if (_switch(r, i, j) < 0.0){
+                  ri_trace->current_Ks[i][j] = 1;
+                  new_c = 1;
+                  if (ri_trace->encounter_map_internal[i] == 0){
+                      ri_trace->encounter_map_internal[i] = i;
+                      ri_trace->encounter_N++;
+                  }
+                  if (ri_trace->encounter_map_internal[j] == 0){
+                      ri_trace->encounter_map_internal[j] = j;
+                      ri_trace->encounter_N++;
+                  }
+
+                  if (j < Nactive){ // Two massive particles have a close encounter
+                      ri_trace->tponly_encounter = 0;
+                  }
+              }
+            }
+        }
+    }
+    return new_c;
+}
+
 int reb_integrator_trace_Fcond(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
@@ -492,7 +601,6 @@ int reb_integrator_trace_Fcond(struct reb_simulation* const r){
     return new_c;
 }
 
-// This is Listing 2
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     //printf("\nStart TS\n");
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
@@ -508,7 +616,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         }
     }
 
-    reb_integrator_trace_Fcond(r); // return value ignored.
+    // check conditions
+    reb_integrator_trace_pre_ts_check(r); // return value ignored.
 
     if (ri_trace->current_C){ //more efficient way to check if we need to redo this...
         // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -528,7 +637,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
     // Check for new close_encounters
-    if (reb_integrator_trace_Fcond(r) && !ri_trace->force_accept){
+    if (reb_integrator_trace_post_ts_check(r) && !ri_trace->force_accept){
         //printf("Reject\n");
         // REJECT STEP
         for (int i=0; i<N; i++){
