@@ -237,6 +237,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         }
     }
 
+    // other substeps
     if (needs_nbody){
         reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
     }
@@ -248,7 +249,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
           }
         }
 
-        odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t); // update yDot w/ nbody derivatives
+        odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t);
     }
     for (int s=0; s < Ns; s++){
 
@@ -266,7 +267,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         }
     }
 
-    for (int j = 1; j < n; ++j) {
+    for (int j = 1; j < n; ++j) {  // Note: iterating n substeps, not 2n substeps as in Eq. (9.13)
         t += subStep;
         for (int s=0; s < Ns; s++){
 
@@ -279,7 +280,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
             double* y1 = odes[s]->y1;
             double* yDot = odes[s]->yDot;
-            double* yTmp = odes[s]->yTmp; // On first iteration this is y0. Becomes y1 of each subsequent iteration
+            double* yTmp = odes[s]->yTmp;
             const int length = odes[s]->length;
             for (int i = 0; i < length; ++i) {
                 const double middle = y1[i];
@@ -333,6 +334,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
     }
 
+    // correction of the last substep (at t0 + step)
     for (int s=0; s < Ns; s++){
 
         if (r->integrator == REB_INTEGRATOR_TRACE){
@@ -346,15 +348,16 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         double* yDot = odes[s]->yDot;
         const int length = odes[s]->length;
         for (int i = 0; i < length; ++i) {
-            y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]);
+            y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); // = 0.25*(y_(2n-1) + 2*y_n(2) + y_(2n+1))     Eq (9.13c)
         }
     }
+
     return 1;
 }
 
 static void extrapolate(const struct reb_ode* ode, double * const coeff, const int k) {
     double* const y1 = ode->y1;
-    double* const C = ode->C;
+    double* const C = ode->C;  // C and D values follow Numerical Recipes 
     double** const D =  ode->D;
     double const length = ode->length;
     for (int j = 0; j < k; ++j) {
@@ -364,8 +367,8 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
         double facD = xim1/(xi-xim1);
         for (int i = 0; i < length; ++i) {
             double CD = C[i] - D[k - j -1][i];
-            C[i] = facC * CD;
-            D[k - j - 1][i] = facD * CD;
+            C[i] = facC * CD; // Only need to keep one C value
+            D[k - j - 1][i] = facD * CD; // Keep all D values for recursion
         }
     }
     for (int i = 0; i < length; ++i) {
@@ -456,9 +459,8 @@ void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot
 
 void reb_integrator_bs_part1(struct reb_simulation* r){
     struct reb_ode** odes = r->odes;
-    int Ns = r->N_odes;
+    int Ns = r->N_odes; // Number of ode sets
     for (int s=0; s < Ns; s++){
-
         const int length = odes[s]->length;
         double* y0 = odes[s]->y;
         double* y1 = odes[s]->y1;
@@ -497,7 +499,7 @@ static void allocate_sequence_arrays(struct reb_simulation* r){
     // initialize the extrapolation tables
     for (int j = 0; j < sequence_length; ++j) {
         double r = 1./((double) ri_bs->sequence[j]);
-        ri_bs->coeff[j] = r*r; // 1 / stepsize**2
+        ri_bs->coeff[j] = r*r;
     }
 
     // TRACE - allocate map
@@ -527,7 +529,6 @@ static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, dou
 
 
 int reb_integrator_bs_step(struct reb_simulation* r, double dt){
-    //printf("%f\n", r->t);
     // return 1 if step was successful
     //        0 if rejected 
     //
@@ -550,8 +551,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     // maxError not used at the moment.
     // double  maxError = DBL_MAX;
 
-    // TRACE: mode = 1, integrate nbody only. Mode = 0, integrate everything except nbody (for additional forces). Do not update time
-    // Loop from start to finish, set variables here for TRACE
     int Ns = r->N_odes; // Number of ode sets
     struct reb_ode** odes = r->odes;
     double error;
@@ -603,7 +602,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
           }
         }
 
-        odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t); // This sets the nbody derivatives into y0Dot
+        odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t);
     }
 
     const int forward = (dt >= 0.);
@@ -613,9 +612,9 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     for (int loop = 1; loop; ) {
 
         ++k;
+        
         // modified midpoint integration with the current substep
         if ( ! tryStep(r, Ns, k, ri_bs->sequence[k], t, dt)) {
-            // tryStep returns 0
 
             // the stability check failed, we reduce the global step
 #if DEBUG
@@ -636,13 +635,12 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
                 const int length = odes[s]->length;
                 for (int i = 0; i < length; ++i) {
-                    double CD = odes[s]->y1[i]; // y1s are the yns now
-                    odes[s]->C[i] = CD; // So Cs are now the yns
-                    odes[s]->D[k][i] = CD; // Set the kth row of D to yns
+                    double CD = odes[s]->y1[i];
+                    odes[s]->C[i] = CD;
+                    odes[s]->D[k][i] = CD;
                 }
             }
 
-            // tryStep returns 1
             // the substep was computed successfully
             if (k > 0) {
 
@@ -744,7 +742,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                         dt = ri_bs->optimal_step[ri_bs->target_iter];
 
 #if DEBUG
-                                                                printf(" e%d %f", ri_bs->target_iter, dt);
+                                        printf("O");
 #endif
                                     }
                                 }
@@ -763,6 +761,9 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                 if (error > ratio * ratio) {
                                     // we don't expect to converge on next iteration
                                     // we reject the step immediately
+#if DEBUG
+                                    printf("o");
+#endif
                                     reject = 1;
                                     loop = 0;
                                     if ((ri_bs->target_iter > 1) &&
@@ -771,15 +772,15 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                         --ri_bs->target_iter;
                                     }
                                     dt = ri_bs->optimal_step[ri_bs->target_iter];
-                                    #if DEBUG
-                                                                        printf("o%d %f ", ri_bs->target_iter, dt);
-                                    #endif
                                 }
                             }
                             break;
 
                         case 1 : // one past target
                             if (error > 1.0) {
+#if DEBUG
+                                printf("e");
+#endif
                                 reject = 1;
                                 if ((ri_bs->target_iter > 1) &&
                                         (ri_bs->cost_per_time_unit[ri_bs->target_iter - 1] <
@@ -787,10 +788,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                     --ri_bs->target_iter;
                                 }
                                 dt = ri_bs->optimal_step[ri_bs->target_iter];
-
-                                #if DEBUG
-                                                                printf(" e%d %f", ri_bs->target_iter, dt);
-                                #endif
                             }
                             loop = 0;
                             break;
@@ -809,6 +806,9 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
 
     if (! reject) {
+#if DEBUG
+        printf(".");
+#endif
         // Swap arrays
         for (int s=0; s < Ns; s++){
 
@@ -817,7 +817,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                 continue;
               }
             }
-
 
             double* y_tmp = odes[s]->y;
             odes[s]->y = odes[s]->y1; 
@@ -872,11 +871,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
             ri_bs->target_iter = optimalIter;
 
         }
-
-        #if DEBUG
-                // Accepted
-                printf(" .%d %f ", ri_bs->target_iter, dt);
-        #endif
     }
 
     dt = fabs(dt);
@@ -927,8 +921,6 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     if (r->integrator == REB_INTEGRATOR_TRACE){
       ode->needs_nbody = 0;
     }
-
-
 
     ode->N_allocated = length;
     ode->getscale = NULL;
