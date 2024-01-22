@@ -60,6 +60,19 @@ void reb_collision_search(struct reb_simulation* const r){
             mercurius_map = r->ri_mercurius.encounter_map;
         }
     }
+
+    int* trace_map = NULL;
+    if (r->integrator==REB_INTEGRATOR_TRACE){
+        if (r->ri_trace.mode==0){
+            // After jump step, only collisions with star might occur.
+            // All other collisions in encounter step/
+            Ninner = 1;
+        }else{
+            N = r->ri_trace.encounter_N;
+            Ninner = N;
+            trace_map = r->ri_trace.encounter_map;
+        }
+    }
     int collisions_N = 0;
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){
@@ -83,6 +96,9 @@ void reb_collision_search(struct reb_simulation* const r){
                     if (mercurius_map){
                         ip = mercurius_map[i];
                     }
+                    if (trace_map){
+                        ip = trace_map[i];
+                    }
                     struct reb_particle p1 = particles[ip];
                     struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                     struct reb_vec6d gb = gborig;
@@ -100,6 +116,9 @@ void reb_collision_search(struct reb_simulation* const r){
                         int jp = j;
                         if (mercurius_map){
                             jp = mercurius_map[j];
+                        }
+                        if (trace_map){
+                            jp = trace_map[j];
                         }
                         struct reb_particle p2 = particles[jp];
                         double dx = gb.x - p2.x; 
@@ -120,6 +139,10 @@ void reb_collision_search(struct reb_simulation* const r){
                             // Init to 32 if no space has been allocated yet, otherwise double it.
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
+                        }
+                        if (r->integrator==REB_INTEGRATOR_TRACE){
+                          // if collision, TRACE automatically accepts the step
+                          r->ri_trace.force_accept = 1;
                         }
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;
@@ -344,7 +367,7 @@ void reb_collision_search(struct reb_simulation* const r){
         resolve = reb_collision_resolve_halt;
     }
     unsigned int collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS || r->integrator == REB_INTEGRATOR_TRACE){
         collision_resolve_keep_sorted = 1; // Force keep_sorted for hybrid integrator
     }
 
@@ -372,6 +395,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     }else{ // Not in a tree, particles get removed immediately 
                         // Update p2 of current collision
                         if (collision_resolve_keep_sorted){
+                          // Always here for TRACE
                             if (c.p2 > c.p1){
                                 c.p2--;
                             }
@@ -763,6 +787,12 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
                 vz += r->ri_mercurius.com_vel.z;
             }
 
+            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==1){
+                vx += r->ri_trace.com_vel.x;
+                vy += r->ri_trace.com_vel.y;
+                vz += r->ri_trace.com_vel.z;
+            }
+
             Ei += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
         }
         {
@@ -773,6 +803,12 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
                 vx += r->ri_mercurius.com_vel.x;
                 vy += r->ri_mercurius.com_vel.y;
                 vz += r->ri_mercurius.com_vel.z;
+            }
+
+            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==1){
+                vx += r->ri_trace.com_vel.x;
+                vy += r->ri_trace.com_vel.y;
+                vz += r->ri_trace.com_vel.z;
             }
 
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
@@ -811,6 +847,12 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
                 vx += r->ri_mercurius.com_vel.x;
                 vy += r->ri_mercurius.com_vel.y;
                 vz += r->ri_mercurius.com_vel.z;
+            }
+
+            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==1){
+                vx += r->ri_trace.com_vel.x;
+                vy += r->ri_trace.com_vel.y;
+                vz += r->ri_trace.com_vel.z;
             }
 
             Ef += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);

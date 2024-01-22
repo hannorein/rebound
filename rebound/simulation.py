@@ -13,9 +13,9 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21, "trace":25}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
-GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
+GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "trace": 6}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
@@ -147,6 +147,40 @@ class Simulation(Structure):
                         # Just a warning
                         warnings.warn(message, RuntimeWarning)
             return sim
+
+        # Create simulation from Simulationarchive
+        if isinstance(args[0], Simulationarchive):
+            sa = args[0]
+        else:
+            # Otherwise assume first argument is filename
+            filename = args[0]
+            if "filename" in kw:
+                filename = kw["filename"]
+            sa = Simulationarchive(filename,process_warnings=False)
+
+        snapshot = -1
+        if len(args)>1:
+            snapshot = args[1]
+        if "snapshot" in kw:
+            snapshot = kw["snapshot"]
+
+        if sa is not None:
+            # Recreate exisitng simulation 
+            sim = super(Simulation,cls).__new__(cls)
+            clibrebound.reb_simulation_init(byref(sim))
+            w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
+            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
+            for majorerror, value, message in BINARY_WARNINGS:
+                if w.value & value:
+                    if majorerror:
+                        raise RuntimeError(message)
+                    else:
+                        # Just a warning
+                        warnings.warn(message, RuntimeWarning)
+            return sim
+
+        # Still here? Then an error occured.
+        raise RuntimeError("Can not create Simulation.")
 
         # Still here? Then an error occured.
         raise RuntimeError("Can not create Simulation.")
@@ -581,6 +615,7 @@ class Simulation(Structure):
         - ``'EOS'`` 
         - ``'BS'`` 
         - ``'WHFast512'``
+        - ``'TRACE'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -1431,6 +1466,7 @@ from .integrators.eos import IntegratorEOS
 from .integrators.ias15 import IntegratorIAS15
 from .integrators.saba import IntegratorSABA
 from .integrators.mercurius import IntegratorMercurius
+from .integrators.trace import IntegratorTRACE
 
 from .variation import Variation
 
@@ -1537,6 +1573,7 @@ Simulation._fields_ = [
                 ("ri_saba", IntegratorSABA),
                 ("ri_ias15", IntegratorIAS15),
                 ("ri_mercurius", IntegratorMercurius),
+                ("ri_trace", IntegratorTRACE),
                 ("ri_janus", IntegratorJanus),
                 ("ri_eos", IntegratorEOS),
                 ("ri_bs", IntegratorBS),
@@ -1561,7 +1598,6 @@ AFF = CFUNCTYPE(None,POINTER(Simulation))
 CORFF = CFUNCTYPE(c_double,POINTER(Simulation), c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER(Simulation), CollisionS)
 FPA = CFUNCTYPE(None, POINTER(Particle))
-
 
 # Import at the end to avoid circular dependence
 from . import horizons

@@ -19,7 +19,7 @@ Abstract submission and registration are now open at [https://hannorein.github.i
 * No dependencies on external libraries.
 * Runs natively on Linux, MacOS, and Windows. 
 * Symplectic integrators ([WHFast](integrators/#whfast), [SEI](integrators/#sei), [LEAPFROG](integrators/#leapfrog), [EOS](integrators/#embedded-operator-splitting-method-eos))
-* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
+* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius), [TRACE](integrators/#trace))
 * High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
 * High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
 * Can integrate arbitrary user-defined ODEs that are coupled to N-body dynamics for tides, spin, etc
@@ -109,4 +109,3 @@ REBOUND is free software: you can redistribute it and/or modify it under the ter
 REBOUND is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with REBOUND.  If not, see <http://www.gnu.org/licenses/>.
-

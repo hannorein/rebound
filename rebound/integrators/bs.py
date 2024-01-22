@@ -57,4 +57,6 @@ class IntegratorBS(Structure):
                 ("_previous_rejected", c_int),
                 ("_target_iter", c_int),
                 ("_user_ode_needs_nbody", c_int),
+                ("_map", POINTER(c_int)),
+                ("_map_allocated_n", c_uint),
             ]               

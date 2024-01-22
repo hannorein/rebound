@@ -250,6 +250,38 @@ struct reb_integrator_sei {
     double tandtz;      // Cached tan(), z axis
 };
 
+// TRACE (Lu et al. 2023)
+struct reb_integrator_trace {
+    double (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+    double (*S_peri) (struct reb_simulation* const r, const unsigned int j);
+
+    double r_crit_hill;
+    double peri_crit_fdot;
+    double peri_crit_distance;
+
+    // Internal use
+    unsigned int mode;              // 0 if WH is operating, 1 if BS is operating.
+    unsigned int encounter_N;        // Number of particles currently having an encounter
+    unsigned int encounter_N_active;  // Number of active particles currently having an encounter
+
+    unsigned int N_allocated;
+    unsigned int N_allocated_additional_forces;
+    unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
+
+    struct reb_particle* REB_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
+    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  TLu contains coordinates before kepler step
+    struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
+
+    int* encounter_map;             // Map to represent which particles are integrated with BS
+    int* encounter_map_internal;
+    struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
+    struct reb_vec3d com_vel;
+
+    int** current_Ks; // TLu tracking K for the entire timestep
+    unsigned int current_C; // TLu tracking C for the entire timestep
+    unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
+};
+
 // SABA Integrator (Laskar & Robutel 2001)
 struct reb_integrator_saba {
     enum {
@@ -360,6 +392,11 @@ struct reb_integrator_bs {
     int previous_rejected;
     int target_iter;
     int user_ode_needs_nbody;   // Do not set manually. Use needs_nbody in reb_ode instead.
+
+    // Update simulationarchive for these
+    int* map;                       // internal map to particles (this is an identity map except when TRACE is used)
+    unsigned int N_allocated_map;   // allocated size for map
+    int nbody_index; // for TRACE
 };
 
 // Available methods for EOS Integrator
@@ -565,6 +602,7 @@ struct reb_simulation {
         REB_INTEGRATOR_BS = 12,         // Gragg-Bulirsch-Stoer 
         // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,  // WHFast integrator, optimized for AVX512
+        REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu et al. 2023)
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
@@ -579,6 +617,7 @@ struct reb_simulation {
         REB_GRAVITY_TREE = 3,           // Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
         REB_GRAVITY_MERCURIUS = 4,      // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,         // Special gravity routine which includes the Jacobi terms for WH integrators 
+        REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
         } gravity;
 
     // Datastructures for integrators
@@ -588,6 +627,7 @@ struct reb_simulation {
     struct reb_integrator_saba ri_saba;             // The SABA struct 
     struct reb_integrator_ias15 ri_ias15;           // The IAS15 struct
     struct reb_integrator_mercurius ri_mercurius;   // The MERCURIUS struct
+    struct reb_integrator_trace ri_trace;              // The TRACE struct
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct

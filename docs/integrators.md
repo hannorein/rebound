@@ -400,6 +400,104 @@ The `reb_integrator_mercurius` structure contains the configuration and data str
 `unsigned int safe_mode`
 :   If this flag is set to 1 (the default), the integrator will recalculate heliocentric coordinates and synchronize after every timestep to avoid problems with outputs or particle modifications between timesteps. Setting this flag to 0 will result in a speedup, but care must be taken to synchronize and recalculate coordinates manually if needed.
 
+## TRACE
+
+TRACE is a hybrid time-reversible integrator, based on the algorithm described in [Hernandez & Dehnen 2023](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract). 
+It uses WHFast for long term integrations but switches reversibly to BS for all close encounters. TRACE is appropriate for systems with a dominant central mass.
+The TRACE implementation is described in UPDATE LINK [Lu et al in prep](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract)
+
+
+The following code enables TRACE and sets the critical radius to 4 Hill radii
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_create_simulation();
+    r->integrator = REB_INTEGRATOR_TRACE;
+    r->ri_trace.hillfac = 4.;
+    ```
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.integrator = "trace"
+    sim.ri_trace.hillfac = 4.
+    ```
+
+The `reb_integrator_trace` structure contains the configuration and data structures used by the hybrid symplectic TRACE integrator.
+
+`double (*S) (const struct reb_simulation* const r, const unsigned int i, const unsigned int j)`
+:   This is a function pointer to the switching function for close encounters between non-central bodies.
+    If NULL (the default), the default switching function will be used.
+    The arguments `i` and `j` are the indices of the two particles considered.
+    The return value is a scalar.
+    If this function returns a negative value, it means a close encounter has been flagged.
+
+    - Default switching function
+
+        This is a similar (but slightly modified) switching function used in MERCURY and MERCURIUS.
+
+        ```c
+        double reb_integrator_trace_switch_default(const struct reb_simulation* const r, const unsigned int i, const unsigned int j);           
+        ```
+
+    The switching function can be manually set using this syntax:
+
+    === "C"
+        ```c
+        struct reb_simulation* r = reb_create_simulation();
+        r->ri_trace.S = reb_integrator_trace_switch_default;
+        ```
+
+    === "Python"
+        ```python
+        sim = rebound.Simulation()
+        sim.ri_trace.S = "default"
+        ```
+        
+`double (*S_peri) (const struct reb_simulation* const r, const unsigned int j)`
+:   This is a function pointer to the switching function for close encounters involving the central body.
+    If NULL (the default), the default switching function will be used.
+    The argument `j` is the index of the non-central particle considered.
+    The return value is a scalar.
+    If this function returns a negative value, it means a close encounter has been flagged. If the return values of both this function and the non-central switching function are always positive, then the integrator effectively becomes the standard Wisdom-Holman integrator.
+
+    - Default switching function
+
+        This switching function checks if a body is close to its pericenter, inspired by [Wisdom 2015](https://ui.adsabs.harvard.edu/abs/2015AJ....150..127W/abstract)
+
+        ```c
+        double reb_integrator_trace_peri_switch_default(const struct reb_simulation* const r, const unsigned int j);           
+        ```
+        
+    - Distance switching function
+
+        This switching function checks for close encounters with a simple heliocentric distance check
+
+        ```c
+        double reb_integrator_trace_peri_switch_distance(const struct reb_simulation* const r, const unsigned int j);           
+        ```
+
+    The switching function can be manually set using this syntax:
+
+    === "C"
+        ```c
+        struct reb_simulation* r = reb_create_simulation();
+        r->ri_trace.S_peri = reb_integrator_trace_peri_switch_distance;
+        ```
+
+    === "Python"
+        ```python
+        sim = rebound.Simulation()
+        sim.ri_trace.S_peri = "distance"
+        ```
+
+`double hillfac`
+:   The critical switchover radii of non-central particles are calculated based on a modified Hill radii criteria. This modified Hill radius for each particle is calculated and then multiplied by the `hillfac` parameter. The parameter is in units of the modified Hill radius. The default value is 4.
+
+`double pfdot`
+:   The criteria for a pericenter approach with the central body. This criteria is used in the `default` pericenter switching condition. It flags a particle as in a close pericenter approach if the effective period at pericenter (in units of the timestep) is less than the `hillfac` parameter. The default value is 16.
+
+`double peri_distance`
+:   The criteria for a pericenter approach with the central body. This criteria is used in the `distance` pericenter switching condition. It flags a particle as in a close pericenter approach if its heliocentric distance is less than the `peri_distance` parameter.
 
 
 
