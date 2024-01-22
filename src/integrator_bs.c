@@ -468,7 +468,7 @@ void reb_integrator_bs_part1(struct reb_simulation* r){
     }
 }
 
-static void allocate_sequence_arrays(struct reb_integrator_bs* ri_bs){
+static void allocate_sequence_arrays(struct reb_simulation* r){
     struct reb_integrator_bs* ri_bs = &r->ri_bs;
     ri_bs->sequence        = malloc(sizeof(int)*sequence_length);
     ri_bs->cost_per_step     = malloc(sizeof(int)*sequence_length);
