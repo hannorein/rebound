@@ -382,7 +382,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 }
 
 
-void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+static void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
     if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE || r->integrator == REB_INTEGRATOR_MERCURIUS) { // TRACE always needs this to ensure the right Hamiltonian is evolved
         // Not needed for first step. Accelerations already calculated. Just need to copy them
@@ -916,11 +916,6 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     ode->r = r; // weak reference
     ode->length = length;
     ode->needs_nbody = 1;
-
-    // try just killing this for TRACE. But what if you make the ODE before setting TRACE?
-    if (r->integrator == REB_INTEGRATOR_TRACE){
-      ode->needs_nbody = 0;
-    }
 
     ode->N_allocated = length;
     ode->getscale = NULL;

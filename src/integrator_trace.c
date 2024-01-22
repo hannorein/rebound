@@ -393,22 +393,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_trace->S_peri = reb_integrator_trace_peri_switch_default;
     }
 
-    // Set nbody ODE here to know if we need to integrate other ODEs in step one.
-    if (r->ri_bs.nbody_ode == NULL){
-        r->ri_bs.nbody_index = r->N_odes;
-        r->ri_bs.nbody_ode = reb_ode_create(r, r->N*3*2);
-        r->ri_bs.nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
-        r->ri_bs.nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
-        r->ri_bs.first_or_last_step = 1; // what is this?
-    }
-
-    // I can't think of a better way to do this, but TRACE needs to kill needs_nbody for each additional ODE
-    if (r->N_odes > 1){
-      for (int s=0; s < r->N_odes; s++){
-        r->odes[s]->needs_nbody = 0;
-      }
-    }
-
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = 0;
     ri_trace->force_accept = 0;
