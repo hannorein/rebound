@@ -396,7 +396,6 @@ struct reb_integrator_bs {
     // Update simulationarchive for these
     int* map;                       // internal map to particles (this is an identity map except when TRACE is used)
     unsigned int N_allocated_map;   // allocated size for map
-    int nbody_index; // for TRACE
 };
 
 // Available methods for EOS Integrator

@@ -123,6 +123,9 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     const double subStep  = step / n;
     double t = t0;
     int needs_nbody = ri_bs->user_ode_needs_nbody;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        needs_nbody = 0; // TRACE does not allow for coupling of N-body and other ODEs
+    }
 
     // LeapFrog Method did not seem to be of any advantage 
     //    switch (method) {
@@ -220,14 +223,6 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     // first substep
     t += subStep;
     for (int s=0; s < Ns; s++){
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s != ri_bs->nbody_index) || (!r->ri_trace.mode && s == ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
-
         double* y0 = odes[s]->y;
         double* y1 = odes[s]->y1;
         double* y0Dot = odes[s]->y0Dot;
@@ -242,23 +237,9 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
     }
     for (int s=0; s < Ns; s++){
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s != ri_bs->nbody_index) || (!r->ri_trace.mode && s == ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
         odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t);
     }
     for (int s=0; s < Ns; s++){
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s != ri_bs->nbody_index) || (!r->ri_trace.mode && s == ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
         double* y0 = odes[s]->y;
         double* yTmp = odes[s]->yTmp;
         const int length = odes[s]->length;
@@ -270,14 +251,6 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     for (int j = 1; j < n; ++j) {  // Note: iterating n substeps, not 2n substeps as in Eq. (9.13)
         t += subStep;
         for (int s=0; s < Ns; s++){
-
-            if (r->integrator == REB_INTEGRATOR_TRACE){
-              if ((r->ri_trace.mode && s != ri_bs->nbody_index) || (!r->ri_trace.mode && s == ri_bs->nbody_index)){
-                continue;
-              }
-            }
-
-
             double* y1 = odes[s]->y1;
             double* yDot = odes[s]->yDot;
             double* yTmp = odes[s]->yTmp;
@@ -293,14 +266,6 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
             reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
         }
         for (int s=0; s < Ns; s++){
-
-            if (r->integrator == REB_INTEGRATOR_TRACE){
-              if ((r->ri_trace.mode && s != ri_bs->nbody_index) || (!r->ri_trace.mode && s == ri_bs->nbody_index)){
-                continue;
-              }
-            }
-
-
             odes[s]->derivatives(odes[s], odes[s]->yDot, odes[s]->y1, t);
         }
 
@@ -309,13 +274,6 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
             double initialNorm = 0.0;
             double deltaNorm = 0.0;
             for (int s=0; s < Ns; s++){
-
-                if (r->integrator == REB_INTEGRATOR_TRACE){
-                  if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-                    continue;
-                  }
-                }
-
                 double* yDot = odes[s]->yDot;
                 double* y0Dot = odes[s]->y0Dot;
                 double* scale = odes[s]->scale;
@@ -336,13 +294,6 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
     // correction of the last substep (at t0 + step)
     for (int s=0; s < Ns; s++){
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s != ri_bs->nbody_index) || (!r->ri_trace.mode && s == ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
         double* y1 = odes[s]->y1;
         double* yTmp = odes[s]->yTmp;
         double* yDot = odes[s]->yDot;
@@ -558,13 +509,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     // Check if ODEs have been set up correctly 
     for (int s=0; s < Ns; s++){
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
         if (!odes[s]->derivatives){
             reb_simulation_error(r,"A user-specified set of ODEs has not been provided with a derivatives function.");
             r->status = REB_STATUS_GENERIC_ERROR;
@@ -574,14 +518,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     for (int s=0; s < Ns; s++){
         // Check if ODEs need pre timestep setup
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
-
         if (odes[s]->pre_timestep){
             odes[s]->pre_timestep(odes[s], odes[s]->y);
         }
@@ -595,13 +531,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     // first evaluation, at the beginning of the step
     for (int s=0; s < Ns; s++){
-
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-          if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-            continue;
-          }
-        }
-
         odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t);
     }
 
@@ -626,13 +555,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
         } else {
             for (int s=0; s < Ns; s++){
-
-                if (r->integrator == REB_INTEGRATOR_TRACE){
-                  if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-                    continue;
-                  }
-                }
-
                 const int length = odes[s]->length;
                 for (int i = 0; i < length; ++i) {
                     double CD = odes[s]->y1[i];
@@ -647,14 +569,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                 // extrapolate the state at the end of the step
                 // using last iteration data
                 for (int s=0; s < Ns; s++){
-
-                    if (r->integrator == REB_INTEGRATOR_TRACE){
-                      if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-                        continue;
-                      }
-                    }
-
-
                     extrapolate(odes[s], ri_bs->coeff, k);
                     if (odes[s]->getscale){
                         odes[s]->getscale(odes[s], odes[s]->y, odes[s]->y1);
@@ -667,14 +581,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                 error = 0;
                 //long int combined_length = 0;
                 for (int s=0; s < Ns; s++){
-
-                    if (r->integrator == REB_INTEGRATOR_TRACE){
-                      if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-                        continue;
-                      }
-                    }
-
-
                     const int length = odes[s]->length;
                     //combined_length += length;
                     double * C = odes[s]->C;
@@ -811,13 +717,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 #endif
         // Swap arrays
         for (int s=0; s < Ns; s++){
-
-            if (r->integrator == REB_INTEGRATOR_TRACE){
-              if ((r->ri_trace.mode && s!=ri_bs->nbody_index) || (!r->ri_trace.mode && s==ri_bs->nbody_index)){
-                continue;
-              }
-            }
-
             double* y_tmp = odes[s]->y;
             odes[s]->y = odes[s]->y1; 
             odes[s]->y1 = y_tmp; 
@@ -970,7 +869,6 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         }
     }
     if (ri_bs->nbody_ode == NULL){ 
-        ri_bs->nbody_index = r->N_odes;
         ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
         ri_bs->nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode

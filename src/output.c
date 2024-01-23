@@ -173,7 +173,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 161, REB_INT,         "ri_bs.previous_rejected",       offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
     { 162, REB_INT,         "ri_bs.target_iter",             offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
     // TLu which fields are needed?
-    { 163, REB_INT,         "ri_bs.nbody_index",             offsetof(struct reb_simulation, ri_bs.nbody_index), 0, 0},
     { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",                offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
     { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",                   offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
     { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",                 offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
