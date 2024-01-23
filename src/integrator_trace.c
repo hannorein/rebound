@@ -256,6 +256,59 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     }
 }
 
+void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+    struct reb_simulation* const r = ode->r;
+    if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE || r->integrator == REB_INTEGRATOR_MERCURIUS) { // TRACE always needs this to ensure the right Hamiltonian is evolved
+        // Not needed for first step. Accelerations already calculated. Just need to copy them
+        reb_integrator_bs_update_particles(r, y);
+        reb_simulation_update_acceleration(r);
+    }
+
+    // TLu Levison & Duncan 22, 23 EoMs
+    double px=0., py=0., pz=0.;
+    int* map = r->ri_trace.encounter_map;
+    int N = r->ri_trace.encounter_N;
+
+    if (map==NULL){
+        reb_simulation_error(r, "Cannot access TRACE map from BS.");
+        return;
+    }
+
+    // Kepler Step
+    // This is only for pericenter approach
+    if (r->ri_trace.current_C){
+        for (int i=1;i<r->N;i++){ // all particles
+            px += r->particles[i].vx*r->particles[i].m; // in dh
+            py += r->particles[i].vy*r->particles[i].m;
+            pz += r->particles[i].vz*r->particles[i].m;
+        }
+        px /= r->particles[0].m;
+        py /= r->particles[0].m;
+        pz /= r->particles[0].m;
+
+    }
+
+    for (int i=0; i<r->N; i++){
+        if (i<N && i!=0){
+            int mi = map[i];
+            const struct reb_particle p = r->particles[mi];
+            yDot[i*6+0] = p.vx + px; // Already checked for current_L
+            yDot[i*6+1] = p.vy + py;
+            yDot[i*6+2] = p.vz + pz;
+            yDot[i*6+3] = p.ax;
+            yDot[i*6+4] = p.ay;
+            yDot[i*6+5] = p.az;
+        }else{
+            yDot[i*6+0] = 0.0;
+            yDot[i*6+1] = 0.0;
+            yDot[i*6+2] = 0.0;
+            yDot[i*6+3] = 0.0;
+            yDot[i*6+4] = 0.0;
+            yDot[i*6+5] = 0.0;
+        }
+    }
+}
+
 void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _dt){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
 

@@ -335,62 +335,20 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE || r->integrator == REB_INTEGRATOR_MERCURIUS) { // TRACE always needs this to ensure the right Hamiltonian is evolved
+    if (r->t != t || r->integrator == REB_INTEGRATOR_MERCURIUS) {
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
         reb_simulation_update_acceleration(r);
     }
 
-    // TLu Levison & Duncan 22, 23 EoMs
-    double px=0., py=0., pz=0.;
-    int* map;
-    int N;
-    if (r->integrator==REB_INTEGRATOR_TRACE){
-        map = r->ri_trace.encounter_map;
-
-        if (map==NULL){
-            reb_simulation_error(r, "Cannot access TRACE map from BS.");
-            return;
-        }
-
-        N = r->ri_trace.encounter_N;
-
-        // Kepler Step
-        // This is only for pericenter approach
-        if (r->ri_trace.current_C){
-            for (int i=1;i<r->N;i++){ // all particles
-                px += r->particles[i].vx*r->particles[i].m; // in dh
-                py += r->particles[i].vy*r->particles[i].m;
-                pz += r->particles[i].vz*r->particles[i].m;
-            }
-            px /= r->particles[0].m;
-            py /= r->particles[0].m;
-            pz /= r->particles[0].m;
-
-        }
-    }else{
-        map = r->ri_bs.map;
-        N = r->N;
-    }
-
-    for (int i=0; i<r->N; i++){
-        if (r->integrator!=REB_INTEGRATOR_TRACE || ( i<N && i!=0)){
-            int mi = map[i];
-            const struct reb_particle p = r->particles[mi];
-            yDot[i*6+0] = p.vx + px; // Already checked for current_L
-            yDot[i*6+1] = p.vy + py;
-            yDot[i*6+2] = p.vz + pz;
-            yDot[i*6+3] = p.ax;
-            yDot[i*6+4] = p.ay;
-            yDot[i*6+5] = p.az;
-        }else{
-            yDot[i*6+0] = 0.0;
-            yDot[i*6+1] = 0.0;
-            yDot[i*6+2] = 0.0;
-            yDot[i*6+3] = 0.0;
-            yDot[i*6+4] = 0.0;
-            yDot[i*6+5] = 0.0;
-        }
+    for (unsigned int i=0; i<r->N; i++){
+        const struct reb_particle p = r->particles[i];
+        yDot[i*6+0] = p.vx;
+        yDot[i*6+1] = p.vy;
+        yDot[i*6+2] = p.vz;
+        yDot[i*6+3] = p.ax;
+        yDot[i*6+4] = p.ay;
+        yDot[i*6+5] = p.az;
     }
 }
 
@@ -856,6 +814,9 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     if (ri_bs->nbody_ode == NULL){ 
         ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
         ri_bs->nbody_ode->derivatives = nbody_derivatives;
+        if (r->integrator == REB_INTEGRATOR_TRACE){
+            ri_bs->nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
+        }
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->first_or_last_step = 1;
     }
