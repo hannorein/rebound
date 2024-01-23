@@ -333,7 +333,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 }
 
 
-static void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
     if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE || r->integrator == REB_INTEGRATOR_MERCURIUS) { // TRACE always needs this to ensure the right Hamiltonian is evolved
         // Not needed for first step. Accelerations already calculated. Just need to copy them
@@ -646,7 +646,6 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                                             ri_bs->target_iter -= 1;
                                         }
                                         dt = ri_bs->optimal_step[ri_bs->target_iter];
-
 #if DEBUG
                                         printf("O");
 #endif
@@ -713,7 +712,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
     if (! reject) {
 #if DEBUG
-        printf(".");
+        printf("."); 
 #endif
         // Swap arrays
         for (int s=0; s < Ns; s++){
@@ -815,7 +814,6 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     ode->r = r; // weak reference
     ode->length = length;
     ode->needs_nbody = 1;
-
     ode->N_allocated = length;
     ode->getscale = NULL;
     ode->derivatives = NULL;
@@ -870,7 +868,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     }
     if (ri_bs->nbody_ode == NULL){ 
         ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
-        ri_bs->nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
+        ri_bs->nbody_ode->derivatives = nbody_derivatives;
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->first_or_last_step = 1;
     }
@@ -891,7 +889,6 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+3] = p.vx;
         y[i*6+4] = p.vy;
         y[i*6+5] = p.vz;
-
     }
 
     int success = reb_integrator_bs_step(r, r->dt);
