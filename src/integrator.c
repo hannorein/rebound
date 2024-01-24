@@ -129,9 +129,7 @@ void reb_integrator_part2(struct reb_simulation* r){
 	}
     
     // Integrate other ODEs
-		double old_dt = r->dt;
-		// This is tricky. TRACE only makes the BS ODE
-    if (r->integrator != REB_INTEGRATOR_BS && r->N_odes && (r->integrator != REB_INTEGRATOR_TRACE || r->N_odes > 1)){
+    if (r->integrator != REB_INTEGRATOR_BS && r->N_odes){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
             reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
             r->ode_warnings = 1;
@@ -251,7 +249,6 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
         }
-
         r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
@@ -266,8 +263,8 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
 
-				// Same for TRACE
-				if (r->integrator==REB_INTEGRATOR_TRACE){
+        // Same for TRACE
+        if (r->integrator==REB_INTEGRATOR_TRACE){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
             if(r->N>r->ri_trace.N_allocated_additional_forces){
@@ -296,3 +293,4 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
+
