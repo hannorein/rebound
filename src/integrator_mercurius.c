@@ -566,3 +566,4 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.dcrit = NULL;
     r->ri_mercurius.N_allocated_dcrit = 0;
 }
+
