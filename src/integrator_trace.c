@@ -256,21 +256,9 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     }
 }
 
-void reb_integrator_trace_update_particles(){
-
-    int N;
-    int* map;
-    if (r->integrator == REB_INTEGRATOR_TRACE){
-      N = r->ri_trace.encounter_N;
-      map = r->ri_trace.encounter_map;
-      if (map==NULL){
-        reb_simulation_error(r, "Cannot access TRACE map from BS.");
-        return;
-      }
-    }else{
-      N = r->N;
-      map = r->ri_bs.map;
-    }
+void reb_integrator_trace_update_particles(struct reb_simulation* r, const double* y){
+    int N = r->ri_trace.encounter_N;
+    int* map = r->ri_trace.encounter_map;
 
     for (int i=0; i<N; i++){
         int mi = map[i];
@@ -367,9 +355,24 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     const double old_dt = r->dt;
     const double old_t = r->t;
     double t_needed = r->t + _dt;
-    //reb_integrator_bs_reset(r);
+    reb_integrator_bs_reset(r);
 
     r->dt = _dt; // start with a small timestep.
+
+    struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
+    nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
+    nbody_ode->needs_nbody = 0;
+    double* const y = nbody_ode->y;
+    for (unsigned int i=0; i<ri_trace->encounter_N; i++){
+        const int mi = ri_trace->encounter_map[i];
+        const struct reb_particle p = r->particles[mi];
+        y[i*6+0] = p.x;
+        y[i*6+1] = p.y;
+        y[i*6+2] = p.z;
+        y[i*6+3] = p.vx;
+        y[i*6+4] = p.vy;
+        y[i*6+5] = p.vz;
+    }
 
     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
         // In case of overshoot
@@ -382,7 +385,14 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
         r->particles[0].vy = 0;
         r->particles[0].vz = 0;
 
-        reb_integrator_bs_part2(r);
+        int success = reb_integrator_bs_step(r, r->dt);
+        if (success){
+            r->t += r->dt;
+            r->dt_last_done = r->dt;
+        }
+        r->dt = r->ri_bs.dt_proposed;
+        reb_integrator_trace_update_particles(r, nbody_ode->y1);
+
         reb_collision_search(r);
 
         r->particles[0].vx = star.vx; // restore every timestep for collisions
@@ -415,6 +425,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
             r->particles[mi] = ri_trace->particles_backup_kepler[mi];
         }
     }
+    
+    reb_ode_free(nbody_ode);
 
     r->t = old_t;
     r->dt = old_dt;
