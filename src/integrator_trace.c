@@ -251,6 +251,7 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
     //struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
+    printf("WH\n");
     for (int i=1;i<N;i++){
         reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt);
     }
@@ -323,13 +324,14 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     }
 }
 
-void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _dt){
+void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
 
     if (ri_trace->encounter_N < 2){
         // No close encounters, skip
         return;
     }
+    printf("BS");
 
     int i_enc = 0;
     ri_trace->encounter_N_active = 0;
@@ -354,10 +356,9 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     // run
     const double old_dt = r->dt;
     const double old_t = r->t;
-    double t_needed = r->t + _dt;
+    double t = r->t;
+    double t_needed = r->t + dt;
     reb_integrator_bs_reset(r);
-
-    r->dt = _dt; // start with a small timestep.
 
     struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
     nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
@@ -374,23 +375,23 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
         y[i*6+5] = p.vz;
     }
 
-    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+    while(t < t_needed && fabs(dt/old_dt)>1e-14 ){
         // In case of overshoot
-        if (r->t+r->dt >  t_needed){
-            r->dt = t_needed-r->t;
+        if (t + dt >  t_needed){
+            dt = t_needed - t;
         }
+        printf(".");
 
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh
         r->particles[0].vy = 0;
         r->particles[0].vz = 0;
 
-        int success = reb_integrator_bs_step(r, r->dt);
+        int success = reb_integrator_bs_step(r, dt);
         if (success){
-            r->t += r->dt;
-            r->dt_last_done = r->dt;
+            t += dt;
         }
-        r->dt = r->ri_bs.dt_proposed;
+        dt = r->ri_bs.dt_proposed;
         reb_integrator_trace_update_particles(r, nbody_ode->y1);
 
         reb_collision_search(r);
@@ -416,6 +417,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
             }
         }
     }
+    printf("\n");
 
     // if only test particles encountered massive bodies, reset the
     // massive body coordinates to their post Kepler step state
@@ -429,7 +431,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, const double _
     reb_ode_free(nbody_ode);
 
     r->t = old_t;
-    r->dt = old_dt;
     ri_trace->mode = 0;
 }
 
