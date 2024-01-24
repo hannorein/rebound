@@ -671,7 +671,6 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     // Swap particle buffers
     for(int k=0;k<N;++k) {
         int mk = map[k];
-
         particles[mk].x = x0[3*k+0]; // Set final position
         particles[mk].y = x0[3*k+1];
         particles[mk].z = x0[3*k+2];
