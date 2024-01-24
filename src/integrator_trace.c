@@ -302,25 +302,22 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
         pz /= r->particles[0].m;
 
     }
+    yDot[0*6+0] = 0.0;
+    yDot[0*6+1] = 0.0;
+    yDot[0*6+2] = 0.0;
+    yDot[0*6+3] = 0.0;
+    yDot[0*6+4] = 0.0;
+    yDot[0*6+5] = 0.0;
 
-    for (int i=0; i<r->N; i++){
-        if (i<N && i!=0){
-            int mi = map[i];
-            const struct reb_particle p = r->particles[mi];
-            yDot[i*6+0] = p.vx + px; // Already checked for current_L
-            yDot[i*6+1] = p.vy + py;
-            yDot[i*6+2] = p.vz + pz;
-            yDot[i*6+3] = p.ax;
-            yDot[i*6+4] = p.ay;
-            yDot[i*6+5] = p.az;
-        }else{
-            yDot[i*6+0] = 0.0;
-            yDot[i*6+1] = 0.0;
-            yDot[i*6+2] = 0.0;
-            yDot[i*6+3] = 0.0;
-            yDot[i*6+4] = 0.0;
-            yDot[i*6+5] = 0.0;
-        }
+    for (int i=1; i<N; i++){
+        int mi = map[i];
+        const struct reb_particle p = r->particles[mi];
+        yDot[i*6+0] = p.vx + px; // Already checked for current_L
+        yDot[i*6+1] = p.vy + py;
+        yDot[i*6+2] = p.vz + pz;
+        yDot[i*6+3] = p.ax;
+        yDot[i*6+4] = p.ay;
+        yDot[i*6+5] = p.az;
     }
 }
 
@@ -366,16 +363,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     double* const y = nbody_ode->y;
 
     while(t < t_needed && fabs(dt/old_dt)>1e-14 ){
-        for (unsigned int i=0; i<ri_trace->encounter_N; i++){
-            const int mi = ri_trace->encounter_map[i];
-            const struct reb_particle p = r->particles[mi];
-            y[i*6+0] = p.x;
-            y[i*6+1] = p.y;
-            y[i*6+2] = p.z;
-            y[i*6+3] = p.vx;
-            y[i*6+4] = p.vy;
-            y[i*6+5] = p.vz;
-        }
         // In case of overshoot
         if (t + dt >  t_needed){
             dt = t_needed - t;
@@ -386,6 +373,17 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         r->particles[0].vx = 0; // star does not move in dh
         r->particles[0].vy = 0;
         r->particles[0].vz = 0;
+        
+        for (unsigned int i=0; i<ri_trace->encounter_N; i++){
+            const int mi = ri_trace->encounter_map[i];
+            const struct reb_particle p = r->particles[mi];
+            y[i*6+0] = p.x;
+            y[i*6+1] = p.y;
+            y[i*6+2] = p.z;
+            y[i*6+3] = p.vx;
+            y[i*6+4] = p.vy;
+            y[i*6+5] = p.vz;
+        }
 
         int success = reb_integrator_bs_step(r, dt);
         if (success){
@@ -394,11 +392,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         dt = r->ri_bs.dt_proposed;
         reb_integrator_trace_update_particles(r, nbody_ode->y1);
 
-        reb_collision_search(r);
-
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
+        
+        reb_collision_search(r);
 
         star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
         star.vy = r->particles[0].vy;
