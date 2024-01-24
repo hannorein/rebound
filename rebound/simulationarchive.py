@@ -140,7 +140,7 @@ class Simulationarchive(Structure):
                     # Just a warning
                     if self.process_warnings:
                         warnings.warn(message, RuntimeWarning)
-        if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_trace.is_synchronized==0:
+        if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0:
             warnings.warn("The simulation might not be synchronized. You can manually synchronize it by calling sim.integrator_synchronize().", RuntimeWarning)
 
         return sim
@@ -229,7 +229,7 @@ class Simulationarchive(Structure):
             self.setup(sim, *self.setup_args)
 
         if mode=='snapshot':
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1) or (sim.integrator=="trace" and sim.ri_trace.safe_mode == 1):
+            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
@@ -238,7 +238,7 @@ class Simulationarchive(Structure):
         else:
             if mode=='exact':
                 keep_unsynchronized = 0
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1) or (sim.integrator=="trace" and sim.ri_trace.safe_mode == 1):
+            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
