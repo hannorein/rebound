@@ -251,7 +251,6 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
     //struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
-    printf("WH\n");
     for (int i=1;i<N;i++){
         reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt);
     }
@@ -328,7 +327,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         // No close encounters, skip
         return;
     }
-    printf("BS");
 
     int i_enc = 0;
     ri_trace->encounter_N_active = 0;
@@ -367,7 +365,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         if (t + dt >  t_needed){
             dt = t_needed - t;
         }
-        printf(".");
 
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh
@@ -415,7 +412,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             }
         }
     }
-    printf("\n");
 
     // if only test particles encountered massive bodies, reset the
     // massive body coordinates to their post Kepler step state
