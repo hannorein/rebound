@@ -89,24 +89,8 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         reb_simulation_error(r, "Update particles called without valid y pointer.");
         return;
     }
-
-    int N;
-    int* map;
-    if (r->integrator == REB_INTEGRATOR_TRACE){
-      N = r->ri_trace.encounter_N;
-      map = r->ri_trace.encounter_map;
-      if (map==NULL){
-        reb_simulation_error(r, "Cannot access TRACE map from BS.");
-        return;
-      }
-    }else{
-      N = r->N;
-      map = r->ri_bs.map;
-    }
-
-    for (int i=0; i<N; i++){
-        int mi = map[i];
-        struct reb_particle* const p = &(r->particles[mi]);
+    for (unsigned int i=0; i<r->N; i++){
+        struct reb_particle* const p = &(r->particles[i]);
         p->x  = y[i*6+0];
         p->y  = y[i*6+1];
         p->z  = y[i*6+2];
@@ -335,7 +319,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t || r->integrator == REB_INTEGRATOR_MERCURIUS) {
+    if (r->t != t) { 
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
         reb_simulation_update_acceleration(r);
@@ -366,8 +350,7 @@ void reb_integrator_bs_part1(struct reb_simulation* r){
     }
 }
 
-static void allocate_sequence_arrays(struct reb_simulation* r){
-    struct reb_integrator_bs* ri_bs = &r->ri_bs;
+static void allocate_sequence_arrays(struct reb_integrator_bs* ri_bs){
     ri_bs->sequence        = malloc(sizeof(int)*sequence_length);
     ri_bs->cost_per_step     = malloc(sizeof(int)*sequence_length);
     ri_bs->coeff           = malloc(sizeof(double)*sequence_length);
@@ -397,22 +380,6 @@ static void allocate_sequence_arrays(struct reb_simulation* r){
         double r = 1./((double) ri_bs->sequence[j]);
         ri_bs->coeff[j] = r*r;
     }
-
-    // TRACE - allocate map
-    int N;
-    if (r->integrator == REB_INTEGRATOR_TRACE){
-      N = r->ri_trace.encounter_N;
-    }else{
-      N = r->N;
-    }
-
-    if (N > ri_bs->N_allocated_map){
-      ri_bs->map = realloc(ri_bs->map, sizeof(int) * N);
-      for (int i = 0; i < N; i++){
-        ri_bs->map[i] = i; // Identity map
-      }
-      ri_bs->N_allocated_map = N;
-    }
 }
 
 static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, double* y2, double relTol, double absTol){
@@ -431,7 +398,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     struct reb_integrator_bs* ri_bs = &r->ri_bs;
     
     if (ri_bs->sequence==NULL){
-        allocate_sequence_arrays(r);
+        allocate_sequence_arrays(ri_bs);
     }
 
     double t = r->t;
@@ -787,22 +754,6 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
     
     unsigned int nbody_length = r->N*3*2;
-    struct reb_integrator_trace* ri_trace = &(r->ri_trace);
-
-    int N;
-    int* map;
-
-    if (ri_bs->sequence==NULL){ // Moved from BS Step because need to allocate map here
-        allocate_sequence_arrays(r);
-    }
-
-    if (r->integrator == REB_INTEGRATOR_TRACE){
-      N = ri_trace->encounter_N;
-      map = ri_trace->encounter_map;
-    }else{
-      N = r->N;
-      map = ri_bs->map;
-    }
 
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
@@ -828,9 +779,8 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     }
 
     double* const y = ri_bs->nbody_ode->y;
-    for (int i=0; i<N; i++){
-        int mi = map[i];
-        const struct reb_particle p = r->particles[mi];
+    for (unsigned int i=0; i<r->N; i++){
+        const struct reb_particle p = r->particles[i];
         y[i*6+0] = p.x;
         y[i*6+1] = p.y;
         y[i*6+2] = p.z;
@@ -920,10 +870,6 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     free(ri_bs->optimal_step);
     ri_bs->optimal_step = NULL;
     
-    r->ri_bs.N_allocated_map  = 0;
-    free(r->ri_bs.map);
-    r->ri_bs.map =  NULL;
-
     
     // Default settings
     ri_bs->eps_abs          = 1e-8;

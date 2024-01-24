@@ -256,13 +256,39 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     }
 }
 
+void reb_integrator_trace_update_particles(){
+
+    int N;
+    int* map;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+      N = r->ri_trace.encounter_N;
+      map = r->ri_trace.encounter_map;
+      if (map==NULL){
+        reb_simulation_error(r, "Cannot access TRACE map from BS.");
+        return;
+      }
+    }else{
+      N = r->N;
+      map = r->ri_bs.map;
+    }
+
+    for (int i=0; i<N; i++){
+        int mi = map[i];
+        struct reb_particle* const p = &(r->particles[mi]);
+        p->x  = y[i*6+0];
+        p->y  = y[i*6+1];
+        p->z  = y[i*6+2];
+        p->vx = y[i*6+3];
+        p->vy = y[i*6+4];
+        p->vz = y[i*6+5];
+    }
+}
+
 void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t || r->integrator == REB_INTEGRATOR_TRACE || r->integrator == REB_INTEGRATOR_MERCURIUS) { // TRACE always needs this to ensure the right Hamiltonian is evolved
-        // Not needed for first step. Accelerations already calculated. Just need to copy them
-        reb_integrator_bs_update_particles(r, y);
-        reb_simulation_update_acceleration(r);
-    }
+    // TRACE always needs this to ensure the right Hamiltonian is evolved
+    reb_integrator_bs_update_particles(r, y);
+    reb_simulation_update_acceleration(r);
 
     // TLu Levison & Duncan 22, 23 EoMs
     double px=0., py=0., pz=0.;
