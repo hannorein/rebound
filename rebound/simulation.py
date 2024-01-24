@@ -148,40 +148,6 @@ class Simulation(Structure):
                         warnings.warn(message, RuntimeWarning)
             return sim
 
-        # Create simulation from Simulationarchive
-        if isinstance(args[0], Simulationarchive):
-            sa = args[0]
-        else:
-            # Otherwise assume first argument is filename
-            filename = args[0]
-            if "filename" in kw:
-                filename = kw["filename"]
-            sa = Simulationarchive(filename,process_warnings=False)
-
-        snapshot = -1
-        if len(args)>1:
-            snapshot = args[1]
-        if "snapshot" in kw:
-            snapshot = kw["snapshot"]
-
-        if sa is not None:
-            # Recreate exisitng simulation 
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
-            w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
-            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
-            for majorerror, value, message in BINARY_WARNINGS:
-                if w.value & value:
-                    if majorerror:
-                        raise RuntimeError(message)
-                    else:
-                        # Just a warning
-                        warnings.warn(message, RuntimeWarning)
-            return sim
-
-        # Still here? Then an error occured.
-        raise RuntimeError("Can not create Simulation.")
-
         # Still here? Then an error occured.
         raise RuntimeError("Can not create Simulation.")
 
@@ -1598,6 +1564,7 @@ AFF = CFUNCTYPE(None,POINTER(Simulation))
 CORFF = CFUNCTYPE(c_double,POINTER(Simulation), c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER(Simulation), CollisionS)
 FPA = CFUNCTYPE(None, POINTER(Particle))
+
 
 # Import at the end to avoid circular dependence
 from . import horizons
