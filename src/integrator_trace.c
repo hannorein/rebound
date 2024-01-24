@@ -276,7 +276,7 @@ void reb_integrator_trace_update_particles(struct reb_simulation* r, const doubl
 void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
-    reb_integrator_bs_update_particles(r, y);
+    reb_integrator_trace_update_particles(r, y);
     reb_simulation_update_acceleration(r);
 
     // TLu Levison & Duncan 22, 23 EoMs
@@ -357,25 +357,25 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     const double old_dt = r->dt;
     const double old_t = r->t;
     double t = r->t;
-    double t_needed = r->t + dt;
+    const double t_needed = r->t + dt;
     reb_integrator_bs_reset(r);
 
     struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
     nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
     nbody_ode->needs_nbody = 0;
     double* const y = nbody_ode->y;
-    for (unsigned int i=0; i<ri_trace->encounter_N; i++){
-        const int mi = ri_trace->encounter_map[i];
-        const struct reb_particle p = r->particles[mi];
-        y[i*6+0] = p.x;
-        y[i*6+1] = p.y;
-        y[i*6+2] = p.z;
-        y[i*6+3] = p.vx;
-        y[i*6+4] = p.vy;
-        y[i*6+5] = p.vz;
-    }
 
     while(t < t_needed && fabs(dt/old_dt)>1e-14 ){
+        for (unsigned int i=0; i<ri_trace->encounter_N; i++){
+            const int mi = ri_trace->encounter_map[i];
+            const struct reb_particle p = r->particles[mi];
+            y[i*6+0] = p.x;
+            y[i*6+1] = p.y;
+            y[i*6+2] = p.z;
+            y[i*6+3] = p.vx;
+            y[i*6+4] = p.vy;
+            y[i*6+5] = p.vz;
+        }
         // In case of overshoot
         if (t + dt >  t_needed){
             dt = t_needed - t;
