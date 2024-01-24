@@ -754,7 +754,6 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
     
     unsigned int nbody_length = r->N*3*2;
-
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
         if (ri_bs->nbody_ode->length != nbody_length){
@@ -765,9 +764,6 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
     if (ri_bs->nbody_ode == NULL){ 
         ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
         ri_bs->nbody_ode->derivatives = nbody_derivatives;
-        if (r->integrator == REB_INTEGRATOR_TRACE){
-            ri_bs->nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
-        }
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->first_or_last_step = 1;
     }

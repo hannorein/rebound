@@ -392,10 +392,6 @@ struct reb_integrator_bs {
     int previous_rejected;
     int target_iter;
     int user_ode_needs_nbody;   // Do not set manually. Use needs_nbody in reb_ode instead.
-
-    // Update simulationarchive for these
-    int* map;                       // internal map to particles (this is an identity map except when TRACE is used)
-    unsigned int N_allocated_map;   // allocated size for map
 };
 
 // Available methods for EOS Integrator
