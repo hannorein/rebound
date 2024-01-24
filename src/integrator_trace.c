@@ -390,7 +390,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             t += dt;
         }
         dt = r->ri_bs.dt_proposed;
-        reb_integrator_trace_update_particles(r, nbody_ode->y1);
+        reb_integrator_trace_update_particles(r, nbody_ode->y);
 
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
