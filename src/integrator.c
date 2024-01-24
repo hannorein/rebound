@@ -249,6 +249,16 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
         }
+        if (r->integrator==REB_INTEGRATOR_TRACE){
+            // shift pos and velocity so that external forces are calculated in inertial frame
+            // Note: Copying avoids degrading floating point performance
+            if(r->N>r->ri_trace.N_allocated_additional_forces){
+                r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+                r->ri_trace.N_allocated_additional_forces = r->N;
+            }
+            memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
+            reb_integrator_trace_dh_to_inertial(r);
+        }
         r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
@@ -262,20 +272,6 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 particles[i].vz = backup[i].vz;
             }
         }
-
-        // Same for TRACE
-        if (r->integrator==REB_INTEGRATOR_TRACE){
-            // shift pos and velocity so that external forces are calculated in inertial frame
-            // Note: Copying avoids degrading floating point performance
-            if(r->N>r->ri_trace.N_allocated_additional_forces){
-                r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
-                r->ri_trace.N_allocated_additional_forces = r->N;
-            }
-            memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
-            reb_integrator_trace_dh_to_inertial(r);
-        }
-
-        r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_TRACE){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
@@ -288,7 +284,6 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 particles[i].vz = backup[i].vz;
             }
         }
-
     }
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
