@@ -395,6 +395,14 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
         reb_collision_search(r);
 
+        if (nbody_ode->length != ri_trace->encounter_N*3*2){
+            if (ri_trace->encounter_N*3*2 > nbody_ode->N_allocated){
+                reb_simulation_error(r, "Cannot add particles during encounter step");
+            }
+            nbody_ode->length = ri_trace->encounter_N*3*2;
+            r->ri_bs.first_or_last_step = 1;
+        }
+
         star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
         star.vy = r->particles[0].vy;
         star.vz = r->particles[0].vz;
