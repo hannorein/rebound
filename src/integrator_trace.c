@@ -388,16 +388,17 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         }
         dt = r->ri_bs.dt_proposed;
         reb_integrator_trace_update_particles(r, nbody_ode->y);
-
-        reb_collision_search(r);
         
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
 
+        reb_collision_search(r);
+
         star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
         star.vy = r->particles[0].vy;
         star.vz = r->particles[0].vz;
+
         if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
             // Collision with star occured
             // Shift all particles back to heliocentric coordinates
