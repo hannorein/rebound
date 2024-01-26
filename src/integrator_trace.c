@@ -458,9 +458,16 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
-        ri_trace->current_Ks             = realloc(ri_trace->current_Ks, sizeof(int*)*N); // This is inefficient for now, can be Nactive instead of N
+
+        if (ri_trace->current_Ks){ // Free previously allocated matrix
+            for (int k = 0; k < ri_trace->N_allocated; ++k) {
+                free(ri_trace->current_Ks[k]);
+            }
+            free(ri_trace->current_Ks);
+        }
+        ri_trace->current_Ks             = malloc(sizeof(int*)*N); // This is inefficient for now, can be Nactive instead of N
         for (int k = 0; k < N; ++k) {
-            ri_trace->current_Ks[k]      = realloc(ri_trace->current_Ks[k], sizeof(int)*N);
+            ri_trace->current_Ks[k]      = malloc(sizeof(int)*N);
         }
 
         ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
