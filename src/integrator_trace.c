@@ -351,17 +351,16 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     // run
     const double old_dt = r->dt;
     const double old_t = r->t;
-    //double t = r->t;
     const double t_needed = r->t + dt;
     reb_integrator_bs_reset(r);
 
     struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
     nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
     nbody_ode->needs_nbody = 0;
-    double* y;
 
+    // TODO: Support backwards integrations
     while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
-        y = nbody_ode->y;
+        double* y = nbody_ode->y;
         
         // In case of overshoot
         if (r->t + dt >  t_needed){
@@ -632,8 +631,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     reb_integrator_trace_interaction_step(r, r->dt/2.);
     reb_integrator_trace_jump_step(r, r->dt/2.);
-    reb_integrator_trace_com_step(r,r->dt);
     reb_integrator_trace_kepler_step(r, r->dt); // always accept this
+    reb_integrator_trace_com_step(r,r->dt);
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
