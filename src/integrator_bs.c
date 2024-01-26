@@ -806,8 +806,8 @@ void reb_ode_free(struct reb_ode* ode){
     ode->scale = NULL;
     
     if (ode->D){
-        for (int k = 0; k < sequence_length; ++k) {
-            ode->D[k] = NULL;
+        for (int k=0; k < sequence_length; k++) {
+            free(ode->D[k]);
         }
         free(ode->D);
         ode->D = NULL;
