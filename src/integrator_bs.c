@@ -796,6 +796,8 @@ void reb_integrator_bs_synchronize(struct reb_simulation* r){
 
 void reb_ode_free(struct reb_ode* ode){
     // Free data array
+    free(ode->y);
+    ode->y = NULL;
     free(ode->y1);
     ode->y1 = NULL;
     free(ode->C);
