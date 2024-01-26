@@ -48,7 +48,44 @@ def derivatives_ho(ode, yDot, y, t):
     yDot[0] = y[1]
     yDot[1] = -k/m*y[0]
 
-class TestTrace(unittest.TestCase):
+class TestIntegratorTraceHarmonic(unittest.TestCase):
+   
+    def test_trace_harmonic_with_nbody(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.123);
+        sim.add(m=1e-3,a=2.6,e=0.123);
+        sim.integrator = "TRACE"
+        ode_ho = sim.create_ode(length=2, needs_nbody=False)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+    
+    def test_trace_harmonic_with_nbody_coupledy(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1,e=0.123);
+        sim.add(m=1e-3,a=2.6,e=0.123);
+        sim.integrator = "TRACE"
+        e0 = sim.energy()
+        ode_ho = sim.create_ode(length=2, needs_nbody=True)
+        ode_ho.derivatives = derivatives_ho
+
+        ode_ho.y[0] = 1. 
+        ode_ho.y[1] = 0. # zero velocity
+
+        sim.integrate(20.*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+        e1 = sim.energy()
+        self.assertLess(math.fabs((e0-e1)/e0),1e-10)
+
+class TestIntegratorTrace(unittest.TestCase):
 
     def test_no_effect_tp(self):
         # tests if test particle encounters have an effect
@@ -402,7 +439,7 @@ class TestTrace(unittest.TestCase):
         time_ias15 = (datetime.now()-start).total_seconds()
         dE_ias15 = abs((jacobi(sim) - E0)/E0)
 
-        self.assertLess(dE_trace,1e-5)              # reasonable precision for trace
+        self.assertLess(dE_trace,1e-6)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
 '''
     def test_pericenter(self):
@@ -424,22 +461,6 @@ class TestTrace(unittest.TestCase):
 
         self.assertLess(dE_trace,1e-3)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
-
-    def test_independent_ho(self):
-        # Tests if TRACE correctly integrates independent HO when BS is triggered
-        sim = chaotic_exchange_sim()
-        sim.integrator='trace'
-        sim.dt = (8./365.)*2.*math.pi
-
-        ode_ho = sim.create_ode(length=2)
-        ode_ho.derivatives = derivatives_ho
-
-        ode_ho.y[0] = 1.
-        ode_ho.y[1] = 0. # zero velocity
-
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-9) # One order of magnitude higher than BS? Probably timestep
-        self.assertLess(math.fabs(ode_ho.y[1]),2e-8)
 
     def test_trace_simulationarchive(self):
         sim = chaotic_exchange_sim()
