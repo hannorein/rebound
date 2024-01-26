@@ -382,6 +382,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     for (int s=0; s<r->N_odes; s++){
         r->odes[s]->r = NULL;
     }
+    free(r->odes);
 }
 
 int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
