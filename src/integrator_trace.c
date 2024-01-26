@@ -681,9 +681,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.peri_crit_distance = 0.;
 
     // Internal arrays (only used within one timestep)
-    r->ri_trace.N_allocated = 0;
-    r->ri_trace.N_allocated_additional_forces = 0;
-
     free(r->ri_trace.particles_backup);
     r->ri_trace.particles_backup = NULL;
     free(r->ri_trace.particles_backup_kepler);
@@ -699,8 +696,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
 
     r->ri_trace.current_C = 0;
     if (r->ri_trace.current_Ks){
-        for (int k = 0; k < r->N; ++k) {
-            r->ri_trace.current_Ks[k] = NULL;
+        for (int k=0; k < r->ri_trace.N_allocated; k++) {
+            free(r->ri_trace.current_Ks[k]);
         }
         free(r->ri_trace.current_Ks);
         r->ri_trace.current_Ks = NULL;
@@ -708,5 +705,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
 
     r->ri_trace.S = NULL;
     r->ri_trace.S_peri = NULL;
-
+    
+    r->ri_trace.N_allocated = 0;
+    r->ri_trace.N_allocated_additional_forces = 0;
 }
