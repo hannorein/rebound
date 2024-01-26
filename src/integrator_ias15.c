@@ -164,11 +164,12 @@ static inline void add_cs(double* p, double* csp, double inp){
 }
 
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    unsigned int N3;
+    unsigned int N3 = 3*r->N;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
         N3 = 3*r->ri_mercurius.encounter_N;// mercurius close encounter
-    }else{ 
-        N3 = 3*r->N;
+    }
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+        N3 = 3*r->ri_trace.encounter_N;// trace close encounter
     }
     if (N3 > r->ri_ias15.N_allocated) {
         realloc_dp7(&(r->ri_ias15.g),N3);
@@ -208,8 +209,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
-    int N;
-    int* map; // this map allow for integrating only a selection of particles 
+    int N = r->N;
+    int* map = r->ri_ias15.map; // this map allow for integrating only a selection of particles 
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
         N = r->ri_mercurius.encounter_N;
         map = r->ri_mercurius.encounter_map;
@@ -217,9 +218,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
             return 0;
         }
-    }else{ 
-        N = r->N;
-        map = r->ri_ias15.map; // identity map
+    }
+    if (r->integrator==REB_INTEGRATOR_TRACE){// trace close encounter
+        N = r->ri_trace.encounter_N;
+        map = r->ri_trace.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
+            return 0;
+        }
     }
     const int N3 = 3*N;
     

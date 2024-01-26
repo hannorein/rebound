@@ -348,93 +348,155 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     }
 
     ri_trace->mode = 1;
+
+    const int ias15 = 1;
+
     // run
     const double old_dt = r->dt;
     const double old_t = r->t;
     const double t_needed = r->t + dt;
-    reb_integrator_bs_reset(r);
 
-    struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
-    nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
-    nbody_ode->needs_nbody = 0;
+    if (ias15){
+        printf("ias\n");
+        reb_integrator_ias15_reset(r);
+        r->dt = 0.0001*dt; // start with a small timestep.
 
-    // TODO: Support backwards integrations
-    while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
-        double* y = nbody_ode->y;
-        
-        // In case of overshoot
-        if (r->t + dt >  t_needed){
-            dt = t_needed - r->t;
-        }
+        while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+            struct reb_particle star = r->particles[0]; // backup velocity
+            r->particles[0].vx = 0; // star does not move in dh 
+            r->particles[0].vy = 0;
+            r->particles[0].vz = 0;
+            reb_simulation_update_acceleration(r);
+            reb_integrator_ias15_part2(r);
+            r->particles[0].vx = star.vx; // restore every timestep for collisions
+            r->particles[0].vy = star.vy;
+            r->particles[0].vz = star.vz;
 
-        struct reb_particle star = r->particles[0]; // backup velocity
-        r->particles[0].vx = 0; // star does not move in dh
-        r->particles[0].vy = 0;
-        r->particles[0].vz = 0;
-
-        for (unsigned int i=0; i<ri_trace->encounter_N; i++){
-            const int mi = ri_trace->encounter_map[i];
-            const struct reb_particle p = r->particles[mi];
-            y[i*6+0] = p.x;
-            y[i*6+1] = p.y;
-            y[i*6+2] = p.z;
-            y[i*6+3] = p.vx;
-            y[i*6+4] = p.vy;
-            y[i*6+5] = p.vz;
-        }
-
-        int success = reb_integrator_bs_step(r, dt);
-        if (success){
-            r->t += dt;
-        }
-        dt = r->ri_bs.dt_proposed;
-        reb_integrator_trace_update_particles(r, nbody_ode->y);
-
-        r->particles[0].vx = star.vx; // restore every timestep for collisions
-        r->particles[0].vy = star.vy;
-        r->particles[0].vz = star.vz;
-
-        reb_collision_search(r);
-
-        if (nbody_ode->length != ri_trace->encounter_N*3*2){
-            if (ri_trace->encounter_N*3*2 > nbody_ode->N_allocated){
-                reb_simulation_error(r, "Cannot add particles during encounter step");
+            if (r->t+r->dt >  t_needed){
+                r->dt = t_needed-r->t;
             }
-            nbody_ode->length = ri_trace->encounter_N*3*2;
-            r->ri_bs.first_or_last_step = 1;
-        }
 
-        star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
-        star.vy = r->particles[0].vy;
-        star.vz = r->particles[0].vz;
+            // Search and resolve collisions
+            reb_collision_search(r);
 
-        if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
-            // Collision with star occured
-            // Shift all particles back to heliocentric coordinates
-            // Ignore stars velocity:
-            //   - will not be used after this
-            //   - com velocity is unchained. this velocity will be used
-            //     to reconstruct star's velocity later.
-            for (int i=r->N-1; i>=0; i--){
-                r->particles[i].x -= r->particles[0].x;
-                r->particles[i].y -= r->particles[0].y;
-                r->particles[i].z -= r->particles[0].z;
+            // Do any additional post_timestep_modifications.
+            // Note: post_timestep_modifications is called here but also
+            // at the end of the full timestep. The function thus needs
+            // to be implemented with care as not to do the same 
+            // modification multiple times. To do that, check the value of
+            // r->ri_mercurius.mode
+            if (r->post_timestep_modifications){
+                r->post_timestep_modifications(r);
+            }
+
+            star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
+            star.vy = r->particles[0].vy;
+            star.vz = r->particles[0].vz;
+            if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
+                // Collision with star occured
+                // Shift all particles back to heliocentric coordinates
+                // Ignore stars velocity:
+                //   - will not be used after this
+                //   - com velocity is unchained. this velocity will be used
+                //     to reconstruct star's velocity later.
+                for (int i=r->N-1; i>=0; i--){
+                    r->particles[i].x -= r->particles[0].x;
+                    r->particles[i].y -= r->particles[0].y;
+                    r->particles[i].z -= r->particles[0].z;
+                }
             }
         }
-    }
 
-    // if only test particles encountered massive bodies, reset the
-    // massive body coordinates to their post Kepler step state
-    if(ri_trace->tponly_encounter){
-        for (unsigned int i=1; i < ri_trace->encounter_N_active; i++){
-            unsigned int mi = ri_trace->encounter_map[i];
-            r->particles[mi] = ri_trace->particles_backup_kepler[mi];
+        // if only test particles encountered massive bodies, reset the
+        // massive body coordinates to their post Kepler step state
+
+        // Reset constant for global particles
+        r->t = old_t;
+        r->dt = old_dt;
+    }else{
+        reb_integrator_bs_reset(r);
+        struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
+        nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
+        nbody_ode->needs_nbody = 0;
+
+        // TODO: Support backwards integrations
+        while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
+            double* y = nbody_ode->y;
+
+            // In case of overshoot
+            if (r->t + dt >  t_needed){
+                dt = t_needed - r->t;
+            }
+
+            struct reb_particle star = r->particles[0]; // backup velocity
+            r->particles[0].vx = 0; // star does not move in dh
+            r->particles[0].vy = 0;
+            r->particles[0].vz = 0;
+
+            for (unsigned int i=0; i<ri_trace->encounter_N; i++){
+                const int mi = ri_trace->encounter_map[i];
+                const struct reb_particle p = r->particles[mi];
+                y[i*6+0] = p.x;
+                y[i*6+1] = p.y;
+                y[i*6+2] = p.z;
+                y[i*6+3] = p.vx;
+                y[i*6+4] = p.vy;
+                y[i*6+5] = p.vz;
+            }
+
+            int success = reb_integrator_bs_step(r, dt);
+            if (success){
+                r->t += dt;
+            }
+            dt = r->ri_bs.dt_proposed;
+            reb_integrator_trace_update_particles(r, nbody_ode->y);
+
+            r->particles[0].vx = star.vx; // restore every timestep for collisions
+            r->particles[0].vy = star.vy;
+            r->particles[0].vz = star.vz;
+
+            reb_collision_search(r);
+
+            if (nbody_ode->length != ri_trace->encounter_N*3*2){
+                if (ri_trace->encounter_N*3*2 > nbody_ode->N_allocated){
+                    reb_simulation_error(r, "Cannot add particles during encounter step");
+                }
+                nbody_ode->length = ri_trace->encounter_N*3*2;
+                r->ri_bs.first_or_last_step = 1;
+            }
+
+            star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
+            star.vy = r->particles[0].vy;
+            star.vz = r->particles[0].vz;
+
+            if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
+                // Collision with star occured
+                // Shift all particles back to heliocentric coordinates
+                // Ignore stars velocity:
+                //   - will not be used after this
+                //   - com velocity is unchained. this velocity will be used
+                //     to reconstruct star's velocity later.
+                for (int i=r->N-1; i>=0; i--){
+                    r->particles[i].x -= r->particles[0].x;
+                    r->particles[i].y -= r->particles[0].y;
+                    r->particles[i].z -= r->particles[0].z;
+                }
+            }
         }
+
+        // if only test particles encountered massive bodies, reset the
+        // massive body coordinates to their post Kepler step state
+        if(ri_trace->tponly_encounter){
+            for (unsigned int i=1; i < ri_trace->encounter_N_active; i++){
+                unsigned int mi = ri_trace->encounter_map[i];
+                r->particles[mi] = ri_trace->particles_backup_kepler[mi];
+            }
+        }
+
+        reb_ode_free(nbody_ode);
+
+        r->t = old_t;
     }
-
-    reb_ode_free(nbody_ode);
-
-    r->t = old_t;
     ri_trace->mode = 0;
 }
 
