@@ -168,7 +168,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
         N3 = 3*r->ri_mercurius.encounter_N;// mercurius close encounter
     }
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
+    if (r->integrator==REB_INTEGRATOR_TRACE){
         N3 = 3*r->ri_trace.encounter_N;// trace close encounter
     }
     if (N3 > r->ri_ias15.N_allocated) {

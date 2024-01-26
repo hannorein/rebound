@@ -291,6 +291,7 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     // Kepler Step
     // This is only for pericenter approach
     if (r->ri_trace.current_C){
+        printf("C triggered\n");
         for (int i=1;i<r->N;i++){ // all particles
             px += r->particles[i].vx*r->particles[i].m; // in dh
             py += r->particles[i].vy*r->particles[i].m;
@@ -325,6 +326,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
     if (ri_trace->encounter_N < 2){
         // No close encounters, skip
+        printf("skip\n");
         return;
     }
 
