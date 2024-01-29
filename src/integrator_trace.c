@@ -361,7 +361,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     if (ias15){
         printf("ias\n");
         reb_integrator_ias15_reset(r);
-        r->dt = 0.0001*dt; // start with a small timestep.
+        r->dt = 0.01*dt; // start with a small timestep.
 
         while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
             struct reb_particle star = r->particles[0]; // backup velocity
@@ -373,6 +373,18 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             r->particles[0].vx = star.vx; // restore every timestep for collisions
             r->particles[0].vy = star.vy;
             r->particles[0].vz = star.vz;
+    
+    double m = 1000000;
+    for(int i=0; i<r->N;i++){
+        for(int j=i+1; j<r->N;j++){
+            double dx = r->particles[i].x - r->particles[j].x;
+            double dy = r->particles[i].y - r->particles[j].y;
+            double dz = r->particles[i].z - r->particles[j].z;
+            double d = sqrt(dx*dx+dy*dy+dz*dz);
+            if (d<m) m=d;
+        }
+    }
+            printf("dt = %e %e\n", r->dt, m);
 
             if (r->t+r->dt >  t_needed){
                 r->dt = t_needed-r->t;
@@ -593,6 +605,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     for (int j = 1; j < Nactive; j++){
         if (_switch_peri(r, j) < 0.0){
             ri_trace->current_C = 1;
+            printf("Peri\n");
             if (j < Nactive){ // Two massive particles have a close encounter
                 ri_trace->tponly_encounter = 0;
             }
