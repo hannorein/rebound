@@ -679,8 +679,8 @@ Once you have compiled REBOUND with AVX512 enabled, you can use WHFast512 like a
     sim.integrator = "whfast512"
     ```
 
-See also [this example](c_examples/whfast512_solar_system) on how to use WHFast512.
-If you are interested in integrating 2 or 4 planet systems in parallel, see [this example](c_examples/whfast512_2_planets).
+See also [this example](../c_examples/whfast512_solar_system) on how to use WHFast512.
+If you are interested in integrating 2 or 4 planet systems in parallel, see [this example](../c_examples/whfast512_2_planets).
 
 To allow for the best performance, WHFast512 has certain limitations that WHFast does not have.
 
@@ -706,5 +706,5 @@ The following settings are available:
 :   This flag determines if an additional $1/r^2$ potential is included in the force calculation. The default is 0. Set to 1 to turn on the potential. This can be used to mimic general relativistic precession. Note that this feature assumes [units](../units/) of AU and year/2pi. 
 
 `unsigned int N_systems`
-:   This flag determines how many systems are integrated in parallel. Possible values are 1, 2, or 4.  By default this is set to 1 which means WHFast512 is integrating only one system at a time. If your system has fewer than 5 planets, then you can use WHFast512 to integrate 2 systems in parallel. If your system has fewer than 3 planets, then you can use WHFast512 to integrate 4 systems in parallel. If multiple systems are integrated at the same time, particles must be added in the following order: Star 1, Planet, Planet, Star 2, Planet, Planet, ... For more information see the [this example](c_examples/whfast512_2_planets).
+:   This flag determines how many systems are integrated in parallel. Possible values are 1, 2, or 4.  By default this is set to 1 which means WHFast512 is integrating only one system at a time. If your system has fewer than 5 planets, then you can use WHFast512 to integrate 2 systems in parallel. If your system has fewer than 3 planets, then you can use WHFast512 to integrate 4 systems in parallel. If multiple systems are integrated at the same time, particles must be added in the following order: Star 1, Planet, Planet, Star 2, Planet, Planet, ... For more information see the [this example](../c_examples/whfast512_2_planets).
 
