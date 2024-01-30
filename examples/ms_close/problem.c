@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
     double peri = 0.1;
     int integrator = 0;
     if (argc == 3){
-      peri = pow(10, -1. * atof(argv[2]));
+      peri = pow(10, -1. * atof(argv[2])/2.);
       integrator = atoi(argv[1]);
     }
 
@@ -52,28 +52,35 @@ int main(int argc, char* argv[]){
     double si = M_PI / 2.;
 
     char grators[10][10] = {"TRACE", "WHFAST", "MERCURIUS", "WHFASTr", "MERCURIUSr", "TRACEf"};
-
     switch(integrator){
       case 0:
+        //printf("Using TRACE\n");
         r->integrator = REB_INTEGRATOR_TRACE;
         r->dt = 0.15 * 2 * M_PI;
         r->ri_trace.peri_crit_distance=2.;
+        break;
       case 1:
+        //printf("Using WHFAST %f\n", se);
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->dt = 0.15 * 2 * M_PI;
+        break;
       case 2:
         r->integrator = REB_INTEGRATOR_MERCURIUS;
         r->dt = 0.15 * 2 * M_PI;
+        break;
       case 3:
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->dt = 2*M_PI*sqrt((1-se)*(1-se)*(1-se)*sa*sa*sa/((1+se)*r->G*star.m))/50.;
+        break;
       case 4:
         r->integrator = REB_INTEGRATOR_MERCURIUS;
         r->dt = 2*M_PI*sqrt((1-se)*(1-se)*(1-se)*sa*sa*sa/((1+se)*r->G*star.m))/15.;
+        break;
       case 5:
         r->integrator = REB_INTEGRATOR_TRACE;
         r->dt = 0.15 * 2 * M_PI;
         r->ri_trace.peri_crit_fdot=17.;
+        break;
     }
 
     //r->integrator = REB_INTEGRATOR_TRACE;
@@ -101,7 +108,7 @@ int main(int argc, char* argv[]){
     r->exact_finish_time=0;
     e_init = reb_simulation_energy(r);
     //system("rm -rf ho.txt");
-    //system("rm -rf energy_trace_best.txt");
+    //system("rm -rf energy_wh.txt");
 
     //FILE* f = fopen("energy_trace_best.txt","a");
     //fclose(f);
@@ -130,6 +137,7 @@ void heartbeat(struct reb_simulation* r){
     //}
 
     double e_curr = fabs((reb_simulation_energy(r) - e_init) / e_init);
+    //printf("%f %e\n", r->t, e_curr);
     if (emax < e_curr){
       emax = e_curr;
     }
@@ -141,7 +149,7 @@ void heartbeat(struct reb_simulation* r){
         if (err > emax){
           emax = err;
         }
-        FILE* f = fopen("energy_trace_best.txt","a");
+        FILE* f = fopen("energy_wh.txt","a");
 
         // rotate whole simulation to rotating frame
         //reb_simulation_irotate(r, r1);
@@ -178,4 +186,3 @@ void heartbeat(struct reb_simulation* r){
 */
 
 }
-
