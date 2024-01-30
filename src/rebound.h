@@ -603,6 +603,7 @@ struct reb_simulation {
     void (*pre_timestep_modifications) (struct reb_simulation* const r);    // Executed just before eaach timestep. Used by REBOUNDx.
     void (*post_timestep_modifications) (struct reb_simulation* const r);   // Executed just after each timestep. Used by REBOUNDx.
     void (*heartbeat) (struct reb_simulation* r);                           // Executed at each timestep once. Use this to do extra output/work during a simulation.
+    int (*key_callback) (struct reb_simulation* r, int key);                // Used when SERVER or OPENGL visualization is on. Gets called after completed timestep and if a key has been pressed. Return 1 if you want to skip default key commands.
     double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v);  // Allows for a velocity dependent coefficient of restitution (used for ring simulations)
     int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);        // Determines what happens when two particles collide.
     void (*free_particle_ap) (struct reb_particle* p);                      // Used by REBOUNDx.

@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v4.0.1-green.svg?style=flat)](https://rebound.readthedocs.org)
+[![Version](https://img.shields.io/badge/rebound-v4.0.3-green.svg?style=flat)](https://rebound.readthedocs.org)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
 [![Paper](https://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat)](https://arxiv.org/abs/1110.4876)
@@ -20,6 +20,15 @@
 ![REBOUND Examples](https://github.com/hannorein/rebound/raw/main/docs/img/reboundbanner.png)
 
 REBOUND is an N-body integrator, i.e. a software package that can integrate the motion of particles under the influence of gravity. The particles can represent stars, planets, moons, ring or dust particles. REBOUND is very flexible and can be customized to accurately and efficiently solve many problems in astrophysics.  
+
+## REBOUND 24 Meeting
+![REBOUND 24 Virtual Meeting](https://github.com/hannorein/rebound/raw/main/docs/img/reb24flyer.png)
+
+Join us for the first virtual 2-day REBOUND meeting, aimed to bring REBOUND developers and users together. 
+1 day of science talks, 1 day of technical/hands-on talks, discussions on REBOUND's future + social events!
+
+Abstract submission and registration are now open at [https://hannorein.github.io/rebound24/](https://hannorein.github.io/rebound24/).
+
 
 ## Features
 

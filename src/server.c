@@ -249,26 +249,39 @@ void* reb_server_start(void* args){
         }else if (!strncasecmp(uri, "/keyboard/",10)) {
             int key = 0;
             sscanf(uri, "/keyboard/%d", &key);
-            switch (key){
-                case 'Q':
-                    data->r->status = REB_STATUS_USER;
-                    fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
-                    fprintf(stream, "ok.\n");
-                    break;
-                case ' ':
-                    if (data->r->status == REB_STATUS_PAUSED){
-                        printf("Resume.\n");
-                        data->r->status = REB_STATUS_RUNNING;
-                    }else if (data->r->status == REB_STATUS_RUNNING){
-                        printf("Pause.\n");
-                        data->r->status = REB_STATUS_PAUSED;
-                    }
-                    fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
-                    fprintf(stream, "ok.\n");
-                    break;
-                default:
-                    reb_server_cerror(stream, "Unsupported key received.");
-                    break;
+            data->need_copy = 1;
+            pthread_mutex_lock(&(data->mutex));
+            int skip_default_keys = 0;
+            if (r->key_callback){
+                skip_default_keys = r->key_callback(r, key);
+            } 
+            data->need_copy = 0;
+            pthread_mutex_unlock(&(data->mutex));
+            if (!skip_default_keys){
+                switch (key){
+                    case 'Q':
+                        data->r->status = REB_STATUS_USER;
+                        fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
+                        fprintf(stream, "ok.\n");
+                        break;
+                    case ' ':
+                        if (data->r->status == REB_STATUS_PAUSED){
+                            printf("Resume.\n");
+                            data->r->status = REB_STATUS_RUNNING;
+                        }else if (data->r->status == REB_STATUS_RUNNING){
+                            printf("Pause.\n");
+                            data->r->status = REB_STATUS_PAUSED;
+                        }
+                        fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
+                        fprintf(stream, "ok.\n");
+                        break;
+                    default:
+                        reb_server_cerror(stream, "Unsupported key received.");
+                        break;
+                }
+            }else{
+                fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
+                fprintf(stream, "ok.\n");
             }
         }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             struct stat sbuf;
@@ -373,27 +386,40 @@ void* reb_server_start(void* args){
             int key = 0;
             const char* ok = "ok.";
             sscanf(uri, "/keyboard/%d", &key);
-            switch (key){
-                case 'Q':
-                    data->r->status = REB_STATUS_USER;
-                    sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
-                    sendBytes(clientS, ok, strlen(ok));
-                    break;
-                case ' ':
-                    if (data->r->status == REB_STATUS_PAUSED){
-                        printf("Resume.\n");
-                        data->r->status = REB_STATUS_RUNNING;
-                    }else if (data->r->status == REB_STATUS_RUNNING){
-                        printf("Pause.\n");
-                        data->r->status = REB_STATUS_PAUSED;
-                    }
-                    sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
-                    sendBytes(clientS, ok, strlen(ok));
-                    break;
-                default:
-                    reb_server_cerror(clientS, "Unknown key received.");
-                    continue;
-                    break;
+            int skip_default_keys = 0;
+            data->need_copy = 1;
+            //pthread_mutex_lock(&(data->mutex)); TODO!!
+            if (r->key_callback){
+                skip_default_keys = r->key_callback(r, key);
+            } 
+            data->need_copy = 0;
+            //pthread_mutex_unlock(&(data->mutex));
+            if (!skip_default_keys){
+                switch (key){
+                    case 'Q':
+                        data->r->status = REB_STATUS_USER;
+                        sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                        sendBytes(clientS, ok, strlen(ok));
+                        break;
+                    case ' ':
+                        if (data->r->status == REB_STATUS_PAUSED){
+                            printf("Resume.\n");
+                            data->r->status = REB_STATUS_RUNNING;
+                        }else if (data->r->status == REB_STATUS_RUNNING){
+                            printf("Pause.\n");
+                            data->r->status = REB_STATUS_PAUSED;
+                        }
+                        sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                        sendBytes(clientS, ok, strlen(ok));
+                        break;
+                    default:
+                        reb_server_cerror(clientS, "Unknown key received.");
+                        continue;
+                        break;
+                }
+            }else{
+                sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                sendBytes(clientS, ok, strlen(ok));
             }
         }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             FILE *f = fopen("rebound.html", "rb");

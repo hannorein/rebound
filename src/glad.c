@@ -21,6 +21,7 @@
 */
 
 #ifdef OPENGL
+#ifndef __EMSCRIPTEN__
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1708,4 +1709,5 @@ int gladLoadGLLoader(GLADloadproc load) {
 	return GLVersion.major != 0 || GLVersion.minor != 0;
 }
 
+#endif // __EMSCRIPTEN__
 #endif // OPENGL

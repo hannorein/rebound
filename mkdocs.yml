@@ -136,6 +136,7 @@ nav:
       - ipython_examples/SaturnsRings.ipynb
     - "Visualization":
       - ipython_examples/OrbitPlot.ipynb
+      - c_examples/simulationarchive_viewer.md
     - "Removing particles":
       - c_examples/removing_particles_from_simulation.md
       - ipython_examples/EscapingParticles.ipynb

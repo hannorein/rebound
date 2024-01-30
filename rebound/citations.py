@@ -2,7 +2,7 @@
 """Automatically generate citations for a simulation."""
 
 def cite(sim):
-    txt = """Simulations in this paper made use of the REBOUND N-body code \citep{rebound}. """
+    txt = """Simulations in this paper made use of the REBOUND N-body code \\citep{rebound}. """
     bib = """@ARTICLE{rebound,
        author = {{Rein}, H. and {Liu}, S. -F.},
         title = "{REBOUND: an open-source multi-purpose N-body code for collisional dynamics}",
@@ -22,11 +22,11 @@ archivePrefix = {arXiv},
 }
 """
     if sim.extras:
-        txt +="""The REBOUNDx package was used to incorporate additional physics \citep{reboundx}. """
+        txt +="""The REBOUNDx package was used to incorporate additional physics \\citep{reboundx}. """
         bib +="""@ARTICLE{reboundx,
        author = {{Tamayo}, Daniel and {Rein}, Hanno and {Shi}, Pengshuai and {Hernandez}, David M.},
         title = "{REBOUNDx: a library for adding conservative and dissipative forces to otherwise symplectic N-body integrations}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
          year = 2020,
         month = jan,
@@ -42,7 +42,7 @@ archivePrefix = {arXiv},
 }
 """
     if sim.integrator == "ias15":
-        txt += """The simulations were integrated using IAS15, a 15th order Gauss-Radau integrator \citep{reboundias15}. """
+        txt += """The simulations were integrated using IAS15, a 15th order Gauss-Radau integrator \\citep{reboundias15}. """
         bib += """@ARTICLE{reboundias15,
        author = {{Rein}, Hanno and {Spiegel}, David S.},
         title = "{IAS15: a fast, adaptive, high-order integrator for gravitational dynamics, accurate to machine precision over a billion orbits}",
@@ -62,7 +62,7 @@ archivePrefix = {arXiv},
 }
 """
     if sim.integrator == "whfast":
-        txt += """The simulations were integrated using WHFast, a symplectic Wisdom-Holman integrator \citep{reboundwhfast,wh}. """
+        txt += """The simulations were integrated using WHFast, a symplectic Wisdom-Holman integrator \\citep{reboundwhfast,wh}. """
         bib += """@ARTICLE{reboundwhfast,
        author = {{Rein}, Hanno and {Tamayo}, Daniel},
         title = "{WHFAST: a fast and unbiased implementation of a symplectic Wisdom-Holman integrator for long-term gravitational simulations}",
@@ -84,7 +84,7 @@ archivePrefix = {arXiv},
         bib += """@ARTICLE{wh,
        author = {{Wisdom}, Jack and {Holman}, Matthew},
         title = "{Symplectic maps for the N-body problem.}",
-      journal = {\aj},
+      journal = {\\aj},
      keywords = {Many Body Problem, Planetary Evolution, Pluto (Planet), Astronomical Maps, Gravitational Effects, Physics (General)},
          year = 1991,
         month = oct,
@@ -96,11 +96,11 @@ archivePrefix = {arXiv},
 }
 """
         if sim.ri_whfast.kernel != "default":
-            txt += """A high order kernel was used in WHFast to improved the accuracy of the integrations \citep{reboundhighorder}. """
+            txt += """A high order kernel was used in WHFast to improved the accuracy of the integrations \\citep{reboundhighorder}. """
             bib += """@ARTICLE{reboundhighorder,
            author = {{Rein}, Hanno and {Tamayo}, Daniel and {Brown}, Garett},
             title = "{High-order symplectic integrators for planetary dynamics and their implementation in REBOUND}",
-          journal = {\mnras},
+          journal = {\\mnras},
          keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Computational Physics},
              year = 2019,
             month = nov,
@@ -117,7 +117,7 @@ archivePrefix = {arXiv},
     """
 
     if sim.integrator == "whfast512":
-        txt += """The simulations were integrated using WHFast512, a symplectic Wisdom-Holman integrator using SIMD AVX512 instructions \citep{reboundwhfast512,wh}. """
+        txt += """The simulations were integrated using WHFast512, a symplectic Wisdom-Holman integrator using SIMD AVX512 instructions \\citep{reboundwhfast512,wh}. """
         bib += """@ARTICLE{reboundwhfast512,
        author = {{Javaheri}, Pejvak and {Rein}, Hanno and {Tamayp}, Daniel},
         title = "{WHFast512: An N-body integrator for planetary systems optimized with AVX512 SIMD instructions}",
@@ -127,7 +127,7 @@ archivePrefix = {arXiv},
         bib += """@ARTICLE{wh,
        author = {{Wisdom}, Jack and {Holman}, Matthew},
         title = "{Symplectic maps for the N-body problem.}",
-      journal = {\aj},
+      journal = {\\aj},
      keywords = {Many Body Problem, Planetary Evolution, Pluto (Planet), Astronomical Maps, Gravitational Effects, Physics (General)},
          year = 1991,
         month = oct,
@@ -141,13 +141,13 @@ archivePrefix = {arXiv},
 
     
     if sim.integrator == "mercurius":
-        txt += """The simulations were integrated using the hybrid symplectic MERCURIUS integrator \citep{reboundmercurius}. """
+        txt += """The simulations were integrated using the hybrid symplectic MERCURIUS integrator \\citep{reboundmercurius}. """
         bib += """@ARTICLE{reboundmercurius,
        author = {{Rein}, Hanno and {Hernandez}, David M. and {Tamayo}, Daniel and
          {Brown}, Garett and {Eckels}, Emily and {Holmes}, Emma and
-         {Lau}, Michelle and {Leblanc}, R{\'e}jean and {Silburt}, Ari},
+         {Lau}, Michelle and {Leblanc}, R{\\'e}jean and {Silburt}, Ari},
         title = "{Hybrid symplectic integrators for planetary dynamics}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Dynamical Systems},
          year = 2019,
         month = jun,
@@ -164,11 +164,11 @@ archivePrefix = {arXiv},
 """
 
     if sim.integrator == "janus":
-        txt += """The simulations were integrated using the time-reversible JANUS integrator \citep{reboundjanus}. """
+        txt += """The simulations were integrated using the time-reversible JANUS integrator \\citep{reboundjanus}. """
         bib += """@ARTICLE{reboundjanus,
        author = {{Rein}, Hanno and {Tamayo}, Daniel},
         title = "{JANUS: a bit-wise reversible integrator for N-body dynamics}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Earth and Planetary Astrophysics},
          year = 2018,
         month = jan,
@@ -185,11 +185,11 @@ archivePrefix = {arXiv},
 """
 
     if sim.integrator == "sei":
-        txt += """The simulations were integrated using the Symplectic Epicycle Integrator (SEI) \citep{reboundsei}. """
+        txt += """The simulations were integrated using the Symplectic Epicycle Integrator (SEI) \\citep{reboundsei}. """
         bib += """@ARTICLE{reboundsei,
        author = {{Rein}, Hanno and {Tremaine}, Scott},
         title = "{Symplectic integrators in the shearing sheet}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {methods: numerical, celestial mechanics, planets and satellites: dynamical evolution and stability, planets and satellites: formation, planets and satellites: rings, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Galaxy Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Numerical Analysis},
          year = 2011,
         month = aug,
@@ -206,11 +206,11 @@ archivePrefix = {arXiv},
 """
     
     if sim.integrator == "saba":
-        txt += """The simulations were integrated using the SABA Integrator \citep{reboundhighorder,saba}. """
+        txt += """The simulations were integrated using the SABA Integrator \\citep{reboundhighorder,saba}. """
         bib += """@ARTICLE{reboundhighorder,
        author = {{Rein}, Hanno and {Tamayo}, Daniel and {Brown}, Garett},
         title = "{High-order symplectic integrators for planetary dynamics and their implementation in REBOUND}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Computational Physics},
          year = 2019,
         month = nov,
@@ -245,11 +245,11 @@ archivePrefix = {arXiv},
 
 
     if sim.simulationarchive_auto_interval!=0 or sim.simulationarchive_auto_walltime!=0 or sim.simulationarchive_auto_step!=0:
-        txt += """The Simulationarchive format was used to store fully reproducible simulation data \citep{reboundsa}. """
+        txt += """The Simulationarchive format was used to store fully reproducible simulation data \\citep{reboundsa}. """
         bib += """@ARTICLE{reboundsa,
        author = {{Rein}, Hanno and {Tamayo}, Daniel},
         title = "{A new paradigm for reproducing and analyzing N-body simulations of planetary systems}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {methods: numerical, gravitation, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
          year = 2017,
         month = may,
@@ -265,11 +265,11 @@ archivePrefix = {arXiv},
 }
 """
     if sim.N_var>0:
-        txt += """Variational equations were used to calculate trajectories of nearby orbits \citep{reboundvar}. """
+        txt += """Variational equations were used to calculate trajectories of nearby orbits \\citep{reboundvar}. """
         bib += """@ARTICLE{reboundvar,
        author = {{Rein}, Hanno and {Tamayo}, Daniel},
         title = "{Second-order variational equations for N-body simulations}",
-      journal = {\mnras},
+      journal = {\\mnras},
      keywords = {gravitation, methods: numerical, planets and satellites: dynamical evolution and stability, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Mathematics - Classical Analysis and ODEs, Mathematics - Dynamical Systems},
          year = 2016,
         month = jul,

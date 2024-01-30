@@ -312,7 +312,7 @@ class TestMercurius(unittest.TestCase):
         
         # Note: precision might vary on machine as initializations use cos/sin 
         # and are therefore machine dependent. 
-        self.assertLess(dE_mercurius,4e-6)              # reasonable precision for mercurius
+        self.assertLess(dE_mercurius,5e-6)              # reasonable precision for mercurius
         self.assertLess(dE_mercurius/dE_whfast,1e-4)    # at least 1e4 times better than whfast
         self.assertLess(time_mercurius,time_ias15) # faster than ias15
         if sys.maxsize > 2**32: # 64 bit

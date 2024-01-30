@@ -45,9 +45,6 @@
 
 #ifdef OPENGL
 #include "simplefont.h"
-#define GLFW_INCLUDE_NONE
-#include "glad.h"
-#include <GLFW/glfw3.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/fetch.h>
@@ -386,6 +383,19 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
         printf("Error accessing data in reb_display_keyboard\n");
         return;
     }
+    if (!data->r){
+        printf("Error accessing data->r in reb_display_keyboard\n");
+        return;
+    }
+    // User defined keys:
+    int skip_default_keys = 0;
+    if (data->r->key_callback){
+        skip_default_keys = data->r->key_callback(data->r, key);
+    } 
+    if (skip_default_keys){
+        return;
+    }
+    // Default keys:
     data->key_mods = mods;
     if (action==GLFW_PRESS){
         switch(key){
@@ -828,7 +838,10 @@ void reb_display_init(struct reb_simulation * const r){
     }
 
     glfwMakeContextCurrent(window);
+
+#ifndef __EMSCRIPTEN__
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+#endif // __EMSCRIPTEN__
     
     glfwSetWindowUserPointer(window,data); 
 

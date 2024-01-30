@@ -4,6 +4,17 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.0.3
+* Default IAS15 timestepping criterion is now `adaptive_mode=2`. See Pham, Rein, and Spiegel (2024) for details. To use the old default timestepping criterion, set `adaptive_mode=1`.
+* Fixed a race condition that should improve the responsiveness of web based visualizations.
+* Removed the glad dependency from emscripten builds which reduces filesize and improves performance.
+
+### Version 4.0.2
+* Fixes an issue where the default Makefiles included white spaces after the SERVER and OPENGL variable definitions. This caused the main Makefile to ignore these settings.
+* Added `key_callback` function for customizing user interaction in visualizations.
+* Added `simulationarchive_viewer` example.
+* Included `-sGL_ENABLE_GET_PROC_ADDRESS` flag that is now needed for the latest version of emscripten.
+
 ### Version 4.0.1
 * Include missing python packages
 

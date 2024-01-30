@@ -66,7 +66,7 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.0.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.0.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
@@ -381,6 +381,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     for (int s=0; s<r->N_odes; s++){
         r->odes[s]->r = NULL;
     }
+    free(r->odes);
 }
 
 int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
@@ -572,7 +573,7 @@ void reb_simulation_init(struct reb_simulation* r){
     // ********** IAS15
     r->ri_ias15.epsilon         = 1e-9;
     r->ri_ias15.min_dt      = 0;
-    r->ri_ias15.adaptive_mode = 1; // default is old mode for now
+    r->ri_ias15.adaptive_mode = 2; // new default since January 2024
     r->ri_ias15.iterations_max_exceeded = 0;    
     
     // ********** SEI
@@ -788,8 +789,9 @@ static void* reb_simulation_integrate_raw(void* args){
     if (r->testparticle_hidewarnings==0 && reb_particle_check_testparticles(r)){
         reb_simulation_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
-
-    r->status = REB_STATUS_RUNNING;
+    if (r->status != REB_STATUS_PAUSED){ // Allow simulation to be paused initially
+        r->status = REB_STATUS_RUNNING;
+    }
     reb_run_heartbeat(r);
 #ifdef __EMSCRIPTEN__
     double t0 = emscripten_performance_now();

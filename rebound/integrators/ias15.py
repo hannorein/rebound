@@ -31,7 +31,10 @@ class IntegratorIAS15(ctypes.Structure):
     :ivar float adaptive_mode:
         Determines how the adaptive timestep is chosen. 
         This replaces the previous epsilon_global variable.
-        TODO: list options.
+        The default is 2 which corresponds to the timestep criterion described in Pham, Rein, and Spiegel (2024).  This should be optimal in almost all cases.
+        If set to 0, the fractional error is estimated via `max(acceleration_error/acceleration)` and the timestep criterion of Rein and Spiegel (2015) is used. 
+        If set to 1, IAS15 estimates the fractional error via `max(acceleration_error)/max(acceleration)` where the maximum is taken over all particles. As before, the timestep criterion of Rein and Spiegel (2015) is used. This was the default until January 2024. 
+        If set to 3, then the criterion of Aarseth (1985) is used.
     
     """
     def __repr__(self):
