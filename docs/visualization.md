@@ -38,7 +38,7 @@ The following code shows how to start the server:
     ```
 
 By default, the server opens port 1234 on your computer. 
-Now all you have to do to see the visualization is to open your browser and go to [http://localhost1234](http://localhost1234) or [http://127.0.0.1](http://127.0.0.1).
+Now all you have to do to see the visualization is to open your browser and go to [http://localhost:1234/](http://localhost:1234/) or [http://127.0.0.1:1234/](http://127.0.0.1:1234/).
 
 When you open the page the REBOUND web server accepts your request and serves you a `rebound.html` file which includes all the code required to visualize a simulation using WebGL. 
 The cool thing is, the visualization code is just REBOUND itself, compiled to WebAssembly using emscripten. 
