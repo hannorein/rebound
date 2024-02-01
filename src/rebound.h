@@ -412,6 +412,8 @@ struct reb_integrator_janus {
 
 // Possible return values of of rebound_integrate
 enum REB_STATUS {
+    // Any status less than SINGLE_STEP get incremented once every timestep until SINGLE_STEP is reached.
+    REB_STATUS_SINGLE_STEP = -10, // Performing a single step, then switching to PAUSED.
     REB_STATUS_PAUSED = -3,       // Simulation is paused by visualization.
     REB_STATUS_LAST_STEP = -2,    // Current timestep is the last one. Needed to ensure that t=tmax exactly.
     REB_STATUS_RUNNING = -1,      // Simulation is current running, no error occurred.
@@ -1063,15 +1065,14 @@ DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 
 // The following stuctures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
 
-struct reb_particle_opengl {
-    float x,y,z;
-    float vx,vy,vz;
-    float r;
-};
 struct reb_orbit_opengl {
     float x,y,z;
     float a, e, f;
     float omega, Omega, inc;
+};
+
+struct reb_vec4d_opengl {
+    float x,y,z,r;
 };
 
 struct reb_server_data {
@@ -1095,7 +1096,7 @@ struct reb_server_data {
 struct reb_display_data {
     struct reb_simulation* r;
     struct reb_simulation* r_copy;
-    struct reb_particle_opengl* particle_data;
+    struct reb_vec4d_opengl* particle_data;
     struct reb_orbit_opengl* orbit_data;
     uint64_t N_allocated;
     double scale;
@@ -1114,44 +1115,67 @@ struct reb_display_data {
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running
     int wire;                       // Shows/hides orbit wires.
+    int past;                       // Shows/hides past particle positions.
+    uint64_t past_last_steps_done;
+    unsigned int past_N;            // Number of past particle positions.
+    unsigned int past_N_allocated;
+    unsigned int past_current_index;
     int onscreentext;               // Shows/hides onscreen text.
     int onscreenhelp;               // Shows/hides onscreen help.
     int multisample;                // Turn off/on multisampling.
-    int clear;                      // Toggles clearing the display on each draw.
     int ghostboxes;                 // Shows/hides ghost boxes.
     int reference;                  // reb_particle used as a reference for centering.
     unsigned int mouse_action;      
     unsigned int key_mods;      
     struct reb_rotation view;
-    unsigned int simplefont_tex;
-    unsigned int simplefont_shader_program;
-    unsigned int simplefont_shader_vao;
-    unsigned int simplefont_shader_pos_location;
-    unsigned int simplefont_shader_ypos_location;
-    unsigned int simplefont_shader_scale_location;
-    unsigned int simplefont_shader_aspect_location;
-    unsigned int simplefont_shader_screen_aspect_location;
-    unsigned int simplefont_shader_charval_buffer;
-    unsigned int box_shader_program;
-    unsigned int box_shader_box_vao;
-    unsigned int box_shader_cross_vao;
-    unsigned int box_shader_mvp_location;
-    unsigned int box_shader_color_location;
-    unsigned int point_shader_mvp_location;
-    unsigned int point_shader_color_location;
-    unsigned int point_shader_program;
-    unsigned int point_shader_particle_vao;
-    unsigned int sphere_shader_mvp_location;
-    unsigned int sphere_shader_program;
-    unsigned int sphere_shader_particle_vao;
-    unsigned int sphere_shader_vertex_count;
-    unsigned int orbit_shader_mvp_location;
-    unsigned int orbit_shader_program;
-    unsigned int orbit_shader_particle_vao;
-    unsigned int orbit_shader_vertex_count;
     unsigned int particle_buffer;
+    unsigned int particle_buffer_current;
     unsigned int orbit_buffer;
+    unsigned int orbit_buffer_current;
     void* window;
+    struct {
+        unsigned int texture;
+        unsigned int program;
+        unsigned int vao;
+        unsigned int pos_location;
+        unsigned int ypos_location;
+        unsigned int scale_location;
+        unsigned int aspect_location;
+        unsigned int screen_aspect_location;
+        unsigned int charval_buffer;
+    } shader_simplefont;
+    struct {
+        unsigned int program;
+        unsigned int box_vao;
+        unsigned int cross_vao;
+        unsigned int mvp_location;
+        unsigned int color_location;
+    } shader_box;
+    struct {
+        unsigned int mvp_location;
+        unsigned int color_location;
+        unsigned int current_vertex_location;
+        unsigned int past_N_location;
+        unsigned int N_real_location;
+        unsigned int program;
+        unsigned int particle_vao;
+    } shader_point;
+    struct {
+        unsigned int mvp_location;
+        unsigned int program;
+        unsigned int particle_vao_current;
+        unsigned int particle_vao;
+    } shader_sphere;
+    struct {
+        unsigned int mvp_location;
+        unsigned int current_vertex_location;
+        unsigned int past_N_location;
+        unsigned int N_real_location;
+        unsigned int program;
+        unsigned int particle_vao_current;
+        unsigned int particle_vao;
+        unsigned int vertex_count;
+    } shader_orbit;
 
 };
 

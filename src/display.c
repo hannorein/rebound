@@ -129,21 +129,24 @@ static const char* onscreenhelp[] = {
                 " h       | Show/hide this page",
                 " q       | Quit simulation",
                 " (space) | Pause simulation",
+                " (ar dwn)| Perform one single time step",
+                " (pg dwn)| Perform 50 time steps",
                 " d       | Pause real-time visualization", 
                 "         | (the simulation continues)",
-                " s       | Toggle three dimensional spheres ",
-                "         | (looks better)/points (draws faster)",
-                " g       | Toggle ghost boxes",
-                " r       | Reset view. Press multiple times to ",
+                " r       | Reset view. Press multiple times to",
                 "         | change orientation",
-                " x/X     | Move to a coordinate system centerd ",
+                " x/X     | Move to a coordinate system centered",
                 "         | on a particle (note: does not work if", 
                 "         | particle array is resorted)",
-                " c       | Toggle clear screen after each time-step",
-                " m       | Toggle multisampling",
-                " w       | Draw orbits as wires",
                 " t       | Show/hide logo, time, timestep and number",
-                "         | of particles.",
+                "         | of particles",
+                " s       | Toggle points/spheres/points+spheres/none",
+                " g       | Toggle ghost boxes",
+                " m       | Toggle multisampling",
+                " w       | Show/hide instantaneous orbits as wires",
+                " p       | Show/hide past particle locations",
+                " i / o   | Increase/decrease past particle locations",
+                " c       | Clear past particle location history",
                 "----------------------------------------------------"
 };
 
@@ -294,6 +297,14 @@ static void reb_glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error: %s\n", description);
 }
 
+static void reb_display_scroll(GLFWwindow* window, double xoffset, double yoffset){
+    struct reb_display_data* data = glfwGetWindowUserPointer(window);
+    if (!data){
+        printf("Error accessing data in reb_display_scroll\n");
+        return;
+    }
+    data->scale *= 1.-yoffset/100.;
+}
 static void reb_display_mouse_button(GLFWwindow* window, int button, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
@@ -376,6 +387,38 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
         }
     }
 }
+                
+#define xstr(s) ystr(s)
+#define ystr(s) #s
+static void reb_display_clear_particle_data(struct reb_display_data* data){
+    int N_real = data->N_allocated;
+    int N_hist = data->past_N_allocated;
+    if (data->particle_data){
+        float n = NAN;
+        for (int i=0; i<N_real; i++){
+            data->particle_data[i].x = n;
+            data->particle_data[i].y = n;
+            data->particle_data[i].z = n;
+            data->particle_data[i].r = n;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        for (int i=0; i<N_hist; i++){
+            glBufferSubData(GL_ARRAY_BUFFER, i*N_real*sizeof(struct reb_vec4d_opengl), N_real*sizeof(struct reb_vec4d_opengl), data->particle_data);
+        }
+    }
+    if (data->orbit_data){
+        float n = NAN;
+        for (int i=0; i<N_real; i++){
+            data->orbit_data[i].x = n; // enought to not render
+            data->orbit_data[i].y = n;
+            data->orbit_data[i].z = n;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+        for (int i=0; i<N_hist; i++){
+            glBufferSubData(GL_ARRAY_BUFFER, i*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        }
+    }
+}
 
 void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
@@ -415,7 +458,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 }
                 break;
             case 'S':
-                data->spheres = (data->spheres+1)%3;
+                data->spheres = (data->spheres+1)%4;
                 break;
             case 'G':
                 data->ghostboxes = !data->ghostboxes;
@@ -452,13 +495,23 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 data->pause = !data->pause;
                 break;
             case 'W':
-                data->wire = !data->wire;
+                data->wire = (data->wire+1)%2;
+                break;
+            case 'C':
+                reb_display_clear_particle_data(data);
+                break;
+            case 'P':
+                data->past = (data->past+1)%2;
+                break;
+            case 'I':
+                data->past_N *= 2;
+                break;
+            case 'O':
+                data->past_current_index = data->past_current_index % MAX(2, data->past_N/2) ;
+                data->past_N = MAX(2, data->past_N/2) ;
                 break;
             case 'T':
                 data->onscreentext = !data->onscreentext;
-                break;
-            case 'C':
-                data->clear = !data->clear;
                 break;
             case 'X': 
                 if (mods!=GLFW_MOD_SHIFT){
@@ -469,6 +522,18 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                     data->reference--;
                     if (data->reference<-1) data->reference = data->r->N-1;
                     printf("Reference particle: %d.\n",data->reference);
+                }
+                break;
+            case 264: // arrow down
+                if (data->r->status == REB_STATUS_PAUSED){
+                    data->r->status = REB_STATUS_SINGLE_STEP;
+                    printf("Step.\n");
+                }
+                break;
+            case 267: // page down
+                if (data->r->status == REB_STATUS_PAUSED){
+                    data->r->status = REB_STATUS_SINGLE_STEP - 50;
+                    printf("50 steps.\n");
                 }
                 break;
         }
@@ -526,15 +591,26 @@ void reb_render_frame(void* p){
 
     // prepare data (incl orbit calculation)
     const int N_real = r_copy->N - r_copy->N_var;
-    if (N_real > data->N_allocated){
-        data->N_allocated = N_real;
-        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_particle_opengl));
-        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
+
+    if (N_real > data->N_allocated || data->past_N != data->past_N_allocated){
+        data->particle_data = realloc(data->particle_data, N_real*sizeof(struct reb_vec4d_opengl));
+        data->orbit_data = realloc(data->orbit_data, N_real*sizeof(struct reb_orbit_opengl));
+        
         // Resize memory if needed
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_particle_opengl), NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data->past_N*N_real*sizeof(struct reb_vec4d_opengl), NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
+        glBufferData(GL_ARRAY_BUFFER, N_real*sizeof(struct reb_vec4d_opengl), NULL, GL_STATIC_DRAW);
+        
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data->past_N*N_real*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
+        glBufferData(GL_ARRAY_BUFFER, N_real*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+        
+        data->N_allocated = N_real;
+        data->past_N_allocated = data->past_N;
+                
+        reb_display_clear_particle_data(data);
     }
 
     // this only does something for WHFAST
@@ -546,11 +622,17 @@ void reb_render_frame(void* p){
         data->particle_data[i].x  = (float)p.x;
         data->particle_data[i].y  = (float)p.y;
         data->particle_data[i].z  = (float)p.z;
-        data->particle_data[i].vx = (float)p.vx;
-        data->particle_data[i].vy = (float)p.vy;
-        data->particle_data[i].vz = (float)p.vz;
         data->particle_data[i].r  = (float)p.r;
     }
+    if (r->steps_done != data->past_last_steps_done){
+        if (r->steps_done < data->past_last_steps_done){
+            // Something strange is happening. New simulation?
+            reb_display_clear_particle_data(data);
+        }
+        data->past_last_steps_done = r->steps_done;
+        data->past_current_index = (data->past_current_index+1) % data->past_N_allocated;
+    }
+
     if (data->wire && N_real>1){
         struct reb_particle com = r_copy->particles[0];
         for (unsigned int i=1;i<N_real;i++){
@@ -571,17 +653,24 @@ void reb_render_frame(void* p){
     if (N_real>0){
         // Fill memory (but not resize)
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_particle_opengl), data->particle_data);
+        glBufferSubData(GL_ARRAY_BUFFER, data->past_current_index*N_real*sizeof(struct reb_vec4d_opengl), N_real*sizeof(struct reb_vec4d_opengl), data->particle_data);
+        if (data->spheres==1 || data->spheres==2){
+            glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_vec4d_opengl), data->particle_data);
+        }
+            
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        glBufferSubData(GL_ARRAY_BUFFER, data->past_current_index*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        if (data->wire){
+            glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        }
     }
 
     // Do actual drawing
     double ratio = (double)width/(double)height;
     glViewport(0,0,width,height);
-    if (data->clear){
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-    }
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
 
 #ifndef __EMSCRIPTEN__
     glPointSize(15.*data->retina);
@@ -614,51 +703,75 @@ void reb_render_frame(void* p){
             mattranslate(tmp2,gb.x,gb.y,gb.z);
             matmult(view,tmp2,tmp1);
             matmult(projection,tmp1,tmp2);
-            if(data->spheres>0){
+            if(data->spheres==1||data->spheres==2){
                 // Solid Spheres
                 glEnable(GL_DEPTH_TEST);
-                glUseProgram(data->sphere_shader_program);
-                glBindVertexArray(data->sphere_shader_particle_vao);
-                glUniformMatrix4fv(data->sphere_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, data->sphere_shader_vertex_count, N_real);
+                glUseProgram(data->shader_sphere.program);
+                glUniformMatrix4fv(data->shader_sphere.mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
+                if (data->past==1){
+                    glBindVertexArray(data->shader_sphere.particle_vao);
+                    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real*data->past_N_allocated);
+                }else{
+                    glBindVertexArray(data->shader_sphere.particle_vao_current);
+                    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real);
+                }
                 glBindVertexArray(0);
                 glDisable(GL_DEPTH_TEST);
             }
 
             if(data->spheres%2==0){
+                glUseProgram(data->shader_point.program);
+                glBindVertexArray(data->shader_point.particle_vao);
+                glUniformMatrix4fv(data->shader_point.mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
+                glUniform1i(data->shader_point.past_N_location, data->past_N_allocated);
+                int current_vertex = (data->past_current_index-1+data->past_N_allocated)%data->past_N_allocated;
+                if (data->past==1){
+                    glUniform4f(data->shader_point.color_location, 1.,1.,1.,0.8);
+                    glUniform1i(data->shader_point.N_real_location, N_real);
+                    glUniform1i(data->shader_point.current_vertex_location, current_vertex);
+                    glDrawArrays(GL_POINTS, 0, N_real*data->past_N_allocated);
+                }
                 // Points
-                glUseProgram(data->point_shader_program);
-                glBindVertexArray(data->point_shader_particle_vao);
-                glUniform4f(data->point_shader_color_location, 1.,1.,0.,0.8);
-                glUniformMatrix4fv(data->point_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                glDrawArrays(GL_POINTS, 0, N_real);
+                glUniform4f(data->shader_point.color_location, 1.,1.,0.,0.8);
+                glUniform1i(data->shader_point.N_real_location, 0);
+                glDrawArrays(GL_POINTS, N_real*((current_vertex+1)%data->past_N_allocated), N_real);
                 glBindVertexArray(0);
             }
-            if (data->wire){
+            if (data->wire==1){
                 // Orbits
-                glUseProgram(data->orbit_shader_program);
-                glBindVertexArray(data->orbit_shader_particle_vao);
-                glUniformMatrix4fv(data->orbit_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
-                reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->orbit_shader_vertex_count, N_real-1);
+                glUseProgram(data->shader_orbit.program);
+                glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
+                glUniform1i(data->shader_orbit.past_N_location, data->past_N_allocated);
+                if (data->past==1){
+                    glBindVertexArray(data->shader_orbit.particle_vao);
+                    glUniform1i(data->shader_orbit.N_real_location, N_real-1);
+                    int current_vertex = (data->past_current_index-1+data->past_N_allocated)%data->past_N_allocated;
+                    glUniform1i(data->shader_orbit.current_vertex_location, current_vertex);
+                    reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->past_N_allocated*(N_real-1));
+                }else{
+                    glBindVertexArray(data->shader_orbit.particle_vao_current);
+                    glUniform1i(data->shader_orbit.N_real_location, 0);
+                    reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, N_real-1);
+                }
                 glBindVertexArray(0);
             }
         }
         { // Box
-            glUseProgram(data->box_shader_program);
+            glUseProgram(data->shader_box.program);
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
-                glBindVertexArray(data->box_shader_cross_vao);
+                glBindVertexArray(data->shader_box.cross_vao);
                 matscale(tmp1,data->scale);
             }else{
-                glBindVertexArray(data->box_shader_box_vao);
+                glBindVertexArray(data->shader_box.box_vao);
                 float boxsize[3] = {data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.};
                 matscale3(tmp1,boxsize);
             }
-            glUniform4f(data->box_shader_color_location, 1.,0.,0.,1.);
+            glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
             mattranslate(tmp2,gb.x,gb.y,gb.z);
             matmult(tmp2,tmp1,tmp3);
             matmult(view,tmp3,tmp1);
             matmult(projection,tmp1,tmp2);
-            glUniformMatrix4fv(data->box_shader_mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
+            glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) tmp2);
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
                 glDrawArrays(GL_LINES, 0, 6);
             }else{
@@ -669,30 +782,30 @@ void reb_render_frame(void* p){
     }}}
 #ifndef __EMSCRIPTEN__
     if (data->onscreentext){ // On screen text
-        glUseProgram(data->simplefont_shader_program);
-        glBindVertexArray(data->simplefont_shader_vao);
-        glBindTexture(GL_TEXTURE_2D,data->simplefont_tex);
-        glUniform1i(glGetUniformLocation(data->simplefont_shader_program, "tex"), 0);
-        glUniform2f(data->simplefont_shader_pos_location, -0.96,-0.72);
-        glUniform1f(data->simplefont_shader_aspect_location, 1.9);
-        glUniform1f(data->simplefont_shader_screen_aspect_location, 1./ratio);
-        glUniform1f(data->simplefont_shader_scale_location, 0.01);
-        glBindBuffer(GL_ARRAY_BUFFER, data->simplefont_shader_charval_buffer);
+        glUseProgram(data->shader_simplefont.program);
+        glBindVertexArray(data->shader_simplefont.vao);
+        glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
+        glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
+        glUniform2f(data->shader_simplefont.pos_location, -0.96,-0.72);
+        glUniform1f(data->shader_simplefont.aspect_location, 1.9);
+        glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
+        glUniform1f(data->shader_simplefont.scale_location, 0.01);
+        glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
         float val[200] = {0.};
         for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
             int j = convertLine(reb_logo[i],val);
-            glUniform1f(data->simplefont_shader_ypos_location, (float)i);
+            glUniform1f(data->shader_simplefont.ypos_location, (float)i);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
             reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
         
         char str[256];
         int ypos = 0;
-        glUniform2f(data->simplefont_shader_pos_location, -0.70,-269./350.);
-        glUniform1f(data->simplefont_shader_aspect_location, 1.4);
-        glUniform1f(data->simplefont_shader_scale_location, 16./350.);
+        glUniform2f(data->shader_simplefont.pos_location, -0.70,-269./350.);
+        glUniform1f(data->shader_simplefont.aspect_location, 1.4);
+        glUniform1f(data->shader_simplefont.scale_location, 16./350.);
         
-        glUniform1f(data->simplefont_shader_ypos_location, ypos++);
+        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         sprintf(str,"REBOUND v%s",reb_version_str);
         int j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
@@ -702,25 +815,31 @@ void reb_render_frame(void* p){
             sprintf(str, "Simulation is running  ");
         }else if (data->r_copy->status == REB_STATUS_PAUSED){
             sprintf(str, "Simulation is paused   ");
+        }else if (data->r_copy->status <= REB_STATUS_SINGLE_STEP){
+            if (data->r_copy->status == REB_STATUS_SINGLE_STEP){
+                sprintf(str, "Integrating 1 step");
+            }else{
+                sprintf(str, "Integrating %d steps",REB_STATUS_SINGLE_STEP - data->r_copy->status + 1);
+            }
         }
-        glUniform1f(data->simplefont_shader_ypos_location, ypos++);
+        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
         sprintf(str, "Press h for help ");
-        glUniform1f(data->simplefont_shader_ypos_location, ypos++);
+        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
         sprintf(str, "N = %d ",data->r_copy->N);
-        glUniform1f(data->simplefont_shader_ypos_location, ypos++);
+        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
-        glUniform1f(data->simplefont_shader_ypos_location, ypos++);
+        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         if (data->r_copy->integrator==REB_INTEGRATOR_SEI){
             sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->ri_sei.OMEGA/2./M_PI);
         }else{
@@ -734,19 +853,19 @@ void reb_render_frame(void* p){
         glBindTexture(GL_TEXTURE_2D,0);
     }
     if (data->onscreenhelp){ // On screen help
-        glUseProgram(data->simplefont_shader_program);
-        glBindVertexArray(data->simplefont_shader_vao);
-        glBindTexture(GL_TEXTURE_2D,data->simplefont_tex);
-        glUniform1i(glGetUniformLocation(data->simplefont_shader_program, "tex"), 0);
-        glUniform2f(data->simplefont_shader_pos_location, -0.67,0.7);
-        glUniform1f(data->simplefont_shader_aspect_location, 1.4);
-        glUniform1f(data->simplefont_shader_screen_aspect_location, 1./ratio);
-        glUniform1f(data->simplefont_shader_scale_location, 0.035);
-        glBindBuffer(GL_ARRAY_BUFFER, data->simplefont_shader_charval_buffer);
+        glUseProgram(data->shader_simplefont.program);
+        glBindVertexArray(data->shader_simplefont.vao);
+        glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
+        glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
+        glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
+        glUniform1f(data->shader_simplefont.aspect_location, 1.4);
+        glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
+        glUniform1f(data->shader_simplefont.scale_location, 0.035);
+        glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
         float val[200] = {0.};
         for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
             int j = convertLine(onscreenhelp[i],val);
-            glUniform1f(data->simplefont_shader_ypos_location, (float)i);
+            glUniform1f(data->shader_simplefont.ypos_location, (float)i);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
             reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
@@ -764,49 +883,56 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
     if (!data){
         return EM_TRUE;
     }
-    if (!data->pause){
-        reb_render_frame(data);
-        reb_overlay_hide(!data->onscreentext);
-        if (data->onscreentext){ 
-            char str[10240] = "\0";
-            char line[1024];
-            sprintf(line,"<div class=\"reboundlogo\"></div>REBOUND v%s<br />",reb_version_str);
-            strlcat(str, line, 10240);
-            if (data->connection_status>=0){
-                if (data->r_copy->status == REB_STATUS_RUNNING){
-                    sprintf(line, "Simulation is running<br />");
-                }else if (data->r_copy->status == REB_STATUS_PAUSED){
-                    sprintf(line, "Simulation is paused<br />");
-                }else if (data->r_copy->status == REB_STATUS_SUCCESS){
-                    sprintf(line, "Simulation ready<br />");
-                }else if (data->r_copy->status == REB_STATUS_USER){
-                    sprintf(line, "Simulation canceled<br />");
-                }else if (data->r_copy->status > 0){
-                    sprintf(line, "Simulation error occured<br />");
+    if (data->pause){
+        return EM_TRUE;
+    }
+    reb_render_frame(data);
+    reb_overlay_hide(!data->onscreentext);
+    if (data->onscreentext){ 
+        char str[10240] = "\0";
+        char line[1024];
+        sprintf(line,"<div class=\"reboundlogo\"></div>REBOUND v%s<br />",reb_version_str);
+        strlcat(str, line, 10240);
+        if (data->connection_status>=0){
+            if (data->r_copy->status == REB_STATUS_RUNNING){
+                sprintf(line, "Simulation is running<br />");
+            }else if (data->r_copy->status == REB_STATUS_PAUSED){
+                sprintf(line, "Simulation is paused<br />");
+            }else if (data->r_copy->status == REB_STATUS_SUCCESS){
+                sprintf(line, "Simulation ready<br />");
+            }else if (data->r_copy->status == REB_STATUS_USER){
+                sprintf(line, "Simulation canceled<br />");
+            }else if (data->r_copy->status > 0){
+                sprintf(line, "Simulation error occured<br />");
+            }else if (data->r_copy->status <= REB_STATUS_SINGLE_STEP){
+                if (data->r_copy->status == REB_STATUS_SINGLE_STEP){
+                    sprintf(line, "Integrating 1 step<br />");
+                }else{
+                    sprintf(line, "Integrating %d steps<br />",REB_STATUS_SINGLE_STEP - data->r_copy->status + 1);
                 }
-                strlcat(str, line, 10240);
-                sprintf(line, "N = %d<br />",data->r_copy->N);
-                strlcat(str, line, 10240);
-                sprintf(line, "t = %g<br />",data->r_copy->t);
-                strlcat(str, line, 10240);
-                sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
-                strlcat(str, line, 10240);
-                strlcat(str, "Press h or click for help<br />", 10240);
-                reb_overlay_update(str, data->r_copy->status);
-            }else{
-                sprintf(line, "Unable to connect. Server might have shut down.");
-                strlcat(str, line, 10240);
-                reb_overlay_update(str, 10);
             }
+            strlcat(str, line, 10240);
+            sprintf(line, "N = %d<br />",data->r_copy->N);
+            strlcat(str, line, 10240);
+            sprintf(line, "t = %g<br />",data->r_copy->t);
+            strlcat(str, line, 10240);
+            sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
+            strlcat(str, line, 10240);
+            strlcat(str, "Press h or click for help<br />", 10240);
+            reb_overlay_update(str, data->r_copy->status);
+        }else{
+            sprintf(line, "Unable to connect. Server might have shut down.");
+            strlcat(str, line, 10240);
+            reb_overlay_update(str, 10);
         }
-        data->onscreenhelp = reb_overlay_help_show(data->onscreenhelp);
-        if (data->onscreenhelp){ 
-            char str[10240] = "\0";
-            for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
-                strlcat(str, onscreenhelp[i], 10240);
-                strlcat(str, "<br />", 10240);
-                reb_overlay_help_set_text(str);
-            }
+    }
+    data->onscreenhelp = reb_overlay_help_show(data->onscreenhelp);
+    if (data->onscreenhelp){ 
+        char str[10240] = "\0";
+        for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
+            strlcat(str, onscreenhelp[i], 10240);
+            strlcat(str, "<br />", 10240);
+            reb_overlay_help_set_text(str);
         }
     }
     return EM_TRUE;
@@ -858,21 +984,25 @@ void reb_display_init(struct reb_simulation * const r){
     }else{
         data->spheres       = 0; 
     }
-    data->pause         = 0; 
-    data->multisample = 1; 
+    data->pause             = 0; 
+    data->multisample       = 1; 
     if (data->r->integrator==REB_INTEGRATOR_WHFAST){
         data->wire          = 1; 
     }else{
         data->wire          = 0; 
     }
-    data->onscreentext  = 1; 
-    data->clear         = 1; 
-    data->ghostboxes    = 0; 
-    data->reference     = -1;
-    data->view.r        = 1.;
-    data->window        = window;
+    data->past              = 0; 
+    data->past_current_index= 0;
+    data->past_N_allocated  = 0;
+    data->past_N            = 64;
+    data->onscreentext      = 1; 
+    data->ghostboxes        = 0; 
+    data->reference         = -1;
+    data->view.r            = 1.;
+    data->window            = window;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
+    glfwSetScrollCallback(window,reb_display_scroll);
     glfwGetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS);
     glfwSetMouseButtonCallback(window, reb_display_mouse_button);
     glfwSetCursorPosCallback(window, reb_display_cursor);
@@ -886,26 +1016,9 @@ void reb_display_init(struct reb_simulation * const r){
     glBlendEquation(GL_FUNC_ADD);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT); 
-    {
-        // Load simplefont
-        unsigned char image[65536];
-        for(int i=0;i<8192;i++){
-            unsigned char byte = simplefont[i];
-            for(int b=0;b<8;b++){
-                image[i*8+b] = ((byte >> b) & 0x01)? 0xFF : 0x00;
-            }
-        }
-        glGenTextures(1, &data->simplefont_tex);
-        glBindTexture(GL_TEXTURE_2D,data->simplefont_tex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image);
-        glBindTexture(GL_TEXTURE_2D,0);
-    }
 
     {
+        // SIMPLEFONT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
             "#version 300 es\n"
@@ -940,15 +1053,81 @@ void reb_display_init(struct reb_simulation * const r){
             "  outcolor =   vec4(0.5,0.5,0.5,(1.-texture(tex, Texcoord).r)); \n"
             "}\n";
 
-        data->simplefont_shader_program = loadShader(vertex_shader, fragment_shader);
-        data->simplefont_shader_ypos_location = glGetUniformLocation(data->simplefont_shader_program, "ypos");
-        data->simplefont_shader_pos_location = glGetUniformLocation(data->simplefont_shader_program, "pos");
-        data->simplefont_shader_scale_location = glGetUniformLocation(data->simplefont_shader_program, "scale");
-        data->simplefont_shader_aspect_location = glGetUniformLocation(data->simplefont_shader_program, "aspect");
-        data->simplefont_shader_screen_aspect_location = glGetUniformLocation(data->simplefont_shader_program, "screen_aspect");
+        data->shader_simplefont.program = loadShader(vertex_shader, fragment_shader);
+        data->shader_simplefont.ypos_location = glGetUniformLocation(data->shader_simplefont.program, "ypos");
+        data->shader_simplefont.pos_location = glGetUniformLocation(data->shader_simplefont.program, "pos");
+        data->shader_simplefont.scale_location = glGetUniformLocation(data->shader_simplefont.program, "scale");
+        data->shader_simplefont.aspect_location = glGetUniformLocation(data->shader_simplefont.program, "aspect");
+        data->shader_simplefont.screen_aspect_location = glGetUniformLocation(data->shader_simplefont.program, "screen_aspect");
+    
+        glUseProgram(data->shader_simplefont.program);
+        glGenVertexArrays(1, &data->shader_simplefont.vao);
+        glBindVertexArray(data->shader_simplefont.vao);
+        GLuint sfvp = glGetAttribLocation(data->shader_simplefont.program,"vp");
+        glEnableVertexAttribArray(sfvp);
+        GLuint sftexcoordp = glGetAttribLocation(data->shader_simplefont.program,"texcoord");
+        glEnableVertexAttribArray(sftexcoordp);
+        GLuint charval_location = glGetAttribLocation(data->shader_simplefont.program,"charval");
+        glEnableVertexAttribArray(charval_location);
+        GLuint charpos_location = glGetAttribLocation(data->shader_simplefont.program,"charpos");
+        glEnableVertexAttribArray(charpos_location);
+        float simplefont_data[] = {
+            0., 0., 0., 1., 
+            0., 1., 0., 0.0,
+            1., 0., 1., 1.,
+            1., 1., 1., 0.0
+        };
+        GLuint simplefont_buffer;
+        glGenBuffers(1, &simplefont_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, simplefont_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(simplefont_data), simplefont_data, GL_STATIC_DRAW);
+        
+        glVertexAttribPointer(sfvp, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, NULL);
+        glVertexAttribPointer(sftexcoordp, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void *)(sizeof(float)*2));
+
+        GLuint charpos_buffer;
+        glGenBuffers(1, &charpos_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, charpos_buffer);
+        float charpos[100];
+        for(int i=0;i<100;i++){
+            charpos[i] = (float)i;
+        }
+        glBufferData(GL_ARRAY_BUFFER, sizeof(charpos), charpos, GL_STATIC_DRAW);
+        glVertexAttribPointer(charpos_location, 1, GL_FLOAT, GL_FALSE, sizeof(float)*1, NULL);
+
+        glGenBuffers(1, &data->shader_simplefont.charval_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
+        glBufferData(GL_ARRAY_BUFFER, 200*sizeof(float), NULL,GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(charval_location, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, NULL);
+
+        reb_glVertexAttribDivisor(sfvp, 0); 
+        reb_glVertexAttribDivisor(sftexcoordp, 0); 
+        reb_glVertexAttribDivisor(charpos_location,1);
+        reb_glVertexAttribDivisor(charval_location,1);
+
+        glBindVertexArray(0);
+
+        // Load simplefont
+        unsigned char image[65536];
+        for(int i=0;i<8192;i++){
+            unsigned char byte = simplefont[i];
+            for(int b=0;b<8;b++){
+                image[i*8+b] = ((byte >> b) & 0x01)? 0xFF : 0x00;
+            }
+        }
+        glGenTextures(1, &data->shader_simplefont.texture);
+        glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image);
+        glBindTexture(GL_TEXTURE_2D,0);
+
     }
     
     {
+        // POINT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
             "#version 300 es\n"
@@ -959,10 +1138,16 @@ void reb_display_init(struct reb_simulation * const r){
             "uniform mat4 mvp;\n"
             "uniform vec4 vc;\n"
             "out vec4 color;\n"
+            "uniform int current_vertex;\n"
+            "uniform int N_real;\n"
+            "uniform int past_N;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
-            " gl_PointSize = 15.0f;\n"
+            "  gl_PointSize = 15.0f;\n"
             "  color = vc;\n"
+            "  float age = float( (gl_VertexID/N_real -1 - current_vertex + 2*past_N)%past_N )/float(past_N);\n"
+            "  if (N_real == 0) age = 1.0;\n"
+            "  color = vec4(vc.xyz,age*vc.a);\n"
             "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
@@ -986,12 +1171,27 @@ void reb_display_init(struct reb_simulation * const r){
             "  }\n"
             "}\n";
 
-        data->point_shader_program = loadShader(vertex_shader, fragment_shader);
-        data->point_shader_mvp_location = glGetUniformLocation(data->point_shader_program, "mvp");
-        data->point_shader_color_location = glGetUniformLocation(data->point_shader_program, "vc");
+        data->shader_point.program = loadShader(vertex_shader, fragment_shader);
+        data->shader_point.mvp_location = glGetUniformLocation(data->shader_point.program, "mvp");
+        data->shader_point.color_location = glGetUniformLocation(data->shader_point.program, "vc");
+        data->shader_point.current_vertex_location = glGetUniformLocation(data->shader_point.program, "current_vertex");
+        data->shader_point.past_N_location = glGetUniformLocation(data->shader_point.program, "past_N");
+        data->shader_point.N_real_location = glGetUniformLocation(data->shader_point.program, "N_real");
+        
+        glUseProgram(data->shader_point.program);
+        glGenVertexArrays(1, &data->shader_point.particle_vao);
+        glBindVertexArray(data->shader_point.particle_vao);
+        GLuint pvp = glGetAttribLocation(data->shader_point.program,"vp");
+        glEnableVertexAttribArray(pvp);
+
+        glGenBuffers(1, &data->particle_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+        glVertexAttribPointer(pvp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*4, NULL);
+        glBindVertexArray(0);
     }
 
     {
+        // BOX shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
             "#version 300 es\n"
@@ -1019,12 +1219,51 @@ void reb_display_init(struct reb_simulation * const r){
             "  outcolor = color;\n"
             "}\n";
 
-        data->box_shader_program = loadShader(vertex_shader, fragment_shader);
-        data->box_shader_mvp_location = glGetUniformLocation(data->box_shader_program, "mvp");
-        data->box_shader_color_location = glGetUniformLocation(data->box_shader_program, "vc");
+        data->shader_box.program = loadShader(vertex_shader, fragment_shader);
+        data->shader_box.mvp_location = glGetUniformLocation(data->shader_box.program, "mvp");
+        data->shader_box.color_location = glGetUniformLocation(data->shader_box.program, "vc");
+
+        // Create cross mesh
+        glUseProgram(data->shader_box.program);
+        glGenVertexArrays(1, &data->shader_box.cross_vao);
+        glBindVertexArray(data->shader_box.cross_vao);
+        GLuint cvp = glGetAttribLocation(data->shader_box.program,"vp");
+        glEnableVertexAttribArray(cvp);
+
+        float cross_data[18] = {
+            -0.04,0.,0., +0.04,0.,0., 0.,-0.04,0., 0.,+0.04,0., 0.,0.,-0.04, 0.,0.,+0.04,
+        };
+        GLuint cross_buffer;
+        glGenBuffers(1, &cross_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, cross_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cross_data), cross_data, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(cvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindVertexArray(0);
+
+        // Create box mesh
+        glGenVertexArrays(1, &data->shader_box.box_vao);
+        glBindVertexArray(data->shader_box.box_vao);
+        GLuint bvp = glGetAttribLocation(data->shader_box.program,"vp");
+        glEnableVertexAttribArray(bvp);
+
+        float box_data[] = {
+            -1,-1,-1, 1,-1,-1, 1,-1,-1, 1, 1,-1, 1, 1,-1, -1, 1,-1, -1, 1,-1, -1,-1,-1,
+            -1,-1, 1, 1,-1, 1, 1,-1, 1, 1, 1, 1, 1, 1, 1, -1, 1, 1, -1, 1, 1, -1,-1, 1,
+            -1,-1,-1, -1,-1, 1, -1, 1,-1, -1, 1, 1, 1, 1,-1, 1, 1, 1, 1,-1,-1, 1,-1, 1,
+        };
+        GLuint box_buffer;
+        glGenBuffers(1, &box_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, box_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(box_data), box_data, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(bvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindVertexArray(0);
+
     }
-    
+
     {
+        // SPHERE shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
             "#version 300 es\n"
@@ -1055,11 +1294,86 @@ void reb_display_init(struct reb_simulation * const r){
             "  outcolor = vec4(intensity,intensity,intensity,1.);\n"
             "}\n";
 
-        data->sphere_shader_program = loadShader(vertex_shader, fragment_shader);
-        data->sphere_shader_mvp_location = glGetUniformLocation(data->sphere_shader_program, "mvp");
+        data->shader_sphere.program = loadShader(vertex_shader, fragment_shader);
+        data->shader_sphere.mvp_location = glGetUniformLocation(data->shader_sphere.program, "mvp");
+    
+        // Sphere data
+        float* sphere_data = malloc(sizeof(float)*3*800);
+        int count = 0; // will be 800 by end
+        const int ni = 20;
+        const int nj = 20;
+        for(int i=0;i<ni;i++){
+            for(int j=0;j<nj;j++){
+                sphere_data[count*3+0] = sinf((float)i/(float)ni*M_PI)*sinf((float)j/(float)nj*2.*M_PI);
+                sphere_data[count*3+1] = sinf((float)i/(float)ni*M_PI)*cosf((float)j/(float)nj*2.*M_PI);
+                sphere_data[count*3+2] = cosf((float)i/(float)ni*M_PI);
+                count++;
+                sphere_data[count*3+0] = sinf((float)(i+1)/(float)ni*M_PI)*sinf((float)j/(float)nj*2.*M_PI);
+                sphere_data[count*3+1] = sinf((float)(i+1)/(float)ni*M_PI)*cosf((float)j/(float)nj*2.*M_PI);
+                sphere_data[count*3+2] = cosf((float)(i+1)/(float)ni*M_PI);
+                count++;
+            }
+        }
+        GLuint sphere_vertex_buffer;
+        glGenBuffers(1, &sphere_vertex_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, sphere_vertex_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*count, sphere_data, GL_STATIC_DRAW);
+        free(sphere_data);
+
+
+        // Create sphere vao (one for current, one for past)
+        glUseProgram(data->shader_sphere.program);
+        GLuint svp = glGetAttribLocation(data->shader_sphere.program,"vp");
+        GLuint ssp = glGetAttribLocation(data->shader_sphere.program,"sp");
+        GLuint ssr = glGetAttribLocation(data->shader_sphere.program,"sr");
+
+
+        { // current
+            glGenVertexArrays(1, &data->shader_sphere.particle_vao_current);
+            glBindVertexArray(data->shader_sphere.particle_vao_current);
+            glBindBuffer(GL_ARRAY_BUFFER, sphere_vertex_buffer);
+            glEnableVertexAttribArray(svp);
+
+            glVertexAttribPointer(svp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+            glEnableVertexAttribArray(ssp);
+            glEnableVertexAttribArray(ssr);
+            glGenBuffers(1, &data->particle_buffer_current);
+            glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
+            glVertexAttribPointer(ssp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*4, NULL);
+            glVertexAttribPointer(ssr, 1, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*3));
+
+            reb_glVertexAttribDivisor(svp, 0); 
+            reb_glVertexAttribDivisor(data->shader_sphere.mvp_location, 0); 
+            reb_glVertexAttribDivisor(ssp, 1);
+            reb_glVertexAttribDivisor(ssr, 1);
+        }
+        { // current
+            glGenVertexArrays(1, &data->shader_sphere.particle_vao);
+            glBindVertexArray(data->shader_sphere.particle_vao);
+            glBindBuffer(GL_ARRAY_BUFFER, sphere_vertex_buffer);
+            glEnableVertexAttribArray(svp);
+
+            glVertexAttribPointer(svp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+            glEnableVertexAttribArray(ssp);
+            glEnableVertexAttribArray(ssr);
+            // glGenBuffers(1, &data->particle_buffer); // generated earlier
+            glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
+            glVertexAttribPointer(ssp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*4, NULL);
+            glVertexAttribPointer(ssr, 1, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void*)(sizeof(float)*3));
+
+            reb_glVertexAttribDivisor(svp, 0); 
+            reb_glVertexAttribDivisor(data->shader_sphere.mvp_location, 0); 
+            reb_glVertexAttribDivisor(ssp, 1);
+            reb_glVertexAttribDivisor(ssr, 1);
+        }
+
+        glBindVertexArray(0);
     }
     
     {
+        // ORBIT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
             "#version 300 es\n"
@@ -1070,6 +1384,9 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec3 aef;\n"
             "in vec3 omegaOmegainc;\n"
             "in float lintwopi;\n"
+            "uniform int current_vertex;\n"
+            "uniform int N_real;\n"
+            "uniform int past_N;\n"
             "out float lin;\n"
             "uniform mat4 mvp;\n"
             "const float M_PI = 3.14159265359;\n"
@@ -1082,6 +1399,9 @@ void reb_display_init(struct reb_simulation * const r){
             "       float theta_max = acos(-1./e);\n"
             "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
             "       lin = sqrt(min(0.5,lin));\n"
+            "   }\n"
+            "   if (N_real != 0) {\n"
+            "       lin = float( (gl_InstanceID/N_real -1 - current_vertex + 2*past_N)%past_N )/float(past_N);\n"
             "   }\n"
             "   float omega = omegaOmegainc.x;\n"
             "   float Omega = omegaOmegainc.y;\n"
@@ -1111,203 +1431,88 @@ void reb_display_init(struct reb_simulation * const r){
             "  outcolor = vec4(1.,1.,1.,sqrt(lin));\n"
             "}\n";
 
-        data->orbit_shader_program = loadShader(vertex_shader, fragment_shader);
-        data->orbit_shader_mvp_location = glGetUniformLocation(data->orbit_shader_program, "mvp");
-    }
+        data->shader_orbit.program = loadShader(vertex_shader, fragment_shader);
+        data->shader_orbit.mvp_location = glGetUniformLocation(data->shader_orbit.program, "mvp");
+        data->shader_orbit.current_vertex_location = glGetUniformLocation(data->shader_orbit.program, "current_vertex");
+        data->shader_orbit.past_N_location = glGetUniformLocation(data->shader_orbit.program, "past_N");
+        data->shader_orbit.N_real_location = glGetUniformLocation(data->shader_orbit.program, "N_real");
     
-    // Create simplefont mesh
-    glUseProgram(data->simplefont_shader_program);
-    glGenVertexArrays(1, &data->simplefont_shader_vao);
-    glBindVertexArray(data->simplefont_shader_vao);
-    GLuint sfvp = glGetAttribLocation(data->simplefont_shader_program,"vp");
-    glEnableVertexAttribArray(sfvp);
-    GLuint sftexcoordp = glGetAttribLocation(data->simplefont_shader_program,"texcoord");
-    glEnableVertexAttribArray(sftexcoordp);
-    GLuint simplefont_shader_charval_location = glGetAttribLocation(data->simplefont_shader_program,"charval");
-    glEnableVertexAttribArray(simplefont_shader_charval_location);
-    GLuint simplefont_shader_charpos_location = glGetAttribLocation(data->simplefont_shader_program,"charpos");
-    glEnableVertexAttribArray(simplefont_shader_charpos_location);
-    float simplefont_data[] = {
-        0., 0., 0., 1., 
-        0., 1., 0., 0.0,
-        1., 0., 1., 1.,
-        1., 1., 1., 0.0
-    };
-    GLuint simplefont_buffer;
-    glGenBuffers(1, &simplefont_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, simplefont_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(simplefont_data), simplefont_data, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(sfvp, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, NULL);
-    glVertexAttribPointer(sftexcoordp, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void *)(sizeof(float)*2));
-
-    GLuint simplefont_shader_charpos_buffer;
-    glGenBuffers(1, &simplefont_shader_charpos_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, simplefont_shader_charpos_buffer);
-    float charpos[100];
-    for(int i=0;i<100;i++){
-        charpos[i] = (float)i;
-    }
-    glBufferData(GL_ARRAY_BUFFER, sizeof(charpos), charpos, GL_STATIC_DRAW);
-    glVertexAttribPointer(simplefont_shader_charpos_location, 1, GL_FLOAT, GL_FALSE, sizeof(float)*1, NULL);
-
-    glGenBuffers(1, &data->simplefont_shader_charval_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, data->simplefont_shader_charval_buffer);
-    glBufferData(GL_ARRAY_BUFFER, 200*sizeof(float), NULL,GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(simplefont_shader_charval_location, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, NULL);
-
-    reb_glVertexAttribDivisor(sfvp, 0); 
-    reb_glVertexAttribDivisor(sftexcoordp, 0); 
-    reb_glVertexAttribDivisor(simplefont_shader_charpos_location,1);
-    reb_glVertexAttribDivisor(simplefont_shader_charval_location,1);
-
-    glBindVertexArray(0);
-
-
-    // Particle data is dynamic
-    glUseProgram(data->point_shader_program);
-    glGenVertexArrays(1, &data->point_shader_particle_vao);
-    glBindVertexArray(data->point_shader_particle_vao);
-    GLuint pvp = glGetAttribLocation(data->point_shader_program,"vp");
-    glEnableVertexAttribArray(pvp);
-
-    GLuint particle_buffer;
-    glGenBuffers(1, &particle_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-    data->particle_buffer = particle_buffer;
-    
-    glVertexAttribPointer(pvp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, NULL);
-    glBindVertexArray(0);
-    
-    // Create cross mesh
-    glUseProgram(data->box_shader_program);
-    glGenVertexArrays(1, &data->box_shader_cross_vao);
-    glBindVertexArray(data->box_shader_cross_vao);
-    GLuint cvp = glGetAttribLocation(data->box_shader_program,"vp");
-    glEnableVertexAttribArray(cvp);
-    
-    float cross_data[18] = {
-        -0.04,0.,0., +0.04,0.,0., 0.,-0.04,0., 0.,+0.04,0., 0.,0.,-0.04, 0.,0.,+0.04,
-    };
-    GLuint cross_buffer;
-    glGenBuffers(1, &cross_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, cross_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cross_data), cross_data, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(cvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    glBindVertexArray(0);
-    
-    // Create box mesh
-    glGenVertexArrays(1, &data->box_shader_box_vao);
-    glBindVertexArray(data->box_shader_box_vao);
-    GLuint bvp = glGetAttribLocation(data->box_shader_program,"vp");
-    glEnableVertexAttribArray(bvp);
-
-    float box_data[] = {
-        -1,-1,-1, 1,-1,-1, 1,-1,-1, 1, 1,-1, 1, 1,-1, -1, 1,-1, -1, 1,-1, -1,-1,-1,
-        -1,-1, 1, 1,-1, 1, 1,-1, 1, 1, 1, 1, 1, 1, 1, -1, 1, 1, -1, 1, 1, -1,-1, 1,
-        -1,-1,-1, -1,-1, 1, -1, 1,-1, -1, 1, 1, 1, 1,-1, 1, 1, 1, 1,-1,-1, 1,-1, 1,
-    };
-    GLuint box_buffer;
-    glGenBuffers(1, &box_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, box_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(box_data), box_data, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(bvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    glBindVertexArray(0);
-    
-                
-    // Sphere data
-    glUseProgram(data->sphere_shader_program);
-    glGenVertexArrays(1, &data->sphere_shader_particle_vao);
-    glBindVertexArray(data->sphere_shader_particle_vao);
-    GLuint svp = glGetAttribLocation(data->sphere_shader_program,"vp");
-    glEnableVertexAttribArray(svp);
-    GLuint ssp = glGetAttribLocation(data->sphere_shader_program,"sp");
-    glEnableVertexAttribArray(ssp);
-    GLuint ssr = glGetAttribLocation(data->sphere_shader_program,"sr");
-    glEnableVertexAttribArray(ssr);
-   
-    float* sphere_data = malloc(sizeof(float)*5000);
-    int count = 0;
-    int ni = 20;
-    int nj = 20;
-    for(int i=0;i<ni;i++){
-        for(int j=0;j<nj;j++){
-            sphere_data[count*3+0] = sinf((float)i/(float)ni*M_PI)*sinf((float)j/(float)nj*2.*M_PI);
-            sphere_data[count*3+1] = sinf((float)i/(float)ni*M_PI)*cosf((float)j/(float)nj*2.*M_PI);
-            sphere_data[count*3+2] = cosf((float)i/(float)ni*M_PI);
-            count++;
-            sphere_data[count*3+0] = sinf((float)(i+1)/(float)ni*M_PI)*sinf((float)j/(float)nj*2.*M_PI);
-            sphere_data[count*3+1] = sinf((float)(i+1)/(float)ni*M_PI)*cosf((float)j/(float)nj*2.*M_PI);
-            sphere_data[count*3+2] = cosf((float)(i+1)/(float)ni*M_PI);
-            count++;
+        // Orbit data
+        data->shader_orbit.vertex_count = 500; // higher number = smoother orbits
+        float* lin_data = malloc(sizeof(float)*data->shader_orbit.vertex_count);
+        for(int i=0;i<data->shader_orbit.vertex_count;i++){
+            lin_data[i] = (float)i/(float)(data->shader_orbit.vertex_count-1)*2.*M_PI;
         }
+        GLuint orbit_vertex_buffer;
+        glGenBuffers(1, &orbit_vertex_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*data->shader_orbit.vertex_count, lin_data, GL_STATIC_DRAW);
+        free(lin_data);
+
+        // Generate two orbit vao
+        glUseProgram(data->shader_orbit.program);
+        GLuint olintwopip = glGetAttribLocation(data->shader_orbit.program,"lintwopi");
+        GLuint ofocusp = glGetAttribLocation(data->shader_orbit.program,"focus");
+        GLuint oaefp = glGetAttribLocation(data->shader_orbit.program,"aef");
+        GLuint oomegaOmegaincp = glGetAttribLocation(data->shader_orbit.program,"omegaOmegainc");
+
+        { // Current
+            glGenVertexArrays(1, &data->shader_orbit.particle_vao_current);
+            glBindVertexArray(data->shader_orbit.particle_vao_current);
+            glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
+            glEnableVertexAttribArray(olintwopip);
+            glEnableVertexAttribArray(ofocusp);
+            glEnableVertexAttribArray(oaefp);
+            glEnableVertexAttribArray(oomegaOmegaincp);
+
+            glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
+            glGenBuffers(1, &data->orbit_buffer_current);
+            glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
+            glVertexAttribPointer(ofocusp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, NULL);
+            glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
+            glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
+
+            GLuint divisor = 0;
+            reb_glVertexAttribDivisor(olintwopip, divisor); 
+            reb_glVertexAttribDivisor(data->shader_orbit.mvp_location, 0); 
+            reb_glVertexAttribDivisor(ofocusp, 1);
+            reb_glVertexAttribDivisor(oaefp, 1);
+            reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
+        }
+        
+        { // Past
+            glGenVertexArrays(1, &data->shader_orbit.particle_vao);
+            glBindVertexArray(data->shader_orbit.particle_vao);
+            glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
+            glEnableVertexAttribArray(olintwopip);
+            glEnableVertexAttribArray(ofocusp);
+            glEnableVertexAttribArray(oaefp);
+            glEnableVertexAttribArray(oomegaOmegaincp);
+
+            glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
+            glGenBuffers(1, &data->orbit_buffer);
+            glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
+            glVertexAttribPointer(ofocusp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, NULL);
+            glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
+            glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
+
+            GLuint divisor = 0;
+            reb_glVertexAttribDivisor(olintwopip, divisor); 
+            reb_glVertexAttribDivisor(data->shader_orbit.mvp_location, 0); 
+            reb_glVertexAttribDivisor(ofocusp, 1);
+            reb_glVertexAttribDivisor(oaefp, 1);
+            reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
+        }
+
+        glBindVertexArray(0);
+    
+
     }
-    data->sphere_shader_vertex_count = count;
-    GLuint sphere_vertex_buffer;
-    glGenBuffers(1, &sphere_vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, sphere_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*count, sphere_data, GL_STATIC_DRAW);
-    free(sphere_data);
-    glVertexAttribPointer(svp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, particle_buffer);
-    glVertexAttribPointer(ssp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*7, NULL);
-    glVertexAttribPointer(ssr, 1, GL_FLOAT, GL_FALSE, sizeof(float)*7, (void*)(sizeof(float)*6));
-
-    reb_glVertexAttribDivisor(svp, 0); 
-    reb_glVertexAttribDivisor(data->sphere_shader_mvp_location, 0); 
-    reb_glVertexAttribDivisor(ssp, 1);
-    reb_glVertexAttribDivisor(ssr, 1);
     
-    glBindVertexArray(0);
-
-    
-    // Orbit data
-    glUseProgram(data->orbit_shader_program);
-    glGenVertexArrays(1, &data->orbit_shader_particle_vao);
-    glBindVertexArray(data->orbit_shader_particle_vao);
-    GLuint olintwopip = glGetAttribLocation(data->orbit_shader_program,"lintwopi");
-    glEnableVertexAttribArray(olintwopip);
-    GLuint ofocusp = glGetAttribLocation(data->orbit_shader_program,"focus");
-    glEnableVertexAttribArray(ofocusp);
-    GLuint oaefp = glGetAttribLocation(data->orbit_shader_program,"aef");
-    glEnableVertexAttribArray(oaefp);
-    GLuint oomegaOmegaincp = glGetAttribLocation(data->orbit_shader_program,"omegaOmegainc");
-    glEnableVertexAttribArray(oomegaOmegaincp);
-   
-    data->orbit_shader_vertex_count = 500;
-    float* lin_data = malloc(sizeof(float)*data->orbit_shader_vertex_count);
-    for(int i=0;i<data->orbit_shader_vertex_count;i++){
-        lin_data[i] = (float)i/(float)(data->orbit_shader_vertex_count-1)*2.*M_PI;
-    }
-    GLuint orbit_vertex_buffer;
-    glGenBuffers(1, &orbit_vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*data->orbit_shader_vertex_count, lin_data, GL_STATIC_DRAW);
-    free(lin_data);
-    glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-
-
-    GLuint orbit_buffer;
-    glGenBuffers(1, &orbit_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, orbit_buffer);
-    data->orbit_buffer = orbit_buffer;
-    glVertexAttribPointer(ofocusp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, NULL);
-    glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
-    glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
-
-    GLuint divisor = 0;
-    reb_glVertexAttribDivisor(olintwopip, divisor); 
-    reb_glVertexAttribDivisor(data->orbit_shader_mvp_location, 0); 
-    reb_glVertexAttribDivisor(ofocusp, 1);
-    reb_glVertexAttribDivisor(oaefp, 1);
-    reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
-    
-    glBindVertexArray(0);
-
-
 
     // Main display loop
 #ifdef __EMSCRIPTEN__
@@ -1331,6 +1536,7 @@ void reb_display_init(struct reb_simulation * const r){
     // Destroy particle buffers
     if (data->N_allocated){
         data->N_allocated = 0;
+        data->past_N_allocated = 0;
         free(data->particle_data);
         free(data->orbit_data);
         data->particle_data = NULL;

@@ -636,6 +636,14 @@ void reb_simulation_init(struct reb_simulation* r){
 
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
+    if(r->status <= REB_STATUS_SINGLE_STEP){
+        if(r->status == REB_STATUS_SINGLE_STEP){
+            r->status = REB_STATUS_PAUSED;
+        }else{
+            // This allows an arbitrary number of steps before the simulation is paused
+            r->status++;
+        }
+    }
     while(r->status == REB_STATUS_PAUSED){
         // Wait for user to disable paused simulation
 #ifdef __EMSCRIPTEN__
