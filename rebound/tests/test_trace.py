@@ -404,7 +404,7 @@ class TestTrace(unittest.TestCase):
 
         self.assertLess(dE_trace,1e-5)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
-'''
+
     def test_pericenter(self):
 
         sim = pericenter_sim()
@@ -437,7 +437,7 @@ class TestTrace(unittest.TestCase):
         ode_ho.y[0] = 1.
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
+        sim.integrate(20.*math.pi, exact_finish_time=0)
         self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-9) # One order of magnitude higher than BS? Probably timestep
         self.assertLess(math.fabs(ode_ho.y[1]),2e-8)
 
@@ -463,6 +463,6 @@ class TestTrace(unittest.TestCase):
         x0 = sim.particles[1].x
 
         self.assertEqual(x0,x1)
-'''
+
 if __name__ == "__main__":
     unittest.main()
