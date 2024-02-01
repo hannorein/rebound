@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.1.1
+* Fixed python wheels for windows.
+
 ### Version 4.1.0
 * New visualization feature that allows you to show past particle positions and orbits (keyboard commands p, u, and i).
 * After pausing a simulation, you can now advance it by a single timestep by pressing the down arrow or 50 timesteps by pressing the page down key.

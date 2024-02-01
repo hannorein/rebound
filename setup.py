@@ -18,7 +18,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=9df07b1f9e1b34837cd03fb09496a077dd2a76d7" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=99cae63da1594074f3597013e1f35993b6336df4" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -83,7 +83,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='4.1.0',
+    version='4.1.1',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",
