@@ -351,14 +351,14 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
     ri_trace->mode = 1;
 
-    const int ias15 = 1;
+    const unsigned int encounter_integrator = ri_trace->encounter_integrator;
 
     // run
     const double old_dt = r->dt;
     const double old_t = r->t;
     const double t_needed = r->t + dt;
 
-    if (ias15){
+    if (encounter_integrator == REB_TRACE_ENCOUNTER_INTEGRATOR_IAS15){
         printf("ias\n");
         reb_integrator_ias15_reset(r);
         r->dt = 0.01*dt; // start with a small timestep.
@@ -427,7 +427,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         // Reset constant for global particles
         r->t = old_t;
         r->dt = old_dt;
-    }else{
+    }else if (encounter_integrator == REB_TRACE_ENCOUNTER_INTEGRATOR_BS){
         reb_integrator_bs_reset(r);
         struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
         nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
@@ -510,6 +510,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         reb_ode_free(nbody_ode);
 
         r->t = old_t;
+    }else {
+        reb_simulation_error(r, "Unsupported TRACE encounter integrator.");
     }
     ri_trace->mode = 0;
 }

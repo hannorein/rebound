@@ -258,6 +258,10 @@ struct reb_integrator_trace {
     double r_crit_hill;
     double peri_crit_fdot;
     double peri_crit_distance;
+    enum {
+        REB_TRACE_ENCOUNTER_INTEGRATOR_IAS15 = 0,  // IAS15
+        REB_TRACE_ENCOUNTER_INTEGRATOR_BS = 12,    // Bulirsh Stoer
+    } encounter_integrator;
 
     // Internal use
     unsigned int mode;              // 0 if WH is operating, 1 if BS is operating.
