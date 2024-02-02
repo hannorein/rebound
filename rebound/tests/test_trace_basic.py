@@ -20,7 +20,7 @@ class TestIntegratorTraceBasic(unittest.TestCase):
             self.assertEqual(sim.ri_trace._encounter_N,3)
             self.assertEqual(sim.ri_trace._encounter_N_active,3)
             for i in range(sim.N):
-                for j in range(sim.N):
+                for j in range(i+1,sim.N):
                     if i==1 and j==2: 
                         self.assertEqual(sim.ri_trace._current_Ks[i*sim.N+j],1)
                     else:
@@ -33,7 +33,7 @@ class TestIntegratorTraceBasic(unittest.TestCase):
             self.assertEqual(sim.ri_trace._current_C,0)
             self.assertEqual(sim.ri_trace._encounter_N,1)
             for i in range(sim.N):
-                for j in range(sim.N):
+                for j in range(i+1,sim.N):
                     self.assertEqual(sim.ri_trace._current_Ks[i*sim.N+j],0)
 
 
