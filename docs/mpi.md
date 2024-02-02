@@ -13,8 +13,8 @@ This can be useful to accelerate simulations but it only makes sense if certain 
 
 Use cases where MPI might be a good way to speed up simulations are:
 
-- [A self-gravitating disk](c_examples/selfgravity_disc_mpi/)
-- [A shearing sheet simulation](c_examples/shearing_sheet_mpi/) of self-gravitating or collisional particles (e.g. to simulate Saturn's Rings)
+- [A self-gravitating disk](../c_examples/selfgravity_disc_mpi/)
+- [A shearing sheet simulation](../c_examples/shearing_sheet_mpi/) of self-gravitating or collisional particles (e.g. to simulate Saturn's Rings)
 
 ## Basic Workflow
 The basic workflow when using MPI is as follows. You need to enable MPI and choose the appropriate compiler for MPI in the Makefile of the problem directory:

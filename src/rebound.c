@@ -67,7 +67,7 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.0.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.1.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
@@ -645,6 +645,14 @@ void reb_simulation_init(struct reb_simulation* r){
 
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
+    if(r->status <= REB_STATUS_SINGLE_STEP){
+        if(r->status == REB_STATUS_SINGLE_STEP){
+            r->status = REB_STATUS_PAUSED;
+        }else{
+            // This allows an arbitrary number of steps before the simulation is paused
+            r->status++;
+        }
+    }
     while(r->status == REB_STATUS_PAUSED){
         // Wait for user to disable paused simulation
 #ifdef __EMSCRIPTEN__

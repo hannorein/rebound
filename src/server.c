@@ -275,8 +275,24 @@ void* reb_server_start(void* args){
                         fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
                         fprintf(stream, "ok.\n");
                         break;
+                    case 264: // arrow down
+                        if (data->r->status == REB_STATUS_PAUSED){
+                            data->r->status = REB_STATUS_SINGLE_STEP;
+                            printf("Step.\n");
+                        }
+                        fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
+                        fprintf(stream, "ok.\n");
+                        break;
+                    case 267: // page down
+                        if (data->r->status == REB_STATUS_PAUSED){
+                            data->r->status = REB_STATUS_SINGLE_STEP - 50;
+                            printf("50 steps.\n");
+                        }
+                        fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
+                        fprintf(stream, "ok.\n");
+                        break;
                     default:
-                        reb_server_cerror(stream, "Unsupported key received.");
+                        // reb_server_cerror(stream, "Unsupported key received.");
                         break;
                 }
             }else{
@@ -412,8 +428,24 @@ void* reb_server_start(void* args){
                         sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
                         sendBytes(clientS, ok, strlen(ok));
                         break;
+                    case 264: // down arrow
+                        if (data->r->status == REB_STATUS_PAUSED){
+                            data->r->status = REB_STATUS_SINGLE_STEP;
+                            printf("Step.\n");
+                        }
+                        sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                        sendBytes(clientS, ok, strlen(ok));
+                        break;
+                    case 267: // page down
+                        if (data->r->status == REB_STATUS_PAUSED){
+                            data->r->status = REB_STATUS_SINGLE_STEP - 50;
+                            printf("50 step.\n");
+                        }
+                        sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+                        sendBytes(clientS, ok, strlen(ok));
+                        break;
                     default:
-                        reb_server_cerror(clientS, "Unknown key received.");
+                        // reb_server_cerror(clientS, "Unknown key received.");
                         continue;
                         break;
                 }

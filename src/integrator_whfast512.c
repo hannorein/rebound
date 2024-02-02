@@ -835,7 +835,7 @@ static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int N_systems = r->ri_whfast512.N_systems;
     for (int s=0; s<N_systems; s++){
         r->ri_whfast512.p_jh0[s].x += _dt*r->ri_whfast512.p_jh0[s].vx;
         r->ri_whfast512.p_jh0[s].y += _dt*r->ri_whfast512.p_jh0[s].vy;

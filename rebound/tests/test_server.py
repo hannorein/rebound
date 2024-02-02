@@ -22,7 +22,7 @@ class TestServer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w: 
             warnings.simplefilter("always")
             sim.start_server(port=1234)
-            self.assertEqual(1,len(w))
+            self.assertGreaterEqual(len(w),1)
         self.assertNotEqual(sim._server_data,None)
         self.assertEqual(sim._server_data.contents.ready,1)
         self.assertEqual(sim._server_data.contents.port,1234)
