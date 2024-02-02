@@ -500,8 +500,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = 2; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
-    reb_integrator_trace_inertial_to_dh(r);
-
 }
 
 void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
@@ -641,6 +639,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     
+    reb_integrator_trace_inertial_to_dh(r);
     ri_trace->mode = 0;
                         
     // This will be set to 1 if a collision occured.
