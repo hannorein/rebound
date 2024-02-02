@@ -498,17 +498,10 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     }
 
     r->gravity = REB_GRAVITY_TRACE;
-    ri_trace->mode = 0;
-    ri_trace->force_accept = 0;
+    ri_trace->mode = 2; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
     reb_integrator_trace_inertial_to_dh(r);
 
-    // Clear encounter maps
-    for (unsigned int i=0; i<r->N; i++){
-        ri_trace->encounter_map[i] = 0;
-        ri_trace->encounter_map_internal[i] = 0;
-    }
-    ri_trace->encounter_map_internal[0] = 1;
 }
 
 void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
@@ -518,6 +511,13 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     double (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
     double (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
     
+    // Clear encounter maps
+    for (unsigned int i=0; i<r->N; i++){
+        ri_trace->encounter_map[i] = 0;
+        ri_trace->encounter_map_internal[i] = 0;
+    }
+    ri_trace->encounter_map_internal[0] = 1;
+
     // Reset encounter triggers.
     ri_trace->encounter_N = 1;
     ri_trace->current_C = 0;
@@ -579,6 +579,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
 }
 
 double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
+    // This function returns 1 if any new encounters occured.
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
@@ -587,18 +588,16 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     int new_close_encounter = 0; // New CEs
 
     // Check for pericenter CE
-    if (ri_trace->current_C == 0){
-      for (int j = 1; j < Nactive; j++){
-          if (_switch_peri(r, j) < 0.0){
-              ri_trace->current_C = 1;
-              new_close_encounter = 1;
+    for (int j = 1; j < Nactive; j++){
+        if (_switch_peri(r, j) < 0.0){
+            ri_trace->current_C = 1;
+            new_close_encounter = 1;
 
-              if (j < Nactive){ // Two massive particles have a close encounter
-                  ri_trace->tponly_encounter = 0;
-                  break; // No need to check other particles
-              }
-          }
-      }
+            if (j < Nactive){ // Two massive particles have a close encounter
+                ri_trace->tponly_encounter = 0;
+                break; // No need to check other particles
+            }
+        }
     }
     if (ri_trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -641,11 +640,16 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
+    
+    ri_trace->mode = 0;
+                        
+    // This will be set to 1 if a collision occured.
+    ri_trace->force_accept = 0;
 
     // Create copy of all particle to allow for the step to be rejected.
-    memcpy(ri_trace->particles_backup,r->particles,N*sizeof(struct reb_particle));
+    memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
 
-    // check conditions
+    // Check if there are any close encounters
     reb_integrator_trace_pre_ts_check(r);
 
     reb_integrator_trace_interaction_step(r, r->dt/2.);
@@ -655,15 +659,16 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
-    // We need to force the acceptance of the step when a collision occured
-    // as it is impossible to undo the collision.
-    // We also don't need to check the encounter conditions if the pericenter 
-    // condition was already triggered pre timestep.
+    // We might need to check again for close encounters to ensure time reversibility. However:
+    // - We alaways accept the step if a collision occured
+    //   as it is impossible to undo the collision.
+    // - We don't need to check the encounter conditions if the pericenter 
+    //   condition was already triggered because all particles are integrated with BS.
     if (!ri_trace->force_accept && !ri_trace->current_C){
         // Check for new close encounters not present pre timestep
         if (reb_integrator_trace_post_ts_check(r)){
-            // No encounters were found. Need to reject the step.
-            // Undo previous step:
+            // New encounters were found. Will reject the step.
+            // Revert particles to the beginning of the step.
             memcpy(r->particles, ri_trace->particles_backup, N*sizeof(struct reb_particle));
 
             // Do step again
@@ -678,7 +683,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-    ri_trace->mode = 0;
 
     reb_integrator_trace_dh_to_inertial(r);
 }

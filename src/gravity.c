@@ -982,6 +982,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             }
         #endif // OPENMP
                         }
+                        case 2: // In-between steps. Do not calculate anything. 
+                            break;
                 break;
             }
         }
