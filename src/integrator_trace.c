@@ -532,8 +532,19 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             ri_trace->current_C = 1;
             if (j < Nactive){ // Two massive particles have a close encounter
                 ri_trace->tponly_encounter = 0;
+                break; // No need to check other particles
             }
         }
+    }
+    
+    if (ri_trace->current_C){
+        // Pericenter close encounter detected. We integrate the entire simulation with BS
+        ri_trace->encounter_N = N;
+        for (int i = 0; i < N; i++){
+            ri_trace->encounter_map_internal[i] = 1; //  trigger encounter
+        }
+        ri_trace->encounter_N_active = ((r->N_active==-1)?r->N:r->N_active);
+        return; // No need to check other condition
     }
 
     // Body-body
@@ -543,11 +554,11 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             if (_switch(r, i, j) < 0.0){
                 ri_trace->current_Ks[i][j] = 1;
                 if (ri_trace->encounter_map_internal[i] == 0){
-                    ri_trace->encounter_map_internal[i] = i;
+                    ri_trace->encounter_map_internal[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
                 }
                 if (ri_trace->encounter_map_internal[j] == 0){
-                    ri_trace->encounter_map_internal[j] = j;
+                    ri_trace->encounter_map_internal[j] = 1; // trigger encounter
                     ri_trace->encounter_N++;
                 }
 
@@ -592,11 +603,11 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
                   ri_trace->current_Ks[i][j] = 1;
                   new_c = 1;
                   if (ri_trace->encounter_map_internal[i] == 0){
-                      ri_trace->encounter_map_internal[i] = i;
+                      ri_trace->encounter_map_internal[i] = 1; // trigger encounter
                       ri_trace->encounter_N++;
                   }
                   if (ri_trace->encounter_map_internal[j] == 0){
-                      ri_trace->encounter_map_internal[j] = j;
+                      ri_trace->encounter_map_internal[j] = 1; // trigger encounter
                       ri_trace->encounter_N++;
                   }
 
@@ -625,17 +636,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     }
 
     // check conditions
-    reb_integrator_trace_pre_ts_check(r); // return value ignored.
-
-    if (ri_trace->current_C){
-        // Pericenter close encounter detected. We integrate the entire simulation with BS
-        ri_trace->encounter_map_internal[0] = 1;
-        ri_trace->encounter_N = N;
-        for (int i = 1; i < N; i++){
-            ri_trace->encounter_map_internal[i] = i; // Identity map
-        }
-        ri_trace->encounter_N_active = ((r->N_active==-1)?r->N:r->N_active);
-    }
+    reb_integrator_trace_pre_ts_check(r);
 
     reb_integrator_trace_interaction_step(r, r->dt/2.);
     reb_integrator_trace_jump_step(r, r->dt/2.);
