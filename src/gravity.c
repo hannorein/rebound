@@ -770,7 +770,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = G * (1 - r->ri_trace.current_Ks[j][i]) / (_r*_r*_r);
+                                    const double prefact = G * (1 - r->ri_trace.current_Ks[j*N+i]) / (_r*_r*_r);
                                     const double prefactj = -prefact*particles[j].m;
                                     const double prefacti = prefact*particles[i].m;
                                     particles[i].ax    += prefactj*dx;
@@ -789,7 +789,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = G * (1 - r->ri_trace.current_Ks[j][i])/(_r*_r*_r);
+                                    const double prefact = G * (1 - r->ri_trace.current_Ks[j*N+i])/(_r*_r*_r);
                                     const double prefactj = -prefact*particles[j].m;
                                     particles[i].ax    += prefactj*dx;
                                     particles[i].ay    += prefactj*dy;
@@ -821,7 +821,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = -G*particles[j].m*(1 - r->ri_trace.current_Ks[j][i])/(_r*_r*_r);
+                                    const double prefact = -G*particles[j].m*(1 - r->ri_trace.current_Ks[j*N+i])/(_r*_r*_r);
                                     particles[i].ax    += prefact*dx;
                                     particles[i].ay    += prefact*dy;
                                     particles[i].az    += prefact*dz;
@@ -834,7 +834,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = -G*particles[j].m*(1 - r->ri_trace.current_Ks[j][i])/(_r*_r*_r);
+                                    const double prefact = -G*particles[j].m*(1 - r->ri_trace.current_Ks[j*N+i])/(_r*_r*_r);
                                     particles[i].ax    += prefact*dx;
                                     particles[i].ay    += prefact*dy;
                                     particles[i].az    += prefact*dz;
@@ -877,7 +877,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                   int mi = map[i];
                                   for (int j=1; j<i; j++){
                                       int mj = map[j];
-                                      int current_K = r->ri_trace.current_Ks[mj][mi];
+                                      int current_K = r->ri_trace.current_Ks[mj*N+mi];
                                       if (current_K){ // Only need to calculate if CE
                                         const double dx = particles[mi].x - particles[mj].x;
                                         const double dy = particles[mi].y - particles[mj].y;
@@ -905,7 +905,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 int mi = map[i];
                                 for (int j=1; j<encounter_N_active; j++){
                                     int mj = map[j];
-                                    int current_K = r->ri_trace.current_Ks[mj][mi];
+                                    int current_K = r->ri_trace.current_Ks[mj*N+mi];
                                     if (current_K){
                                       const double dx = particles[mi].x - particles[mj].x;
                                       const double dy = particles[mi].y - particles[mj].y;
@@ -954,7 +954,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double dy = y - particles[mj].y;
                                     const double dz = z - particles[mj].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    double prefact = -G*particles[mj].m*r->ri_trace.current_Ks[mj][mi]/(_r*_r*_r);
+                                    double prefact = -G*particles[mj].m*r->ri_trace.current_Ks[mj*N+mi]/(_r*_r*_r);
                                     particles[mi].ax    += prefact*dx;
                                     particles[mi].ay    += prefact*dy;
                                     particles[mi].az    += prefact*dz;
@@ -973,7 +973,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double dy = y - particles[mj].y;
                                     const double dz = z - particles[mj].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    double prefact = -G*particles[mj].m*r->ri_trace.current_Ks[mj][mi]/(_r*_r*_r);
+                                    double prefact = -G*particles[mj].m*r->ri_trace.current_Ks[mj*N+mi]/(_r*_r*_r);
                                     particles[mi].ax    += prefact*dx;
                                     particles[mi].ay    += prefact*dy;
                                     particles[mi].az    += prefact*dz;

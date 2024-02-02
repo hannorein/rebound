@@ -459,18 +459,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
-
-        if (ri_trace->current_Ks){ // Free previously allocated matrix
-            for (int k = 0; k < ri_trace->N_allocated; ++k) {
-                free(ri_trace->current_Ks[k]);
-            }
-            free(ri_trace->current_Ks);
-        }
-        ri_trace->current_Ks             = malloc(sizeof(int*)*N); // This is inefficient for now, can be Nactive instead of N
-        for (int k = 0; k < N; ++k) {
-            ri_trace->current_Ks[k]      = malloc(sizeof(int)*N);
-        }
-
+        ri_trace->current_Ks             = realloc(ri_trace->encounter_map,sizeof(int)*N*N);
         ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
         ri_trace->encounter_map_internal = realloc(ri_trace->encounter_map_internal,sizeof(int)*N); // Do we need this now?
 
@@ -522,7 +511,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
 
     for (int i = 0; i < N; i++){
         for (unsigned int j = i + 1; j < N; j++){
-            ri_trace->current_Ks[i][j] = 0;
+            ri_trace->current_Ks[i*N+j] = 0;
         }
     }
 
@@ -558,7 +547,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j) < 0.0){
-                ri_trace->current_Ks[i][j] = 1;
+                ri_trace->current_Ks[i*N+j] = 1;
                 if (ri_trace->encounter_map_internal[i] == 0){
                     ri_trace->encounter_map_internal[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
@@ -612,9 +601,9 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
-            if (ri_trace->current_Ks[i][j] == 0){
+            if (ri_trace->current_Ks[i*N+j] == 0){
               if (_switch(r, i, j) < 0.0){
-                  ri_trace->current_Ks[i][j] = 1;
+                  ri_trace->current_Ks[i*N+j] = 1;
                   new_close_encounter = 1;
                   if (ri_trace->encounter_map_internal[i] == 0){
                       ri_trace->encounter_map_internal[i] = 1; // trigger encounter
@@ -712,13 +701,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_map_internal = NULL;
 
     r->ri_trace.current_C = 0;
-    if (r->ri_trace.current_Ks){
-        for (int k=0; k < r->ri_trace.N_allocated; k++) {
-            free(r->ri_trace.current_Ks[k]);
-        }
-        free(r->ri_trace.current_Ks);
-        r->ri_trace.current_Ks = NULL;
-    }
+    free(r->ri_trace.current_Ks);
+    r->ri_trace.current_Ks = NULL;
 
     r->ri_trace.S = NULL;
     r->ri_trace.S_peri = NULL;

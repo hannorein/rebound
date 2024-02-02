@@ -277,7 +277,7 @@ struct reb_integrator_trace {
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
-    int** current_Ks; // TLu tracking K for the entire timestep
+    int* current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_C; // TLu tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };

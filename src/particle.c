@@ -353,12 +353,12 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             for (unsigned int i = 1; i < r->N-1; i++){
                 if (i < index){
                     for (unsigned int j = index+1; j < r->N; j++){
-                        ri_trace->current_Ks[i][j-1] = ri_trace->current_Ks[i][j];
+                        ri_trace->current_Ks[i*r->N+j-1] = ri_trace->current_Ks[i*r->N+j];
                     }
                 }
                 else{
                     for (unsigned int j = i+1; j < r->N-1; j++){
-                        ri_trace->current_Ks[i][j] = ri_trace->current_Ks[i+1][j+1];
+                        ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j+1];
                     }
                 }
             }
