@@ -218,6 +218,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
 
     struct reb_integrator_trace* ri_trace = &(r->ri_trace);
     const int current_C = ri_trace->current_C;
+    if (current_C) return; // No jump step for pericenter approaches
 
     const int N_active = r->N_active==-1?r->N:r->N_active;
 
@@ -230,15 +231,15 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
         py += r->particles[i].vy*r->particles[i].m;
         pz += r->particles[i].vz*r->particles[i].m;
     }
-    px /= r->particles[0].m;
-    py /= r->particles[0].m;
-    pz /= r->particles[0].m;
+    px *= dt/r->particles[0].m;
+    py *= dt/r->particles[0].m;
+    pz *= dt/r->particles[0].m;
 
     const int N_all = r->N;
     for (int i=1;i<N_all;i++){
-        particles[i].x += dt*px*(1-current_C);
-        particles[i].y += dt*py*(1-current_C);
-        particles[i].z += dt*pz*(1-current_C);
+        particles[i].x += px;
+        particles[i].y += py;
+        particles[i].z += pz;
     }
 }
 
