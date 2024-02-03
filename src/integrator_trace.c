@@ -40,39 +40,46 @@
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    double dcriti = 0.0;
-    double dcritj = 0.0;
+    double dcriti6 = 0.0;
+    double dcritj6 = 0.0;
 
     const double m0 = r->particles[0].m;
 
     if (r->particles[i].m != 0){
-
         const double dxi  = r->particles[i].x;  // in dh
         const double dyi  = r->particles[i].y;
         const double dzi  = r->particles[i].z;
-        const double di = sqrt(dxi*dxi + dyi*dyi + dzi*dzi);
-        dcriti = ri_trace->r_crit_hill*di*cbrt(r->particles[i].m/(3.*m0));
+        const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
+        const double mr = r->particles[i].m/(3.*m0);
+        dcriti6 = di2*di2*di2*mr*mr;
     }
 
     if (r->particles[j].m != 0){
-
         const double dxj  = r->particles[j].x;  // in dh
         const double dyj  = r->particles[j].y;
         const double dzj  = r->particles[j].z;
-        const double dj = sqrt(dxj*dxj + dyj*dyj + dzj*dzj);
-        dcritj = ri_trace->r_crit_hill*dj*cbrt(r->particles[j].m/(3.*m0));
+        const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
+        const double mr = r->particles[j].m/(3.*m0);
+        dcritj6 = dj2*dj2*dj2*mr*mr;
     }
 
     const double dx = r->particles[i].x - r->particles[j].x;
     const double dy = r->particles[i].y - r->particles[j].y;
     const double dz = r->particles[i].z - r->particles[j].z;
-    const double d = sqrt(dx*dx + dy*dy + dz*dz);
+    const double d2 = dx*dx + dy*dy + dz*dz;
 
-    // Use traditional switching function
-    double dcritmax = MAX(dcriti,dcritj);
-    dcritmax *= 1.21;
+    double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
+    double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
 
-    return d - dcritmax < 0.0;
+    // TODO Remove the following? Factor seems arbitrary. 
+    dcritmax6 *= 1.21;
+    dcritmax6 *= 1.21;
+    dcritmax6 *= 1.21;
+    dcritmax6 *= 1.21;
+    dcritmax6 *= 1.21;
+    dcritmax6 *= 1.21;
+
+    return d2*d2*d2 < dcritmax6;
 }
 
 int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j){
@@ -87,7 +94,7 @@ int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, co
     const double dz = r->particles[0].z - r->particles[j].z;
     const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-    return d - peri < 0.0;
+    return d < peri;
 }
 
 
