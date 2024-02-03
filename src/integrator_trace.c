@@ -354,7 +354,16 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     const double old_t = r->t;
     const double t_needed = r->t + dt;
     reb_integrator_bs_reset(r);
+    
+    // Temporarily remove all odes for BS step
+    struct reb_ode** odes_backup = r->odes;
+    int N_allocated_odes_backup = r->N_allocated_odes;
+    int N_odes_backup = r->N_odes;
+    r->odes = NULL;
+    r->N_allocated_odes = 0;
+    r->N_odes = 0;
 
+    // Temporarily add new nbody ode for BS step
     struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
     nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
     nbody_ode->needs_nbody = 0;
@@ -433,7 +442,12 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         }
     }
 
+    // Restore odes
     reb_ode_free(nbody_ode);
+    free(r->odes);
+    r->odes = odes_backup;
+    r->N_allocated_odes = N_allocated_odes_backup;
+    r->N_odes = N_odes_backup;
 
     r->t = old_t;
     ri_trace->mode = REB_TRACE_MODE_WH;
