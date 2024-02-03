@@ -548,7 +548,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         for (int i = 0; i < N; i++){
             ri_trace->encounter_map_internal[i] = 1; //  trigger encounter
         }
-        ri_trace->encounter_N_active = ((r->N_active==-1)?r->N:r->N_active);
     }
 
     // Body-body
@@ -601,7 +600,6 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
         for (int i = 0; i < N; i++){
             ri_trace->encounter_map_internal[i] = 1; // trigger encounter
         }
-        ri_trace->encounter_N_active = ((r->N_active==-1)?r->N:r->N_active);
     }
 
 
