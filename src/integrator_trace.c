@@ -511,7 +511,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     
     // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
-        ri_trace->encounter_map[i] = 0;
         ri_trace->encounter_map_internal[i] = 0;
     }
     ri_trace->encounter_map_internal[0] = 1;
@@ -550,7 +549,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             ri_trace->encounter_map_internal[i] = 1; //  trigger encounter
         }
         ri_trace->encounter_N_active = ((r->N_active==-1)?r->N:r->N_active);
-        return; // No need to check other condition
     }
 
     // Body-body
@@ -604,7 +602,6 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
             ri_trace->encounter_map_internal[i] = 1; // trigger encounter
         }
         ri_trace->encounter_N_active = ((r->N_active==-1)?r->N:r->N_active);
-        return new_close_encounter; // No need to check for particle particle encounters
     }
 
 
