@@ -466,12 +466,14 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_part1(struct reb_simulation* r){
+    // Do memory management and consistency checks in part1.
+    // Actual integration is happening in part2.
+    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    const int N = r->N;
+    
     if (r->N_var_config){
         reb_simulation_warning(r,"TRACE does not work with variational equations.");
     }
-
-    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const int N = r->N;
 
     if (ri_trace->N_allocated<N){
         // These arrays are only used within one timestep.
@@ -495,15 +497,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
         reb_simulation_warning(r,"TRACE has it's own gravity routine. Gravity routine set by the user will be ignored.");
     }
-
-    if (ri_trace->S == NULL){
-        ri_trace->S = reb_integrator_trace_switch_default;
-    }
-
-    if (ri_trace->S_peri == NULL){
-        ri_trace->S_peri = reb_integrator_trace_switch_peri_default;
-    }
-
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
@@ -513,8 +506,8 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
-    int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
-    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
+    int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
+    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     
     // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
@@ -588,8 +581,8 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
-    int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
-    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
+    int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
+    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     int new_close_encounter = 0; // New CEs
 
     // Check for pericenter CE

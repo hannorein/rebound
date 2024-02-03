@@ -172,14 +172,9 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 160, REB_INT,         "ri_bs.first_or_last_step",        offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
     { 161, REB_INT,         "ri_bs.previous_rejected",       offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
     { 162, REB_INT,         "ri_bs.target_iter",             offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
-    // TLu which fields are needed?
-    { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",                offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
-    { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",                   offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
-    { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",                 offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
-    // Don't think these are needed...
-    { 168, REB_VEC3D,       "ri_trace.com_pos",         offsetof(struct reb_simulation, ri_trace.com_pos), 0, 0},
-    { 169, REB_VEC3D,       "ri_trace.com_vel",         offsetof(struct reb_simulation, ri_trace.com_vel), 0, 0},
-//    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
+    { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
+    { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",      offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
+    { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",  offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
@@ -522,6 +517,8 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
         r->collision_resolve ||
         r->additional_forces ||
         r->heartbeat ||
+        r->ri_trace.S ||
+        r->ri_trace.S_peri ||
         r->post_timestep_modifications ||
         r->free_particle_ap){
         functionpointersused = 1;
