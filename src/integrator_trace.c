@@ -92,9 +92,9 @@ int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, co
     const double dx = r->particles[0].x - r->particles[j].x;
     const double dy = r->particles[0].y - r->particles[j].y;
     const double dz = r->particles[0].z - r->particles[j].z;
-    const double d = sqrt(dx*dx + dy*dy + dz*dz);
+    const double d2 = dx*dx + dy*dy + dz*dz;
 
-    return d < peri;
+    return d2 < peri*peri;
 }
 
 
@@ -107,8 +107,9 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     const double dy = r->particles[j].y;
     const double dz = r->particles[j].z;
     const double d2 = dx*dx + dy*dy + dz*dz;
-    const double d = sqrt(d2);
+    if (d2 < pdist*pdist) return 1;
 
+    // TODO Remove star's velocity here. Working in DH, so velocirt of particle is already relative to star.
     const double dvx = r->particles[j].vx - r->particles[0].vx;
     const double dvy = r->particles[j].vy - r->particles[0].vy;
     const double dvz = r->particles[j].vz - r->particles[0].vz;
@@ -116,16 +117,14 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     const double hx = (dy*dvz - dz*dvy);  // specific angular momentum vector
     const double hy = (dz*dvx - dx*dvz);
     const double hz = (dx*dvy - dy*dvx);
-    const double h = sqrt ( hx*hx + hy*hy + hz*hz );
+    const double h2 = hx*hx + hy*hy + hz*hz;
 
     // This only works for bound orbits!
-    const double fdot = h / (d2);
-    const double peff = (2 * M_PI / fdot); // effective period
-    double fcond_peri = peff - pfdot * r->dt;
+    const double fdot2 = h2 / (d2*d2);
+    const double peff2 = (4 * M_PI * M_PI) / fdot2; // effective period squared
 
     // Failsafe: use pericenter pericenter distance
-    double fcond_dist = d - pdist;
-    return MIN(fcond_peri, fcond_dist) < 0.0;
+    return peff2 < pfdot*pfdot * r->dt*r->dt;
 }
 
 int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j){
