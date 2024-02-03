@@ -581,6 +581,16 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     int new_close_encounter = 0; // New CEs
+    
+    // Clear encounter maps
+    for (unsigned int i=0; i<r->N; i++){
+        ri_trace->encounter_map_internal[i] = 0;
+    }
+    ri_trace->encounter_map_internal[0] = 1;
+
+    // Reset encounter triggers.
+    ri_trace->encounter_N = 1;
+    ri_trace->current_C = 0;
 
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
@@ -607,23 +617,23 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
-            if (ri_trace->current_Ks[i*N+j] == 0){
-              if (_switch(r, i, j)){
-                  ri_trace->current_Ks[i*N+j] = 1;
-                  new_close_encounter = 1;
-                  if (ri_trace->encounter_map_internal[i] == 0){
-                      ri_trace->encounter_map_internal[i] = 1; // trigger encounter
-                      ri_trace->encounter_N++;
-                  }
-                  if (ri_trace->encounter_map_internal[j] == 0){
-                      ri_trace->encounter_map_internal[j] = 1; // trigger encounter
-                      ri_trace->encounter_N++;
-                  }
+            if (_switch(r, i, j)){
+                if (ri_trace->current_Ks[i*N+j] == 0){
+                      new_close_encounter = 1;
+                }
+                ri_trace->current_Ks[i*N+j] = 1;
+                if (ri_trace->encounter_map_internal[i] == 0){
+                    ri_trace->encounter_map_internal[i] = 1; // trigger encounter
+                    ri_trace->encounter_N++;
+                }
+                if (ri_trace->encounter_map_internal[j] == 0){
+                    ri_trace->encounter_map_internal[j] = 1; // trigger encounter
+                    ri_trace->encounter_N++;
+                }
 
-                  if (j < Nactive){ // Two massive particles have a close encounter
-                      ri_trace->tponly_encounter = 0;
-                  }
-              }
+                if (j < Nactive){ // Two massive particles have a close encounter
+                    ri_trace->tponly_encounter = 0;
+                }
             }
         }
     }
