@@ -349,17 +349,15 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
                 }
             }
 
-            // reshuffle current_Ks. Check logic on this
-            for (unsigned int i = 1; i < r->N-1; i++){
-                if (i < index){
-                    for (unsigned int j = index+1; j < r->N; j++){
-                        ri_trace->current_Ks[i*r->N+j-1] = ri_trace->current_Ks[i*r->N+j];
-                    }
+            // reshuffle current_Ks.
+            for (unsigned int i = index; i<r->N-1; i++){
+                for (unsigned int j = 0; j<r->N; j++){
+                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j];
                 }
-                else{
-                    for (unsigned int j = i+1; j < r->N-1; j++){
-                        ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j+1];
-                    }
+            }
+            for (unsigned int i = 0; i<r->N-1; i++){
+                for (unsigned int j = index; j<r->N-1; j++){
+                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[i*r->N+(j+1)];
                 }
             }
             if (encounter_index<ri_trace->encounter_N_active){
