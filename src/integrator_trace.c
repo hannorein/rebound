@@ -511,9 +511,9 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         ri_trace->encounter_map[i] = 0;
     }
     ri_trace->encounter_map[0] = 1;
+    ri_trace->encounter_N = 1;
 
     // Reset encounter triggers.
-    ri_trace->encounter_N = 1;
     ri_trace->current_C = 0;
 
     for (int i = 0; i < N; i++){
@@ -584,20 +584,19 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
         ri_trace->encounter_map[i] = 0;
     }
     ri_trace->encounter_map[0] = 1;
-
-    // Reset encounter triggers.
     ri_trace->encounter_N = 1;
-    ri_trace->current_C = 0;
+    
+    if (!ri_trace->current_C){
+        // Check for pericenter CE if not already triggered from pre-timstep.
+        for (int j = 1; j < Nactive; j++){
+            if (_switch_peri(r, j)){
+                ri_trace->current_C = 1;
+                new_close_encounter = 1;
 
-    // Check for pericenter CE
-    for (int j = 1; j < Nactive; j++){
-        if (_switch_peri(r, j)){
-            ri_trace->current_C = 1;
-            new_close_encounter = 1;
-
-            if (j < Nactive){ // Two massive particles have a close encounter
-                ri_trace->tponly_encounter = 0;
-                break; // No need to check other particles
+                if (j < Nactive){ // Two massive particles have a close encounter
+                    ri_trace->tponly_encounter = 0;
+                    break; // No need to check other particles
+                }
             }
         }
     }
@@ -660,13 +659,9 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_jump_step(r, r->dt/2.);
     reb_integrator_trace_interaction_step(r, r->dt/2.);
 
-    // We might need to check again for close encounters to ensure time reversibility. However:
-    // - We alaways accept the step if a collision occured
-    //   as it is impossible to undo the collision.
-    // - We don't need to check the encounter conditions if the pericenter 
-    //   condition was already triggered because all particles are integrated with BS.
-    if (!ri_trace->force_accept && !ri_trace->current_C){
-        // Check for new close encounters not present pre timestep
+    // We alaways accept the step if a collision occured as it is impossible to undo the collision.
+    if (!ri_trace->force_accept){
+        // We check again for close encounters to ensure time reversibility. 
         if (reb_integrator_trace_post_ts_check(r)){
             // New encounters were found. Will reject the step.
             // Revert particles to the beginning of the step.
