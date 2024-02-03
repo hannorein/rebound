@@ -598,7 +598,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_janus.scale_vel = 1e-16;
     
     // ********** TRACE
-    r->ri_trace.mode = 0;
+    r->ri_trace.mode = REB_TRACE_MODE_NONE;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.r_crit_hill = 3.;
     r->ri_trace.peri_crit_fdot = 17.;

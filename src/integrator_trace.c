@@ -348,7 +348,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         }
     }
 
-    ri_trace->mode = 1;
+    ri_trace->mode = REB_TRACE_MODE_BS;
     // run
     const double old_dt = r->dt;
     const double old_t = r->t;
@@ -436,7 +436,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     reb_ode_free(nbody_ode);
 
     r->t = old_t;
-    ri_trace->mode = 0;
+    ri_trace->mode = REB_TRACE_MODE_WH;
 }
 
 void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const double _dt){
@@ -487,7 +487,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     }
 
     r->gravity = REB_GRAVITY_TRACE;
-    ri_trace->mode = 2; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
+    ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
 }
 
@@ -629,7 +629,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     const int N = r->N;
     
     reb_integrator_trace_inertial_to_dh(r);
-    ri_trace->mode = 0;
+    ri_trace->mode = REB_TRACE_MODE_WH;
                         
     // This will be set to 1 if a collision occured.
     ri_trace->force_accept = 0;
@@ -679,7 +679,7 @@ void reb_integrator_trace_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){
-    r->ri_trace.mode = 0;
+    r->ri_trace.mode = REB_TRACE_MODE_NONE;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;

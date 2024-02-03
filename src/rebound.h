@@ -260,7 +260,11 @@ struct reb_integrator_trace {
     double peri_crit_distance;
 
     // Internal use
-    unsigned int mode;              // 0 if WH is operating, 1 if BS is operating, 2 if in-between steps
+    enum {
+        REB_TRACE_MODE_WH = 0,
+        REB_TRACE_MODE_BS = 1,
+        REB_TRACE_MODE_NONE = 2, // In-between steps, to avcoid calculate_accelerations
+    } mode;
     unsigned int encounter_N;        // Number of particles currently having an encounter
     unsigned int encounter_N_active;  // Number of active particles currently having an encounter
 
