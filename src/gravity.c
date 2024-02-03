@@ -766,11 +766,12 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             for (int i=2; i<_N_active; i++){
                                 if (reb_sigint) return;
                                 for (int j=1; j<i; j++){
+                                    if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = G * (1 - r->ri_trace.current_Ks[j*N+i]) / (_r*_r*_r);
+                                    const double prefact = G / (_r*_r*_r);
                                     const double prefactj = -prefact*particles[j].m;
                                     const double prefacti = prefact*particles[i].m;
                                     particles[i].ax    += prefactj*dx;
@@ -785,11 +786,12 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             for (int i=startitestp; i<_N_real; i++){
                                 if (reb_sigint) return;
                                 for (int j=1; j<_N_active; j++){
+                                    if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = G * (1 - r->ri_trace.current_Ks[j*N+i])/(_r*_r*_r);
+                                    const double prefact = G / (_r*_r*_r);
                                     const double prefactj = -prefact*particles[j].m;
                                     particles[i].ax    += prefactj*dx;
                                     particles[i].ay    += prefactj*dy;
@@ -817,11 +819,12 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[i].az = 0;
                                 for (int j=1; j<_N_active; j++){
                                     if (i==j) continue;
+                                    if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = -G*particles[j].m*(1 - r->ri_trace.current_Ks[j*N+i])/(_r*_r*_r);
+                                    const double prefact = -G*particles[j].m/(_r*_r*_r);
                                     particles[i].ax    += prefact*dx;
                                     particles[i].ay    += prefact*dy;
                                     particles[i].az    += prefact*dz;
@@ -830,11 +833,12 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             if (_testparticle_type){
                             for (int i=1; i<_N_active; i++){
                                 for (int j=_N_active; j<_N_real; j++){
+                                    if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = -G*particles[j].m*(1 - r->ri_trace.current_Ks[j*N+i])/(_r*_r*_r);
+                                    const double prefact = -G*particles[j].m/(_r*_r*_r);
                                     particles[i].ax    += prefact*dx;
                                     particles[i].ay    += prefact*dy;
                                     particles[i].az    += prefact*dz;
@@ -873,12 +877,11 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             // The star feels no acceleration
                             // Interactions between active-active
                             if (encounter_N_active > 2){ // if two or less, no active-active planets
-                              for (int i=2; i<encounter_N_active; i++){
-                                  int mi = map[i];
-                                  for (int j=1; j<i; j++){
-                                      int mj = map[j];
-                                      int current_K = r->ri_trace.current_Ks[mj*N+mi];
-                                      if (current_K){ // Only need to calculate if CE
+                                for (int i=2; i<encounter_N_active; i++){
+                                    int mi = map[i];
+                                    for (int j=1; j<i; j++){
+                                        int mj = map[j];
+                                        if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                         const double dx = particles[mi].x - particles[mj].x;
                                         const double dy = particles[mi].y - particles[mj].y;
                                         const double dz = particles[mi].z - particles[mj].z;
@@ -893,10 +896,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                         particles[mj].ax    += prefacti*dx;
                                         particles[mj].ay    += prefacti*dy;
                                         particles[mj].az    += prefacti*dz;
-                                      }
-
-                                  }
-                              }
+                                    }
+                                }
                             }
 
                             // Interactions between active-testparticle
@@ -905,17 +906,16 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 int mi = map[i];
                                 for (int j=1; j<encounter_N_active; j++){
                                     int mj = map[j];
-                                    int current_K = r->ri_trace.current_Ks[mj*N+mi];
-                                    if (current_K){
-                                      const double dx = particles[mi].x - particles[mj].x;
-                                      const double dy = particles[mi].y - particles[mj].y;
-                                      const double dz = particles[mi].z - particles[mj].z;
-                                      const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                      double prefact = G/(_r*_r*_r);
-                                      double prefactj = -prefact*particles[mj].m;
-                                      particles[mi].ax    += prefactj*dx;
-                                      particles[mi].ay    += prefactj*dy;
-                                      particles[mi].az    += prefactj*dz;
+                                    if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+                                    const double dx = particles[mi].x - particles[mj].x;
+                                    const double dy = particles[mi].y - particles[mj].y;
+                                    const double dz = particles[mi].z - particles[mj].z;
+                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                    double prefact = G/(_r*_r*_r);
+                                    double prefactj = -prefact*particles[mj].m;
+                                    particles[mi].ax    += prefactj*dx;
+                                    particles[mi].ay    += prefactj*dy;
+                                    particles[mi].az    += prefactj*dz;
 
                                     if (_testparticle_type){
                                         double prefacti = prefact*particles[mi].m;
@@ -923,7 +923,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                         particles[mj].ay    += prefacti*dy;
                                         particles[mj].az    += prefacti*dz;
                                     }
-                                  }
                                 }
                             }
         #else // OPENMP
@@ -932,7 +931,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             particles[0].az = 0;
                             // We're in a heliocentric coordinate system.
                             // The star feels no acceleration
-        #pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(guided)
                             for (int i=1; i<encounter_N; i++){
                                 int mi = map[i];
                                 particles[mi].ax = 0;
@@ -949,36 +948,38 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mi].az    += prefact*z;
                                 for (int j=1; j<encounter_N_active; j++){
                                     if (i==j) continue;
+                                    if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                     int mj = map[j];
                                     const double dx = x - particles[mj].x;
                                     const double dy = y - particles[mj].y;
                                     const double dz = z - particles[mj].z;
                                     const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    double prefact = -G*particles[mj].m*r->ri_trace.current_Ks[mj*N+mi]/(_r*_r*_r);
+                                    double prefact = -G*particles[mj].m/(_r*_r*_r);
                                     particles[mi].ax    += prefact*dx;
                                     particles[mi].ay    += prefact*dy;
                                     particles[mi].az    += prefact*dz;
                                 }
                             }
                             if (_testparticle_type){
-        #pragma omp parallel for schedule(guided)
-                            for (int i=1; i<encounter_N_active; i++){
-                                int mi = map[i];
-                                const double x = particles[mi].x;
-                                const double y = particles[mi].y;
-                                const double z = particles[mi].z;
-                                for (int j=encounter_N_active; j<encounter_N; j++){
-                                    int mj = map[j];
-                                    const double dx = x - particles[mj].x;
-                                    const double dy = y - particles[mj].y;
-                                    const double dz = z - particles[mj].z;
-                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    double prefact = -G*particles[mj].m*r->ri_trace.current_Ks[mj*N+mi]/(_r*_r*_r);
-                                    particles[mi].ax    += prefact*dx;
-                                    particles[mi].ay    += prefact*dy;
-                                    particles[mi].az    += prefact*dz;
+#pragma omp parallel for schedule(guided)
+                                for (int i=1; i<encounter_N_active; i++){
+                                    int mi = map[i];
+                                    const double x = particles[mi].x;
+                                    const double y = particles[mi].y;
+                                    const double z = particles[mi].z;
+                                    for (int j=encounter_N_active; j<encounter_N; j++){
+                                        if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+                                        int mj = map[j];
+                                        const double dx = x - particles[mj].x;
+                                        const double dy = y - particles[mj].y;
+                                        const double dz = z - particles[mj].z;
+                                        const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                        double prefact = -G*particles[mj].m/(_r*_r*_r);
+                                        particles[mi].ax    += prefact*dx;
+                                        particles[mi].ay    += prefact*dy;
+                                        particles[mi].az    += prefact*dz;
+                                    }
                                 }
-                            }
                             }
         #endif // OPENMP
                         }
