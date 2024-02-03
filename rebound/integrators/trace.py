@@ -31,8 +31,8 @@ class IntegratorTRACE(ctypes.Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_crit_fdot=={4},peri_crit_distance={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_crit_fdot, self.peri_crit_distance)
 
-    _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
-                ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint)),
+    _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
+                ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_fdot", ctypes.c_double),
                 ("peri_crit_distance", ctypes.c_double),
@@ -79,5 +79,5 @@ class IntegratorTRACE(ctypes.Structure):
             self._S_perifp = TRACECF(func)
             self._S_peri = self._S_perifp
 
-TRACEKF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
-TRACECF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation), ctypes.c_uint)
+TRACEKF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
+TRACECF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)

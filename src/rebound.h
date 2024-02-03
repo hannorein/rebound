@@ -252,8 +252,8 @@ struct reb_integrator_sei {
 
 // TRACE (Lu et al. 2023)
 struct reb_integrator_trace {
-    double (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
-    double (*S_peri) (struct reb_simulation* const r, const unsigned int j);
+    int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+    int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
 
     double r_crit_hill;
     double peri_crit_fdot;
@@ -821,10 +821,17 @@ DLLEXPORT double reb_simulation_lyapunov(struct reb_simulation* r);
 
 // Built in mercurius switching functions
 
-DLLEXPORT double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
-DLLEXPORT double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
-DLLEXPORT double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
-DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
+double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
+double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
+double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
+double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
+
+// Built in trace switching functions
+
+DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 
 
 // Built in collision resolve functions

@@ -38,7 +38,7 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
-double reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
+int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     double dcriti = 0.0;
     double dcritj = 0.0;
@@ -72,11 +72,10 @@ double reb_integrator_trace_switch_default(struct reb_simulation* const r, const
     double dcritmax = MAX(dcriti,dcritj);
     dcritmax *= 1.21;
 
-    double fcond = d - dcritmax;
-    return fcond;
+    return d - dcritmax < 0.0;
 }
 
-double reb_integrator_trace_peri_switch_distance(struct reb_simulation* const r, const unsigned int j){
+int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double peri = ri_trace->peri_crit_distance;
     if (peri == 0.0){
@@ -88,12 +87,11 @@ double reb_integrator_trace_peri_switch_distance(struct reb_simulation* const r,
     const double dz = r->particles[0].z - r->particles[j].z;
     const double d = sqrt(dx*dx + dy*dy + dz*dz);
 
-    double fcond_peri = d - peri;
-    return fcond_peri;
+    return d - peri < 0.0;
 }
 
 
-double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, const unsigned int j){
+int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double pfdot = ri_trace->peri_crit_fdot;
     const double pdist = ri_trace->peri_crit_distance;
@@ -120,12 +118,12 @@ double reb_integrator_trace_peri_switch_default(struct reb_simulation* const r, 
 
     // Failsafe: use pericenter pericenter distance
     double fcond_dist = d - pdist;
-    return MIN(fcond_peri, fcond_dist);
+    return MIN(fcond_peri, fcond_dist) < 0.0;
 }
 
-double reb_integrator_trace_peri_switch_none(struct reb_simulation* const r, const unsigned int j){
+int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j){
     // No pericenter flags
-    return 1.0;
+    return 0;
 }
 
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
@@ -497,7 +495,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     }
 
     if (ri_trace->S_peri == NULL){
-        ri_trace->S_peri = reb_integrator_trace_peri_switch_default;
+        ri_trace->S_peri = reb_integrator_trace_switch_peri_default;
     }
 
     r->gravity = REB_GRAVITY_TRACE;
@@ -509,8 +507,8 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
-    double (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
-    double (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
+    int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
+    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
     
     // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
@@ -537,7 +535,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
 
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
-        if (_switch_peri(r, j) < 0.0){
+        if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
             if (j < Nactive){ // Two massive particles have a close encounter
                 ri_trace->tponly_encounter = 0;
@@ -560,7 +558,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
-            if (_switch(r, i, j) < 0.0){
+            if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*N+j] = 1;
                 if (ri_trace->encounter_map_internal[i] == 0){
                     ri_trace->encounter_map_internal[i] = 1; // trigger encounter
@@ -584,13 +582,13 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
-    double (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
-    double (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
+    int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = r->ri_trace.S;
+    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = r->ri_trace.S_peri;
     int new_close_encounter = 0; // New CEs
 
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
-        if (_switch_peri(r, j) < 0.0){
+        if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
             new_close_encounter = 1;
 
@@ -616,7 +614,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
             if (ri_trace->current_Ks[i*N+j] == 0){
-              if (_switch(r, i, j) < 0.0){
+              if (_switch(r, i, j)){
                   ri_trace->current_Ks[i*N+j] = 1;
                   new_close_encounter = 1;
                   if (ri_trace->encounter_map_internal[i] == 0){
