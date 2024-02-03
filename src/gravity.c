@@ -948,8 +948,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[mi].az    += prefact*z;
                                 for (int j=1; j<encounter_N_active; j++){
                                     if (i==j) continue;
-                                    if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                     int mj = map[j];
+                                    if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                     const double dx = x - particles[mj].x;
                                     const double dy = y - particles[mj].y;
                                     const double dz = z - particles[mj].z;
@@ -968,8 +968,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     const double y = particles[mi].y;
                                     const double z = particles[mi].z;
                                     for (int j=encounter_N_active; j<encounter_N; j++){
-                                        if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                         int mj = map[j];
+                                        if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                         const double dx = x - particles[mj].x;
                                         const double dy = y - particles[mj].y;
                                         const double dz = z - particles[mj].z;
