@@ -46,7 +46,6 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_particles_backup_kepler", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
                 ("_encounter_map", ctypes.POINTER(ctypes.c_int)),
-                ("_encounter_map_internal", ctypes.POINTER(ctypes.c_int)),
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),

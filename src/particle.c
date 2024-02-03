@@ -341,7 +341,6 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             for (int i=0;i<ri_trace->encounter_N;i++){
                 if (after_to_be_removed_particle == 1){
                     ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
-                    // ri_trace->encounter_map_internal[i-1] = ri_trace->encounter_map_internal[i] - 1; // Don't think we need this since we auto accept collisions
                 }
                 if (ri_trace->encounter_map[i]==index){
                     encounter_index = i;
