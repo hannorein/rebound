@@ -439,7 +439,7 @@ class TestIntegratorTrace(unittest.TestCase):
         time_ias15 = (datetime.now()-start).total_seconds()
         dE_ias15 = abs((jacobi(sim) - E0)/E0)
 
-        self.assertLess(dE_trace,1e-6)              # reasonable precision for trace
+        self.assertLess(dE_trace, 2e-6)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
 '''
     def test_pericenter(self):

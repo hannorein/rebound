@@ -71,14 +71,6 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
     double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
 
-    // TODO Remove the following? Factor seems arbitrary. 
-    dcritmax6 *= 1.21;
-    dcritmax6 *= 1.21;
-    dcritmax6 *= 1.21;
-    dcritmax6 *= 1.21;
-    dcritmax6 *= 1.21;
-    dcritmax6 *= 1.21;
-
     return d2*d2*d2 < dcritmax6;
 }
 
