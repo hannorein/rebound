@@ -109,10 +109,9 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     const double d2 = dx*dx + dy*dy + dz*dz;
     if (d2 < pdist*pdist) return 1;
 
-    // TODO Remove star's velocity here. Working in DH, so velocirt of particle is already relative to star.
-    const double dvx = r->particles[j].vx - r->particles[0].vx;
-    const double dvy = r->particles[j].vy - r->particles[0].vy;
-    const double dvz = r->particles[j].vz - r->particles[0].vz;
+    const double dvx = r->particles[j].vx;
+    const double dvy = r->particles[j].vy;
+    const double dvz = r->particles[j].vz;
 
     const double hx = (dy*dvz - dz*dvy);  // specific angular momentum vector
     const double hy = (dz*dvx - dx*dvz);
