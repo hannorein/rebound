@@ -12,6 +12,7 @@ class TestIntegratorTraceBasic(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,f=0.25) # First step will be rejected.
         sim.add(m=1e-3,a=3.1)
         sim.integrator = "TRACE"
+        sim.ri_trace.r_crit_hill *= 1.21
         sim.dt = 0.14 
 
         for k in range(3):
