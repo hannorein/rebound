@@ -425,6 +425,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
+        sim.ri_trace.r_crit_hill *= 1.21 # previously this was hardcoded
         sim.dt = (8./365.)*2.*math.pi
         E0 = jacobi(sim)
         start=datetime.now()
@@ -439,7 +440,7 @@ class TestIntegratorTrace(unittest.TestCase):
         time_ias15 = (datetime.now()-start).total_seconds()
         dE_ias15 = abs((jacobi(sim) - E0)/E0)
 
-        self.assertLess(dE_trace, 2e-6)              # reasonable precision for trace
+        self.assertLess(dE_trace, 1e-6)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
 '''
     def test_pericenter(self):
