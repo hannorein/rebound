@@ -255,6 +255,12 @@ struct reb_integrator_trace {
     int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
     int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
 
+    enum {
+        REB_TRACE_PERI_PARTIAL = 0,
+        REB_TRACE_PERI_FULL_BS = 1,
+        REB_TRACE_PERI_FULL_IAS15 = 2,
+    } peri_mode;
+
     double r_crit_hill;
     double peri_crit_fdot;
     double peri_crit_distance;
@@ -264,6 +270,7 @@ struct reb_integrator_trace {
         REB_TRACE_MODE_WH = 0,
         REB_TRACE_MODE_BS = 1,
         REB_TRACE_MODE_NONE = 2, // In-between steps, to avcoid calculate_accelerations
+        REB_TRACE_MODE_FULL = 3,
     } mode;
     unsigned int encounter_N;        // Number of particles currently having an encounter
     unsigned int encounter_N_active;  // Number of active particles currently having an encounter

@@ -755,7 +755,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 case REB_GRAVITY_TRACE:
                 {
                     switch (r->ri_trace.mode){
-                        case 0: // Interaction step
+                        case REB_TRACE_MODE_WH: // Interaction step
                         {
         #ifndef OPENMP
                             for (int i=0; i<_N_real; i++){
@@ -848,7 +848,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
         #endif // OPENMP
                         }
                         break;
-                        case 1: // BS part
+                        case REB_TRACE_MODE_BS: // BS part
                         // Kepler Step
                         {
                             const double m0 = r->particles[0].m;
@@ -983,10 +983,13 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             }
         #endif // OPENMP
                         }
-                        case 2: // In-between steps. Do not calculate anything. 
+                        break;
+                        case REB_TRACE_MODE_NONE: // In-between steps. Do not calculate anything. 
                             break;
-                break;
-            }
+                        default:
+                            reb_simulation_error(r, "TRACE mode not supported in gravity.c");
+                            break;
+                    }
         }
         break;
         default:
