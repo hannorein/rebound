@@ -636,6 +636,26 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     return new_close_encounter;
 }
 
+// TODO: Should be resused from BS
+static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+    struct reb_simulation* const r = ode->r;
+    if (r->t != t) { 
+        // Not needed for first step. Accelerations already calculated. Just need to copy them
+        reb_integrator_bs_update_particles(r, y);
+        reb_simulation_update_acceleration(r);
+    }
+
+    for (unsigned int i=0; i<r->N; i++){
+        const struct reb_particle p = r->particles[i];
+        yDot[i*6+0] = p.vx;
+        yDot[i*6+1] = p.vy;
+        yDot[i*6+2] = p.vz;
+        yDot[i*6+3] = p.ax;
+        yDot[i*6+4] = p.ay;
+        yDot[i*6+5] = p.az;
+    }
+}
+
 static void reb_integrator_trace_step(struct reb_simulation* const r){
     if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL){
         reb_integrator_trace_interaction_step(r, r->dt/2.);
@@ -648,22 +668,64 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         double t_needed = r->t + r->dt;
         const double old_dt = r->dt;
         const double old_t = r->t;
-        // Setup default IAS15 integration
-        reb_integrator_trace_dh_to_inertial(r);
         r->gravity = REB_GRAVITY_BASIC;
         r->ri_trace.mode = REB_TRACE_MODE_FULL; // for collision search
-        while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
-            reb_simulation_update_acceleration(r);
-            reb_integrator_ias15_part2(r);
-            if (r->t+r->dt >  t_needed){
-                r->dt = t_needed-r->t;
-            }
-            reb_collision_search(r);
+        reb_integrator_trace_dh_to_inertial(r);
+        switch (r->ri_trace.peri_mode){
+            case REB_TRACE_PERI_FULL_IAS15:
+                // Run default IAS15 integration
+                reb_integrator_ias15_reset(r);
+                while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+                    reb_simulation_update_acceleration(r);
+                    reb_integrator_ias15_part2(r);
+                    if (r->t+r->dt >  t_needed){
+                        r->dt = t_needed-r->t;
+                    }
+                    reb_collision_search(r);
+                }
+                break;
+            case REB_TRACE_PERI_FULL_BS:
+                {
+                    // Run default BS integration
+                    // TODO: Syntax should be similar to IAS
+                    reb_integrator_bs_reset(r);
+                    struct reb_ode* nbody_ode = reb_ode_create(r, 6*r->N);
+                    nbody_ode->derivatives = nbody_derivatives;
+                    nbody_ode->needs_nbody = 0;
+
+                    double* const y = nbody_ode->y;
+                    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+                        for (unsigned int i=0; i<r->N; i++){
+                            const struct reb_particle p = r->particles[i];
+                            y[i*6+0] = p.x;
+                            y[i*6+1] = p.y;
+                            y[i*6+2] = p.z;
+                            y[i*6+3] = p.vx;
+                            y[i*6+4] = p.vy;
+                            y[i*6+5] = p.vz;
+                        }
+
+                        int success = reb_integrator_bs_step(r, r->dt);
+                        if (success){
+                            r->t += r->dt;
+                        }
+                        r->dt = r->ri_bs.dt_proposed;
+                        reb_integrator_trace_update_particles(r, nbody_ode->y);
+
+                        reb_integrator_bs_update_particles(r, nbody_ode->y);
+                        reb_collision_search(r);
+                    }
+                    reb_ode_free(nbody_ode);
+                }
+                break;
+            default:
+                reb_simulation_error(r,"Unsupport peri_mode encountered\n");
+                break;
         }
         r->gravity = REB_GRAVITY_TRACE;
-        r->t = old_t;
+        r->t = old_t; // final time will be set later
         r->dt = old_dt;
-        reb_integrator_trace_inertial_to_dh(r); // Should be optimized.
+        reb_integrator_trace_inertial_to_dh(r); // TODO: This should be optimized.
     }
 }
 

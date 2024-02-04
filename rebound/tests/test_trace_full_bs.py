@@ -95,7 +95,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.move_to_com()
         sim.N_active=2
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 0.1
         sim2 = sim.copy()
         p = sim.particles[1].copy()
@@ -115,7 +115,7 @@ class TestIntegratorTrace(unittest.TestCase):
         rebound.data.add_outer_solar_system(sim)
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         P = sim.particles[1].P
         sim.dt = 1e-3*P
 
@@ -131,7 +131,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         #sim.integrator = "whfast"
         #sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
@@ -153,7 +153,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 0
@@ -178,7 +178,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 1
@@ -195,7 +195,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 1
@@ -217,7 +217,7 @@ class TestIntegratorTrace(unittest.TestCase):
             sim.particles[i].m *=50.
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         P = sim.particles[1].P
         sim.dt = 1e-3*P
 
@@ -236,7 +236,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 0.01
         sim.track_energy_offset = 1
         sim.collision = "direct"
@@ -265,7 +265,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 0.01
         sim.testparticle_type = 1
         sim.track_energy_offset = 1
@@ -290,7 +290,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.N_active = 2
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 0.01
         sim.testparticle_type = 1
         sim.collision = "direct"
@@ -315,7 +315,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 0.01
         sim.track_energy_offset = 1
         sim.collision = "direct"
@@ -344,7 +344,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.dt = 0.01
         sim.track_energy_offset = 1
         sim.collision = "direct"
@@ -383,7 +383,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim = get_sim()
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         E0 = sim.energy()
         start=datetime.now()
         sim.integrate(2000)
@@ -438,7 +438,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.ri_trace.peri_mode = 1
         sim.ri_trace.r_crit_hill *= 1.21 # previously this was hardcoded
         sim.dt = (8./365.)*2.*math.pi
         E0 = jacobi(sim)
