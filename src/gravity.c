@@ -848,7 +848,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
         #endif // OPENMP
                         }
                         break;
-                        case REB_TRACE_MODE_BS: // BS part
+                        case REB_TRACE_MODE_KEPLER: // BS part
                         // Kepler Step
                         {
                             const double m0 = r->particles[0].m;

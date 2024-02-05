@@ -70,7 +70,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 // All other collisions in encounter step/
                 Ninner = 1;
                 break;
-            case REB_TRACE_MODE_BS:
+            case REB_TRACE_MODE_KEPLER:
                 N = r->ri_trace.encounter_N;
                 Ninner = N;
                 trace_map = r->ri_trace.encounter_map;
@@ -794,7 +794,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
                 vz += r->ri_mercurius.com_vel.z;
             }
 
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_BS){
+            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
                 vx += r->ri_trace.com_vel.x;
                 vy += r->ri_trace.com_vel.y;
                 vz += r->ri_trace.com_vel.z;
@@ -812,7 +812,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
                 vz += r->ri_mercurius.com_vel.z;
             }
 
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_BS){
+            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
                 vx += r->ri_trace.com_vel.x;
                 vy += r->ri_trace.com_vel.y;
                 vz += r->ri_trace.com_vel.z;
@@ -856,7 +856,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
                 vz += r->ri_mercurius.com_vel.z;
             }
 
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_BS){
+            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
                 vx += r->ri_trace.com_vel.x;
                 vy += r->ri_trace.com_vel.y;
                 vz += r->ri_trace.com_vel.z;

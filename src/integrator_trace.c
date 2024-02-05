@@ -345,7 +345,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         }
     }
 
-    ri_trace->mode = REB_TRACE_MODE_BS;
+    ri_trace->mode = REB_TRACE_MODE_KEPLER;
     
     
     if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){

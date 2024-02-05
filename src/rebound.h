@@ -268,7 +268,7 @@ struct reb_integrator_trace {
     // Internal use
     enum {
         REB_TRACE_MODE_INTERACTION = 0,
-        REB_TRACE_MODE_BS = 1,
+        REB_TRACE_MODE_KEPLER = 1,
         REB_TRACE_MODE_NONE = 2, // In-between steps, to avcoid calculate_accelerations
         REB_TRACE_MODE_FULL = 3,
     } mode;
