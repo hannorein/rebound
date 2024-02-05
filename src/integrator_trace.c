@@ -28,6 +28,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <assert.h>
 #include "rebound.h"
 #include "integrator.h"
 #include "gravity.h"
@@ -349,6 +350,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     
     if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
         // current_C cannot be triggered.
+        assert(ri_trace->current_C == 0);
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
