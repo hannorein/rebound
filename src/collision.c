@@ -64,7 +64,7 @@ void reb_collision_search(struct reb_simulation* const r){
     int* trace_map = NULL;
     if (r->integrator==REB_INTEGRATOR_TRACE){
         switch (r->ri_trace.mode){
-            case REB_TRACE_MODE_WH:
+            case REB_TRACE_MODE_INTERACTION:
             case REB_TRACE_MODE_NONE:
                 // After jump step, only collisions with star might occur.
                 // All other collisions in encounter step/

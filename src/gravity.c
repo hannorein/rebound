@@ -755,7 +755,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 case REB_GRAVITY_TRACE:
                 {
                     switch (r->ri_trace.mode){
-                        case REB_TRACE_MODE_WH: // Interaction step
+                        case REB_TRACE_MODE_INTERACTION: // Interaction step
                         {
         #ifndef OPENMP
                             for (int i=0; i<_N_real; i++){

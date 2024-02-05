@@ -201,7 +201,7 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
 void reb_integrator_trace_interaction_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
-    r->ri_trace.mode = REB_TRACE_MODE_WH;
+    r->ri_trace.mode = REB_TRACE_MODE_INTERACTION;
     reb_simulation_update_acceleration(r);
     for (int i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
