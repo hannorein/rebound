@@ -406,7 +406,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         r->t = old_t;
         r->dt = old_dt;
     }else{
-        // REB_TRACE_PERI_PARTIAL or REB_TRACE_FULL_BS
+        // REB_TRACE_PERI_PARTIAL_BS or REB_TRACE_FULL_BS
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
@@ -720,7 +720,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 }
 
 static void reb_integrator_trace_step(struct reb_simulation* const r){
-    if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL){
+    if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
         reb_integrator_trace_interaction_step(r, r->dt/2.);
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_kepler_step(r, r->dt);
@@ -859,7 +859,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.S = NULL;
     r->ri_trace.S_peri = NULL;
     
-    r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL;
+    r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
     
     r->ri_trace.N_allocated = 0;
     r->ri_trace.N_allocated_additional_forces = 0;

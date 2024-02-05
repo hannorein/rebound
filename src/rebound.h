@@ -256,7 +256,7 @@ struct reb_integrator_trace {
     int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
 
     enum {
-        REB_TRACE_PERI_PARTIAL = 0,
+        REB_TRACE_PERI_PARTIAL_BS = 0,
         REB_TRACE_PERI_FULL_BS = 1,
         REB_TRACE_PERI_FULL_IAS15 = 2,
     } peri_mode;
