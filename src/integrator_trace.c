@@ -358,7 +358,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
         reb_integrator_ias15_reset(r);
 
-        r->dt = 0.1*dt; // start with a small timestep.
+        r->dt = 0.01*dt; // start with a small timestep.
 
         while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
             struct reb_particle star = r->particles[0]; // backup velocity
@@ -403,6 +403,14 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                     r->particles[i].y -= r->particles[0].y;
                     r->particles[i].z -= r->particles[0].z;
                 }
+            }
+        }
+        // if only test particles encountered massive bodies, reset the
+        // massive body coordinates to their post Kepler step state
+        if(ri_trace->tponly_encounter){
+            for (unsigned int i=1;i<ri_trace->encounter_N_active;i++){
+                unsigned int mi = ri_trace->encounter_map[i];
+                r->particles[mi] = ri_trace->particles_backup_kepler[mi];
             }
         }
         r->t = old_t;

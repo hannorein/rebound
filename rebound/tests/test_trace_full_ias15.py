@@ -447,13 +447,6 @@ class TestIntegratorTrace(unittest.TestCase):
         time_trace = (datetime.now()-start).total_seconds()
         dE_trace = abs((jacobi(sim) - E0)/E0)
 
-        sim = chaotic_exchange_sim()
-        sim.integrator = "ias15"
-        start=datetime.now()
-        sim.integrate(5000.)
-        time_ias15 = (datetime.now()-start).total_seconds()
-        dE_ias15 = abs((jacobi(sim) - E0)/E0)
-
         self.assertLess(dE_trace, 1e-6)              # reasonable precision for trace
 
 if __name__ == "__main__":
