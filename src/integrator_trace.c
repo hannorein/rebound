@@ -358,7 +358,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
         reb_integrator_ias15_reset(r);
 
-        r->dt = 0.01*dt; // start with a small timestep.
+        if (ri_trace->last_dt_ias15){
+            r->dt = ri_trace->last_dt_ias15; // use previously used timestep to start with
+        }else{
+            r->dt = 0.01*dt; // start with a small timestep.
+        }
 
         while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
             struct reb_particle star = r->particles[0]; // backup velocity
@@ -373,6 +377,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
             if (r->t+r->dt >  t_needed){
                 r->dt = t_needed-r->t;
+            }else{
+                ri_trace->last_dt_ias15 = r->dt;
             }
 
             // Search and resolve collisions
@@ -422,7 +428,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         const double old_t = r->t;
         const double t_needed = r->t + dt;
         reb_integrator_bs_reset(r);
-
+        
         // Temporarily remove all odes for BS step
         struct reb_ode** odes_backup = r->odes;
         int N_allocated_odes_backup = r->N_allocated_odes;

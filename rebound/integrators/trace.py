@@ -40,6 +40,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),
+                ("_last_dt_ias15", ctypes.c_double),
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_additionalforces", ctypes.c_uint),
                 ("_tponly_encounter", ctypes.c_uint),

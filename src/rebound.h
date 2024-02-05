@@ -274,6 +274,7 @@ struct reb_integrator_trace {
     } mode;
     unsigned int encounter_N;        // Number of particles currently having an encounter
     unsigned int encounter_N_active;  // Number of active particles currently having an encounter
+    double last_dt_ias15;
 
     unsigned int N_allocated;
     unsigned int N_allocated_additional_forces;

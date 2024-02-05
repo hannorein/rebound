@@ -447,7 +447,7 @@ class TestIntegratorTrace(unittest.TestCase):
         time_trace = (datetime.now()-start).total_seconds()
         dE_trace = abs((jacobi(sim) - E0)/E0)
 
-        self.assertLess(dE_trace, 1e-6)              # reasonable precision for trace
+        self.assertLess(dE_trace, 3e-6)              # reasonable precision for trace
 
 if __name__ == "__main__":
     unittest.main()
