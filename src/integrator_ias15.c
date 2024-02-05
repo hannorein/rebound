@@ -167,6 +167,8 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     unsigned int N3;
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){
         N3 = 3*r->ri_mercurius.encounter_N;// mercurius close encounter
+    }else if (r->integrator==REB_INTEGRATOR_TRACE){
+        N3 = 3*r->ri_trace.encounter_N;// trace close encounter
     }else{ 
         N3 = 3*r->N;
     }
@@ -215,6 +217,13 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         map = r->ri_mercurius.encounter_map;
         if (map==NULL){
             reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
+            return 0;
+        }
+    }else if (r->integrator==REB_INTEGRATOR_TRACE){// trace close encounter
+        N = r->ri_trace.encounter_N;
+        map = r->ri_trace.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
             return 0;
         }
     }else{ 
