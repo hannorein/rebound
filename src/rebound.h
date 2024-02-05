@@ -267,13 +267,13 @@ struct reb_integrator_trace {
 
     // Internal use
     enum {
-        REB_TRACE_MODE_INTERACTION = 0,
-        REB_TRACE_MODE_KEPLER = 1,
-        REB_TRACE_MODE_NONE = 2, // In-between steps, to avcoid calculate_accelerations
-        REB_TRACE_MODE_FULL = 3,
+        REB_TRACE_MODE_INTERACTION = 0, // Interaction step
+        REB_TRACE_MODE_KEPLER = 1,      // Kepler step
+        REB_TRACE_MODE_NONE = 2,        // In-between steps, to avcoid calculate_accelerations
+        REB_TRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
     } mode;
-    unsigned int encounter_N;        // Number of particles currently having an encounter
-    unsigned int encounter_N_active;  // Number of active particles currently having an encounter
+    unsigned int encounter_N;           // Number of particles currently having an encounter
+    unsigned int encounter_N_active;    // Number of active particles currently having an encounter
     double last_dt_ias15;
 
     unsigned int N_allocated;
