@@ -135,7 +135,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 115, REB_UINT,        "ri_janus.order",               offsetof(struct reb_simulation, ri_janus.order), 0, 0},
     { 116, REB_UINT,        "ri_janus.recalculate_integer_coordinates_this_timestep", offsetof(struct reb_simulation, ri_janus.recalculate_integer_coordinates_this_timestep), 0, 0},
     { 117, REB_INT,         "ri_whfast.coordinates",        offsetof(struct reb_simulation, ri_whfast.coordinates), 0, 0},
-    { 118, REB_DOUBLE,      "ri_mercurius.r_crit_hill",         offsetof(struct reb_simulation, ri_mercurius.r_crit_hill), 0, 0},
+    { 118, REB_DOUBLE,      "ri_mercurius.r_crit_hill",     offsetof(struct reb_simulation, ri_mercurius.r_crit_hill), 0, 0},
     { 119, REB_UINT,        "ri_mercurius.safe_mode",       offsetof(struct reb_simulation, ri_mercurius.safe_mode), 0, 0},
     { 120, REB_UINT,        "ri_mercurius.is_synchronized", offsetof(struct reb_simulation, ri_mercurius.is_synchronized), 0, 0},
     { 122, REB_POINTER,     "ri_mercurius.dcrit",           offsetof(struct reb_simulation, ri_mercurius.dcrit), offsetof(struct reb_simulation, ri_mercurius.N_allocated_dcrit), sizeof(double)},
@@ -148,9 +148,9 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 132, REB_UINT32,      "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0},
     { 133, REB_VEC3D,       "ri_mercurius.com_pos",         offsetof(struct reb_simulation, ri_mercurius.com_pos), 0, 0},
     { 134, REB_VEC3D,       "ri_mercurius.com_vel",         offsetof(struct reb_simulation, ri_mercurius.com_vel), 0, 0},
-    { 135, REB_UINT64,   "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0},
-    { 136, REB_UINT64,   "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0},
-    { 137, REB_UINT64,   "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0},
+    { 135, REB_UINT64,      "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0},
+    { 136, REB_UINT64,      "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0},
+    { 137, REB_UINT64,      "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0},
     { 140, REB_UINT,        "ri_saba.safe_mode",            offsetof(struct reb_simulation, ri_saba.safe_mode), 0, 0},
     { 141, REB_UINT,        "ri_saba.is_synchronized",      offsetof(struct reb_simulation, ri_saba.is_synchronized), 0, 0},
     { 143, REB_UINT,        "ri_whfast.corrector2",         offsetof(struct reb_simulation, ri_whfast.corrector2), 0, 0},
@@ -169,10 +169,11 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 157, REB_DOUBLE,      "ri_bs.eps_rel",                offsetof(struct reb_simulation, ri_bs.eps_rel), 0, 0},
     { 158, REB_DOUBLE,      "ri_bs.min_dt",                 offsetof(struct reb_simulation, ri_bs.min_dt), 0, 0},
     { 159, REB_DOUBLE,      "ri_bs.max_dt",                 offsetof(struct reb_simulation, ri_bs.max_dt), 0, 0},
-    { 160, REB_INT,         "ri_bs.first_or_last_step",        offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
-    { 161, REB_INT,         "ri_bs.previous_rejected",       offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
-    { 162, REB_INT,         "ri_bs.target_iter",             offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
+    { 160, REB_INT,         "ri_bs.first_or_last_step",     offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
+    { 161, REB_INT,         "ri_bs.previous_rejected",      offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
+    { 162, REB_INT,         "ri_bs.target_iter",            offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
 //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
+    { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
@@ -482,6 +483,20 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
                 pointer = *(char**)pointer;
+                reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+            }
+        }
+        // Pointer with a fixed size
+        if (dtype == REB_POINTER_FIXED_SIZE ){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            field.size = reb_binary_field_descriptor_list[i].element_size;
+                
+            char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+            pointer = *(char**)pointer;
+            if (pointer){
+                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
             }
         }

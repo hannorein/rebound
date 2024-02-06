@@ -217,7 +217,7 @@ class TestSimulation(unittest.TestCase):
 
 
     def test_checkpoint(self):
-        self.sim.save_to_file("bintest.bin")
+        self.sim.save_to_file("bintest.bin", delete_file=True)
         sim2 = rebound.Simulation("bintest.bin")
         self.assertEqual(self.sim.particles[1].x, sim2.particles[1].x)
         self.assertEqual(self.sim.particles[1].vx, sim2.particles[1].vx)
@@ -228,7 +228,7 @@ class TestSimulation(unittest.TestCase):
     
     def test_checkpoint_ias15_pointers(self):
         self.sim.integrate(1.)
-        self.sim.save_to_file("bintest.bin")
+        self.sim.save_to_file("bintest.bin", delete_file=True)
         self.sim.integrate(5.)
         sim2 = rebound.Simulation("bintest.bin")
         sim2.integrate(5.)

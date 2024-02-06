@@ -1482,6 +1482,7 @@ Simulation._fields_ = [
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
+                ("_display_view", c_void_p),
                 ("_display_data", c_void_p), # not needed from python
                 ("_server_data", POINTER(ServerData)),
                 ("track_energy_offset", c_int),

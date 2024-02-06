@@ -119,6 +119,16 @@ next_field:
 
                     goto next_field;
                 }
+                if (fd.dtype == REB_POINTER_FIXED_SIZE){
+                    if (field.size != reb_binary_field_descriptor_list[i].element_size){
+                        reb_simulation_warning(r, "Inconsistent size encountered in binary field (fixed pointer size).");
+                    }
+                    char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
+                    *(char**)pointer = realloc(*(char**)pointer, field.size);
+                    fread(*(char**)pointer, field.size,1,inf);
+
+                    goto next_field;
+                }
                 // Special datatype for ias15. Similar to REB_POINTER. 
                 if (fd.dtype == REB_DP7){
                     if (field.size % reb_binary_field_descriptor_list[i].element_size){
