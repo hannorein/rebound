@@ -803,11 +803,16 @@ void reb_render_frame(void* p){
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
-        sprintf(str, "Press h for help ");
+        if (!r_copy->display_settings){
+            sprintf(str, "Press h for help ");
+        }else{
+            sprintf(str, "User interaction disabled");
+        }
         glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
         
         sprintf(str, "N = %d ",data->r_copy->N);
         glUniform1f(data->shader_simplefont.ypos_location, ypos++);
@@ -894,7 +899,11 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
             strlcat(str, line, 10240);
             sprintf(line, "steps/s = %g<br />",1./data->r_copy->walltime_last_steps);
             strlcat(str, line, 10240);
-            strlcat(str, "Press h or click for help<br />", 10240);
+            if (!data->r_copy->display_settings){
+                strlcat(str, "Press h or click for help<br />", 10240);
+            }else{
+                strlcat(str, "User interaction disabled<br />", 10240);
+            }
             reb_overlay_update(str, data->r_copy->status);
         }else{
             sprintf(line, "Unable to connect. Server might have shut down.");
