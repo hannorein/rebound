@@ -680,10 +680,11 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
         for (unsigned int i=0; i<p_per_system; i++){
             m[s*p_per_system+i] = 0; // dummy
             x[s*p_per_system+i] = 100.0+i; // dummy
-            y[s*p_per_system+i] = 100.0+i;
-            z[s*p_per_system+i] = 100.0+i;
+            y[s*p_per_system+i] = 1.0+i;
+            z[s*p_per_system+i] = 1.0+i;
+            double vcirc = sqrt(r->G*mtot/100.); // aproximate circular velocity to keep particles away from origin.
             vx[s*p_per_system+i] = 0.0;
-            vy[s*p_per_system+i] = 0.0;
+            vy[s*p_per_system+i] = vcirc;
             vz[s*p_per_system+i] = 0.0;
         }
         ri_whfast512->p_jh0[s].m = mtot;
