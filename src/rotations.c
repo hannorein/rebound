@@ -316,11 +316,11 @@ struct reb_rotation reb_rotation_slerp(struct reb_rotation q1, struct reb_rotati
 // Matrix methods, mostly used for visualization
 
 struct reb_mat4df reb_mat4df_identity(){
-    struct reb_mat4df i = {
+    struct reb_mat4df i = { .m={
         1.,0.,0.,0.,
         0.,1.,0.,0.,
         0.,0.,1.,0.,
-        0.,0.,0.,1.};
+        0.,0.,0.,1.}};
     return i;
 }
 
