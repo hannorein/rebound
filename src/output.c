@@ -306,12 +306,20 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
 
     if (r->server_data->screenshot){
         FILE* f = fopen(filename,"wb");
-        fwrite(r->server_data->screenshot, r->server_data->N_screenshot, 1, f);
-        fclose(f);
-        free(r->server_data->screenshot);
-        r->server_data->screenshot = 0;
-        r->server_data->N_screenshot = 0;
-        return 1;
+        if (!f){
+            reb_simulation_error(r, "Error opening output file for screenshot.");
+            free(r->server_data->screenshot);
+            r->server_data->screenshot = 0;
+            r->server_data->N_screenshot = 0;
+            return 0;
+        }else{
+            fwrite(r->server_data->screenshot, r->server_data->N_screenshot, 1, f);
+            fclose(f);
+            free(r->server_data->screenshot);
+            r->server_data->screenshot = 0;
+            r->server_data->N_screenshot = 0;
+            return 1;
+        }
     }
 #else //SERVER
     reb_simulation_error(r, "To take a screenshot compile with SERVER=1, call reb_simulation_start_server(), and connect with a web browser.");
