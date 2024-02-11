@@ -421,6 +421,8 @@ struct reb_integrator_janus {
 enum REB_STATUS {
     // Any status less than SINGLE_STEP get incremented once every timestep until SINGLE_STEP is reached.
     REB_STATUS_SINGLE_STEP = -10, // Performing a single step, then switching to PAUSED.
+    REB_STATUS_SCREENSHOT_READY=-5,// Screenshot is ready, send back, then finish integration
+    REB_STATUS_SCREENSHOT = -4,   // Pause until visualization has taken a screenshot.
     REB_STATUS_PAUSED = -3,       // Simulation is paused by visualization.
     REB_STATUS_LAST_STEP = -2,    // Current timestep is the last one. Needed to ensure that t=tmax exactly.
     REB_STATUS_RUNNING = -1,      // Simulation is current running, no error occurred.
@@ -688,6 +690,9 @@ DLLEXPORT void reb_simulation_output_ascii(struct reb_simulation* r, char* filen
 DLLEXPORT void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 // Function to allow for periodic outputs in heartbeat function. See examples on how to use it.
 DLLEXPORT int reb_simulation_output_check(struct reb_simulation* r, double interval);
+// Write a screenshot of the current simulation to a file. Requires that a server was started with reb_simulation_start_server() and one client web browser is connected. 
+// Returns 1 if successful, otherwise.
+DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filename);
 
 
 // Timestepping
@@ -1090,11 +1095,14 @@ struct reb_vec4df {
 
 struct reb_server_data {
     struct reb_simulation* r;
-    struct reb_simulation* r_copy;
+    void* screenshot; // Screenshot data received by server (decoded)
+    size_t N_screenshot; // Size of decoded screenshot data
+    enum REB_STATUS status_before_screenshot;
     int port;
     int need_copy;
     int ready;
 #ifdef SERVER
+    int mutex_locked_by_integrate;  // Let's heartbeat find out if it is being called while the mutex is locked.
 #ifdef _WIN32
     SOCKET socket;
     HANDLE mutex;          // Mutex to allow for copying
@@ -1124,6 +1132,7 @@ struct reb_display_data {
     struct reb_display_settings s;
     struct reb_simulation* r;
     struct reb_simulation* r_copy;
+    void* screenshot; // Screenshot data to be sent to server
     struct reb_vec4df* particle_data;
     struct reb_orbit_opengl* orbit_data;
     uint64_t N_allocated;

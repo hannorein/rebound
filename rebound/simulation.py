@@ -1439,7 +1439,9 @@ from .variation import Variation
 class ServerData(Structure):
     _fields_ = [
             ("r", POINTER(Simulation)),
-            ("r_copy", POINTER(Simulation)),
+            ("_screenshot", c_void_p),
+            ("_N_screenshot", c_size_t),
+            ("_status_before_screenshot", c_int),
             ("port", c_int),
             ("need_copy", c_int),
             ("ready", c_int),

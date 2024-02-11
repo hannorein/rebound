@@ -14,6 +14,8 @@ def run(*args, **kwargs):
             # Manual exception for file viewer
             if "_viewer" in cname:
                 livepreview=0
+            if "screenshots" in cname:
+                livepreview=0
             try:
                 with open("examples/"+cname+"/Makefile","r") as mfd:
                     Makefile = mfd.read()

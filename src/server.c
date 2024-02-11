@@ -131,8 +131,84 @@ static void reb_server_cerror(FILE *stream, char *cause){
     free(buf);
 }
 
+static const unsigned char base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+/**
+ * base64_decode - Base64 decode
+ * @src: Data to be decoded
+ * @len: Length of the data to be decoded
+ * @out_len: Pointer to output length variable
+ * Returns: Allocated buffer of out_len bytes of decoded data,
+ * or %NULL on failure
+ *
+ * Caller is responsible for freeing the returned buffer.
+ *
+ * Source: https://web.mit.edu/freebsd/head/contrib/wpa/src/utils/base64.c
+ */
+static unsigned char * base64_decode(const unsigned char *src, size_t len, size_t *out_len) {
+	unsigned char dtable[256], *out, *pos, block[4], tmp;
+	size_t i, count, olen;
+	int pad = 0;
+
+	memset(dtable, 0x80, 256);
+	for (i = 0; i < sizeof(base64_table) - 1; i++)
+		dtable[base64_table[i]] = (unsigned char) i;
+	dtable['='] = 0;
+
+	count = 0;
+	for (i = 0; i < len; i++) {
+		if (dtable[src[i]] != 0x80)
+			count++;
+	}
+
+	if (count == 0 || count % 4)
+		return NULL;
+
+	olen = count / 4 * 3;
+	pos = out = malloc(olen);
+	if (out == NULL)
+		return NULL;
+
+	count = 0;
+	for (i = 0; i < len; i++) {
+		tmp = dtable[src[i]];
+		if (tmp == 0x80)
+			continue;
+
+		if (src[i] == '=')
+			pad++;
+		block[count] = tmp;
+		count++;
+		if (count == 4) {
+			*pos++ = (block[0] << 2) | (block[1] >> 4);
+			*pos++ = (block[1] << 4) | (block[2] >> 2);
+			*pos++ = (block[2] << 6) | block[3];
+			count = 0;
+			if (pad) {
+				if (pad == 1)
+					pos--;
+				else if (pad == 2)
+					pos -= 2;
+				else {
+					/* Invalid padding */
+					free(out);
+					return NULL;
+				}
+				break;
+			}
+		}
+	}
+
+	*out_len = pos - out;
+	return out;
+}
+
+
+#ifndef _WIN32
 void* reb_server_start(void* args){
+#else //_WIN32
+DWORD WINAPI reb_server_start(void* args){
+#endif // _WIN32
     struct reb_server_data* data = (struct reb_server_data*)args;
     struct reb_simulation* r = data->r;
 
@@ -222,8 +298,8 @@ void* reb_server_start(void* args){
         sscanf(buf, "%s %s %s\n", method, uri, version);
 
         /* only support the GET method */
-        if (strcasecmp(method, "GET")) {
-            reb_server_cerror(stream, "Only GET is implemented.");
+        if (strcasecmp(method, "GET") && strcasecmp(method, "POST")) {
+            reb_server_cerror(stream, "Only GET+POST are implemented.");
             fclose(stream);
             close(childfd);
             continue;
@@ -231,7 +307,13 @@ void* reb_server_start(void* args){
            
         /* read (and ignore) the HTTP headers */
         fgets(buf, BUFSIZE, stream);
+        unsigned long content_length = 0;
         while(strcmp(buf, "\r\n")) {
+            char cl[BUFSIZE];
+            int ni = sscanf(buf, "Content-Length: %s\n", cl);
+            if (ni){
+                content_length = strtol(cl,NULL,10);
+            }
             fgets(buf, BUFSIZE, stream);
         }
 
@@ -302,7 +384,7 @@ void* reb_server_start(void* args){
         }else if (!strcasecmp(uri, "/") || !strcasecmp(uri, "/index.html") || !strcasecmp(uri, "/rebound.html")) {
             struct stat sbuf;
             if (stat("rebound.html", &sbuf) < 0) {
-                reb_server_cerror(stream, "rebound.html not found in current directory. Try `make rebuund.html`.");
+                reb_server_cerror(stream, "rebound.html not found in current directory. Try `make rebound.html`.");
             }else{
                 fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
                 int fd = open("rebound.html", O_RDONLY);
@@ -313,9 +395,58 @@ void* reb_server_start(void* args){
         }else if (!strcasecmp(uri, "/favicon.ico")) {
                 fwrite(reb_server_header_png, 1, strlen(reb_server_header_png), stream);
                 fwrite(reb_favicon_png,1, reb_favicon_len, stream);
+        }else if (!strcasecmp(uri, "/screenshot")) {
+            data->need_copy = 1;
+            pthread_mutex_lock(&(data->mutex));
+            
+            if (content_length==0){
+                printf("Received screenshot with size zero.");
+                goto screenshot_finish;
+            }
+            if (r->status != REB_STATUS_SCREENSHOT){
+                printf("Received screenshot but did not expect one.\n");
+                goto screenshot_finish;
+            }
+            if (data->screenshot) {
+                printf("Unable to receive screenshot as previous screenshot not freed.\n");
+                goto screenshot_finish;
+            }
+
+            char* dataURL = malloc(content_length);
+            int rc = fread(dataURL, content_length, 1,  stream);
+
+            if (rc!=1){
+                printf("Error while reading screenshot data.\n");
+                free(dataURL);
+                goto screenshot_finish;
+            }
+
+            int rc_len = strlen(dataURL)+1;
+            char* base64 = strchr(dataURL, ',');
+            if (content_length != rc_len){
+                printf("Received screenshot with incorrect size.\n");
+                free(dataURL);
+                goto screenshot_finish;
+            }
+            if (!base64){
+                printf("Unable to decode received screenshot. Data not in dataURL format.\n");
+                free(dataURL);
+                goto screenshot_finish;
+            }
+            data->screenshot = base64_decode((unsigned char*)base64+1, strlen(base64+1), &data->N_screenshot);
+            if (!data->screenshot){
+                printf("An error occured while decoding the screenshot.\n");
+            }
+            data->r->status = REB_STATUS_PAUSED;
+            free(dataURL);
+screenshot_finish:
+            data->need_copy = 0;
+            pthread_mutex_unlock(&(data->mutex));
+            fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
+            fprintf(stream, "ok.\n");
         }else{
             reb_server_cerror(stream, "Unsupported URI.");
-            printf("UR: %s\n", uri);
+            printf("URI: %s\n", uri);
         }
 
         /* clean up */
@@ -333,7 +464,6 @@ void* reb_server_start(void* args){
     WSADATA wsa;
     struct sockaddr_in server;
     SOCKET clientS;
-    char request[BUFSIZE];
     char method[BUFSIZE];
     char uri[BUFSIZE];
     char version[BUFSIZE];
@@ -376,25 +506,55 @@ void* reb_server_start(void* args){
         if (clientS == INVALID_SOCKET) { // Accept will fail if main thread is closing socket.
             return 1;
         } 
-        // Receive request. Ideally we should check for new line and read more bytes if needed.
-        recv(clientS, request, BUFSIZE, 0);
+        // Receive entire request.
+        int recN = 0;
+        char* recbuf = malloc(BUFSIZE);
+        int recbufN = 0;
+        while((recN = recv(clientS, recbuf+recbufN, BUFSIZE, 0))>0){
+            recbufN += recN;
+            if (recN<BUFSIZE) break;
+            recbuf = realloc(recbuf, recbufN+BUFSIZE);
+        }
 
-        sscanf(request, "%s %s %s\n", method, uri, version);
-
-        /* only support the GET method */
-        if (strcasecmp(method, "GET")) {
+        // Get method and uri
+        sscanf(recbuf, "%s %s %s\n", method, uri, version);
+        if (strcasecmp(method, "GET") && strcasecmp(method, "POST")) {
             reb_server_cerror(clientS, "Method not Implemented");
             continue;
+        }
+        
+        /* read (and ignore) the HTTP headers */
+        char* curLine = recbuf;
+        unsigned long content_length = 0;
+        while(curLine){
+            char* nextLine = strchr(curLine, '\n');
+            if (nextLine) *nextLine = '\0';
+            char cl[BUFSIZE];
+            int ni = sscanf(curLine, "Content-Length: %s\n", cl);
+            if (ni){
+                content_length = strtol(cl,NULL,10);
+            }
+            if (nextLine){
+                *nextLine = '\n';
+                curLine = nextLine+1;
+            }else{
+                break;
+            }
+        }
+        
+        // Only post data is needed, otherwise free here
+        if (strcasecmp(method, "POST")) {
+            free(recbuf);
         }
         
         if (!strcasecmp(uri, "/simulation")) {
             char* bufp = NULL;
             size_t sizep;
             data->need_copy = 1;
-            //pthread_mutex_lock(&(data->mutex)); TODO!!
+            WaitForSingleObject(data->mutex, INFINITE);
             reb_simulation_save_to_stream(r, &bufp,&sizep);
             data->need_copy = 0;
-            //pthread_mutex_unlock(&(data->mutex));
+            ReleaseMutex(data->mutex);
             sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
             sendBytes(clientS, bufp, sizep);
             free(bufp);
@@ -404,12 +564,12 @@ void* reb_server_start(void* args){
             sscanf(uri, "/keyboard/%d", &key);
             int skip_default_keys = 0;
             data->need_copy = 1;
-            //pthread_mutex_lock(&(data->mutex)); TODO!!
+            WaitForSingleObject(data->mutex, INFINITE);
             if (r->key_callback){
                 skip_default_keys = r->key_callback(r, key);
             } 
             data->need_copy = 0;
-            //pthread_mutex_unlock(&(data->mutex));
+            ReleaseMutex(data->mutex);
             if (!skip_default_keys){
                 switch (key){
                     case 'Q':
@@ -466,12 +626,52 @@ void* reb_server_start(void* args){
                 sendBytes(clientS, buf, fsize); 
                 free(buf);
             }else{
-                reb_server_cerror(clientS, "rebound.html not found in current directory. Try `make rebuund.html`.");
+                reb_server_cerror(clientS, "rebound.html not found in current directory. Try `make rebound.html`.");
                 continue;
             }
         }else if (!strcasecmp(uri, "/favicon.ico")) {
                 sendBytes(clientS, reb_server_header_png, strlen(reb_server_header_png)); 
                 sendBytes(clientS, reb_favicon_png, reb_favicon_len); 
+        }else if (!strcasecmp(uri, "/screenshot")) {
+            data->need_copy = 1;
+            WaitForSingleObject(data->mutex, INFINITE);
+            if (content_length==0){
+                printf("Received screenshot with size zero.");
+                goto screenshot_finish;
+            }
+            if (r->status != REB_STATUS_SCREENSHOT){
+                printf("Received screenshot but did not expect one.\n");
+                goto screenshot_finish;
+            }
+            if (data->screenshot) {
+                printf("Unable to receive screenshot as previous screenshot not freed.\n");
+                goto screenshot_finish;
+            }
+
+            char* dataURL = curLine; // Memory!
+
+            int rc_len = strlen(dataURL)+1;
+            char* base64 = strchr(dataURL, ',');
+            if (content_length != rc_len){
+                printf("Received screenshot with incorrect size.\n");
+                goto screenshot_finish;
+            }
+            if (!base64){
+                printf("Unable to decode received screenshot. Data not in dataURL format.\n");
+                goto screenshot_finish;
+            }
+            data->screenshot = base64_decode((unsigned char*)base64+1, strlen(base64+1), &data->N_screenshot);
+            if (!data->screenshot){
+                printf("An error occured while decoding the screenshot.\n");
+            }
+            data->r->status = REB_STATUS_PAUSED;
+screenshot_finish:
+            free(recbuf);
+            data->need_copy = 0;
+            ReleaseMutex(data->mutex);
+            const char* ok = "ok.";
+            sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 
+            sendBytes(clientS, ok, strlen(ok));
         }else{
             reb_server_cerror(clientS, "Unsupported request.");
             printf("URI: %s\n",uri);
@@ -481,7 +681,7 @@ void* reb_server_start(void* args){
         closesocket(clientS);
     }
     WSACleanup();
-    return NULL;
+    return 0;
 #endif // _WIN32
 }
 

@@ -135,6 +135,7 @@ nav:
       - c_examples/thermalhysteresis.md
       - ipython_examples/SaturnsRings.ipynb
     - "Visualization":
+      - c_examples/screenshots.md
       - c_examples/animation_saturns_rings.md
       - c_examples/animation_solar_system.md
       - ipython_examples/OrbitPlot.ipynb

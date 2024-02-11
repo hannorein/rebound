@@ -43,7 +43,6 @@
 #include "integrator.h"
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 
-
 static void reb_display_set_default_view(struct reb_simulation* const r, struct reb_display_settings* s){
     float  scale = 0.;
     // Need a scale for visualization
@@ -174,6 +173,7 @@ EM_JS(int, reb_overlay_help_show, (int show), {
     }
     return show;
 });
+
 EM_JS(void, reb_overlay_hide, (int hide), {
     var overlay = document.getElementById("overlay");
     if (hide){
@@ -879,6 +879,10 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 sprintf(line, "Simulation is running<br />");
             }else if (data->r_copy->status == REB_STATUS_PAUSED){
                 sprintf(line, "Simulation is paused<br />");
+            }else if (data->r_copy->status == REB_STATUS_SCREENSHOT_READY){
+                sprintf(line, "Screenshot ready<br />");
+            }else if (data->r_copy->status == REB_STATUS_SCREENSHOT){
+                sprintf(line, "Taking screenshot<br />");
             }else if (data->r_copy->status == REB_STATUS_SUCCESS){
                 sprintf(line, "Simulation ready<br />");
             }else if (data->r_copy->status == REB_STATUS_USER){
@@ -919,6 +923,16 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
             strlcat(str, "<br />", 10240);
             reb_overlay_help_set_text(str);
         }
+    }
+    if (data->r_copy->status == REB_STATUS_SCREENSHOT && !data->screenshot){
+        data->screenshot = EM_ASM_PTR({
+                var canvas = document.getElementById('canvas');
+                return stringToNewUTF8(canvas.toDataURL());
+                });
+        if (!data->screenshot){
+            printf("Error, screenshot not successful.");
+        }
+        data->r->status = REB_STATUS_SCREENSHOT_READY; // changing main simulation as r_copy will be overwritten
     }
     return EM_TRUE;
 }
