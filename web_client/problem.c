@@ -80,6 +80,32 @@ void reb_display_keyboard_passthrough(GLFWwindow* window, int key, int scancode,
 }
 
 
+void send_screenshot_succeeded(emscripten_fetch_t *fetch) {
+    struct reb_simulation* r = fetch->userData;
+    emscripten_fetch_close(fetch); // Free data associated with the fetch.
+    r->status = REB_STATUS_PAUSED; // Pause until server sends new simulation.
+    r->display_data->r_copy->status = REB_STATUS_PAUSED; // Pause until server sends new simulation.
+    free(r->display_data->screenshot);
+    r->display_data->screenshot = NULL;
+    emscripten_sleep(1000./120.);
+    request_frame_from_server(r);
+}
+
+
+void send_screenshot_to_server(struct reb_simulation* r){
+    emscripten_fetch_attr_t attr;
+    emscripten_fetch_attr_init(&attr);
+    attr.userData = r;
+    strcpy(attr.requestMethod, "POST");
+    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+    attr.onsuccess = send_screenshot_succeeded;
+    attr.onerror = request_frame_failed;
+    attr.requestData = r->display_data->screenshot;
+    attr.requestDataSize = strlen(r->display_data->screenshot)+1;
+
+    emscripten_fetch(&attr, "/screenshot");
+}
+
 
 void request_frame_succeeded(emscripten_fetch_t *fetch) {
     struct reb_simulation* r = fetch->userData;
@@ -107,14 +133,32 @@ void request_frame_succeeded(emscripten_fetch_t *fetch) {
 
 
 void request_frame_from_server(struct reb_simulation* r){
-    emscripten_fetch_attr_t attr;
-    emscripten_fetch_attr_init(&attr);
-    attr.userData = r;
-    strcpy(attr.requestMethod, "GET");
-    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
-    attr.onsuccess = request_frame_succeeded;
-    attr.onerror = request_frame_failed;
-    emscripten_fetch(&attr, "/simulation");
+    switch (r->status){
+        case REB_STATUS_SCREENSHOT:
+            // Screenshot not ready yet. Wait. 
+            emscripten_sleep(1000./120.);
+            request_frame_from_server(r);
+            break;
+        case REB_STATUS_SCREENSHOT_READY:
+            // Screenshot ready
+            // Send back
+            // resume normal pulls
+            send_screenshot_to_server(r);
+            break;
+        default:
+            {
+                emscripten_fetch_attr_t attr;
+                emscripten_fetch_attr_init(&attr);
+                attr.userData = r;
+                strcpy(attr.requestMethod, "GET");
+                attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+                attr.onsuccess = request_frame_succeeded;
+                attr.onerror = request_frame_failed;
+                emscripten_fetch(&attr, "/simulation");
+            }
+            break;
+    }
+
 
 }
 

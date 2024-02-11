@@ -67,7 +67,7 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.1.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.3.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
@@ -310,6 +310,9 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
     }
+    if(r->display_settings){
+        free(r->display_settings);
+    }
 #ifdef OPENGL
     if(r->display_data){
         // Waiting for visualization to shut down.
@@ -522,7 +525,9 @@ void reb_simulation_init(struct reb_simulation* r){
     r->output_timing_last   = -1;
     r->save_messages = 0;
     r->track_energy_offset = 0;
+    r->server_data = NULL;
     r->display_data = NULL;
+    r->display_settings = NULL;
     r->walltime = 0;
 
     r->minimum_collision_velocity = 0;
@@ -655,7 +660,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
             r->status++;
         }
     }
-    while(r->status == REB_STATUS_PAUSED){
+    while(r->status == REB_STATUS_PAUSED || r->status == REB_STATUS_SCREENSHOT){
         // Wait for user to disable paused simulation
 #ifdef __EMSCRIPTEN__
         emscripten_sleep(100);
@@ -808,7 +813,7 @@ static void* reb_simulation_integrate_raw(void* args){
     if (r->testparticle_hidewarnings==0 && reb_particle_check_testparticles(r)){
         reb_simulation_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
-    if (r->status != REB_STATUS_PAUSED){ // Allow simulation to be paused initially
+    if (r->status != REB_STATUS_PAUSED && r->status != REB_STATUS_SCREENSHOT){ // Allow simulation to be paused initially
         r->status = REB_STATUS_RUNNING;
     }
     reb_run_heartbeat(r);
@@ -846,6 +851,7 @@ static void* reb_simulation_integrate_raw(void* args){
 #else // _WIN32
             pthread_mutex_lock(&(r->server_data->mutex)); 
 #endif // _WIN32
+            r->server_data->mutex_locked_by_integrate = 1;
         }
 #endif //SERVER
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -866,6 +872,7 @@ static void* reb_simulation_integrate_raw(void* args){
 #else // _WIN32
             pthread_mutex_unlock(&(r->server_data->mutex));
 #endif // _WIN32
+            r->server_data->mutex_locked_by_integrate = 0;
         }
 #endif //SERVER
         if (r->usleep > 0){

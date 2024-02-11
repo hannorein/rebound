@@ -126,8 +126,8 @@ int test_basic(){
 int test_number_of_planets(){
     // Different numbers of planets
     for (int gr=0; gr<=1; gr++){
-        for (int p=1; p<=9; p++){
-            struct reb_simulation* r = setup_sim(9);
+        for (int p=2; p<=9; p++){
+            struct reb_simulation* r = setup_sim(p);
             struct reb_simulation* r512 = reb_simulation_copy(r);
              
             r512->integrator = REB_INTEGRATOR_WHFAST512;

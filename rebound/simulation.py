@@ -1323,6 +1323,32 @@ class Simulation(Structure):
         else:
             raise AttributeError("Cannot specify more than one of interval, walltime, or step.")
 
+    def output_screenshot(self, filename):
+        """
+        Saves a screenshot of the current WebGL visualization to a file in png format.
+
+        The web server needs to be started, and a web browser needs to be 
+        connected to the server in order to take screen shots.
+
+        Arguments
+        ---------
+        filename : str
+            Filename of the output file.
+        
+        Examples
+        --------
+        The following example take a screenshot of a simulation.
+
+        >>> sim = rebound.Simulation()
+        >>> sim.integrator = "whfast"
+        >>> sim.add(m=1.)
+        >>> sim.add(a=1.)
+        >>> sim.widget() # this connects one client
+        >>> sim.output_screenshot("screenshot.png")
+        """
+                
+        clibrebound.reb_simulation_output_screenshot(byref(self), c_char_p(filename.encode("ascii")))
+        self.process_messages()
 
 # Integration
     def step(self):
@@ -1441,7 +1467,9 @@ from .variation import Variation
 class ServerData(Structure):
     _fields_ = [
             ("r", POINTER(Simulation)),
-            ("r_copy", POINTER(Simulation)),
+            ("_screenshot", c_void_p),
+            ("_N_screenshot", c_size_t),
+            ("_status_before_screenshot", c_int),
             ("port", c_int),
             ("need_copy", c_int),
             ("ready", c_int),
@@ -1484,6 +1512,7 @@ Simulation._fields_ = [
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
+                ("_display_view", c_void_p),
                 ("_display_data", c_void_p), # not needed from python
                 ("_server_data", POINTER(ServerData)),
                 ("track_energy_offset", c_int),

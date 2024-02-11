@@ -4,6 +4,16 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.3.0
+* Take screenshots of WebGL based visualizations using the `reb_simulation_output_screenshot()` function. You need to connect one web browser to the simulation in order to take screenshots. 
+* Improved synchronization of visualization and simulation on Windows with mutex.
+* Fixes an issue that might lead to NaN values when less than the maximum number of planets are used in WHFast512.
+
+### Version 4.2.0
+* It is now possible to programmatically change all aspects of a REBOUND visualization. This can be used to set up default viewing options or to render animations. See the C examples in `animation_solar_system` and `animation_saturn_rings`.
+* Reworked matrix operations in visualization routines to follow the Model-View-Projection paradigm.
+* Fixed an issues where unit tests would fail because a binary file was not deleted.
+
 ### Version 4.1.1
 * Fixed python wheels for windows.
 
