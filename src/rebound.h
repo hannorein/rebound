@@ -1119,8 +1119,7 @@ struct reb_display_settings {
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running
     int wire;                       // Shows/hides orbit wires.
-    int past;                       // Shows/hides past particle positions.
-    unsigned int past_N;            // Number of past particle positions.
+    unsigned int breadcrumbs;       // Number of past particle positions.
     int onscreentext;               // Shows/hides onscreen text.
     int onscreenhelp;               // Shows/hides onscreen help.
     int multisample;                // Turn off/on multisampling.
@@ -1147,9 +1146,9 @@ struct reb_display_data {
 #ifdef __EMSCRIPTEN__
     int connection_status;
 #endif
-    uint64_t past_last_steps_done;
-    unsigned int past_N_allocated;
-    unsigned int past_current_index;
+    uint64_t breadcrumb_last_steps_done;
+    unsigned int breadcrumb_N_allocated;
+    unsigned int breadcrumb_current_index;
     unsigned int mouse_action;      
     unsigned int key_mods;      
     unsigned int particle_buffer;
@@ -1178,8 +1177,8 @@ struct reb_display_data {
     struct {
         unsigned int mvp_location;
         unsigned int color_location;
-        unsigned int current_vertex_location;
-        unsigned int past_N_location;
+        unsigned int current_index_location;
+        unsigned int breadcrumb_N_location;
         unsigned int N_real_location;
         unsigned int program;
         unsigned int particle_vao;
@@ -1192,8 +1191,8 @@ struct reb_display_data {
     } shader_sphere;
     struct {
         unsigned int mvp_location;
-        unsigned int current_vertex_location;
-        unsigned int past_N_location;
+        unsigned int current_index_location;
+        unsigned int breadcrumb_N_location;
         unsigned int N_real_location;
         unsigned int program;
         unsigned int particle_vao_current;

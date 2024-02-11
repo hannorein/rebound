@@ -95,8 +95,7 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     }else{
         s->wire          = 0; 
     }
-    s->past              = 0; 
-    s->past_N            = 64;
+    s->breadcrumbs       = 0;
     s->onscreentext      = 1; 
     s->ghostboxes        = 0; 
     s->reference         = -1;
@@ -125,13 +124,6 @@ void emscripten_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, G
 #define reb_glVertexAttribDivisor emscripten_glVertexAttribDivisor
 #define reb_glDrawArraysInstanced emscripten_glDrawArraysInstanced
 
-// Getting size from canvas element
-EM_JS(int, canvas_get_width, (), {
-  return document.getElementById("canvas").scrollWidth;
-});
-EM_JS(int, canvas_get_height, (), {
-  return document.getElementById("canvas").scrollHeight;
-});
 
 EM_JS(void, reb_overlay_update, (const char* text, int status), {
     var overlaytext = document.getElementById("overlaytext");
@@ -151,12 +143,6 @@ EM_JS(void, reb_overlay_update, (const char* text, int status), {
         }
     }
 });
-EM_JS(void, reb_overlay_help_set_text, (const char* text), {
-    var overlaytext = document.getElementById("overlaytext-help");
-    if (overlaytext){
-        overlaytext.innerHTML = UTF8ToString(text);
-    }
-});
 EM_JS(int, reb_overlay_help_show, (int show), {
     var overlaytoggle = document.getElementById("overlay-toggle");
     if (overlaytoggle){
@@ -174,15 +160,6 @@ EM_JS(int, reb_overlay_help_show, (int show), {
     return show;
 });
 
-EM_JS(void, reb_overlay_hide, (int hide), {
-    var overlay = document.getElementById("overlay");
-    if (hide){
-        overlay.style.display = "none";
-    }else{
-        overlay.style.display = "block";
-    }
-
-});
 #else
 #define reb_glVertexAttribDivisor glVertexAttribDivisor
 #define reb_glDrawArraysInstanced glDrawArraysInstanced
@@ -215,9 +192,8 @@ static const char* onscreenhelp[] = {
                 " g       | Toggle ghost boxes",
                 " m       | Toggle multisampling",
                 " w       | Show/hide instantaneous orbits as wires",
-                " p       | Show/hide past particle locations",
-                " i / o   | Increase/decrease past particle locations",
-                " c       | Clear past particle location history",
+                " i / o   | Increase / decrease number of breadcrumbs",
+                " c       | Clear breadcrumb data",
                 "----------------------------------------------------"
 };
 
@@ -391,7 +367,7 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
 #define ystr(s) #s
 static void reb_display_clear_particle_data(struct reb_display_data* data){
     int N_real = data->N_allocated;
-    int N_hist = data->past_N_allocated;
+    int N_hist = data->breadcrumb_N_allocated;
     if (data->particle_data){
         float n = NAN;
         for (int i=0; i<N_real; i++){
@@ -483,15 +459,12 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
             case 'C':
                 reb_display_clear_particle_data(data);
                 break;
-            case 'P':
-                data->s.past = (data->s.past+1)%2;
-                break;
             case 'I':
-                data->s.past_N *= 2;
+                data->s.breadcrumbs = MAX(1,data->s.breadcrumbs*2);
                 break;
             case 'O':
-                data->past_current_index = data->past_current_index % MAX(2, data->s.past_N/2) ;
-                data->s.past_N = MAX(2, data->s.past_N/2) ;
+                data->s.breadcrumbs = MAX(0, data->s.breadcrumbs/2) ;
+                data->breadcrumb_current_index = 0; // prevent bad memory access after rescale 
                 break;
             case 'T':
                 data->s.onscreentext = !data->s.onscreentext;
@@ -535,8 +508,12 @@ void reb_render_frame(void* p){
     int width, height;
 #ifdef __EMSCRIPTEN__
     // Need to query canvas size using JS, set window size, then read framebuffer size.
-    width = canvas_get_width();
-    height = canvas_get_height();
+    width = EM_ASM_INT({
+            return document.getElementById("canvas").scrollWidth;
+            });
+    height = EM_ASM_INT({
+            return document.getElementById("canvas").scrollHeight;
+            });
     int cwidth, cheight;
     glfwGetWindowSize(data->window, &cwidth, &cheight);
     if (cwidth!=width || cheight !=height){
@@ -575,32 +552,29 @@ void reb_render_frame(void* p){
     if (r_copy->display_settings){
         // User provided settings server-side. Will overwrite our own.
         data->s = *r_copy->display_settings;
-        if (data->s.past_N <2){ 
-            data->s.past_N = 2;
-        }
     }
 
     // prepare data (incl orbit calculation)
     const int N_real = r_copy->N - r_copy->N_var;
-    
-    if (N_real > data->N_allocated || data->s.past_N != data->past_N_allocated){
-        data->particle_data = realloc(data->particle_data, N_real*sizeof(struct reb_vec4df));
-        data->orbit_data = realloc(data->orbit_data, N_real*sizeof(struct reb_orbit_opengl));
+        
+    if (N_real > data->N_allocated || data->s.breadcrumbs+1 != data->breadcrumb_N_allocated){
+        data->N_allocated = N_real;
+        data->breadcrumb_N_allocated = data->s.breadcrumbs+1;
+        
+        data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_vec4df));
+        data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
         
         // Resize memory if needed
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferData(GL_ARRAY_BUFFER, data->s.past_N*N_real*sizeof(struct reb_vec4df), NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data->breadcrumb_N_allocated*data->N_allocated*sizeof(struct reb_vec4df), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
-        glBufferData(GL_ARRAY_BUFFER, N_real*sizeof(struct reb_vec4df), NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_vec4df), NULL, GL_STATIC_DRAW);
         
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferData(GL_ARRAY_BUFFER, data->s.past_N*N_real*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data->breadcrumb_N_allocated*data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
-        glBufferData(GL_ARRAY_BUFFER, N_real*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
         
-        data->N_allocated = N_real;
-        data->past_N_allocated = data->s.past_N;
-                
         reb_display_clear_particle_data(data);
     }
 
@@ -615,13 +589,14 @@ void reb_render_frame(void* p){
         data->particle_data[i].z  = (float)p.z;
         data->particle_data[i].r  = (float)p.r;
     }
-    if (r->steps_done != data->past_last_steps_done){
-        if (r->steps_done < data->past_last_steps_done){
+    // Only advance breadcrumb index if simulation has advanced
+    if (r->steps_done != data->breadcrumb_last_steps_done){
+        if (r->steps_done < data->breadcrumb_last_steps_done){
             // Something strange is happening. New simulation?
             reb_display_clear_particle_data(data);
         }
-        data->past_last_steps_done = r->steps_done;
-        data->past_current_index = (data->past_current_index+1) % data->past_N_allocated;
+        data->breadcrumb_last_steps_done = r->steps_done;
+        data->breadcrumb_current_index = (data->breadcrumb_current_index+1) % data->breadcrumb_N_allocated;
     }
 
     if (data->s.wire && N_real>1){
@@ -644,14 +619,14 @@ void reb_render_frame(void* p){
     if (N_real>0){
         // Fill memory (but not resize)
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, data->past_current_index*N_real*sizeof(struct reb_vec4df), N_real*sizeof(struct reb_vec4df), data->particle_data);
+        glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*N_real*sizeof(struct reb_vec4df), N_real*sizeof(struct reb_vec4df), data->particle_data);
         if (data->s.spheres==1 || data->s.spheres==2){
             glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
             glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_vec4df), data->particle_data);
         }
             
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, data->past_current_index*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
         if (data->s.wire){
             glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
             glBufferSubData(GL_ARRAY_BUFFER, 0, (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
@@ -687,9 +662,9 @@ void reb_render_frame(void* p){
                 glEnable(GL_DEPTH_TEST);
                 glUseProgram(data->shader_sphere.program);
                 glUniformMatrix4fv(data->shader_sphere.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                if (data->s.past==1){
+                if (data->breadcrumb_N_allocated>1){
                     glBindVertexArray(data->shader_sphere.particle_vao);
-                    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real*data->past_N_allocated);
+                    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real*data->breadcrumb_N_allocated);
                 }else{
                     glBindVertexArray(data->shader_sphere.particle_vao_current);
                     reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real);
@@ -702,31 +677,29 @@ void reb_render_frame(void* p){
                 glUseProgram(data->shader_point.program);
                 glBindVertexArray(data->shader_point.particle_vao);
                 glUniformMatrix4fv(data->shader_point.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                glUniform1i(data->shader_point.past_N_location, data->past_N_allocated);
-                int current_vertex = (data->past_current_index-1+data->past_N_allocated)%data->past_N_allocated;
-                if (data->s.past==1){
+                glUniform1i(data->shader_point.breadcrumb_N_location, data->breadcrumb_N_allocated);
+                if (data->breadcrumb_N_allocated>1){
                     glUniform4f(data->shader_point.color_location, 1.,1.,1.,0.8);
                     glUniform1i(data->shader_point.N_real_location, N_real);
-                    glUniform1i(data->shader_point.current_vertex_location, current_vertex);
-                    glDrawArrays(GL_POINTS, 0, N_real*data->past_N_allocated);
+                    glUniform1i(data->shader_point.current_index_location, data->breadcrumb_current_index);
+                    glDrawArrays(GL_POINTS, 0, N_real*data->breadcrumb_N_allocated);
                 }
                 // Points
                 glUniform4f(data->shader_point.color_location, 1.,1.,0.,0.8);
                 glUniform1i(data->shader_point.N_real_location, 0);
-                glDrawArrays(GL_POINTS, N_real*((current_vertex+1)%data->past_N_allocated), N_real);
+                glDrawArrays(GL_POINTS, N_real*data->breadcrumb_current_index, N_real);
                 glBindVertexArray(0);
             }
             if (data->s.wire==1){
                 // Orbits
                 glUseProgram(data->shader_orbit.program);
                 glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                glUniform1i(data->shader_orbit.past_N_location, data->past_N_allocated);
-                if (data->s.past==1){
+                glUniform1i(data->shader_orbit.breadcrumb_N_location, data->breadcrumb_N_allocated);
+                if (data->breadcrumb_N_allocated>1){
                     glBindVertexArray(data->shader_orbit.particle_vao);
                     glUniform1i(data->shader_orbit.N_real_location, N_real-1);
-                    int current_vertex = (data->past_current_index-1+data->past_N_allocated)%data->past_N_allocated;
-                    glUniform1i(data->shader_orbit.current_vertex_location, current_vertex);
-                    reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->past_N_allocated*(N_real-1));
+                    glUniform1i(data->shader_orbit.current_index_location, data->breadcrumb_current_index);
+                    reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->breadcrumb_N_allocated*(N_real-1));
                 }else{
                     glBindVertexArray(data->shader_orbit.particle_vao_current);
                     glUniform1i(data->shader_orbit.N_real_location, 0);
@@ -868,7 +841,14 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
         return EM_TRUE;
     }
     reb_render_frame(data);
-    reb_overlay_hide(!data->s.onscreentext);
+    EM_ASM({
+        var overlay = document.getElementById("overlay");
+        if ($0){
+            overlay.style.display = "none";
+        }else{
+            overlay.style.display = "block";
+        }
+        }, !data->s.onscreentext);
     if (data->s.onscreentext){ 
         char str[10240] = "\0";
         char line[1024];
@@ -921,7 +901,11 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
         for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
             strlcat(str, onscreenhelp[i], 10240);
             strlcat(str, "<br />", 10240);
-            reb_overlay_help_set_text(str);
+            EM_ASM({
+                    var overlaytext = document.getElementById("overlaytext-help");
+                    if (overlaytext){
+                        overlaytext.innerHTML = UTF8ToString($0);
+                    }}, str);
         }
     }
     if (data->r_copy->status == REB_STATUS_SCREENSHOT && !data->screenshot){
@@ -980,8 +964,8 @@ void reb_display_init(struct reb_simulation * const r){
         data->retina = (double)fwidth/(double)wwidth;
     }
     data->window            = window;
-    data->past_current_index= 0;
-    data->past_N_allocated  = 0;
+    data->breadcrumb_current_index= 0;
+    data->breadcrumb_N_allocated  = 0;
 
     glfwSetKeyCallback(window,reb_display_keyboard);
     glfwSetScrollCallback(window,reb_display_scroll);
@@ -1120,14 +1104,14 @@ void reb_display_init(struct reb_simulation * const r){
             "uniform mat4 mvp;\n"
             "uniform vec4 vc;\n"
             "out vec4 color;\n"
-            "uniform int current_vertex;\n"
+            "uniform int current_index;\n"
             "uniform int N_real;\n"
-            "uniform int past_N;\n"
+            "uniform int breadcrumb_N;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
             "  gl_PointSize = 15.0f;\n"
             "  color = vc;\n"
-            "  float age = float( (gl_VertexID/N_real -1 - current_vertex + 2*past_N)%past_N )/float(past_N);\n"
+            "  float age = float( (gl_VertexID/N_real - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
             "  if (N_real == 0) age = 1.0;\n"
             "  color = vec4(vc.xyz,age*vc.a);\n"
             "}\n";
@@ -1156,8 +1140,8 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_point.program = loadShader(vertex_shader, fragment_shader);
         data->shader_point.mvp_location = glGetUniformLocation(data->shader_point.program, "mvp");
         data->shader_point.color_location = glGetUniformLocation(data->shader_point.program, "vc");
-        data->shader_point.current_vertex_location = glGetUniformLocation(data->shader_point.program, "current_vertex");
-        data->shader_point.past_N_location = glGetUniformLocation(data->shader_point.program, "past_N");
+        data->shader_point.current_index_location = glGetUniformLocation(data->shader_point.program, "current_index");
+        data->shader_point.breadcrumb_N_location = glGetUniformLocation(data->shader_point.program, "breadcrumb_N");
         data->shader_point.N_real_location = glGetUniformLocation(data->shader_point.program, "N_real");
         
         glUseProgram(data->shader_point.program);
@@ -1366,9 +1350,9 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec3 aef;\n"
             "in vec3 omegaOmegainc;\n"
             "in float lintwopi;\n"
-            "uniform int current_vertex;\n"
+            "uniform int current_index;\n"
             "uniform int N_real;\n"
-            "uniform int past_N;\n"
+            "uniform int breadcrumb_N;\n"
             "out float lin;\n"
             "uniform mat4 mvp;\n"
             "const float M_PI = 3.14159265359;\n"
@@ -1383,7 +1367,7 @@ void reb_display_init(struct reb_simulation * const r){
             "       lin = sqrt(min(0.5,lin));\n"
             "   }\n"
             "   if (N_real != 0) {\n"
-            "       lin = float( (gl_InstanceID/N_real -1 - current_vertex + 2*past_N)%past_N )/float(past_N);\n"
+            "       lin = float( (gl_InstanceID/N_real - current_index + 2*breadcrumb_N -1)%breadcrumb_N )/float(breadcrumb_N);\n"
             "   }\n"
             "   float omega = omegaOmegainc.x;\n"
             "   float Omega = omegaOmegainc.y;\n"
@@ -1415,8 +1399,8 @@ void reb_display_init(struct reb_simulation * const r){
 
         data->shader_orbit.program = loadShader(vertex_shader, fragment_shader);
         data->shader_orbit.mvp_location = glGetUniformLocation(data->shader_orbit.program, "mvp");
-        data->shader_orbit.current_vertex_location = glGetUniformLocation(data->shader_orbit.program, "current_vertex");
-        data->shader_orbit.past_N_location = glGetUniformLocation(data->shader_orbit.program, "past_N");
+        data->shader_orbit.current_index_location = glGetUniformLocation(data->shader_orbit.program, "current_index");
+        data->shader_orbit.breadcrumb_N_location = glGetUniformLocation(data->shader_orbit.program, "breadcrumb_N");
         data->shader_orbit.N_real_location = glGetUniformLocation(data->shader_orbit.program, "N_real");
     
         // Orbit data
@@ -1518,7 +1502,7 @@ void reb_display_init(struct reb_simulation * const r){
     // Destroy particle buffers
     if (data->N_allocated){
         data->N_allocated = 0;
-        data->past_N_allocated = 0;
+        data->breadcrumb_N_allocated = 0;
         free(data->particle_data);
         free(data->orbit_data);
         data->particle_data = NULL;

@@ -55,7 +55,7 @@ void heartbeat(struct reb_simulation* const r){
     }else if (r->t > 2.*2.*M_PI && r->t < 4.*2.*M_PI){              // Year 2 to 4
         
         // Increase length of trail to 64
-        r->display_settings->past_N = 64;
+        r->display_settings->breadcrumbs = 64;
                                                        
         // Apply same rotation matrix as before
         struct reb_mat4df rm = reb_rotation_to_mat4df(rot_x);
@@ -111,7 +111,7 @@ void heartbeat(struct reb_simulation* const r){
         // Show real size of particles
         r->display_settings->spheres = 1;
         // Hide planet trails
-        r->display_settings->past = 0;
+        r->display_settings->breadcrumbs = 0;
 
     }
 
@@ -195,8 +195,7 @@ int main(int argc, char* argv[]) {
     // Show orbits
     r->display_settings->wire = 1;
     // Show 4 past particle positions
-    r->display_settings->past = 1;
-    r->display_settings->past_N = 4;
+    r->display_settings->breadcrumbs = 4;
 
     // Slow the simulation down to at most 120 timesteps per second.
     r->usleep = 8333;
