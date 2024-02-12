@@ -718,11 +718,8 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
 // TODO: Should be reused from BS
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    if (r->t != t) { 
-        // Not needed for first step. Accelerations already calculated. Just need to copy them
-        reb_integrator_bs_update_particles(r, y);
-        reb_simulation_update_acceleration(r);
-    }
+    reb_integrator_bs_update_particles(r, y);
+    reb_simulation_update_acceleration(r);
 
     for (unsigned int i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
@@ -767,13 +764,21 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                 {
                     // Run default BS integration
                     // TODO: Syntax should be similar to IAS
-                    reb_integrator_bs_reset(r);
-                    struct reb_ode* nbody_ode = reb_ode_create(r, 6*r->N);
-                    nbody_ode->derivatives = nbody_derivatives;
-                    nbody_ode->needs_nbody = 0;
+                    struct reb_ode* nbody_ode = NULL;
 
-                    double* const y = nbody_ode->y;
+                    double* y;
                     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+                        if (!nbody_ode || nbody_ode->length != 6*r->N){
+                            if (nbody_ode){
+                                reb_ode_free(nbody_ode);
+                            }
+                            nbody_ode = reb_ode_create(r, 6*r->N);
+                            nbody_ode->derivatives = nbody_derivatives;
+                            nbody_ode->needs_nbody = 0;
+                            y = nbody_ode->y;
+                            reb_integrator_bs_reset(r);
+                        }
+
                         for (unsigned int i=0; i<r->N; i++){
                             const struct reb_particle p = r->particles[i];
                             y[i*6+0] = p.x;
@@ -789,7 +794,6 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                             r->t += r->dt;
                         }
                         r->dt = r->ri_bs.dt_proposed;
-                        reb_integrator_trace_update_particles(r, nbody_ode->y);
 
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
                         reb_collision_search(r);
