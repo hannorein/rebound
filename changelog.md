@@ -4,6 +4,12 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.3.1
+* Added new `plane` visualization mode for orbits. Press `w` to toggle through available orbit visualization modes.
+* Added python interface for screenshot API.
+* Fixed an issue where no python exception was raised when a particle was added outside a simulation box.
+* Renamed `past_N` to breadcrumbs in visualization module.
+
 ### Version 4.3.0
 * Take screenshots of WebGL based visualizations using the `reb_simulation_output_screenshot()` function. You need to connect one web browser to the simulation in order to take screenshots. 
 * Improved synchronization of visualization and simulation on Windows with mutex.
