@@ -1199,7 +1199,13 @@ struct reb_display_data {
         unsigned int particle_vao;
         unsigned int vertex_count;
     } shader_orbit;
-
+    struct {
+        unsigned int mvp_location;
+        unsigned int vertex_count_location;
+        unsigned int program;
+        unsigned int particle_vao_current;
+        unsigned int vertex_count;
+    } shader_plane;
 };
 
 // Display settings initialization

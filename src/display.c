@@ -191,7 +191,7 @@ static const char* onscreenhelp[] = {
                 " s       | Toggle points/spheres/points+spheres/none",
                 " g       | Toggle ghost boxes",
                 " m       | Toggle multisampling",
-                " w       | Show/hide instantaneous orbits as wires",
+                " w       | Toggle orbit mode (none/wire/plane)",
                 " i / o   | Increase / decrease number of breadcrumbs",
                 " c       | Clear breadcrumb data",
                 "----------------------------------------------------"
@@ -454,7 +454,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 data->s.pause = !data->s.pause;
                 break;
             case 'W':
-                data->s.wire = (data->s.wire+1)%2;
+                data->s.wire = (data->s.wire+1)%3;
                 break;
             case 'C':
                 reb_display_clear_particle_data(data);
@@ -657,6 +657,17 @@ void reb_render_frame(void* p){
         struct reb_mat4df model = reb_mat4df_translate(reb_mat4df_identity(), gb.x, gb.y, gb.z);
         { // Particles
             struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, model));
+            if (data->s.wire==2){
+                // Orbit Planes
+                glDisable(GL_CULL_FACE);
+                glUseProgram(data->shader_plane.program);
+                glUniformMatrix4fv(data->shader_plane.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
+                glBindVertexArray(data->shader_plane.particle_vao_current);
+                glUniform1i(data->shader_plane.vertex_count_location, data->shader_plane.vertex_count);
+                reb_glDrawArraysInstanced(GL_TRIANGLES, 0, 3.*data->shader_plane.vertex_count, N_real-1);
+                glBindVertexArray(0);
+                glEnable(GL_CULL_FACE);
+            }
             if(data->s.spheres==1||data->s.spheres==2){
                 // Solid Spheres
                 glEnable(GL_DEPTH_TEST);
@@ -690,7 +701,7 @@ void reb_render_frame(void* p){
                 glDrawArrays(GL_POINTS, N_real*data->breadcrumb_current_index, N_real);
                 glBindVertexArray(0);
             }
-            if (data->s.wire==1){
+            if (data->s.wire>=1){
                 // Orbits
                 glUseProgram(data->shader_orbit.program);
                 glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
@@ -1477,6 +1488,92 @@ void reb_display_init(struct reb_simulation * const r){
         glBindVertexArray(0);
     
 
+    }
+    
+    {
+        // PLANE shader
+        const char* vertex_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
+            "#version 330\n"
+#endif
+            "in vec3 focus;\n"
+            "in vec3 aef;\n"
+            "in vec3 omegaOmegainc;\n"
+            "uniform int vertex_count;\n"
+            "uniform mat4 mvp;\n"
+            "const float M_PI = 3.14159265359;\n"
+            "void main() {\n"
+            "   float a = aef.x;\n"
+            "   float e = aef.y;\n"
+            "   float lin = (float(gl_VertexID/3) +float(gl_VertexID%3)*3.0)/float(vertex_count);\n"
+            "   float f = 2.*M_PI*lin;\n"
+            "   if (e>1.){\n"
+            "       float theta_max = acos(-1./e);\n"
+            "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+            "   }\n"
+            "   float omega = omegaOmegainc.x;\n"
+            "   float Omega = omegaOmegainc.y;\n"
+            "   float inc = omegaOmegainc.z;\n"
+            "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
+            "   float cO = cos(Omega);\n"
+            "   float sO = sin(Omega);\n"
+            "   float co = cos(omega);\n"
+            "   float so = sin(omega);\n"
+            "   float cf = cos(f);\n"
+            "   float sf = sin(f);\n"
+            "   float ci = cos(inc);\n"
+            "   float si = sin(inc);\n"
+            "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
+            "   if (gl_VertexID%3==0) {pos = vec3(0.,0.,0.);}\n"
+            "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "}\n";
+        const char* fragment_shader =
+#ifdef __EMSCRIPTEN__
+            "#version 300 es\n"
+#else
+            "#version 330\n"
+#endif
+            "precision highp float;"
+            "out vec4 outcolor;\n"
+            "void main() {\n"
+            "  outcolor = vec4(1.,1.,1.,0.1);\n"
+            "}\n";
+
+        data->shader_plane.program = loadShader(vertex_shader, fragment_shader);
+        data->shader_plane.mvp_location = glGetUniformLocation(data->shader_plane.program, "mvp");
+        data->shader_plane.vertex_count_location = glGetUniformLocation(data->shader_plane.program, "vertex_count");
+    
+        // Orbit data
+        data->shader_plane.vertex_count = 500; // higher number = smoother orbits
+
+        // Generate two orbit vao
+        glUseProgram(data->shader_plane.program);
+        GLuint ofocusp = glGetAttribLocation(data->shader_plane.program,"focus");
+        GLuint oaefp = glGetAttribLocation(data->shader_plane.program,"aef");
+        GLuint oomegaOmegaincp = glGetAttribLocation(data->shader_plane.program,"omegaOmegainc");
+
+        { // Current
+            glGenVertexArrays(1, &data->shader_plane.particle_vao_current);
+            glBindVertexArray(data->shader_plane.particle_vao_current);
+            glEnableVertexAttribArray(ofocusp);
+            glEnableVertexAttribArray(oaefp);
+            glEnableVertexAttribArray(oomegaOmegaincp);
+
+            glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
+            glVertexAttribPointer(ofocusp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, NULL);
+            glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
+            glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
+
+            reb_glVertexAttribDivisor(data->shader_plane.mvp_location, 0); 
+            reb_glVertexAttribDivisor(ofocusp, 1);
+            reb_glVertexAttribDivisor(oaefp, 1);
+            reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
+        }
+        
+        glBindVertexArray(0);
+    
     }
     
 
