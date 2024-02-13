@@ -926,6 +926,7 @@ class Simulation(Structure):
                 raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
+        self.process_messages()
 
 # Particle getter functions
     @property
