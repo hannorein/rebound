@@ -422,11 +422,9 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     size_t sizep;
     reb_simulation_save_to_stream(r, &bufp,&sizep);
     
-    reb_simulation_reset_function_pointers(r_copy);
-    r_copy->simulationarchive_filename = NULL;
-    
-    // Set to old version by default. Will be overwritten if new version was used.
-    r_copy->simulationarchive_version = 0;
+    reb_simulation_free_pointers(r_copy);
+    memset(r_copy, 0, sizeof(struct reb_simulation));
+    reb_simulation_init(r_copy);
 
     FILE* fin = reb_fmemopen(bufp, sizep, "r");
     reb_input_fields(r_copy, fin, warnings);
