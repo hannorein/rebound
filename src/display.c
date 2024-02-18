@@ -1497,6 +1497,7 @@ void reb_display_init(struct reb_simulation * const r){
             "   float si = sin(inc);\n"
             "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
             "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "    gl_Position.z = 0.;\n" // no clipping
             "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
@@ -1631,6 +1632,7 @@ void reb_display_init(struct reb_simulation * const r){
             "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
             "   if (gl_VertexID%3==0) {pos = vec3(0.,0.,0.);}\n"
             "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "    gl_Position.z = 0.;\n" // no clipping
             "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
