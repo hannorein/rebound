@@ -772,10 +772,16 @@ void reb_render_frame(void* p){
         glBindVertexArray(data->shader_simplefont.vao);
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
         glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
-        glUniform2f(data->shader_simplefont.pos_location, -0.96,-0.72);
-        glUniform1f(data->shader_simplefont.aspect_location, 1.9);
-        glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
-        glUniform1f(data->shader_simplefont.scale_location, 0.01);
+        float screen_aspect = (float)height/(float)width;
+        glUniform1f(data->shader_simplefont.screen_aspect_location, screen_aspect);
+
+        float char_size = 4.; // px per char
+        float scale = 2.*char_size/height; // size of one char in screen coordinates
+        float logo_width = 42.0*0.5 *scale*screen_aspect;     //  41=num char, 0.5=aspect
+        float logo_height = 26.0 *scale;         //  26=num char
+        glUniform2f(data->shader_simplefont.pos_location, -1.,-1.+logo_height);
+        glUniform1f(data->shader_simplefont.aspect_location, 0.5);
+        glUniform1f(data->shader_simplefont.scale_location, scale);
         glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
         float val[200] = {0.};
         for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
@@ -785,11 +791,14 @@ void reb_render_frame(void* p){
             reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
         
+        char_size = 16.; // px per char
+        scale = 2.*char_size/height; // size of one char in screen coordinates
+
         char str[256];
-        int ypos = 0;
-        glUniform2f(data->shader_simplefont.pos_location, -0.70,-269./350.);
-        glUniform1f(data->shader_simplefont.aspect_location, 1.4);
-        glUniform1f(data->shader_simplefont.scale_location, 16./350.);
+        int ypos = 1;
+        glUniform2f(data->shader_simplefont.pos_location, -1+logo_width,-1.+logo_height);
+        glUniform1f(data->shader_simplefont.aspect_location,0.75);
+        glUniform1f(data->shader_simplefont.scale_location, scale);
         
         glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         sprintf(str,"REBOUND v%s",reb_version_str);
@@ -841,9 +850,9 @@ void reb_render_frame(void* p){
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
         // Ruler
+        float ruler_width = 7*0.75*scale*screen_aspect; 
         sprintf(str, "%6.1g", 1./scaley);
-        glUniform2f(data->shader_simplefont.pos_location, 0.7,0.);
-        glUniform1f(data->shader_simplefont.scale_location, 16./350.);
+        glUniform2f(data->shader_simplefont.pos_location, 1.-ruler_width,0.);
         glUniform1f(data->shader_simplefont.ypos_location, 0);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
@@ -858,7 +867,7 @@ void reb_render_frame(void* p){
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
         glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
         glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
-        glUniform1f(data->shader_simplefont.aspect_location, 1.4);
+        glUniform1f(data->shader_simplefont.aspect_location, 0.75);
         glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
         glUniform1f(data->shader_simplefont.scale_location, 0.035);
         glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
@@ -1061,7 +1070,7 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec2 texcoord;\n"
             "out vec2 Texcoord;\n"
             "void main() {\n"
-            "  gl_Position = vec4(pos.x*screen_aspect,pos.y,0.,0.)+vec4(screen_aspect*scale*(vp.x+charpos/aspect+charpos/16.),scale*(vp.y-ypos),0., 1.);\n"
+            "  gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
             "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
             "}\n";
         const char* fragment_shader =
