@@ -179,6 +179,11 @@ static const char* onscreenhelp[] = {
                 " (space) | Pause simulation",
                 " (ar dwn)| Perform one single time step",
                 " (pg dwn)| Perform 50 time steps",
+#ifdef __EMSCRIPTEN__
+                " e       | Take screenshot and export as png file",
+#else // __EMSCRIPTEN__
+                " e       | Take screenshot and export as tga file",
+#endif // __EMSCRIPTEN__
                 " d       | Pause real-time visualization", 
                 "         | (the simulation continues)",
                 " r       | Reset view. Press multiple times to",
@@ -458,6 +463,9 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 break;
             case 'C':
                 reb_display_clear_particle_data(data);
+                break;
+            case 'E':
+                data->take_one_screenshot = 1;
                 break;
             case 'I':
                 data->s.breadcrumbs = MAX(1,data->s.breadcrumbs*2);
@@ -918,6 +926,19 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                         overlaytext.innerHTML = UTF8ToString($0);
                     }}, str);
         }
+    }
+    if (data->take_one_screenshot){
+        EM_ASM_PTR({
+                var canvas = document.getElementById('canvas');
+                var link = document.createElement("a");
+                link.download = "screenshot.png";
+                link.href = canvas.toDataURL();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                delete link;
+                });
+        data->take_one_screenshot = 0;
     }
     if (data->r_copy->status == REB_STATUS_SCREENSHOT && !data->screenshot){
         data->screenshot = EM_ASM_PTR({
@@ -1588,6 +1609,21 @@ void reb_display_init(struct reb_simulation * const r){
         double t0 = glfwGetTime();
         if (!data->s.pause){
             reb_render_frame(data);
+        }
+        if (data->take_one_screenshot){
+            int cwidth, cheight;
+            glfwGetFramebufferSize(data->window, &cwidth, &cheight);
+            FILE   *out = fopen("screenshot.tga", "w");
+            char   pixel_data[3*cwidth*cheight];
+            short  TGAhead[] = {0, 2, 0, 0, 0, 0, cwidth, cheight, 24};
+
+            glReadBuffer(GL_FRONT);
+            glReadPixels(0, 0, cwidth, cheight, GL_BGR, GL_UNSIGNED_BYTE, pixel_data);
+            fwrite(&TGAhead, sizeof(TGAhead), 1, out);
+            fwrite(pixel_data, 3*cwidth*cheight, 1, out);
+            fclose(out);
+            printf("\nScreenshot saved as 'screenshot.tga',\n");
+            data->take_one_screenshot = 0;
         }
         while (glfwGetTime()-t0 < 1.0/120.) { // Maxframerate 120Hz
             usleep(10);
