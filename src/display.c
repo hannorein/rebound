@@ -759,8 +759,8 @@ void reb_render_frame(void* p){
         scaley = powf(10.,floor(log10f(3.2*scale.y))); // nearest power of 10, factor of 3.2 determines wrapping
 
         struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
-        ruler_mvp = reb_mat4df_scale(ruler_mvp, 1./ratio, 0.3125*scale.y/scaley, 1);  // 0.3125 comes from b and t values in projection matrix
-        ruler_mvp = reb_mat4df_translate(ruler_mvp, -1.+ratio, 0, 0);
+        ruler_mvp = reb_mat4df_translate(ruler_mvp, 1.-30./width, 0, 0);
+        ruler_mvp = reb_mat4df_scale(ruler_mvp, 500.0/width, 0.3125*scale.y/scaley, 1);  // 0.3125 comes from b and t values in projection matrix
         glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
         glBindVertexArray(data->shader_box.ruler_vao);
         glDrawArrays(GL_LINES, 0, 18);
@@ -774,6 +774,7 @@ void reb_render_frame(void* p){
         glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
         float screen_aspect = (float)height/(float)width;
         glUniform1f(data->shader_simplefont.screen_aspect_location, screen_aspect);
+        glUniform1i(data->shader_simplefont.rotation_location, 0);
 
         float char_size = 4.; // px per char
         float scale = 2.*char_size/height; // size of one char in screen coordinates
@@ -852,8 +853,9 @@ void reb_render_frame(void* p){
         // Ruler
         float ruler_width = 7*0.75*scale*screen_aspect; 
         sprintf(str, "%6.1g", 1./scaley);
-        glUniform2f(data->shader_simplefont.pos_location, 1.-ruler_width,0.);
+        glUniform2f(data->shader_simplefont.pos_location, 1-ruler_width,0.);
         glUniform1f(data->shader_simplefont.ypos_location, 0);
+        glUniform1i(data->shader_simplefont.rotation_location, 1);
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
@@ -869,6 +871,7 @@ void reb_render_frame(void* p){
         glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
         glUniform1f(data->shader_simplefont.aspect_location, 0.75);
         glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
+        glUniform1i(data->shader_simplefont.rotation_location, 0);
         glUniform1f(data->shader_simplefont.scale_location, 0.035);
         glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
         float val[200] = {0.};
@@ -1066,11 +1069,16 @@ void reb_display_init(struct reb_simulation * const r){
             "uniform float screen_aspect;\n"
             "uniform float ypos;\n"
             "uniform vec2 pos;\n"
+            "uniform int rotation;\n"
             "in vec2 charval;\n"
             "in vec2 texcoord;\n"
             "out vec2 Texcoord;\n"
             "void main() {\n"
-            "  gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
+            "  if (rotation==0) {\n"
+            "    gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
+            "  }else{\n"
+            "    gl_Position = vec4(pos.x+screen_aspect*scale*(-vp.y),pos.y+scale*(vp.x-ypos+charpos*aspect),0.,1.);\n"
+            "  }\n"
             "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
             "}\n";
         const char* fragment_shader =
@@ -1091,6 +1099,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_simplefont.ypos_location = glGetUniformLocation(data->shader_simplefont.program, "ypos");
         data->shader_simplefont.pos_location = glGetUniformLocation(data->shader_simplefont.program, "pos");
         data->shader_simplefont.scale_location = glGetUniformLocation(data->shader_simplefont.program, "scale");
+        data->shader_simplefont.rotation_location = glGetUniformLocation(data->shader_simplefont.program, "rotation");
         data->shader_simplefont.aspect_location = glGetUniformLocation(data->shader_simplefont.program, "aspect");
         data->shader_simplefont.screen_aspect_location = glGetUniformLocation(data->shader_simplefont.program, "screen_aspect");
     
@@ -1301,12 +1310,12 @@ void reb_display_init(struct reb_simulation * const r){
         glEnableVertexAttribArray(rvp);
 
         float ruler_data[18] = {
-            0.95, -1, 0, 
-            0.95, 1, 0, 
-            0.99, 1, 0, 
-            0.91, 1, 0, 
-            0.99, -1, 0, 
-            0.91, -1, 0, 
+            0.0, -1, 0, 
+            0.0, 1, 0, 
+            0.04, 1, 0, 
+            -0.04, 1, 0, 
+            0.04, -1, 0, 
+            -0.04, -1, 0, 
         };
         GLuint ruler_buffer;
         glGenBuffers(1, &ruler_buffer);
