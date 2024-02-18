@@ -181,6 +181,8 @@ static const char* onscreenhelp[] = {
                 " (pg dwn)| Perform 50 time steps",
 #ifdef __EMSCRIPTEN__
                 " e       | Take screenshot and export as png file",
+#else // __EMSCRIPTEN__
+                " e       | Take screenshot and export as tga file",
 #endif // __EMSCRIPTEN__
                 " d       | Pause real-time visualization", 
                 "         | (the simulation continues)",
@@ -1607,6 +1609,21 @@ void reb_display_init(struct reb_simulation * const r){
         double t0 = glfwGetTime();
         if (!data->s.pause){
             reb_render_frame(data);
+        }
+        if (data->take_one_screenshot){
+            int cwidth, cheight;
+            glfwGetFramebufferSize(data->window, &cwidth, &cheight);
+            FILE   *out = fopen("screenshot.tga", "w");
+            char   pixel_data[3*cwidth*cheight];
+            short  TGAhead[] = {0, 2, 0, 0, 0, 0, cwidth, cheight, 24};
+
+            glReadBuffer(GL_FRONT);
+            glReadPixels(0, 0, cwidth, cheight, GL_BGR, GL_UNSIGNED_BYTE, pixel_data);
+            fwrite(&TGAhead, sizeof(TGAhead), 1, out);
+            fwrite(pixel_data, 3*cwidth*cheight, 1, out);
+            fclose(out);
+            printf("\nScreenshot saved as 'screenshot.tga',\n");
+            data->take_one_screenshot = 0;
         }
         while (glfwGetTime()-t0 < 1.0/120.) { // Maxframerate 120Hz
             usleep(10);
