@@ -1172,6 +1172,7 @@ struct reb_display_data {
         unsigned int program;
         unsigned int box_vao;
         unsigned int cross_vao;
+        unsigned int ruler_vao;
         unsigned int mvp_location;
         unsigned int color_location;
     } shader_box;

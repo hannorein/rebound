@@ -729,15 +729,16 @@ void reb_render_frame(void* p){
         }
         { // Box
             glUseProgram(data->shader_box.program);
+            struct reb_mat4df boxmodel =  model;
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
                 glBindVertexArray(data->shader_box.cross_vao);
                 struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
-                model = reb_mat4df_scale(model, 1./scale.x, 1./scale.y, 1./scale.z);
+                boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
             }else{
                 glBindVertexArray(data->shader_box.box_vao);
-                model = reb_mat4df_scale(model, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
+                boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
             }
-            struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, model));
+            struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
             glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
             glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
@@ -745,6 +746,18 @@ void reb_render_frame(void* p){
             }else{
                 glDrawArrays(GL_LINES, 0, 24);
             }
+
+            /////
+            struct reb_vec3df scale = reb_mat4df_get_scale(view);
+            float scaley = pow(10.,floor(log10f(scale.y)));
+
+            struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
+            ruler_mvp = reb_mat4df_scale(ruler_mvp, 1./ratio, 0.1*scale.y/scaley, 1);
+            ruler_mvp = reb_mat4df_translate(ruler_mvp, -1.+ratio, 0, 0);
+            glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
+            glBindVertexArray(data->shader_box.ruler_vao);
+                glDrawArrays(GL_LINES, 0, 18);
+            /////
             glBindVertexArray(0);
         }
     }}}
@@ -1256,6 +1269,28 @@ void reb_display_init(struct reb_simulation * const r){
         glBufferData(GL_ARRAY_BUFFER, sizeof(box_data), box_data, GL_STATIC_DRAW);
 
         glVertexAttribPointer(bvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindVertexArray(0);
+        
+        // Create ruler mesh
+        glGenVertexArrays(1, &data->shader_box.ruler_vao);
+        glBindVertexArray(data->shader_box.ruler_vao);
+        GLuint rvp = glGetAttribLocation(data->shader_box.program,"vp");
+        glEnableVertexAttribArray(rvp);
+
+        float ruler_data[18] = {
+            0.95, -1, 0, 
+            0.95, 1, 0, 
+            0.99, 1, 0, 
+            0.91, 1, 0, 
+            0.99, -1, 0, 
+            0.91, -1, 0, 
+        };
+        GLuint ruler_buffer;
+        glGenBuffers(1, &ruler_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, ruler_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(ruler_data), ruler_data, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(rvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
 
     }
