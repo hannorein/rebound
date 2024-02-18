@@ -1138,6 +1138,7 @@ struct reb_display_data {
     double mouse_x;
     double mouse_y;
     double retina;
+    int take_one_screenshot;
 #ifndef _WIN32
     int need_copy;
     pthread_mutex_t mutex;          // Mutex to allow for copying

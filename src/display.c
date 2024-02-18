@@ -179,6 +179,9 @@ static const char* onscreenhelp[] = {
                 " (space) | Pause simulation",
                 " (ar dwn)| Perform one single time step",
                 " (pg dwn)| Perform 50 time steps",
+#ifdef __EMSCRIPTEN__
+                " e       | Take screenshot and export as png file",
+#endif // __EMSCRIPTEN__
                 " d       | Pause real-time visualization", 
                 "         | (the simulation continues)",
                 " r       | Reset view. Press multiple times to",
@@ -458,6 +461,9 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 break;
             case 'C':
                 reb_display_clear_particle_data(data);
+                break;
+            case 'E':
+                data->take_one_screenshot = 1;
                 break;
             case 'I':
                 data->s.breadcrumbs = MAX(1,data->s.breadcrumbs*2);
@@ -918,6 +924,19 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                         overlaytext.innerHTML = UTF8ToString($0);
                     }}, str);
         }
+    }
+    if (data->take_one_screenshot){
+        EM_ASM_PTR({
+                var canvas = document.getElementById('canvas');
+                var link = document.createElement("a");
+                link.download = "screenshot.png";
+                link.href = canvas.toDataURL();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                delete link;
+                });
+        data->take_one_screenshot = 0;
     }
     if (data->r_copy->status == REB_STATUS_SCREENSHOT && !data->screenshot){
         data->screenshot = EM_ASM_PTR({
