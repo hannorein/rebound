@@ -522,13 +522,18 @@ void reb_render_frame(void* p){
     height = EM_ASM_INT({
             return document.getElementById("canvas").scrollHeight;
             });
+#endif
     int cwidth, cheight;
     glfwGetWindowSize(data->window, &cwidth, &cheight);
+#ifdef __EMSCRIPTEN__
     if (cwidth!=width || cheight !=height){
         glfwSetWindowSize(data->window, width, height);
     }
 #endif
     glfwGetFramebufferSize(data->window, &width, &height);
+
+    // Check if we have a retina display
+    data->retina = (double)width/(double)cwidth;
 
     struct reb_simulation* r_copy = r->display_data->r_copy;
     if (!r_copy){
@@ -753,38 +758,58 @@ void reb_render_frame(void* p){
 
     // Ruler
     float scaley;
-    {
+    if (data->s.onscreentext){ 
         glUseProgram(data->shader_box.program);
+        glUniform4f(data->shader_box.color_location, 1.,1.,1.,1.);
         struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
         scaley = powf(10.,floor(log10f(3.2*scale.y))); // nearest power of 10, factor of 3.2 determines wrapping
 
         struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
         ruler_mvp = reb_mat4df_translate(ruler_mvp, 1.-30./width, 0, 0);
-        ruler_mvp = reb_mat4df_scale(ruler_mvp, 500.0/width, 0.3125*scale.y/scaley, 1);  // 0.3125 comes from b and t values in projection matrix
+        ruler_mvp = reb_mat4df_scale(ruler_mvp, 15.0/width, 0.3125*scale.y/scaley, 1);  // 0.3125 comes from b and t values in projection matrix
         glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
         glBindVertexArray(data->shader_box.ruler_vao);
         glDrawArrays(GL_LINES, 0, 18);
         glBindVertexArray(0);
     }
-#ifndef __EMSCRIPTEN__
-    if (data->s.onscreentext){ // On screen text
+    // On screen text
+    if (data->s.onscreentext){ 
+        char str[256];
+        float val[200] = {0.};
+        float char_size = data->retina*16.; // px per char
+        float scale = 2.*char_size/height; // size of one char in screen coordinates
         glUseProgram(data->shader_simplefont.program);
         glBindVertexArray(data->shader_simplefont.vao);
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
         glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
         float screen_aspect = (float)height/(float)width;
         glUniform1f(data->shader_simplefont.screen_aspect_location, screen_aspect);
-        glUniform1i(data->shader_simplefont.rotation_location, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
 
-        float char_size = 4.; // px per char
-        float scale = 2.*char_size/height; // size of one char in screen coordinates
+
+        // Ruler
+        float ruler_height = 7.*0.75*scale; 
+        sprintf(str, "%6.1g", 1./scaley);
+        glUniform2f(data->shader_simplefont.pos_location, 1.-30./width,-ruler_height/2.);
+        glUniform1f(data->shader_simplefont.ypos_location, 0);
+        glUniform1i(data->shader_simplefont.rotation_location, 1);
+        glUniform1f(data->shader_simplefont.scale_location, scale);
+        int j = convertLine(str,val);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+#ifdef __EMSCRIPTEN__
+    }
+#else // __EMSCRIPTEN__
+        // Logo
+        char_size = data->retina*4.; // px per char
+        scale = 2.*char_size/height; // size of one char in screen coordinates
         float logo_width = 42.0*0.5 *scale*screen_aspect;     //  41=num char, 0.5=aspect
         float logo_height = 26.0 *scale;         //  26=num char
         glUniform2f(data->shader_simplefont.pos_location, -1.,-1.+logo_height);
         glUniform1f(data->shader_simplefont.aspect_location, 0.5);
+        glUniform1i(data->shader_simplefont.rotation_location, 0);
         glUniform1f(data->shader_simplefont.scale_location, scale);
-        glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
-        float val[200] = {0.};
         for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
             int j = convertLine(reb_logo[i],val);
             glUniform1f(data->shader_simplefont.ypos_location, (float)i);
@@ -792,10 +817,10 @@ void reb_render_frame(void* p){
             reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
         
-        char_size = 16.; // px per char
+        // Status text
+        char_size = data->retina*16.; // px per char
         scale = 2.*char_size/height; // size of one char in screen coordinates
 
-        char str[256];
         int ypos = 1;
         glUniform2f(data->shader_simplefont.pos_location, -1+logo_width,-1.+logo_height);
         glUniform1f(data->shader_simplefont.aspect_location,0.75);
@@ -803,7 +828,7 @@ void reb_render_frame(void* p){
         
         glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         sprintf(str,"REBOUND v%s",reb_version_str);
-        int j = convertLine(str,val);
+        j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
@@ -849,20 +874,10 @@ void reb_render_frame(void* p){
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-
-        // Ruler
-        float ruler_width = 7*0.75*scale*screen_aspect; 
-        sprintf(str, "%6.1g", 1./scaley);
-        glUniform2f(data->shader_simplefont.pos_location, 1-ruler_width,0.);
-        glUniform1f(data->shader_simplefont.ypos_location, 0);
-        glUniform1i(data->shader_simplefont.rotation_location, 1);
-        j = convertLine(str,val);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
-        glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D,0);
     }
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D,0);
     if (data->s.onscreenhelp){ // On screen help
         glUseProgram(data->shader_simplefont.program);
         glBindVertexArray(data->shader_simplefont.vao);
@@ -1312,10 +1327,10 @@ void reb_display_init(struct reb_simulation * const r){
         float ruler_data[18] = {
             0.0, -1, 0, 
             0.0, 1, 0, 
-            0.04, 1, 0, 
-            -0.04, 1, 0, 
-            0.04, -1, 0, 
-            -0.04, -1, 0, 
+            1.0, 1, 0, 
+            -1.0, 1, 0, 
+            1.0, -1, 0, 
+            -1.0, -1, 0, 
         };
         GLuint ruler_buffer;
         glGenBuffers(1, &ruler_buffer);
