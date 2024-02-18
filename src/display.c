@@ -731,8 +731,8 @@ void reb_render_frame(void* p){
             glUseProgram(data->shader_box.program);
             struct reb_mat4df boxmodel =  model;
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
-                glBindVertexArray(data->shader_box.cross_vao);
                 struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
+                glBindVertexArray(data->shader_box.cross_vao);
                 boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
             }else{
                 glBindVertexArray(data->shader_box.box_vao);
@@ -746,21 +746,26 @@ void reb_render_frame(void* p){
             }else{
                 glDrawArrays(GL_LINES, 0, 24);
             }
-
-            /////
-            struct reb_vec3df scale = reb_mat4df_get_scale(view);
-            float scaley = pow(10.,floor(log10f(scale.y)));
-
-            struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
-            ruler_mvp = reb_mat4df_scale(ruler_mvp, 1./ratio, 0.1*scale.y/scaley, 1);
-            ruler_mvp = reb_mat4df_translate(ruler_mvp, -1.+ratio, 0, 0);
-            glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
-            glBindVertexArray(data->shader_box.ruler_vao);
-                glDrawArrays(GL_LINES, 0, 18);
-            /////
             glBindVertexArray(0);
         }
     }}}
+
+
+    // Ruler
+    float scaley;
+    {
+        glUseProgram(data->shader_box.program);
+        struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
+        scaley = powf(10.,floor(log10f(3.2*scale.y))); // nearest power of 10, factor of 3.2 determines wrapping
+
+        struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
+        ruler_mvp = reb_mat4df_scale(ruler_mvp, 1./ratio, 0.3125*scale.y/scaley, 1);  // 0.3125 comes from b and t values in projection matrix
+        ruler_mvp = reb_mat4df_translate(ruler_mvp, -1.+ratio, 0, 0);
+        glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
+        glBindVertexArray(data->shader_box.ruler_vao);
+        glDrawArrays(GL_LINES, 0, 18);
+        glBindVertexArray(0);
+    }
 #ifndef __EMSCRIPTEN__
     if (data->s.onscreentext){ // On screen text
         glUseProgram(data->shader_simplefont.program);
@@ -835,6 +840,15 @@ void reb_render_frame(void* p){
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
+        // Ruler
+        sprintf(str, "%6.1g", 1./scaley);
+        glUniform2f(data->shader_simplefont.pos_location, 0.7,0.);
+        glUniform1f(data->shader_simplefont.scale_location, 16./350.);
+        glUniform1f(data->shader_simplefont.ypos_location, 0);
+        j = convertLine(str,val);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+        
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D,0);
     }
