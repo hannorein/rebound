@@ -82,10 +82,9 @@ int main(int argc, char* argv[]) {
         p.vx = ss_vel[i][0];
         p.vy = ss_vel[i][1];
         p.vz = ss_vel[i][2];
-        p.m = i==0?ss_mass[i]:0.;
+        p.m = ss_mass[i];
         reb_simulation_add(r, p);
     }
-    reb_simulation_add_fmt(r, "a", 500.);
 
     reb_simulation_move_to_com(r);
 

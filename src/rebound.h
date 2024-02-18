@@ -1167,6 +1167,7 @@ struct reb_display_data {
         unsigned int aspect_location;
         unsigned int screen_aspect_location;
         unsigned int rotation_location;
+        unsigned int texture_location;
         unsigned int charval_buffer;
     } shader_simplefont;
     struct {

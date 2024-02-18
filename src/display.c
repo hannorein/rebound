@@ -191,8 +191,8 @@ static const char* onscreenhelp[] = {
                 " x/X     | Move to a coordinate system centered",
                 "         | on a particle (note: does not work if", 
                 "         | particle array is resorted)",
-                " t       | Show/hide logo, time, timestep and number",
-                "         | of particles",
+                " t       | Show/hide logo, time, timestep, number",
+                "         | of particles, and scale",
                 " s       | Toggle points/spheres/points+spheres/none",
                 " g       | Toggle ghost boxes",
                 " m       | Toggle multisampling",
@@ -757,43 +757,48 @@ void reb_render_frame(void* p){
 
 
     // Ruler
-    float scaley;
     if (data->s.onscreentext){ 
         glUseProgram(data->shader_box.program);
+        glBindVertexArray(data->shader_box.ruler_vao);
         glUniform4f(data->shader_box.color_location, 1.,1.,1.,1.);
-        struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
-        scaley = powf(10.,floor(log10f(3.2*scale.y))); // nearest power of 10, factor of 3.2 determines wrapping
+        struct reb_vec3df scale3 = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
+        float scaley = powf(10.,floor(log10f(3./scale3.y))); // nearest power of 10, factor of 3. determines wrapping
+        if (5.*scaley<3./scale3.y) { scaley*=5;}
+        if (2.*scaley<3./scale3.y) { scaley*=2;}
 
         struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
         ruler_mvp = reb_mat4df_translate(ruler_mvp, 1.-30./width, 0, 0);
-        ruler_mvp = reb_mat4df_scale(ruler_mvp, 15.0/width, 0.3125*scale.y/scaley, 1);  // 0.3125 comes from b and t values in projection matrix
+        ruler_mvp = reb_mat4df_scale(ruler_mvp, 15.0/width, 0.3125*scale3.y*scaley, 1);  // 0.3125 comes from b and t values in projection matrix
         glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
-        glBindVertexArray(data->shader_box.ruler_vao);
-        glDrawArrays(GL_LINES, 0, 18);
+        glDrawArrays(GL_LINES, 0, 6);
         glBindVertexArray(0);
-    }
-    // On screen text
-    if (data->s.onscreentext){ 
+
+        // Text
         char str[256];
         float val[200] = {0.};
         float char_size = data->retina*16.; // px per char
         float scale = 2.*char_size/height; // size of one char in screen coordinates
         glUseProgram(data->shader_simplefont.program);
         glBindVertexArray(data->shader_simplefont.vao);
+        glUniform1i(data->shader_simplefont.texture_location, 0);
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
-        glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
         float screen_aspect = (float)height/(float)width;
         glUniform1f(data->shader_simplefont.screen_aspect_location, screen_aspect);
         glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
 
 
         // Ruler
-        float ruler_height = 7.*0.75*scale; 
-        sprintf(str, "%6.1g", 1./scaley);
-        glUniform2f(data->shader_simplefont.pos_location, 1.-30./width,-ruler_height/2.);
+        if (scaley >= 1000. || scaley<=0.01){
+            sprintf(str, "%.0e", scaley);
+        }else{
+            sprintf(str, "%.*f", MAX(0,1-(int)log10f(scaley)), scaley);
+        }
+        float ruler_height = strlen(str)*0.75*scale; 
+        glUniform2f(data->shader_simplefont.pos_location, 1.-31./width,-ruler_height/2.);
         glUniform1f(data->shader_simplefont.ypos_location, 0);
         glUniform1i(data->shader_simplefont.rotation_location, 1);
         glUniform1f(data->shader_simplefont.scale_location, scale);
+        glUniform1f(data->shader_simplefont.aspect_location, 0.75);
         int j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
@@ -882,7 +887,6 @@ void reb_render_frame(void* p){
         glUseProgram(data->shader_simplefont.program);
         glBindVertexArray(data->shader_simplefont.vao);
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
-        glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
         glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
         glUniform1f(data->shader_simplefont.aspect_location, 0.75);
         glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
@@ -1115,6 +1119,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_simplefont.pos_location = glGetUniformLocation(data->shader_simplefont.program, "pos");
         data->shader_simplefont.scale_location = glGetUniformLocation(data->shader_simplefont.program, "scale");
         data->shader_simplefont.rotation_location = glGetUniformLocation(data->shader_simplefont.program, "rotation");
+        data->shader_simplefont.texture_location = glGetUniformLocation(data->shader_simplefont.program, "tex");
         data->shader_simplefont.aspect_location = glGetUniformLocation(data->shader_simplefont.program, "aspect");
         data->shader_simplefont.screen_aspect_location = glGetUniformLocation(data->shader_simplefont.program, "screen_aspect");
     
@@ -1285,8 +1290,8 @@ void reb_display_init(struct reb_simulation * const r){
         glUseProgram(data->shader_box.program);
         glGenVertexArrays(1, &data->shader_box.cross_vao);
         glBindVertexArray(data->shader_box.cross_vao);
-        GLuint cvp = glGetAttribLocation(data->shader_box.program,"vp");
-        glEnableVertexAttribArray(cvp);
+        GLuint vp = glGetAttribLocation(data->shader_box.program,"vp");
+        glEnableVertexAttribArray(vp);
 
         float cross_data[18] = {
             -0.04,0.,0., +0.04,0.,0., 0.,-0.04,0., 0.,+0.04,0., 0.,0.,-0.04, 0.,0.,+0.04,
@@ -1296,14 +1301,13 @@ void reb_display_init(struct reb_simulation * const r){
         glBindBuffer(GL_ARRAY_BUFFER, cross_buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cross_data), cross_data, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(cvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
 
         // Create box mesh
         glGenVertexArrays(1, &data->shader_box.box_vao);
         glBindVertexArray(data->shader_box.box_vao);
-        GLuint bvp = glGetAttribLocation(data->shader_box.program,"vp");
-        glEnableVertexAttribArray(bvp);
+        glEnableVertexAttribArray(vp);
 
         float box_data[] = {
             -1,-1,-1, 1,-1,-1, 1,-1,-1, 1, 1,-1, 1, 1,-1, -1, 1,-1, -1, 1,-1, -1,-1,-1,
@@ -1315,29 +1319,28 @@ void reb_display_init(struct reb_simulation * const r){
         glBindBuffer(GL_ARRAY_BUFFER, box_buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(box_data), box_data, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(bvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
         
         // Create ruler mesh
         glGenVertexArrays(1, &data->shader_box.ruler_vao);
         glBindVertexArray(data->shader_box.ruler_vao);
-        GLuint rvp = glGetAttribLocation(data->shader_box.program,"vp");
-        glEnableVertexAttribArray(rvp);
+        glEnableVertexAttribArray(vp);
 
         float ruler_data[18] = {
-            0.0, -1, 0, 
-            0.0, 1, 0, 
-            1.0, 1, 0, 
-            -1.0, 1, 0, 
-            1.0, -1, 0, 
-            -1.0, -1, 0, 
+            0.0, -1.0, 0., 
+            0.0, 1.0, 0., 
+            1.0, 1.0, 0., 
+            -1.0, 1.0, 0., 
+            1.0, -1.0, 0., 
+            -1.0, -1.0, 0., 
         };
         GLuint ruler_buffer;
         glGenBuffers(1, &ruler_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, ruler_buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(ruler_data), ruler_data, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(rvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
 
     }
