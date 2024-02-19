@@ -1603,7 +1603,7 @@ void reb_display_init(struct reb_simulation * const r){
             "       float rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
             "       if (gl_VertexID%3==0) { \n"
             "           r = rmax;\n"
-            "           f = 0; \n"
+            "           f = 0.0; \n"
             "       }else{\n"
             "           lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
             "           f = 0.0001-theta_max+1.9998*lin*theta_max;\n"

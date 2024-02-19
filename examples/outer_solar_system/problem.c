@@ -85,7 +85,6 @@ int main(int argc, char* argv[]) {
         p.m = ss_mass[i];
         reb_simulation_add(r, p);
     }
-   reb_simulation_add_fmt(r, "a e", -500., 1.3);
 
     reb_simulation_move_to_com(r);
 
