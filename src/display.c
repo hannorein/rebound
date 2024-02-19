@@ -191,8 +191,8 @@ static const char* onscreenhelp[] = {
                 " x/X     | Move to a coordinate system centered",
                 "         | on a particle (note: does not work if", 
                 "         | particle array is resorted)",
-                " t       | Show/hide logo, time, timestep and number",
-                "         | of particles",
+                " t       | Show/hide logo, time, timestep, number",
+                "         | of particles, and scale",
                 " s       | Toggle points/spheres/points+spheres/none",
                 " g       | Toggle ghost boxes",
                 " m       | Toggle multisampling",
@@ -480,7 +480,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
             case 'X': 
                 if (mods!=GLFW_MOD_SHIFT){
                     data->s.reference++;
-                    if (data->s.reference>data->r->N) data->s.reference = -1;
+                    if (data->s.reference>=data->r->N) data->s.reference = -1;
                     printf("Reference particle: %d.\n",data->s.reference);
                 }else{
                     data->s.reference--;
@@ -522,13 +522,18 @@ void reb_render_frame(void* p){
     height = EM_ASM_INT({
             return document.getElementById("canvas").scrollHeight;
             });
+#endif
     int cwidth, cheight;
     glfwGetWindowSize(data->window, &cwidth, &cheight);
+#ifdef __EMSCRIPTEN__
     if (cwidth!=width || cheight !=height){
         glfwSetWindowSize(data->window, width, height);
     }
 #endif
     glfwGetFramebufferSize(data->window, &width, &height);
+
+    // Check if we have a retina display
+    data->retina = (double)width/(double)cwidth;
 
     struct reb_simulation* r_copy = r->display_data->r_copy;
     if (!r_copy){
@@ -672,7 +677,7 @@ void reb_render_frame(void* p){
                 glUniformMatrix4fv(data->shader_plane.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                 glBindVertexArray(data->shader_plane.particle_vao_current);
                 glUniform1i(data->shader_plane.vertex_count_location, data->shader_plane.vertex_count);
-                reb_glDrawArraysInstanced(GL_TRIANGLES, 0, 3.*data->shader_plane.vertex_count, N_real-1);
+                reb_glDrawArraysInstanced(GL_TRIANGLES, 0, data->shader_plane.vertex_count, N_real-1);
                 glBindVertexArray(0);
                 glEnable(GL_CULL_FACE);
             }
@@ -714,6 +719,7 @@ void reb_render_frame(void* p){
                 glUseProgram(data->shader_orbit.program);
                 glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                 glUniform1i(data->shader_orbit.breadcrumb_N_location, data->breadcrumb_N_allocated);
+                glUniform1i(data->shader_orbit.vertex_count_location, data->shader_orbit.vertex_count);
                 if (data->breadcrumb_N_allocated>1){
                     glBindVertexArray(data->shader_orbit.particle_vao);
                     glUniform1i(data->shader_orbit.N_real_location, N_real-1);
@@ -729,15 +735,16 @@ void reb_render_frame(void* p){
         }
         { // Box
             glUseProgram(data->shader_box.program);
+            struct reb_mat4df boxmodel =  model;
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
-                glBindVertexArray(data->shader_box.cross_vao);
                 struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
-                model = reb_mat4df_scale(model, 1./scale.x, 1./scale.y, 1./scale.z);
+                glBindVertexArray(data->shader_box.cross_vao);
+                boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
             }else{
                 glBindVertexArray(data->shader_box.box_vao);
-                model = reb_mat4df_scale(model, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
+                boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
             }
-            struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, model));
+            struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
             glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
             glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
             if (data->r_copy->boundary == REB_BOUNDARY_NONE){
@@ -748,18 +755,67 @@ void reb_render_frame(void* p){
             glBindVertexArray(0);
         }
     }}}
-#ifndef __EMSCRIPTEN__
-    if (data->s.onscreentext){ // On screen text
+
+
+    // Ruler
+    if (data->s.onscreentext){ 
+        glUseProgram(data->shader_box.program);
+        glBindVertexArray(data->shader_box.ruler_vao);
+        glUniform4f(data->shader_box.color_location, 1.,1.,1.,1.);
+        struct reb_vec3df scale3 = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
+        float scaley = powf(10.,floor(log10f(3./scale3.y))); // nearest power of 10, factor of 3. determines wrapping
+        if (5.*scaley<3./scale3.y) { scaley*=5;}
+        if (2.*scaley<3./scale3.y) { scaley*=2;}
+
+        struct reb_mat4df ruler_mvp =  reb_mat4df_identity();
+        ruler_mvp = reb_mat4df_translate(ruler_mvp, 1.-30./width, 0, 0);
+        ruler_mvp = reb_mat4df_scale(ruler_mvp, 15.0/width, 0.3125*scale3.y*scaley, 1);  // 0.3125 comes from b and t values in projection matrix
+        glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) ruler_mvp.m);
+        glDrawArrays(GL_LINES, 0, 6);
+        glBindVertexArray(0);
+
+        // Text
+        char str[256];
+        float val[200] = {0.};
+        float char_size = data->retina*16.; // px per char
+        float scale = 2.*char_size/height; // size of one char in screen coordinates
         glUseProgram(data->shader_simplefont.program);
         glBindVertexArray(data->shader_simplefont.vao);
+        glUniform1i(data->shader_simplefont.texture_location, 0);
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
-        glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
-        glUniform2f(data->shader_simplefont.pos_location, -0.96,-0.72);
-        glUniform1f(data->shader_simplefont.aspect_location, 1.9);
-        glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
-        glUniform1f(data->shader_simplefont.scale_location, 0.01);
+        float screen_aspect = (float)height/(float)width;
+        glUniform1f(data->shader_simplefont.screen_aspect_location, screen_aspect);
         glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
-        float val[200] = {0.};
+
+
+        // Ruler
+        if (scaley >= 1000. || scaley<=0.01){
+            sprintf(str, "%.0e", scaley);
+        }else{
+            sprintf(str, "%.*f", MAX(0,1-(int)log10f(scaley)), scaley);
+        }
+        float ruler_height = strlen(str)*0.75*scale; 
+        glUniform2f(data->shader_simplefont.pos_location, 1.-31./width,-ruler_height/2.);
+        glUniform1f(data->shader_simplefont.ypos_location, 0);
+        glUniform1i(data->shader_simplefont.rotation_location, 1);
+        glUniform1f(data->shader_simplefont.scale_location, scale);
+        glUniform1f(data->shader_simplefont.aspect_location, 0.75);
+        int j = convertLine(str,val);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+#ifdef __EMSCRIPTEN__
+    }
+#else // __EMSCRIPTEN__
+        // Logo
+        char_size = data->retina*4.; // px per char
+        scale = 2.*char_size/height; // size of one char in screen coordinates
+        float logo_width = 42.0*0.5 *scale*screen_aspect;     //  41=num char, 0.5=aspect
+        float logo_height = 26.0 *scale;         //  26=num char
+        glUniform2f(data->shader_simplefont.pos_location, -1.,-1.+logo_height);
+        glUniform1f(data->shader_simplefont.aspect_location, 0.5);
+        glUniform1i(data->shader_simplefont.rotation_location, 0);
+        glUniform1f(data->shader_simplefont.scale_location, scale);
         for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
             int j = convertLine(reb_logo[i],val);
             glUniform1f(data->shader_simplefont.ypos_location, (float)i);
@@ -767,15 +823,18 @@ void reb_render_frame(void* p){
             reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         }
         
-        char str[256];
-        int ypos = 0;
-        glUniform2f(data->shader_simplefont.pos_location, -0.70,-269./350.);
-        glUniform1f(data->shader_simplefont.aspect_location, 1.4);
-        glUniform1f(data->shader_simplefont.scale_location, 16./350.);
+        // Status text
+        char_size = data->retina*16.; // px per char
+        scale = 2.*char_size/height; // size of one char in screen coordinates
+
+        int ypos = 1;
+        glUniform2f(data->shader_simplefont.pos_location, -1+logo_width,-1.+logo_height);
+        glUniform1f(data->shader_simplefont.aspect_location,0.75);
+        glUniform1f(data->shader_simplefont.scale_location, scale);
         
         glUniform1f(data->shader_simplefont.ypos_location, ypos++);
         sprintf(str,"REBOUND v%s",reb_version_str);
-        int j = convertLine(str,val);
+        j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
         
@@ -821,18 +880,18 @@ void reb_render_frame(void* p){
         j = convertLine(str,val);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-
-        glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D,0);
+        
     }
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D,0);
     if (data->s.onscreenhelp){ // On screen help
         glUseProgram(data->shader_simplefont.program);
         glBindVertexArray(data->shader_simplefont.vao);
         glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
-        glUniform1i(glGetUniformLocation(data->shader_simplefont.program, "tex"), 0);
         glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
-        glUniform1f(data->shader_simplefont.aspect_location, 1.4);
+        glUniform1f(data->shader_simplefont.aspect_location, 0.75);
         glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
+        glUniform1i(data->shader_simplefont.rotation_location, 0);
         glUniform1f(data->shader_simplefont.scale_location, 0.035);
         glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
         float val[200] = {0.};
@@ -1030,11 +1089,16 @@ void reb_display_init(struct reb_simulation * const r){
             "uniform float screen_aspect;\n"
             "uniform float ypos;\n"
             "uniform vec2 pos;\n"
+            "uniform int rotation;\n"
             "in vec2 charval;\n"
             "in vec2 texcoord;\n"
             "out vec2 Texcoord;\n"
             "void main() {\n"
-            "  gl_Position = vec4(pos.x*screen_aspect,pos.y,0.,0.)+vec4(screen_aspect*scale*(vp.x+charpos/aspect+charpos/16.),scale*(vp.y-ypos),0., 1.);\n"
+            "  if (rotation==0) {\n"
+            "    gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
+            "  }else{\n"
+            "    gl_Position = vec4(pos.x+screen_aspect*scale*(-vp.y),pos.y+scale*(vp.x-ypos+charpos*aspect),0.,1.);\n"
+            "  }\n"
             "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
             "}\n";
         const char* fragment_shader =
@@ -1055,6 +1119,8 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_simplefont.ypos_location = glGetUniformLocation(data->shader_simplefont.program, "ypos");
         data->shader_simplefont.pos_location = glGetUniformLocation(data->shader_simplefont.program, "pos");
         data->shader_simplefont.scale_location = glGetUniformLocation(data->shader_simplefont.program, "scale");
+        data->shader_simplefont.rotation_location = glGetUniformLocation(data->shader_simplefont.program, "rotation");
+        data->shader_simplefont.texture_location = glGetUniformLocation(data->shader_simplefont.program, "tex");
         data->shader_simplefont.aspect_location = glGetUniformLocation(data->shader_simplefont.program, "aspect");
         data->shader_simplefont.screen_aspect_location = glGetUniformLocation(data->shader_simplefont.program, "screen_aspect");
     
@@ -1141,6 +1207,7 @@ void reb_display_init(struct reb_simulation * const r){
             "uniform int breadcrumb_N;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
+            "  gl_Position.z = 0.;\n" // no clipping
             "  gl_PointSize = 15.0f;\n"
             "  color = vc;\n"
             "  float age = float( (gl_VertexID/N_real - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
@@ -1202,6 +1269,7 @@ void reb_display_init(struct reb_simulation * const r){
             "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
+            "  gl_Position.z = 0.;\n" // no clipping
             "  color = vc;\n"
             "}\n";
         const char* fragment_shader =
@@ -1225,8 +1293,8 @@ void reb_display_init(struct reb_simulation * const r){
         glUseProgram(data->shader_box.program);
         glGenVertexArrays(1, &data->shader_box.cross_vao);
         glBindVertexArray(data->shader_box.cross_vao);
-        GLuint cvp = glGetAttribLocation(data->shader_box.program,"vp");
-        glEnableVertexAttribArray(cvp);
+        GLuint vp = glGetAttribLocation(data->shader_box.program,"vp");
+        glEnableVertexAttribArray(vp);
 
         float cross_data[18] = {
             -0.04,0.,0., +0.04,0.,0., 0.,-0.04,0., 0.,+0.04,0., 0.,0.,-0.04, 0.,0.,+0.04,
@@ -1236,14 +1304,13 @@ void reb_display_init(struct reb_simulation * const r){
         glBindBuffer(GL_ARRAY_BUFFER, cross_buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cross_data), cross_data, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(cvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
 
         // Create box mesh
         glGenVertexArrays(1, &data->shader_box.box_vao);
         glBindVertexArray(data->shader_box.box_vao);
-        GLuint bvp = glGetAttribLocation(data->shader_box.program,"vp");
-        glEnableVertexAttribArray(bvp);
+        glEnableVertexAttribArray(vp);
 
         float box_data[] = {
             -1,-1,-1, 1,-1,-1, 1,-1,-1, 1, 1,-1, 1, 1,-1, -1, 1,-1, -1, 1,-1, -1,-1,-1,
@@ -1255,7 +1322,28 @@ void reb_display_init(struct reb_simulation * const r){
         glBindBuffer(GL_ARRAY_BUFFER, box_buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(box_data), box_data, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(bvp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindVertexArray(0);
+        
+        // Create ruler mesh
+        glGenVertexArrays(1, &data->shader_box.ruler_vao);
+        glBindVertexArray(data->shader_box.ruler_vao);
+        glEnableVertexAttribArray(vp);
+
+        float ruler_data[18] = {
+            0.0, -1.0, 0., 
+            0.0, 1.0, 0., 
+            1.0, 1.0, 0., 
+            -1.0, 1.0, 0., 
+            1.0, -1.0, 0., 
+            -1.0, -1.0, 0., 
+        };
+        GLuint ruler_buffer;
+        glGenBuffers(1, &ruler_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, ruler_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(ruler_data), ruler_data, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
 
     }
@@ -1381,9 +1469,9 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec3 focus;\n"
             "in vec3 aef;\n"
             "in vec3 omegaOmegainc;\n"
-            "in float lintwopi;\n"
             "uniform int current_index;\n"
             "uniform int N_real;\n"
+            "uniform int vertex_count;\n"
             "uniform int breadcrumb_N;\n"
             "out float lin;\n"
             "uniform mat4 mvp;\n"
@@ -1391,8 +1479,8 @@ void reb_display_init(struct reb_simulation * const r){
             "void main() {\n"
             "   float a = aef.x;\n"
             "   float e = aef.y;\n"
-            "   float f = aef.z+lintwopi;\n"
-            "   lin = lintwopi/(M_PI*2.);\n"
+            "   lin = float(gl_VertexID)/float(vertex_count-1);\n"
+            "   float f = aef.z+lin*M_PI*2.;\n"
             "   if (e>1.){\n"
             "       float theta_max = acos(-1./e);\n"
             "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
@@ -1415,6 +1503,7 @@ void reb_display_init(struct reb_simulation * const r){
             "   float si = sin(inc);\n"
             "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
             "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "    gl_Position.z = 0.;\n" // no clipping
             "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
@@ -1432,24 +1521,13 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_orbit.program = loadShader(vertex_shader, fragment_shader);
         data->shader_orbit.mvp_location = glGetUniformLocation(data->shader_orbit.program, "mvp");
         data->shader_orbit.current_index_location = glGetUniformLocation(data->shader_orbit.program, "current_index");
+        data->shader_orbit.vertex_count_location = glGetUniformLocation(data->shader_orbit.program, "vertex_count");
         data->shader_orbit.breadcrumb_N_location = glGetUniformLocation(data->shader_orbit.program, "breadcrumb_N");
         data->shader_orbit.N_real_location = glGetUniformLocation(data->shader_orbit.program, "N_real");
-    
-        // Orbit data
         data->shader_orbit.vertex_count = 500; // higher number = smoother orbits
-        float* lin_data = malloc(sizeof(float)*data->shader_orbit.vertex_count);
-        for(int i=0;i<data->shader_orbit.vertex_count;i++){
-            lin_data[i] = (float)i/(float)(data->shader_orbit.vertex_count-1)*2.*M_PI;
-        }
-        GLuint orbit_vertex_buffer;
-        glGenBuffers(1, &orbit_vertex_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*data->shader_orbit.vertex_count, lin_data, GL_STATIC_DRAW);
-        free(lin_data);
 
         // Generate two orbit vao
         glUseProgram(data->shader_orbit.program);
-        GLuint olintwopip = glGetAttribLocation(data->shader_orbit.program,"lintwopi");
         GLuint ofocusp = glGetAttribLocation(data->shader_orbit.program,"focus");
         GLuint oaefp = glGetAttribLocation(data->shader_orbit.program,"aef");
         GLuint oomegaOmegaincp = glGetAttribLocation(data->shader_orbit.program,"omegaOmegainc");
@@ -1457,14 +1535,9 @@ void reb_display_init(struct reb_simulation * const r){
         { // Current
             glGenVertexArrays(1, &data->shader_orbit.particle_vao_current);
             glBindVertexArray(data->shader_orbit.particle_vao_current);
-            glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-            glEnableVertexAttribArray(olintwopip);
             glEnableVertexAttribArray(ofocusp);
             glEnableVertexAttribArray(oaefp);
             glEnableVertexAttribArray(oomegaOmegaincp);
-
-            glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-
 
             glGenBuffers(1, &data->orbit_buffer_current);
             glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
@@ -1472,8 +1545,6 @@ void reb_display_init(struct reb_simulation * const r){
             glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
             glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
 
-            GLuint divisor = 0;
-            reb_glVertexAttribDivisor(olintwopip, divisor); 
             reb_glVertexAttribDivisor(data->shader_orbit.mvp_location, 0); 
             reb_glVertexAttribDivisor(ofocusp, 1);
             reb_glVertexAttribDivisor(oaefp, 1);
@@ -1483,14 +1554,9 @@ void reb_display_init(struct reb_simulation * const r){
         { // Past
             glGenVertexArrays(1, &data->shader_orbit.particle_vao);
             glBindVertexArray(data->shader_orbit.particle_vao);
-            glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-            glEnableVertexAttribArray(olintwopip);
             glEnableVertexAttribArray(ofocusp);
             glEnableVertexAttribArray(oaefp);
             glEnableVertexAttribArray(oomegaOmegaincp);
-
-            glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-
 
             glGenBuffers(1, &data->orbit_buffer);
             glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
@@ -1498,8 +1564,6 @@ void reb_display_init(struct reb_simulation * const r){
             glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
             glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
 
-            GLuint divisor = 0;
-            reb_glVertexAttribDivisor(olintwopip, divisor); 
             reb_glVertexAttribDivisor(data->shader_orbit.mvp_location, 0); 
             reb_glVertexAttribDivisor(ofocusp, 1);
             reb_glVertexAttribDivisor(oaefp, 1);
@@ -1507,8 +1571,6 @@ void reb_display_init(struct reb_simulation * const r){
         }
 
         glBindVertexArray(0);
-    
-
     }
     
     {
@@ -1524,20 +1586,40 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec3 omegaOmegainc;\n"
             "uniform int vertex_count;\n"
             "uniform mat4 mvp;\n"
+            "out float fog;\n"
             "const float M_PI = 3.14159265359;\n"
             "void main() {\n"
             "   float a = aef.x;\n"
             "   float e = aef.y;\n"
-            "   float lin = (float(gl_VertexID/3) +float(gl_VertexID%3)*3.0)/float(vertex_count);\n"
+            "   float lin = float(gl_VertexID/3)/float(vertex_count/3) + float(gl_VertexID%3)/float(vertex_count/3);\n"
             "   float f = 2.*M_PI*lin;\n"
+            "   float theta_max = 0.0;\n"
+            "   fog = 1.;\n"
+            "   float r;\n"
             "   if (e>1.){\n"
-            "       float theta_max = acos(-1./e);\n"
+            "       theta_max = acos(-1./e);\n"
+            "       lin = 0.5/float(vertex_count/3+1) ;\n"
             "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+            "       float rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
+            "       if (gl_VertexID%3==0) { \n"
+            "           r = rmax;\n"
+            "           f = 0.0; \n"
+            "       }else{\n"
+            "           lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
+            "           f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+            "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
+            "       }\n"
+            "       fog = 1.-abs(r/rmax);\n"
+            "   }else{ \n"
+            "       if (gl_VertexID%3==0) { \n"
+            "           r = 0.;\n"
+            "       }else{\n"
+            "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
+            "       }\n"
             "   }\n"
             "   float omega = omegaOmegainc.x;\n"
             "   float Omega = omegaOmegainc.y;\n"
             "   float inc = omegaOmegainc.z;\n"
-            "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
             "   float cO = cos(Omega);\n"
             "   float sO = sin(Omega);\n"
             "   float co = cos(omega);\n"
@@ -1547,8 +1629,8 @@ void reb_display_init(struct reb_simulation * const r){
             "   float ci = cos(inc);\n"
             "   float si = sin(inc);\n"
             "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
-            "   if (gl_VertexID%3==0) {pos = vec3(0.,0.,0.);}\n"
-            "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "   gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "   gl_Position.z = 0.;\n" // no clipping
             "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
@@ -1558,8 +1640,9 @@ void reb_display_init(struct reb_simulation * const r){
 #endif
             "precision highp float;"
             "out vec4 outcolor;\n"
+            "in float fog;\n"
             "void main() {\n"
-            "  outcolor = vec4(1.,1.,1.,0.1);\n"
+            "  outcolor = vec4(1.,1.,1.,fog*0.3);\n"
             "}\n";
 
         data->shader_plane.program = loadShader(vertex_shader, fragment_shader);
@@ -1567,7 +1650,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_plane.vertex_count_location = glGetUniformLocation(data->shader_plane.program, "vertex_count");
     
         // Orbit data
-        data->shader_plane.vertex_count = 500; // higher number = smoother orbits
+        data->shader_plane.vertex_count = 3*200; // higher number = smoother orbits // must be multiple of 3
 
         // Generate two orbit vao
         glUseProgram(data->shader_plane.program);

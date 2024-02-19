@@ -1166,12 +1166,15 @@ struct reb_display_data {
         unsigned int scale_location;
         unsigned int aspect_location;
         unsigned int screen_aspect_location;
+        unsigned int rotation_location;
+        unsigned int texture_location;
         unsigned int charval_buffer;
     } shader_simplefont;
     struct {
         unsigned int program;
         unsigned int box_vao;
         unsigned int cross_vao;
+        unsigned int ruler_vao;
         unsigned int mvp_location;
         unsigned int color_location;
     } shader_box;
@@ -1195,6 +1198,7 @@ struct reb_display_data {
         unsigned int current_index_location;
         unsigned int breadcrumb_N_location;
         unsigned int N_real_location;
+        unsigned int vertex_count_location;
         unsigned int program;
         unsigned int particle_vao_current;
         unsigned int particle_vao;
