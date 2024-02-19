@@ -719,6 +719,7 @@ void reb_render_frame(void* p){
                 glUseProgram(data->shader_orbit.program);
                 glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                 glUniform1i(data->shader_orbit.breadcrumb_N_location, data->breadcrumb_N_allocated);
+                glUniform1i(data->shader_orbit.vertex_count_location, data->shader_orbit.vertex_count);
                 if (data->breadcrumb_N_allocated>1){
                     glBindVertexArray(data->shader_orbit.particle_vao);
                     glUniform1i(data->shader_orbit.N_real_location, N_real-1);
@@ -1468,9 +1469,9 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec3 focus;\n"
             "in vec3 aef;\n"
             "in vec3 omegaOmegainc;\n"
-            "in float lintwopi;\n"
             "uniform int current_index;\n"
             "uniform int N_real;\n"
+            "uniform int vertex_count;\n"
             "uniform int breadcrumb_N;\n"
             "out float lin;\n"
             "uniform mat4 mvp;\n"
@@ -1478,8 +1479,8 @@ void reb_display_init(struct reb_simulation * const r){
             "void main() {\n"
             "   float a = aef.x;\n"
             "   float e = aef.y;\n"
-            "   float f = aef.z+lintwopi;\n"
-            "   lin = lintwopi/(M_PI*2.);\n"
+            "   lin = float(gl_VertexID)/float(vertex_count-1);\n"
+            "   float f = aef.z+lin*M_PI*2.;\n"
             "   if (e>1.){\n"
             "       float theta_max = acos(-1./e);\n"
             "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
@@ -1520,24 +1521,13 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_orbit.program = loadShader(vertex_shader, fragment_shader);
         data->shader_orbit.mvp_location = glGetUniformLocation(data->shader_orbit.program, "mvp");
         data->shader_orbit.current_index_location = glGetUniformLocation(data->shader_orbit.program, "current_index");
+        data->shader_orbit.vertex_count_location = glGetUniformLocation(data->shader_orbit.program, "vertex_count");
         data->shader_orbit.breadcrumb_N_location = glGetUniformLocation(data->shader_orbit.program, "breadcrumb_N");
         data->shader_orbit.N_real_location = glGetUniformLocation(data->shader_orbit.program, "N_real");
-    
-        // Orbit data
         data->shader_orbit.vertex_count = 500; // higher number = smoother orbits
-        float* lin_data = malloc(sizeof(float)*data->shader_orbit.vertex_count);
-        for(int i=0;i<data->shader_orbit.vertex_count;i++){
-            lin_data[i] = (float)i/(float)(data->shader_orbit.vertex_count-1)*2.*M_PI;
-        }
-        GLuint orbit_vertex_buffer;
-        glGenBuffers(1, &orbit_vertex_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float)*data->shader_orbit.vertex_count, lin_data, GL_STATIC_DRAW);
-        free(lin_data);
 
         // Generate two orbit vao
         glUseProgram(data->shader_orbit.program);
-        GLuint olintwopip = glGetAttribLocation(data->shader_orbit.program,"lintwopi");
         GLuint ofocusp = glGetAttribLocation(data->shader_orbit.program,"focus");
         GLuint oaefp = glGetAttribLocation(data->shader_orbit.program,"aef");
         GLuint oomegaOmegaincp = glGetAttribLocation(data->shader_orbit.program,"omegaOmegainc");
@@ -1545,14 +1535,9 @@ void reb_display_init(struct reb_simulation * const r){
         { // Current
             glGenVertexArrays(1, &data->shader_orbit.particle_vao_current);
             glBindVertexArray(data->shader_orbit.particle_vao_current);
-            glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-            glEnableVertexAttribArray(olintwopip);
             glEnableVertexAttribArray(ofocusp);
             glEnableVertexAttribArray(oaefp);
             glEnableVertexAttribArray(oomegaOmegaincp);
-
-            glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-
 
             glGenBuffers(1, &data->orbit_buffer_current);
             glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
@@ -1560,8 +1545,6 @@ void reb_display_init(struct reb_simulation * const r){
             glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
             glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
 
-            GLuint divisor = 0;
-            reb_glVertexAttribDivisor(olintwopip, divisor); 
             reb_glVertexAttribDivisor(data->shader_orbit.mvp_location, 0); 
             reb_glVertexAttribDivisor(ofocusp, 1);
             reb_glVertexAttribDivisor(oaefp, 1);
@@ -1571,14 +1554,9 @@ void reb_display_init(struct reb_simulation * const r){
         { // Past
             glGenVertexArrays(1, &data->shader_orbit.particle_vao);
             glBindVertexArray(data->shader_orbit.particle_vao);
-            glBindBuffer(GL_ARRAY_BUFFER, orbit_vertex_buffer);
-            glEnableVertexAttribArray(olintwopip);
             glEnableVertexAttribArray(ofocusp);
             glEnableVertexAttribArray(oaefp);
             glEnableVertexAttribArray(oomegaOmegaincp);
-
-            glVertexAttribPointer(olintwopip, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-
 
             glGenBuffers(1, &data->orbit_buffer);
             glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
@@ -1586,8 +1564,6 @@ void reb_display_init(struct reb_simulation * const r){
             glVertexAttribPointer(oaefp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
             glVertexAttribPointer(oomegaOmegaincp, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*6));
 
-            GLuint divisor = 0;
-            reb_glVertexAttribDivisor(olintwopip, divisor); 
             reb_glVertexAttribDivisor(data->shader_orbit.mvp_location, 0); 
             reb_glVertexAttribDivisor(ofocusp, 1);
             reb_glVertexAttribDivisor(oaefp, 1);
@@ -1595,8 +1571,6 @@ void reb_display_init(struct reb_simulation * const r){
         }
 
         glBindVertexArray(0);
-    
-
     }
     
     {
