@@ -4,6 +4,13 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.3.2
+* No longer clipping particles and orbits in visualization.
+* Added a scale to visualization. Hide by pressing `t`.
+* Option to take a screenshow manually in png (WebGL) or tga (OpenGL) format by pressing `e`.
+* Improved `plane` visualization mode. Now supporting hyperbolic orbits. 
+* Fixed a memory leak in `reb_simulation_copy`.
+
 ### Version 4.3.1
 * Added new `plane` visualization mode for orbits. Press `w` to toggle through available orbit visualization modes.
 * Added python interface for screenshot API.
