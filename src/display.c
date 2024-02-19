@@ -480,7 +480,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
             case 'X': 
                 if (mods!=GLFW_MOD_SHIFT){
                     data->s.reference++;
-                    if (data->s.reference>data->r->N) data->s.reference = -1;
+                    if (data->s.reference>=data->r->N) data->s.reference = -1;
                     printf("Reference particle: %d.\n",data->s.reference);
                 }else{
                     data->s.reference--;
@@ -677,7 +677,7 @@ void reb_render_frame(void* p){
                 glUniformMatrix4fv(data->shader_plane.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                 glBindVertexArray(data->shader_plane.particle_vao_current);
                 glUniform1i(data->shader_plane.vertex_count_location, data->shader_plane.vertex_count);
-                reb_glDrawArraysInstanced(GL_TRIANGLES, 0, 3.*data->shader_plane.vertex_count, N_real-1);
+                reb_glDrawArraysInstanced(GL_TRIANGLES, 0, data->shader_plane.vertex_count, N_real-1);
                 glBindVertexArray(0);
                 glEnable(GL_CULL_FACE);
             }
@@ -1206,6 +1206,7 @@ void reb_display_init(struct reb_simulation * const r){
             "uniform int breadcrumb_N;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
+            "  gl_Position.z = 0.;\n" // no clipping
             "  gl_PointSize = 15.0f;\n"
             "  color = vc;\n"
             "  float age = float( (gl_VertexID/N_real - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
@@ -1267,6 +1268,7 @@ void reb_display_init(struct reb_simulation * const r){
             "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp*vec4(vp, 1.0);\n"
+            "  gl_Position.z = 0.;\n" // no clipping
             "  color = vc;\n"
             "}\n";
         const char* fragment_shader =
@@ -1610,20 +1612,39 @@ void reb_display_init(struct reb_simulation * const r){
             "in vec3 omegaOmegainc;\n"
             "uniform int vertex_count;\n"
             "uniform mat4 mvp;\n"
+            "out float fog;\n"
             "const float M_PI = 3.14159265359;\n"
             "void main() {\n"
             "   float a = aef.x;\n"
             "   float e = aef.y;\n"
-            "   float lin = (float(gl_VertexID/3) +float(gl_VertexID%3)*3.0)/float(vertex_count);\n"
+            "   float lin = float(gl_VertexID/3)/float(vertex_count/3) + float(gl_VertexID%3)/float(vertex_count/3);\n"
             "   float f = 2.*M_PI*lin;\n"
+            "   float theta_max = 0.0;\n"
+            "   fog = 1.;\n"
+            "   float rmax = 0.;\n"  // hyperbolic rmax
+            "   float r;\n"
             "   if (e>1.){\n"
-            "       float theta_max = acos(-1./e);\n"
+            "       theta_max = acos(-1./e);\n"
+            "       lin = 0.5/float(vertex_count/3+1) ;\n"
             "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+            "       rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
+            "       lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
+            "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+            "       r = a*(1.-e*e)/(1. + e*cos(f));\n"
+            "       if (gl_VertexID%3==0) { \n"
+            "           r = rmax;\n"
+            "           f = 0; \n"
+            "       }\n"
+            "       fog = 1.-abs(r/rmax);\n"
+            "   }else{ \n"
+            "       r = a*(1.-e*e)/(1. + e*cos(f));\n"
+            "       if (gl_VertexID%3==0) { \n"
+            "           r = 0.;\n"
+            "       }\n"
             "   }\n"
             "   float omega = omegaOmegainc.x;\n"
             "   float Omega = omegaOmegainc.y;\n"
             "   float inc = omegaOmegainc.z;\n"
-            "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
             "   float cO = cos(Omega);\n"
             "   float sO = sin(Omega);\n"
             "   float co = cos(omega);\n"
@@ -1633,9 +1654,8 @@ void reb_display_init(struct reb_simulation * const r){
             "   float ci = cos(inc);\n"
             "   float si = sin(inc);\n"
             "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
-            "   if (gl_VertexID%3==0) {pos = vec3(0.,0.,0.);}\n"
-            "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
-            "    gl_Position.z = 0.;\n" // no clipping
+            "   gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+            "   gl_Position.z = 0.;\n" // no clipping
             "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
@@ -1645,8 +1665,9 @@ void reb_display_init(struct reb_simulation * const r){
 #endif
             "precision highp float;"
             "out vec4 outcolor;\n"
+            "in float fog;\n"
             "void main() {\n"
-            "  outcolor = vec4(1.,1.,1.,0.1);\n"
+            "  outcolor = vec4(1.,1.,1.,fog*0.3);\n"
             "}\n";
 
         data->shader_plane.program = loadShader(vertex_shader, fragment_shader);
@@ -1654,7 +1675,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_plane.vertex_count_location = glGetUniformLocation(data->shader_plane.program, "vertex_count");
     
         // Orbit data
-        data->shader_plane.vertex_count = 500; // higher number = smoother orbits
+        data->shader_plane.vertex_count = 3*200; // higher number = smoother orbits // must be multiple of 3
 
         // Generate two orbit vao
         glUseProgram(data->shader_plane.program);
