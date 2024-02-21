@@ -20,7 +20,8 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "timestamps/ias15_stats_";
-char title_stats[100] = "214_trace_newts_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "220_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "220_ias15_element_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
@@ -90,14 +91,16 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.peri_crit_distance = 0.1;
-    r->dt = final_ts;
-    //r->ri_ias15.adaptive_mode = 2;
-    r->exact_finish_time = 0;
+    r->integrator = REB_INTEGRATOR_IAS15;
+    //r->ri_trace.peri_crit_distance = 0.1;
+    //r->dt = final_ts;
+    r->ri_ias15.adaptive_mode = 2;
+    //r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
+    r->collision = REB_COLLISION_DIRECT;
+    r->collision_resolve = reb_collision_resolve_merge;
     r->track_energy_offset = 1;
-    r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
+    //r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
     //r->heartbeat  = heartbeat;               // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     if (r->heartbeat != NULL){
@@ -155,10 +158,27 @@ int main(int argc, char* argv[]){
     //fclose(fs);
 
     FILE* tf = fopen(title_stats, "a");
-    fprintf(tf, "%d,%d,%e,%e,%.20e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent, add);
-    //printf("%d,%d,%e,%e,%f\n", ind, r->N-1, fabs(reb_simulation_energy(r) - e_init)/e_init, time_spent, r->t/(2*M_PI));
-    //fprintf(tf, "%d,%d,%e,%e\n", ind, nbodies, fabs(reb_tools_energy(r) - e_init)/e_init, time_spent);
-    //fclose(tf);
+    fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent);
+    fclose(tf);
+
+    struct reb_particle* s = &r->particles[0];
+    FILE* ef = fopen(element_stats, "a");
+    fprintf(ef, "%d", ind);
+    double tot_m = 0.0;
+    for (unsigned int i = 1; i < nbodies+1; i++){
+        struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
+        if (p != NULL){
+          struct reb_orbit o = reb_orbit_from_particle(r->G, *p, *s);
+          fprintf(ef, ",%f,%f,%f", o.a, o.e, o.inc);
+          tot_m += p->m;
+        }
+        else{
+          fprintf(ef, ", , , ");
+        }
+    }
+    int num_collisions = (int) (tot_m / planet_m) - (r->N - 1);
+    fprintf(ef, ",%d\n", num_collisions);
+    fclose(ef);
 
     reb_simulation_free(r);
 }
