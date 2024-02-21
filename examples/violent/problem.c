@@ -20,8 +20,8 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "timestamps/ias15_stats_";
-char title_stats[100] = "220_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
-char element_stats[100] = "220_ias15_element_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "221_ias15_stats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "221_ias15_element_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
 
     double sma = 5.;
     double add = 0.;
-    double delta= 4.;
+    double delta= 2.5;
 
     ind = 0;
     if (argc == 2){
@@ -48,46 +48,26 @@ int main(int argc, char* argv[]){
 
     r->rand_seed = ind;
 
-    // Delta = 4
-    double xs[3] = {4.750000e+00,7.383881e+00,1.147573e+01};
-    double vys[3] = {4.703868e-01,3.779635e-01,3.036952e-01};
-    double vzs[3] = {0.0, 6.589543e-03,1.058331e-02};
-
     add = reb_random_uniform(r, -1e-12, 1e-12);
 
+    double smas[3] = {};
+
     for (int i = 0; i < nbodies; i++){
+      smas[i] = sma;
+      reb_simulation_add_fmt(r, "m a e inc hash", planet_m, sma, 0.05, (double)i * M_PI / 180., i+1);
+      double num = -pow(2., 1./3.) * pow(3., 1./3.) * sma - pow((planet_m / star.m), 1./3.) * delta * sma;
+      double denom = -pow(2., 1./3.) * pow(3., 1./3.) + pow((planet_m / star.m), 1./3.) * delta;
 
-
-      struct reb_particle p = {0};
-      p.m = planet_m;
-      p.x = xs[i];
-      if (i == nbodies - 1){
-        //add = reb_random_uniform(r, -1e-12, 1e-12);
-        p.x += add;
-      }
-      p.vy = vys[i];
-      p.vz = vzs[i];
-      p.hash = i+1;
-      reb_simulation_add(r, p);
-
+      sma = num/denom;
     }
+    // random
+    struct reb_particle* pouter = &r->particles[nbodies];
+    pouter->x += add;
 
     struct reb_particle* sun = &r->particles[0];
-    /*
-    double min = INFINITY;
 
-    for (int i = 1; i < nbodies+1; i++){
-        struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
-        //printf("%d %e %e %e\n", i, p->x, p->vy, p->vz);
-        struct reb_orbit o = reb_orbit_from_particle(r->G, *p, *sun);
-        printf("%f\n", o.a);
-        if (abs(o.P) < min){
-          min = o.P;
-        }
-    }
-    */
-
-    double final_ts = sqrt(4 * M_PI * M_PI / (r->G * star.m) * 2.438 * 2.438 * 2.438) / 15.12345;
+    double final_a = smas[0] * smas[1] * smas[2] / (smas[0]*smas[1] + smas[1]*smas[2] + smas[0]*smas[2]);
+    double final_ts = sqrt(4 * M_PI * M_PI / (r->G * star.m) * final_a * final_a * final_a) / 15.12345;
 
     reb_simulation_move_to_com(r);
 
@@ -95,7 +75,6 @@ int main(int argc, char* argv[]){
     //r->ri_trace.peri_crit_distance = 0.1;
     //r->dt = final_ts;
     r->ri_ias15.adaptive_mode = 2;
-    //r->exact_finish_time = 0;
     r->exit_max_distance = 1e4;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
@@ -152,10 +131,6 @@ int main(int argc, char* argv[]){
     }
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    //FILE* fs = fopen(title_stats, "a");
-    //fprintf(fs, "%d,%d,%e\n", ind, -1, r->t);
-    //fclose(fs);
 
     FILE* tf = fopen(title_stats, "a");
     fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent);
