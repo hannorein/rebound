@@ -20,8 +20,8 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "timestamps/ias15_stats_";
-char title_stats[100] = "221_mercurius_stats";//"merc_timestamps/mercurius_first_ejection";
-char element_stats[100] = "221_mercurius_element_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "221_bs_stats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "221_bs_element_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
@@ -71,10 +71,10 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = REB_INTEGRATOR_BS;
     //r->ri_trace.peri_crit_distance = 0.1;
-    r->dt = final_ts;
-    r->ri_ias15.adaptive_mode = 2;
+    //r->dt = final_ts;
+    //r->ri_ias15.adaptive_mode = 2;
     r->exit_max_distance = 1e4;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
