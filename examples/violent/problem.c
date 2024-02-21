@@ -20,8 +20,8 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "timestamps/ias15_stats_";
-char title_stats[100] = "221_trace_distance_stats";//"merc_timestamps/mercurius_first_ejection";
-char element_stats[100] = "221_trace_distance_element_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "221_trace_stats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "221_trace_element_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
 
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_trace.peri_crit_distance = 0.25 * final_a;
-    r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
+    //r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
     r->dt = final_ts;
     //r->ri_ias15.adaptive_mode = 2;
     r->exit_max_distance = 1e4;
