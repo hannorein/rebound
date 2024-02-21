@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
 
     r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_trace.peri_crit_distance = 0.25 * final_a;
-    r->ri_trace.S_peri = reb_integrator_trace_peri_switch_distance;
+    r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
     r->dt = final_ts;
     //r->ri_ias15.adaptive_mode = 2;
     r->exit_max_distance = 1e4;
