@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
     struct reb_particle* s = &r->particles[0];
     FILE* ef = fopen(element_stats, "a");
     fprintf(ef, "%d", ind);
-    double tot_m = sim->particles[0].m;
+    double tot_m = r->particles[0].m;
     for (unsigned int i = 1; i < nbodies+1; i++){
         struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
         if (p != NULL){
