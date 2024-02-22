@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
     struct reb_particle* s = &r->particles[0];
     FILE* ef = fopen(element_stats, "a");
     fprintf(ef, "%d", ind);
-    double tot_m = 0.0;
+    double tot_m = sim->particles[0].m;
     for (unsigned int i = 1; i < nbodies+1; i++){
         struct reb_particle* p = reb_simulation_particle_by_hash(r, i);
         if (p != NULL){
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]){
           fprintf(ef, ", , , ");
         }
     }
-    int num_collisions = (int) (tot_m / planet_m) - (r->N - 1);
+    int num_collisions = (int) ((tot_m -1.)/ planet_m) - (r->N - 1);
     fprintf(ef, ",%d\n", num_collisions);
     fclose(ef);
 
