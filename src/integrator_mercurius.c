@@ -327,6 +327,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     
     // run
     const double old_dt = r->dt;
+    const double dtsign = old_dt>=0.?1.:-1.;
     const double old_t = r->t;
     double t_needed = r->t + _dt; 
         
@@ -334,7 +335,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     
     r->dt = 0.0001*_dt; // start with a small timestep.
     
-    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+    while(dtsign*r->t < dtsign*t_needed && fabs(r->dt/old_dt)>1e-14 ){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh 
         r->particles[0].vy = 0;
@@ -345,7 +346,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
         
-        if (r->t+r->dt >  t_needed){
+        if (dtsign*(r->t+r->dt) > dtsign*t_needed){
             r->dt = t_needed-r->t;
         }
 
