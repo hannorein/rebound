@@ -20,8 +20,8 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "timestamps/ias15_stats_";
-char title_stats[100] = "222_bs_cstats";//"merc_timestamps/mercurius_first_ejection";
-char element_stats[100] = "222_bs_element_cstats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "222_trace_rcrit_cstats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "222_trace_rcrit_element_cstats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
@@ -72,16 +72,17 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_BS;
-    //r->ri_trace.peri_crit_distance = 0.25 * final_a;
-    //r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
-    //r->dt = final_ts;
+    r->integrator = REB_INTEGRATOR_TRACE;
+    r->ri_trace.peri_crit_distance = 0.25 * final_a;
+    r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
+    r->ri_trace.r_crit_hill = 3. * 1.21;
+    r->dt = final_ts;
     //r->ri_ias15.adaptive_mode = 2;
     r->exit_max_distance = 1e4;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge;
     r->track_energy_offset = 1;
-    //r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
+    r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
     //r->heartbeat  = heartbeat;               // This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     if (r->heartbeat != NULL){
