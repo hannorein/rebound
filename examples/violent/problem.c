@@ -21,7 +21,7 @@ int ind;
 
 char title[100] = "timestamps/ias15_stats_";
 char title_stats[100] = "222_trace_cstats";//"merc_timestamps/mercurius_first_ejection";
-char element_stats[100] = "222_trace_cstats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "222_trace_element_cstats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);
 
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = REB_INTEGRATOR_TRACE;
     r->ri_trace.peri_crit_distance = 0.25 * final_a;
     //r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
     r->dt = final_ts;
