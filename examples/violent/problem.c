@@ -20,8 +20,8 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "timestamps/ias15_stats_";
-char title_stats[100] = "222_trace_rcrit_cstats";//"merc_timestamps/mercurius_first_ejection";
-char element_stats[100] = "222_trace_rcrit_element_cstats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "227_trace_rcrit_cstats";//"merc_timestamps/mercurius_first_ejection";
+char element_stats[100] = "227_trace_rcrit_element_cstats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf timestamps/ias15_stats_";
 
 int main(int argc, char* argv[]){
