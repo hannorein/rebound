@@ -90,6 +90,48 @@ int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, co
     return d2 < peri*peri;
 }
 
+int reb_integrator_trace_switch_peri_pham2024(struct reb_simulation* const r, const unsigned int j){
+    double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use. 
+    double x = r->particles[j].x;
+    double y = r->particles[j].y;
+    double z = r->particles[j].z;
+    double d2 = x*x + y*y + z*z;
+
+    // first derivative
+    double dx = r->particles[j].vx;
+    double dy = r->particles[j].vy;
+    double dz = r->particles[j].vz;
+    
+    // second derivative
+    double prefact2 = -GM/sqrt(d2*d2*d2);
+    double ddx = prefact2*x;
+    double ddy = prefact2*y;
+    double ddz = prefact2*z;
+    double dd = sqrt(ddx*ddx + ddy*ddy + ddz*ddz); 
+    
+    // third derivative
+    double prefact3 = GM/sqrt(d2*d2*d2*d2*d2);
+    double dddx = prefact3*(-dx*(y*y+z*z) + 2.*x*x*dx+3.*x*(y*dy+z*dz));
+    double dddy = prefact3*(-dy*(x*x+z*z) + 2.*y*y*dy+3.*y*(x*dx+z*dz));
+    double dddz = prefact3*(-dz*(x*x+y*y) + 2.*z*z*dz+3.*z*(x*dx+y*dy));
+    double ddd = sqrt(dddx*dddx + dddy*dddy + dddz*dddz); 
+    
+    // fourth derivative
+    double prefact4 = GM/sqrt(d2*d2*d2*d2*d2*d2*d2);
+    double ddddx = prefact4* (d2 * (-ddx*(y*y+z*z) + 2.*x*x*ddx + dx*(y*dy + z*dz) + x*(4.*dx*dx + 3.*(y*ddy + dy*dy + z*ddz + dz*dz ))) - 5.*(x*dx+y*dy+z*dz)*(-dx*(y*y+z*z)+2.*x*x*dx + 3.*x*(y*dy+z*dz)));
+    double ddddy = prefact4* (d2 * (-ddy*(x*x+z*z) + 2.*y*y*ddy + dy*(x*dx + z*dz) + y*(4.*dy*dy + 3.*(x*ddx + dx*dx + z*ddz + dz*dz ))) - 5.*(y*dy+x*dx+z*dz)*(-dy*(x*x+z*z)+2.*y*y*dy + 3.*y*(x*dx+z*dz)));
+    double ddddz = prefact4* (d2 * (-ddz*(y*y+x*x) + 2.*z*z*ddz + dz*(y*dy + x*dx) + z*(4.*dz*dz + 3.*(y*ddy + dy*dy + x*ddx + dx*dx ))) - 5.*(z*dz+y*dy+x*dx)*(-dz*(y*y+x*x)+2.*z*z*dz + 3.*z*(y*dy+x*dx)));
+    double dddd = sqrt(ddddx*ddddx + ddddy*ddddy + ddddz*ddddz); 
+
+    double tau_prs23 = sqrt(2.*dd*dd/(ddd*ddd+dd*dddd)); // Eq 16
+    double eta = 0.1; // Requires experimentation
+    double dt_prs23 = eta*tau_prs23;
+    if (r->dt > dt_prs23){
+        return 1;
+    }else{
+        return 0;
+    }
+}
 
 int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
