@@ -126,6 +126,8 @@ int reb_integrator_trace_switch_peri_pham2024(struct reb_simulation* const r, co
     double y = r->particles[j].y;
     double z = r->particles[j].z;
     double d2 = x*x + y*y + z*z;
+    const double pdist = ri_trace->peri_crit_distance;
+    if (d2 < pdist*pdist) return 1;
 
     // first derivative
     double dx = r->particles[j].vx;
