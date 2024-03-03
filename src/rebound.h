@@ -199,9 +199,12 @@ struct reb_integrator_ias15 {
                                             // 1: fractional error is calculated globally (default)
                                             // 2: Dang, Rein & Spiegel (2023) timestep criterion
                                             // 3: Aarseth (1985) timestep criterion
+    unsigned int cs;                        // 0: compensates summation is off
+                                            // 1: compensates summation is on (default)
     // Internal use
     uint64_t iterations_max_exceeded; // Counter how many times the iteration did not converge. 
     unsigned int N_allocated;          
+    unsigned int N_allocated_cs;          
     double* REB_RESTRICT at;
     double* REB_RESTRICT x0;
     double* REB_RESTRICT v0;
