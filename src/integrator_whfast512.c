@@ -521,9 +521,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         // 0123 4567
         // 3201 7645
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
-        p_jh->vx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->vx); 
-        p_jh->vy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->vy); 
-        p_jh->vz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->vz); 
+        p_jh->vx = _mm512_mask3_fnmadd_pd(prefact1, dx_j, p_jh->vx, mask); 
+        p_jh->vy = _mm512_mask3_fnmadd_pd(prefact1, dy_j, p_jh->vy, mask); 
+        p_jh->vz = _mm512_mask3_fnmadd_pd(prefact1, dz_j, p_jh->vz, mask); 
         
         
         dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC); // within 256
@@ -535,9 +535,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         // 0123 4567
         // 2310 6754
         __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
-        p_jh->vx = _mm512_fmadd_pd(prefact2, dx_j, p_jh->vx); 
-        p_jh->vy = _mm512_fmadd_pd(prefact2, dy_j, p_jh->vy); 
-        p_jh->vz = _mm512_fmadd_pd(prefact2, dz_j, p_jh->vz); 
+        p_jh->vx = _mm512_mask3_fmadd_pd(prefact2, dx_j, p_jh->vx, mask); 
+        p_jh->vy = _mm512_mask3_fmadd_pd(prefact2, dy_j, p_jh->vy, mask); 
+        p_jh->vz = _mm512_mask3_fmadd_pd(prefact2, dz_j, p_jh->vz, mask); 
     }
     {
         x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
@@ -552,9 +552,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         // 0123 4567
         // 1032 5476 
         const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
-        p_jh->vx = _mm512_fnmadd_pd(prefact, dx_j, p_jh->vx); 
-        p_jh->vy = _mm512_fnmadd_pd(prefact, dy_j, p_jh->vy); 
-        p_jh->vz = _mm512_fnmadd_pd(prefact, dz_j, p_jh->vz); 
+        p_jh->vx = _mm512_mask3_fnmadd_pd(prefact, dx_j, p_jh->vx, mask); 
+        p_jh->vy = _mm512_mask3_fnmadd_pd(prefact, dy_j, p_jh->vy, mask); 
+        p_jh->vz = _mm512_mask3_fnmadd_pd(prefact, dz_j, p_jh->vz, mask); 
     }
     
 
