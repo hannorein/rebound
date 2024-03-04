@@ -161,6 +161,7 @@ int test_number_of_planets(){
 
 int test_N_systems(int N_systems, int planets){
     for (int gr=0; gr<=1; gr++){
+         printf("N_systems %d planr  %d  gr %d \n", N_systems, planets, gr);
         struct reb_simulation* r_single = setup_sim(planets+1);
         r_single->integrator = REB_INTEGRATOR_WHFAST512;
         r_single->ri_whfast512.gr_potential = gr;
@@ -172,9 +173,12 @@ int test_N_systems(int N_systems, int planets){
             }
         }
          
-        double tmax = 1e2;
+        double tmax = 1e5;
         if (reb_simulation_integrate(r_single, tmax)>0) return 0;
         if (reb_simulation_integrate(r_many, tmax)>0) return 0;
+        
+       // if (reb_simulation_integrate(r_single, 2.*tmax)>0) return 0;
+       // if (reb_simulation_integrate(r_many, 2.*tmax)>0) return 0;
        
         assert(r_single->t == r_many->t);
         assert(N_systems*r_single->N == r_many->N);
@@ -184,6 +188,7 @@ int test_N_systems(int N_systems, int planets){
                 int equal = r_single->particles[j].x == r_many->particles[r_single->N*i+j].x;
                 if (! equal){
                     printf("Simulation with N_systems>1 not giving same results as simulation with N_systems=1 (gr=%d).\n", gr);
+                    printf("(%d/%d): \n\t%.20f != \n\t%.20f\n", i, j, r_single->particles[j].x, r_many->particles[r_single->N*i+j].x);
                     return 0;
                 }
             }
