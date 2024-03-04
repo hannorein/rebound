@@ -173,12 +173,12 @@ int test_N_systems(int N_systems, int planets){
             }
         }
          
-        double tmax = 1e5;
+        double tmax = 1e3;
         if (reb_simulation_integrate(r_single, tmax)>0) return 0;
         if (reb_simulation_integrate(r_many, tmax)>0) return 0;
         
-       // if (reb_simulation_integrate(r_single, 2.*tmax)>0) return 0;
-       // if (reb_simulation_integrate(r_many, 2.*tmax)>0) return 0;
+        if (reb_simulation_integrate(r_single, 2.*tmax)>0) return 0;
+        if (reb_simulation_integrate(r_many, 2.*tmax)>0) return 0;
        
         assert(r_single->t == r_many->t);
         assert(N_systems*r_single->N == r_many->N);
