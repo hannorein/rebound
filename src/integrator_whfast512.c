@@ -712,11 +712,11 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
         }
     }
     
-    printf("mask: ");
-    for (int i=0; i<8; i++){
-        printf("%d ", 0.0==dummy[i]);
-    }
-    printf("\n");
+    //printf("mask: ");
+    //for (int i=0; i<8; i++){
+    //    printf("%d ", 0.0==dummy[i]);
+    //}
+    //printf("\n");
     mask = _mm512_cmpeq_pd_mask (_mm512_setzero_pd() , _mm512_loadu_pd(dummy));
     
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;

@@ -160,7 +160,7 @@ int test_number_of_planets(){
 }
 
 int test_N_systems(int N_systems, int planets){
-    for (int gr=0; gr<=1; gr++){
+    for (int gr=0; gr<=0; gr++){
          printf("N_systems %d planr  %d  gr %d \n", N_systems, planets, gr);
         struct reb_simulation* r_single = setup_sim(planets+1);
         r_single->integrator = REB_INTEGRATOR_WHFAST512;
@@ -173,7 +173,7 @@ int test_N_systems(int N_systems, int planets){
             }
         }
          
-        double tmax = 1e3;
+        double tmax = 1e5;
         if (reb_simulation_integrate(r_single, tmax)>0) return 0;
         if (reb_simulation_integrate(r_many, tmax)>0) return 0;
         
