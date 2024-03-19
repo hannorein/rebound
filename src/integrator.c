@@ -2,11 +2,11 @@
  * @file 	integrator.c
  * @brief 	Integration schemes.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file manages the different integration scheme.  
- * 
+ * @details	This file manages the different integration scheme.
+ *
  * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein
- * 
+ *
  * This file is part of rebound.
  *
  * rebound is free software: you can redistribute it and/or modify
@@ -127,7 +127,7 @@ void reb_integrator_part2(struct reb_simulation* r){
 		default:
 			break;
 	}
-    
+
     // Integrate other ODEs
     if (r->integrator != REB_INTEGRATOR_BS && r->N_odes){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
@@ -161,7 +161,7 @@ void reb_integrator_part2(struct reb_simulation* r){
     }
 
 }
-	
+
 void reb_simulation_synchronize(struct reb_simulation* r){
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
@@ -246,7 +246,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 r->ri_mercurius.particles_backup_additional_forces = realloc(r->ri_mercurius.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
                 r->ri_mercurius.N_allocated_additional_forces = r->N;
             }
-            memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
+            memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
             reb_integrator_mercurius_dh_to_inertial(r);
         }
         if (r->integrator==REB_INTEGRATOR_TRACE){
@@ -288,4 +288,3 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
-

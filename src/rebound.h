@@ -299,6 +299,8 @@ struct reb_integrator_trace {
     int* current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_C; // TLu tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
+    unsigned int turnaround;
+    int direction;
 };
 
 // SABA Integrator (Laskar & Robutel 2001)
@@ -854,6 +856,7 @@ DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* c
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_pham2024(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_debug(struct reb_simulation* const r, const unsigned int j);
 
 
 // Built in collision resolve functions
