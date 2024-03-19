@@ -19,10 +19,10 @@ int nbodies=3;
 int first_ejected = 999;
 int ind;
 
-char title[100] = "timestamps/ias15_stats_";
+char title[100] = "319_pham_out_";
 char title_stats[100] = "319_trace_pham_stats";//"merc_timestamps/mercurius_first_ejection";
 char element_stats[100] = "319_trace_pham_element_stats";//"merc_timestamps/mercurius_first_ejection";
-char title_remove[100] = "rm -rf timestamps/ias15_stats_";
+char title_remove[100] = "rm -rf 319_pham_out";
 
 int main(int argc, char* argv[]){
 
@@ -83,18 +83,13 @@ int main(int argc, char* argv[]){
     r->collision_resolve = reb_collision_resolve_merge;
     r->track_energy_offset = 1;
     r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
-    //r->heartbeat  = heartbeat;// This makes sure the planetary systems stays within the computational domain and doesn't drift.
+    r->heartbeat  = heartbeat;// This makes sure the planetary systems stays within the computational domain and doesn't drift.
 
     if (r->heartbeat != NULL){
       system(title_remove);
       FILE* f = fopen(title, "w");
       //fprintf(f, "# Seed: %d,%.20e\n", ind, add);
-      fprintf(f, "t");
-      for (int i = 1; i < nbodies+1; i++){
-        fprintf(f, ",a%d,e%d,i%d,x%d,y%d,z%d",i,i,i,i,i,i);
-      }
-
-      fprintf(f, "\n");
+      fprintf(f, "t,E,hd1,hd2,hd3,d12,d23,d13\n");
       fclose(f);
     }
 
@@ -134,7 +129,7 @@ int main(int argc, char* argv[]){
     }
     clock_t end = clock();
     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
+/*
     FILE* tf = fopen(title_stats, "a");
     fprintf(tf, "%d,%d,%e,%e\n", ind, r->N-1, fabs((reb_simulation_energy(r) - e_start)/e_start), time_spent);
     fclose(tf);
@@ -159,7 +154,7 @@ int main(int argc, char* argv[]){
     fclose(ef);
 
     printf("\n%e\n", fabs((reb_simulation_energy(r) - e_start)/e_start));
-
+*/
     reb_simulation_free(r);
 }
 
@@ -170,6 +165,8 @@ void heartbeat(struct reb_simulation* r){
     if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
         reb_simulation_output_timing(r, tmax);
     }
+
+
 
     // Time to first ejection
     // Always track
@@ -214,6 +211,81 @@ void heartbeat(struct reb_simulation* r){
       fclose(f);
     }
 */
+    FILE* f = fopen(title, "a");
+    fprintf(f, "%f,%e,",r->t,fabs((reb_simulation_energy(r) - e_start)/e_start));
+    struct reb_particle* sun = &r->particles[0];
+    struct reb_particle* p1_ptr = reb_simulation_particle_by_hash(r, 1);
+    struct reb_particle* p2_ptr = reb_simulation_particle_by_hash(r, 2);
+    struct reb_particle* p3_ptr = reb_simulation_particle_by_hash(r, 3);
+
+    struct reb_particle p1;
+    struct reb_particle p2;
+    struct reb_particle p3;
+    if (p1_ptr != NULL){
+      p1 = *p1_ptr;
+      double dx = sun->x - p1.x;
+      double dy = sun->y - p1.y;
+      double dz = sun->z - p1.z;
+      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    else{
+      fprintf(f, " ,");
+    }
+
+    if (p2_ptr != NULL){
+      p2 = *p2_ptr;
+      double dx = sun->x - p2.x;
+      double dy = sun->y - p2.y;
+      double dz = sun->z - p2.z;
+      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    else{
+      fprintf(f, " ,");
+    }
+
+    if (p3_ptr != NULL){
+      p3 = *p3_ptr;
+      double dx = sun->x - p3.x;
+      double dy = sun->y - p3.y;
+      double dz = sun->z - p3.z;
+      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    else{
+      fprintf(f, " ,");
+    }
+
+    if (p1_ptr != NULL && p2_ptr != NULL){
+      double dx = p1.x - p2.x;
+      double dy = p1.y - p2.y;
+      double dz = p1.z - p2.z;
+      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    else{
+      fprintf(f, " ,");
+    }
+
+    if (p2_ptr != NULL && p3_ptr != NULL){
+      double dx = p3.x - p2.x;
+      double dy = p3.y - p2.y;
+      double dz = p3.z - p2.z;
+      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    else{
+      fprintf(f, " ,");
+    }
+
+    if (p1_ptr != NULL && p3_ptr != NULL){
+      double dx = p3.x - p1.x;
+      double dy = p3.y - p1.y;
+      double dz = p3.z - p1.z;
+      fprintf(f, "%f", sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    else{
+      fprintf(f, " ");
+    }
+    fprintf(f, "\n");
+/*
+    FILE* f = fopen(title, "a");
     if (reb_simulation_output_check(r, 10000. * 2.*M_PI)){
 
       FILE* f = fopen(title, "a");
@@ -253,5 +325,5 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
-
+*/
 }
