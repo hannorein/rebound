@@ -70,7 +70,7 @@ next_field:
     // Loop over all fields
     while(1){
 
-        int numread = fread(&field,sizeof(struct reb_binary_field),1,inf);
+        int numread = (int)fread(&field,sizeof(struct reb_binary_field),1,inf);
         if (numread<1){
             goto finish_fields; // End of file
         }
@@ -115,7 +115,7 @@ next_field:
                     fread(*(char**)pointer, field.size,1,inf);
 
                     unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
-                    *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
+                    *pointer_N = (unsigned int)field.size/reb_binary_field_descriptor_list[i].element_size;
 
                     goto next_field;
                 }
@@ -153,7 +153,7 @@ next_field:
                     fread(dp7->p6, field.size/7, 1, inf);
 
                     unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
-                    *pointer_N = field.size/reb_binary_field_descriptor_list[i].element_size;
+                    *pointer_N = (unsigned int)field.size/reb_binary_field_descriptor_list[i].element_size;
 
                     goto next_field;
                 }
