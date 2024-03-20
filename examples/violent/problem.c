@@ -211,7 +211,7 @@ void heartbeat(struct reb_simulation* r){
       fclose(f);
     }
 */
-    if (r->t > 2.770313e+07 && r->t < 2.770319e+07){
+    if (r->t > 3.325508e+07 && r->t < 3.325514e+07){
       FILE* f = fopen(title, "a");
       fprintf(f, "%f,%e,",r->t,fabs((reb_simulation_energy(r) - e_start)/e_start));
       struct reb_particle* sun = &r->particles[0];
