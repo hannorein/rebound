@@ -19,10 +19,10 @@ int nbodies=3;
 int first_ejected = 999;
 int ind;
 
-char title[100] = "319_pham_out_";
+char title[100] = "319_pham_detailed_out_";
 char title_stats[100] = "319_trace_pham_stats";//"merc_timestamps/mercurius_first_ejection";
 char element_stats[100] = "319_trace_pham_element_stats";//"merc_timestamps/mercurius_first_ejection";
-char title_remove[100] = "rm -rf 319_pham_out";
+char title_remove[100] = "rm -rf 319_pham_detailed_out";
 
 int main(int argc, char* argv[]){
 
@@ -211,79 +211,82 @@ void heartbeat(struct reb_simulation* r){
       fclose(f);
     }
 */
-    FILE* f = fopen(title, "a");
-    fprintf(f, "%f,%e,",r->t,fabs((reb_simulation_energy(r) - e_start)/e_start));
-    struct reb_particle* sun = &r->particles[0];
-    struct reb_particle* p1_ptr = reb_simulation_particle_by_hash(r, 1);
-    struct reb_particle* p2_ptr = reb_simulation_particle_by_hash(r, 2);
-    struct reb_particle* p3_ptr = reb_simulation_particle_by_hash(r, 3);
+    if (r->t > 2.770313e+07 && r->t < 2.770319e+07){
+      FILE* f = fopen(title, "a");
+      fprintf(f, "%f,%e,",r->t,fabs((reb_simulation_energy(r) - e_start)/e_start));
+      struct reb_particle* sun = &r->particles[0];
+      struct reb_particle* p1_ptr = reb_simulation_particle_by_hash(r, 1);
+      struct reb_particle* p2_ptr = reb_simulation_particle_by_hash(r, 2);
+      struct reb_particle* p3_ptr = reb_simulation_particle_by_hash(r, 3);
 
-    struct reb_particle p1;
-    struct reb_particle p2;
-    struct reb_particle p3;
-    if (p1_ptr != NULL){
-      p1 = *p1_ptr;
-      double dx = sun->x - p1.x;
-      double dy = sun->y - p1.y;
-      double dz = sun->z - p1.z;
-      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
-    }
-    else{
-      fprintf(f, " ,");
-    }
+      struct reb_particle p1;
+      struct reb_particle p2;
+      struct reb_particle p3;
+      if (p1_ptr != NULL){
+        p1 = *p1_ptr;
+        double dx = sun->x - p1.x;
+        double dy = sun->y - p1.y;
+        double dz = sun->z - p1.z;
+        fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+      }
+      else{
+        fprintf(f, "0,");
+      }
 
-    if (p2_ptr != NULL){
-      p2 = *p2_ptr;
-      double dx = sun->x - p2.x;
-      double dy = sun->y - p2.y;
-      double dz = sun->z - p2.z;
-      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
-    }
-    else{
-      fprintf(f, " ,");
-    }
+      if (p2_ptr != NULL){
+        p2 = *p2_ptr;
+        double dx = sun->x - p2.x;
+        double dy = sun->y - p2.y;
+        double dz = sun->z - p2.z;
+        fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+      }
+      else{
+        fprintf(f, "0,");
+      }
 
-    if (p3_ptr != NULL){
-      p3 = *p3_ptr;
-      double dx = sun->x - p3.x;
-      double dy = sun->y - p3.y;
-      double dz = sun->z - p3.z;
-      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
-    }
-    else{
-      fprintf(f, " ,");
-    }
+      if (p3_ptr != NULL){
+        p3 = *p3_ptr;
+        double dx = sun->x - p3.x;
+        double dy = sun->y - p3.y;
+        double dz = sun->z - p3.z;
+        fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+      }
+      else{
+        fprintf(f, "0,");
+      }
 
-    if (p1_ptr != NULL && p2_ptr != NULL){
-      double dx = p1.x - p2.x;
-      double dy = p1.y - p2.y;
-      double dz = p1.z - p2.z;
-      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
-    }
-    else{
-      fprintf(f, " ,");
-    }
+      if (p1_ptr != NULL && p2_ptr != NULL){
+        double dx = p1.x - p2.x;
+        double dy = p1.y - p2.y;
+        double dz = p1.z - p2.z;
+        fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+      }
+      else{
+        fprintf(f, "0,");
+      }
 
-    if (p2_ptr != NULL && p3_ptr != NULL){
-      double dx = p3.x - p2.x;
-      double dy = p3.y - p2.y;
-      double dz = p3.z - p2.z;
-      fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
-    }
-    else{
-      fprintf(f, " ,");
-    }
+      if (p2_ptr != NULL && p3_ptr != NULL){
+        double dx = p3.x - p2.x;
+        double dy = p3.y - p2.y;
+        double dz = p3.z - p2.z;
+        fprintf(f, "%f,", sqrt(dx*dx+dy*dy+dz*dz));
+      }
+      else{
+        fprintf(f, "0,");
+      }
 
-    if (p1_ptr != NULL && p3_ptr != NULL){
-      double dx = p3.x - p1.x;
-      double dy = p3.y - p1.y;
-      double dz = p3.z - p1.z;
-      fprintf(f, "%f", sqrt(dx*dx+dy*dy+dz*dz));
+      if (p1_ptr != NULL && p3_ptr != NULL){
+        double dx = p3.x - p1.x;
+        double dy = p3.y - p1.y;
+        double dz = p3.z - p1.z;
+        fprintf(f, "%f", sqrt(dx*dx+dy*dy+dz*dz));
+      }
+      else{
+        fprintf(f, " ");
+      }
+      fprintf(f, "\n");
+      fclose(f);
     }
-    else{
-      fprintf(f, " ");
-    }
-    fprintf(f, "\n");
 /*
     FILE* f = fopen(title, "a");
     if (reb_simulation_output_check(r, 10000. * 2.*M_PI)){
