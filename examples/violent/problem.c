@@ -20,7 +20,7 @@ int first_ejected = 999;
 int ind;
 
 char title[100] = "319_pham_detailed_out_";
-char title_stats[100] = "319_trace_pham_stats";//"merc_timestamps/mercurius_first_ejection";
+char title_stats[100] = "319_pham_error_stats";//"merc_timestamps/mercurius_first_ejection";
 char element_stats[100] = "319_trace_pham_element_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf 319_pham_detailed_out";
 
@@ -162,8 +162,16 @@ int main(int argc, char* argv[]){
 void heartbeat(struct reb_simulation* r){
     // remove particles if needed
 
-    if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
-        reb_simulation_output_timing(r, tmax);
+    //if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
+    //    reb_simulation_output_timing(r, tmax);
+    //}
+    double err = fabs((reb_simulation_energy(r) - e_start)/e_start);
+
+    if (err > 1.){
+      FILE* f = fopen(title_stats, "a");
+      fprintf(f,"%e,%e\n",r->t,err);
+      fclose(f);
+      exit(1);
     }
 
 
@@ -211,6 +219,7 @@ void heartbeat(struct reb_simulation* r){
       fclose(f);
     }
 */
+/*
     if (r->t > 3.325508e+07 && r->t < 3.325514e+07){
       FILE* f = fopen(title, "a");
       fprintf(f, "%f,%e,",r->t,fabs((reb_simulation_energy(r) - e_start)/e_start));
@@ -287,6 +296,7 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
+    */
 /*
     FILE* f = fopen(title, "a");
     if (reb_simulation_output_check(r, 10000. * 2.*M_PI)){
