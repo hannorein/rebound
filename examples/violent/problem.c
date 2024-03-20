@@ -14,7 +14,7 @@
 void heartbeat(struct reb_simulation* r);
 
 double e_start; // initial energy
-double tmax = 1e7*2*M_PI;
+double tmax;// = 1e7*2*M_PI;
 int nbodies=3;
 int first_ejected = 999;
 int ind;
@@ -23,6 +23,10 @@ char title[100] = "319_pham_detailed_out_";
 char title_stats[100] = "319_pham_error_stats";//"merc_timestamps/mercurius_first_ejection";
 char element_stats[100] = "319_trace_pham_element_stats";//"merc_timestamps/mercurius_first_ejection";
 char title_remove[100] = "rm -rf 319_pham_detailed_out";
+
+int indices[101] = {121,218,185,86,469,61,358,210,370,345,390,265,128,414,280,222,227,207,312,37,416,467,395,485,439,48,375,224,206,97,29,325,88,321,67,391,381,17,308,10,211,236,417,451,294,301,332,21,374,245,107,256,90,126,473,471,59,343,444,376,290,449,346,11,46,295,84,398,482,368,198,133,357,441,145,225,329,429,435,330,93,476,377,192,53,479,464,424,114,101,385,239,259,422,465,28,181,269,231,491};
+int tmaxes[101] = {3022487.,2358667.,3445064.,2678327.,3445064.,3173665.,3267234.,5673876.,2678327.,3173665.,5956678.,5405911.,3651980.,4603285.,7051205.,4769892.,7676660.,5851128.,4893095.,4820995.,5815525.,6340312.,7370437.,8027637.,3997337.,8113853.,8128611.,9272803.,5936937.,8412525.,9718111.,5834688.,4891296.,4820995.,7891814.,9414307.,8412525.,7489289.,9377578.,4280934.,6820940.,7284863.,7132932.,6319658.,4280934.,7489289.,8113853.,5202971.,8826760.,8643913.,9414307.,6090060.,9611407.,7608820.,10821110.,8716286.,10352830.,10352830.,14686720.,7833086.,11968140.,12279950.,15385630.,11425650.,11215110.,11425650.,15103990.,10549640.,21114170.,15103990.,21114170.,10342340.,21552860.,12792910.,16482680.,18053560.,14072220.,16482680.,19335570.,13664540.,28123630.,22795980.,28123630.,22795980.,28877980.,16942050.,29134510.,27703140.,19017230.,20424390.,20424390.,18347220.,40419700.,31578400.,27255740.,47179100.,27255740.,43808500.,54181830.,5851128.};
+
 
 int main(int argc, char* argv[]){
 
@@ -47,7 +51,7 @@ int main(int argc, char* argv[]){
       ind = atoi(argv[1]);
     }
 
-    r->rand_seed = ind;
+    r->rand_seed = indices[ind];
 
     add = reb_random_uniform(r, -1e-12, 1e-12);
 
@@ -96,6 +100,8 @@ int main(int argc, char* argv[]){
 
     e_start = reb_simulation_energy(r);
     clock_t begin = clock();
+
+    tmax = tmaxes[ind] + 50.;
 
     while (r->t < tmax){
        int retval = reb_simulation_integrate(r, tmax);
@@ -165,6 +171,7 @@ void heartbeat(struct reb_simulation* r){
     //if (reb_simulation_output_check(r, 1000.*2.*M_PI)){
     //    reb_simulation_output_timing(r, tmax);
     //}
+    /*
     double err = fabs((reb_simulation_energy(r) - e_start)/e_start);
 
     if (err > 1.){
@@ -173,6 +180,7 @@ void heartbeat(struct reb_simulation* r){
       fclose(f);
       exit(1);
     }
+    */
 
 
 
@@ -219,8 +227,8 @@ void heartbeat(struct reb_simulation* r){
       fclose(f);
     }
 */
-/*
-    if (r->t > 3.325508e+07 && r->t < 3.325514e+07){
+
+    if (r->t > tmax - 100. && r->t < tmax){
       FILE* f = fopen(title, "a");
       fprintf(f, "%f,%e,",r->t,fabs((reb_simulation_energy(r) - e_start)/e_start));
       struct reb_particle* sun = &r->particles[0];
@@ -296,7 +304,7 @@ void heartbeat(struct reb_simulation* r){
       fprintf(f, "\n");
       fclose(f);
     }
-    */
+
 /*
     FILE* f = fopen(title, "a");
     if (reb_simulation_output_check(r, 10000. * 2.*M_PI)){
