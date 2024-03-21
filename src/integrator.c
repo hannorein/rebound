@@ -288,3 +288,4 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 	PROFILING_STOP(PROFILING_CAT_GRAVITY)
 	PROFILING_START()
 }
+
