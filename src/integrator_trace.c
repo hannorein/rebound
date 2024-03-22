@@ -91,7 +91,7 @@ int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, co
 }
 
 
-int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j){
+int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double pfdot = ri_trace->peri_crit_fdot;
     const double pdist = ri_trace->peri_crit_distance;
@@ -117,6 +117,101 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
 
     // Failsafe: use pericenter pericenter distance
     return peff2 < pfdot*pfdot * r->dt*r->dt;
+}
+
+int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j){
+    // Many square roots, can this be fixed?
+    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use.
+    double x = r->particles[j].x;
+    double y = r->particles[j].y;
+    double z = r->particles[j].z;
+    double d2 = x*x + y*y + z*z;
+    double d = sqrt(d2);
+
+    // first derivative
+    double dx = r->particles[j].vx;
+    double dy = r->particles[j].vy;
+    double dz = r->particles[j].vz;
+
+    // second derivative
+    double prefact2 = -GM/(d2*d);
+    double ddx = prefact2*x;
+    double ddy = prefact2*y;
+    double ddz = prefact2*z;
+    // need sqrt for this one...
+    double dd = sqrt(ddx*ddx + ddy*ddy + ddz*ddz);
+
+    // third derivative
+    double prefact3 = GM/(d2*d2*d);
+    double dddx = prefact3*(-dx*(y*y+z*z) + 2.*x*x*dx+3.*x*(y*dy+z*dz));
+    double dddy = prefact3*(-dy*(x*x+z*z) + 2.*y*y*dy+3.*y*(x*dx+z*dz));
+    double dddz = prefact3*(-dz*(x*x+y*y) + 2.*z*z*dz+3.*z*(x*dx+y*dy));
+
+    double ddd2 = dddx*dddx + dddy*dddy + dddz*dddz;
+
+    // fourth derivative
+    double prefact4 = GM/(d2*d2*d2*d);
+    double ddddx = prefact4* (d2 * (-ddx*(y*y+z*z) + 2.*x*x*ddx + dx*(y*dy + z*dz) + x*(4.*dx*dx + 3.*(y*ddy + dy*dy + z*ddz + dz*dz ))) - 5.*(x*dx+y*dy+z*dz)*(-dx*(y*y+z*z)+2.*x*x*dx + 3.*x*(y*dy+z*dz)));
+    double ddddy = prefact4* (d2 * (-ddy*(x*x+z*z) + 2.*y*y*ddy + dy*(x*dx + z*dz) + y*(4.*dy*dy + 3.*(x*ddx + dx*dx + z*ddz + dz*dz ))) - 5.*(y*dy+x*dx+z*dz)*(-dy*(x*x+z*z)+2.*y*y*dy + 3.*y*(x*dx+z*dz)));
+    double ddddz = prefact4* (d2 * (-ddz*(y*y+x*x) + 2.*z*z*ddz + dz*(y*dy + x*dx) + z*(4.*dz*dz + 3.*(y*ddy + dy*dy + x*ddx + dx*dx ))) - 5.*(z*dz+y*dy+x*dx)*(-dz*(y*y+x*x)+2.*z*z*dz + 3.*z*(y*dy+x*dx)));
+    double dddd = sqrt(ddddx*ddddx + ddddy*ddddy + ddddz*ddddz);
+
+    double tau_prs2 = 2.*dd*dd/(ddd2+dd*dddd); // Eq 16
+    double dt_prs2 = ri_trace->peri_crit_eta * ri_trace->peri_crit_eta * tau_prs2;
+
+    if (r->dt * r->dt > dt_prs2){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+int reb_integrator_trace_switch_peri_debug(struct reb_simulation* const r, const unsigned int j){
+  // Used this for reversibility debugging. Remove at some point before public release!
+  const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+  /*
+  if (r->steps_done < r->ri_trace.turnaround){
+    if (r->steps_done % 20 == 0){
+      printf("Triggered at Step %d\n", r->steps_done);
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+  else{
+    if ((r->steps_done - r->ri_trace.turnaround) % 20 == 0 && r->steps_done != r->ri_trace.turnaround){
+      printf("Backwards triggered at Step %d\n", r->steps_done);
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+  */
+/*
+  if (r->steps_done % 5 == 0 && r->steps_done != 50){
+    printf("Switching at %d\n", r->steps_done);
+    return 1;
+  }
+  else{
+    return 0;
+  }
+*/
+/*
+  if (ri_trace->direction && r->steps_done % 10 == 0){
+    printf("Forwards Switching at %d,%e\n", ri_trace->turnaround - r->steps_done - 1, r->particles[1].x);
+    return 1;
+  }
+  else if (!ri_trace->direction && (ri_trace->turnaround - r->steps_done-1) % 10 == 0){
+    printf("Backwards Switching at %d,%e\n", r->steps_done, r->particles[1].x);
+    return 1;
+  }
+  else{
+    return 0;
+  }
+  */
 }
 
 int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j){
