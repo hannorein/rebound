@@ -269,6 +269,7 @@ struct reb_integrator_trace {
     } peri_mode;
 
     double r_crit_hill;
+    double peri_crit_eta;
     double peri_crit_fdot;
     double peri_crit_distance;
 
@@ -849,7 +850,9 @@ double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, doubl
 // Built in trace switching functions
 
 DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_debug(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 
