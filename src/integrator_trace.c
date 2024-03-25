@@ -86,6 +86,17 @@ int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, co
     const double dy = r->particles[0].y - r->particles[j].y;
     const double dz = r->particles[0].z - r->particles[j].z;
     const double d2 = dx*dx + dy*dy + dz*dz;
+/*
+    if (d2 < peri * peri){
+      if (ri_trace->direction){
+          printf("Forwards,%d,%f\n", ri_trace->turnaround - r->steps_done - 1,sqrt(d2));
+      }
+      if (!ri_trace->direction){
+          printf("Backwards,%d,%f\n", r->steps_done,sqrt(d2));
+      }
+    }
+    */
+
 
     return d2 < peri*peri;
 }
@@ -114,6 +125,7 @@ int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const 
     // This only works for bound orbits!
     const double fdot2 = h2 / (d2*d2);
     const double peff2 = (4 * M_PI * M_PI) / fdot2; // effective period squared
+
 
     // Failsafe: use pericenter pericenter distance
     return peff2 < pfdot*pfdot * r->dt*r->dt;
@@ -168,7 +180,7 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
 }
 
 int reb_integrator_trace_switch_peri_debug(struct reb_simulation* const r, const unsigned int j){
-  // Used this for reversibility debugging. Remove at some point before public release!
+  // Use this for debugging purposes
   const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
   /*
   if (r->steps_done < r->ri_trace.turnaround){
@@ -696,6 +708,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
         if (_switch_peri(r, j)){
+            //printf("%d,0\n", r->steps_done);
             ri_trace->current_C = 1;
             if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
@@ -722,6 +735,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
+                //printf("SHOULD NEVER HAPPEN\n");
                 ri_trace->current_Ks[i*N+j] = 1;
                 if (ri_trace->encounter_map[i] == 0){
                     ri_trace->encounter_map[i] = 1; // trigger encounter
@@ -760,6 +774,15 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
         // Check for pericenter CE if not already triggered from pre-timstep.
         for (int j = 1; j < Nactive; j++){
             if (_switch_peri(r, j)){
+<<<<<<< HEAD
+=======
+                struct reb_particle pj = r->particles[j];
+                //double dx = pj.x;
+                //double dy = pj.y;
+                //double dz = pj.z;
+                //
+                //printf("%d,1\n", r->steps_done);
+>>>>>>> parent of 393030cb (new pham default)
                 ri_trace->current_C = 1;
                 new_close_encounter = 1;
                 if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
@@ -788,6 +811,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     for (int i = 1; i < Nactive; i++){
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
+                //printf("SHOULD NEVER HAPPEN\n");
                 if (ri_trace->current_Ks[i*N+j] == 0){
                       new_close_encounter = 1;
                 }
@@ -936,6 +960,11 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
             // Do step again
             reb_integrator_trace_step(r);
         }
+    }
+
+    if (r->ri_trace.current_C){
+      //printf("Ended with C = 1 %f\n", r->t);
+      //exit(1);
     }
 
     r->t+=r->dt;
