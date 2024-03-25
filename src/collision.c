@@ -844,6 +844,11 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     pi->r  = cbrt(pi->r*pi->r*pi->r + pj->r*pj->r*pj->r);
     pi->last_collision = r->t;
 
+    // Reset to DHC after collision with central body
+    if (r->integrator == REB_INTEGRATOR_TRACE && i == 0){
+      reb_integrator_trace_inertial_to_dh(r);
+    }
+
 
     // Keeping track of energy offst
     if(r->track_energy_offset){
@@ -867,11 +872,6 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
         }
         r->energy_offset += Ei - Ef;
     }
-
-    if (r->integrator == REB_INTEGRATOR_TRACE && i == 0){
-      reb_integrator_trace_inertial_to_dh(r);
-    }
-
 
     return swap?1:2; // Remove particle p2 from simulation
 }
