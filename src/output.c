@@ -174,6 +174,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 162, REB_INT,         "ri_bs.target_iter",            offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
     { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
     { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
+    { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
     { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",      offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
     { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",  offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
     { 168, REB_DOUBLE,      "ri_trace.last_dt_ias15",       offsetof(struct reb_simulation, ri_trace.last_dt_ias15), 0, 0},
