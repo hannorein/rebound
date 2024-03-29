@@ -16,7 +16,8 @@ class TestShearingSheet(unittest.TestCase):
         sim.softening = 0.2       # [m]
         boxsize = 50.            # [m]
         sim.configure_box(boxsize)
-        sim.configure_ghostboxes(2,2,0)
+        sim.N_ghost_x = 2
+        sim.N_ghost_y = 2
         sim.integrator = "sei"
         sim.boundary   = "shear"
         sim.gravity    = "tree"

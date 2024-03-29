@@ -71,7 +71,9 @@ The following code sets up two rings of ghost boxes in the x and y directions.
 
 === "python"
     ```python
-    sim.configure_ghostboxes(2, 2, 0)
+    sim.N_ghost_x = 2
+    sim.N_ghost_y = 2
+    sim.N_ghost_z = 0
     ```
 
 See [Rein & Liu](https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.128R/abstract) for details on the ghost box implementation.

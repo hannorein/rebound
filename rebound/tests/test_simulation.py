@@ -70,9 +70,6 @@ class TestSimulation(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.sim.remove(hash=-99334)
     
-    def test_configure_ghostboxes(self):
-        self.sim.configure_ghostboxes(1,1,1)
-   
     def test_step(self):
         self.sim.step()
         self.assertNotEqual(self.sim.t, 1.246)
