@@ -396,7 +396,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     ri_trace->mode = REB_TRACE_MODE_KEPLER;
     
     // Only Partial BS uses this step 
-    if (ri_trace->peri_mode == REB_TRACE_PERI_PARTIAL_BS){
+    if (ri_trace->peri_mode == REB_TRACE_PERI_PARTIAL_BS || !ri_trace->current_C){
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
