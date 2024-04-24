@@ -771,6 +771,8 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         r->dt = r->ri_bs.dt_proposed;
 
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
+
+			// Does this need the star velocity changes too? Or is it OK because it's in inertial
                         reb_collision_search(r);
                     }
                     reb_ode_free(nbody_ode);
@@ -855,7 +857,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.S = NULL;
     r->ri_trace.S_peri = NULL;
     
-    r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
+    r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
     
     r->ri_trace.N_allocated = 0;
     r->ri_trace.N_allocated_additional_forces = 0;
