@@ -24,12 +24,13 @@ class IntegratorTRACE(ctypes.Structure):
     >>> sim = rebound.Simulation()
     >>> sim.integrator = "trace"
     >>> sim.ri_trace.r_crit_hill = 4
-    >>> sim.ri_trace.peri_crit_fdot = 16
+    >>> sim.ri_trace.peri_crit_eta = 1
+    >>> sim.ri_trace.peri_crit_fdot = 17
     >>> sim.ri_trace.peri_crit_distance = 1
 
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_crit_fdot=={4},peri_crit_distance={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_crit_fdot, self.peri_crit_distance)
+        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5},peri_crit_fdot=={6},peri_crit_distance={7}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_crit_fdot, self.peri_crit_distance)
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
@@ -55,6 +56,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
                 ]
+    # To be honest I'm not sure what these do: do we need this? - Tiger
     @property
     def S(self):
         raise AttributeError("You can only set C function pointers from python.")
@@ -72,7 +74,9 @@ class IntegratorTRACE(ctypes.Structure):
     @S_peri.setter
     def S_peri(self, func):
         if func == "default":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_default,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_pham,TRACECF)
+        elif func == "fdot":
+            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_fdot,TRACECF)
         elif func == "distance":
             self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_distance,TRACECF)
         elif func == "none":

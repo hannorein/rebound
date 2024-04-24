@@ -604,7 +604,7 @@ void reb_simulation_init(struct reb_simulation* r){
     
     // ********** TRACE
     r->ri_trace.mode = REB_TRACE_MODE_NONE;
-    r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;
+    r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.r_crit_hill = 3.;
     r->ri_trace.peri_crit_eta = 1.0;

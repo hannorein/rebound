@@ -804,9 +804,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                     }
                                 }
                             }
-                            //if (r->ri_trace.print){
-                            //  printf("\n");
-                            //}
 
         #else // OPENMP
                             particles[0].ax = 0;

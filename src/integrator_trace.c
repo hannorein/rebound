@@ -395,82 +395,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
     ri_trace->mode = REB_TRACE_MODE_KEPLER;
     
-    
-    if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
-        // current_C cannot be triggered.
-        assert(ri_trace->current_C == 0);
-        // run
-        const double old_dt = r->dt;
-        const double old_t = r->t;
-        double t_needed = r->t + dt; 
-
-        reb_integrator_ias15_reset(r);
-
-        if (ri_trace->last_dt_ias15){
-            r->dt = ri_trace->last_dt_ias15; // use previously used timestep to start with
-        }else{
-            r->dt = 0.01*dt; // start with a small timestep.
-        }
-
-        while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
-            struct reb_particle star = r->particles[0]; // backup velocity
-            r->particles[0].vx = 0; // star does not move in dh 
-            r->particles[0].vy = 0;
-            r->particles[0].vz = 0;
-            reb_simulation_update_acceleration(r);
-            reb_integrator_ias15_part2(r);
-            r->particles[0].vx = star.vx; // restore every timestep for collisions
-            r->particles[0].vy = star.vy;
-            r->particles[0].vz = star.vz;
-
-            if (r->t+r->dt >  t_needed){
-                r->dt = t_needed-r->t;
-            }else{
-                ri_trace->last_dt_ias15 = r->dt;
-            }
-
-            // Search and resolve collisions
-            reb_collision_search(r);
-
-            // Do any additional post_timestep_modifications.
-            // Note: post_timestep_modifications is called here but also
-            // at the end of the full timestep. The function thus needs
-            // to be implemented with care as not to do the same 
-            // modification multiple times. To do that, check the value of
-            // r->ri_mercurius.mode
-            if (r->post_timestep_modifications){
-                r->post_timestep_modifications(r);
-            }
-
-            star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
-            star.vy = r->particles[0].vy;
-            star.vz = r->particles[0].vz;
-            if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
-                // Collision with star occured
-                // Shift all particles back to heliocentric coordinates
-                // Ignore stars velocity:
-                //   - will not be used after this
-                //   - com velocity is unchained. this velocity will be used
-                //     to reconstruct star's velocity later.
-                for (int i=r->N-1; i>=0; i--){
-                    r->particles[i].x -= r->particles[0].x;
-                    r->particles[i].y -= r->particles[0].y;
-                    r->particles[i].z -= r->particles[0].z;
-                }
-            }
-        }
-        // if only test particles encountered massive bodies, reset the
-        // massive body coordinates to their post Kepler step state
-        if(ri_trace->tponly_encounter){
-            for (unsigned int i=1;i<ri_trace->encounter_N_active;i++){
-                unsigned int mi = ri_trace->encounter_map[i];
-                r->particles[mi] = ri_trace->particles_backup_kepler[mi];
-            }
-        }
-        r->t = old_t;
-        r->dt = old_dt;
-    }else{
-        // REB_TRACE_PERI_PARTIAL_BS or REB_TRACE_FULL_BS
+    // Only Partial BS uses this step 
+    if (ri_trace->peri_mode == REB_TRACE_PERI_PARTIAL_BS){
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
@@ -789,6 +715,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_interaction_step(r, r->dt/2.);
     }else{
+	// Pericenter approach with one of the FULL prescriptions
         double t_needed = r->t + r->dt;
         const double old_dt = r->dt;
         const double old_t = r->t;
@@ -907,6 +834,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_fdot = 17.;
     r->ri_trace.peri_crit_distance = 0.;
+    r->ri_trace.peri_crit_eta = 1.0;
 
     // Internal arrays (only used within one timestep)
     free(r->ri_trace.particles_backup);
