@@ -803,6 +803,9 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     const int N = r->N;
     
     //reb_integrator_trace_inertial_to_dh(r);
+    
+    // Create copy of all particle to allow for the step to be rejected.
+    memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
                         
     // This will be set to 1 if a collision occured.
     ri_trace->force_accept = 0;
@@ -811,10 +814,11 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_pre_ts_check(r);
     
     if (ri_trace->current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
-        // Create copy of all particle to allow for the step to be rejected.
-        memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
-
 	reb_integrator_trace_inertial_to_dh(r); 
+        
+	// Create copy of all particle to allow for the step to be rejected.
+	// Only reject in DHC
+        memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
     }
     // Attempt one step. 
     reb_integrator_trace_step(r);
@@ -835,7 +839,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 
-    reb_integrator_trace_dh_to_inertial(r);
+    // reb_integrator_trace_dh_to_inertial(r);
+
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
