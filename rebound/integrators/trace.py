@@ -6,14 +6,25 @@ from ..simulation import Simulation
 from ..particle import Particle
 from ..vectors import Vec3dBasic
 
+TRACE_PERI_MODES = {"FULL_BS": 1, "PARTIAL_BS": 0, "FULL_IAS15": 2}
+
 class IntegratorTRACE(ctypes.Structure):
     """
     This class is an abstraction of the C-struct reb_integrator_trace.
-    It controls the behaviour of the TRACE integrator.  See Lu et al. (2023)
+    It controls the behaviour of the TRACE integrator.  See Lu, Hernandez and Rein (2024)
     for more details.
 
     :ivar float r_crit_hill:
         Switching radius in units of the modified hill radius.
+    :ivar float peri_mode:
+        Pericenter switching mode. Determines how close encounters with the central star are integrated.
+        The default is 1, which uses the FULL BS prescription. This converts our system from Democratic Heliocentric Coordinates to back to Intertial Cartesian coordinates. The whole system is integrated with Bulirsch-Stoer.
+        If set to 0, we use the PARTIAL BS prescription. This moves all terms from the Jump step to the Kepler step as described in Hernandez and Dehnen (2023). The Kepler step is integrated with Bulirsch-Stoer.
+        If set to 2, we use the FULL IAS15 prescription. This acts similarly to the PURE BS prescription, but uses IAS15 instead of BS to integrate the whole system.
+    :ivar float peri_crit_eta:
+        Pericenter switching condition: ratio of timestep to condition from Pham, Rein and Spiegel 2024.
+    :ivar float peri_crit_distance:
+        Pericenter switching condition: heliocentric distance
     :ivar float peri_crit_fdot:
         Pericenter switching condition: rate of change of true anomaly in units of 1/timestep.
     :ivar float peri_crit_distance:
@@ -74,16 +85,43 @@ class IntegratorTRACE(ctypes.Structure):
     @S_peri.setter
     def S_peri(self, func):
         if func == "default":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_pham,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_pham,TRACECF)
         elif func == "fdot":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_fdot,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_fdot,TRACECF)
         elif func == "distance":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_distance,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_distance,TRACECF)
         elif func == "none":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_peri_switch_none,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_none,TRACECF)
         else:
             self._S_perifp = TRACECF(func)
             self._S_peri = self._S_perifp
+    
+    @property
+    def peri_mode(self):
+        """
+        Get or set the pericenter switching mode.
+
+        Available kernels are:
+
+        - ``'FULL_BS'`` (Integrate entire system with BS)
+        - ``'PARTIAL_BS'`` (Integrate only the Kepler step with BS)
+        - ``'FULL_IAS15'`` (Integrate entire system with IAS15)
+        """
+        i = self.peri_mode
+        for name, _i in TRACE_PERI_MODES.items():
+            if i==_i:
+                return name
+        return i
+    @peri_mode.setter
+    def peri_mode(self, value):
+        if isinstance(value, int):
+            self.peri_mode = ctypes.c_uint(value)
+        elif isinstance(value, basestring):
+            value = value.lower().replace(" ", "")
+            if value in TRACE_PERI_MODES: 
+                self.peri_mmode = TRACE_PERI_MODES[value]
+            else:
+                raise ValueError("Warning. Pericenter switching mode not found.")
 
 TRACEKF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
 TRACECF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)

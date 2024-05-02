@@ -403,7 +403,7 @@ The `reb_integrator_mercurius` structure contains the configuration and data str
 ## TRACE
 
 TRACE is a hybrid time-reversible integrator, based on the algorithm described in [Hernandez & Dehnen 2023](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract). 
-It uses WHFast for long term integrations but switches reversibly to BS for all close encounters. TRACE is appropriate for systems with a dominant central mass.
+It uses WHFast for long term integrations but switches time-reversibly to BS or IAS15 for all close encounters. TRACE is appropriate for systems with a dominant central mass that will occasionally have close encounters. 
 The TRACE implementation is described in UPDATE LINK [Lu et al in prep](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract)
 
 
@@ -412,14 +412,14 @@ The following code enables TRACE and sets the critical radius to 4 Hill radii
     ```c
     struct reb_simulation* r = reb_create_simulation();
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.hillfac = 4.;
+    r->ri_trace.r_crit_hill = 4;
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
     sim.integrator = "trace"
-    sim.ri_trace.hillfac = 4.
+    sim.ri_trace.r_crit_hill = 4
     ```
 
 The `reb_integrator_trace` structure contains the configuration and data structures used by the hybrid symplectic TRACE integrator.
@@ -462,10 +462,17 @@ The `reb_integrator_trace` structure contains the configuration and data structu
 
     - Default switching function
 
-        This switching function checks if a body is close to its pericenter, inspired by [Wisdom 2015](https://ui.adsabs.harvard.edu/abs/2015AJ....150..127W/abstract)
+        This switching function checks if a body is close to its pericenter by considering a timescale derived from high-order derivatives of the particle's herliocentric position, inspired by [Pham, Rein, and Spiegel 2024](https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract).
 
         ```c
-        double reb_integrator_trace_peri_switch_default(const struct reb_simulation* const r, const unsigned int j);           
+        double reb_integrator_trace_switch_peri_pham(const struct reb_simulation* const r, const unsigned int j);           
+        ```
+    - Fdot switching function
+
+        This switching function checks if a body is close to its pericenter by measuring the rate of change of true anomaly, inspired by [Wisdom 2015](https://ui.adsabs.harvard.edu/abs/2015AJ....150..127W/abstract)
+
+        ```c
+        double reb_integrator_trace_switch_peri_fdot(const struct reb_simulation* const r, const unsigned int j);           
         ```
         
     - Distance switching function
@@ -473,7 +480,7 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         This switching function checks for close encounters with a simple heliocentric distance check
 
         ```c
-        double reb_integrator_trace_peri_switch_distance(const struct reb_simulation* const r, const unsigned int j);           
+        double reb_integrator_trace_switch_peri_distance(const struct reb_simulation* const r, const unsigned int j);           
         ```
 
     The switching function can be manually set using this syntax:
@@ -481,7 +488,8 @@ The `reb_integrator_trace` structure contains the configuration and data structu
     === "C"
         ```c
         struct reb_simulation* r = reb_create_simulation();
-        r->ri_trace.S_peri = reb_integrator_trace_peri_switch_distance;
+        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_fdot;
+        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
         ```
 
     === "Python"
@@ -490,16 +498,59 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         sim.ri_trace.S_peri = "distance"
         ```
 
-`double hillfac`
+`double r_crit_hill`
 :   The critical switchover radii of non-central particles are calculated based on a modified Hill radii criteria. This modified Hill radius for each particle is calculated and then multiplied by the `hillfac` parameter. The parameter is in units of the modified Hill radius. The default value is 4.
 
-`double pfdot`
-:   The criteria for a pericenter approach with the central body. This criteria is used in the `default` pericenter switching condition. It flags a particle as in a close pericenter approach if the effective period at pericenter (in units of the timestep) is less than the `hillfac` parameter. The default value is 16.
+`double peri_crit_eta`
+:   The criteria for a pericenter approach with the central body. This criteria is used in the `default` pericenter switching condition. It flags a particle as in a close pericenter approach if the ratio of the timestep to the condition described in [Pham, Rein, and Spiegel 2024](https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract). The default value is 1.
 
-`double peri_distance`
-:   The criteria for a pericenter approach with the central body. This criteria is used in the `distance` pericenter switching condition. It flags a particle as in a close pericenter approach if its heliocentric distance is less than the `peri_distance` parameter.
+`double peri_crit_fdot`
+:   The criteria for a pericenter approach with the central body. This criteria is used in the `fdot` pericenter switching condition. It flags a particle as in a close pericenter approach if the effective period at pericenter (in units of the timestep) is less than the `peri_crit_fdot` parameter. The default value is 17.
 
+`double peri_crit_distance`
+:   The criteria for a pericenter approach with the central body. This criteria is used in the `distance` pericenter switching condition. It flags a particle as in a close pericenter approach if its heliocentric distance is less than the `peri_crit_distance` parameter.
 
+    These switching criteria can be manually set using this syntax:
+
+    === "C"
+        ```c
+        struct reb_simulation* r = reb_create_simulation();
+        r->ri_trace.peri_crit_eta = 0.5;    // or
+        r->ri_trace.peri_crit_fdot = 16;    // or
+        r->ri_trace.peri_crit_distance = 1;
+        ```
+
+    === "Python"
+        ```python
+        sim = rebound.Simulation()
+        sim.ri_trace.peri_crit_eta = 0.5    # or
+        sim.ri_trace.peri_crit_fdot = 16    # or
+        sim.ri_trace.peri_crit_distance = 1 # or
+        ```
+`unsigned int peri_mode`
+:   This variable determines how TRACE integrates close approaches with the central star. 
+    The following options are currently supported:
+
+    - Integrating the entire system with BS. This is the default.
+    - Integrating only the Kepler Step with BS. 
+    - Integrating the entire system with IAS15. 
+        
+    Check [Lu, Hernandez & Rein 2024]() for details on what these kernel methods are. 
+    The syntax to use them is 
+    
+    === "C"
+        ```c
+        r->ri_trace.peri_mode = REB_TRACE_PERI_PARTIAL_BS;  // or
+        r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;     // or
+        r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_IAS15;  // or
+        ```
+
+    === "Python"
+        ```python
+        sim.ri_trace.peri_mode = "PARTIAL_BS" # or
+        sim.ri_trace.peri_mode = "FULL_BS"    # or
+        sim.ri_trace.peri_mode = "FULL_IAS15" # or
+        ```
 
 ## SABA
 

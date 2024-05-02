@@ -1,7 +1,7 @@
 /**
  * @file    integrator_trace.c
  * @brief   TRACE
- * @author  Tiger Lu
+ * @author  Tiger Lu, Hanno Rein
  *
  * @section LICENSE
  * Copyright (c) 2023 Tiger Lu
