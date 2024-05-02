@@ -299,7 +299,6 @@ struct reb_integrator_trace {
     int* current_Ks; // TLu tracking K for the entire timestep
     unsigned int current_C; // TLu tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
-    int coord; // 1 for DHC, 0 for inertial
 };
 
 // SABA Integrator (Laskar & Robutel 2001)
@@ -622,7 +621,7 @@ struct reb_simulation {
         REB_INTEGRATOR_BS = 12,         // Gragg-Bulirsch-Stoer 
         // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,  // WHFast integrator, optimized for AVX512
-        REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu et al. 2023)
+        REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu, Hernandez and Rein 2024)
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)

@@ -119,7 +119,7 @@ class IntegratorTRACE(ctypes.Structure):
         elif isinstance(value, basestring):
             value = value.lower().replace(" ", "")
             if value in TRACE_PERI_MODES: 
-                self.peri_mmode = TRACE_PERI_MODES[value]
+                self.peri_mode = TRACE_PERI_MODES[value]
             else:
                 raise ValueError("Warning. Pericenter switching mode not found.")
 
