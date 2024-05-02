@@ -123,24 +123,17 @@ int reb_integrator_trace_switch_peri_pham(struct reb_simulation* const r, const 
     // Many square roots, can this be fixed?
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use.
-    double x0 = r->particles[0].x;
-    double y0 = r->particles[0].y;
-    double z0 = r->particles[0].z;
     
-    double x = r->particles[j].x - x0;
-    double y = r->particles[j].y - x0;
-    double z = r->particles[j].z - x0;
+    double x = r->particles[j].x;
+    double y = r->particles[j].y;
+    double z = r->particles[j].z;
     double d2 = x*x + y*y + z*z;
     double d = sqrt(d2);
 
     // first derivative
-    double vx0 = r->particles[0].vx;
-    double vy0 = r->particles[0].vy;
-    double vz0 = r->particles[0].vz;
-    
-    double dx = r->particles[j].vx - vx0;
-    double dy = r->particles[j].vy - vy0;
-    double dz = r->particles[j].vz - vz0;
+    double dx = r->particles[j].vx;
+    double dy = r->particles[j].vy;
+    double dz = r->particles[j].vz;
 
     // second derivative
     double prefact2 = -GM/(d2*d);
@@ -716,7 +709,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 static void reb_integrator_trace_step(struct reb_simulation* const r){
     if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
-        reb_integrator_trace_inertial_to_dh(r);
 	reb_integrator_trace_interaction_step(r, r->dt/2.);
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_kepler_step(r, r->dt);
@@ -802,7 +794,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     
-    //reb_integrator_trace_inertial_to_dh(r);
+    reb_integrator_trace_inertial_to_dh(r);
     
     // Create copy of all particle to allow for the step to be rejected.
     memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
@@ -813,13 +805,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     // Check if there are any close encounters
     reb_integrator_trace_pre_ts_check(r);
     
-    if (ri_trace->current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
-	reb_integrator_trace_inertial_to_dh(r); 
-        
-	// Create copy of all particle to allow for the step to be rejected.
-	// Only reject in DHC
-        memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
-    }
     // Attempt one step. 
     reb_integrator_trace_step(r);
 
@@ -839,7 +824,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 
-    // reb_integrator_trace_dh_to_inertial(r);
+    reb_integrator_trace_dh_to_inertial(r);
 
 }
 
