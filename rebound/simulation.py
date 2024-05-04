@@ -921,7 +921,8 @@ class Simulation(Structure):
                     if "frame" not in kwargs:
                         if hasattr(self, 'default_plane'):
                             kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
-                    self.add(horizons.query_horizons_for_particle(particle, **kwargs), hash=particle)
+                    mass_unit = hash_to_unit(self.python_unit_m) # For manually provided masses
+                    self.add(horizons.query_horizons_for_particle(mass_unit, particle, **kwargs), hash=particle)
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
@@ -1226,25 +1227,6 @@ class Simulation(Structure):
         clibrebound.reb_simulation_configure_box(byref(self), c_double(boxsize), c_int(N_root_x), c_int(N_root_y), c_int(N_root_z))
         return
    
-    def configure_ghostboxes(self, N_ghost_x=0, N_ghost_y=0, N_ghost_z=0):
-        """
-        Initialize the ghost boxes.
-
-        This function only needs to be called it boundary conditions other than "none" or
-        "open" are used. In such a case the number of ghostboxes must be known and is set 
-        with this function. 
-        
-        Parameters
-        ----------
-        N_ghost_x, N_ghost_y, N_ghost_z : int
-            The number of ghost boxes in each direction. All values default to 0 (no ghost boxes).
-        """
-        clibrebound.N_ghost_x = c_int(N_ghost_x)
-        clibrebound.N_ghost_y = c_int(N_ghost_y)
-        clibrebound.N_ghost_z = c_int(N_ghost_z)
-        return
-
-
 # Output to file (Simulationarchive)
     def save_to_file(self, filename, interval=None, walltime=None, step=None, delete_file=False):
         """

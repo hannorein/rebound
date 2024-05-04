@@ -7,6 +7,7 @@ import datetime
 import re
 import warnings
 import sys
+from .units import convert_mass
 
 HORIZONSBASEURL = "https://ssd.jpl.nasa.gov/api/horizons.api?"
 
@@ -65,7 +66,7 @@ def api_request(particle, datestart, dateend, plane):
     return body
 
 
-def query_horizons_for_particle(particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
+def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
                 anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic", hash=0):
     if plane not in ["ecliptic", "frame"]:
         raise AttributeError(
@@ -152,7 +153,11 @@ def query_horizons_for_particle(particle=None, m=None, x=None, y=None, z=None, v
         else:
             print("Found body (Name could not be detected)")
     if m is not None:
-        p.m = m
+        if mass_unit is not None:
+            p.m = convert_mass(m, mass_unit, "kg")
+        else:
+            ## Assume kg
+            p.m = m
     elif idn is not None:
         try:
             p.m = float(

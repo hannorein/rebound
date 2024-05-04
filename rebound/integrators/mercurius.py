@@ -50,13 +50,13 @@ class IntegratorMercurius(ctypes.Structure):
     @L.setter
     def L(self, func):
         if func == "mercury":
-            self._L = cast(clibrebound.reb_integrator_mercurius_L_mercury,MERCURIUSLF)
+            self._L = ctypes.cast(clibrebound.reb_integrator_mercurius_L_mercury,MERCURIUSLF)
         elif func == "C4":
-            self._L = cast(clibrebound.reb_integrator_mercurius_L_C4,MERCURIUSLF)
+            self._L = ctypes.cast(clibrebound.reb_integrator_mercurius_L_C4,MERCURIUSLF)
         elif func == "C5":
-            self._L = cast(clibrebound.reb_integrator_mercurius_L_C5,MERCURIUSLF)
+            self._L = ctypes.cast(clibrebound.reb_integrator_mercurius_L_C5,MERCURIUSLF)
         elif func == "infinity":
-            self._L = cast(clibrebound.reb_integrator_mercurius_L_minfinity,MERCURIUSLF)
+            self._L = ctypes.cast(clibrebound.reb_integrator_mercurius_L_infinity,MERCURIUSLF)
         else:
             self._Lfp = MERCURIUSLF(func)
             self._L = self._Lfp

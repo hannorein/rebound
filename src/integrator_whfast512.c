@@ -765,9 +765,9 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
         particles[s*N_per_system].x  = ri_whfast512->p_jh0[s].x - x0s;
         particles[s*N_per_system].y  = ri_whfast512->p_jh0[s].y - y0s;
         particles[s*N_per_system].z  = ri_whfast512->p_jh0[s].z - z0s;
-        particles[s*N_per_system].vx = ri_whfast512->p_jh0[s].vx = vx0s;
-        particles[s*N_per_system].vy = ri_whfast512->p_jh0[s].vy = vy0s;
-        particles[s*N_per_system].vz = ri_whfast512->p_jh0[s].vz = vz0s;
+        particles[s*N_per_system].vx = ri_whfast512->p_jh0[s].vx - vx0s;
+        particles[s*N_per_system].vy = ri_whfast512->p_jh0[s].vy - vy0s;
+        particles[s*N_per_system].vz = ri_whfast512->p_jh0[s].vz - vz0s;
         for (unsigned int i=1; i<N_per_system; i++){
             particles[s*N_per_system+i].x  = x[s*p_per_system+(i-1)] + particles[s*N_per_system].x;
             particles[s*N_per_system+i].y  = y[s*p_per_system+(i-1)] + particles[s*N_per_system].y;

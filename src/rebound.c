@@ -67,7 +67,7 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.3.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.3.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
@@ -423,11 +423,9 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     size_t sizep;
     reb_simulation_save_to_stream(r, &bufp,&sizep);
     
-    reb_simulation_reset_function_pointers(r_copy);
-    r_copy->simulationarchive_filename = NULL;
-    
-    // Set to old version by default. Will be overwritten if new version was used.
-    r_copy->simulationarchive_version = 0;
+    reb_simulation_free_pointers(r_copy);
+    memset(r_copy, 0, sizeof(struct reb_simulation));
+    reb_simulation_init(r_copy);
 
     FILE* fin = reb_fmemopen(bufp, sizep, "r");
     reb_input_fields(r_copy, fin, warnings);

@@ -63,7 +63,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
+//#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
     
 // Default configuration parameter. 
 // They are hard coded here because it

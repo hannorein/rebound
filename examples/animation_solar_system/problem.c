@@ -53,6 +53,8 @@ void heartbeat(struct reb_simulation* const r){
         view = reb_mat4df_multiply(rm, view); 
 
     }else if (r->t > 2.*2.*M_PI && r->t < 4.*2.*M_PI){              // Year 2 to 4
+        // Show orbits as wires
+        r->display_settings->wire = 1;
         
         // Increase length of trail to 64
         r->display_settings->breadcrumbs = 64;
@@ -192,8 +194,8 @@ int main(int argc, char* argv[]) {
 
     // Show particles as points (not as spheres with their real size)
     r->display_settings->spheres = 0;
-    // Show orbits
-    r->display_settings->wire = 1;
+    // Show orbits as planes
+    r->display_settings->wire = 2;
     // Show 4 past particle positions
     r->display_settings->breadcrumbs = 4;
 
