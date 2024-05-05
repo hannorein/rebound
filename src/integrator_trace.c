@@ -93,13 +93,11 @@ int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, co
 int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double pfdot = ri_trace->peri_crit_fdot;
-    const double pdist = ri_trace->peri_crit_distance;
 
     const double dx = r->particles[j].x;
     const double dy = r->particles[j].y;
     const double dz = r->particles[j].z;
     const double d2 = dx*dx + dy*dy + dz*dz;
-    if (d2 < pdist*pdist) return 1;
 
     const double dvx = r->particles[j].vx;
     const double dvy = r->particles[j].vy;
@@ -114,8 +112,6 @@ int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const 
     const double fdot2 = h2 / (d2*d2);
     const double peff2 = (4 * M_PI * M_PI) / fdot2; // effective period squared
 
-
-    // Failsafe: use pericenter pericenter distance
     return peff2 < pfdot*pfdot * r->dt*r->dt;
 }
 
@@ -325,7 +321,6 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     reb_integrator_trace_update_particles(r, y);
     reb_simulation_update_acceleration(r);
 
-    // TLu Levison & Duncan 22, 23 EoMs
     double px=0., py=0., pz=0.;
     int* map = r->ri_trace.encounter_map;
     int N = r->ri_trace.encounter_N;
@@ -722,7 +717,6 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
         r->ri_trace.mode = REB_TRACE_MODE_FULL; // for collision search
-        //reb_integrator_trace_dh_to_inertial(r);
         switch (r->ri_trace.peri_mode){
             case REB_TRACE_PERI_FULL_IAS15:
                 // Run default IAS15 integration
@@ -773,7 +767,6 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
 
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
 
-			// Does this need the star velocity changes too? Or is it OK because it's in inertial
                         reb_collision_search(r);
                     }
                     reb_ode_free(nbody_ode);
@@ -786,7 +779,6 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         r->gravity = REB_GRAVITY_TRACE;
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
-        //reb_integrator_trace_inertial_to_dh(r); // TODO: This should be optimized.
     }
 }
 

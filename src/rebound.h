@@ -257,7 +257,7 @@ struct reb_integrator_sei {
     double tandtz;      // Cached tan(), z axis
 };
 
-// TRACE (Lu et al. 2023)
+// TRACE (Lu Hernandez & Rein 2024)
 struct reb_integrator_trace {
     int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
     int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
@@ -288,16 +288,16 @@ struct reb_integrator_trace {
     unsigned int N_allocated_additional_forces;
     unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
-    struct reb_particle* REB_RESTRICT particles_backup; //  TLu contains coordinates before the entire step
-    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  TLu contains coordinates before kepler step
+    struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
+    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
 
     int* encounter_map;             // Map to represent which particles are integrated with BS
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
-    int* current_Ks; // TLu tracking K for the entire timestep
-    unsigned int current_C; // TLu tracking C for the entire timestep
+    int* current_Ks; // Tracking K_ij for the entire timestep
+    unsigned int current_C; // Tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 

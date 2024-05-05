@@ -283,7 +283,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         double* yDot = odes[s]->yDot;
         const int length = odes[s]->length;
         for (int i = 0; i < length; ++i) {
-            y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); // = 0.25*(y_(2n-1) + 2*y_n(2) + y_(2n+1))     Eq (9.13c)
+            y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); 
         }
     }
 
@@ -292,7 +292,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
 static void extrapolate(const struct reb_ode* ode, double * const coeff, const int k) {
     double* const y1 = ode->y1;
-    double* const C = ode->C;  // C and D values follow Numerical Recipes 
+    double* const C = ode->C;
     double** const D =  ode->D;
     double const length = ode->length;
     for (int j = 0; j < k; ++j) {
@@ -302,8 +302,8 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
         double facD = xim1/(xi-xim1);
         for (int i = 0; i < length; ++i) {
             double CD = C[i] - D[k - j -1][i];
-            C[i] = facC * CD; // Only need to keep one C value
-            D[k - j - 1][i] = facD * CD; // Keep all D values for recursion
+            C[i] = facC * CD;
+            D[k - j - 1][i] = facD * CD;
         }
     }
     for (int i = 0; i < length; ++i) {
@@ -339,7 +339,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 void reb_integrator_bs_part1(struct reb_simulation* r){
     struct reb_ode** odes = r->odes;
-    int Ns = r->N_odes; // Number of ode sets
+    int Ns = r->N_odes;
     for (int s=0; s < Ns; s++){
         const int length = odes[s]->length;
         double* y0 = odes[s]->y;

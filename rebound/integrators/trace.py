@@ -41,11 +41,11 @@ class IntegratorTRACE(ctypes.Structure):
 
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5},peri_crit_fdot=={6},peri_crit_distance={7}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_crit_fdot, self.peri_crit_distance)
+        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5},peri_crit_fdot=={6},peri_crit_distance={7}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_mode, self.peri_crit_eta, self.peri_crit_fdot, self.peri_crit_distance)
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
-                ("peri_mode", ctypes.c_uint),
+                ("_peri_mode", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
                 ("peri_crit_fdot", ctypes.c_double),
@@ -107,7 +107,7 @@ class IntegratorTRACE(ctypes.Structure):
         - ``'PARTIAL_BS'`` (Integrate only the Kepler step with BS)
         - ``'FULL_IAS15'`` (Integrate entire system with IAS15)
         """
-        i = self.peri_mode
+        i = self._peri_mode
         for name, _i in TRACE_PERI_MODES.items():
             if i==_i:
                 return name
@@ -115,11 +115,10 @@ class IntegratorTRACE(ctypes.Structure):
     @peri_mode.setter
     def peri_mode(self, value):
         if isinstance(value, int):
-            self.peri_mode = ctypes.c_uint(value)
+            self._peri_mode = ctypes.c_uint(value)
         elif isinstance(value, basestring):
-            value = value.lower().replace(" ", "")
             if value in TRACE_PERI_MODES: 
-                self.peri_mode = TRACE_PERI_MODES[value]
+                self._peri_mode = TRACE_PERI_MODES[value]
             else:
                 raise ValueError("Warning. Pericenter switching mode not found.")
 
