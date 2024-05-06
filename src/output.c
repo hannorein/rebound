@@ -667,3 +667,4 @@ void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* f
     fprintf(of,"%e\t%e\t%e\t%e\t%e\t%e\t%e\n",r->t,A_tot.x,A_tot.y,A_tot.z,Q_tot.x,Q_tot.y,Q_tot.z);
     fclose(of);
 }
+

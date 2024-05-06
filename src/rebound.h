@@ -842,10 +842,10 @@ DLLEXPORT double reb_simulation_lyapunov(struct reb_simulation* r);
 
 // Built in mercurius switching functions
 
-double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
-double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
-double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
-double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
+DLLEXPORT double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
+DLLEXPORT double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
+DLLEXPORT double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
+DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
 
 // Built in trace switching functions
 
