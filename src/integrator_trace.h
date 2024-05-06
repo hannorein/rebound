@@ -28,7 +28,4 @@ void reb_integrator_trace_part1(struct reb_simulation* r);          ///< Interna
 void reb_integrator_trace_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_trace_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
 void reb_integrator_trace_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation
-void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Internal in-place coordinate transformation
-
 #endif

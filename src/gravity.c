@@ -1330,6 +1330,7 @@ void reb_calculate_acceleration_var(struct reb_simulation* r){
         default:
             reb_exit("Variational gravity calculation not yet implemented.");
     }
+
 }
 
 void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
@@ -1484,3 +1485,4 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
         particles[pt].az += prefact*dz; 
     }
 }
+

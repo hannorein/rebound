@@ -31,5 +31,4 @@ void reb_integrator_bs_reset(struct reb_simulation* r);          ///< Internal f
 void reb_integrator_bs_reset_struct(struct reb_integrator_bs* ri_bs);
 int reb_integrator_bs_step(struct reb_simulation* r, double dt);
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y);
-void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t);
 #endif
