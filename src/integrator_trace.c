@@ -115,8 +115,8 @@ int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const 
     return peff2 < pfdot*pfdot * r->dt*r->dt;
 }
 
-int reb_integrator_trace_switch_peri_pham(struct reb_simulation* const r, const unsigned int j){
-    // Many square roots, can this be fixed?
+int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j){
+    // Following Pham et al (2024)
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use.
     
@@ -544,7 +544,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
-    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_pham;
+    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     
     // Clear encounter map
     for (unsigned int i=1; i<r->N; i++){
@@ -621,7 +621,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
-    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_pham;
+    int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     int new_close_encounter = 0; // New CEs
     
     // Clear encounter maps

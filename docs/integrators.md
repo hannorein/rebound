@@ -404,7 +404,7 @@ The `reb_integrator_mercurius` structure contains the configuration and data str
 
 TRACE is a hybrid time-reversible integrator, based on the algorithm described in [Hernandez & Dehnen 2023](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract). 
 It uses WHFast for long term integrations but switches time-reversibly to BS or IAS15 for all close encounters. TRACE is appropriate for systems with a dominant central mass that will occasionally have close encounters. 
-The TRACE implementation is described in UPDATE LINK [Lu et al in prep](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract)
+A paper describing the TRACE implementation is in preparation. 
 
 
 The following code enables TRACE and sets the critical radius to 4 Hill radii
@@ -429,7 +429,8 @@ The `reb_integrator_trace` structure contains the configuration and data structu
     If NULL (the default), the default switching function will be used.
     The arguments `i` and `j` are the indices of the two particles considered.
     The return value is a scalar.
-    If this function returns a negative value, it means a close encounter has been flagged.
+    A negative return value means a close encounter has been flagged.
+    If the return values of both this function and the central switching function below are always positive, then the integrator effectively becomes the standard Wisdom-Holman integrator.
 
     - Default switching function
 
@@ -458,14 +459,14 @@ The `reb_integrator_trace` structure contains the configuration and data structu
     If NULL (the default), the default switching function will be used.
     The argument `j` is the index of the non-central particle considered.
     The return value is a scalar.
-    If this function returns a negative value, it means a close encounter has been flagged. If the return values of both this function and the non-central switching function are always positive, then the integrator effectively becomes the standard Wisdom-Holman integrator.
+    A negative value means a close encounter has been flagged. 
 
     - Default switching function
 
         This switching function checks if a body is close to its pericenter by considering a timescale derived from high-order derivatives of the particle's herliocentric position, inspired by [Pham, Rein, and Spiegel 2024](https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract).
 
         ```c
-        double reb_integrator_trace_switch_peri_pham(const struct reb_simulation* const r, const unsigned int j);           
+        double reb_integrator_trace_switch_peri_default(const struct reb_simulation* const r, const unsigned int j);           
         ```
     - Fdot switching function
 
@@ -488,14 +489,19 @@ The `reb_integrator_trace` structure contains the configuration and data structu
     === "C"
         ```c
         struct reb_simulation* r = reb_create_simulation();
+        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_default; // default
         r->ri_trace.S_peri = reb_integrator_trace_switch_peri_fdot;
         r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
+        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none; // Turn off pericenter switching
         ```
 
     === "Python"
         ```python
         sim = rebound.Simulation()
+        sim.ri_trace.S_peri = "default" # Following Pham et al 2024
+        sim.ri_trace.S_peri = "fdot"
         sim.ri_trace.S_peri = "distance"
+        sim.ri_trace.S_peri = "none" # Turn off pericenter switching 
         ```
 
 `double r_crit_hill`

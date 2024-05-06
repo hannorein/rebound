@@ -85,7 +85,7 @@ class IntegratorTRACE(ctypes.Structure):
     @S_peri.setter
     def S_peri(self, func):
         if func == "default":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_pham,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_default,TRACECF)
         elif func == "fdot":
             self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_fdot,TRACECF)
         elif func == "distance":
