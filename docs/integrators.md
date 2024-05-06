@@ -505,7 +505,7 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         ```
 
 `double r_crit_hill`
-:   The critical switchover radii of non-central particles are calculated based on a modified Hill radii criteria. This modified Hill radius for each particle is calculated and then multiplied by the `hillfac` parameter. The parameter is in units of the modified Hill radius. The default value is 4.
+:   The critical switchover radii of non-central particles are calculated based on a modified Hill radii criteria. This modified Hill radius for each particle is calculated and then multiplied by the `hillfac` parameter. The parameter is in units of the modified Hill radius. This value is used by the `default` switching function. The default value is 4.
 
 `double peri_crit_eta`
 :   The criteria for a pericenter approach with the central body. This criteria is used in the `default` pericenter switching condition. It flags a particle as in a close pericenter approach if the ratio of the timestep to the condition described in [Pham, Rein, and Spiegel 2024](https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract). The default value is 1.
