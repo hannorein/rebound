@@ -22,8 +22,10 @@ class TestServer(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w: 
             warnings.simplefilter("always")
             sim.start_server(port=1234)
-            for ww in w:
-                print(str(ww))
+            if len(w)>1:
+                print("More errors than expected:")
+                for ww in w:
+                    print(str(ww))
             self.assertEqual(len(w),1)
         self.assertNotEqual(sim._server_data,None)
         self.assertEqual(sim._server_data.contents.ready,1)
