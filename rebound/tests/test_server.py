@@ -15,17 +15,17 @@ class TestServer(unittest.TestCase):
         self.assertEqual(sim._server_data.contents.ready,1)
         self.assertEqual(sim._server_data.contents.port,1234)
     
-    #def test_start_with_download(self):
-    #    if os.path.isfile("rebound.html"):
-    #        os.remove("rebound.html")
-    #    sim = rebound.Simulation()
-    #    with warnings.catch_warnings(record=True) as w: 
-    #        warnings.simplefilter("always")
-    #        sim.start_server(port=1234)
-    #        self.assertEqual(len(w),1)
-    #    self.assertNotEqual(sim._server_data,None)
-    #    self.assertEqual(sim._server_data.contents.ready,1)
-    #    self.assertEqual(sim._server_data.contents.port,1234)
+    def test_start_with_download(self):
+        if os.path.isfile("rebound.html"):
+            os.remove("rebound.html")
+        sim = rebound.Simulation()
+        with warnings.catch_warnings(record=True) as w: 
+            warnings.simplefilter("always")
+            sim.start_server(port=1234)
+            self.assertEqual(len(w),1)
+        self.assertNotEqual(sim._server_data,None)
+        self.assertEqual(sim._server_data.contents.ready,1)
+        self.assertEqual(sim._server_data.contents.port,1234)
     
     def test_connect(self):
         teststring = "<h1>Hi</h1>"
