@@ -424,20 +424,20 @@ The following code enables TRACE and sets the critical radius to 4 Hill radii
 
 The `reb_integrator_trace` structure contains the configuration and data structures used by the hybrid symplectic TRACE integrator.
 
-`double (*S) (const struct reb_simulation* const r, const unsigned int i, const unsigned int j)`
+`int (*S) (const struct reb_simulation* const r, const unsigned int i, const unsigned int j)`
 :   This is a function pointer to the switching function for close encounters between non-central bodies.
     If NULL (the default), the default switching function will be used.
     The arguments `i` and `j` are the indices of the two particles considered.
-    The return value is a scalar.
-    A negative return value means a close encounter has been flagged.
-    If the return values of both this function and the central switching function below are always positive, then the integrator effectively becomes the standard Wisdom-Holman integrator.
+    The return value is either 0 or 1.
+    A return value of 1 means a close encounter has been flagged.
+    If the return values of both this function and the central switching function below are always 0, then the integrator effectively becomes the standard Wisdom-Holman integrator.
 
     - Default switching function
 
-        This is a similar (but slightly modified) switching function used in MERCURY and MERCURIUS.
+        This is a similar (but slightly modified) switching function used in MERCURY. It uses a modified Hill radius criteria, with heliocentric distance replacing semimajor axis
 
         ```c
-        double reb_integrator_trace_switch_default(const struct reb_simulation* const r, const unsigned int i, const unsigned int j);           
+        int reb_integrator_trace_switch_default(const struct reb_simulation* const r, const unsigned int i, const unsigned int j);           
         ```
 
     The switching function can be manually set using this syntax:
@@ -454,26 +454,26 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         sim.ri_trace.S = "default"
         ```
         
-`double (*S_peri) (const struct reb_simulation* const r, const unsigned int j)`
+`int  (*S_peri) (const struct reb_simulation* const r, const unsigned int j)`
 :   This is a function pointer to the switching function for close encounters involving the central body.
     If NULL (the default), the default switching function will be used.
     The argument `j` is the index of the non-central particle considered.
-    The return value is a scalar.
-    A negative value means a close encounter has been flagged. 
+    The return value is either 0 or 1.
+    A return value of 1 means a close encounter has been flagged. 
 
     - Default switching function
 
         This switching function checks if a body is close to its pericenter by considering a timescale derived from high-order derivatives of the particle's herliocentric position, inspired by [Pham, Rein, and Spiegel 2024](https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract).
 
         ```c
-        double reb_integrator_trace_switch_peri_default(const struct reb_simulation* const r, const unsigned int j);           
+        int reb_integrator_trace_switch_peri_default(const struct reb_simulation* const r, const unsigned int j);           
         ```
     - Fdot switching function
 
         This switching function checks if a body is close to its pericenter by measuring the rate of change of true anomaly, inspired by [Wisdom 2015](https://ui.adsabs.harvard.edu/abs/2015AJ....150..127W/abstract)
 
         ```c
-        double reb_integrator_trace_switch_peri_fdot(const struct reb_simulation* const r, const unsigned int j);           
+        int reb_integrator_trace_switch_peri_fdot(const struct reb_simulation* const r, const unsigned int j);           
         ```
         
     - Distance switching function
@@ -481,7 +481,7 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         This switching function checks for close encounters with a simple heliocentric distance check
 
         ```c
-        double reb_integrator_trace_switch_peri_distance(const struct reb_simulation* const r, const unsigned int j);           
+        int reb_integrator_trace_switch_peri_distance(const struct reb_simulation* const r, const unsigned int j);           
         ```
 
     The switching function can be manually set using this syntax:
