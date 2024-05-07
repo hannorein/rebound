@@ -717,6 +717,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
         r->ri_trace.mode = REB_TRACE_MODE_FULL; // for collision search
+	reb_integrator_trace_dh_to_inertial(r);
         switch (r->ri_trace.peri_mode){
             case REB_TRACE_PERI_FULL_IAS15:
                 // Run default IAS15 integration
@@ -779,6 +780,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         r->gravity = REB_GRAVITY_TRACE;
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
+	reb_integrator_trace_inertial_to_dh(r);
     }
 }
 
