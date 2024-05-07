@@ -63,7 +63,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 17, REB_DOUBLE,       "exit_max_distance",            offsetof(struct reb_simulation, exit_max_distance), 0, 0},
     { 18, REB_DOUBLE,       "exit_min_distance",            offsetof(struct reb_simulation, exit_min_distance), 0, 0},
     { 19, REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0},
-    { 20, REB_INT,          "track_energ_yoffset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0},
+    { 20, REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0},
     { 21, REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0},
     { 22, REB_VEC3D,        "boxsize",                      offsetof(struct reb_simulation, boxsize), 0, 0},
     { 23, REB_DOUBLE,       "boxsize_max",                  offsetof(struct reb_simulation, boxsize_max), 0, 0},
@@ -172,8 +172,13 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 160, REB_INT,         "ri_bs.first_or_last_step",     offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
     { 161, REB_INT,         "ri_bs.previous_rejected",      offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
     { 162, REB_INT,         "ri_bs.target_iter",            offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
-//    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
+    { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
+    { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
+    { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",      offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
+    { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",  offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
+    { 168, REB_DOUBLE,      "ri_trace.last_dt_ias15",       offsetof(struct reb_simulation, ri_trace.last_dt_ias15), 0, 0},
+//    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
@@ -593,6 +598,8 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
         r->collision_resolve ||
         r->additional_forces ||
         r->heartbeat ||
+        r->ri_trace.S ||
+        r->ri_trace.S_peri ||
         r->post_timestep_modifications ||
         r->free_particle_ap){
         functionpointersused = 1;
@@ -661,4 +668,3 @@ void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* f
     fclose(of);
 }
 
-    

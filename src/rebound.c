@@ -38,6 +38,7 @@
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #include "integrator_bs.h"
 #include "boundary.h"
 #include "gravity.h"
@@ -89,7 +90,7 @@ void reb_simulation_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
-   
+
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -355,6 +356,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
+    reb_integrator_trace_reset(r);
     reb_integrator_bs_reset(r);
     if(r->free_particle_ap){
         for(unsigned int i=0; i<r->N; i++){
@@ -599,6 +601,17 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_janus.scale_pos = 1e-16;
     r->ri_janus.scale_vel = 1e-16;
     
+    // ********** TRACE
+    r->ri_trace.mode = REB_TRACE_MODE_NONE;
+    r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
+    r->ri_trace.encounter_N = 0;
+    r->ri_trace.r_crit_hill = 3.;
+    r->ri_trace.peri_crit_eta = 1.0;
+    r->ri_trace.peri_crit_fdot = 17.;
+    r->ri_trace.peri_crit_distance = 0.; // User should set this to appropriate value for system, but not strictly needed
+    r->ri_trace.force_accept = 0;
+    r->ri_trace.last_dt_ias15 = 0;
+
     // ********** EOS
     r->ri_eos.n = 2;
     r->ri_eos.phi0 = REB_EOS_LF;

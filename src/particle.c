@@ -30,7 +30,9 @@
 #include "boundary.h"
 #include "particle.h"
 #include "integrator_ias15.h"
+#include "integrator_bs.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #ifndef COLLISIONS_NONE
 #include "collision.h"
 #endif // COLLISIONS_NONE
@@ -92,6 +94,12 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
                 // Otherwise, assume we're adding non active particle. 
                 rim->encounter_N_active++;
             }
+        }
+    }
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        if (r->ri_trace.mode==1){ // BS part
+            reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
+            return;
         }
     }
 }
@@ -320,6 +328,44 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             rim->encounter_N--;
         }
     }
+
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        keep_sorted = 1; // Force keepSorted for hybrid integrator
+        struct reb_integrator_trace* ri_trace = &(r->ri_trace);
+        reb_integrator_bs_reset(r);
+        if (r->ri_trace.mode==1){
+            // Only removed mid-timestep if collision - BS Step!
+            // Need to fix current_Ks still, and double check logic
+            int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
+            for (int i=0;i<ri_trace->encounter_N;i++){
+                if (after_to_be_removed_particle == 1){
+                    ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
+                }
+                if (ri_trace->encounter_map[i]==index){
+                    encounter_index = i;
+                    after_to_be_removed_particle = 1;
+                }
+            }
+
+            // reshuffle current_Ks.
+            for (unsigned int i = index; i<r->N-1; i++){
+                for (unsigned int j = 0; j<r->N; j++){
+                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j];
+                }
+            }
+            for (unsigned int i = 0; i<r->N-1; i++){
+                for (unsigned int j = index; j<r->N-1; j++){
+                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[i*r->N+(j+1)];
+                }
+            }
+            if (encounter_index<ri_trace->encounter_N_active){
+                ri_trace->encounter_N_active--;
+            }
+            ri_trace->encounter_N--;
+        }
+    }
+
 	if (r->N==1){
 	    r->N = 0;
         if(r->free_particle_ap){
