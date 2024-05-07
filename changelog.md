@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.0
+* Added TRACE integrator. See Lu, Hernandez & Rein (2024) for details on this implementation.
+
 ### Version 4.3.2
 * No longer clipping particles and orbits in visualization.
 * Added a scale to visualization. Hide by pressing `t`.
