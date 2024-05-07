@@ -461,8 +461,8 @@ class TestIntegratorTrace(unittest.TestCase):
         dE_trace = abs((sim.energy() - E0)/E0)
 
         self.assertLess(dE_trace,1e-4)              # reasonable precision for trace
-        self.assertLess(time_trace,time_ias15) # faster than ias15
-'''
+        self.assertLess(time_trace, 2.*time_ias15)  # not much slower than ias15
+
     def test_trace_simulationarchive(self):
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
@@ -485,6 +485,6 @@ class TestIntegratorTrace(unittest.TestCase):
         x0 = sim.particles[1].x
 
         self.assertEqual(x0,x1)
-'''
+
 if __name__ == "__main__":
     unittest.main()
