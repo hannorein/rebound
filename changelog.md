@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.1
+* Fixed bug in TRACE for FULL PERI modes.
+
 ### Version 4.4.0
 * Added TRACE integrator. See Lu, Hernandez & Rein (2024) for details on this implementation.
 
