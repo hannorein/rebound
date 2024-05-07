@@ -442,13 +442,13 @@ class TestIntegratorTrace(unittest.TestCase):
 
         self.assertLess(dE_trace, 1e-6)              # reasonable precision for trace
         self.assertLess(time_trace,2.0*time_ias15)   # not much slower than ias15
-'''
+
     def test_pericenter(self):
 
         sim = pericenter_sim()
         sim.integrator = "ias15"
         start_ias15=datetime.now()
-        sim.integrate(3000.)
+        sim.integrate(10 * 2 * math.pi * 29.4)
         time_ias15 = (datetime.now()-start_ias15).total_seconds()
 
         sim = pericenter_sim()
@@ -456,13 +456,13 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.dt = 0.15 * 2 * math.pi
         E0 = sim.energy()
         start_trace=datetime.now()
-        sim.integrate(3000.)
+        sim.integrate(10 * 2 * math.pi * 29.4)
         time_trace = (datetime.now()-start_trace).total_seconds()
         dE_trace = abs((sim.energy() - E0)/E0)
 
-        self.assertLess(dE_trace,1e-3)              # reasonable precision for trace
+        self.assertLess(dE_trace,1e-4)              # reasonable precision for trace
         self.assertLess(time_trace,time_ias15) # faster than ias15
-
+'''
     def test_trace_simulationarchive(self):
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
