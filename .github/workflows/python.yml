@@ -10,8 +10,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
-        os: [ubuntu-latest, windows-2019, macos-11]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, windows-2019, macos-13]
 
     steps:
       - uses: actions/checkout@v3
@@ -27,6 +27,8 @@ jobs:
           pip install multiprocess
       - name: Build package
         run: pip install -e .
+        env: 
+          FFP_CONTRACT_OFF: 1
       - name: Output package contents
         run: | 
           pip show rebound -vf
