@@ -125,7 +125,6 @@ There are several papers describing the functionality of REBOUND.
 ## Acknowledgments
 
 If you use this code or parts of this code for results presented in a scientific publication, we would greatly appreciate a citation.
-please cite REBOUND.
 The simplest way to find the citations relevant to the specific setup of your REBOUND simulation is: 
 
 ```python
