@@ -75,12 +75,12 @@ void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simul
     // Read SA snapshot
     if(fseek(inf, sa->offset[snapshot], SEEK_SET)){
         *warnings |= REB_SIMULATION_BINARY_ERROR_SEEK;
-        reb_simulation_free(r);
+        //reb_simulation_free(r);
         return;
     }
     if (r->simulationarchive_version<2){ 
         *warnings |= REB_SIMULATION_BINARY_ERROR_OLD;
-        reb_simulation_free(r);
+        //reb_simulation_free(r);
         return;
     }else{
         // Version 2 or higher
