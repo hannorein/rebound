@@ -164,7 +164,7 @@ archivePrefix = {arXiv},
 """
 
     if sim.integrator == "trace":
-        txt += """The simulations were integrated using the hybrid time-reversible TRACE integrator \citep{reboundtrace}. """
+        txt += """The simulations were integrated using the hybrid time-reversible TRACE integrator \\citep{reboundtrace}. """
         bib += """@ARTICLE{reboundtrace,
        author = {{Lu}, Tiger and {Hernandez}, David M. and {Rein}, Hanno},
         title = "{TRACE: a Time Reversible Algorithm for Close Encounters}",
