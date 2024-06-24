@@ -171,7 +171,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                 cmajor[c2-c1-1] = '\0';
                 version_minor = atoi(cminor);
                 version_major = atoi(cmajor);
-                if (version_major <= 3 || version_minor < 18){
+                if (version_major <= 3 && version_minor < 18){
                     uses32bitoffsets = 0; // fallback to 16 bit 
                 }
             }
