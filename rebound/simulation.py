@@ -26,7 +26,7 @@ BINARY_WARNINGS = [
     (True,  16, "Error while reading binary file (file was closed).",),
     (True,  32, "Index out of range.",),
     (True,  64, "Error while trying to seek file.",),
-    (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
+    (False, 128, "Encountered unknown field in file. File might have been saved with a different version of REBOUND."),
     (True,  256, "Integrator type is not supported by this simulationarchive version."),
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
     (True, 1024, "Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
