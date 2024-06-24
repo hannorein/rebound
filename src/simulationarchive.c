@@ -78,7 +78,7 @@ void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simul
         reb_simulation_free(r);
         return;
     }
-    if (r->simulationarchive_version<3){ 
+    if (r->simulationarchive_version<2){ 
         *warnings |= REB_SIMULATION_BINARY_ERROR_OLD;
         reb_simulation_free(r);
         return;
