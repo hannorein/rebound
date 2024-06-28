@@ -118,8 +118,9 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
     struct reb_binary_field field = {0};
     sa->version = 0;
     double t0 = 0;
-    int version_major = 0; // will be overwritten unless there is an error
-    int version_minor = 0;
+    sa->reb_version_major = 0;
+    sa->reb_version_minor = 0;
+    sa->reb_version_patch = 0;
     int uses32bitoffsets = 1; 
     // Cache descriptors
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
@@ -163,15 +164,19 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                 if (debug) printf("SA Error. Cannot determine version.\n");
                 *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
             }else{
+                char cpatch[64];
                 char cminor[64];
                 char cmajor[64];
+                strncpy(cpatch, readbuf+c3+1, 3);
+                cminor[4] = '\0';
                 strncpy(cminor, readbuf+c2+1, c3-c2-1);
                 cminor[c3-c2-1] = '\0';
                 strncpy(cmajor, readbuf+c1+1, c2-c1-1);
                 cmajor[c2-c1-1] = '\0';
-                version_minor = atoi(cminor);
-                version_major = atoi(cmajor);
-                if (version_major <= 3 && version_minor < 18){
+                sa->reb_version_patch = atoi(cpatch);
+                sa->reb_version_minor = atoi(cminor);
+                sa->reb_version_major = atoi(cmajor);
+                if (sa->reb_version_major <= 3 && sa->reb_version_minor < 18){
                     uses32bitoffsets = 0; // fallback to 16 bit 
                 }
             }
