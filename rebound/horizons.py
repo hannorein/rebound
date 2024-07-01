@@ -101,7 +101,7 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
     else:
         # Assume date is in JD with format JDxxxxxx.xxxx
         datestart = date
-        date_f = float(re.sub("[^0-9\.]","",date))
+        date_f = float(re.sub("[^0-9\\.]","",date))
         dateend = "JD%.8f"%(date_f+0.1)
 
     print("Searching NASA Horizons for '{}'... ".format(particle))
