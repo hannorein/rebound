@@ -36,6 +36,7 @@
 #include "integrator_saba.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #include "integrator_leapfrog.h"
 #include "integrator_sei.h"
 #include "integrator_janus.h"
@@ -76,6 +77,9 @@ void reb_integrator_part1(struct reb_simulation* r){
 		case REB_INTEGRATOR_BS:
 			reb_integrator_bs_part1(r);
 			break;
+		case REB_INTEGRATOR_TRACE:
+			reb_integrator_trace_part1(r);
+            break;
 		default:
 			break;
 	}
@@ -112,6 +116,9 @@ void reb_integrator_part2(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_BS:
 			reb_integrator_bs_part2(r);
+			break;
+		case REB_INTEGRATOR_TRACE:
+			reb_integrator_trace_part2(r);
 			break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
@@ -186,6 +193,9 @@ void reb_simulation_synchronize(struct reb_simulation* r){
 		case REB_INTEGRATOR_BS:
 			reb_integrator_bs_synchronize(r);
 			break;
+		case REB_INTEGRATOR_TRACE:
+			reb_integrator_trace_synchronize(r);
+			break;
 		default:
 			break;
 	}
@@ -214,6 +224,7 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
 	reb_integrator_janus_reset(r);
 	reb_integrator_eos_reset(r);
 	reb_integrator_bs_reset(r);
+	reb_integrator_trace_reset(r);
 }
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
@@ -224,7 +235,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 	if (r->N_var){
 		reb_calculate_acceleration_var(r);
 	}
-	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0)){
+	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==0)){
         // For Mercurius:
         // Additional forces are only calculated in the kick step, not during close encounter
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
@@ -237,10 +248,32 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
         }
+        if (r->integrator==REB_INTEGRATOR_TRACE){
+            // shift pos and velocity so that external forces are calculated in inertial frame
+            // Note: Copying avoids degrading floating point performance
+            if(r->N>r->ri_trace.N_allocated_additional_forces){
+                r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+                r->ri_trace.N_allocated_additional_forces = r->N;
+            }
+            memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
+            reb_integrator_trace_dh_to_inertial(r);
+        }
         r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additional_forces;
+            for (unsigned int i=0;i<r->N;i++){
+                particles[i].x = backup[i].x;
+                particles[i].y = backup[i].y;
+                particles[i].z = backup[i].z;
+                particles[i].vx = backup[i].vx;
+                particles[i].vy = backup[i].vy;
+                particles[i].vz = backup[i].vz;
+            }
+        }
+        if (r->integrator==REB_INTEGRATOR_TRACE){
+            struct reb_particle* restrict const particles = r->particles;
+            struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
             for (unsigned int i=0;i<r->N;i++){
                 particles[i].x = backup[i].x;
                 particles[i].y = backup[i].y;

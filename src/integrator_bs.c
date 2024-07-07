@@ -59,10 +59,11 @@
 #include "gravity.h"
 #include "integrator.h"
 #include "integrator_bs.h"
+#include "integrator_trace.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
+//#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
     
 // Default configuration parameter. 
 // They are hard coded here because it
@@ -101,10 +102,14 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
 
 
 static int tryStep(struct reb_simulation* r, const int Ns, const int k, const int n, const double t0, const double step) {
+    struct reb_integrator_bs* ri_bs = &r->ri_bs;
     struct reb_ode** odes = r->odes;
     const double subStep  = step / n;
     double t = t0;
-    int needs_nbody = r->ri_bs.user_ode_needs_nbody;
+    int needs_nbody = ri_bs->user_ode_needs_nbody;
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        needs_nbody = 0; // TRACE does not allow for coupling of N-body and other ODEs
+    }
 
     // LeapFrog Method did not seem to be of any advantage 
     //    switch (method) {
@@ -278,7 +283,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
         double* yDot = odes[s]->yDot;
         const int length = odes[s]->length;
         for (int i = 0; i < length; ++i) {
-            y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); // = 0.25*(y_(2n-1) + 2*y_n(2) + y_(2n+1))     Eq (9.13c)
+            y1[i] = 0.5 * (yTmp[i] + y1[i] + subStep * yDot[i]); 
         }
     }
 
@@ -287,7 +292,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
 
 static void extrapolate(const struct reb_ode* ode, double * const coeff, const int k) {
     double* const y1 = ode->y1;
-    double* const C = ode->C;  // C and D values follow Numerical Recipes 
+    double* const C = ode->C;
     double** const D =  ode->D;
     double const length = ode->length;
     for (int j = 0; j < k; ++j) {
@@ -297,8 +302,8 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
         double facD = xim1/(xi-xim1);
         for (int i = 0; i < length; ++i) {
             double CD = C[i] - D[k - j -1][i];
-            C[i] = facC * CD; // Only need to keep one C value
-            D[k - j - 1][i] = facD * CD; // Keep all D values for recursion
+            C[i] = facC * CD;
+            D[k - j - 1][i] = facD * CD;
         }
     }
     for (int i = 0; i < length; ++i) {
@@ -334,7 +339,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 void reb_integrator_bs_part1(struct reb_simulation* r){
     struct reb_ode** odes = r->odes;
-    int Ns = r->N_odes; // Number of ode sets
+    int Ns = r->N_odes;
     for (int s=0; s < Ns; s++){
         const int length = odes[s]->length;
         double* y0 = odes[s]->y;

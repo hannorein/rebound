@@ -163,6 +163,16 @@ archivePrefix = {arXiv},
 }
 """
 
+    if sim.integrator == "trace":
+        txt += """The simulations were integrated using the hybrid time-reversible TRACE integrator \\citep{reboundtrace}. """
+        bib += """@ARTICLE{reboundtrace,
+       author = {{Lu}, Tiger and {Hernandez}, David M. and {Rein}, Hanno},
+        title = "{TRACE: a Time Reversible Algorithm for Close Encounters}",
+      journal = {\\mnras},
+      pubstate = {in prep}
+}
+"""
+
     if sim.integrator == "janus":
         txt += """The simulations were integrated using the time-reversible JANUS integrator \\citep{reboundjanus}. """
         bib += """@ARTICLE{reboundjanus,

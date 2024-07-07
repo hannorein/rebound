@@ -680,10 +680,11 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
         for (unsigned int i=0; i<p_per_system; i++){
             m[s*p_per_system+i] = 0; // dummy
             x[s*p_per_system+i] = 100.0+i; // dummy
-            y[s*p_per_system+i] = 100.0+i;
-            z[s*p_per_system+i] = 100.0+i;
+            y[s*p_per_system+i] = 1.0+i;
+            z[s*p_per_system+i] = 1.0+i;
+            double vcirc = sqrt(r->G*mtot/100.); // aproximate circular velocity to keep particles away from origin.
             vx[s*p_per_system+i] = 0.0;
-            vy[s*p_per_system+i] = 0.0;
+            vy[s*p_per_system+i] = vcirc;
             vz[s*p_per_system+i] = 0.0;
         }
         ri_whfast512->p_jh0[s].m = mtot;
@@ -764,9 +765,9 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
         particles[s*N_per_system].x  = ri_whfast512->p_jh0[s].x - x0s;
         particles[s*N_per_system].y  = ri_whfast512->p_jh0[s].y - y0s;
         particles[s*N_per_system].z  = ri_whfast512->p_jh0[s].z - z0s;
-        particles[s*N_per_system].vx = ri_whfast512->p_jh0[s].vx = vx0s;
-        particles[s*N_per_system].vy = ri_whfast512->p_jh0[s].vy = vy0s;
-        particles[s*N_per_system].vz = ri_whfast512->p_jh0[s].vz = vz0s;
+        particles[s*N_per_system].vx = ri_whfast512->p_jh0[s].vx - vx0s;
+        particles[s*N_per_system].vy = ri_whfast512->p_jh0[s].vy - vy0s;
+        particles[s*N_per_system].vz = ri_whfast512->p_jh0[s].vz - vz0s;
         for (unsigned int i=1; i<N_per_system; i++){
             particles[s*N_per_system+i].x  = x[s*p_per_system+(i-1)] + particles[s*N_per_system].x;
             particles[s*N_per_system+i].y  = y[s*p_per_system+(i-1)] + particles[s*N_per_system].y;
@@ -835,7 +836,7 @@ static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int N_systems = r->ri_whfast512.N_systems;
     for (int s=0; s<N_systems; s++){
         r->ri_whfast512.p_jh0[s].x += _dt*r->ri_whfast512.p_jh0[s].vx;
         r->ri_whfast512.p_jh0[s].y += _dt*r->ri_whfast512.p_jh0[s].vy;

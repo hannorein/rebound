@@ -71,7 +71,7 @@ double reb_random_powerlaw(struct reb_simulation* r, double min, double max, dou
 }
 
 double reb_random_normal(struct reb_simulation* r, double variance){
-	double v1,v2,rsq=1.;
+	double v1=0.,v2=0.,rsq=1.;
     unsigned int seed;
     unsigned int* seedp;
     if (r){

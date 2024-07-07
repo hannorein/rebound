@@ -18,9 +18,9 @@ do
         mkdir -p $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/
         echo "Compiling... "
         if [ $server_used -eq 0 ]; then
-            emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -s -sASYNCIFY -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file web_client/shell_rebound_console.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
+            emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -s -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file web_client/shell_rebound_console.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
         else
-            emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file web_client/shell_rebound_webgl.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
+            emcc -O$OPTIMI -Isrc/ src/*.c $dir/problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file web_client/shell_rebound_webgl.html -o $READTHEDOCS_OUTPUT/html/emscripten_c_$dir/index.html || exit 1
         fi
         echo "Done. "
     else

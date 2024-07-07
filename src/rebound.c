@@ -23,7 +23,9 @@
  *
  */
 #define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
+#if defined(_WIN32) && defined(_MSC_VER)
 #pragma comment(lib, "legacy_stdio_definitions.lib")
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h> // for offsetof()
@@ -38,6 +40,7 @@
 #include "integrator_whfast.h"
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
+#include "integrator_trace.h"
 #include "integrator_bs.h"
 #include "boundary.h"
 #include "gravity.h"
@@ -66,7 +69,7 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.0.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.4.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
@@ -89,7 +92,7 @@ void reb_simulation_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
-   
+
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -310,6 +313,9 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
     }
+    if(r->display_settings){
+        free(r->display_settings);
+    }
 #ifdef OPENGL
     if(r->display_data){
         // Waiting for visualization to shut down.
@@ -352,6 +358,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
+    reb_integrator_trace_reset(r);
     reb_integrator_bs_reset(r);
     if(r->free_particle_ap){
         for(unsigned int i=0; i<r->N; i++){
@@ -419,11 +426,9 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     size_t sizep;
     reb_simulation_save_to_stream(r, &bufp,&sizep);
     
-    reb_simulation_reset_function_pointers(r_copy);
-    r_copy->simulationarchive_filename = NULL;
-    
-    // Set to old version by default. Will be overwritten if new version was used.
-    r_copy->simulationarchive_version = 0;
+    reb_simulation_free_pointers(r_copy);
+    memset(r_copy, 0, sizeof(struct reb_simulation));
+    reb_simulation_init(r_copy);
 
     FILE* fin = reb_fmemopen(bufp, sizep, "r");
     reb_input_fields(r_copy, fin, warnings);
@@ -521,7 +526,9 @@ void reb_simulation_init(struct reb_simulation* r){
     r->output_timing_last   = -1;
     r->save_messages = 0;
     r->track_energy_offset = 0;
+    r->server_data = NULL;
     r->display_data = NULL;
+    r->display_settings = NULL;
     r->walltime = 0;
 
     r->minimum_collision_velocity = 0;
@@ -596,6 +603,17 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_janus.scale_pos = 1e-16;
     r->ri_janus.scale_vel = 1e-16;
     
+    // ********** TRACE
+    r->ri_trace.mode = REB_TRACE_MODE_NONE;
+    r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
+    r->ri_trace.encounter_N = 0;
+    r->ri_trace.r_crit_hill = 3.;
+    r->ri_trace.peri_crit_eta = 1.0;
+    r->ri_trace.peri_crit_fdot = 17.;
+    r->ri_trace.peri_crit_distance = 0.; // User should set this to appropriate value for system, but not strictly needed
+    r->ri_trace.force_accept = 0;
+    r->ri_trace.last_dt_ias15 = 0;
+
     // ********** EOS
     r->ri_eos.n = 2;
     r->ri_eos.phi0 = REB_EOS_LF;
@@ -636,7 +654,15 @@ void reb_simulation_init(struct reb_simulation* r){
 
 
 int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
-    while(r->status == REB_STATUS_PAUSED){
+    if(r->status <= REB_STATUS_SINGLE_STEP){
+        if(r->status == REB_STATUS_SINGLE_STEP){
+            r->status = REB_STATUS_PAUSED;
+        }else{
+            // This allows an arbitrary number of steps before the simulation is paused
+            r->status++;
+        }
+    }
+    while(r->status == REB_STATUS_PAUSED || r->status == REB_STATUS_SCREENSHOT){
         // Wait for user to disable paused simulation
 #ifdef __EMSCRIPTEN__
         emscripten_sleep(100);
@@ -789,7 +815,7 @@ static void* reb_simulation_integrate_raw(void* args){
     if (r->testparticle_hidewarnings==0 && reb_particle_check_testparticles(r)){
         reb_simulation_warning(r,"At least one test particle (type 0) has finite mass. This might lead to unexpected behaviour. Set testparticle_hidewarnings=1 to hide this warning.");
     }
-    if (r->status != REB_STATUS_PAUSED){ // Allow simulation to be paused initially
+    if (r->status != REB_STATUS_PAUSED && r->status != REB_STATUS_SCREENSHOT){ // Allow simulation to be paused initially
         r->status = REB_STATUS_RUNNING;
     }
     reb_run_heartbeat(r);
@@ -827,6 +853,7 @@ static void* reb_simulation_integrate_raw(void* args){
 #else // _WIN32
             pthread_mutex_lock(&(r->server_data->mutex)); 
 #endif // _WIN32
+            r->server_data->mutex_locked_by_integrate = 1;
         }
 #endif //SERVER
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -847,6 +874,7 @@ static void* reb_simulation_integrate_raw(void* args){
 #else // _WIN32
             pthread_mutex_unlock(&(r->server_data->mutex));
 #endif // _WIN32
+            r->server_data->mutex_locked_by_integrate = 0;
         }
 #endif //SERVER
         if (r->usleep > 0){

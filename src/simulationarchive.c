@@ -75,12 +75,12 @@ void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simul
     // Read SA snapshot
     if(fseek(inf, sa->offset[snapshot], SEEK_SET)){
         *warnings |= REB_SIMULATION_BINARY_ERROR_SEEK;
-        reb_simulation_free(r);
+        //reb_simulation_free(r);
         return;
     }
-    if (r->simulationarchive_version<3){ 
+    if (r->simulationarchive_version<2){ 
         *warnings |= REB_SIMULATION_BINARY_ERROR_OLD;
-        reb_simulation_free(r);
+        //reb_simulation_free(r);
         return;
     }else{
         // Version 2 or higher
@@ -98,6 +98,13 @@ struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_s
     return r; // might be null if error occured
 }
 
+// Old 16 bit offsets. Used only to read old files.
+struct reb_simulationarchive_blob16 {
+    int32_t index;
+    int16_t offset_prev;
+    int16_t offset_next;
+};
+
 void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
     // Assumes sa->inf is set to an open stream
     const int debug = 0;
@@ -111,7 +118,10 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
     struct reb_binary_field field = {0};
     sa->version = 0;
     double t0 = 0;
-    
+    sa->reb_version_major = 0;
+    sa->reb_version_minor = 0;
+    sa->reb_version_patch = 0;
+    int uses32bitoffsets = 1; 
     // Cache descriptors
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
     struct reb_binary_field_descriptor fd_t = reb_binary_field_descriptor_for_name("t");
@@ -123,7 +133,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
 
 
     do{
-        int didReadField = fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
+        int didReadField = (int)fread(&field,sizeof(struct reb_binary_field),1,sa->inf);
         if (!didReadField){
             *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
             break;
@@ -137,6 +147,39 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
             sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binary_field), reb_version_str);
 
             objects += fread(readbuf,sizeof(char),bufsize,sa->inf);
+            // Finding version_major/version_minor version
+            int c1=0, c2=0, c3=0; 
+            for (int c=0; c<bufsize; c++){
+                if (c2 != 0 && c3 == 0 && readbuf[c] == '.'){
+                    c3 = c;
+                }
+                if (c1 != 0 && c2 == 0 && readbuf[c] == '.'){
+                    c2 = c;
+                }
+                if (c1 == 0 && readbuf[c] == ':'){
+                    c1 = c;
+                }
+            }
+            if (c1==0 || c2==0 || c3==0){
+                if (debug) printf("SA Error. Cannot determine version.\n");
+                *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+            }else{
+                char cpatch[64];
+                char cminor[64];
+                char cmajor[64];
+                strncpy(cpatch, readbuf+c3+1, 3);
+                cminor[4] = '\0';
+                strncpy(cminor, readbuf+c2+1, c3-c2-1);
+                cminor[c3-c2-1] = '\0';
+                strncpy(cmajor, readbuf+c1+1, c2-c1-1);
+                cmajor[c2-c1-1] = '\0';
+                sa->reb_version_patch = atoi(cpatch);
+                sa->reb_version_minor = atoi(cminor);
+                sa->reb_version_major = atoi(cmajor);
+                if (sa->reb_version_major <= 3 && sa->reb_version_minor < 18){
+                    uses32bitoffsets = 0; // fallback to 16 bit 
+                }
+            }
             if (objects < 1){
                 *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
             }else{
@@ -224,7 +267,17 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                 }
                 // Everything looks normal so far. Attempt to read next blob
                 struct reb_simulationarchive_blob blob = {0};
-                size_t r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
+                size_t r3;
+                if (uses32bitoffsets){
+                    r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
+                }else{
+                    // Workaround for versions < 3.18
+                    struct reb_simulationarchive_blob16 blob16 = {0};
+                    r3 = fread(&blob16, sizeof(struct reb_simulationarchive_blob16), 1, sa->inf);
+                    blob.index = blob16.index;
+                    blob.offset_prev = blob16.offset_prev;
+                    blob.offset_next = blob16.offset_next;
+                }
                 int next_blob_is_corrupted = 0;
                 if (r3!=1){ // Next snapshot is definitly corrupted. 
                             // Assume we have reached the end of the file. 
@@ -234,10 +287,16 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                     *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
                 }
                 if (i>0){
+                    size_t blobsize;
+                    if (uses32bitoffsets){
+                        blobsize = sizeof(struct reb_simulationarchive_blob);
+                    }else{
+                        blobsize = sizeof(struct reb_simulationarchive_blob16);
+                    }
                     // Checking the offsets. Acts like a checksum.
-                    if (((int64_t)blob.offset_prev )+ ((int64_t)sizeof(struct reb_simulationarchive_blob)) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
+                    if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
                         // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
-                        if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + sizeof(struct reb_simulationarchive_blob), (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
+                        if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
                         read_error = 1;
                         break;
                     }
@@ -427,7 +486,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         struct reb_simulationarchive_blob blob = {0};
         int bytesread;
         do{
-            bytesread = fread(&field,sizeof(struct reb_binary_field),1,of);
+            bytesread = (int)fread(&field,sizeof(struct reb_binary_field),1,of);
             fseek(of, field.size, SEEK_CUR);
         }while(field.type!=fd_end.type && bytesread);
         int64_t size_old = ftell(of);
@@ -436,7 +495,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
             return;
         }
 
-        bytesread = fread(&blob,sizeof(struct reb_simulationarchive_blob),1,of);
+        bytesread = (int)fread(&blob,sizeof(struct reb_simulationarchive_blob),1,of);
         if (bytesread!=1){
             reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
             return;
@@ -463,7 +522,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
 
         int file_corrupt = 0;
         int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
-        int blobs_read = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        int blobs_read = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         if (seek_ok !=0 || blobs_read != 1){ // cannot read blob
             file_corrupt = 1;
         }
@@ -473,7 +532,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         if (file_corrupt==0 && archive_contains_more_than_one_blob ){
             // Check if last two blobs are consistent.
             seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binary_field), SEEK_CUR);  
-            bytesread = fread(&field, sizeof(struct reb_binary_field), 1, of);
+            bytesread = (int)fread(&field, sizeof(struct reb_binary_field), 1, of);
             if (seek_ok!=0 || bytesread!=1){
                 file_corrupt = 1;
             }
@@ -483,7 +542,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
             }
             seek_ok = fseek(of, -blob.offset_prev - sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
             struct reb_simulationarchive_blob blob2 = {0};
-            blobs_read = fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
+            blobs_read = (int)fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
             if (seek_ok!=0 || blobs_read!=1 || blob2.offset_next != blob.offset_prev){
                 file_corrupt = 1;
             }
@@ -501,11 +560,11 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
                 if (seek_ok != 0){
                     break;
                 }
-                bytesread = fread(&field, sizeof(struct reb_binary_field), 1, of);
+                bytesread = (int)fread(&field, sizeof(struct reb_binary_field), 1, of);
                 if (bytesread != 1 || field.type != fd_end.type){ // could be EOF or corrupt snapshot
                     break;
                 }
-                bytesread = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+                bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
                 if (bytesread != 1){
                     break;
                 }
@@ -530,7 +589,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         // Update blob info and Write diff to binary file
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-        blob.offset_next = size_diff+sizeof(struct reb_binary_field);
+        blob.offset_next = (int32_t)size_diff+sizeof(struct reb_binary_field);
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 

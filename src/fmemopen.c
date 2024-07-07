@@ -50,7 +50,7 @@ static int readfn(void *handler, char *buf, int size) {
     size_t available = mem->size - mem->pos;
 
     if (size > available) {
-        size = available;
+        size = (int)available;
     }
     memcpy(buf, mem->buffer + mem->pos, sizeof(char) * size);
     mem->pos += size;
@@ -63,7 +63,7 @@ static int writefn(void *handler, const char *buf, int size) {
     size_t available = mem->size - mem->pos;
 
     if (size > available) {
-        size = available;
+        size = (int)available;
     }
     memcpy(mem->buffer + mem->pos, buf, sizeof(char) * size);
     mem->pos += size;

@@ -13,9 +13,9 @@ import types
 ### The following enum and class definitions need to
 ### consitent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21, "trace":25}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
-GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5}
+GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "trace": 6}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
@@ -26,7 +26,7 @@ BINARY_WARNINGS = [
     (True,  16, "Error while reading binary file (file was closed).",),
     (True,  32, "Index out of range.",),
     (True,  64, "Error while trying to seek file.",),
-    (False, 128, "Encountered unkown field in file. File might have been saved with a different version of REBOUND."),
+    (False, 128, "Encountered unknown field in file. File might have been saved with a different version of REBOUND."),
     (True,  256, "Integrator type is not supported by this simulationarchive version."),
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
     (True, 1024, "Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
@@ -581,6 +581,7 @@ class Simulation(Structure):
         - ``'EOS'`` 
         - ``'BS'`` 
         - ``'WHFast512'``
+        - ``'TRACE'``
         - ``'none'``
         
         Check the online documentation for a full description of each of the integrators. 
@@ -920,12 +921,14 @@ class Simulation(Structure):
                     if "frame" not in kwargs:
                         if hasattr(self, 'default_plane'):
                             kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
-                    self.add(horizons.query_horizons_for_particle(particle, **kwargs), hash=particle)
+                    mass_unit = hash_to_unit(self.python_unit_m) # For manually provided masses
+                    self.add(horizons.query_horizons_for_particle(mass_unit, particle, **kwargs), hash=particle)
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
         else: 
             self.add(Particle(simulation=self, **kwargs))
+        self.process_messages()
 
 # Particle getter functions
     @property
@@ -1224,25 +1227,6 @@ class Simulation(Structure):
         clibrebound.reb_simulation_configure_box(byref(self), c_double(boxsize), c_int(N_root_x), c_int(N_root_y), c_int(N_root_z))
         return
    
-    def configure_ghostboxes(self, N_ghost_x=0, N_ghost_y=0, N_ghost_z=0):
-        """
-        Initialize the ghost boxes.
-
-        This function only needs to be called it boundary conditions other than "none" or
-        "open" are used. In such a case the number of ghostboxes must be known and is set 
-        with this function. 
-        
-        Parameters
-        ----------
-        N_ghost_x, N_ghost_y, N_ghost_z : int
-            The number of ghost boxes in each direction. All values default to 0 (no ghost boxes).
-        """
-        clibrebound.N_ghost_x = c_int(N_ghost_x)
-        clibrebound.N_ghost_y = c_int(N_ghost_y)
-        clibrebound.N_ghost_z = c_int(N_ghost_z)
-        return
-
-
 # Output to file (Simulationarchive)
     def save_to_file(self, filename, interval=None, walltime=None, step=None, delete_file=False):
         """
@@ -1322,6 +1306,32 @@ class Simulation(Structure):
         else:
             raise AttributeError("Cannot specify more than one of interval, walltime, or step.")
 
+    def output_screenshot(self, filename):
+        """
+        Saves a screenshot of the current WebGL visualization to a file in png format.
+
+        The web server needs to be started, and a web browser needs to be 
+        connected to the server in order to take screen shots.
+
+        Arguments
+        ---------
+        filename : str
+            Filename of the output file.
+        
+        Examples
+        --------
+        The following example take a screenshot of a simulation.
+
+        >>> sim = rebound.Simulation()
+        >>> sim.integrator = "whfast"
+        >>> sim.add(m=1.)
+        >>> sim.add(a=1.)
+        >>> sim.widget() # this connects one client
+        >>> sim.output_screenshot("screenshot.png")
+        """
+                
+        clibrebound.reb_simulation_output_screenshot(byref(self), c_char_p(filename.encode("ascii")))
+        self.process_messages()
 
 # Integration
     def step(self):
@@ -1431,6 +1441,7 @@ from .integrators.eos import IntegratorEOS
 from .integrators.ias15 import IntegratorIAS15
 from .integrators.saba import IntegratorSABA
 from .integrators.mercurius import IntegratorMercurius
+from .integrators.trace import IntegratorTRACE
 
 from .variation import Variation
 
@@ -1439,7 +1450,9 @@ from .variation import Variation
 class ServerData(Structure):
     _fields_ = [
             ("r", POINTER(Simulation)),
-            ("r_copy", POINTER(Simulation)),
+            ("_screenshot", c_void_p),
+            ("_N_screenshot", c_size_t),
+            ("_status_before_screenshot", c_int),
             ("port", c_int),
             ("need_copy", c_int),
             ("ready", c_int),
@@ -1482,6 +1495,7 @@ Simulation._fields_ = [
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
+                ("_display_view", c_void_p),
                 ("_display_data", c_void_p), # not needed from python
                 ("_server_data", POINTER(ServerData)),
                 ("track_energy_offset", c_int),
@@ -1537,6 +1551,7 @@ Simulation._fields_ = [
                 ("ri_saba", IntegratorSABA),
                 ("ri_ias15", IntegratorIAS15),
                 ("ri_mercurius", IntegratorMercurius),
+                ("ri_trace", IntegratorTRACE),
                 ("ri_janus", IntegratorJanus),
                 ("ri_eos", IntegratorEOS),
                 ("ri_bs", IntegratorBS),

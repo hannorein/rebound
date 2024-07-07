@@ -278,3 +278,131 @@ void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, 
         *Omega += M_PI*2.0;
     }
 }
+
+#define QUATERNION_EPS 1e-4 // enough for visualizations
+struct reb_rotation reb_rotation_slerp(struct reb_rotation q1, struct reb_rotation q2, double t){
+    // Based on http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/index.htm
+    struct reb_rotation result;
+
+    double cosHalfTheta = q1.r*q2.r + q1.ix*q2.ix + q1.iy*q2.iy + q1.iz*q2.iz;
+
+    // if q1=q2 or qa=-q2 then theta = 0 and we can return qa
+    if (fabs(cosHalfTheta) >= 1.0) {
+        return q1;
+    }
+
+    double halfTheta = acos(cosHalfTheta);
+    double sinHalfTheta = sqrt(1.0 - cosHalfTheta*cosHalfTheta);
+    // If theta = 180 degrees then result is not fully defined
+    // We could rotate around any axis normal to q1 or q2
+    if (fabs(sinHalfTheta) < QUATERNION_EPS) {
+        result.r = (q1.r * 0.5 + q2.r * 0.5);
+        result.ix = (q1.ix * 0.5 + q2.ix * 0.5);
+        result.iy = (q1.iy * 0.5 + q2.iy * 0.5);
+        result.iz = (q1.iz * 0.5 + q2.iz * 0.5);
+    } else {
+        // Default quaternion calculation
+        double ratioA = sin((1 - t) * halfTheta) / sinHalfTheta;
+        double ratioB = sin(t * halfTheta) / sinHalfTheta;
+        result.r = (q1.r * ratioA + q2.r * ratioB);
+        result.ix = (q1.ix * ratioA + q2.ix * ratioB);
+        result.iy = (q1.iy * ratioA + q2.iy * ratioB);
+        result.iz = (q1.iz * ratioA + q2.iz * ratioB);
+    }
+    return result;
+}
+
+
+// Matrix methods, mostly used for visualization
+
+struct reb_mat4df reb_mat4df_identity(){
+    struct reb_mat4df i = { .m={
+        1.,0.,0.,0.,
+        0.,1.,0.,0.,
+        0.,0.,1.,0.,
+        0.,0.,0.,1.}};
+    return i;
+}
+
+struct reb_mat4df reb_mat4df_scale(struct reb_mat4df m, float x, float y, float z){
+    struct reb_mat4df nm = m;
+    for(int j=0;j<4;j++){
+        nm.m[0+j*4] *= x;    
+        nm.m[1+j*4] *= y;    
+        nm.m[2+j*4] *= z;    
+    }
+    return nm;
+}
+
+void reb_mat4df_print(struct reb_mat4df m){
+    printf("\n");
+    for(int i=0;i<4;i++){
+        for(int j=0;j<4;j++){
+            printf("%f \t", m.m[i+j*4]);    
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+int reb_mat4df_eq(struct reb_mat4df A, struct reb_mat4df B){
+    for(int j=0;j<16;j++){
+        if (A.m[j] != B.m[j]) return 0;
+    }
+    return 1;
+}
+
+struct reb_vec3df reb_mat4df_get_scale(struct reb_mat4df m){
+    struct reb_vec3df s = {
+        .x = sqrtf(m.m[0]*m.m[0] + m.m[4]*m.m[4] + m.m[8]*m.m[8]),
+        .y = sqrtf(m.m[1]*m.m[1] + m.m[5]*m.m[5] + m.m[9]*m.m[9]),
+        .z = sqrtf(m.m[2]*m.m[2] + m.m[6]*m.m[6] + m.m[10]*m.m[10]),
+    };
+    return s;
+}
+
+struct reb_mat4df reb_mat4df_translate(struct reb_mat4df m, float x, float y, float z){
+    struct reb_mat4df nm = m;
+    nm.m[3+4*0] += x*m.m[0+4*0] + y*m.m[1+4*0] + z*m.m[2+4*0];
+    nm.m[3+4*1] += x*m.m[0+4*1] + y*m.m[1+4*1] + z*m.m[2+4*1];
+    nm.m[3+4*2] += x*m.m[0+4*2] + y*m.m[1+4*2] + z*m.m[2+4*2];
+    return nm;
+}
+
+struct reb_mat4df reb_mat4df_multiply(struct reb_mat4df A, struct reb_mat4df B){
+    struct reb_mat4df C = {0};
+    for(int i=0;i<4;i++)
+    for(int j=0;j<4;j++){
+        C.m[i+4*j] = 0.;
+    for(int k=0;k<4;k++){
+        C.m[i+4*j] += A.m[k+4*j]*B.m[i+4*k];
+    }}
+    return C;
+}
+
+struct reb_mat4df reb_rotation_to_mat4df(struct reb_rotation A){
+    struct reb_mat4df m;
+    float xx = A.ix * A.ix; float xy = A.ix * A.iy; float xz = A.ix * A.iz;
+    float xw = A.ix * A.r; float yy = A.iy * A.iy; float yz = A.iy * A.iz;
+    float yw = A.iy * A.r; float zz = A.iz * A.iz; float zw = A.iz * A.r;
+    m.m[0] = 1.-2.*(yy+zz);
+    m.m[1] =    2.*(xy-zw);
+    m.m[2] =    2.*(xz+yw);
+    m.m[4] =    2.*(xy+zw);
+    m.m[5] = 1.-2.*(xx+zz);
+    m.m[6] =    2.*(yz-xw);
+    m.m[8] =    2.*(xz-yw);
+    m.m[9] =    2.*(yz+xw);
+    m.m[10]= 1.-2.*(xx+yy);
+    m.m[3] = m.m[7] = m.m[11] = m.m[12] = m.m[13] = m.m[14] = 0; m.m[15]= 1;
+    return m;
+}
+
+struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t, float n, float f) {
+    struct reb_mat4df m;
+    m.m[0] = 2.f/(r-l); m.m[1] = 0.; m.m[2] = 0.; m.m[3] = -(r+l)/(r-l);
+    m.m[4] = 0.; m.m[5] = 2.f/(t-b); m.m[6] = 0.; m.m[7] = -(t+b)/(t-b);
+    m.m[8] = 0.; m.m[9] = 0.; m.m[10] = -2.f/(f-n); m.m[11] = -(f+n)/(f-n);
+    m.m[12] = 0.; m.m[13] = 0.; m.m[14] = 0.; m.m[15] = 1.f;
+    return m;
+}

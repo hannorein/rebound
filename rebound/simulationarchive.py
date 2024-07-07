@@ -44,6 +44,9 @@ class Simulationarchive(Structure):
     _fields_ = [("_inf", c_void_p),
                 ("_filename", c_char_p),
                 ("version", c_int), 
+                ("_reb_version_major", c_int), 
+                ("_reb_version_minor", c_int), 
+                ("_reb_version_patch", c_int), 
                 ("auto_interval", c_double), 
                 ("auto_walltime", c_double), 
                 ("auto_step", c_uint64), 
@@ -52,7 +55,7 @@ class Simulationarchive(Structure):
                 ("t", POINTER(c_double)) 
                 ]
     def __repr__(self):
-        return '<{0}.{1} object at {2}, nblobs={3}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs)
+        return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, reb_version_minor, reb_version_patch)
 
     def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
         """
@@ -91,6 +94,11 @@ class Simulationarchive(Structure):
                     raise RuntimeError(message)
                 else:  
                     # Just a warning
+                    if value==2: # Version warning. Append version used to save SA to message
+                        sa_version = "%d.%d.%d" %(self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
+                        if sa_version != __version__ and sa_version != "0.0.0":
+                            message += " Binary file was saved with REBOUND Version " + sa_version + "."
+                            message += " You are currently using REBOUND Version " +  __version__ + "."
                     if process_warnings:
                         warnings.warn(message, RuntimeWarning)
         if not process_warnings:
@@ -109,7 +117,7 @@ class Simulationarchive(Structure):
         """
         Returns a string with details of this simulationarchive.
         """
-        return "<rebound.Simulationarchive instance, snapshots={0} >".format(str(len(self)))
+        return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
     def __getitem__(self, key):
         PY3 = sys.version_info[0] == 3
@@ -352,4 +360,4 @@ class Simulationarchive(Structure):
         return verts, codes
 
 from .simulation import Simulation, BINARY_WARNINGS
-from . import clibrebound 
+from . import clibrebound, __version__

@@ -106,6 +106,7 @@ struct reb_display_data;
 struct reb_server_data;
 struct reb_treecell;
 struct reb_variational_configuration;
+struct reb_display_settings;
 
 // Particle structure
 struct reb_particle {
@@ -145,6 +146,12 @@ struct reb_vec3d {
     double y;
     double z;
 };
+
+// Generic 4d matrix (single precision)
+struct reb_mat4df {
+    float m[16];
+};
+
 
 // Generic 6d vector
 struct reb_vec6d{
@@ -248,6 +255,50 @@ struct reb_integrator_sei {
     double tandt;       // Cached tan() 
     double sindtz;      // Cached sin(), z axis
     double tandtz;      // Cached tan(), z axis
+};
+
+// TRACE (Lu Hernandez & Rein 2024)
+struct reb_integrator_trace {
+    int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+    int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
+
+    enum {
+        REB_TRACE_PERI_PARTIAL_BS = 0,
+        REB_TRACE_PERI_FULL_BS = 1,
+        REB_TRACE_PERI_FULL_IAS15 = 2,
+    } peri_mode;
+
+    double r_crit_hill;
+    double peri_crit_eta;
+    double peri_crit_fdot;
+    double peri_crit_distance;
+
+    // Internal use
+    enum {
+        REB_TRACE_MODE_INTERACTION = 0, // Interaction step
+        REB_TRACE_MODE_KEPLER = 1,      // Kepler step
+        REB_TRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
+        REB_TRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
+    } mode;
+    unsigned int encounter_N;           // Number of particles currently having an encounter
+    unsigned int encounter_N_active;    // Number of active particles currently having an encounter
+    double last_dt_ias15;
+
+    unsigned int N_allocated;
+    unsigned int N_allocated_additional_forces;
+    unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
+
+    struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
+    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
+    struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
+
+    int* encounter_map;             // Map to represent which particles are integrated with BS
+    struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
+    struct reb_vec3d com_vel;
+
+    int* current_Ks; // Tracking K_ij for the entire timestep
+    unsigned int current_C; // Tracking C for the entire timestep
+    unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 
 // SABA Integrator (Laskar & Robutel 2001)
@@ -412,6 +463,10 @@ struct reb_integrator_janus {
 
 // Possible return values of of rebound_integrate
 enum REB_STATUS {
+    // Any status less than SINGLE_STEP get incremented once every timestep until SINGLE_STEP is reached.
+    REB_STATUS_SINGLE_STEP = -10, // Performing a single step, then switching to PAUSED.
+    REB_STATUS_SCREENSHOT_READY=-5,// Screenshot is ready, send back, then finish integration
+    REB_STATUS_SCREENSHOT = -4,   // Pause until visualization has taken a screenshot.
     REB_STATUS_PAUSED = -3,       // Simulation is paused by visualization.
     REB_STATUS_LAST_STEP = -2,    // Current timestep is the last one. Needed to ensure that t=tmax exactly.
     REB_STATUS_RUNNING = -1,      // Simulation is current running, no error occurred.
@@ -470,6 +525,7 @@ struct reb_simulation {
     double exit_max_distance;       // Exit simulation if a particle is this far away from the origin.
     double exit_min_distance;       // Exit simulation if two particles come this close to each other.
     double usleep;                  // Artificially slow down simulations by this many microseconds each timestep.
+    struct reb_display_settings* display_settings;// Optional. Will overwrite settings for visualization. If NULL, UI will determine settings.
     struct reb_display_data* display_data; // Datastructure stores visualization related data. Does not have to be modified by the user. 
     struct reb_server_data* server_data; // Datastructure stores server related data. Does not have to be modified by the user. 
     int track_energy_offset;        // 0 (default): do not track energy offset due to merging/lost particles, 1: track offset
@@ -565,6 +621,7 @@ struct reb_simulation {
         REB_INTEGRATOR_BS = 12,         // Gragg-Bulirsch-Stoer 
         // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,  // WHFast integrator, optimized for AVX512
+        REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu, Hernandez and Rein 2024)
         } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
@@ -579,6 +636,7 @@ struct reb_simulation {
         REB_GRAVITY_TREE = 3,           // Use the tree to calculate gravity, O(N log(N)), set opening_angle2 to adjust accuracy.
         REB_GRAVITY_MERCURIUS = 4,      // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,         // Special gravity routine which includes the Jacobi terms for WH integrators 
+        REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
         } gravity;
 
     // Datastructures for integrators
@@ -588,6 +646,7 @@ struct reb_simulation {
     struct reb_integrator_saba ri_saba;             // The SABA struct 
     struct reb_integrator_ias15 ri_ias15;           // The IAS15 struct
     struct reb_integrator_mercurius ri_mercurius;   // The MERCURIUS struct
+    struct reb_integrator_trace ri_trace;              // The TRACE struct
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
@@ -678,6 +737,9 @@ DLLEXPORT void reb_simulation_output_ascii(struct reb_simulation* r, char* filen
 DLLEXPORT void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 // Function to allow for periodic outputs in heartbeat function. See examples on how to use it.
 DLLEXPORT int reb_simulation_output_check(struct reb_simulation* r, double interval);
+// Write a screenshot of the current simulation to a file. Requires that a server was started with reb_simulation_start_server() and one client web browser is connected. 
+// Returns 1 if successful, otherwise.
+DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filename);
 
 
 // Timestepping
@@ -785,6 +847,14 @@ DLLEXPORT double reb_integrator_mercurius_L_infinity(const struct reb_simulation
 DLLEXPORT double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
 DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
 
+// Built in trace switching functions
+
+DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+
 
 // Built in collision resolve functions
 
@@ -822,10 +892,13 @@ struct reb_simulationarchive{
     FILE* inf;                      // File pointer (will be kept open)
     char* filename;                 // Filename of open file. This is NULL if this is a memory-mapped file (using fmemopen)
     int version;                    // Simulationarchive version
+    int reb_version_major;          // Major REBOUND Version used to save SA
+    int reb_version_minor;          // Minor REBOUND Version used to save SA
+    int reb_version_patch;          // Patch REBOUND Version used to save SA
     double auto_interval;           // Interval setting used to create SA (if used)
     double auto_walltime;           // Walltime setting used to create SA (if used)
-    uint64_t auto_step;   // Steps in-between SA snapshots (if used)
-    int64_t nblobs;                    // Total number of snapshots (including initial binary)
+    uint64_t auto_step;             // Steps in-between SA snapshots (if used)
+    int64_t nblobs;                 // Total number of snapshots (including initial binary)
     uint64_t* offset;               // Index of offsets in file (length nblobs)
     double* t;                      // Index of simulation times in file (length nblobs)
 };
@@ -1033,6 +1106,7 @@ DLLEXPORT struct reb_rotation reb_rotation_init_angle_axis(const double angle, s
 DLLEXPORT struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to);
 DLLEXPORT struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega);
 DLLEXPORT struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
+DLLEXPORT struct reb_rotation reb_rotation_slerp(struct reb_rotation q1, struct reb_rotation q2, double t);
 
 // transformations to/from vec3d
 DLLEXPORT struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
@@ -1063,24 +1137,30 @@ DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 
 // The following stuctures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
 
-struct reb_particle_opengl {
-    float x,y,z;
-    float vx,vy,vz;
-    float r;
-};
 struct reb_orbit_opengl {
     float x,y,z;
     float a, e, f;
     float omega, Omega, inc;
 };
 
+struct reb_vec3df {
+    float x,y,z;
+};
+
+struct reb_vec4df {
+    float x,y,z,r;
+};
+
 struct reb_server_data {
     struct reb_simulation* r;
-    struct reb_simulation* r_copy;
+    void* screenshot; // Screenshot data received by server (decoded)
+    size_t N_screenshot; // Size of decoded screenshot data
+    enum REB_STATUS status_before_screenshot;
     int port;
     int need_copy;
     int ready;
 #ifdef SERVER
+    int mutex_locked_by_integrate;  // Let's heartbeat find out if it is being called while the mutex is locked.
 #ifdef _WIN32
     SOCKET socket;
     HANDLE mutex;          // Mutex to allow for copying
@@ -1092,17 +1172,31 @@ struct reb_server_data {
 #endif // SERVER
 };
 
+struct reb_display_settings {
+    struct reb_mat4df view;
+    int spheres;                    // Switches between point sprite and real spheres.
+    int pause;                      // Pauses visualization, but keep simulation running
+    int wire;                       // Shows/hides orbit wires.
+    unsigned int breadcrumbs;       // Number of past particle positions.
+    int onscreentext;               // Shows/hides onscreen text.
+    int onscreenhelp;               // Shows/hides onscreen help.
+    int multisample;                // Turn off/on multisampling.
+    int ghostboxes;                 // Shows/hides ghost boxes.
+    int reference;                  // reb_particle used as a reference for centering.
+};
+
 struct reb_display_data {
+    struct reb_display_settings s;
     struct reb_simulation* r;
     struct reb_simulation* r_copy;
-    struct reb_particle_opengl* particle_data;
+    void* screenshot; // Screenshot data to be sent to server
+    struct reb_vec4df* particle_data;
     struct reb_orbit_opengl* orbit_data;
     uint64_t N_allocated;
-    double scale;
-    double mouse_scale;
     double mouse_x;
     double mouse_y;
     double retina;
+    int take_one_screenshot;
 #ifndef _WIN32
     int need_copy;
     pthread_mutex_t mutex;          // Mutex to allow for copying
@@ -1111,49 +1205,86 @@ struct reb_display_data {
 #ifdef __EMSCRIPTEN__
     int connection_status;
 #endif
-    int spheres;                    // Switches between point sprite and real spheres.
-    int pause;                      // Pauses visualization, but keep simulation running
-    int wire;                       // Shows/hides orbit wires.
-    int onscreentext;               // Shows/hides onscreen text.
-    int onscreenhelp;               // Shows/hides onscreen help.
-    int multisample;                // Turn off/on multisampling.
-    int clear;                      // Toggles clearing the display on each draw.
-    int ghostboxes;                 // Shows/hides ghost boxes.
-    int reference;                  // reb_particle used as a reference for centering.
+    uint64_t breadcrumb_last_steps_done;
+    unsigned int breadcrumb_N_allocated;
+    unsigned int breadcrumb_current_index;
     unsigned int mouse_action;      
     unsigned int key_mods;      
-    struct reb_rotation view;
-    unsigned int simplefont_tex;
-    unsigned int simplefont_shader_program;
-    unsigned int simplefont_shader_vao;
-    unsigned int simplefont_shader_pos_location;
-    unsigned int simplefont_shader_ypos_location;
-    unsigned int simplefont_shader_scale_location;
-    unsigned int simplefont_shader_aspect_location;
-    unsigned int simplefont_shader_screen_aspect_location;
-    unsigned int simplefont_shader_charval_buffer;
-    unsigned int box_shader_program;
-    unsigned int box_shader_box_vao;
-    unsigned int box_shader_cross_vao;
-    unsigned int box_shader_mvp_location;
-    unsigned int box_shader_color_location;
-    unsigned int point_shader_mvp_location;
-    unsigned int point_shader_color_location;
-    unsigned int point_shader_program;
-    unsigned int point_shader_particle_vao;
-    unsigned int sphere_shader_mvp_location;
-    unsigned int sphere_shader_program;
-    unsigned int sphere_shader_particle_vao;
-    unsigned int sphere_shader_vertex_count;
-    unsigned int orbit_shader_mvp_location;
-    unsigned int orbit_shader_program;
-    unsigned int orbit_shader_particle_vao;
-    unsigned int orbit_shader_vertex_count;
     unsigned int particle_buffer;
+    unsigned int particle_buffer_current;
     unsigned int orbit_buffer;
+    unsigned int orbit_buffer_current;
     void* window;
-
+    struct {
+        unsigned int texture;
+        unsigned int program;
+        unsigned int vao;
+        unsigned int pos_location;
+        unsigned int ypos_location;
+        unsigned int scale_location;
+        unsigned int aspect_location;
+        unsigned int screen_aspect_location;
+        unsigned int rotation_location;
+        unsigned int texture_location;
+        unsigned int charval_buffer;
+    } shader_simplefont;
+    struct {
+        unsigned int program;
+        unsigned int box_vao;
+        unsigned int cross_vao;
+        unsigned int ruler_vao;
+        unsigned int mvp_location;
+        unsigned int color_location;
+    } shader_box;
+    struct {
+        unsigned int mvp_location;
+        unsigned int color_location;
+        unsigned int current_index_location;
+        unsigned int breadcrumb_N_location;
+        unsigned int N_real_location;
+        unsigned int program;
+        unsigned int particle_vao;
+    } shader_point;
+    struct {
+        unsigned int mvp_location;
+        unsigned int program;
+        unsigned int particle_vao_current;
+        unsigned int particle_vao;
+    } shader_sphere;
+    struct {
+        unsigned int mvp_location;
+        unsigned int current_index_location;
+        unsigned int breadcrumb_N_location;
+        unsigned int N_real_location;
+        unsigned int vertex_count_location;
+        unsigned int program;
+        unsigned int particle_vao_current;
+        unsigned int particle_vao;
+        unsigned int vertex_count;
+    } shader_orbit;
+    struct {
+        unsigned int mvp_location;
+        unsigned int vertex_count_location;
+        unsigned int program;
+        unsigned int particle_vao_current;
+        unsigned int vertex_count;
+    } shader_plane;
 };
+
+// Display settings initialization
+DLLEXPORT void reb_simulation_add_display_settings(struct reb_simulation* r);
+
+// Matrix methods
+DLLEXPORT struct reb_mat4df reb_mat4df_identity();
+DLLEXPORT struct reb_mat4df reb_mat4df_scale(struct reb_mat4df m, float x, float y, float z);
+DLLEXPORT void reb_mat4df_print(struct reb_mat4df m);
+DLLEXPORT int reb_mat4df_eq(struct reb_mat4df A, struct reb_mat4df B);
+DLLEXPORT struct reb_vec3df reb_mat4df_get_scale(struct reb_mat4df m);
+DLLEXPORT struct reb_mat4df reb_mat4df_translate(struct reb_mat4df m, float x, float y, float z);
+DLLEXPORT struct reb_mat4df reb_mat4df_multiply(struct reb_mat4df A, struct reb_mat4df B);
+DLLEXPORT struct reb_mat4df reb_rotation_to_mat4df(struct reb_rotation A);
+DLLEXPORT struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t, float n, float f);
+
 
 // Declarations and functions needed internally or by python interface only.
 void reb_sigint_handler(int signum);
@@ -1184,6 +1315,7 @@ struct reb_binary_field_descriptor {
         REB_FIELD_END = 13,          // Special type to indicate end of blob
         REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
         REB_PARTICLE4 = 15,          // Used for WHFast512
+        REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
     } dtype;
     char name[1024];
     size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
