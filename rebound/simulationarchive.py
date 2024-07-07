@@ -55,7 +55,7 @@ class Simulationarchive(Structure):
                 ("t", POINTER(c_double)) 
                 ]
     def __repr__(self):
-        return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, reb_version_minor, reb_version_patch)
+        return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
     def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
         """
