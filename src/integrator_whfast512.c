@@ -1057,30 +1057,38 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
 #else // No AVX512 available
       // Using WHFast as a workaround.
       // Not bit-wise reproducible. 
-        struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-        if (ri_whfast512->N_systems !=1){
-            reb_simulation_warning(r, "Synchronization using WHFast not implemented for N_systems != 1.");
-            return;
-        }
         reb_simulation_warning(r, "WHFast512 is not available. Synchronization is provided using WHFast and is not bit-compatible to WHFast512.");
-        reb_integrator_whfast_init(r);
+        const unsigned int p_per_system = 8/N_systems;
+        const unsigned int N_per_system = r->N/N_systems;
         for (int s=0; s<N_systems; s++){
-            ri_whfast->p_jh[s] = ri_whfast512->p_jh0[s];
+            struct reb_simulation* rs = reb_simulation_create();
+            rs->G = r->G;
+            for (unsigned int i=0;i<=N_per_system;i++){
+                reb_simulation_add(rs, r->particles[s*N_per_system+i]);
+            }
+            struct reb_integrator_whfast* const ri_whfast = &(rs->ri_whfast);
+            reb_integrator_whfast_init(rs);
+            ri_whfast->coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+            ri_whfast->is_synchronized = 0;
+            ri_whfast->p_jh[0] = ri_whfast512->p_jh0[s];
+            for (unsigned int i=1;i<=N_per_system;i++){
+                ri_whfast->p_jh[i].m = ri_whfast512->p_jh->m[s*p_per_system+i-1];
+                ri_whfast->p_jh[i].x = ri_whfast512->p_jh->x[s*p_per_system+i-1];
+                ri_whfast->p_jh[i].y = ri_whfast512->p_jh->y[s*p_per_system+i-1];
+                ri_whfast->p_jh[i].z = ri_whfast512->p_jh->z[s*p_per_system+i-1];
+                ri_whfast->p_jh[i].vx = ri_whfast512->p_jh->vx[s*p_per_system+i-1];
+                ri_whfast->p_jh[i].vy = ri_whfast512->p_jh->vy[s*p_per_system+i-1];
+                ri_whfast->p_jh[i].vz = ri_whfast512->p_jh->vz[s*p_per_system+i-1];
+            }
+            reb_integrator_whfast_synchronize(rs);
+            for (unsigned int i=0;i<N_per_system;i++){
+                r->particles[s*N_per_system+i] = rs->particles[i];
+                r->particles[s*N_per_system+i].sim = r;
+            }
+            reb_simulation_free(rs);
         }
-        for (unsigned int i=1;i<r->N;i++){
-            ri_whfast->p_jh[i].m = ri_whfast512->p_jh->m[i-1];
-            ri_whfast->p_jh[i].x = ri_whfast512->p_jh->x[i-1];
-            ri_whfast->p_jh[i].y = ri_whfast512->p_jh->y[i-1];
-            ri_whfast->p_jh[i].z = ri_whfast512->p_jh->z[i-1];
-            ri_whfast->p_jh[i].vx = ri_whfast512->p_jh->vx[i-1];
-            ri_whfast->p_jh[i].vy = ri_whfast512->p_jh->vy[i-1];
-            ri_whfast->p_jh[i].vz = ri_whfast512->p_jh->vz[i-1];
-        }
-        ri_whfast->coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
-        ri_whfast->is_synchronized = 0;
-        reb_integrator_whfast_synchronize(r);
         
-        ri_whfast512->is_synchronized = ri_whfast->is_synchronized;
+        ri_whfast512->is_synchronized = 1;
 #endif // AVX512
     }
 }
