@@ -95,6 +95,7 @@ nav:
       - c_examples/restarting_simulation.md
       - ipython_examples/Simulationarchive.ipynb
       - ipython_examples/SimulationarchiveRestart.ipynb
+      - c_examples/simulationarchive_fields.md
     - "Variational equations":
       - c_examples/variational_equations.md
       - ipython_examples/VariationalEquations.ipynb
