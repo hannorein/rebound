@@ -1417,6 +1417,7 @@ class Simulation(Structure):
         Call this function if safe-mode is disabled and you need to synchronize particle positions and velocities between timesteps.
         """
         clibrebound.reb_simulation_synchronize(byref(self))
+        self.process_messages()
     
     def tree_update(self):
         """
