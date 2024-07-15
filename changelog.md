@@ -4,6 +4,12 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.2
+* Fixed bug in TRACE when adding particles.
+* Added WHFast fallback for synchronizing WHFast512 simulations with `N_systems` > 1.
+* Output version number used to create Simulationarchive if there is a version mismatch.
+* Added C example `simulationarchive_fields` which outputs all fields in a simulationarchive for debugging purposes.
+
 ### Version 4.4.1
 * Fixed bug in TRACE for FULL PERI modes.
 
