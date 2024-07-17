@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import ctypes
 
 d = 1e-14 # precision. some orbit transformations are not well behaved
 

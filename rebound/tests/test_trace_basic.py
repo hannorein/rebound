@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import numpy as np
 
 
 class TestIntegratorTraceBasic(unittest.TestCase):

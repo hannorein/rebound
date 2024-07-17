@@ -1,8 +1,5 @@
 import rebound
 import unittest
-import datetime
-import socket
-import warnings
 
 class TestCopy(unittest.TestCase):
     def test_copy_is_same(self):

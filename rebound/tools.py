@@ -1,5 +1,4 @@
-from ctypes import c_uint32, c_uint, c_uint64, c_char_p, c_double, byref
-import sys
+from ctypes import c_double, byref
 import rebound
 
 def mod2pi(x):

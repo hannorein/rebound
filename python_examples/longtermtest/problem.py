@@ -2,8 +2,6 @@
 import sys
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
-from matplotlib import ticker
-from matplotlib.colors import LogNorm
 import rebound
 import numpy as np
 import time

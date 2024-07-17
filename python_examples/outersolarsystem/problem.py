@@ -1,6 +1,5 @@
 # Import the rebound module
 import rebound
-import os
 
 # Create a REBOUND simulation
 sim = rebound.Simulation()
