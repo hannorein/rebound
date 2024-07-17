@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import os
 import rebound.data as data
 
 class TestData(unittest.TestCase):

@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import rebound.data as data
 
 mdot = 1e-6
 def ptm(sim):

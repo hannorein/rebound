@@ -2,10 +2,8 @@ import rebound
 import unittest
 import numpy as np
 import math
-import os
 import sys
 import warnings
-import rebound.data as data
 from datetime import datetime
 
 def chaotic_exchange_sim():

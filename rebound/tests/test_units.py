@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import os
 
 class TestUnits(unittest.TestCase):
     def setUp(self):

@@ -1,7 +1,5 @@
 import rebound
 import unittest
-import os
-import math
 
 class TestSerialize(unittest.TestCase):
     def setUp(self):

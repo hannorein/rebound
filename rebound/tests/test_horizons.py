@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import datetime
 import socket
 import warnings
 

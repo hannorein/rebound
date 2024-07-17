@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import math 
 from ctypes import c_uint32
 
 class TestHash(unittest.TestCase):

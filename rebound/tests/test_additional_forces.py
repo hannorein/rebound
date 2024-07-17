@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import rebound.data as data
 
 class TestAdditionalForces(unittest.TestCase):
     def test_af_ias15(self):

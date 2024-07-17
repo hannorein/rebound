@@ -1,9 +1,7 @@
 import rebound
 import unittest
-import os
 import sys
 import warnings
-import rebound.data as data
 from datetime import datetime
 
 class TestMercurius(unittest.TestCase):

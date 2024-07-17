@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import pickle
-import os
 import warnings
 
 class TestPickle(unittest.TestCase):

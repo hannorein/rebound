@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import math
 import warnings
 
 class TestGravity(unittest.TestCase):
