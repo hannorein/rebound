@@ -278,7 +278,7 @@ int reb_integrator_trace_switch_peri_ep_accels(struct reb_simulation* const r, c
 
     // TLUEPP
 
-    struct reb_particle pi_pre = {};
+    struct reb_particle pi_pre = {0};
     pi_pre.x = r->particles[j].x - h2 * r->particles[j].vx;
     pi_pre.y = r->particles[j].y - h2 * r->particles[j].vy;
     pi_pre.z = r->particles[j].z - h2 * r->particles[j].vz;
@@ -286,7 +286,7 @@ int reb_integrator_trace_switch_peri_ep_accels(struct reb_simulation* const r, c
     pi_pre.vy = r->particles[j].vy - h2 * ddy;
     pi_pre.vz = r->particles[j].vz - h2 * ddz;
 
-    struct reb_particle pi_post = {};
+    struct reb_particle pi_post = {0};
     pi_post.x = r->particles[j].x + h2 * r->particles[j].vx;
     pi_post.y = r->particles[j].y + h2 * r->particles[j].vy;
     pi_post.z = r->particles[j].z + h2 * r->particles[j].vz;
