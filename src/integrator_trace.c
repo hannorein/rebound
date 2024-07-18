@@ -75,6 +75,96 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     return d2*d2*d2 < dcritmax6;
 }
 
+int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
+    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    const double dt = r->dt;
+
+
+    const double dx0 = ri_trace->particles_pre[i].x - ri_trace->particles_pre[j].x;
+    const double dy0 = ri_trace->particles_pre[i].y - ri_trace->particles_pre[j].y;
+    const double dz0 = ri_trace->particles_pre[i].z - ri_trace->particles_pre[j].z;
+    const double r0 = (dx0*dx0 + dy0*dy0 + dz0*dz0);
+    const double dvx0 = ri_trace->particles_pre[i].vx - ri_trace->particles_pre[j].vx;
+    const double dvy0 = ri_trace->particles_pre[i].vy - ri_trace->particles_pre[j].vy;
+    const double dvz0 = ri_trace->particles_pre[i].vz - ri_trace->particles_pre[j].vz;
+    const double dxn = ri_trace->particles_post[i].x - ri_trace->particles_post[j].x;
+    const double dyn = ri_trace->particles_post[i].y - ri_trace->particles_post[j].y;
+    const double dzn = ri_trace->particles_post[i].z - ri_trace->particles_post[j].z;
+    const double dvxn = ri_trace->particles_post[i].vx - ri_trace->particles_post[j].vx;
+    const double dvyn = ri_trace->particles_post[i].vy - ri_trace->particles_post[j].vy;
+    const double dvzn = ri_trace->particles_post[i].vz - ri_trace->particles_post[j].vz;
+    const double rn = (dxn*dxn + dyn*dyn + dzn*dzn);
+
+    //const double dxp = r->particles[i].x - r->particles[j].x;
+    //const double dyp = r->particles[i].y - r->particles[j].y;
+    //const double dzp = r->particles[i].z - r->particles[j].z;
+    //const double rp = (dxp*dxp + dyp*dyp + dzp*dzp);
+
+
+    const double drndt = (dxn*dvxn+dyn*dvyn+dzn*dvzn)*2.;
+    const double drodt = (dx0*dvx0+dy0*dvy0+dz0*dvz0)*2.;
+
+    const double a = 6.*(r0-rn)+3.*dt*(drodt+drndt);
+    const double b = 6.*(rn-r0)-2.*dt*(2.*drodt+drndt);
+    const double c = dt*drodt;
+
+    double rmin = MIN(rn,r0);
+
+    const double s = b*b-4.*a*c;
+    const double sr = sqrt(MAX(0.,s));
+    const double tmin1 = (-b + sr)/(2.*a);
+    const double tmin2 = (-b - sr)/(2.*a);
+    if (tmin1>0. && tmin1<1.){
+	const double rmin1 = (1.-tmin1)*(1.-tmin1)*(1.+2.*tmin1)*r0
+			     + tmin1*tmin1*(3.-2.*tmin1)*rn
+			     + tmin1*(1.-tmin1)*(1.-tmin1)*dt*drodt
+			     - tmin1*tmin1*(1.-tmin1)*dt*drndt;
+	rmin = MIN(MAX(rmin1,0.),rmin);
+    }
+    if (tmin2>0. && tmin2<1.){
+	const double rmin2 = (1.-tmin2)*(1.-tmin2)*(1.+2.*tmin2)*r0
+			     + tmin2*tmin2*(3.-2.*tmin2)*rn
+			     + tmin2*(1.-tmin2)*(1.-tmin2)*dt*drodt
+			     - tmin2*tmin2*(1.-tmin2)*dt*drndt;
+	rmin = MIN(MAX(rmin2,0.),rmin);
+    }
+
+    double dcriti6 = 0.0;
+    double dcritj6 = 0.0;
+
+    const double m0 = r->particles[0].m;
+
+    if (r->particles[i].m != 0){
+        const double dxi  = r->particles[i].x;  // in dh
+        const double dyi  = r->particles[i].y;
+        const double dzi  = r->particles[i].z;
+        const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
+        const double mr = r->particles[i].m/(3.*m0);
+        dcriti6 = di2*di2*di2*mr*mr;
+    }
+
+    if (r->particles[j].m != 0){
+        const double dxj  = r->particles[j].x;  // in dh
+        const double dyj  = r->particles[j].y;
+        const double dzj  = r->particles[j].z;
+        const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
+        const double mr = r->particles[j].m/(3.*m0);
+        dcritj6 = dj2*dj2*dj2*mr*mr;
+    }
+
+    //const double dx = r->particles[i].x - r->particles[j].x;
+    //const double dy = r->particles[i].y - r->particles[j].y;
+    //const double dz = r->particles[i].z - r->particles[j].z;
+    //const double d2 = dx*dx + dy*dy + dz*dz;
+    //rmin = dx * dx + dy * dy + dz * dz;
+
+    double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
+    double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
+
+    return rmin*rmin*rmin < dcritmax6;
+
+}
+
 int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j){
     const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double peri = ri_trace->peri_crit_distance;
@@ -162,6 +252,53 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     }else{
         return 0;
     }
+}
+
+int reb_integrator_trace_switch_peri_ep_accels(struct reb_simulation* const r, const unsigned int j){
+    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use.
+    double h2 = r->dt/2.;
+
+    double x = r->particles[j].x;
+    double y = r->particles[j].y;
+    double z = r->particles[j].z;
+    double d2 = x*x + y*y + z*z;
+    double d = sqrt(d2);
+
+    // first derivative
+    double dx = r->particles[j].vx;
+    double dy = r->particles[j].vy;
+    double dz = r->particles[j].vz;
+
+    // second derivative
+    double prefact2 = -GM/(d2*d);
+    double ddx = prefact2*x;
+    double ddy = prefact2*y;
+    double ddz = prefact2*z;
+
+    // TLUEPP
+
+    struct reb_particle pi_pre = {};
+    pi_pre.x = r->particles[j].x - h2 * r->particles[j].vx;
+    pi_pre.y = r->particles[j].y - h2 * r->particles[j].vy;
+    pi_pre.z = r->particles[j].z - h2 * r->particles[j].vz;
+    pi_pre.vx = r->particles[j].vx - h2 * ddx;
+    pi_pre.vy = r->particles[j].vy - h2 * ddy;
+    pi_pre.vz = r->particles[j].vz - h2 * ddz;
+
+    struct reb_particle pi_post = {};
+    pi_post.x = r->particles[j].x + h2 * r->particles[j].vx;
+    pi_post.y = r->particles[j].y + h2 * r->particles[j].vy;
+    pi_post.z = r->particles[j].z + h2 * r->particles[j].vz;
+    pi_post.vx = r->particles[j].vx + h2 * ddx;
+    pi_post.vy = r->particles[j].vy + h2 * ddy;
+    pi_post.vz = r->particles[j].vz + h2 * ddz;
+
+    ri_trace->particles_pre[j] = pi_pre;
+    ri_trace->particles_post[j] = pi_post;
+
+    return 0;
+
 }
 
 int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j){
@@ -519,6 +656,8 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
+	ri_trace->particles_pre          = realloc(ri_trace->particles_pre,sizeof(struct reb_particle)*N);
+        ri_trace->particles_post         = realloc(ri_trace->particles_post,sizeof(struct reb_particle)*N);
         ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
         ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
@@ -841,6 +980,11 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.particles_backup_kepler = NULL;
     free(r->ri_trace.particles_backup_additional_forces);
     r->ri_trace.particles_backup_additional_forces = NULL;
+    
+    free(r->ri_trace.particles_pre);
+    r->ri_trace.particles_pre = NULL;
+    free(r->ri_trace.particles_post);
+    r->ri_trace.particles_post = NULL;
 
 
     free(r->ri_trace.encounter_map);
