@@ -152,11 +152,11 @@ int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r
         dcritj6 = dj2*dj2*dj2*mr*mr;
     }
 
-    //const double dx = r->particles[i].x - r->particles[j].x;
-    //const double dy = r->particles[i].y - r->particles[j].y;
-    //const double dz = r->particles[i].z - r->particles[j].z;
+    const double dx = r->particles[i].x - r->particles[j].x;
+    const double dy = r->particles[i].y - r->particles[j].y;
+    const double dz = r->particles[i].z - r->particles[j].z;
     //const double d2 = dx*dx + dy*dy + dz*dz;
-    //rmin = dx * dx + dy * dy + dz * dz;
+    rmin = dx * dx + dy * dy + dz * dz;
 
     double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
     double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
