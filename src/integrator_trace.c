@@ -152,11 +152,11 @@ int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r
         dcritj6 = dj2*dj2*dj2*mr*mr;
     }
 
-    const double dx = r->particles[i].x - r->particles[j].x;
-    const double dy = r->particles[i].y - r->particles[j].y;
-    const double dz = r->particles[i].z - r->particles[j].z;
+//    const double dx = r->particles[i].x - r->particles[j].x;
+//    const double dy = r->particles[i].y - r->particles[j].y;
+//    const double dz = r->particles[i].z - r->particles[j].z;
     //const double d2 = dx*dx + dy*dy + dz*dz;
-    rmin = dx * dx + dy * dy + dz * dz;
+//    rmin = dx * dx + dy * dy + dz * dz;
 
     double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
     double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
@@ -279,17 +279,17 @@ int reb_integrator_trace_switch_peri_ep_accels(struct reb_simulation* const r, c
     // TLUEPP
 
     struct reb_particle pi_pre = {0};
-    pi_pre.x = r->particles[j].x - h2 * r->particles[j].vx;
-    pi_pre.y = r->particles[j].y - h2 * r->particles[j].vy;
-    pi_pre.z = r->particles[j].z - h2 * r->particles[j].vz;
+    pi_pre.x = r->particles[j].x - h2 * r->particles[j].vx - 0.5 * h2 * h2 * ddx;
+    pi_pre.y = r->particles[j].y - h2 * r->particles[j].vy - 0.5 * h2 * h2 * ddy;
+    pi_pre.z = r->particles[j].z - h2 * r->particles[j].vz - 0.5 * h2 * h2 * ddz;
     pi_pre.vx = r->particles[j].vx - h2 * ddx;
     pi_pre.vy = r->particles[j].vy - h2 * ddy;
     pi_pre.vz = r->particles[j].vz - h2 * ddz;
 
     struct reb_particle pi_post = {0};
-    pi_post.x = r->particles[j].x + h2 * r->particles[j].vx;
-    pi_post.y = r->particles[j].y + h2 * r->particles[j].vy;
-    pi_post.z = r->particles[j].z + h2 * r->particles[j].vz;
+    pi_post.x = r->particles[j].x + h2 * r->particles[j].vx + 0.5 * h2 * h2 * ddx;
+    pi_post.y = r->particles[j].y + h2 * r->particles[j].vy + 0.5 * h2 * h2 * ddy;
+    pi_post.z = r->particles[j].z + h2 * r->particles[j].vz + 0.5 * h2 * h2 * ddz;
     pi_post.vx = r->particles[j].vx + h2 * ddx;
     pi_post.vy = r->particles[j].vy + h2 * ddy;
     pi_post.vz = r->particles[j].vz + h2 * ddz;
