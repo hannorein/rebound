@@ -291,8 +291,6 @@ struct reb_integrator_trace {
     struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
     struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
-    struct reb_particle* REB_RESTRICT particles_pre; //  Pre-Timestep coordinates
-    struct reb_particle* REB_RESTRICT particles_post; // Post-Timestep coordinates
 
     int* encounter_map;             // Map to represent which particles are integrated with BS
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
@@ -854,7 +852,6 @@ DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* cons
 DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_peri_ep_accels(struct reb_simulation* const r, const unsigned int j); // This is a placeholder
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, const unsigned int i, const unsigned int j);

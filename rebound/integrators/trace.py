@@ -60,8 +60,6 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_particles_backup", ctypes.POINTER(Particle)),
                 ("_particles_backup_kepler", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
-                ("_particles_pre", ctypes.POINTER(Particle)),
-                ("_particles_post", ctypes.POINTER(Particle)),
                 ("_encounter_map", ctypes.POINTER(ctypes.c_int)),
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
@@ -69,7 +67,6 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
                 ]
-    # To be honest I'm not sure what these do: do we need this? - Tiger
     @property
     def S(self):
         raise AttributeError("You can only set C function pointers from python.")
@@ -77,6 +74,10 @@ class IntegratorTRACE(ctypes.Structure):
     def S(self, func):
         if func == "default":
             self._S = cast(clibrebound.reb_integrator_trace_switch_default,TRACEKF)
+        elif func == "line":
+            self._S = cast(clibrebound.reb_integrator_trace_switch_encounter_line, TRACEKF)
+        elif func == "cubic":
+            self._S = cast(clibrebound.reb_integrator_trace_switch_encounter_predict, TRACEKF)
         else:
             self._Sfp = TRACEKF(func)
             self._S = self._Sfp
