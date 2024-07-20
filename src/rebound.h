@@ -857,6 +857,7 @@ DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const
 DLLEXPORT int reb_integrator_trace_switch_peri_ep_accels(struct reb_simulation* const r, const unsigned int j); // This is a placeholder
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 
 
 // Built in collision resolve functions
