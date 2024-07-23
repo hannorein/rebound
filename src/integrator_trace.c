@@ -115,18 +115,30 @@ int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r
     const double pi_pre_x = r->particles[i].x - h2 * r->particles[i].vx + 0.5 * h2 * h2 * ddxi;
     const double pi_pre_y = r->particles[i].y - h2 * r->particles[i].vy + 0.5 * h2 * h2 * ddyi;
     const double pi_pre_z = r->particles[i].z - h2 * r->particles[i].vz + 0.5 * h2 * h2 * ddzi;
+    const double pi_pre_vx = r->particles[i].vx - h2 * ddxi;
+    const double pi_pre_vy = r->particles[i].vy - h2 * ddyi;
+    const double pi_pre_vz = r->particles[i].vz - h2 * ddzi;
 
     const double pi_post_x = r->particles[i].x + h2 * r->particles[i].vx + 0.5 * h2 * h2 * ddxi;
     const double pi_post_y = r->particles[i].y + h2 * r->particles[i].vy + 0.5 * h2 * h2 * ddyi;
     const double pi_post_z = r->particles[i].z + h2 * r->particles[i].vz + 0.5 * h2 * h2 * ddzi;
+    const double pi_post_vx = r->particles[i].vx + h2 * ddxi;
+    const double pi_post_vy = r->particles[i].vy + h2 * ddyi;
+    const double pi_post_vz = r->particles[i].vz + h2 * ddzi;
 
     const double pj_pre_x = r->particles[j].x - h2 * r->particles[j].vx + 0.5 * h2 * h2 * ddxj;
     const double pj_pre_y = r->particles[j].y - h2 * r->particles[j].vy + 0.5 * h2 * h2 * ddyj;
     const double pj_pre_z = r->particles[j].z - h2 * r->particles[j].vz + 0.5 * h2 * h2 * ddzj;
+    const double pj_pre_vx = r->particles[j].vx - h2 * ddxj;
+    const double pj_pre_vy = r->particles[j].vy - h2 * ddyj;
+    const double pj_pre_vz = r->particles[j].vz - h2 * ddzj;
 
     const double pj_post_x = r->particles[j].x + h2 * r->particles[j].vx + 0.5 * h2 * h2 * ddxj;
     const double pj_post_y = r->particles[j].y + h2 * r->particles[j].vy + 0.5 * h2 * h2 * ddyj;
     const double pj_post_z = r->particles[j].z + h2 * r->particles[j].vz + 0.5 * h2 * h2 * ddzj;
+    const double pj_post_vx = r->particles[j].vx + h2 * ddxj;
+    const double pj_post_vy = r->particles[j].vy + h2 * ddyj;
+    const double pj_post_vz = r->particles[j].vz + h2 * ddzj;
 
     // pre
     const double dx0 = pi_pre_x - pj_pre_x; 
@@ -140,17 +152,67 @@ int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r
     const double dzn = pi_post_z - pj_post_z; 
     const double rn = (dxn*dxn + dyn*dyn + dzn*dzn);
 
-    const double a = -2.*(2.*rp - rn - r0)/dt;
-    const double b = (rn-rp)/dt;
-    const double c = rp;
-    double rmin = MIN(MIN(rn,r0),rp);
+    double rmin = MIN(MIN(rn, rp), r0);
+    
+    // Quartic Polynomial
+    const double a = 2.*(8.*rp + dt*(rn - r0) - 4.*(rn - r0)) / (dt*dt*dt*dt);
+    const double b = (dt*(rn + r0) - 2.*(rn - r0)) / (dt*dt*dt);
+    const double c = (8.*(rn + r0) - 16.*rp - dt*(rn-r0)) / (2*dt*dt);
+    const double d = (6.*(rn - r0) - dt*(rn + r0)) / (4. * dt);
+    const double e = rp;
 
-    const double v = -b/(2*a);
-    if (v > -1.*h2 && v < h2){
-        const double vmin = a*v*v + b*v + c;
-	rmin = MIN(rmin, vmin*vmin);
+    // Derivative -- cubic
+    const double ca = 4.*a;
+    const double cb = 3.*b;
+    const double cc = 2.*c;
+    const double cd = d;
+    
+    // Depressed cubic
+    const double p = (3.*ca*cc - cb*cb)/(3*ca*ca);
+    const double q = (2.*cb*cb*cb - 9.*ca*cb*cc + 27.*ca*ca*cd)/(27.*ca*ca*ca);
+    double roots[3] = {};
+    unsigned int nroots = 0; // real roots
+    if (fabs(p) < 1e-10){ // p = 0 -> t^3 = -q
+        roots[0] = pow(-1.*q, 1./3.);
+	nroots = 1;
+    }
+    else if (fabs(q) < 1e-10 && p < 0){ // q = 0 -> t^3 + pt = 0
+        roots[0] = 0.;
+	roots[1] = sqrt(-1.*p);
+        roots[2] = -1.*sqrt(-1.*p);
+	nroots = 3;
+    }
+    else{
+        const double disc = q*q/4. + p*p*p/27.;
+	if (fabs(disc) < 1e-10){
+            roots[0] = -1.5*p*q;
+	    roots[1] = 3.*q/p;
+	    nroots = 2;
+	}
+	else if (disc > 0.){
+	    const double u = pow(-q/2. - sqrt(d), 1./3.);
+	    roots[0] = u - p/(3.*u);
+	    nroots = 1;
+	}
+	else{
+	    const double u = 2.*sqrt(-p/3.);
+	    const double t = acos(3.*q/p/u)/3.;
+	    const double k = 2.*M_PI/3.;
+	    roots[0] = u*cos(t);
+	    roots[1] = u*cos(t-k);
+	    roots[2] = u*cos(t-2*k);
+	    nroots = 3;
+	}
     }
 
+    // check if roots are in the range
+    for (unsigned int i = 0; i < nroots; i++){
+        double root = roots[i] - b/(3.*a);
+	if (root < h2 && root > -1.*h2){
+	    double rval = a*root*root*root*root + b*root*root*root + c*root*root + d*root + e;
+	    rmin = MIN(rmin, rval);
+	}
+    }
 
     double dcriti6 = 0.0;
     double dcritj6 = 0.0;
