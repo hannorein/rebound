@@ -18,7 +18,7 @@ import warnings
 
 # Runs one simulation.
 def simulation(par):
-    saturn_a, saturn_e = par
+    # saturn_a, saturn_e = par
     sim = rebound.Simulation() 
     sim.integrator = "whfast"
     sim.min_dt = 5.
@@ -27,8 +27,8 @@ def simulation(par):
     # These parameters are only approximately those of Jupiter and Saturn.
     sun     = rebound.Particle(m=1.)
     sim.add(sun)
-    jupiter = sim.add(primary=sun,m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
-    saturn  = sim.add(primary=sun,m=0.000285, a=saturn_a, M=0.871, omega=1.616, e=saturn_e)
+    # jupiter = sim.add(primary=sun,m=0.000954, a=5.204, M=0.600, omega=0.257, e=0.048)
+    # saturn  = sim.add(primary=sun,m=0.000285, a=saturn_a, M=0.871, omega=1.616, e=saturn_e)
 
     sim.move_to_com()
     sim.init_megno()

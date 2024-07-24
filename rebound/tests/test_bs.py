@@ -58,8 +58,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
     def test_bs_harmonic_with_nbody(self):
         sim = rebound.Simulation()
         sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.123);
-        sim.add(m=1e-3,a=2.6,e=0.123);
+        sim.add(m=1e-3,a=1,e=0.123)
+        sim.add(m=1e-3,a=2.6,e=0.123)
         sim.integrator = "BS"
         ode_ho = sim.create_ode(length=2, needs_nbody=False)
         ode_ho.derivatives = derivatives_ho
@@ -74,8 +74,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
     def test_bs_harmonic_with_nbody_coupledy(self):
         sim = rebound.Simulation()
         sim.add(m=1)
-        sim.add(m=1e-3,a=1,e=0.123);
-        sim.add(m=1e-3,a=2.6,e=0.123);
+        sim.add(m=1e-3,a=1,e=0.123)
+        sim.add(m=1e-3,a=2.6,e=0.123)
         sim.integrator = "BS"
         ode_ho = sim.create_ode(length=2, needs_nbody=True)
         ode_ho.derivatives = derivatives_ho

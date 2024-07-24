@@ -67,7 +67,7 @@ class TestGravity(unittest.TestCase):
             warnings.simplefilter("always")
             sim.integrate(10.)
             self.assertEqual(1,len(w))
-        x0 = sim.particles[0].x
+        # x0 = sim.particles[0].x
         # TODO
         # Currently fails. WHFAST evolves COM, but should only include star
         #self.assertEqual(x0, 0.)

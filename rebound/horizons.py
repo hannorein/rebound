@@ -84,7 +84,7 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
                         found_match = True
                     except:
                         continue
-                if found_match == False:
+                if not found_match:
                     raise AttributeError("An error occured while calculating the date. Use one "+" or ".join(formats) + " or JDxxxxxxx.xxxxxx")
     # set the cached initialization time if it's not set
     global INITDATE
