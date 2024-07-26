@@ -219,8 +219,8 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
         if (debug) printf("SA Version: 2\n");
         if (sa_index == NULL){ // Need to construct offset index from file.
             int64_t nblobsmax = 1024;
-            sa->t = malloc(sizeof(double)*nblobsmax);
-            sa->offset = malloc(sizeof(uint64_t)*nblobsmax);
+            sa->t = calloc(nblobsmax,sizeof(double));
+            sa->offset = calloc(nblobsmax,sizeof(uint64_t));
             fseek(sa->inf, 0, SEEK_SET);  
             sa->nblobs = 0;
             int read_error = 0;
