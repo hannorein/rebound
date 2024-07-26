@@ -2,7 +2,6 @@ import rebound
 import unittest
 import math
 import rebound.data
-import warnings
 
 
 def derivatives_ho(ode, yDot, y, t):

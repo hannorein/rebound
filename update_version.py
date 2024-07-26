@@ -1,6 +1,5 @@
 #!python
 # This script automatically creates a list of examples by reading the header in all problem.c files.
-import glob
 import subprocess
 ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
 

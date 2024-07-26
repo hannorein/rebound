@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import warnings
 
 class TestRotations(unittest.TestCase):
     def test_init(self):

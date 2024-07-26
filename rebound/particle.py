@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, c_char_p, string_at, POINTER, c_char, c_int64, c_void_p
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, string_at, POINTER, c_char, c_void_p
 import math
 import sys
 import random

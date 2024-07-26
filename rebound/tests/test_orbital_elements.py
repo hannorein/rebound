@@ -1,7 +1,6 @@
 import rebound
 import math
 import unittest
-import ctypes
 
 class TestOrbitalElements(unittest.TestCase):
     def test_add_errors(self):

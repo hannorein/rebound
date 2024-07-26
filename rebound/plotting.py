@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import math
 from .particle import Particle
 from itertools import cycle
 

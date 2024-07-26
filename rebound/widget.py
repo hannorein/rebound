@@ -423,10 +423,9 @@ if ipywidgets_major_version<7:
 
 from ipywidgets import DOMWidget
 import traitlets
-import math
 import base64
 import sys
-from ctypes import c_float, byref, create_string_buffer, c_int, c_char, pointer
+from ctypes import byref, c_int, c_char, pointer
 from . import clibrebound
 from .simulation import VISUALIZATIONS
 

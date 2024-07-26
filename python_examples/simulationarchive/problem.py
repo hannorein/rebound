@@ -1,6 +1,5 @@
 # Import the rebound module
 import rebound
-import os
 
 filename = "simulationarchive.bin"
 try:

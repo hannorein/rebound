@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import warnings
 
 class TestSimulationRestartMercurius(unittest.TestCase):
     def test_sa_mercurius_restart(self):

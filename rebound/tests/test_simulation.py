@@ -2,9 +2,7 @@ import rebound
 import warnings
 import unittest
 import os
-import math
 import sys
-from ctypes import c_uint32
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):

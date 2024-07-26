@@ -14,7 +14,6 @@ from matplotlib.colors import LogNorm
 import rebound
 # Import other modules
 import numpy as np
-import multiprocessing
 import warnings
 
 # Runs one simulation.
