@@ -853,8 +853,9 @@ DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const
 DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+//DLLEXPORT int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_encounter_line_peri(struct reb_simulation* const r, const unsigned int j); // debugging only
 
 
 // Built in collision resolve functions
