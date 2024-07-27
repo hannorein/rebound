@@ -75,145 +75,23 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     return d2*d2*d2 < dcritmax6;
 }
 
-int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
-    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double dt = r->dt;
-    const double h2 = dt/2.;
+int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
+    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    const double h2 = r->dt/2.;
     
-    double GM = r->G*r->particles[0].m; // Think this is still the correct mass, for these encounters solar mass should be more relevant
-
-    // current
-    const double dxi  = r->particles[i].x;  // in dh
+    const double dxi  = r->particles[i].x;
     const double dyi  = r->particles[i].y;
     const double dzi  = r->particles[i].z;
-    const double dxj  = r->particles[j].x;  // in dh
+
+    const double dxj  = r->particles[j].x;
     const double dyj  = r->particles[j].y;
     const double dzj  = r->particles[j].z;
-    const double dxp = dxi - dxj;
-    const double dyp = dyi - dyj;
-    const double dzp = dzi - dzj;
-    const double rp = (dxp*dxp + dyp*dyp + dzp*dzp);
+
+    const double dx = dxi - dxj;
+    const double dy = dyi - dyj;
+    const double dz = dzi - dzj;
+    const double rp = dx*dx + dy*dy + dz*dz;
     
-    const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
-    const double di = sqrt(di2);
-    const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
-    const double dj = sqrt(dj2);
-    
-    // second derivative
-    double prefacti2 = -GM/(di2*di);
-    double ddxi = prefacti2*dxi;
-    double ddyi = prefacti2*dyi;
-    double ddzi = prefacti2*dzi;
-    
-    double prefactj2 = -GM/(dj2*dj);
-    double ddxj = prefactj2*dxj;
-    double ddyj = prefactj2*dyj;
-    double ddzj = prefactj2*dzj;
-
-    // TLUEPP
-
-    const double pi_pre_x = r->particles[i].x - h2 * r->particles[i].vx + 0.5 * h2 * h2 * ddxi;
-    const double pi_pre_y = r->particles[i].y - h2 * r->particles[i].vy + 0.5 * h2 * h2 * ddyi;
-    const double pi_pre_z = r->particles[i].z - h2 * r->particles[i].vz + 0.5 * h2 * h2 * ddzi;
-    const double pi_pre_vx = r->particles[i].vx - h2 * ddxi;
-    const double pi_pre_vy = r->particles[i].vy - h2 * ddyi;
-    const double pi_pre_vz = r->particles[i].vz - h2 * ddzi;
-
-    const double pi_post_x = r->particles[i].x + h2 * r->particles[i].vx + 0.5 * h2 * h2 * ddxi;
-    const double pi_post_y = r->particles[i].y + h2 * r->particles[i].vy + 0.5 * h2 * h2 * ddyi;
-    const double pi_post_z = r->particles[i].z + h2 * r->particles[i].vz + 0.5 * h2 * h2 * ddzi;
-    const double pi_post_vx = r->particles[i].vx + h2 * ddxi;
-    const double pi_post_vy = r->particles[i].vy + h2 * ddyi;
-    const double pi_post_vz = r->particles[i].vz + h2 * ddzi;
-
-    const double pj_pre_x = r->particles[j].x - h2 * r->particles[j].vx + 0.5 * h2 * h2 * ddxj;
-    const double pj_pre_y = r->particles[j].y - h2 * r->particles[j].vy + 0.5 * h2 * h2 * ddyj;
-    const double pj_pre_z = r->particles[j].z - h2 * r->particles[j].vz + 0.5 * h2 * h2 * ddzj;
-    const double pj_pre_vx = r->particles[j].vx - h2 * ddxj;
-    const double pj_pre_vy = r->particles[j].vy - h2 * ddyj;
-    const double pj_pre_vz = r->particles[j].vz - h2 * ddzj;
-
-    const double pj_post_x = r->particles[j].x + h2 * r->particles[j].vx + 0.5 * h2 * h2 * ddxj;
-    const double pj_post_y = r->particles[j].y + h2 * r->particles[j].vy + 0.5 * h2 * h2 * ddyj;
-    const double pj_post_z = r->particles[j].z + h2 * r->particles[j].vz + 0.5 * h2 * h2 * ddzj;
-    const double pj_post_vx = r->particles[j].vx + h2 * ddxj;
-    const double pj_post_vy = r->particles[j].vy + h2 * ddyj;
-    const double pj_post_vz = r->particles[j].vz + h2 * ddzj;
-
-    // pre
-    const double dx0 = pi_pre_x - pj_pre_x; 
-    const double dy0 = pi_pre_y - pj_pre_y; 
-    const double dz0 = pi_pre_z - pj_pre_z; 
-    const double r0 = (dx0*dx0 + dy0*dy0 + dz0*dz0);
-    
-    // post
-    const double dxn = pi_post_x - pj_post_x; 
-    const double dyn = pi_post_y - pj_post_y; 
-    const double dzn = pi_post_z - pj_post_z; 
-    const double rn = (dxn*dxn + dyn*dyn + dzn*dzn);
-
-    double rmin = MIN(MIN(rn, rp), r0);
-    
-    // Quartic Polynomial
-    const double a = 2.*(8.*rp + dt*(rn - r0) - 4.*(rn - r0)) / (dt*dt*dt*dt);
-    const double b = (dt*(rn + r0) - 2.*(rn - r0)) / (dt*dt*dt);
-    const double c = (8.*(rn + r0) - 16.*rp - dt*(rn-r0)) / (2*dt*dt);
-    const double d = (6.*(rn - r0) - dt*(rn + r0)) / (4. * dt);
-    const double e = rp;
-
-    // Derivative -- cubic
-    const double ca = 4.*a;
-    const double cb = 3.*b;
-    const double cc = 2.*c;
-    const double cd = d;
-    
-    // Depressed cubic
-    const double p = (3.*ca*cc - cb*cb)/(3*ca*ca);
-    const double q = (2.*cb*cb*cb - 9.*ca*cb*cc + 27.*ca*ca*cd)/(27.*ca*ca*ca);
-    double roots[3] = {};
-    unsigned int nroots = 0; // real roots
-    if (fabs(p) < 1e-10){ // p = 0 -> t^3 = -q
-        roots[0] = pow(-1.*q, 1./3.);
-	nroots = 1;
-    }
-    else if (fabs(q) < 1e-10 && p < 0){ // q = 0 -> t^3 + pt = 0
-        roots[0] = 0.;
-	roots[1] = sqrt(-1.*p);
-        roots[2] = -1.*sqrt(-1.*p);
-	nroots = 3;
-    }
-    else{
-        const double disc = q*q/4. + p*p*p/27.;
-	if (fabs(disc) < 1e-10){
-            roots[0] = -1.5*p*q;
-	    roots[1] = 3.*q/p;
-	    nroots = 2;
-	}
-	else if (disc > 0.){
-	    const double u = pow(-q/2. - sqrt(d), 1./3.);
-	    roots[0] = u - p/(3.*u);
-	    nroots = 1;
-	}
-	else{
-	    const double u = 2.*sqrt(-p/3.);
-	    const double t = acos(3.*q/p/u)/3.;
-	    const double k = 2.*M_PI/3.;
-	    roots[0] = u*cos(t);
-	    roots[1] = u*cos(t-k);
-	    roots[2] = u*cos(t-2*k);
-	    nroots = 3;
-	}
-    }
-
-    // check if roots are in the range
-    for (unsigned int i = 0; i < nroots; i++){
-        double root = roots[i] - b/(3.*a);
-	if (root < h2 && root > -1.*h2){
-	    double rval = a*root*root*root*root + b*root*root*root + c*root*root + d*root + e;
-	    rmin = MIN(rmin, rval);
-	}
-    }
-
     double dcriti6 = 0.0;
     double dcritj6 = 0.0;
 
@@ -231,30 +109,10 @@ int reb_integrator_trace_switch_encounter_predict(struct reb_simulation* const r
         dcritj6 = dj2*dj2*dj2*mr*mr;
     }
 
-
     double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
     double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
 
-    return rmin*rmin*rmin < dcritmax6;
-
-}
-
-int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
-    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double h2 = r->dt/2.;
-    
-    const double dxi  = r->particles[i].x;
-    const double dyi  = r->particles[i].y;
-    const double dzi  = r->particles[i].z;
-
-    const double dxj  = r->particles[j].x;
-    const double dyj  = r->particles[j].y;
-    const double dzj  = r->particles[j].z;
-
-    const double dx = dxi - dxj;
-    const double dy = dyi - dyj;
-    const double dz = dzi - dzj;
-    const double rp = dx*dx + dy*dy + dz*dz;
+    if (rp*rp*rp < dcritmax6) return 1;
     
     const double dvx  = r->particles[i].vx - r->particles[j].vx;
     const double dvy  = r->particles[i].vy - r->particles[j].vy;
@@ -275,38 +133,84 @@ int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, c
     double rmin1 = MIN(rpre,rpost);
     double rmin = MIN(rmin1,rp);
 
+    if (rmin*rmin*rmin < dcritmax6) return 1;
+
     const double a = dvx*dvx + dvy*dvy + dvz*dvz;
     const double b = 2.*(dx*dvx+dy*dvy+dz*dvz);
     const double c = dx*dx + dy*dy + dz*dz;
 
-    const double tmin = -b/(2*a);
-    if (tmin > -1.*h2 && tmin < h2){
-       double rmin2 = a*tmin*tmin + b*tmin + c;
+    const double tmin_plus = -b/(2*a);
+    const double tmin_minus= b/(2*a);
+    
+    if (tmin_plus < h2 && tmin_plus > 0.){
+       double rmin2 = a*tmin_plus*tmin_plus + b*tmin_plus + c;
        rmin = MIN(rmin2, rmin);
     }
     
-
-    double dcriti6 = 0.0;
-    double dcritj6 = 0.0;
-
-    const double m0 = r->particles[0].m;
-
-    if (r->particles[i].m != 0){
-        const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
-        const double mr = r->particles[i].m/(3.*m0);
-        dcriti6 = di2*di2*di2*mr*mr;
+    if (tmin_minus > -1.*h2 && tmin_minus < 0.){
+       double rmin2 = a*tmin_minus*tmin_minus - b*tmin_minus + c;
+       rmin = MIN(rmin2, rmin);
     }
-
-    if (r->particles[j].m != 0){
-        const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
-        const double mr = r->particles[j].m/(3.*m0);
-        dcritj6 = dj2*dj2*dj2*mr*mr;
-    }
-
-    double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
-    double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
 
     return rmin*rmin*rmin < dcritmax6;
+}
+
+// Debugging only
+int reb_integrator_trace_switch_encounter_line_peri(struct reb_simulation* const r, const unsigned int j){
+    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
+    const double peri = ri_trace->peri_crit_distance;
+    if (peri == 0.0){
+      reb_simulation_warning(r,"Pericenter distance parameter not set. Set with r->ri_trace.peri_crit_distance=");
+    }
+    
+    const double h2 = r->dt/2.;
+
+    const double dx = r->particles[0].x - r->particles[j].x;
+    const double dy = r->particles[0].y - r->particles[j].y;
+    const double dz = r->particles[0].z - r->particles[j].z;
+    const double d2 = dx*dx + dy*dy + dz*dz;
+
+    if (d2 < peri*peri) return 1;
+    
+    const double vx  = r->particles[j].vx;
+    const double vy  = r->particles[j].vy;
+    const double vz  = r->particles[j].vz;
+
+    // pre
+    const double dx_pre = dx - h2 * vx;
+    const double dy_pre = dy - h2 * vy;
+    const double dz_pre = dz - h2 * vz;
+    const double dpre2 = dx_pre*dx_pre + dy_pre*dy_pre + dz_pre*dz_pre;
+   
+    // post
+    const double dx_post = dx + h2 * vx;
+    const double dy_post = dy + h2 * vy;
+    const double dz_post = dz + h2 * vz;
+    const double dpost2 = dx_post*dx_post + dy_post*dy_post + dz_post*dz_post;
+
+    double rmin1 = MIN(dpre2,dpost2);
+    double rmin = MIN(rmin1,d2);
+
+    if (rmin < peri*peri) return 1;
+    
+    const double a = vx*vx + vy*vy + vz*vz;
+    const double b = 2.*(dx*vx+dy*vy+dz*vz);
+    const double c = dx*dx + dy*dy + dz*dz;
+
+    const double tmin_plus = -b/(2*a);
+    const double tmin_minus= b/(2*a);
+    
+    if (tmin_plus < h2 && tmin_plus > 0.){
+       double rmin2 = a*tmin_plus*tmin_plus + b*tmin_plus + c;
+       rmin = MIN(rmin2, rmin);
+    }
+    
+    if (tmin_minus > -1.*h2 && tmin_minus < 0.){
+       double rmin2 = a*tmin_minus*tmin_minus - b*tmin_minus + c;
+       rmin = MIN(rmin2, rmin);
+    }
+
+    return rmin < peri*peri;
 }
 
 int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j){
