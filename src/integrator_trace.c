@@ -132,9 +132,64 @@ int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, c
 
     double rmin1 = MIN(rpre,rpost);
     double rmin = MIN(rmin1,rp);
-
+    
     if (rmin*rmin*rmin < dcritmax6) return 1;
 
+    const double dpx  = r->particles[i].m*r->particles[i].vx - r->particles[j].m*r->particles[j].vx;
+    const double dpy  = r->particles[i].m*r->particles[i].vy - r->particles[j].m*r->particles[j].vy;
+    const double dpz  = r->particles[i].m*r->particles[i].vz - r->particles[j].m*r->particles[j].vz;
+    const double p2 = dpx*dpx + dpy*dpy + dpz*dpz;
+
+    const double qp = dx*dpx + dy*dpy + dz*dpz;
+    double tmin;
+
+    if (qp < 0){
+	// positive solution
+        tmin = -1.*qp / p2; 
+	if (tmin < h2 && tmin > 0.){
+	    const double rmin2 = rp + tmin;
+	    rmin = MIN(rmin2, rmin);
+	}
+	else if (tmin > h2){
+            const double rmin2 = rp + 2.*r->dt*qp + p2 + r->dt*r->dt;
+	    rmin = MIN(rmin2, rmin);
+	}
+    }
+    else{
+        // negative solution
+	tmin = qp / (dpx*dpx + dpy*dpy + dpz*dpz);
+	if (tmin > -1.*h2 && tmin < 0.){
+	    const double rmin2 = rp + tmin;
+	    rmin = MIN(rmin2, rmin);
+	}
+	else if (tmin < -1.*h2){
+            const double rmin2 = rp - 2.*r->dt*qp + p2 + r->dt*r->dt;
+	    rmin = MIN(rmin2, rmin);
+	}
+    }
+
+
+/*
+    const double a = 2.*(rpost - 2.*rpre + rp)/(r->dt*r->dt);
+    const double a_min = 2.*(rpre - 2.*rpost + rp)/(r->dt*r->dt);
+    const double b = (rpre-rpost)/(r->dt);
+    const double b_min = (rpost-rpre)/(r->dt);
+    const double c = rp;
+
+    const double tmin_plus = -b/(2*a);
+    const double tmin_min = -b_min/(2*a_min);
+
+    if (tmin_plus > 0. && tmin_plus < h2){
+       double rmin2 = a*tmin_plus*tmin_plus + b*tmin_plus + c;
+       rmin = MIN(rmin2, rmin);
+    }
+    
+    if (tmin_min > -1.*h2 && tmin_min < 0.){
+       double rmin2 = a*tmin_min*tmin_min + b*tmin_min + c;
+       rmin = MIN(rmin2, rmin);
+    }
+*/
+    /*
     const double a = dvx*dvx + dvy*dvy + dvz*dvz;
     const double b = 2.*(dx*dvx+dy*dvy+dz*dvz);
     const double c = dx*dx + dy*dy + dz*dz;
@@ -151,7 +206,7 @@ int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, c
        double rmin2 = a*tmin_minus*tmin_minus - b*tmin_minus + c;
        rmin = MIN(rmin2, rmin);
     }
-
+*/
     return rmin*rmin*rmin < dcritmax6;
 }
 
