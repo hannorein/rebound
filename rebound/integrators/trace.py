@@ -74,8 +74,6 @@ class IntegratorTRACE(ctypes.Structure):
     def S(self, func):
         if func == "default":
             self._S = cast(clibrebound.reb_integrator_trace_switch_default,TRACEKF)
-        elif func == "line":
-            self._S = cast(clibrebound.reb_integrator_trace_switch_encounter_line, TRACEKF)
         else:
             self._Sfp = TRACEKF(func)
             self._S = self._Sfp

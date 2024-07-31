@@ -40,11 +40,10 @@ class TestIntegratorTraceBasic(unittest.TestCase):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=9.55e-4,x=5.2)
-        sim.add(x=5.3,y=0.36,vy=-7.2) # Normal switching condition misses this
+        sim.add(x=5.3,y=0.36,vy=-7.2) # Non-encounter prediction misses this
         sim.integrator = "TRACE"
         sim.dt = 0.01
         sim.ri_trace.r_crit_hill = 1
-        sim.S = "line"
         sim.step()
         
         self.assertEqual(sim.ri_trace._encounter_N,3)
