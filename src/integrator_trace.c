@@ -145,25 +145,25 @@ int reb_integrator_trace_switch_encounter_line(struct reb_simulation* const r, c
 
     if (qp < 0){
 	// positive solution
-        tmin = -1.*qp / p2; 
+        tmin = -1.*qp/p2; 
 	if (tmin < h2 && tmin > 0.){
-	    const double rmin2 = rp + tmin;
+	    const double rmin2 = rp - qp*qp/p2;
 	    rmin = MIN(rmin2, rmin);
 	}
 	else if (tmin > h2){
-            const double rmin2 = rp + 2.*r->dt*qp + p2 + r->dt*r->dt;
+            const double rmin2 = rp + 2.*r->dt*qp + p2*r->dt*r->dt;
 	    rmin = MIN(rmin2, rmin);
 	}
     }
     else{
         // negative solution
-	tmin = qp / (dpx*dpx + dpy*dpy + dpz*dpz);
+	tmin = qp/p2;
 	if (tmin > -1.*h2 && tmin < 0.){
-	    const double rmin2 = rp + tmin;
+	    const double rmin2 = rp - qp*qp/p2;
 	    rmin = MIN(rmin2, rmin);
 	}
 	else if (tmin < -1.*h2){
-            const double rmin2 = rp - 2.*r->dt*qp + p2 + r->dt*r->dt;
+            const double rmin2 = rp - 2.*r->dt*qp + p2*r->dt*r->dt;
 	    rmin = MIN(rmin2, rmin);
 	}
     }
