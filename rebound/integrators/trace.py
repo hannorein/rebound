@@ -67,7 +67,6 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
                 ]
-    # To be honest I'm not sure what these do: do we need this? - Tiger
     @property
     def S(self):
         raise AttributeError("You can only set C function pointers from python.")
