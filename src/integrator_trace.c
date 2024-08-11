@@ -81,97 +81,33 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     const double dvx  = r->particles[i].vx - r->particles[j].vx;
     const double dvy  = r->particles[i].vy - r->particles[j].vy;
     const double dvz  = r->particles[i].vz - r->particles[j].vz;
-
-    // pre
-    const double dx_pre = dx - h2 * dvx;
-    const double dy_pre = dy - h2 * dvy;
-    const double dz_pre = dz - h2 * dvz;
-    const double rpre = dx_pre*dx_pre + dy_pre*dy_pre + dz_pre*dz_pre;
-   
-    // post
-    const double dx_post = dx + h2 * dvx;
-    const double dy_post = dy + h2 * dvy;
-    const double dz_post = dz + h2 * dvz;
-    const double rpost = dx_post*dx_post + dy_post*dy_post + dz_post*dz_post;
-
-    double rmin1 = MIN(rpre,rpost);
-    double rmin = MIN(rmin1,rp);
+    const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
     
-    if (rmin*rmin*rmin < dcritmax6) return 1;
+    const double qv = dx*dvx + dy*dvy + dz*dvz;
+    int d;
 
-    const double dpx  = r->particles[i].m*r->particles[i].vx - r->particles[j].m*r->particles[j].vx;
-    const double dpy  = r->particles[i].m*r->particles[i].vy - r->particles[j].m*r->particles[j].vy;
-    const double dpz  = r->particles[i].m*r->particles[i].vz - r->particles[j].m*r->particles[j].vz;
-    const double p2 = dpx*dpx + dpy*dpy + dpz*dpz;
-
-    const double qp = dx*dpx + dy*dpy + dz*dpz;
-    double tmin;
-
-    if (qp < 0){
-	// positive solution
-        tmin = -1.*qp/p2; 
-	if (tmin < h2 && tmin > 0.){
-	    const double rmin2 = rp - qp*qp/p2;
-	    rmin = MIN(rmin2, rmin);
-	}
-	else if (tmin > h2){
-            const double rmin2 = rp + 2.*r->dt*qp + p2*r->dt*r->dt;
-	    rmin = MIN(rmin2, rmin);
-	}
+    if (qv == 0.0){ // Small
+        // minimum is at present, which is already checked for
+	return 0;
+    }
+    else if (qv < 0){
+        d = 1; 
     }
     else{
-        // negative solution
-	tmin = qp/p2;
-	if (tmin > -1.*h2 && tmin < 0.){
-	    const double rmin2 = rp - qp*qp/p2;
-	    rmin = MIN(rmin2, rmin);
-	}
-	else if (tmin < -1.*h2){
-            const double rmin2 = rp - 2.*r->dt*qp + p2*r->dt*r->dt;
-	    rmin = MIN(rmin2, rmin);
-	}
+        d = -1;
     }
 
-
-/*
-    const double a = 2.*(rpost - 2.*rpre + rp)/(r->dt*r->dt);
-    const double a_min = 2.*(rpre - 2.*rpost + rp)/(r->dt*r->dt);
-    const double b = (rpre-rpost)/(r->dt);
-    const double b_min = (rpost-rpre)/(r->dt);
-    const double c = rp;
-
-    const double tmin_plus = -b/(2*a);
-    const double tmin_min = -b_min/(2*a_min);
-
-    if (tmin_plus > 0. && tmin_plus < h2){
-       double rmin2 = a*tmin_plus*tmin_plus + b*tmin_plus + c;
-       rmin = MIN(rmin2, rmin);
+    double dmin2;
+    double tmin = -d*qv/(2.*v2);
+    if (fabs(tmin) < h2){
+	// minimum is in the window
+	dmin2 = rp - qv/(4.*v2);
     }
-    
-    if (tmin_min > -1.*h2 && tmin_min < 0.){
-       double rmin2 = a*tmin_min*tmin_min + b*tmin_min + c;
-       rmin = MIN(rmin2, rmin);
+    else{
+	dmin2 = rp + d*qv*h2 + v2*h2*h2/4.;
     }
-*/
-    /*
-    const double a = dvx*dvx + dvy*dvy + dvz*dvz;
-    const double b = 2.*(dx*dvx+dy*dvy+dz*dvz);
-    const double c = dx*dx + dy*dy + dz*dz;
 
-    const double tmin_plus = -b/(2*a);
-    const double tmin_minus= b/(2*a);
-    
-    if (tmin_plus < h2 && tmin_plus > 0.){
-       double rmin2 = a*tmin_plus*tmin_plus + b*tmin_plus + c;
-       rmin = MIN(rmin2, rmin);
-    }
-    
-    if (tmin_minus > -1.*h2 && tmin_minus < 0.){
-       double rmin2 = a*tmin_minus*tmin_minus - b*tmin_minus + c;
-       rmin = MIN(rmin2, rmin);
-    }
-*/
-    return rmin*rmin*rmin < dcritmax6;
+    return dmin2*dmin2*dmin2 < dcritmax6;
 }
 
 
