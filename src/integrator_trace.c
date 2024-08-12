@@ -99,7 +99,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
 
     double dmin2;
     double tmin = -d*qv/(2.*v2);
-    if (fabs(tmin) < h2){
+    if (tmin < h2){
 	// minimum is in the window
 	dmin2 = rp - qv/(4.*v2);
     }
