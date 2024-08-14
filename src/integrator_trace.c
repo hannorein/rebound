@@ -98,13 +98,13 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     }
 
     double dmin2;
-    double tmin = -d*qv/(2.*v2);
+    double tmin = -d*qv/v2;
     if (tmin < h2){
 	// minimum is in the window
-	dmin2 = rp - qv/(4.*v2);
+	dmin2 = rp - qv*qv/v2;
     }
     else{
-	dmin2 = rp + d*qv*h2 + v2*h2*h2/4.;
+	dmin2 = rp + 2*d*qv*h2 + v2*h2*h2;
     }
 
     return dmin2*dmin2*dmin2 < dcritmax6;
