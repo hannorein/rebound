@@ -849,11 +849,11 @@ DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* cons
 
 // Built in trace switching functions
 
+DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_encounter_line_peri(struct reb_simulation* const r, const unsigned int j); // debugging only
 
 
 // Built in collision resolve functions
