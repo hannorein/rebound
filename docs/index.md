@@ -10,8 +10,8 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * No dependencies on external libraries.
 * Runs natively on Linux, MacOS, and Windows. 
 * Symplectic integrators ([WHFast](integrators/#whfast), [SEI](integrators/#sei), [LEAPFROG](integrators/#leapfrog), [EOS](integrators/#embedded-operator-splitting-method-eos))
-* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
 * Hybrid reversible integrators for planetary dynamics with arbitrary close encounters ([TRACE](integrators/#trace))
+* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
 * High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
 * High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
 * Can integrate arbitrary user-defined ODEs that are coupled to N-body dynamics for tides, spin, etc
