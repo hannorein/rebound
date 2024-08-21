@@ -7,4 +7,4 @@ assignees: ''
 
 ---
 
-What is your question?
+What is your question? (It helps to know your name and your affiliation if you have one.)

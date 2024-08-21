@@ -21,3 +21,6 @@ Describe the steps to reproduce the bug. Ideally this includes some or all of yo
 
 **Additional context**
 Add any other context about the problem here.
+
+**Name/Affiliation**
+It helps to know your name and your affiliation (if you have one).

@@ -8,3 +8,6 @@ assignees: ''
 ---
 
 Describe what feature you would like to see added to REBOUND.
+
+**Name/Affiliation**
+It helps to know your name and your affiliation (if you have one).

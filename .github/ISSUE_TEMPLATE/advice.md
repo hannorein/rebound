@@ -29,3 +29,6 @@ What have you tried so far?
 How is that working out?
 What are the stumbling blocks?
 What areas would you like to improve?
+
+**Name/Affiliation**
+It helps to know your name and your affiliation (if you have one).
