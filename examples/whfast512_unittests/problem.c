@@ -272,6 +272,7 @@ int test_restart(){
 
     if (reb_simulation_integrate(r512, tmax)>0) return 0;
     if (reb_simulation_integrate(r512, 2.*tmax)>0) return 0;
+    remove("test.bin");
     reb_simulation_save_to_file(r512, "test.bin");
     if (reb_simulation_integrate(r512, 3.*tmax)>0) return 0;
     if (reb_simulation_integrate(r512, tmaxfinal)>0) return 0;
@@ -298,6 +299,43 @@ int test_restart(){
     return 1;
 }
 
+// Only needed for unit testing
+void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r);
+
+int test_synchronization_fallback(){
+    remove("test.bin");
+    struct reb_simulation* r512 = setup_sim(9);
+     
+    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->ri_whfast512.gr_potential = 1;
+    reb_simulation_save_to_file_interval(r512, "test.bin", 1.0);
+    if (reb_simulation_integrate(r512, 2.5)>0) return 0;
+    reb_simulation_free(r512);
+
+    struct reb_simulation* r1 = reb_simulation_create_from_file("test.bin", 1);
+    struct reb_simulation* r2 = reb_simulation_create_from_file("test.bin", 1);
+    assert(r1->ri_whfast512.is_synchronized == 0);
+    assert(r2->ri_whfast512.is_synchronized == 0);
+    reb_simulation_synchronize(r1);
+    reb_integrator_whfast512_synchronize_fallback(r2);
+    assert(r1->ri_whfast512.is_synchronized == 1);
+    assert(r2->ri_whfast512.is_synchronized == 1);
+    
+    for (int i=0;i<r1->N;i++){
+        double dx = fabs(r1->particles[i].x - r2->particles[i].x);
+        double dvx = fabs(r1->particles[i].vx - r2->particles[i].vx);
+        if (dx>1e-15 || dvx>1e-15){
+            printf("Accuracy not met in synchronization fallback test.\n");
+            printf("i=%i diff_x=%.16e diff_vx=%.16e\n",i,dx, dvx);
+            return 0;
+        }
+    }
+    
+    reb_simulation_free(r1);
+    reb_simulation_free(r2);
+    return 1;
+}
+
 int main(int argc, char* argv[]) {
     assert(test_basic());
     assert(test_number_of_planets());
@@ -311,5 +349,6 @@ int main(int argc, char* argv[]) {
     assert(test_com());
     assert(test_twobody());
     assert(test_gr());
+    assert(test_synchronization_fallback());
     printf("All tests passed.\n");
 }
