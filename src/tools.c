@@ -1166,12 +1166,11 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
         }
     }
 
-    if (p.sim == NULL){                         // if particle isn't in simulation yet, can't get time.  You can still manually apply the equation below using o.M and o.n
-        o.T = nan("");
+    double t0 = 0.0;
+    if (p.sim != NULL){                     // if particle isn't in simulation yet, can't get time.
+        t0 = p.sim->t;
     }
-    else{
-        o.T = p.sim->t - o.M/fabs(o.n);         // time of pericenter passage (M = n(t-T).  Works for hyperbolic with fabs and n defined as above).
-    }
+    o.T = t0 - o.M/fabs(o.n);               // time of pericenter passage (M = n(t-T).  Works for hyperbolic orbits using fabs and n as defined above).
 
     // move some of the angles into [0,2pi) range
     o.f = reb_mod2pi(o.f);
