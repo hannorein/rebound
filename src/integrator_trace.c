@@ -530,6 +530,9 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         r->N_odes = N_odes_backup;
 
         r->t = old_t;
+        
+        // Resetting BS here reduces binary file size.
+        reb_integrator_bs_reset(r);
     }
 }
 
@@ -766,6 +769,8 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                     }
                     reb_collision_search(r);
                 }
+                // Resetting IAS15 here reduces binary file size.
+                reb_integrator_ias15_reset(r);
                 break;
             case REB_TRACE_PERI_FULL_BS:
                 {
@@ -807,6 +812,8 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         reb_collision_search(r);
                     }
                     reb_ode_free(nbody_ode);
+                    // Resetting BS here reduces binary file size
+                    reb_integrator_bs_reset(r);
                 }
                 break;
             default:
