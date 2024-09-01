@@ -4,6 +4,14 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.3
+* REBOUND now raises ImportError if it detects a size mismatch between the C and python Simulation structures.
+* Fixes a bug in the WHFast512 synchronization on non-AVX512 systems.
+* Fixes a bug in the SimulationArchive in cases where there are multiple snaptshots with t=0.
+* Updates TRACE switching condition to match Lu et al (2024).
+* TRACE binary file has been reduced.
+* Pericenter passage time is now calculated even if particles are not in a Simulation.
+
 ### Version 4.4.2
 * Fixed bug in TRACE when adding particles.
 * Added WHFast fallback for synchronizing WHFast512 simulations with `N_systems` > 1.
