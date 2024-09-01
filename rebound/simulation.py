@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at 
+from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof 
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
 from .citations import cite
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
@@ -1577,6 +1577,13 @@ AFF = CFUNCTYPE(None,POINTER(Simulation))
 CORFF = CFUNCTYPE(c_double,POINTER(Simulation), c_double)
 COLRFF = CFUNCTYPE(c_int, POINTER(Simulation), CollisionS)
 FPA = CFUNCTYPE(None, POINTER(Particle))
+
+# Check if Simulation has same size upon import. Nothing will work if there is a mismatch.
+clibrebound.reb_simulation_struct_size.res_type = c_size_t
+simulation_size_c = clibrebound.reb_simulation_struct_size()
+
+if simulation_size_c != sizeof(Simulation):
+    raise ImportError("Size of C struct `reb_simulation` differs from size of python class `Simulation`. This will lead to undefined behaviour. Make sure the C and Python versions of REBOUND are up-to-date and consistent. If you have installed REBOUND from source, you might need to recompile / reinstall the python package.")
 
 
 # Import at the end to avoid circular dependence

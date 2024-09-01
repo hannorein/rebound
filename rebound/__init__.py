@@ -63,7 +63,7 @@ try:
 except:
     # Might fail in some python3 setups, but not important
     pass
-
+        
 # Exceptions
 class GenericError(Exception):
     """The simulation exited with a generic error."""
