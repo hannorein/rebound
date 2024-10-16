@@ -404,7 +404,7 @@ The `reb_integrator_mercurius` structure contains the configuration and data str
 
 TRACE is a hybrid time-reversible integrator, based on the algorithm described in [Hernandez & Dehnen 2023](https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract). 
 It uses WHFast for long term integrations but switches time-reversibly to BS or IAS15 for all close encounters. TRACE is appropriate for systems with a dominant central mass that will occasionally have close encounters. 
-The TRACE implementation is described in [Lu, Hernandez & Rein](https://ui.adsabs.harvard.edu/abs/2024arXiv240503800L/abstract). 
+The TRACE implementation is described in [Lu, Hernandez & Rein](https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L/abstract). 
 
 
 The following code enables TRACE and sets the critical radius to 4 Hill radii
