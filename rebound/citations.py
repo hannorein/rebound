@@ -166,10 +166,22 @@ archivePrefix = {arXiv},
     if sim.integrator == "trace":
         txt += """The simulations were integrated using the hybrid time-reversible TRACE integrator \\citep{reboundtrace}. """
         bib += """@ARTICLE{reboundtrace,
-       author = {{Lu}, Tiger and {Hernandez}, David M. and {Rein}, Hanno},
-        title = "{TRACE: a Time Reversible Algorithm for Close Encounters}",
-      journal = {\\mnras},
-      pubstate = {in prep}
+        author = {{Lu}, Tiger and {Hernandez}, David M. and {Rein}, Hanno},
+        title = "{TRACE: a code for time-reversible astrophysical close encounters}",
+      journal = {\mnras},
+     keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Physics - Computational Physics},
+         year = 2024,
+        month = sep,
+       volume = {533},
+       number = {3},
+        pages = {3708-3723},
+          doi = {10.1093/mnras/stae1982},
+archivePrefix = {arXiv},
+       eprint = {2405.03800},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
 }
 """
 
