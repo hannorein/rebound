@@ -47,7 +47,7 @@ class Particle(Structure):
         return '<{0}.{1} object at {2}, m={3} x={4} y={5} z={6} vx={7} vy={8} vz={9}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.m, self.x, self.y, self.z, self.vx, self.vy, self.vz)
    
 
-    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, E=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, hash=0, jacobi_masses=False):
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, E=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, pal_h=None, pal_k=None, pal_ix=None, pal_iy=None, hash=0, jacobi_masses=False):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -117,13 +117,13 @@ class Particle(Structure):
             True longitude              (Default: 0)
         T           : float 
             Time of pericenter passage  
-        h           : float       
+        h or pal_h  : float       
             h variable, see Pal (2009) for a definition  (Default: 0)
-        k           : float       
+        k or pal_k  : float       
             k variable, see Pal (2009) for a definition  (Default: 0)
-        ix          : float       
+        ix or pal_ix : float       
             ix variable, see Pal (2009) for a definition  (Default: 0)
-        iy           : float       
+        iy or pal_iy : float       
             iy variable, see Pal (2009) for a definition  (Default: 0)
         r           : float       
             Particle radius (only used for collisional simulations)
@@ -257,6 +257,22 @@ class Particle(Structure):
             return
         cart = [x,y,z,vx,vy,vz]
         orbi = [primary,a,P,e,inc,Omega,omega,pomega,f,M,E,l,theta,T]
+        if pal_h is not None:
+            if h is not None:
+                raise ValueError("Both h and pal_h were given.")
+            h = pal_h
+        if pal_k is not None:
+            if k is not None:
+                raise ValueError("Both k and pal_k were given.")
+            k = pal_k
+        if pal_ix is not None:
+            if ix is not None:
+                raise ValueError("Both ix and pal_ix were given.")
+            ix = pal_ix
+        if pal_iy is not None:
+            if iy is not None:
+                raise ValueError("Both iy and pal_iy were given.")
+            iy = pal_iy
         pal  = [h,k,ix,iy]
        
         self.ax = 0.
@@ -881,6 +897,56 @@ class Particle(Structure):
             raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
         newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, e=o.e, inc=o.inc, omega=o.omega, Omega=o.Omega, T=value) 
         self._copy_coordinates(newP)
+    # Pal coordinates
+    @property
+    def pal_h(self):
+        return self.orbit().pal_h
+    @pal_h.setter
+    def pal_h(self,value):
+        o = self.orbit()
+        clibrebound.reb_simulation_jacobi_com.restype = Particle
+        primary = clibrebound.reb_simulation_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, l=o.l, pal_h=value, pal_k=o.pal_k, pal_ix=o.pal_ix, pal_iy=o.pal_iy)
+        self._copy_coordinates(newP)
+    @property
+    def pal_k(self):
+        return self.orbit().pal_k
+    @pal_k.setter
+    def pal_k(self,value):
+        o = self.orbit()
+        clibrebound.reb_simulation_jacobi_com.restype = Particle
+        primary = clibrebound.reb_simulation_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, l=o.l, pal_h=o.pal_h, pal_k=value, pal_ix=o.pal_ix, pal_iy=o.pal_iy)
+        self._copy_coordinates(newP)
+    @property
+    def pal_ix(self):
+        return self.orbit().pal_ix
+    @pal_ix.setter
+    def pal_ix(self,value):
+        o = self.orbit()
+        clibrebound.reb_simulation_jacobi_com.restype = Particle
+        primary = clibrebound.reb_simulation_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, l=o.l, pal_h=o.pal_h, pal_k=o.pal_k, pal_ix=value, pal_iy=o.pal_iy)
+        self._copy_coordinates(newP)
+    @property
+    def pal_iy(self):
+        return self.orbit().pal_iy
+    @pal_iy.setter
+    def pal_iy(self,value):
+        o = self.orbit()
+        clibrebound.reb_simulation_jacobi_com.restype = Particle
+        primary = clibrebound.reb_simulation_jacobi_com(byref(self))
+        if self._sim is None:
+            raise RuntimeError("Cannot modify particle which is not a member of a simulation.")
+        newP = Particle(simulation=self._sim.contents, primary=primary, m=self.m, a=o.a, l=o.l, pal_h=o.pal_h, pal_k=o.pal_k, pal_ix=o.pal_ix, pal_iy=value)
+        self._copy_coordinates(newP)
+    # Other properties
     @property
     def jacobi_com(self):
         clibrebound.reb_simulation_jacobi_com.restype = Particle
