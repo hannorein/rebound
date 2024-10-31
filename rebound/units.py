@@ -72,6 +72,7 @@ def units_convert_particle(p, old_l, old_t, old_m, new_l, new_t, new_m):
     p.x = convert_length(p.x, old_l, new_l) 
     p.y = convert_length(p.y, old_l, new_l)
     p.z = convert_length(p.z, old_l, new_l)
+    p.r = convert_length(p.r, old_l, new_l)
     p.vx = convert_vel(p.vx, old_l, old_t, new_l, new_t)
     p.vy = convert_vel(p.vy, old_l, old_t, new_l, new_t)
     p.vz = convert_vel(p.vz, old_l, old_t, new_l, new_t)
