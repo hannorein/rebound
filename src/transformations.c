@@ -472,3 +472,58 @@ void reb_particles_transform_democraticheliocentric_to_inertial_posvel(struct re
     particles[0].vz = p_h[0].vz -vz0;
 }
 
+/***************************
+* Barycentric Coordinates */
+static struct reb_particle com; // keeps track of center of mass to invert transformation
+void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
+    for (unsigned int i = 0; i<N; i++) {
+        particles[i].x = p_b[i].x + com.x;
+        particles[i].y = p_b[i].y + com.y;
+        particles[i].z = p_b[i].z + com.z;
+    }
+}
+
+void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
+    reb_particles_transform_barycentric_to_inertial_pos(particles, p_b, N, N_active);
+    for(unsigned int i = 0; i<N; i++) {
+        particles[i].vx = p_b[i].vx + com.vx;
+        particles[i].vy = p_b[i].vy + com.vy;
+        particles[i].vz = p_b[i].vz + com.vz;
+    }
+}
+
+void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
+    double mtot = 0.;
+    double x0 = 0.;
+    double y0 = 0.;
+    double z0 = 0.;
+    double vx0 = 0.;
+    double vy0 = 0.;
+    double vz0 = 0.;
+    for (unsigned int i=0;i<N_active;i++) {
+        const double m = particles[i].m;
+        mtot+=m;
+        x0+=particles[i].x*m;
+        y0+=particles[i].y*m;
+        z0+=particles[i].z*m;
+        vx0+=particles[i].vx*m;
+        vy0+=particles[i].vy*m;
+        vz0+=particles[i].vz*m;
+    }
+    const double mi = 1./mtot;
+    com.x = x0*mi;
+    com.y = y0*mi;
+    com.z = z0*mi;
+    com.vx = vx0*mi;
+    com.vy = vy0*mi;
+    com.vz = vz0*mi;
+    for (unsigned int i=0;i<N;i++){
+        p_b[i].x = particles[i].x - com.x;
+        p_b[i].y = particles[i].y - com.y;
+        p_b[i].z = particles[i].z - com.z;
+        p_b[i].vx = particles[i].vx - com.vx;
+        p_b[i].vy = particles[i].vy - com.vy;
+        p_b[i].vz = particles[i].vz - com.vz;
+    }
+}
+
