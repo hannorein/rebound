@@ -429,10 +429,10 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
 #pragma omp parallel for
-            for (int i=0;i<(int)N_real;i++) {
-                p_j[i].vx += _dt*particles[i].ax;
-                p_j[i].vy += _dt*particles[i].ay;
-                p_j[i].vz += _dt*particles[i].az;
+            for (unsigned int i = 0; i < N_real; i++) {
+                p_j[i].vx += _dt * particles[i].ax;
+                p_j[i].vy += _dt * particles[i].ay;
+                p_j[i].vz += _dt * particles[i].az;
             }
             break;
     };
@@ -535,14 +535,11 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
             }
         break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
-        // using interior particles for eta.
-#pragma omp parallel for
-            for (unsigned int i=1; i<N_real; i++) {
-                eta = m0;
-                for (unsigned int j=1; j<=i; j++) {
-                    eta += p_j[j].m;
-                }
-                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+            for (unsigned int i=1;i<N_active;i++) {
+                eta+=p_j[i].m;
+            }
+            for (unsigned int i=1;i<N_real;i++) {
+                reb_whfast_kepler_solver(r, p_j,eta*G, i, _dt);
             }
         break;
     };
