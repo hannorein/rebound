@@ -480,82 +480,101 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
     double x0 = 0;
     double y0 = 0;
     double z0 = 0;
+#pragma omp parallel for reduction(+:mtot)
     for (unsigned int i = 0; i<N_active; i++) {
+        const double m = p_b[i].m;
+        particles[i].m = m;
         mtot += p_b[i].m;
     }
     const double mi = 1.0 / mtot;
+#pragma omp parallel for reduction(+:x0) reduction(+:y0) reduction(+:z0)
     for (unsigned int i=1; i<N; i++) {
         const double m = p_b[i].m;
         particles[i].x = p_b[i].x + p_b[0].x*mi;
         particles[i].y = p_b[i].y + p_b[0].y*mi;
         particles[i].z = p_b[i].z + p_b[0].z*mi;
-        particles[i].m = p_b[i].m;
-        x0 += particles[i].x*m;
-        y0 += particles[i].y*m;
-        z0 += particles[i].z*m;
+        if(i < N_active){
+            x0 += particles[i].x*m;
+            y0 += particles[i].y*m;
+            z0 += particles[i].z*m;
+        }
     }
+    particles[0].m = p_b[0].m;
     particles[0].x = (p_b[0].x - x0)/p_b[0].m;
     particles[0].y = (p_b[0].y - y0)/p_b[0].m;
     particles[0].z = (p_b[0].z - z0)/p_b[0].m;
-    particles[0].m = p_b[0].m;
 }
 
 void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
-    reb_particles_transform_barycentric_to_inertial_pos(particles, p_b, N, N_active);
     double mtot = 0;
     double vx0 = 0;
     double vy0 = 0;
     double vz0 = 0;
+    double x0 = 0;
+    double y0 = 0;
+    double z0 = 0;
+#pragma omp parallel for reduction(+:mtot)
     for (unsigned int i = 0; i<N_active;i++) {
-        mtot += p_b[i].m;
+        const double m = p_b[i].m;
+        mtot += m;
+        particles[i].m = m;
     }
     const double mi = 1./mtot;
+#pragma omp parallel for reduction(+:x0) reduction(+:y0) reduction(+:z0) reduction(+:vx0) reduction(+:vy0) reduction(+:vz0)
     for (unsigned int i=1; i<N; i++) {
-        const double m = p_b[i].m;
+        particles[i].x = p_b[i].x + p_b[0].x*mi;
+        particles[i].y = p_b[i].y + p_b[0].y*mi;
+        particles[i].z = p_b[i].z + p_b[0].z*mi;
         particles[i].vx = p_b[i].vx + p_b[0].vx*mi;
         particles[i].vy = p_b[i].vy + p_b[0].vy*mi;
         particles[i].vz = p_b[i].vz + p_b[0].vz*mi;
-        vx0 += particles[i].vx*m;
-        vy0 += particles[i].vy*m;
-        vz0 += particles[i].vz*m;
+        if(i < N_active) {
+            const double m = p_b[i].m;
+            x0 += particles[i].x*m;
+            y0 += particles[i].y*m;
+            z0 += particles[i].z*m;
+            vx0 += particles[i].vx*m;
+            vy0 += particles[i].vy*m;
+            vz0 += particles[i].vz*m;
+        }
     }
+    particles[0].m = p_b[0].m;
+    particles[0].x = (p_b[0].x - x0)/p_b[0].m;
+    particles[0].y = (p_b[0].y - y0)/p_b[0].m;
+    particles[0].z = (p_b[0].z - z0)/p_b[0].m;
     particles[0].vx = (p_b[0].vx - vx0)/p_b[0].m;
     particles[0].vy = (p_b[0].vy - vy0)/p_b[0].m;
     particles[0].vz = (p_b[0].vz - vz0)/p_b[0].m;
 }
-
 void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
-    double x0 = 0;
-    double y0 = 0;
-    double z0 = 0;
-    double vx0 = 0;
-    double vy0 = 0;
-    double vz0 = 0;
+    p_b[0].x = 0;
+    p_b[0].y = 0;
+    p_b[0].z = 0;
+    p_b[0].vx = 0;
+    p_b[0].vy = 0;
+    p_b[0].vz = 0;
+    p_b[0].m = particles[0].m;
     double mtot = 0;
+#pragma omp parallel for reduction(+:mtot)
     for (unsigned int i = 0; i < N_active; i++) {
-        mtot += particles[i].m;
-        x0 += particles[i].x * particles[i].m;
-        y0 += particles[i].y * particles[i].m;
-        z0 += particles[i].z * particles[i].m;
-        vx0 += particles[i].vx * particles[i].m;
-        vy0 += particles[i].vy * particles[i].m;
-        vz0 += particles[i].vz * particles[i].m;
+        const double m = particles[i].m;
+        mtot += m;
+        p_b[i].m = m;
+        p_b[0].x += particles[i].x * m;
+        p_b[0].y += particles[i].y * m;
+        p_b[0].z += particles[i].z * m;
+        p_b[0].vx += particles[i].vx * m;
+        p_b[0].vy += particles[i].vy * m;
+        p_b[0].vz += particles[i].vz * m;
     }
     const double mi = 1.0 / mtot;
+#pragma omp parallel for
     for (unsigned int i = 1;i<N;i++) {
-        p_b[i].x = particles[i].x - x0*mi;
-        p_b[i].y = particles[i].y - y0*mi;
-        p_b[i].z = particles[i].z - z0*mi;
-        p_b[i].vx = particles[i].vx - vx0*mi;
-        p_b[i].vy = particles[i].vy - vy0*mi;
-        p_b[i].vz = particles[i].vz - vz0*mi;
-        p_b[i].m = particles[i].m;
+        p_b[i].x = particles[i].x - p_b[0].x*mi;
+        p_b[i].y = particles[i].y - p_b[0].y*mi;
+        p_b[i].z = particles[i].z - p_b[0].z*mi;
+        p_b[i].vx = particles[i].vx - p_b[0].vx*mi;
+        p_b[i].vy = particles[i].vy - p_b[0].vy*mi;
+        p_b[i].vz = particles[i].vz - p_b[0].vz*mi;
     }
-    p_b[0].x = x0;
-    p_b[0].y = y0;
-    p_b[0].z = z0;
-    p_b[0].vx = vx0;
-    p_b[0].vy = vy0;
-    p_b[0].vz = vz0;
-    p_b[0].m = particles[0].m;
 }
