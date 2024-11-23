@@ -6,14 +6,14 @@ import ctypes
 def getc(sim):
     c = []
     for i in range(sim.N):
-        c.append(sim.particles[0].x)
-        c.append(sim.particles[0].y)
-        c.append(sim.particles[0].z)
-        c.append(sim.particles[0].vx)
-        c.append(sim.particles[0].vy)
-        c.append(sim.particles[0].vz)
-        c.append(sim.particles[0].m)
-        c.append(sim.particles[0].r)
+        c.append(sim.particles[i].x)
+        c.append(sim.particles[i].y)
+        c.append(sim.particles[i].z)
+        c.append(sim.particles[i].vx)
+        c.append(sim.particles[i].vy)
+        c.append(sim.particles[i].vz)
+        c.append(sim.particles[i].m)
+        c.append(sim.particles[i].r)
     return c
 
 class TestTransformations(unittest.TestCase):
