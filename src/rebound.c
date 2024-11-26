@@ -485,6 +485,7 @@ void reb_clear_pre_post_pointers(struct reb_simulation* const r){
 }
 
 void reb_simulation_init(struct reb_simulation* r){
+    memset(r, 0, sizeof(struct reb_simulation));
     r->rand_seed = reb_tools_get_rand_seed();
     reb_simulation_reset_function_pointers(r);
     r->t        = 0; 
@@ -948,6 +949,11 @@ int reb_check_fp_contract(){
     double r2 = ab+c;
 
     return r1 != r2;
+}
+
+// Wrapper to free pointers from python.
+void reb_free(void* p){
+    free(p);
 }
 
 #ifdef _WIN32

@@ -8,6 +8,11 @@ import os
 import sys
 import warnings
 
+# Avoid unboxing strings. See
+# https://sourceforge.net/p/ctypes/mailman/message/8469497/
+class allocated_c_char_p(c_char_p):
+    pass
+
 import types
       
 ### The following enum and class definitions need to
@@ -281,9 +286,10 @@ class Simulation(Structure):
     def diff(self, other):
         if not isinstance(other,Simulation):
             return NotImplemented
-        clibrebound.reb_simulation_diff_char.restype = c_char_p
+        clibrebound.reb_simulation_diff_char.restype = allocated_c_char_p
         output = clibrebound.reb_simulation_diff_char(byref(other), byref(self))
-        print(output.decode("utf-8"))
+        print(output.value.decode("utf-8"))
+        clibrebound.reb_free(output)
 
     def __add__(self, other):
         if not isinstance(other,Simulation):
