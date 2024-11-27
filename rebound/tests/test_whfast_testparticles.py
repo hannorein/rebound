@@ -3,7 +3,7 @@ import unittest
 import rebound.data
 import warnings
 
-coordinatelist = ["democraticheliocentric","whds","jacobi"]
+coordinatelist = ["democraticheliocentric","whds","jacobi","barycentric"]
 class TestIntegratorWHFastTestParticle(unittest.TestCase):
     pass
 

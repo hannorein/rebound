@@ -2,7 +2,7 @@ import ctypes
 from ..particle import Particle
 
 WHFAST_KERNELS = {"default": 0, "modifiedkick": 1, "composition": 2, "lazy": 3}
-WHFAST_COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2}
+WHFAST_COORDINATES = {"jacobi": 0, "democraticheliocentric": 1, "whds": 2, "barycentric": 3}
 
 class IntegratorWHFast(ctypes.Structure):
     """
@@ -79,6 +79,7 @@ class IntegratorWHFast(ctypes.Structure):
         - ``'jacobi'`` (default)
         - ``'democraticheliocentric'``
         - ``'whds'``
+        - ``'barycentric'``
         """
         i = self._coordinates
         for name, _i in WHFAST_COORDINATES.items():
