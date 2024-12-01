@@ -476,10 +476,10 @@ void reb_particles_transform_democraticheliocentric_to_inertial_posvel(struct re
 * Barycentric */
 
 void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
-    double mtot = 0;
-    double x0 = 0;
-    double y0 = 0;
-    double z0 = 0;
+    double mtot = 0.;
+    double x0 = 0.;
+    double y0 = 0.;
+    double z0 = 0.;
 #pragma omp parallel for reduction(+:mtot)
     for (unsigned int i = 0; i<N_active; i++) {
         const double m = p_b[i].m;
@@ -489,11 +489,11 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
     const double mi = 1.0 / mtot;
 #pragma omp parallel for reduction(+:x0) reduction(+:y0) reduction(+:z0)
     for (unsigned int i=1; i<N; i++) {
-        const double m = p_b[i].m;
         particles[i].x = p_b[i].x + p_b[0].x*mi;
         particles[i].y = p_b[i].y + p_b[0].y*mi;
         particles[i].z = p_b[i].z + p_b[0].z*mi;
         if(i < N_active){
+            const double m = p_b[i].m;
             x0 += particles[i].x*m;
             y0 += particles[i].y*m;
             z0 += particles[i].z*m;
@@ -506,13 +506,13 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
 }
 
 void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
-    double mtot = 0;
-    double vx0 = 0;
-    double vy0 = 0;
-    double vz0 = 0;
-    double x0 = 0;
-    double y0 = 0;
-    double z0 = 0;
+    double mtot = 0.;
+    double vx0 = 0.;
+    double vy0 = 0.;
+    double vz0 = 0.;
+    double x0 = 0.;
+    double y0 = 0.;
+    double z0 = 0.;
 #pragma omp parallel for reduction(+:mtot)
     for (unsigned int i = 0; i<N_active;i++) {
         const double m = p_b[i].m;
@@ -547,14 +547,14 @@ void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle*
     particles[0].vz = (p_b[0].vz - vz0)/p_b[0].m;
 }
 void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
-    p_b[0].x = 0;
-    p_b[0].y = 0;
-    p_b[0].z = 0;
-    p_b[0].vx = 0;
-    p_b[0].vy = 0;
-    p_b[0].vz = 0;
+    p_b[0].x = 0.;
+    p_b[0].y = 0.;
+    p_b[0].z = 0.;
+    p_b[0].vx = 0.;
+    p_b[0].vy = 0.;
+    p_b[0].vz = 0.;
     p_b[0].m = particles[0].m;
-    double mtot = 0;
+    double mtot = 0.;
 #pragma omp parallel for reduction(+:mtot)
     for (unsigned int i = 0; i < N_active; i++) {
         const double m = particles[i].m;
