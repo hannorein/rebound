@@ -1375,6 +1375,8 @@ DLLEXPORT void reb_particles_transform_jacobi_to_inertial_posvel(struct reb_part
 DLLEXPORT void reb_particles_transform_jacobi_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_j, const struct reb_particle* const p_mass, const unsigned int N, const unsigned int N_active);
 DLLEXPORT void reb_particles_transform_jacobi_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_j, const struct reb_particle* const p_mass, const unsigned int N, const unsigned int N_active);
 
+DLLEXPORT void reb_free(void* p);
+
 // Democratic heliocentric coordinates
 DLLEXPORT void reb_particles_transform_inertial_to_democraticheliocentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_h, const unsigned int N, const unsigned int N_active);
 DLLEXPORT void reb_particles_transform_democraticheliocentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const unsigned int N_active);

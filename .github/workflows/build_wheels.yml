@@ -26,8 +26,9 @@ jobs:
            FFP_CONTRACT_OFF: 1
            CIBW_ARCHS_MACOS: x86_64 arm64
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: dist-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   make_sdist:
@@ -41,8 +42,9 @@ jobs:
     - name: Build SDist
       run: pipx run build --sdist
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
+        name: dist-source
         path: dist/*.tar.gz
 
   upload_all:
@@ -53,9 +55,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-    - uses: actions/download-artifact@v4.1.7
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        pattern: dist-*
+        merge-multiple: true
         path: dist
 
     - uses: pypa/gh-action-pypi-publish@release/v1
