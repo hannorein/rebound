@@ -88,6 +88,6 @@ You can compare if simulations are equal to each other using the following synta
     r1 = rebound.Simulation()
     r2 = rebound.Simulation()
     # ... setup simulations ...
-    if r1 == 2:
+    if r1 == r2:
         print("Simulations are equal")
     ```
