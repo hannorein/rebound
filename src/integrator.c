@@ -140,7 +140,7 @@ void reb_integrator_part2(struct reb_simulation* r){
         double forward = (dt>0.) ? 1. : -1.;
         r->ri_bs.first_or_last_step = 1;
         while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
-            if (reb_sigint== 1){
+            if (reb_sigint > 1){
                 r->status = REB_STATUS_SIGINT;
                 return;
             }

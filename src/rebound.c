@@ -670,7 +670,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 #else
         usleep(1000);
 #endif 
-        if (reb_sigint== 1){ // cancel while paused
+        if (reb_sigint){ // cancel while paused
             r->status = REB_STATUS_SIGINT;
         }
     }
@@ -786,7 +786,7 @@ volatile sig_atomic_t reb_sigint;
 void reb_sigint_handler(int signum) {
     // Handles graceful shutdown for interrupts
     if (signum == SIGINT){
-        reb_sigint = 1;
+        reb_sigint += 1;
     }
 }
 
@@ -860,7 +860,7 @@ static void* reb_simulation_integrate_raw(void* args){
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_simulation_step(r); 
         reb_run_heartbeat(r);
-        if (reb_sigint== 1){
+        if (reb_sigint){
             r->status = REB_STATUS_SIGINT;
         }
 #ifdef OPENGL
