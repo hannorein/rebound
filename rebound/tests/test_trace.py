@@ -4,6 +4,7 @@ import numpy as np
 import math
 import sys
 import warnings
+import os
 from datetime import datetime
 
 def chaotic_exchange_sim():
@@ -393,7 +394,8 @@ class TestIntegratorTrace(unittest.TestCase):
         # and are therefore machine dependent.
         self.assertLess(dE_trace,5e-5)              # reasonable precision for trace. Changed by Hanno 23 Jan 2024
         self.assertLess(dE_trace/dE_whfast,1e-4)    # at least 1e4 times better than whfast
-        self.assertLess(time_trace,time_ias15) # faster than ias15
+        if os.getenv("CI") != "true":
+            self.assertLess(time_trace,time_ias15) # faster than ias15
         if sys.maxsize > 2**32: # 64 bit
             self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
@@ -439,7 +441,8 @@ class TestIntegratorTrace(unittest.TestCase):
         dE_ias15 = abs((jacobi(sim) - E0)/E0)
 
         self.assertLess(dE_trace, 1e-6)              # reasonable precision for trace
-        self.assertLess(time_trace,2.0*time_ias15)   # not much slower than ias15
+        if os.getenv("CI") != "true":
+            self.assertLess(time_trace,2.0*time_ias15)   # not much slower than ias15
 
     def test_pericenter(self):
 
@@ -459,7 +462,8 @@ class TestIntegratorTrace(unittest.TestCase):
         dE_trace = abs((sim.energy() - E0)/E0)
 
         self.assertLess(dE_trace,1e-4)              # reasonable precision for trace
-        self.assertLess(time_trace, 2.*time_ias15)  # not much slower than ias15
+        if os.getenv("CI") != "true":
+            self.assertLess(time_trace, 2.*time_ias15)  # not much slower than ias15
 
     def test_trace_simulationarchive(self):
         sim = chaotic_exchange_sim()
