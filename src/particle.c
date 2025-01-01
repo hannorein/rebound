@@ -404,7 +404,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
         }
 	}else{
         if (r->tree_root){
-            // Just flag particle, will be removed in tree_update.
+            // Just flag particle, will be removed in update_tree.
             r->particles[index].y = nan("");
             if(r->free_particle_ap){
                 r->free_particle_ap(&r->particles[index]);

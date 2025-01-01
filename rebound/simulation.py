@@ -1412,20 +1412,20 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_stop(byref(self))
 
-    def integrator_reset(self):
+    def reset_integrator(self):
         """
         Call this function to reset temporary integrator variables
         """
         clibrebound.reb_simulation_reset_integrator(byref(self))
 
-    def integrator_synchronize(self):
+    def synchronize(self):
         """
         Call this function if safe-mode is disabled and you need to synchronize particle positions and velocities between timesteps.
         """
         clibrebound.reb_simulation_synchronize(byref(self))
         self.process_messages()
     
-    def tree_update(self):
+    def update_tree(self):
         """
         Call this function to update the tree structure manually after removing particles.
         """
