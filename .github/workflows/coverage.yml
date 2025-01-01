@@ -1,0 +1,38 @@
+name: Coverage
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    name: Checking test coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Codecov
+        run: |
+          curl -Os https://cli.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov --version
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest coverage
+          pip install -r requirements.txt
+          pip install multiprocess
+      - name: Build package
+        run: python setup.py build_ext --inplace
+        env:
+          FFP_CONTRACT_OFF: 1
+          COVERAGE: 1
+      - name: Running unittests
+        run: |
+          python -m coverage run -m unittest discover -s rebound/tests/ -v
+      - name: Upload coverage reports
+        run: |
+          ./codecov --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }}

@@ -29,7 +29,14 @@ if sys.platform == 'win32':
     extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
 else:
     # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
+    extra_compile_args=['-fstrict-aliasing', '-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
+    # For coverage runs, turn off optimizations and turn on coverage generation
+    COVERAGE = os.environ.get("COVERAGE", None)
+    if COVERAGE:
+        extra_compile_args += ['-O1', '-fprofile-arcs', '-ftest-coverage' ,'-coverage']
+        extra_link_args += ['-fprofile-arcs', '-ftest-coverage' ,'-coverage']
+    else:
+        extra_compile_args += ['-O3']
 
 # Option to disable FMA in CLANG. 
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
