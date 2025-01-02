@@ -5,7 +5,7 @@ class Rotation(ctypes.Structure):
     This class facilitates rotations of Vec3d objects, and provides various convenience functions
     for commonly used rotations in celestial mechanics.
     """
-    def __init__(self, ix=None, iy=None, iz=None, r=None, angle=None, axis=None):
+    def __init__(self, ix=None, iy=None, iz=None, r=None, angle=None, axis=None, fromv=None, tov=None):
         """
         Rotations are implemented as quaternions r + (ix)i + (iy)j + (iz)k. To initialize one
         can directly pass a set of the real numbers (ix, iy, iz, r). Alternatively one can pass
@@ -29,22 +29,34 @@ class Rotation(ctypes.Structure):
             shorthand for [1,0,0], [0,1,0], [0,0,1].
         """
         cart = [ix, iy, iz, r]
-        angle_axis = [angle, axis]
-        if cart.count(None) == len(cart) and angle_axis.count(None) == len(angle_axis):
-            super(Rotation, self).__init__(0.0,0.0,0.0,1.0) # Identity
+        angleaxis = [angle, axis]
+        fromto = [fromv, tov]
+        supplied = [a.count(None)!=len(a) for a in [cart, angleaxis, fromto]]
+        if sum(supplied) > 1:
+            raise ValueError("Cannot mix parameters.")
+        if cart.count(None) == len(cart) and angleaxis.count(None) == len(angleaxis) and fromto.count(None) == len(fromto):
+            clibrebound.reb_rotation_identity.restype = Rotation
+            q = clibrebound.reb_rotation_identity()
+            super(Rotation, self).__init__(q.ix, q.iy, q.iz, q.r)   
             return
-        if cart.count(None) != 0 and angle_axis.count(None) == len(angle_axis):
+        if cart.count(None) != 0 and cart.count(None) != len(cart):
             raise ValueError("You need to specify all four parameters ix, iy, iz, r.")
-        if angle_axis.count(None) != 0 and cart.count(None) == len(cart):
+        if angleaxis.count(None) != 0 and angleaxis.count(None) != len(angleaxis):
             raise ValueError("You need to specify both angle and axis.")
-        if cart.count(None) < len(cart) and angle_axis.count(None) < len(angle_axis):
-            raise ValueError("Cannot mix parameters ix, iy, iz, r with angle, axis.")
+        if fromto.count(None) != 0 and fromto.count(None) != len(fromto):
+            raise ValueError("You need to specify both fromv and tov.")
         if cart.count(None) == 0:
             super(Rotation, self).__init__(ix, iy, iz, r)   
-        if angle_axis.count(None) == 0:
+            return
+        if angleaxis.count(None) == 0:
             clibrebound.reb_rotation_init_angle_axis.restype = Rotation
             q = clibrebound.reb_rotation_init_angle_axis(ctypes.c_double(angle), Vec3d(axis)._vec3d)
             super(Rotation, self).__init__(q.ix, q.iy, q.iz, q.r)   
+            return
+        if fromto.count(None) == 0:
+            q = Rotation.from_to(fromv, tov)
+            super(Rotation, self).__init__(q.ix, q.iy, q.iz, q.r)   
+            return
 
     @classmethod
     def from_to(cls, fromv, tov):
@@ -144,6 +156,19 @@ class Rotation(ctypes.Structure):
         clibrebound.reb_rotation_init_to_new_axes.restype = cls
         q = clibrebound.reb_rotation_init_to_new_axes(Vec3d(newz)._vec3d, Vec3d(newx)._vec3d)
         return q
+    
+    def orbital(self):
+        """
+        Returns a three vector with orbital elements Omega, inc, omega.
+        Note: the angles might not always be in the correct quadrant and might be
+        inconsistent with REBOUND's standard definition of orbital elements.
+        """
+        Omega = ctypes.c_double()
+        inc = ctypes.c_double()
+        omega = ctypes.c_double()
+        clibrebound.reb_rotation_to_orbital(self, ctypes.byref(Omega), ctypes.byref(inc), ctypes.byref(omega))
+        return [Omega.value, inc.value, omega.value]
+    
 
     def inverse(self):
         """
@@ -152,6 +177,19 @@ class Rotation(ctypes.Structure):
         clibrebound.reb_rotation_inverse.restype = Rotation 
         q = clibrebound.reb_rotation_inverse(self)
         return q
+    
+    def normalize(self):
+        """
+        Returns a normalized copy of the Rotation object.
+        """
+        clibrebound.reb_rotation_normalize.restype = Rotation 
+        q = clibrebound.reb_rotation_normalize(self)
+        return q
+    
+    def __eq__(self, other):
+        if not isinstance(other, Rotation):
+            return NotImplemented
+        return self.ix == other.ix and self.iy == other.iy and self.iz == other.iz and self.r == other.r
     
     def __mul__(self, other):
         if isinstance(other, Rotation):
