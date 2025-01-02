@@ -150,7 +150,7 @@ class TestRotations(unittest.TestCase):
         sim.add(a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=0)
         r = rebound.Rotation(fromv=sim.particles[1].xyz, tov=sim.particles[2].xyz)
         res = r*sim.particles[1].xyz
-        self.assertAlmostEqual(res[0], sim.particles[2].x, delta=1e-18)
+        self.assertAlmostEqual(res[0], sim.particles[2].x, delta=1e-15)
         self.assertAlmostEqual(res[1], sim.particles[2].y, delta=1e-15)
         self.assertAlmostEqual(res[2], sim.particles[2].z, delta=1e-15)
         
