@@ -1,6 +1,7 @@
 import rebound
 from ctypes import c_double, byref
 import unittest
+from time import sleep
 
 class TestRandom(unittest.TestCase):
     def test_uniform(self):
@@ -44,6 +45,7 @@ class TestRandom(unittest.TestCase):
         rebound.clibrebound.reb_random_uniform.restype = c_double
         sim1 = rebound.Simulation()
         sim2 = sim1.copy()
+        sleep(0.05) # Windows implementation is very slow, so we wait to get a different seed
         sim3 = rebound.Simulation()
         self.assertEqual(sim1.rand_seed, sim2.rand_seed)
         self.assertNotEqual(sim2.rand_seed, sim3.rand_seed)
