@@ -216,7 +216,6 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
 	r->gravity_ignore_terms = 0;
 	reb_integrator_ias15_reset(r);
 	reb_integrator_mercurius_reset(r);
-	reb_integrator_leapfrog_reset(r);
 	reb_integrator_sei_reset(r);
 	reb_integrator_whfast_reset(r);
 	reb_integrator_whfast512_reset(r);
