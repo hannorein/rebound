@@ -775,25 +775,6 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){
 }
-void reb_integrator_ias15_clear(struct reb_simulation* r){
-    const int N3 = r->ri_ias15.N_allocated;
-    if (N3){
-        clear_dp7(&(r->ri_ias15.g),N3);
-        clear_dp7(&(r->ri_ias15.e),N3);
-        clear_dp7(&(r->ri_ias15.b),N3);
-        clear_dp7(&(r->ri_ias15.csb),N3);
-        clear_dp7(&(r->ri_ias15.er),N3);
-        clear_dp7(&(r->ri_ias15.br),N3);
-        
-        double* restrict const csx = r->ri_ias15.csx; 
-        double* restrict const csv = r->ri_ias15.csv; 
-        for (int i=0;i<N3;i++){
-            // Kill compensated summation coefficients
-            csx[i] = 0;
-            csv[i] = 0;
-        }
-    }
-}
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.N_allocated  = 0;
