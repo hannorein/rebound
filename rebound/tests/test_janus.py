@@ -83,6 +83,18 @@ class TestIntegratorJanus(unittest.TestCase):
             self.assertEqual(sim.t,sim2.t)
             self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
             
+    def test_janus_invalid_order(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-3,a=1.12313)
+        sim.integrator = "janus"
+        sim.ri_janus.order = 2 # valid order
+        sim.integrate(1e1,exact_finish_time=0)
+        sim.reset_integrator()
+        sim.integrator = "janus"
+        sim.ri_janus.order = 12 #invalid order
+        with self.assertRaises(RuntimeError):
+            sim.integrate(1e2,exact_finish_time=0)
             
 
 
