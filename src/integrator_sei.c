@@ -61,9 +61,6 @@ void reb_integrator_sei_part1(struct reb_simulation* const r){
     r->gravity_ignore_terms = 0;
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
-	if (r->ri_sei.OMEGAZ==-1){
-		r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
-	}
 	if (r->ri_sei.lastdt!=r->dt){
         reb_integrator_sei_init(r);
 	}
