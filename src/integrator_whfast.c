@@ -429,7 +429,7 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
 #pragma omp parallel for
-            for (unsigned int i = 0; i < N_real; i++) {
+            for (unsigned int i = 1; i < N_real; i++) {
                 p_j[i].vx += _dt * particles[i].ax;
                 p_j[i].vy += _dt * particles[i].ay;
                 p_j[i].vz += _dt * particles[i].az;
@@ -534,12 +534,18 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
                 reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
             }
         break;
-        case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            for (unsigned int i=1;i<N_active;i++) {
-                eta+=p_j[i].m;
-            }
-            for (unsigned int i=1;i<N_real;i++) {
-                reb_whfast_kepler_solver(r, p_j,eta*G, i, _dt);
+       case REB_WHFAST_COORDINATES_BARYCENTRIC:
+#pragma omp parallel for
+            for (unsigned int i=1;i<N_real;i++){
+                // Special case that works perfectly for two equal masses. 
+                // Need to find something more general. 
+                if (N_real==2 && p_j[i].m > 0.0){
+                    eta = 1./(2*p_j[0].m);
+                }
+                else{
+                    eta = m0;
+                }
+                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
             }
         break;
     };

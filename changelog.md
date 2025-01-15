@@ -4,6 +4,14 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.5
+* Version updated to test github workflows
+
+### Version 4.4.4
+* Fixed several memory leaks and other memory issues. It is unlikely that any of those bugs did affect an simulation.
+* When converting units of a particle, the particle radius is now also converted. 
+* Added getter/setters for Pal coordinates to the particle structure in python. Syntax is `sim.particles[1].pal_h`, `sim.particles[1].pal_ix`, etc. 
+
 ### Version 4.4.3
 * REBOUND now raises ImportError if it detects a size mismatch between the C and python Simulation structures.
 * Fixes a bug in the WHFast512 synchronization on non-AVX512 systems.

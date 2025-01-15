@@ -229,11 +229,12 @@ finish_fields:
             reb_tree_add_particle_to_tree(r, l);
         }
     }
-    if (r->ri_ias15.at){ 
-        // Assume that all arrays were saved whenever ri_ias15.at was saved.
-        // Only 3*N entries got saved. 
-        r->ri_ias15.N_allocated = 3*r->N;
-    }
+    // Commented out on Nov 26 2024. Not sure why this was added. Might be for an older SA version.
+    // if (r->ri_ias15.at){ 
+    //     // Assume that all arrays were saved whenever ri_ias15.at was saved.
+    //     // Only 3*N entries got saved. 
+    //     r->ri_ias15.N_allocated = 3*r->N;
+    // }
     r->ri_whfast512.recalculate_constants = 1;
 }
 

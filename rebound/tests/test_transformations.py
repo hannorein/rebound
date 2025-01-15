@@ -6,14 +6,14 @@ import ctypes
 def getc(sim):
     c = []
     for i in range(sim.N):
-        c.append(sim.particles[0].x)
-        c.append(sim.particles[0].y)
-        c.append(sim.particles[0].z)
-        c.append(sim.particles[0].vx)
-        c.append(sim.particles[0].vy)
-        c.append(sim.particles[0].vz)
-        c.append(sim.particles[0].m)
-        c.append(sim.particles[0].r)
+        c.append(sim.particles[i].x)
+        c.append(sim.particles[i].y)
+        c.append(sim.particles[i].z)
+        c.append(sim.particles[i].vx)
+        c.append(sim.particles[i].vy)
+        c.append(sim.particles[i].vz)
+        c.append(sim.particles[i].m)
+        c.append(sim.particles[i].r)
     return c
 
 class TestTransformations(unittest.TestCase):
@@ -38,7 +38,6 @@ class TestTransformations(unittest.TestCase):
         cl.reb_particles_transform_barycentric_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
-        
         for i in range(len(c0)):
             self.assertAlmostEqual(c0[i],c1[i],delta=1e-16)
         
@@ -61,7 +60,6 @@ class TestTransformations(unittest.TestCase):
         p = ctypes.cast(elems,ctypes.POINTER(rebound.Particle))
 
         c0 = getc(sim)
-
         cl = rebound.clibrebound
         cl.reb_particles_transform_inertial_to_democraticheliocentric_posvel(sim._particles,p,sim.N,sim.N)
 

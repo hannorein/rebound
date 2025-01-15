@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "rebound.h"
 #include "tree.h"
 #include "boundary.h"
@@ -52,8 +53,10 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 		return;
 	}
 	while (r->N_allocated<=r->N){
+		unsigned int old_N_allocated = r->N_allocated;
 		r->N_allocated = r->N_allocated ? r->N_allocated * 2 : 128;
 		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->N_allocated);
+		memset(r->particles + old_N_allocated, 0, (r->N_allocated - old_N_allocated) * sizeof(struct reb_particle));
 	}
 
 	r->particles[r->N] = pt;

@@ -254,6 +254,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 }else{
                     printf("%s",buf);
                 }
+                free(buf);
                 output_stream_reb_type(fd.dtype, buf1+pos1, field1.size, bufp);
 #ifndef _WIN32
                 asprintf(&buf, "\033[0m\n---\n\033[32m> ");
@@ -266,6 +267,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 }else{
                     printf("%s",buf);
                 }
+                free(buf);
                 output_stream_reb_type(fd.dtype, buf2+pos2, field2.size, bufp);
 #ifndef _WIN32
                 asprintf(&buf, "\033[0m\n");
@@ -278,6 +280,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 }else{
                     printf("%s",buf);
                 }
+                free(buf);
             }
         }
         pos1 += field1.size;
