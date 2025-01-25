@@ -679,7 +679,7 @@ void reb_integrator_eos_part2(struct reb_simulation* const r){
         r->gravity_ignore_terms = 0;
         reb_calculate_acceleration_var(r);
         double dY = r->dt * 2. * r->t * reb_tools_megno_deltad_delta(r);
-        reb_tools_megno_update(r, dY);
+        reb_tools_megno_update(r, dY, r->dt);
     }
 
 }
