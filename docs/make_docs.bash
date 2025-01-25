@@ -1,5 +1,5 @@
 #!/bin/bash
-#mkdocs build
+mkdocs build  
 ../emsdk/emsdk activate latest
 source ../emsdk/emsdk_env.sh
 
