@@ -1,4 +1,29 @@
 #!/bin/bash
+if [ -f documentation_lock.txt ]; then
+    echo "Documentation update already in progress. Exiting."
+    exit
+fi
+touch documentation_lock.txt
+
+git pull
+
+repository_head=` git rev-parse HEAD`
+documentation_head=$(<documentation_head.txt)
+
+echo "Rpository head:     $repository_head"
+echo "Documentation head: $documentation_head"
+
+
+if [[ "$s1" == "$s2" ]]; then
+    echo "Documentation is up-to-date."
+    rm documentation_lock.txt
+    exit
+fi
+
+echo "Updating documentation."
+
+## UPDATE START
+
 mkdocs build  
 ../emsdk/emsdk activate latest
 source ../emsdk/emsdk_env.sh
@@ -30,3 +55,10 @@ do
     echo ""
 
 done
+
+## UPDATE DONE
+echo "Documentaiton updated. Releasing lock."
+echo "$repository_head" > documentation_head.txt
+rm documentation_lock.txt
+
+exit
