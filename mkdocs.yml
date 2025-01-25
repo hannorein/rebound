@@ -191,6 +191,8 @@ plugins:
       hooks:
         on_pre_build: "docs.c_examples.generate_c_examples:run"
   - mkdocs-jupyter
+    # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
+    # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
   - mkdocs-video:
       css_style:
         width: "48vw"
