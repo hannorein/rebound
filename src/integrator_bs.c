@@ -338,6 +338,10 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 
 void reb_integrator_bs_part1(struct reb_simulation* r){
+    if (r->calculate_megno){
+        reb_simulation_error(r, "The BS integrator does currently not support MEGNO.");
+    }
+            
     struct reb_ode** odes = r->odes;
     int Ns = r->N_odes;
     for (int s=0; s < Ns; s++){
