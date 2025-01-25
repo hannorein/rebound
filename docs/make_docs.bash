@@ -10,11 +10,11 @@ git pull
 repository_head=` git rev-parse HEAD`
 documentation_head=$(<documentation_head.txt)
 
-echo "Rpository head:     $repository_head"
+echo "Repository head:    $repository_head"
 echo "Documentation head: $documentation_head"
 
 
-if [[ "$s1" == "$s2" ]]; then
+if [[ "$repository_head" == "$documentation_head" ]]; then
     echo "Documentation is up-to-date."
     rm documentation_lock.txt
     exit
