@@ -64,8 +64,7 @@ nav:
         - c_examples/closeencounter.md
         - c_examples/closeencounter_record.md
         - c_examples/closeencounter_hybrid.md
-        - c_examples/apophis_flyby.md
-        - ipython_examples/HybridIntegrationsWithMercurius.ipynb
+        - ipython_examples/HybridIntegrationsWithTRACE.ipynb
         - ipython_examples/CloseEncounters.ipynb
         - c_examples/mergers.md
         - ipython_examples/User_Defined_Collision_Resolve.ipynb
@@ -192,6 +191,8 @@ plugins:
       hooks:
         on_pre_build: "docs.c_examples.generate_c_examples:run"
   - mkdocs-jupyter
+    # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
+    # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
   - mkdocs-video:
       css_style:
         width: "48vw"

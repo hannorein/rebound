@@ -38,11 +38,11 @@ struct reb_particles;
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r);
 
 /**
- * @brief Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt)
+ * @brief Update MEGNO after a successful timestep by adding dY (=ddelta/delta*dt_done)
  * @param r REBOUND simulation to be considered.
  * @param dY Increment for MEGNO Y
  */
-void reb_tools_megno_update(struct reb_simulation* r, double dY);
+void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done);
 
 /**
  * @brief Init random number generator based on time and process id.

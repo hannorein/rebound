@@ -674,7 +674,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
     if (r->calculate_megno){
         double dY = dt_done*integrator_megno_thisdt;
-        reb_tools_megno_update(r, dY);
+        reb_tools_megno_update(r, dY, dt_done);
     }
 
     // Swap particle buffers

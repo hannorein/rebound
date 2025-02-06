@@ -20,7 +20,7 @@ jobs:
         run: |
           bash web_client/compile.bash
       - name: Archive web client
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: web_client
           path: web_client/rebound.html

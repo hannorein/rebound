@@ -785,6 +785,19 @@ class Simulation(Structure):
         self.python_unit_m = clibrebound.reb_hash(c_char_p(newunits[2].encode("ascii")))
         self.G = convert_G(newunits)
 
+    def equal_units(self, sim2):
+        """
+        Compares of this simulation to another simulation.
+            
+        Returns
+        -------
+        True if both simulations use the same units. False otherwise.
+        """
+        if not isinstance(sim2,Simulation):
+            raise AttributeError("Error: Argument is not a Simulation object.")
+
+        return self.python_unit_l == sim2.python_unit_l and self.python_unit_m == sim2.python_unit_m and self.python_unit_t == sim2.python_unit_t
+
     def convert_particle_units(self, *args): 
         """
         Will convert the units for the simulation (i.e. convert G) as well as the particles' cartesian elements.
@@ -909,7 +922,9 @@ class Simulation(Structure):
             if isinstance(particle, Particle):
                 if (self.gravity == "tree" or self.collision == "tree") and self.root_size <=0.:
                     raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
-
+                if particle._sim:
+                    if not self.equal_units(particle._sim.contents):
+                        warnings.warn("Particle is being adding from a simulation that uses different units.", RuntimeWarning)
                 clibrebound.reb_simulation_add(byref(self), particle)
             elif isinstance(particle, list):
                 for p in particle:
