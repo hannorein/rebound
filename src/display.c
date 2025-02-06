@@ -742,7 +742,13 @@ void reb_render_frame(void* p){
                 boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
             }else{
                 glBindVertexArray(data->shader_box.box_vao);
-                boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
+                const double OMEGA = data->r_copy->ri_sei.OMEGA;
+                const double q = data->r_copy->ri_sei.Q_NL;  // Nonlinearity parameter
+			    const double Lx0 = data->r_copy->boxsize.x;
+			    // Compute time-dependent width of the shearing box
+			    double Lx_t = Lx0*(1-q*cos(OMEGA*data->r_copy->t));
+                
+                boxmodel = reb_mat4df_scale(boxmodel, Lx_t/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
             }
             struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
             glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);

@@ -76,7 +76,7 @@ void reb_integrator_sei_part2(struct reb_simulation* r){
 	const int N = r->N;
 	struct reb_particle* const particles = r->particles;
 	const struct reb_integrator_sei ri_sei = r->ri_sei;
-#pragma omp parallel for schedule(guided)
+#pragma s parallel for schedule(guided)
 	for (int i=0;i<N;i++){
 		operator_phi1(r->dt, &(particles[i]));
 		operator_H012(r->dt, ri_sei, &(particles[i]));

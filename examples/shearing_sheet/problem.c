@@ -7,6 +7,15 @@
  * the ghost boxes which are used to calculate gravity and collisions.
  * Particle properties resemble those found in Saturn's rings. 
  */
+
+/*
+cd /mnt/c/Users/nluci/Downloads/PHYD01/rebound
+make clean
+cd examples/shearing_sheet
+make
+./rebound
+http://localhost:1234
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

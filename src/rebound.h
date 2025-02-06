@@ -248,6 +248,7 @@ struct reb_integrator_mercurius {
 struct reb_integrator_sei {
     double OMEGA;       // Epicyclic frequency
     double OMEGAZ;      // Epicyclic frequency in z direction (if not set, use OMEGA)
+    double Q_NL;        // Nonlinearity parameter
 
     // Internal use
     double lastdt;      // Cached sin(), tan() for this value of dt.
@@ -628,6 +629,7 @@ struct reb_simulation {
         REB_BOUNDARY_OPEN = 1,          // Open boundary conditions. Removes particles if they leave the box 
         REB_BOUNDARY_PERIODIC = 2,      // Periodic boundary conditions
         REB_BOUNDARY_SHEAR = 3,         // Shear periodic boundary conditions, needs OMEGA variable
+        REB_BOUNDARY_SHEAR_E = 4,       // Shear periodic eccentric boundary conditions, needs OMEGA variable
         } boundary;
     enum {
         REB_GRAVITY_NONE = 0,           // Do not calculate graviational forces
