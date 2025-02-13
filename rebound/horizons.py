@@ -30,6 +30,8 @@ else:
 
 INITDATE = None
 
+# If this variable is set to "unverified" then the SSL context for API requests does not check certificates.
+SSL_CONTEXT = None
 
 def quote(text):
     return "'{}'".format(text)
@@ -57,7 +59,17 @@ def api_request(particle, datestart, dateend, plane):
     }
     url =  HORIZONSBASEURL + urlencode(get_params)
     # don't use a context manager for python2 compatibility
-    f = urlopen(url)
+
+    if SSL_CONTEXT == "unverified":
+        import ssl
+        ssl_context = ssl._create_unverified_context()
+    else:
+        ssl_context = None
+    try:
+        f = urlopen(url,context=ssl_context)
+    except Exception as e:
+        raise RuntimeError("An error occured while accessing NASA HORIZONS. If this is a SSL certificate issue, you can try disabling the certificate verification by setting rebound.horizons.SSL_CONTEXT = 'unverified'.") from e
+
     if "pyodide" in sys.modules:
         body = f.read()
     else:
