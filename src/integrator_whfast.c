@@ -412,6 +412,29 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
                 p_j[i].vz += _dt*particles[i].az;
             }
             break;
+        case REB_WHFAST_COORDINATES_BARYCENTER:
+            {
+            double mtot = 0.0;
+            for (unsigned int i=0;i<N_real;i++){
+                mtot += particles[i].m;
+            }
+            for (unsigned int i=1;i<N_real;i++){
+                double x = particles[i].x;
+                double y = particles[i].y;
+                double z = particles[i].z;
+                double _r = sqrt(x*x+y*y+z*z);
+                double prefact = r->G * mtot / (_r*_r*_r);
+                particles[i].ax += prefact * x;
+                particles[i].ay += prefact * y;
+                particles[i].az += prefact * z;
+            }
+            for (unsigned int i=0;i<N_real;i++){
+                particles[i].vx += _dt*particles[i].ax;
+                particles[i].vy += _dt*particles[i].ay;
+                particles[i].vz += _dt*particles[i].az;
+            }
+            }
+            break;
         case REB_WHFAST_COORDINATES_WHDS:
 #pragma omp parallel for 
             for (int i=1;i<N_active;i++){
@@ -437,6 +460,7 @@ void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt
     const double m0 = r->particles[0].m;
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
+        case REB_WHFAST_COORDINATES_BARYCENTER:
             // Nothing to be done.
             break;
         case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
@@ -504,6 +528,21 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
                     eta += p_j[i].m;
                 }
                 reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+            }
+            break;
+        case REB_WHFAST_COORDINATES_BARYCENTER:
+            {
+            double mtot = 0.0;
+            for (unsigned int i=0;i<N_real;i++){
+                mtot += r->particles[i].m;
+            }
+#pragma omp parallel for 
+            for (unsigned int i=1;i<N_real;i++){
+                reb_whfast_kepler_solver(r, r->particles, (mtot)*G, i, _dt);
+            }
+            r->particles[0].x += r->particles[0].vx * _dt;
+            r->particles[0].y += r->particles[0].vy * _dt;
+            r->particles[0].z += r->particles[0].vz * _dt;
             }
             break;
         case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
@@ -789,6 +828,8 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
     }else{
         if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI){
             r->gravity_ignore_terms = 1;
+        }else if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_BARYCENTER){
+            r->gravity_ignore_terms = 0;
         }else{
             r->gravity_ignore_terms = 2;
         }
@@ -823,6 +864,9 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
         case REB_WHFAST_COORDINATES_WHDS:
             reb_particles_transform_inertial_to_whds_posvel(particles, ri_whfast->p_jh, N_real, N_active);
             break;
+        case REB_WHFAST_COORDINATES_BARYCENTER:
+            // Nothing to be done.
+            break;
     };
 }
 
@@ -845,6 +889,9 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
             case REB_WHFAST_COORDINATES_WHDS:
                 reb_particles_transform_whds_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
                 break;
+            case REB_WHFAST_COORDINATES_BARYCENTER:
+                // Nothing to be done.
+                break;
         };
     }else{
         switch (ri_whfast->coordinates){
@@ -856,6 +903,9 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
                 break;
             case REB_WHFAST_COORDINATES_WHDS:
                 reb_particles_transform_whds_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
+                break;
+            case REB_WHFAST_COORDINATES_BARYCENTER:
+                // Nothing to be done.
                 break;
         };
     }
@@ -999,6 +1049,9 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
                 break;
             case REB_WHFAST_COORDINATES_WHDS:
                 reb_particles_transform_whds_to_inertial_posvel(r->particles, ri_whfast->p_jh, N_real, N_active);
+                break;
+            case REB_WHFAST_COORDINATES_BARYCENTER:
+                // Nothing to be done.
                 break;
         };
         for (int v=0;v<r->N_var_config;v++){

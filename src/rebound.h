@@ -342,6 +342,7 @@ struct reb_integrator_whfast {
         REB_WHFAST_COORDINATES_JACOBI = 0,                      // Jacobi coordinates (default)
         REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      // Democratic Heliocentric coordinates
         REB_WHFAST_COORDINATES_WHDS = 2,                        // WHDS coordinates (Hernandez and Dehnen, 2017)
+        REB_WHFAST_COORDINATES_BARYCENTER = 3,                  // Barycentric coordinates
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting
     unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
     unsigned int safe_mode;                                     // 0: Drift Kick Drift scheme (default), 1: combine first and last sub-step.
