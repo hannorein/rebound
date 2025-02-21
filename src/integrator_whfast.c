@@ -434,44 +434,16 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             }
             for (unsigned int i=1;i<(int)N_real;i++){
                 const double dr = sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z);
-                const double prefac = G/(dr*dr*dr);
-                const double prefaci = particles[i].m*prefac;
-                const double prefac0 = M*prefac - m0*prefac;
-                particles[i].ax += prefac0*particles[i].x;
-                particles[i].ay += prefac0*particles[i].y;
-                particles[i].az += prefac0*particles[i].z;
-                particles[0].ax += prefaci*particles[i].x;
-                particles[0].ay += prefaci*particles[i].y;
-                particles[0].az += prefaci*particles[i].z;
+                const double prefac = G*M/(dr*dr*dr);
+                particles[i].ax += prefac*particles[i].x;
+                particles[i].ay += prefac*particles[i].y;
+                particles[i].az += prefac*particles[i].z;
             }
             for (unsigned int i=0;i<(int)N_real;i++){
                 particles[i].vx += _dt*particles[i].ax;
                 particles[i].vy += _dt*particles[i].ay;
                 particles[i].vz += _dt*particles[i].az;
             }
-            
-            // reb_particles_transform_inertial_to_barycentric_acc(particles, p_j, N_real, N_active);
-            // double M = m0;
-            // for (unsigned int i=1; i<(int)N_active;i++){
-            //     M+=p_j[i].m;
-            // }
-            // for (unsigned int i=1;i<(int)N_real;i++){
-            //     const double dr = sqrt(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z);
-            //     const double prefac = G/(dr*dr*dr);
-            //     const double prefaci = p_j[i].m*prefac;
-            //     const double prefac0 = prefac*M;
-            //     // p_j[0].ax += prefaci*p_j[i].x;
-            //     // p_j[0].ay += prefaci*p_j[i].y;
-            //     // p_j[0].az += prefaci*p_j[i].z;
-            //     p_j[i].ax += prefac0*p_j[i].x;
-            //     p_j[i].ay += prefac0*p_j[i].y;
-            //     p_j[i].az += prefac0*p_j[i].z;
-            // }
-            // for (unsigned int i=0;i<(int)N_real;i++){
-            //     p_j[i].vx += _dt*p_j[i].ax;
-            //     p_j[i].vy += _dt*p_j[i].ay;
-            //     p_j[i].vz += _dt*p_j[i].az;
-            // }
             break;
     };
 }
@@ -573,22 +545,15 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
             }
         break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            struct reb_particle* const particles = r->particles;
             for (unsigned int i=1; i<(int)N_active;i++){
-                eta+=particles[i].m;
+                eta+=r->particles[i].m;
             }
             for (unsigned int i=1;i<(int)N_real;i++){
-                reb_whfast_kepler_solver(r, particles, eta*G, i, _dt);
+                reb_whfast_kepler_solver(r, r->particles, eta*G, i, _dt);
             }
-            particles[0].x += _dt*particles[0].vx;
-            particles[0].y += _dt*particles[0].vy;
-            particles[0].z += _dt*particles[0].vz;
-            // for (unsigned int i=1; i<(int)N_active;i++){
-            //     eta+=p_j[i].m;
-            // }
-            // for (unsigned int i=1;i<(int)N_real;i++){
-            //     reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
-            // }
+            r->particles[0].x += _dt*r->particles[0].vx;
+            r->particles[0].y += _dt*r->particles[0].vy;
+            r->particles[0].z += _dt*r->particles[0].vz;
         break;
     };
 }
@@ -856,6 +821,8 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
     }else{
         if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI){
             r->gravity_ignore_terms = 1;
+        }else if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_BARYCENTRIC){
+            r->gravity_ignore_terms = 0;
         }else{
             r->gravity_ignore_terms = 2;
         }
