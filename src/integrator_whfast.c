@@ -428,21 +428,16 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             }
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            double M = m0;
-            for (unsigned int i=1; i<(int)N_active;i++){
-                M+=particles[i].m;
-            }
+            reb_particles_transform_inertial_to_barycentric_acc(particles, p_j, N_real, N_active);
+            p_j[0].vx += _dt*p_j[0].ax;
+            p_j[0].vy += _dt*p_j[0].ay;
+            p_j[0].vz += _dt*p_j[0].az;
             for (unsigned int i=1;i<(int)N_real;i++){
-                const double dr = sqrt(particles[i].x*particles[i].x + particles[i].y*particles[i].y + particles[i].z*particles[i].z);
-                const double prefac = G*M/(dr*dr*dr);
-                particles[i].ax += prefac*particles[i].x;
-                particles[i].ay += prefac*particles[i].y;
-                particles[i].az += prefac*particles[i].z;
-            }
-            for (unsigned int i=0;i<(int)N_real;i++){
-                particles[i].vx += _dt*particles[i].ax;
-                particles[i].vy += _dt*particles[i].ay;
-                particles[i].vz += _dt*particles[i].az;
+                const double dr = sqrt(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z);
+                const double prefac = G*p_j[0].m/(dr*dr*dr);
+                p_j[i].vx += _dt*(prefac*p_j[i].x + p_j[i].ax);
+                p_j[i].vy += _dt*(prefac*p_j[i].y + p_j[i].ay);
+                p_j[i].vz += _dt*(prefac*p_j[i].z + p_j[i].az);
             }
             break;
     };
@@ -545,15 +540,10 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
             }
         break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            for (unsigned int i=1; i<(int)N_active;i++){
-                eta+=r->particles[i].m;
-            }
+            eta = p_j[0].m;
             for (unsigned int i=1;i<(int)N_real;i++){
-                reb_whfast_kepler_solver(r, r->particles, eta*G, i, _dt);
+                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
             }
-            r->particles[0].x += _dt*r->particles[0].vx;
-            r->particles[0].y += _dt*r->particles[0].vy;
-            r->particles[0].z += _dt*r->particles[0].vz;
         break;
     };
 }
@@ -858,7 +848,7 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
             reb_particles_transform_inertial_to_whds_posvel(particles, ri_whfast->p_jh, N_real, N_active);
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            //reb_particles_transform_inertial_to_barycentric_posvel(particles, ri_whfast->p_jh, N_real, N_active);
+            reb_particles_transform_inertial_to_barycentric_posvel(particles, ri_whfast->p_jh, N_real, N_active);
             break;
     };
 }
@@ -883,7 +873,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
                 reb_particles_transform_whds_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
                 break;
             case REB_WHFAST_COORDINATES_BARYCENTRIC:
-                //reb_particles_transform_barycentric_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
+                reb_particles_transform_barycentric_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
                 break;
         };
     }else{
@@ -898,7 +888,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
                 reb_particles_transform_whds_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
                 break;
             case REB_WHFAST_COORDINATES_BARYCENTRIC:
-                //reb_particles_transform_barycentric_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
+                reb_particles_transform_barycentric_to_inertial_posvel(particles, ri_whfast->p_jh, N_real, N_active);
                 break;
         };
     }
@@ -1044,7 +1034,7 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
                 reb_particles_transform_whds_to_inertial_posvel(r->particles, ri_whfast->p_jh, N_real, N_active);
                 break;
             case REB_WHFAST_COORDINATES_BARYCENTRIC:
-                //reb_particles_transform_barycentric_to_inertial_posvel(r->particles, ri_whfast->p_jh, N_real, N_active);
+                reb_particles_transform_barycentric_to_inertial_posvel(r->particles, ri_whfast->p_jh, N_real, N_active);
                 break;
         };
         for (int v=0;v<r->N_var_config;v++){

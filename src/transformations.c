@@ -497,12 +497,6 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
     particles[0].x *= m0i;
     particles[0].y *= m0i;
     particles[0].z *= m0i;
-    // for (unsigned int i=0; i<N; i++) {
-    //     particles[i].x = p_b[i].x;
-    //     particles[i].y = p_b[i].y;
-    //     particles[i].z = p_b[i].z;
-    //     particles[i].m = p_b[i].m;
-    // }
 }
 
 void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
@@ -564,18 +558,6 @@ void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle*
     particles[0].vx *= m0i;
     particles[0].vy *= m0i;
     particles[0].vz *= m0i;
-    // for(unsigned int i = 0; i < N; i++){
-    //     particles[i].x = p_b[i].x;
-    //     particles[i].y = p_b[i].y;
-    //     particles[i].z = p_b[i].z;
-    //     particles[i].vx = p_b[i].vx;
-    //     particles[i].vy = p_b[i].vy;
-    //     particles[i].vz = p_b[i].vz;
-    //     particles[i].ax = p_b[i].ax;
-    //     particles[i].ay = p_b[i].ay;
-    //     particles[i].az = p_b[i].az;
-    //     particles[i].m = p_b[i].m;
-    // }
 }
 void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
     p_b[0].x = particles[0].m*particles[0].x;
@@ -611,16 +593,4 @@ void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_par
         p_b[i].vy = particles[i].vy - p_b[0].vy;
         p_b[i].vz = particles[i].vz - p_b[0].vz;
     }
-    // for(unsigned int i=0; i<N; i++){
-    //     p_b[i].x = particles[i].x;
-    //     p_b[i].y = particles[i].y;
-    //     p_b[i].z = particles[i].z;
-    //     p_b[i].vx = particles[i].vx;
-    //     p_b[i].vy = particles[i].vy;
-    //     p_b[i].vz = particles[i].vz;
-    //     p_b[i].ax = particles[i].ax;
-    //     p_b[i].ay = particles[i].ay;
-    //     p_b[i].az = particles[i].az;
-    //     p_b[i].m = particles[i].m;
-    // }
 }
