@@ -479,7 +479,12 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
     particles[0].x = p_b[0].m*p_b[0].x;
     particles[0].y = p_b[0].m*p_b[0].y;
     particles[0].z = p_b[0].m*p_b[0].z;
-    particles[0].m = p_b[0].m; 
+    particles[0].m = p_b[0].m;
+     
+    double s_x = 0.0;
+    double s_y = 0.0;
+    double s_z = 0.0;
+    double s_m = 0.0;
     for (unsigned int i=1; i<N; i++) {
         particles[i].x = p_b[i].x + p_b[0].x;
         particles[i].y = p_b[i].y + p_b[0].y;
@@ -487,12 +492,16 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
         if(i < N_active){
             const double m = p_b[i].m;
             particles[i].m = m;
-            particles[0].x -= particles[i].x*m;
-            particles[0].y -= particles[i].y*m;
-            particles[0].z -= particles[i].z*m;
-            particles[0].m -= m;
+            s_x += particles[i].x*m;
+            s_y += particles[i].y*m;
+            s_z += particles[i].z*m;
+            s_m += m;
         }
     }
+    particles[0].x -= s_x;
+    particles[0].y -= s_y;
+    particles[0].z -= s_z;
+    particles[0].m -= s_m;
     const double m0i = 1./ particles[0].m;
     particles[0].x *= m0i;
     particles[0].y *= m0i;
@@ -504,14 +513,24 @@ void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_partic
     p_b[0].ay = particles[0].m*particles[0].ay;
     p_b[0].az = particles[0].m*particles[0].az;
     p_b[0].m = particles[0].m;
+
+    double s_ax = 0.0;
+    double s_ay = 0.0;
+    double s_az = 0.0;
+    double s_m = 0.0;
     for (unsigned int i = 1; i < N_active; i++) {
         const double m = particles[i].m;
         p_b[i].m = m;
-        p_b[0].m += m;
-        p_b[0].ax += particles[i].ax * m;
-        p_b[0].ay += particles[i].ay * m;
-        p_b[0].az += particles[i].az * m;
+        s_ax += particles[i].ax * m;
+        s_ay += particles[i].ay * m;
+        s_az += particles[i].az * m;
+        s_m += m;
     }
+
+    p_b[0].m += s_m;
+    p_b[0].ax += s_ax;
+    p_b[0].ay += s_ay;
+    p_b[0].az += s_az;
     const double mi = 1.0 / p_b[0].m;
     p_b[0].ax *= mi;
     p_b[0].ay *= mi;
@@ -523,6 +542,38 @@ void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_partic
     }
 }
 
+void reb_particles_transform_barycentric_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
+    particles[0].ax = p_b[0].m*p_b[0].ax;
+    particles[0].ay = p_b[0].m*p_b[0].ay;
+    particles[0].az = p_b[0].m*p_b[0].az;
+    particles[0].m = p_b[0].m;
+     
+    double s_ax = 0.0;
+    double s_ay = 0.0;
+    double s_az = 0.0;
+    double s_m = 0.0;
+    for (unsigned int i=1; i<N; i++) {
+        particles[i].ax = p_b[i].ax + p_b[0].ax;
+        particles[i].ay = p_b[i].ay + p_b[0].ay;
+        particles[i].az = p_b[i].az + p_b[0].az;
+        if(i < N_active){
+            const double m = p_b[i].m;
+            particles[i].m = m;
+            s_ax += particles[i].ax*m;
+            s_ay += particles[i].ay*m;
+            s_az += particles[i].az*m;
+            s_m += m;
+        }
+    }
+    particles[0].ax -= s_ax;
+    particles[0].ay -= s_ay;
+    particles[0].az -= s_az;
+    particles[0].m -= s_m;
+    const double m0i = 1./ particles[0].m;
+    particles[0].ax *= m0i;
+    particles[0].ay *= m0i;
+    particles[0].az *= m0i;
+} 
 
 void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
     particles[0].x = p_b[0].m*p_b[0].x;
@@ -532,6 +583,14 @@ void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle*
     particles[0].vy = p_b[0].m*p_b[0].vy;
     particles[0].vz = p_b[0].m*p_b[0].vz;
     particles[0].m = p_b[0].m;
+    
+    double s_x = 0.0;
+    double s_y = 0.0;
+    double s_z = 0.0;
+    double s_vx = 0.0;
+    double s_vy = 0.0;
+    double s_vz = 0.0;
+    double s_m = 0.0;
     for (unsigned int i=1; i<N; i++) {
         particles[i].x = p_b[i].x + p_b[0].x;
         particles[i].y = p_b[i].y + p_b[0].y;
@@ -542,15 +601,22 @@ void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle*
         if(i < N_active) {
             const double m = p_b[i].m;
             particles[i].m = m;
-            particles[0].x -= particles[i].x*m;
-            particles[0].y -= particles[i].y*m;
-            particles[0].z -= particles[i].z*m;
-            particles[0].vx -= particles[i].vx*m;
-            particles[0].vy -= particles[i].vy*m;
-            particles[0].vz -= particles[i].vz*m;
-            particles[0].m -= m;
+            s_x += particles[i].x*m;
+            s_y += particles[i].y*m;
+            s_z += particles[i].z*m;
+            s_vx += particles[i].vx*m;
+            s_vy += particles[i].vy*m;
+            s_vz += particles[i].vz*m;
+            s_m += m;
         }
     }
+    particles[0].x -= s_x;
+    particles[0].y -= s_y;
+    particles[0].z -= s_z;
+    particles[0].vx -= s_vx;
+    particles[0].vy -= s_vy;
+    particles[0].vz -= s_vz;
+    particles[0].m -= s_m;
     const double m0i = 1./particles[0].m;
     particles[0].x *= m0i;
     particles[0].y *= m0i;
@@ -559,6 +625,7 @@ void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle*
     particles[0].vy *= m0i;
     particles[0].vz *= m0i;
 }
+
 void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
     p_b[0].x = particles[0].m*particles[0].x;
     p_b[0].y = particles[0].m*particles[0].y;
@@ -567,17 +634,32 @@ void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_par
     p_b[0].vy = particles[0].m*particles[0].vy;
     p_b[0].vz = particles[0].m*particles[0].vz;
     p_b[0].m = particles[0].m;
+
+    double s_x = 0.0;
+    double s_y = 0.0;
+    double s_z = 0.0;
+    double s_vx = 0.0;
+    double s_vy = 0.0;
+    double s_vz = 0.0;
+    double s_m = 0.0;
     for (unsigned int i = 1; i < N_active; i++) {
         const double m = particles[i].m;
         p_b[i].m = m;
-        p_b[0].m += m; 
-        p_b[0].x += particles[i].x * m;
-        p_b[0].y += particles[i].y * m;
-        p_b[0].z += particles[i].z * m;
-        p_b[0].vx += particles[i].vx * m;
-        p_b[0].vy += particles[i].vy * m;
-        p_b[0].vz += particles[i].vz * m;
+        s_x += particles[i].x*m;
+        s_y += particles[i].y*m;
+        s_z += particles[i].z*m;
+        s_vx += particles[i].vx*m;
+        s_vy += particles[i].vy*m;
+        s_vz += particles[i].vz*m;
+        s_m += m;
     }
+    p_b[0].x += s_x;
+    p_b[0].y += s_y;
+    p_b[0].z += s_z;
+    p_b[0].vx += s_vx;
+    p_b[0].vy += s_vy;
+    p_b[0].vz += s_vz;
+    p_b[0].m += s_m;
     const double mi = 1.0 / p_b[0].m;
     p_b[0].x *= mi;
     p_b[0].y *= mi;
