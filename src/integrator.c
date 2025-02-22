@@ -140,7 +140,7 @@ void reb_integrator_part2(struct reb_simulation* r){
         double forward = (dt>0.) ? 1. : -1.;
         r->ri_bs.first_or_last_step = 1;
         while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
-            if (reb_sigint== 1){
+            if (reb_sigint > 1){
                 r->status = REB_STATUS_SIGINT;
                 return;
             }
@@ -216,7 +216,6 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
 	r->gravity_ignore_terms = 0;
 	reb_integrator_ias15_reset(r);
 	reb_integrator_mercurius_reset(r);
-	reb_integrator_leapfrog_reset(r);
 	reb_integrator_sei_reset(r);
 	reb_integrator_whfast_reset(r);
 	reb_integrator_whfast512_reset(r);

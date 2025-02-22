@@ -159,6 +159,10 @@ class TestParticleInSimulation(unittest.TestCase):
         self.assertAlmostEqual(p[1].l,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].theta,0.,delta=1e-15)
         self.assertAlmostEqual(p[1].T,0.,delta=1e-15)
+        self.assertAlmostEqual(p[1].pal_h,0.,delta=1e-15)
+        self.assertAlmostEqual(p[1].pal_k,0.,delta=1e-15)
+        self.assertAlmostEqual(p[1].pal_ix,0.,delta=1e-15)
+        self.assertAlmostEqual(p[1].pal_iy,0.,delta=1e-15)
     
     def test_orbits_errors(self):
         self.sim.add()

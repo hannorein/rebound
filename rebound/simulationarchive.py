@@ -149,7 +149,7 @@ class Simulationarchive(Structure):
                     if self.process_warnings:
                         warnings.warn(message, RuntimeWarning)
         if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0:
-            warnings.warn("The simulation might not be synchronized. You can manually synchronize it by calling sim.integrator_synchronize().", RuntimeWarning)
+            warnings.warn("The simulation might not be synchronized. You can manually synchronize it by calling sim.synchronize().", RuntimeWarning)
 
         return sim
     
@@ -241,7 +241,7 @@ class Simulationarchive(Structure):
                 keep_unsynchronized = 0
             sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
             sim.ri_saba.keep_unsynchronized = keep_unsynchronized
-            sim.integrator_synchronize()
+            sim.synchronize()
             return sim
         else:
             if mode=='exact':

@@ -1,7 +1,6 @@
 from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, string_at, POINTER, c_char, c_void_p
 import math
 import sys
-import random
 
 def notNone(a):
     """
@@ -170,24 +169,32 @@ class Particle(Structure):
             self.ap = 0
             return
 
+        # Random initialization of particle angles
+        clibrebound.reb_random_uniform.restype = c_double
+        if simulation is not None:
+            # Will use random seed stored in simulation.
+            simp = byref(simulation)
+        else:
+            # Will use random seed based on time.
+            simp = 0
         if Omega == "uniform":
-            Omega = random.vonmisesvariate(0.,0.) 
+            Omega = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if omega == "uniform":
-            omega = random.vonmisesvariate(0.,0.) 
+            omega = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if pomega == "uniform":
-            pomega = random.vonmisesvariate(0.,0.) 
+            pomega = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if f == "uniform":
-            f = random.vonmisesvariate(0.,0.) 
+            f = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if M == "uniform":
-            M = random.vonmisesvariate(0.,0.) 
+            M = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if E == "uniform":
-            E = random.vonmisesvariate(0.,0.) 
+            E = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if l == "uniform":
-            l = random.vonmisesvariate(0.,0.) 
+            l = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if theta == "uniform":
-            theta = random.vonmisesvariate(0.,0.) 
+            theta = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
         if inc == "uniform":
-            inc = random.vonmisesvariate(0.,0.) 
+            inc = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
 
         self.hash = hash # set via the property, which checks for type
             

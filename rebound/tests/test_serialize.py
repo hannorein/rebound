@@ -26,6 +26,8 @@ class TestSerialize(unittest.TestCase):
         self.assertEqual(a[1][1],0)
         self.assertEqual(a[1][2],0)
 
+        self.sim.particles[0].xyz = [0,0,0]
+
         b = np.zeros(self.sim.N,dtype="uint32")
         c = np.zeros(self.sim.N)
         self.sim.serialize_particle_data(r=c,hash=b)
@@ -38,6 +40,28 @@ class TestSerialize(unittest.TestCase):
         
         with self.assertRaises(AttributeError):
             self.sim.serialize_particle_data(xyz=c)
+
+    
+    def test_set_serialize(self):
+        try:
+            import numpy as np
+        except:
+            # Make numpy tests optional
+            print("WARNING: Not testing serialization because numpy is not available")
+            return;
+        
+        for i in range(self.sim.N):
+            self.sim.particles[i].xyz = [0,0,0]
+            self.assertEqual(self.sim.particles[i].x,0)
+            self.assertEqual(self.sim.particles[i].y,0)
+            self.assertEqual(self.sim.particles[i].z,0)
+        
+        a = np.zeros((self.sim.N,3),dtype="float64")
+        a[0][1] = 2
+        a[1][2] = 6
+        self.sim.set_serialized_particle_data(xyz=a)
+        self.assertEqual(self.sim.particles[0].y,2)
+        self.assertEqual(self.sim.particles[1].z,6)
 
     
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DGITHASH="+ghash.strip()
 except:
-    ghash_arg = "-DGITHASH=5d649b9125ed899b4cb25025712c3edf22be76a0" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=be4654593929232c50cce49e27913af43a9db2b8" #GITHASHAUTOUPDATE
 
 extra_link_args=[]
 if sys.platform == 'darwin':
@@ -29,7 +29,14 @@ if sys.platform == 'win32':
     extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
 else:
     # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
+    extra_compile_args=['-fstrict-aliasing', '-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
+    # For coverage runs, turn off optimizations and turn on coverage generation
+    COVERAGE = os.environ.get("COVERAGE", None)
+    if COVERAGE:
+        extra_compile_args += ['-O1', '-fprofile-arcs', '-ftest-coverage' ,'-coverage']
+        extra_link_args += ['-fprofile-arcs', '-ftest-coverage' ,'-coverage']
+    else:
+        extra_compile_args += ['-O3']
 
 # Option to disable FMA in CLANG. 
 FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
@@ -84,7 +91,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='rebound',
-    version='4.4.5',
+    version='4.4.6',
     description='An open-source multi-purpose N-body code',
     long_description=long_description,
     long_description_content_type="text/markdown",

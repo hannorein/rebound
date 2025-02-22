@@ -33,7 +33,7 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res[1], 0, delta=1e-15)
         self.assertAlmostEqual(res[2], 0, delta=1e-15)
 
-    def test_to_orbit(self):
+    def test_orbit(self):
         sim = rebound.Simulation()
         a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4
         sim.add(m=1)
@@ -45,6 +45,12 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(res[0], sim.particles[1].x, delta=1e-15)
         self.assertAlmostEqual(res[1], sim.particles[1].y, delta=1e-15)
         self.assertAlmostEqual(res[2], sim.particles[1].z, delta=1e-15)
+       
+        # checking inverse: Rotation -> orbital elements
+        _Omega, _inc, _omega = r.orbital()
+        self.assertAlmostEqual(_Omega, Omega, delta=2e-15)
+        self.assertAlmostEqual(_inc, inc, delta=2e-15)
+        self.assertAlmostEqual(_omega, omega, delta=2e-15)
     
     def test_to_new_axes(self):
         sim = rebound.Simulation()
@@ -98,6 +104,61 @@ class TestRotations(unittest.TestCase):
         self.assertAlmostEqual(mag, mag2, delta=1e-15)
         self.assertAlmostEqual(theta, theta2, delta=1e-15)
         self.assertAlmostEqual(phi, phi2, delta=1e-15)
+    
+    def test_rotate_sim(self):
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(x=1)
+        r = rebound.Rotation(angle=math.pi/2, axis=[0,0,1])
+        sim = r * sim
+        self.assertAlmostEqual(0, sim.particles[0].x, delta=1e-15)
+        self.assertAlmostEqual(0, sim.particles[0].y, delta=1e-15)
+        self.assertAlmostEqual(0, sim.particles[0].z, delta=1e-15)
+        self.assertAlmostEqual(0, sim.particles[1].x, delta=1e-15)
+        self.assertAlmostEqual(1, sim.particles[1].y, delta=1e-15)
+        self.assertAlmostEqual(0, sim.particles[1].z, delta=1e-15)
+    
+    def test_rotate_particle(self):
+        p = rebound.Particle(x=1)
+        r = rebound.Rotation(angle=math.pi/2, axis=[0,0,1])
+        p = r * p
+        self.assertAlmostEqual(0, p.x, delta=1e-15)
+        self.assertAlmostEqual(1, p.y, delta=1e-15)
+        self.assertAlmostEqual(0, p.z, delta=1e-15)
+    
+    def test_normalize(self):
+        r1 = rebound.Rotation(ix=1, iy=0, iz=0, r=0)
+        r2 = rebound.Rotation(ix=2, iy=0, iz=0, r=0)
+        r3 = r2.normalize()
+        self.assertNotEqual(r1, r2)
+        self.assertNotEqual(r2, r3)
+        self.assertEqual(r1, r3)
+    
+    def test_identity(self):
+        r = rebound.Rotation()
+        a = [1,2,3]
+        b = r*a 
+        self.assertEqual(a[0], b[0])
+        self.assertEqual(a[1], b[1])
+        self.assertEqual(a[2], b[2])
+        
+    def test_tofrom(self):
+        sim = rebound.Simulation()
+        a, e, inc, Omega, omega = 1, 0.1, 0.2, 0.3, 0.4
+        sim.add(m=1)
+        sim.add(a=a,e=e)
+        sim.add(a=a,e=e,inc=inc,Omega=Omega,omega=omega,f=0)
+        r = rebound.Rotation(fromv=sim.particles[1].xyz, tov=sim.particles[2].xyz)
+        res = r*sim.particles[1].xyz
+        self.assertAlmostEqual(res[0], sim.particles[2].x, delta=1e-15)
+        self.assertAlmostEqual(res[1], sim.particles[2].y, delta=1e-15)
+        self.assertAlmostEqual(res[2], sim.particles[2].z, delta=1e-15)
+        
+        r = rebound.Rotation.from_to(fromv=sim.particles[1].xyz, tov=sim.particles[2].xyz)
+        res = r*sim.particles[1].xyz
+        self.assertAlmostEqual(res[0], sim.particles[2].x, delta=1e-15)
+        self.assertAlmostEqual(res[1], sim.particles[2].y, delta=1e-15)
+        self.assertAlmostEqual(res[2], sim.particles[2].z, delta=1e-15)
         
 if __name__ == "__main__":
     unittest.main()

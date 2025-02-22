@@ -97,6 +97,16 @@ class TestGravity(unittest.TestCase):
         sim.integrate(10.)
         x1ias = sim.particles[1].x
         self.assertAlmostEqual(x1ias, x1,delta=1e-9)
+    
+    def test_tree_duplicate_particle(self):
+        sim = rebound.Simulation()
+        sim.configure_box(10)
+        sim.gravity = "tree"
+        sim.add(m=1.)
+        with self.assertRaises(RuntimeError):
+            # Cannot add two particles on top of each other
+            sim.add(m=1.)
+
 
 
 if __name__ == "__main__":

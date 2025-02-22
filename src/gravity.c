@@ -159,7 +159,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                 // All active particle pairs
 #ifndef OPENMP // OPENMP off, do O(1/2*N^2)
                 for (int i=starti; i<_N_active; i++){
-                if (reb_sigint) return;
+                if (reb_sigint > 1) return;
                 for (int j=startj; j<i; j++){
                     const double dx = (gb.x+particles[i].x) - particles[j].x;
                     const double dy = (gb.y+particles[i].y) - particles[j].y;
@@ -200,7 +200,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #ifndef OPENMP // OPENMP off
                 const int startitestp = MAX(_N_active, starti);
                 for (int i=startitestp; i<_N_real; i++){
-                if (reb_sigint) return;
+                if (reb_sigint > 1) return;
                 for (int j=startj; j<_N_active; j++){
                     const double dx = (gb.x+particles[i].x) - particles[j].x;
                     const double dy = (gb.y+particles[i].y) - particles[j].y;
@@ -371,7 +371,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
             }
 #else // OPENMP
             for (int i=0; i<_N_active; i++){
-            if (reb_sigint) return;
+            if (reb_sigint > 1) return;
             for (int j=i+1; j<_N_active; j++){
                 if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                 if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
@@ -428,7 +428,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 
             // Testparticles
             for (int i=_N_active; i<_N_real; i++){
-            if (reb_sigint) return;
+            if (reb_sigint > 1) return;
             for (int j=0; j<_N_active; j++){
                 if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                 if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
@@ -502,7 +502,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 #pragma omp parallel for schedule(guided)
                 for (int i=0; i<N; i++){
 #ifndef OPENMP
-                    if (reb_sigint) return;
+                    if (reb_sigint > 1) return;
 #endif // OPENMP
                     struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                     // Precalculated shifted position
@@ -530,7 +530,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         particles[i].az = 0; 
                     }
                     for (int i=2; i<_N_active; i++){
-                        if (reb_sigint) return;
+                        if (reb_sigint > 1) return;
                         for (int j=1; j<i; j++){
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
@@ -551,7 +551,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     }
                     const int startitestp = MAX(_N_active,2);
                     for (int i=startitestp; i<_N_real; i++){
-                        if (reb_sigint) return;
+                        if (reb_sigint > 1) return;
                         for (int j=1; j<_N_active; j++){
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
@@ -764,7 +764,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 particles[i].az = 0;
                             }
                             for (int i=2; i<_N_active; i++){
-                                if (reb_sigint) return;
+                                if (reb_sigint > 1) return;
                                 for (int j=1; j<i; j++){
                                     if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
@@ -784,7 +784,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             }
                             const int startitestp = MAX(_N_active,2);
                             for (int i=startitestp; i<_N_real; i++){
-                                if (reb_sigint) return;
+                                if (reb_sigint > 1) return;
                                 for (int j=1; j<_N_active; j++){
                                     if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
@@ -1351,7 +1351,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
 #pragma omp parallel for
             for (int i=starti; i<_N_active; i++){
 #ifndef OPENMP
-                if (reb_sigint) return;
+                if (reb_sigint > 1) return;
 #endif // OPENMP
                 for (int j=startj; j<i; j++){
                     const double dx = particles[i].x - particles[j].x; 
@@ -1382,7 +1382,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
 #pragma omp parallel for
             for (int i=_N_active; i<_N_real; i++){
 #ifndef OPENMP
-                if (reb_sigint) return;
+                if (reb_sigint > 1) return;
 #endif // OPENMP
                 for (int j=startj; j<i; j++){
                     const double dx = particles[i].x - particles[j].x; 

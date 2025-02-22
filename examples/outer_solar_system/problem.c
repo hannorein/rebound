@@ -12,7 +12,7 @@
  *
  * The example also works with the WHFAST symplectic integrator. We turn
  * off safe-mode to allow fast and accurate simulations with the symplectic
- * corrector. If an output is required, you need to call ireb_simulation_synchronize()
+ * corrector. If an output is required, you need to call reb_simulation_synchronize()
  * before accessing the particle structure.
  */
 #include <stdio.h>
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     const double k = 0.01720209895; // Gaussian constant
     r->dt = 40;                     // in days
     r->G = k * k;                   // These are the same units as used by the mercury6 code.
-    r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call integrator_synchronize() before outputs.
+    r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call reb_simulation_synchronize() before outputs.
     r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
 
     // Setup callbacks:

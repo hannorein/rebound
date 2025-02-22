@@ -95,6 +95,26 @@ class TestSimulation(unittest.TestCase):
         self.sim.move_to_com()
         com = self.sim.com()
         self.assertAlmostEqual(com.x, 0., delta=1e-15)
+        # Check if tree is adjusted.
+        sim = rebound.Simulation()
+        sim.configure_box(10)
+        sim.gravity = "tree"
+        sim.add(m=1,x=1)
+        sim.move_to_com()
+        com = sim.com()
+        self.assertAlmostEqual(com.x, 0., delta=1e-15)
+    
+    def test_hel(self):
+        for p in self.sim.particles:
+            p.x += 10.0
+            p.vx += 10.0
+        self.sim.move_to_hel()
+        self.assertAlmostEqual(self.sim.particles[0].x, 0., delta=1e-16)
+        self.assertAlmostEqual(self.sim.particles[0].y, 0., delta=1e-16)
+        self.assertAlmostEqual(self.sim.particles[0].z, 0., delta=1e-16)
+        self.assertAlmostEqual(self.sim.particles[0].vx, 0., delta=1e-16)
+        self.assertAlmostEqual(self.sim.particles[0].vy, 0., delta=1e-16)
+        self.assertAlmostEqual(self.sim.particles[0].vz, 0., delta=1e-16)
     
     def test_com_range(self):
         sim = rebound.Simulation()

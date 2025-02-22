@@ -56,10 +56,13 @@ class TestShearingSheet(unittest.TestCase):
         self.assertGreater(sim.collisions_log_n,1000)
         Nbefore = sim.N
         sim.remove(0,keep_sorted=0)
-        sim.tree_update()
+        sim.update_tree()
         self.assertEqual(Nbefore-1,sim.N)
         with self.assertRaises(RuntimeError):
             sim.remove(0,keep_sorted=1)
+        self.assertNotEqual(sim.ri_sei._lastdt,0.0)
+        sim.reset_integrator()
+        self.assertEqual(sim.ri_sei._lastdt,0.0)
 
 if __name__ == "__main__":
     unittest.main()

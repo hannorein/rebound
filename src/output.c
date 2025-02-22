@@ -293,7 +293,7 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
     // Wait until screenshot arrives
     while (!r->server_data->screenshot && r->status <0){
         usleep(100);
-        if (reb_sigint== 1){
+        if (reb_sigint > 1){
             r->status = REB_STATUS_SIGINT;
         }
     }

@@ -4,6 +4,11 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.6
+* When initializing particles with "uniform" in python, REBOUND now uses its own `reb_random_uniform()` function. This avoids importing the "random" library and makes results reproducible as the random seed of the simulation is used when generating random numbers.
+* More cracefull interrupt handling. REBOUND now stop the integration after the next timestep when CTRL-C is pressed the first time. If CTRL-C s pressed twice, then long loops (during gravity, collision calculations) are terminated immediately. Continuing an integration after one CTRL-C press should be easier with this change as the simulation does not get corrupted.
+* Fixed typos in documentation.
+
 ### Version 4.4.5
 * Version updated to test github workflows
 

@@ -1,5 +1,5 @@
 mkdocs-material
-mkdocs-jupyter
+mkdocs-jupyter==0.24.7
 #git+git://github.com/hannorein/mkdocs-jupyter
 mkdocs-simple-hooks
 mkdocs-video

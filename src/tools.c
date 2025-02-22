@@ -1500,12 +1500,12 @@ double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
     return deltad/delta2;
 }
 
-void reb_tools_megno_update(struct reb_simulation* r, double dY){
+void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done){
 	// Calculate running Y(t)
 	r->megno_Ys += dY;
 	double Y = r->megno_Ys/r->t;
 	// Calculate averge <Y> 
-	r->megno_Yss += Y * r->dt;
+	r->megno_Yss += Y * dt_done;
 	// Update covariance of (Y,t) and variance of t
 	r->megno_n++;
 	double _d_t = r->t - r->megno_mean_t;
