@@ -538,13 +538,13 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
                 }
                 reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
             }
-        break;
+            break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
             eta = p_j[0].m;
             for (unsigned int i=1;i<(int)N_real;i++){
                 reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
             }
-        break;
+            break;
     };
 }
 
