@@ -49,6 +49,7 @@ class TestTransformations(unittest.TestCase):
         for i in range(len(c0)):
             self.assertAlmostEqual(c0[i],c1[i],delta=1e-16)
     
+    
     def test_democratichelio(self):
         sim = rebound.Simulation()
         sim.add(m=1.2354)
@@ -60,6 +61,7 @@ class TestTransformations(unittest.TestCase):
         p = ctypes.cast(elems,ctypes.POINTER(rebound.Particle))
 
         c0 = getc(sim)
+
         cl = rebound.clibrebound
         cl.reb_particles_transform_inertial_to_democraticheliocentric_posvel(sim._particles,p,sim.N,sim.N)
 
