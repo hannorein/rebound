@@ -79,7 +79,7 @@ It supports first and second symplectic correctors as well as the kernel method 
 The basic implementation of WHFast is described in detail in [Rein & Tamayo 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..376R/abstract). 
 The higher order aspects of it are described in [Rein, Tamayo & Brown 2019](https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract). 
 WHFast also supports first order variational equations which can be used in chaos estimators ([Rein & Tamayo 2016](https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R/abstract)). 
-The user can choose between Jacobi and Democratic Heliocentric coordinates. 
+The user can choose between Jacobi, Democratic Heliocentric, WHDS,  and barycentric coordinates. 
 
 The following code enables the WHFast integrator. 
 Because WHFast is not an adaptive integrator, you also need to set a timestep.
@@ -187,14 +187,16 @@ The setting for WHFast are stored in the `reb_integrator_whfast` structure, whic
         ```c
         r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;                  // or
         r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;  // or
-        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_WHDS; 
+        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_WHDS;                    // or
+        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_BARYCENTRIC; 
         ```
 
     === "Python"
         ```python
         sim.ri_whfast.coordinates = "jacobi"                 # or
         sim.ri_whfast.coordinates = "democraticheliocentric" # or
-        sim.ri_whfast.coordinates = "whds"
+        sim.ri_whfast.coordinates = "whds"                   # or
+        sim.ri_whfast.coordinates = "barycentric"
         ```
 
 `unsigned int recalculate_coordinates_this_timestep`
@@ -202,11 +204,11 @@ The setting for WHFast are stored in the `reb_integrator_whfast` structure, whic
     After the timestep, the flag gets set back to 0. If you want to change particles after every timestep, you also need to set this flag to 1 before every timestep. Default is 0.
 
 `unsigned int safe_mode`
-:   If this flag is set (the default), WHFast will recalculate the internal coordinates (Jacobi/heliocentric/WHDS) and synchronize every timestep, to avoid problems with outputs or particle modifications between timesteps. 
+:   If this flag is set (the default), WHFast will recalculate the internal coordinates (Jacobi/heliocentric/WHDS/barycentric) and synchronize every timestep, to avoid problems with outputs or particle modifications between timesteps. 
     Setting it to 0 will result in a speedup, but care must be taken to synchronize and recalculate the internal coordinates when needed. See also the AdvWHFast.ipynb tutorial.
 
 `unsigned int keep_unsynchronized`
-:   This flag determines if the inertial coordinates generated are discarded in subsequent timesteps (cached Jacobi/heliocentric/WHDS coordinates are used instead). The default is 0. Set this flag to 1 if you require outputs and bit-wise reproducibility
+:   This flag determines if the inertial coordinates generated are discarded in subsequent timesteps (cached Jacobi/heliocentric/WHDS/barycentric coordinates are used instead). The default is 0. Set this flag to 1 if you require outputs and bit-wise reproducibility
 
 All other members of the `reb_integrator_whfast` structure are for internal use only.
 
