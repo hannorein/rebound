@@ -483,14 +483,24 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             r->particles[0].vx = star.vx; // restore every timestep for collisions
             r->particles[0].vy = star.vy;
             r->particles[0].vz = star.vz;
-
+	
             reb_collision_search(r);
 
             if (nbody_ode->length != ri_trace->encounter_N*3*2){
+		/*
                 if (ri_trace->encounter_N*3*2 > nbody_ode->N_allocated){
-                    reb_simulation_error(r, "Cannot add particles during encounter step");
-                }
-                nbody_ode->length = ri_trace->encounter_N*3*2;
+                    //reb_simulation_error(r, "Cannot add particles during encounter step");
+		}
+		*/
+		// Just re-create the ODE
+		// printf("old length: %d %d\n", ri_trace->encounter_N, nbody_ode->length);
+		reb_ode_free(nbody_ode);
+		nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
+                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
+                nbody_ode->needs_nbody = 0;
+		// printf("new length: %d %d\n", ri_trace->encounter_N, nbody_ode->length);
+                
+		//nbody_ode->length = ri_trace->encounter_N*3*2;
                 r->ri_bs.first_or_last_step = 1;
             }
 
@@ -512,7 +522,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 }
             }
         }
-
+        
         // if only test particles encountered massive bodies, reset the
         // massive body coordinates to their post Kepler step state
         if(ri_trace->tponly_encounter){
@@ -844,6 +854,9 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     
     // Attempt one step. 
     reb_integrator_trace_step(r);
+
+    // If particles added mid timestep, force accept
+    if (r->N > N) ri_trace->force_accept = 1;
 
     // We alaways accept the step if a collision occured as it is impossible to undo the collision.
     if (!ri_trace->force_accept){

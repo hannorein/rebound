@@ -99,12 +99,52 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             }
         }
     }
+
+    // TRACE can add particles mid-timestep now
     if (r->integrator == REB_INTEGRATOR_TRACE){
-        if (r->ri_trace.mode==1){ // BS part
-            reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
-            return;
+        struct reb_integrator_trace* ri_trace = &(r->ri_trace);
+        if (r->ri_trace.mode==1 || r->ri_trace.mode==3){ // BS part
+	    const int old_N = r->N-1;
+            //reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
+            //return;
+            if (ri_trace->N_allocated < r->N){
+	        ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
+		ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(int)*r->N);
+		ri_trace->N_allocated = r->N;
+	    }
+	    ri_trace->encounter_map[ri_trace->encounter_N] = old_N;
+	    ri_trace->encounter_N++;
+            
+	    if (r->N_active==-1){ 
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle. 
+                ri_trace->encounter_N_active++;
+            }
+
+	    // Unlike remove particle, I can't figure out a convenient way to reshuffle Ks
+	    // So make a temporary copy...
+	    int temp_Ks[r->N];
+	    for (int i = 0; i < old_N; i++){
+	        temp_Ks[i] = ri_trace->current_Ks[i];
+	    }
+
+	    // First reshuffle existing Ks
+	    for (int i = 0; i < old_N; i++){
+	        for (int j = 0; j < old_N; j++){ // I think it's better to do this...to populate with zeros?
+		    ri_trace->current_Ks[i*old_N+j] = temp_Ks[i*old_N+j+i];
+		}
+	    }
+
+	    // add in new particle
+	    for (int i = 0; i < ri_trace->encounter_N; i++){
+		ri_trace->current_Ks[ri_trace->encounter_map[i]*r->N+old_N];
+	    }
+
+	    
         }
     }
+    
+
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
