@@ -560,23 +560,38 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
     struct reb_particle* restrict const particles = r->particles;
     const int N_real = r->N-r->N_var;
     const int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
-    reb_whfast_kepler_step(r, a);
-    reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N_real, N_active);
-    for (int v=0;v<r->N_var_config;v++){
-        struct reb_variational_configuration const vc = r->var_config[v];
-        reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
+    switch (ri_whfast->coordinates){
+        case REB_WHFAST_COORDINATES_JACOBI:
+            reb_whfast_kepler_step(r, a);
+            reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N_real, N_active);
+            for (int v=0;v<r->N_var_config;v++){
+                struct reb_variational_configuration const vc = r->var_config[v];
+                reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
+            }
+            reb_simulation_update_acceleration(r);
+            reb_whfast_interaction_step(r, -b);
+            reb_whfast_kepler_step(r, -2.*a);
+            reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N_real, N_active);
+            for (int v=0;v<r->N_var_config;v++){
+                struct reb_variational_configuration const vc = r->var_config[v];
+                reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
+            }
+            reb_simulation_update_acceleration(r);
+            reb_whfast_interaction_step(r, b);
+            reb_whfast_kepler_step(r, a);
+            break;
+        case REB_WHFAST_COORDINATES_BARYCENTRIC:
+            reb_whfast_kepler_step(r, a);
+            reb_particles_transform_barycentric_to_inertial_pos(particles, ri_whfast->p_jh, N_real, N_active);
+            reb_simulation_update_acceleration(r);
+            reb_whfast_interaction_step(r, -b);
+            reb_whfast_kepler_step(r, -2.*a);
+            reb_particles_transform_barycentric_to_inertial_pos(particles, ri_whfast->p_jh, N_real, N_active);
+            reb_simulation_update_acceleration(r);
+            reb_whfast_interaction_step(r, b);
+            reb_whfast_kepler_step(r, a);
+            break;
     }
-    reb_simulation_update_acceleration(r);
-    reb_whfast_interaction_step(r, -b);
-    reb_whfast_kepler_step(r, -2.*a);
-    reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N_real, N_active);
-    for (int v=0;v<r->N_var_config;v++){
-        struct reb_variational_configuration const vc = r->var_config[v];
-        reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
-    }
-    reb_simulation_update_acceleration(r);
-    reb_whfast_interaction_step(r, b);
-    reb_whfast_kepler_step(r, a);
 }
 
 void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int order){
@@ -795,8 +810,8 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
         reb_simulation_error(r, "Kernel method must be 0 (default), 1 (exact modified kick), 2 (composition kernel), or 3 (lazy implementer's modified kick). ");
         return 1; // Error
     }
-    if (ri_whfast->corrector!=0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
-        reb_simulation_error(r, "Symplectic correctors are only compatible with Jacobi coordinates.");
+    if (ri_whfast->corrector!=0 && (ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_BARYCENTRIC) ){
+        reb_simulation_error(r, "Symplectic correctors are only compatible with Jacobi and Barycentric coordinates.");
         return 1; // Error
     }
     if (ri_whfast->corrector!=0 && ri_whfast->corrector!=3 && ri_whfast->corrector!=5  && ri_whfast->corrector!=7 && ri_whfast->corrector!=11 && ri_whfast->corrector!=17 ){
