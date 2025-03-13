@@ -107,20 +107,18 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 	    const int old_N = r->N-1;
             if (ri_trace->N_allocated < r->N){
 	        ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
+	        ri_trace->temp_Ks       = realloc(ri_trace->temp_Ks, sizeof(int)*r->N*r->N);
 		ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(int)*r->N);
-		ri_trace->N_allocated = r->N;
+		ri_trace->N_allocated   = r->N;
 	    }
 
 	    // Make a temporary copy...
-	    int temp_Ks[old_N*old_N];
-	    for (int i = 0; i < old_N*old_N; i++){
-	        temp_Ks[i] = ri_trace->current_Ks[i];
-	    }
+	    memcpy(ri_trace->temp_Ks, ri_trace->current_Ks, r->N*r->N*sizeof(int));
 
 	    // First reshuffle existing Ks
 	    for (int i = 0; i < old_N; i++){
 	        for (int j = 0; j < old_N; j++){ // I think it's better to do this...to populate with zeros?
-		    ri_trace->current_Ks[i*old_N+j+i] = temp_Ks[i*old_N+j];
+		    ri_trace->current_Ks[i*old_N+j+i] = ri_trace->temp_Ks[i*old_N+j];
 		}
 	    }
 	    
@@ -375,11 +373,8 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         reb_integrator_bs_reset(r);
         if (r->ri_trace.mode==1 || r->ri_trace.mode==3){
-	    int temp_Ks[r->N*r->N];
 	    
-	    for (int i = 0; i < r->N*r->N; i++){
-	        temp_Ks[i] = ri_trace->current_Ks[i];
-	    }
+	    memcpy(ri_trace->temp_Ks, ri_trace->current_Ks, r->N*r->N*sizeof(int));
             
 	    // Only removed mid-timestep if collision - BS Step!
             // Need to fix current_Ks still, and double check logic
@@ -410,7 +405,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
 		        add_index++;
 			crossed_j = 1;
 		    }
-                    ri_trace->current_Ks[i*(r->N-1)+j] = temp_Ks[i*(r->N-1)+j+add_index];
+                    ri_trace->current_Ks[i*(r->N-1)+j] = ri_trace->temp_Ks[i*(r->N-1)+j+add_index];
                 }
             }
             

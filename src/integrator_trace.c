@@ -558,10 +558,11 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     if (ri_trace->N_allocated<N){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
-        ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
+        ri_trace->particles_backup          = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
-        ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
-        ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
+        ri_trace->current_Ks                = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
+        ri_trace->temp_Ks                   = realloc(ri_trace->temp_Ks,sizeof(int)*N*N);
+        ri_trace->encounter_map             = realloc(ri_trace->encounter_map,sizeof(int)*N);
         ri_trace->N_allocated = N;
     }
 
@@ -846,8 +847,8 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     // Attempt one step. 
     reb_integrator_trace_step(r);
 
-    // If particles added mid timestep, force accept
-    if (r->N > N) ri_trace->force_accept = 1;
+    // If particles added or removed mid timestep, force accept. Maybe a warning?
+    if (r->N != N) ri_trace->force_accept = 1;
 
     // We alaways accept the step if a collision occured as it is impossible to undo the collision.
     if (!ri_trace->force_accept){
