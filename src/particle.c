@@ -105,13 +105,31 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         if (r->ri_trace.mode==1 || r->ri_trace.mode==3){ // BS part
 	    const int old_N = r->N-1;
-            //reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
-            //return;
             if (ri_trace->N_allocated < r->N){
 	        ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
 		ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(int)*r->N);
 		ri_trace->N_allocated = r->N;
 	    }
+
+	    // Make a temporary copy...
+	    int temp_Ks[old_N*old_N];
+	    for (int i = 0; i < old_N*old_N; i++){
+	        temp_Ks[i] = ri_trace->current_Ks[i];
+	    }
+
+	    // First reshuffle existing Ks
+	    for (int i = 0; i < old_N; i++){
+	        for (int j = 0; j < old_N; j++){ // I think it's better to do this...to populate with zeros?
+		    ri_trace->current_Ks[i*old_N+j+i] = temp_Ks[i*old_N+j];
+		}
+	    }
+	    
+	    // add in new particle, we want it to interact with all currently interacting particles
+	    // exclude star
+	    for (int i = 1; i < ri_trace->encounter_N; i++){
+		ri_trace->current_Ks[ri_trace->encounter_map[i]*r->N+old_N] = 1;
+	    }
+	    
 	    ri_trace->encounter_map[ri_trace->encounter_N] = old_N;
 	    ri_trace->encounter_N++;
             
@@ -120,26 +138,6 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
                 // Otherwise, assume we're adding non active particle. 
                 ri_trace->encounter_N_active++;
             }
-
-	    // Unlike remove particle, I can't figure out a convenient way to reshuffle Ks
-	    // So make a temporary copy...
-	    int temp_Ks[r->N];
-	    for (int i = 0; i < old_N; i++){
-	        temp_Ks[i] = ri_trace->current_Ks[i];
-	    }
-
-	    // First reshuffle existing Ks
-	    for (int i = 0; i < old_N; i++){
-	        for (int j = 0; j < old_N; j++){ // I think it's better to do this...to populate with zeros?
-		    ri_trace->current_Ks[i*old_N+j] = temp_Ks[i*old_N+j+i];
-		}
-	    }
-
-	    // add in new particle
-	    for (int i = 0; i < ri_trace->encounter_N; i++){
-		ri_trace->current_Ks[ri_trace->encounter_map[i]*r->N+old_N];
-	    }
-
 	    
         }
     }
@@ -376,8 +374,14 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
         keep_sorted = 1; // Force keepSorted for hybrid integrator
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         reb_integrator_bs_reset(r);
-        if (r->ri_trace.mode==1){
-            // Only removed mid-timestep if collision - BS Step!
+        if (r->ri_trace.mode==1 || r->ri_trace.mode==3){
+	    int temp_Ks[r->N*r->N];
+	    
+	    for (int i = 0; i < r->N*r->N; i++){
+	        temp_Ks[i] = ri_trace->current_Ks[i];
+	    }
+            
+	    // Only removed mid-timestep if collision - BS Step!
             // Need to fix current_Ks still, and double check logic
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
@@ -391,18 +395,26 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
                 }
             }
 
-            // reshuffle current_Ks.
-            for (unsigned int i = index; i<r->N-1; i++){
-                for (unsigned int j = 0; j<r->N; j++){
-                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j];
-                }
-            }
+            // reshuffle current_Ks
+	    unsigned int add_index = 0;
+	    int crossed_i = 0;
             for (unsigned int i = 0; i<r->N-1; i++){
-                for (unsigned int j = index; j<r->N-1; j++){
-                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[i*r->N+(j+1)];
+	        if (i >= index && !crossed_i){
+		    add_index += r->N;
+		    crossed_i = 1;
+	        }
+
+	        int crossed_j = 0;
+                for (unsigned int j = 0; j<r->N-1; j++){
+		    if (j >= index && !crossed_j){
+		        add_index++;
+			crossed_j = 1;
+		    }
+                    ri_trace->current_Ks[i*(r->N-1)+j] = temp_Ks[i*(r->N-1)+j+add_index];
                 }
             }
-            if (encounter_index<ri_trace->encounter_N_active){
+            
+	    if (encounter_index<ri_trace->encounter_N_active){
                 ri_trace->encounter_N_active--;
             }
             ri_trace->encounter_N--;
