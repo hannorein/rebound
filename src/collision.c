@@ -132,10 +132,11 @@ void reb_collision_search(struct reb_simulation* const r){
                         double dx = gb.x - p2.x; 
                         double dy = gb.y - p2.y; 
                         double dz = gb.z - p2.z; 
-                        double sr = p1.r + p2.r; 
+                        double sr = p1.r + p2.r;
                         double r2 = dx*dx+dy*dy+dz*dz;
                         // Check if particles are overlapping 
                         if (r2>sr*sr) continue;    
+			
                         double dvx = gb.vx - p2.vx; 
                         double dvy = gb.vy - p2.vy; 
                         double dvz = gb.vz - p2.vz; 
@@ -222,6 +223,12 @@ void reb_collision_search(struct reb_simulation* const r){
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                         }
+
+                        if (r->integrator==REB_INTEGRATOR_TRACE){
+                          // if collision, TRACE automatically accepts the step
+                          r->ri_trace.force_accept = 1;
+                        }
+
                         r->collisions[collisions_N].p1 = i;
                         r->collisions[collisions_N].p2 = j;
                         r->collisions[collisions_N].gb = gborig;

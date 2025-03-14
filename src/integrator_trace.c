@@ -847,9 +847,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     // Attempt one step. 
     reb_integrator_trace_step(r);
 
-    // If particles added or removed mid timestep, force accept. Maybe a warning?
-    if (r->N != N) ri_trace->force_accept = 1;
-
     // We alaways accept the step if a collision occured as it is impossible to undo the collision.
     if (!ri_trace->force_accept){
         // We check again for close encounters to ensure time reversibility. 
