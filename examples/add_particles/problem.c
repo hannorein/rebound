@@ -1,10 +1,9 @@
 /**
- * Close encounters with simple MERCURIUS (Hernandez 2023)
+ * Test TRACE collisions that add particles
  *
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include "rebound.h"
 
@@ -68,128 +67,6 @@ int test_collision(struct reb_simulation* const r, struct reb_collision c){
     p3.vx = vfrag_mag * p3_hat.x;
     p3.vy = vfrag_mag * p3_hat.y;
     p3.vz = vfrag_mag * p3_hat.z;
-    /*
-    // Scale out energy from collision
-    double Ei=0, Ef=0;
-    if(r->track_energy_offset){
-        {
-            double vx = pi->vx;
-            double vy = pi->vy;
-            double vz = pi->vz;
-            // Calculate energy difference in inertial frame
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
-            Ei += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
-        }
-        {
-            double vx = pj->vx;
-            double vy = pj->vy;
-            double vz = pj->vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
-            Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
-        }
-        
-	double x = pi->x - pj->x;
-        double y = pi->y - pj->y;
-        double z = pi->z - pj->z;
-        double _r = sqrt(x*x + y*y + z*z);
-        Ei += - r->G*pi->m*pj->m/_r;
-	
-	// Final energy
-	{
-            double vx = p1.vx;
-            double vy = p1.vy;
-            double vz = p1.vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
-            Ef += 0.5*p1.m*(vx*vx + vy*vy + vz*vz);
-        }
-	{
-            double vx = p2.vx;
-            double vy = p2.vy;
-            double vz = p2.vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
-            Ef += 0.5*p2.m*(vx*vx + vy*vy + vz*vz);
-        }
-	{
-            double vx = p3.vx;
-            double vy = p3.vy;
-            double vz = p3.vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
-            Ef += 0.5*p3.m*(vx*vx + vy*vy + vz*vz);
-        }
-        
-	double x12 = p1.x - p2.x;
-        double y12 = p1.y - p2.y;
-        double z12 = p1.z - p2.z;
-	double x23 = p2.x - p3.x;
-        double y23 = p2.y - p3.y;
-        double z23 = p2.z - p3.z;
-	double x13 = p1.x - p3.x;
-        double y13 = p1.y - p3.y;
-        double z13 = p1.z - p3.z;
-        double _r12 = sqrt(x12*x12 + y12*y12 + z12*z12);
-        double _r23 = sqrt(x23*x23 + y23*y23 + z23*z23);
-        double _r13 = sqrt(x13*x13 + y13*y13 + z13*z13);
-        Ef += - r->G*p1.m*p2.m/_r12;
-        Ef += - r->G*p2.m*p3.m/_r23;
-        Ef += - r->G*p1.m*p3.m/_r13;
-        r->energy_offset += Ei - Ef;
-    }
-    */
     
     double E0 = reb_simulation_energy(r);
     
@@ -217,13 +94,12 @@ int main(int argc, char* argv[]){
     reb_simulation_add_fmt(r, "m r a e", 1e-5, 1.6e-4, 0.5, 0.1);
     reb_simulation_add_fmt(r, "m r a e f", 1e-8, 4e-5, 0.55, 0.4, -0.94);
 
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = REB_INTEGRATOR_TRACE;
     r->dt = 0.01;
     r->collision = REB_COLLISION_DIRECT;
     //r->collision_resolve = reb_collision_resolve_merge;
     r->collision_resolve = test_collision;
     r->track_energy_offset = 1;
-    //r->heartbeat  = heartbeat;
 
     double e0 = reb_simulation_energy(r);
     printf("%d\n", r->N); 
