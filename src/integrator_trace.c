@@ -60,8 +60,14 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     double dcritj6 = 0.0;
 
     const double m0 = r->particles[0].m;
+    
+    // Check central body for physical radius ONLY
+    if (i == 0 && r->particles[i].r != 0){
+	const double rs = r->particles[0].r;
+        dcriti6 = rs*rs*rs*rs*rs*rs;
+    }
 
-    if (r->particles[i].m != 0){
+    else if (r->particles[i].m != 0){
         const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
         const double mr = r->particles[i].m/(3.*m0);
         dcriti6 = di2*di2*di2*mr*mr;
@@ -429,6 +435,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     
     // Only Partial BS uses this step 
     if (ri_trace->peri_mode == REB_TRACE_PERI_PARTIAL_BS || !ri_trace->current_C){
+
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
@@ -635,7 +642,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
 
     // Body-body
     // there cannot be TP-TP CEs
-    for (int i = 1; i < Nactive; i++){
+    for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*N+j] = 1;
@@ -701,7 +708,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
 
     // Body-body
     // there cannot be TP-TP CEs
-    for (int i = 1; i < Nactive; i++){
+    for (int i = 1; i < Nactive; i++){ // Do not check for central body anymore
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
                 if (ri_trace->current_Ks[i*N+j] == 0){
