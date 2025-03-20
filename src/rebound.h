@@ -298,6 +298,7 @@ struct reb_integrator_trace {
 
     int* current_Ks; // Tracking K_ij for the entire timestep
     int* temp_Ks;    // temporary K array for adding/removing particles 
+    double* dcrit6;    // temporary K array for adding/removing particles 
     unsigned int current_C; // Tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };

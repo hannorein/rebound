@@ -61,22 +61,35 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
 
     const double m0 = r->particles[0].m;
     
-    // Check central body for physical radius ONLY
-    if (i == 0 && r->particles[i].r != 0){
-	const double rs = r->particles[0].r;
-        dcriti6 = rs*rs*rs*rs*rs*rs;
+    // Check if dcrit has been pre-computed
+    if (ri_trace->dcrit6[i] != 0){
+        dcriti6 = ri_trace->dcrit6[i];
+    }
+    else{
+            // Check central body for physical radius ONLY
+        if (i == 0 && r->particles[i].r != 0){
+	    const double rs = r->particles[0].r;
+	    dcriti6 = rs*rs*rs*rs*rs*rs;
+        }
+
+        else if (r->particles[i].m != 0){
+	    const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
+	    const double mr = r->particles[i].m/(3.*m0);
+	    dcriti6 = di2*di2*di2*mr*mr;
+        }
+        ri_trace->dcrit6[i] = dcriti6;
     }
 
-    else if (r->particles[i].m != 0){
-        const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
-        const double mr = r->particles[i].m/(3.*m0);
-        dcriti6 = di2*di2*di2*mr*mr;
+    if (ri_trace->dcrit6[j] != 0){
+        dcritj6 = ri_trace->dcrit6[j];
     }
-
-    if (r->particles[j].m != 0){
-        const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
-        const double mr = r->particles[j].m/(3.*m0);
-        dcritj6 = dj2*dj2*dj2*mr*mr;
+    else{
+	if (r->particles[j].m != 0){
+	    const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
+	    const double mr = r->particles[j].m/(3.*m0);
+	    dcritj6 = dj2*dj2*dj2*mr*mr;
+	}
+	ri_trace->dcrit6[j] = dcritj6;
     }
 
     double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
@@ -112,7 +125,6 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     else{
 	dmin2 = rp + 2*d*qv*h2 + v2*h2*h2;
     }
-
     return dmin2*dmin2*dmin2 < dcritmax6;
 }
 
@@ -569,6 +581,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
         ri_trace->current_Ks                = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
         ri_trace->temp_Ks                   = realloc(ri_trace->temp_Ks,sizeof(int)*N*N);
+        ri_trace->dcrit6                    = realloc(ri_trace->dcrit6,sizeof(double)*N);
         ri_trace->encounter_map             = realloc(ri_trace->encounter_map,sizeof(int)*N);
         ri_trace->N_allocated = N;
     }
@@ -597,8 +610,10 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // Clear encounter map
     for (unsigned int i=1; i<r->N; i++){
         ri_trace->encounter_map[i] = 0;
+        ri_trace->dcrit6[i] = 0;
     }
     ri_trace->encounter_map[0] = 1;
+    ri_trace->dcrit6[0] = 0;
     ri_trace->encounter_N = 1;
 
     // Reset encounter triggers.
@@ -900,6 +915,10 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.current_C = 0;
     free(r->ri_trace.current_Ks);
     r->ri_trace.current_Ks = NULL;
+    free(r->ri_trace.temp_Ks);
+    r->ri_trace.temp_Ks = NULL;
+    free(r->ri_trace.dcrit6);
+    r->ri_trace.dcrit6 = NULL;
 
     r->ri_trace.S = NULL;
     r->ri_trace.S_peri = NULL;
