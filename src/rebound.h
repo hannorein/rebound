@@ -273,6 +273,7 @@ struct reb_integrator_trace {
     double peri_crit_fdot;
     double peri_crit_distance;
     unsigned int safe_mode;             // Combine post- and pre- timestep checks
+    unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
 
     // Internal use
     enum {
@@ -285,7 +286,6 @@ struct reb_integrator_trace {
     unsigned int post_ts_check;         // Are we in the post-timestep check? For safe mode   
     unsigned int encounter_N;           // Number of particles currently having an encounter
     unsigned int encounter_N_active;    // Number of active particles currently having an encounter
-    unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
     unsigned int recalculate_close_encounters_this_timestep; // Set to 1 if we need to re-do pre-timestep check
     double last_dt_ias15;
 
