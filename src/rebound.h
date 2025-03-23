@@ -272,6 +272,7 @@ struct reb_integrator_trace {
     double peri_crit_eta;
     double peri_crit_fdot;
     double peri_crit_distance;
+    unsigned int safe_mode;             // Combine post- and pre- timestep checks
 
     // Internal use
     enum {
@@ -280,8 +281,12 @@ struct reb_integrator_trace {
         REB_TRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
         REB_TRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
     } mode;
+    unsigned int is_synchronized;   
+    unsigned int post_ts_check;         // Are we in the post-timestep check? For safe mode   
     unsigned int encounter_N;           // Number of particles currently having an encounter
     unsigned int encounter_N_active;    // Number of active particles currently having an encounter
+    unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
+    unsigned int recalculate_close_encounters_this_timestep; // Set to 1 if we need to re-do pre-timestep check
     double last_dt_ias15;
 
     unsigned int N_allocated;
@@ -298,7 +303,10 @@ struct reb_integrator_trace {
 
     int* current_Ks; // Tracking K_ij for the entire timestep
     int* temp_Ks;    // temporary K array for adding/removing particles 
-    double* dcrit6;    // temporary K array for adding/removing particles 
+    int* previous_Ks; // K_ij for last timestep, for safe mode
+//    double* pairwise_v2; // Keep track of pairwise velocities between particles, for safe mode
+//    double* pairwise_qvs; // Keep track of pairwise qdotv between particles, for safe mode
+    double* dcrit6;    // temporary switching radius array for adding/removing particles 
     unsigned int current_C; // Tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
