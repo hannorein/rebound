@@ -149,10 +149,6 @@ void reb_collision_search(struct reb_simulation* const r){
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                         }
-                        if (r->integrator==REB_INTEGRATOR_TRACE){
-                          // if collision, TRACE automatically accepts the step
-                          r->ri_trace.force_accept = 1;
-                        }
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;
                         r->collisions[collisions_N].gb = gborig;
@@ -222,11 +218,6 @@ void reb_collision_search(struct reb_simulation* const r){
                             // Init to 32 if no space has been allocated yet, otherwise double it.
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
-                        }
-
-                        if (r->integrator==REB_INTEGRATOR_TRACE){
-                          // if collision, TRACE automatically accepts the step
-                          r->ri_trace.force_accept = 1;
                         }
 
                         r->collisions[collisions_N].p1 = i;
