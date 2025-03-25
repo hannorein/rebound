@@ -614,7 +614,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
     r->ri_trace.safe_mode = 1;
     r->ri_trace.recalculate_close_encounters_this_timestep = 1; // first pre-ts check needs this
-    r->ri_trace.is_synchronized = 1;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.r_crit_hill = 3.;
     r->ri_trace.peri_crit_eta = 1.0;

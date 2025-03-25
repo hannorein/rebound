@@ -23,8 +23,6 @@ class IntegratorTRACE(ctypes.Structure):
         If set to 2, we use the FULL IAS15 prescription. This acts similarly to the PURE BS prescription, but uses IAS15 instead of BS to integrate the whole system.
     :ivar float peri_crit_eta:
         Pericenter switching condition: ratio of timestep to condition from Pham, Rein and Spiegel 2024.
-    :ivar float peri_crit_distance:
-        Pericenter switching condition: heliocentric distance
 
     Example usage:
 
@@ -39,7 +37,7 @@ class IntegratorTRACE(ctypes.Structure):
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
-                ("_peri_mode", ctypes.c_uint),
+                ("peri_mode", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
                 ("safe_mode", ctypes.c_uint),

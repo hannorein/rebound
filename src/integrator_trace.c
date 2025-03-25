@@ -866,21 +866,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
-    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    if (ri_trace->is_synchronized == 0){
-	// Is this only needed for simulation archive?
-	r->gravity = REB_GRAVITY_TRACE;
-        ri_trace->mode = REB_TRACE_MODE_NONE;
-
-	if (ri_trace->S == NULL){
-	    ri_trace->S = reb_integrator_trace_switch_default;
-	}
-	
-	if (ri_trace->S_peri == NULL){
-	    ri_trace->S_peri = reb_integrator_trace_switch_peri_default;
-	}
-	ri_trace->is_synchronized = 1;
-    }
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){
