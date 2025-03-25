@@ -270,10 +270,8 @@ struct reb_integrator_trace {
 
     double r_crit_hill;
     double peri_crit_eta;
-    double peri_crit_fdot;
-    double peri_crit_distance;
     unsigned int safe_mode;             // Combine post- and pre- timestep checks
-    unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
+    unsigned int recalculate_close_encounters_this_timestep; // Set to 1 if we need to re-do pre-timestep check
 
     // Internal use
     enum {
@@ -283,11 +281,8 @@ struct reb_integrator_trace {
         REB_TRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
     } mode;
     unsigned int is_synchronized;   
-    unsigned int post_ts_check;         // Are we in the post-timestep check? For safe mode   
     unsigned int encounter_N;           // Number of particles currently having an encounter
     unsigned int encounter_N_active;    // Number of active particles currently having an encounter
-    unsigned int recalculate_close_encounters_this_timestep; // Set to 1 if we need to re-do pre-timestep check
-    double last_dt_ias15;
 
     unsigned int N_allocated;
     unsigned int N_allocated_additional_forces;
@@ -860,8 +855,6 @@ DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* cons
 // Built in trace switching functions
 
 DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 

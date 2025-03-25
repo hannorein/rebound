@@ -175,9 +175,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
     { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
     { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
-    { 166, REB_DOUBLE,      "ri_trace.peri_crit_fdot",      offsetof(struct reb_simulation, ri_trace.peri_crit_fdot), 0, 0},
-    { 167, REB_DOUBLE,      "ri_trace.peri_crit_distance",  offsetof(struct reb_simulation, ri_trace.peri_crit_distance), 0, 0},
-    { 168, REB_DOUBLE,      "ri_trace.last_dt_ias15",       offsetof(struct reb_simulation, ri_trace.last_dt_ias15), 0, 0},
 //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},

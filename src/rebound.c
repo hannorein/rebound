@@ -91,9 +91,11 @@ void reb_simulation_step(struct reb_simulation* const r){
         r->pre_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
+        r->ri_trace.recalculate_close_encounters_this_timestep= 1;
     }
-
+    //printf("Pre Part 1 %d\n", r->ri_trace.is_synchronized);
     reb_integrator_part1(r);
+    //printf("Post Part 1 %d\n", r->ri_trace.is_synchronized);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
     // Update and simplify tree. 
@@ -140,13 +142,16 @@ void reb_simulation_step(struct reb_simulation* const r){
 
     // A 'DKD'-like integrator will do the 'KD' part.
     PROFILING_START()
+    //printf("Pre Part 2 %d\n", r->ri_trace.is_synchronized);
     reb_integrator_part2(r);
+    //printf("Post Part 2 %d\n", r->ri_trace.is_synchronized);
     
     if (r->post_timestep_modifications){
         reb_simulation_synchronize(r);
         r->post_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
+        r->ri_trace.recalculate_close_encounters_this_timestep= 1;
     }
     
     if (r->N_var){
@@ -608,17 +613,12 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_trace.mode = REB_TRACE_MODE_NONE;
     r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
     r->ri_trace.safe_mode = 1;
-    r->ri_trace.recalculate_coordinates_this_timestep = 0;
-    r->ri_trace.recalculate_close_encounters_this_timestep = 0;
+    r->ri_trace.recalculate_close_encounters_this_timestep = 1; // first pre-ts check needs this
     r->ri_trace.is_synchronized = 1;
-    r->ri_trace.post_ts_check = 0;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.r_crit_hill = 3.;
     r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.peri_crit_fdot = 17.;
-    r->ri_trace.peri_crit_distance = 0.; // User should set this to appropriate value for system, but not strictly needed
     r->ri_trace.force_accept = 0;
-    r->ri_trace.last_dt_ias15 = 0;
 
     // ********** EOS
     r->ri_eos.n = 2;
@@ -887,7 +887,6 @@ static void* reb_simulation_integrate_raw(void* args){
             usleep(r->usleep);
         }
     }
-
     reb_simulation_synchronize(r);
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 
