@@ -25,10 +25,6 @@ class IntegratorTRACE(ctypes.Structure):
         Pericenter switching condition: ratio of timestep to condition from Pham, Rein and Spiegel 2024.
     :ivar float peri_crit_distance:
         Pericenter switching condition: heliocentric distance
-    :ivar float peri_crit_fdot:
-        Pericenter switching condition: rate of change of true anomaly in units of 1/timestep.
-    :ivar float peri_crit_distance:
-        Pericenter switching condition: heliocentric distance
 
     Example usage:
 
@@ -36,8 +32,6 @@ class IntegratorTRACE(ctypes.Structure):
     >>> sim.integrator = "trace"
     >>> sim.ri_trace.r_crit_hill = 4
     >>> sim.ri_trace.peri_crit_eta = 1
-    >>> sim.ri_trace.peri_crit_fdot = 17
-    >>> sim.ri_trace.peri_crit_distance = 1
 
     """
     def __repr__(self):
@@ -52,7 +46,6 @@ class IntegratorTRACE(ctypes.Structure):
                 ("recalculate_close_encounters_this_timestep", ctypes.c_uint),
                 ("_mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
-                ("_encounter_N_active", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_additionalforces", ctypes.c_uint),
