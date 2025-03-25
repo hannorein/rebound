@@ -529,7 +529,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_trace->particles_backup          = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
         ri_trace->current_Ks                = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
-        ri_trace->temp_Ks                   = realloc(ri_trace->temp_Ks,sizeof(int)*N*N);
         ri_trace->encounter_map             = realloc(ri_trace->encounter_map,sizeof(int)*N);
         ri_trace->N_allocated = N;
     }
@@ -854,12 +853,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         }
     }
     reb_integrator_trace_dh_to_inertial(r);
-/*
-    ri_trace->is_synchronized = 0;
-    if (ri_trace->safe_mode){
-        reb_integrator_trace_synchronize(r);
-    }
-*/
+    
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 
@@ -875,6 +869,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_eta = 1.0;
     r->ri_trace.recalculate_close_encounters_this_timestep = 0;
+    r->ri_trace.force_accept = 0;
 
     // Internal arrays (only used within one timestep)
     free(r->ri_trace.particles_backup);
@@ -890,8 +885,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.current_C = 0;
     free(r->ri_trace.current_Ks);
     r->ri_trace.current_Ks = NULL;
-    free(r->ri_trace.temp_Ks);
-    r->ri_trace.temp_Ks = NULL;
 
     r->ri_trace.S = NULL;
     r->ri_trace.S_peri = NULL;

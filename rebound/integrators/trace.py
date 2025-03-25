@@ -55,7 +55,6 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),
-                ("_temp_Ks", ctypes.POINTER(ctypes.c_int)),
                 ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
                 ]

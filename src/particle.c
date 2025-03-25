@@ -107,18 +107,14 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 	    const int old_N = r->N-1;
             if (ri_trace->N_allocated < r->N){
 	        ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
-	        ri_trace->temp_Ks       = realloc(ri_trace->temp_Ks, sizeof(int)*r->N*r->N);
 		ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(int)*r->N);
 		ri_trace->N_allocated   = r->N;
 	    }
 
-	    // Make a temporary copy...
-	    memcpy(ri_trace->temp_Ks, ri_trace->current_Ks, r->N*r->N*sizeof(int));
-
 	    // First reshuffle existing Ks
-	    for (int i = 0; i < old_N; i++){
-	        for (int j = 0; j < old_N; j++){ // I think it's better to do this...to populate with zeros?
-		    ri_trace->current_Ks[i*old_N+j+i] = ri_trace->temp_Ks[i*old_N+j];
+	    for (int i = old_N-1; i >= 0; i--){
+	        for (int j = old_N-1; j >= 0; j--){ 
+		    ri_trace->current_Ks[i*old_N+j+i] = ri_trace->current_Ks[i*old_N+j];
 		}
 	    }
 	    
@@ -373,11 +369,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         reb_integrator_bs_reset(r);
         if (r->ri_trace.mode==1 || r->ri_trace.mode==3){
-	    
-	    memcpy(ri_trace->temp_Ks, ri_trace->current_Ks, r->N*r->N*sizeof(int));
-            
 	    // Only removed mid-timestep if collision - BS Step!
-            // Need to fix current_Ks still, and double check logic
             int after_to_be_removed_particle = 0;
             int encounter_index = -1;
             for (int i=0;i<ri_trace->encounter_N;i++){
@@ -391,23 +383,15 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             }
 
             // reshuffle current_Ks
-	    unsigned int add_index = 0;
-	    int crossed_i = 0;
-            for (unsigned int i = 0; i<r->N-1; i++){
-	        if (i >= index && !crossed_i){
-		    add_index += r->N;
-		    crossed_i = 1;
-	        }
-
-	        int crossed_j = 0;
-                for (unsigned int j = 0; j<r->N-1; j++){
-		    if (j >= index && !crossed_j){
-		        add_index++;
-			crossed_j = 1;
-		    }
-                    ri_trace->current_Ks[i*(r->N-1)+j] = ri_trace->temp_Ks[i*(r->N-1)+j+add_index];
-                }
-            }
+	    unsigned int counter = 0;
+	    const int new_N = r->N-1;
+	    for (unsigned int i = 0; i < new_N; i++){
+		if (i == index) counter += r->N;
+	        for (unsigned int j = 0; j < new_N; j++){
+		   if (j == index) counter++;
+		ri_trace->current_Ks[i*new_N+j] = ri_trace->current_Ks[i*new_N+j+counter];
+		}
+	    }
             
 	    if (encounter_index<ri_trace->encounter_N_active){
                 ri_trace->encounter_N_active--;
