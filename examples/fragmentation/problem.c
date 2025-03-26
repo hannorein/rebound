@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "rebound.h"
 
-
+char TITLE[100] = "mercurius_simarchive_";
 
 double min_frag_mass = 1.4e-8;
 int tot_no_frags = 0;  //if restarting a simulation this needs to be changed to the last number of frags in the simulation, otherwise new fragments added will rewrite exisiting frags
@@ -157,9 +158,9 @@ void add_fragments(struct reb_simulation* const r, struct reb_collision c, struc
         Slr1.vz = com.vz + fragment_velocity*unit_viz;
 
         Slr1.r = get_radii(Slr1.m, rho);
-        sprintf(hash,"FRAG%d", tot_no_frags+1);
+     //   sprintf(hash,"FRAG%d", tot_no_frags+1);
         Slr1.hash = reb_hash(hash);
-        printf("%s hash, mass:      %u %e\n", hash, Slr1.hash, Slr1.m);
+     //   printf("%s hash, mass:      %u %e\n", hash, Slr1.hash, Slr1.m);
         mxsum[0] += Slr1.m*Slr1.x;
         mxsum[1] += Slr1.m*Slr1.y;    
         mxsum[2] += Slr1.m*Slr1.z;
@@ -187,9 +188,9 @@ void add_fragments(struct reb_simulation* const r, struct reb_collision c, struc
 
         fragment.r = get_radii(frag_mass, rho);
         fragment.last_collision = r->t;
-        sprintf(hash, "FRAG%d", i);
+       // sprintf(hash, "FRAG%d", i);
         fragment.hash = reb_hash(hash);
-        printf("%s hash, mass:      %u %e\n", hash, fragment.hash, fragment.m);
+       // printf("%s hash, mass:      %u %e\n", hash, fragment.hash, fragment.m);
         mxsum[0] +=fragment.m*fragment.x;
         mxsum[1] += fragment.m*fragment.y;    
         mxsum[2] += fragment.m*fragment.z;
@@ -220,7 +221,7 @@ void add_fragments(struct reb_simulation* const r, struct reb_collision c, struc
 
     for (int i=(tot_no_frags-new_bodies)+1; i<(tot_no_frags+1); i++){ 
         char frag[10];
-        sprintf(frag, "FRAG%d", i);
+        // sprintf(frag, "FRAG%d", i);
         double mass_fraction = reb_simulation_particle_by_hash(r, reb_hash(frag))->m/initial_mass;
         reb_simulation_particle_by_hash(r, reb_hash(frag))->x += xoff[0]*mass_fraction;
         reb_simulation_particle_by_hash(r, reb_hash(frag))->y += xoff[1]*mass_fraction;
@@ -294,7 +295,7 @@ int hit_and_run(struct reb_simulation* const r, struct reb_collision c, struct c
         double v_crit = params->V_esc*(c1*zeta*fac + c2*zeta +c3*fac + c4);
 
         if (params->Vi <= v_crit){             //if impact velocity is low, the hit-and-run results in a merger.
-            printf("GRAZE AND MERGE\n");  
+          //  printf("GRAZE AND MERGE\n");  
             params->collision_type = 1;          
             merge(r,c,params);
             return swap;
@@ -303,14 +304,14 @@ int hit_and_run(struct reb_simulation* const r, struct reb_collision c, struct c
         else{ //vi>v_crit
             if (params->Mlr<targ_m){ //Target is being eroded, projectile should also fragment
                 if (targ_m+imp_m <= 2*min_frag_mass){ //not enough mass to produce new fragments
-                    printf("ELASTIC BOUNCE\n");
+                    //printf("ELASTIC BOUNCE\n");
                     params->collision_type=0;
                     reb_collision_resolve_hardsphere(r,c);
                     swap = 0;
                                                        }
                 else{
                     params->Mlr = MAX(params->Mlr, min_frag_mass);
-                    printf("GRAZING PARTIAL EROSION\n");
+                    //printf("GRAZING PARTIAL EROSION\n");
                     params->collision_type = 3;
                     add_fragments(r,c,params);
                     }
@@ -325,14 +326,14 @@ int hit_and_run(struct reb_simulation* const r, struct reb_collision c, struct c
             double new_projectile_mass = projectile->m - projectile_mass_accreted;
             Mlr_dag = MAX(Mlr_dag, min_frag_mass);
             if (new_projectile_mass-Mlr_dag < min_frag_mass){
-                    printf("ELASTIC BOUNCE\n");
+                    //printf("ELASTIC BOUNCE\n");
                     params->collision_type=0;
                     reb_collision_resolve_hardsphere(r,c);
                     swap = 0;
                                                             }
                 else{
                     params->Mslr = Mlr_dag;
-                    printf("HIT AND RUN\n");
+                    //printf("HIT AND RUN\n");
                     params->collision_type = 2;
                     add_fragments(r,c,params);
                     }
@@ -343,6 +344,7 @@ int hit_and_run(struct reb_simulation* const r, struct reb_collision c, struct c
 
 void print_collision_array(struct reb_simulation* const r, struct reb_collision c, struct collision_params *params){  
 //0=elastic bounce, 1=merger, 2=partial accretion, 3=partial erosion, 4=supercat
+    /*
     FILE* of = fopen("collision_report.txt","a+");
     fprintf(of, "%e\t", r->t);     
     fprintf(of, "%d\t", params->collision_type);
@@ -358,6 +360,7 @@ void print_collision_array(struct reb_simulation* const r, struct reb_collision 
     }
     fprintf(of, "\n");   
     fclose(of);                        // close file
+    */
 
 }
 //*** PRODUCING AN EJECTION FILE ***
@@ -368,20 +371,20 @@ void print_collision_array(struct reb_simulation* const r, struct reb_collision 
 
 void heartbeat(struct reb_simulation* sim){
     if (reb_simulation_output_check(sim, 100)){   //heartbeat is at every 100 years
-        reb_simulation_output_timing(sim, 0);
-        printf("Walltime(s) = %f \n", sim->walltime);
+        //reb_simulation_output_timing(sim, 0);
+        //printf("Walltime(s) = %f \n", sim->walltime);
         for (int i=0;i<sim->N;i++){
             struct reb_orbit o =  reb_orbit_from_particle(sim->G, sim->particles[i], sim->particles[0]);
             if (o.a > 100.){
                 int keepSorted = 1;
                 int removed_hash = sim->particles[i].hash;
                 reb_simulation_remove_particle_by_hash(sim, removed_hash, keepSorted);
-                printf("PARTICLE REMOVED: semi-major axis grew bigger than 100 au\n");
-                printf("particle hash:     %u\n", removed_hash);
-                FILE* of_ejec = fopen("ejections.txt","a+");
-                fprintf(of_ejec, "%e\t", sim->t);
-                fprintf(of_ejec, "%u\n", removed_hash);
-                fclose(of_ejec);
+                //printf("PARTICLE REMOVED: semi-major axis grew bigger than 100 au\n");
+                //printf("particle hash:     %u\n", removed_hash);
+                //FILE* of_ejec = fopen("ejections.txt","a+");
+                //fprintf(of_ejec, "%e\t", sim->t);
+                //fprintf(of_ejec, "%u\n", removed_hash);
+                //fclose(of_ejec);
         }
         }
         }
@@ -447,11 +450,11 @@ int reb_collision_resolve_fragment(struct reb_simulation* const r, struct reb_co
 
     double imp_m = particles[j].m;
     double targ_m = particles[i].m;
-
+/*
     printf("TIME OF COLLISION: %e\n", r->t);
     printf("Target hash, mass = %u %e\n", particles[i].hash, targ_m);
     printf("Projectile hash, mass = %u %e\n", particles[j].hash, imp_m);
-
+*/
     double M_tot = imp_m + targ_m;
     double G = r->G;
     double Mlr,dx,dy,dz,Vix,Viy,Viz;
@@ -478,7 +481,7 @@ int reb_collision_resolve_fragment(struct reb_simulation* const r, struct reb_co
     Vi = sqrt(v2imp);  //magnitude of impact velocity vector
     b = sqrt(h2/v2imp);  //impact parameter, b=R_tot*sin(theta)
     if (b != b){
-        printf("NAN b \n");
+        //printf("NAN b \n");
         exit(0);}
     //Stewart & Leinhardt 2012 parameters
     double mu = (targ_m*imp_m)/M_tot;  //Chambers Eq. 2, reduced mass
@@ -537,7 +540,7 @@ int reb_collision_resolve_fragment(struct reb_simulation* const r, struct reb_co
     params->xrel = xrel;
     params->Mlr = Mlr;
 
-
+/*
     printf("Mp/Mt:    %0.4f\n", imp_m/targ_m);
     printf("Mlr/Mt:    %0.4f\n", Mlr/targ_m);
     printf("Mlr/Mtot:    %0.4f\n", Mlr/M_tot);
@@ -545,29 +548,29 @@ int reb_collision_resolve_fragment(struct reb_simulation* const r, struct reb_co
     printf("Vimp/Vesc:     %0.4f\n",  Vi/V_esc);
     printf("Q/ Qstar:     %0.4f\n", Q/Q_star);
     printf("COLLISION TYPE: ");
-
+*/
     if (Vi <= V_esc){
         params->collision_type = 1;
-        printf("SIMPLY MERGED\n");
+        //printf("SIMPLY MERGED\n");
         merge(r,c, params);
                     }
     else{  //Vi > V_esc
         if (b<targ_r){ //non-grazing regime
             if (M_tot - params->Mlr < min_frag_mass){
                 params->collision_type = 1;
-                printf("EFFECTIVELY MERGED\n");
+                //printf("EFFECTIVELY MERGED\n");
                 merge(r,c,params);
                                                      }
             else{ // M_tot - params->Mlr >= min_frag_mass; fragments will be produced unless it is a graze and merge or elastic bounce 
                 if (params->Mlr < targ_m){
                     if (params->Mlr <= 0.1*targ_m){
-                        printf("SUPER-CATASTROPHIC\n");
+                        //printf("SUPER-CATASTROPHIC\n");
                         params->collision_type = 4;
                         params->Mlr = MAX(Mlr, min_frag_mass);
                         add_fragments(r,c,params);
                                                    }
                     else{
-                        printf("PARTIAL EROSION\n");
+                        //printf("PARTIAL EROSION\n");
                         params->collision_type = 3;
                         params->Mlr = MAX(Mlr, min_frag_mass);
                         add_fragments(r,c,params);
@@ -575,7 +578,7 @@ int reb_collision_resolve_fragment(struct reb_simulation* const r, struct reb_co
                                           }
                                     
                 else{  //(params->Mlr >= targ_m)
-                            printf("PARTIAL ACCRETION\n");
+                            //printf("PARTIAL ACCRETION\n");
                             params->collision_type = 2;
                             add_fragments(r,c,params);
                     }
@@ -601,16 +604,20 @@ int main(int argc, char* argv[]){
     r->G = 39.476926421373;
     r->dt = 6./365.;
     //r->exit_max_distance = 100.; 
+
+    // The random seed is passed as a command line argument
+    if (argc == 2){
+      r->rand_seed = atoi(argv[1]);
+      strcat(TITLE, argv[1]);
+    }
  
-    r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.safe_mode = 0;
-    r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none;
+    r->integrator = REB_INTEGRATOR_MERCURIUS;
     r->heartbeat = heartbeat;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_fragment;
     r->rand_seed = 1;
 
-        //Assigning mass and number of planetary embryos and planetesimals
+    //Assigning mass and number of planetary embryos and planetesimals
     double rho = 5.05e6; //3 g/cm^3
     int n_emb = 14; //number of planetary embryos
     double m_emb = 2.8e-7; //mass of each embryo
@@ -640,7 +647,7 @@ int main(int argc, char* argv[]){
     star.r = 0.1; 
     star.hash = 0; 
     reb_simulation_add(r, star);
-    FILE* of_dbcti = fopen("dbct_input.txt","a+");
+   // FILE* of_dbcti = fopen("dbct_input.txt","a+");
     
     // Add planetary embryos
     
@@ -660,10 +667,10 @@ int main(int argc, char* argv[]){
         
         reb_simulation_add(r, emb); 
 
-        fprintf(of_dbcti, "%u\t", emb.hash);
-        fprintf(of_dbcti, "%e\t", emb.m);
-        fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
-        fprintf(of_dbcti, "\n"); 
+     //   fprintf(of_dbcti, "%u\t", emb.hash);
+     //   fprintf(of_dbcti, "%e\t", emb.m);
+     //   fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
+     //   fprintf(of_dbcti, "\n"); 
     }
     //add planetesimals
     for (int i=0; i<n_pl; i++){
@@ -682,13 +689,13 @@ int main(int argc, char* argv[]){
         
         reb_simulation_add(r, pl); 
 
-        fprintf(of_dbcti, "%u\t", pl.hash);
-        fprintf(of_dbcti, "%e\t", pl.m);
-        fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
-        fprintf(of_dbcti, "\n"); 
+     //   fprintf(of_dbcti, "%u\t", pl.hash);
+     //   fprintf(of_dbcti, "%e\t", pl.m);
+     //   fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
+     //   fprintf(of_dbcti, "\n"); 
     }
 
-    fclose(of_dbcti);
+    //fclose(of_dbcti);
 
     
     double m,a,e,inc,Omega,omega,f; //Omega=longitude of ascending node, omega= argument of pericenter in RADIANS
@@ -706,16 +713,9 @@ int main(int argc, char* argv[]){
 
 
     reb_simulation_move_to_com(r);  // This makes sure the planetary systems stays within the computational domain and doesn't drift.
-    double run_time = 300.e6;
-    double simarchive_interval = 1e5;
-    int steps = (int)(run_time / simarchive_interval);
-    for (int i = 0; i < steps; i++){
-        reb_simulation_integrate(r, r->t + simarchive_interval);    
-        reb_simulation_synchronize(r);
-        reb_simulation_save_to_file(r,"323_trace_no_peri.bin");
-    }
+    double run_time = 3e7;
+    reb_simulation_save_to_file_interval(r,TITLE,1.e5);
     reb_simulation_integrate(r, run_time);
-
 }
 
 //void heartbeat(struct reb_simulation* r){
