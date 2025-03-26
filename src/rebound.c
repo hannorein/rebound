@@ -93,9 +93,7 @@ void reb_simulation_step(struct reb_simulation* const r){
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
         r->ri_trace.recalculate_close_encounters_this_timestep= 1;
     }
-    //printf("Pre Part 1 %d\n", r->ri_trace.is_synchronized);
     reb_integrator_part1(r);
-    //printf("Post Part 1 %d\n", r->ri_trace.is_synchronized);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
     // Update and simplify tree. 
@@ -142,9 +140,7 @@ void reb_simulation_step(struct reb_simulation* const r){
 
     // A 'DKD'-like integrator will do the 'KD' part.
     PROFILING_START()
-    //printf("Pre Part 2 %d\n", r->ri_trace.is_synchronized);
     reb_integrator_part2(r);
-    //printf("Post Part 2 %d\n", r->ri_trace.is_synchronized);
     
     if (r->post_timestep_modifications){
         reb_simulation_synchronize(r);
