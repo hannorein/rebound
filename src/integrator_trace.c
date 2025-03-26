@@ -43,7 +43,6 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double h2 = r->dt/2.;
-    const int N = r->N;
 
     const double dxi  = r->particles[i].x;
     const double dyi  = r->particles[i].y;
@@ -72,7 +71,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     else if (r->particles[i].m != 0){
 	const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
 	const double mr = r->particles[i].m/(3.*m0);
-	dcriti6 = di2*di2*di2*mr*mr;
+        dcriti6 = di2*di2*di2*mr*mr;
     }
 
     if (r->particles[j].m != 0){
@@ -90,8 +89,8 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     const double dvy  = r->particles[i].vy - r->particles[j].vy;
     const double dvz  = r->particles[i].vz - r->particles[j].vz;
     const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
-    const double qv = dx*dvx + dy*dvy + dz*dvz;
     
+    const double qv = dx*dvx + dy*dvy + dz*dvz; 
     int d;
 
     if (qv == 0.0){ // Small
@@ -114,7 +113,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     else{
 	dmin2 = rp + 2*d*qv*h2 + v2*h2*h2;
     }
-    
+
     return dmin2*dmin2*dmin2 < dcritmax6;
 }
 
@@ -396,7 +395,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     
     // Only Partial BS uses this step 
     if (ri_trace->peri_mode == REB_TRACE_PERI_PARTIAL_BS || !ri_trace->current_C){
-
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
@@ -451,8 +449,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             r->particles[0].vx = star.vx; // restore every timestep for collisions
             r->particles[0].vy = star.vy;
             r->particles[0].vz = star.vz;
-	
-            reb_collision_search(r);
+            
+	    reb_collision_search(r);
 	    if (r->N_allocated_collisions) ri_trace->force_accept = 1;
 
             if (nbody_ode->length != ri_trace->encounter_N*3*2){
@@ -483,7 +481,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             }
         }
         
-        // if only test particles encountered massive bodies, reset the
+	// if only test particles encountered massive bodies, reset the
         // massive body coordinates to their post Kepler step state
         if(ri_trace->tponly_encounter){
             for (unsigned int i=1; i < ri_trace->encounter_N_active; i++){
@@ -538,9 +536,9 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
 	ri_trace->recalculate_close_encounters_this_timestep = 1;
     }
 
-    // Calculate collisions only with DIRECT method
-    if (r->collision != REB_COLLISION_NONE && r->collision != REB_COLLISION_DIRECT){
-        reb_simulation_warning(r,"TRACE only works with a direct collision search.");
+    // Calculate collisions only with DIRECT or LINE method
+    if (r->collision != REB_COLLISION_NONE && (r->collision != REB_COLLISION_DIRECT && r->collision != REB_COLLISION_LINE)){
+        reb_simulation_warning(r,"TRACE only works with a direct or line collision search.");
     }
 
     // Calculate gravity with special function
@@ -835,14 +833,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     // Attempt one step. 
     reb_integrator_trace_step(r);
 
-    // If particle number has changed, automatically accept
-    /*
-    if (r->N != N){
-        ri_trace->force_accept = 1;
-	ri_trace->recalculate_close_encounters_this_timestep = 1;
-    }
-    */
-
     // We alaways accept the step if a collision occured as it is impossible to undo the collision.
     if (!ri_trace->force_accept){
         // We check again for close encounters to ensure time reversibility. 
@@ -864,7 +854,6 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
