@@ -77,7 +77,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     if (r->particles[j].m != 0){
         const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
         const double mr = r->particles[j].m/(3.*m0);
-	dcritj6 = dj2*dj2*dj2*mr*mr;
+        dcritj6 = dj2*dj2*dj2*mr*mr;
     }
 
     double r_crit_hill2 = ri_trace->r_crit_hill*ri_trace->r_crit_hill;
