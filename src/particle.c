@@ -138,8 +138,6 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 	    
         }
     }
-    
-
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
@@ -395,7 +393,6 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
 		ri_trace->current_Ks[i*new_N+j] = ri_trace->current_Ks[i*new_N+j+counter];
                 }
             }
-            
             if (encounter_index<ri_trace->encounter_N_active){
                 ri_trace->encounter_N_active--;
             }

@@ -480,7 +480,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 }
             }
         }
- 
+  
         // if only test particles encountered massive bodies, reset the
         // massive body coordinates to their post Kepler step state
         if(ri_trace->tponly_encounter){
@@ -818,7 +818,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
 void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
-
+    
     reb_integrator_trace_inertial_to_dh(r);
     
     // Create copy of all particle to allow for the step to be rejected.
