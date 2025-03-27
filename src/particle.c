@@ -393,10 +393,10 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
 	        for (unsigned int j = 0; j < new_N; j++){
 		   if (j == index) counter++;
 		ri_trace->current_Ks[i*new_N+j] = ri_trace->current_Ks[i*new_N+j+counter];
-		}
-	    }
+                }
+            }
             
-	    if (encounter_index<ri_trace->encounter_N_active){
+            if (encounter_index<ri_trace->encounter_N_active){
                 ri_trace->encounter_N_active--;
             }
             ri_trace->encounter_N--;

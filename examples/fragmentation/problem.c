@@ -615,7 +615,6 @@ int main(int argc, char* argv[]){
     r->heartbeat = heartbeat;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_fragment;
-    r->rand_seed = 1;
 
     //Assigning mass and number of planetary embryos and planetesimals
     double rho = 5.05e6; //3 g/cm^3

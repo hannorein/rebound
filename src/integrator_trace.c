@@ -43,7 +43,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double h2 = r->dt/2.;
-
+    
     const double dxi  = r->particles[i].x;
     const double dyi  = r->particles[i].y;
     const double dzi  = r->particles[i].z;
@@ -69,14 +69,14 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     }
 
     else if (r->particles[i].m != 0){
-	const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
-	const double mr = r->particles[i].m/(3.*m0);
+        const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
+        const double mr = r->particles[i].m/(3.*m0);
         dcriti6 = di2*di2*di2*mr*mr;
     }
 
     if (r->particles[j].m != 0){
-	const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
-	const double mr = r->particles[j].m/(3.*m0);
+        const double dj2 = dxj*dxj + dyj*dyj + dzj*dzj;
+        const double mr = r->particles[j].m/(3.*m0);
 	dcritj6 = dj2*dj2*dj2*mr*mr;
     }
 
@@ -90,7 +90,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     const double dvz  = r->particles[i].vz - r->particles[j].vz;
     const double v2 = dvx*dvx + dvy*dvy + dvz*dvz;
     
-    const double qv = dx*dvx + dy*dvy + dz*dvz; 
+    const double qv = dx*dvx + dy*dvy + dz*dvz;
     int d;
 
     if (qv == 0.0){ // Small
@@ -525,7 +525,7 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     if (ri_trace->N_allocated<N){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
-	ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
+        ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
         ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
         ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
