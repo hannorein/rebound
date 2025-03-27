@@ -84,7 +84,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
 
     if (rp*rp*rp < dcritmax6) return 1;
-
+    
     const double dvx  = r->particles[i].vx - r->particles[j].vx;
     const double dvy  = r->particles[i].vy - r->particles[j].vy;
     const double dvz  = r->particles[i].vz - r->particles[j].vz;
@@ -480,8 +480,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 }
             }
         }
-        
-	// if only test particles encountered massive bodies, reset the
+ 
+        // if only test particles encountered massive bodies, reset the
         // massive body coordinates to their post Kepler step state
         if(ri_trace->tponly_encounter){
             for (unsigned int i=1; i < ri_trace->encounter_N_active; i++){
@@ -525,10 +525,10 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
     if (ri_trace->N_allocated<N){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
-        ri_trace->particles_backup          = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
+	ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
-        ri_trace->current_Ks                = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
-        ri_trace->encounter_map             = realloc(ri_trace->encounter_map,sizeof(int)*N);
+        ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
+        ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
         ri_trace->N_allocated = N;
     }
 
@@ -865,6 +865,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_eta = 1.0;
+    r->ri_trace.safe_mode= 1;
     r->ri_trace.recalculate_close_encounters_this_timestep = 0;
     r->ri_trace.force_accept = 0;
 

@@ -51,7 +51,8 @@ def collision_add_particle(sim_pointer, collision):
     sim = sim_pointer.contents
     sim.add(m=1e-10, a=1.) # meaningless
     sim.add(m=1e-10, a=2.) # meaningless
-    return 2    
+    sim.add(m=1e-10, a=3.) # meaningless
+    return 3
 
 class TestIntegratorTraceHarmonic(unittest.TestCase):
    
@@ -251,20 +252,20 @@ class TestIntegratorTrace(unittest.TestCase):
         self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
     
-    #def test_collision_add_particles(self):
-    #    sim = rebound.Simulation()
-    #    sim.add(m=1.)
-    #    sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
-    #    sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
-    #    N0 = sim.N
+    def test_collision_add_particles(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
+        sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
+        N0 = sim.N
 
-    #    sim.integrator = "trace"
-    #    sim.dt = 0.01
-    #    sim.collision = "direct"
-    #    sim.collision_resolve = collision_add_particle
+        sim.integrator = "trace"
+        sim.dt = 0.01
+        sim.collision = "direct"
+        sim.collision_resolve = collision_add_particle
 
-    #    sim.integrate(1)
-    #    self.assertEqual(N0+1,sim.N)
+        sim.integrate(1)
+        self.assertEqual(N0+1,sim.N)
 
     def test_planetesimal_collision(self):
         sim = rebound.Simulation()
