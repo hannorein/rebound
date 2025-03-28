@@ -559,6 +559,15 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
 
     if (!ri_trace->safe_mode && !ri_trace->recalculate_close_encounters_this_timestep){
        // Safe mode is off, and we don't need to recalculate. Nothing changes, and we don't need to do anything here
+       if (r->steps_done > 14000 && r->steps_done < 14010){
+	    printf("SAFE MODE Pre-TS: Steps: %d ", r->steps_done);
+	    for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
+		for (int j = i + 1; j < N; j++){
+		    printf("i:%d j:%d -> K:%d ", i, j, ri_trace->current_Ks[i*N+j]);
+		}
+	    }
+	    printf("\n");
+       }
        return;
     }
    
@@ -628,6 +637,15 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
                 }
             }
         }
+    }
+    if (r->steps_done > 14000 && r->steps_done < 14010){
+	    printf("Pre-TS: Steps: %d ", r->steps_done);
+	    for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
+		for (int j = i + 1; j < N; j++){
+		    printf("i:%d j:%d -> K:%d ", i, j, ri_trace->current_Ks[i*N+j]);
+		}
+	    }
+	    printf("\n");
     }
 }
 
@@ -705,6 +723,16 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // If not in safe mode and everything has gone right, no need to recalculate close encounters
     if (!ri_trace->safe_mode){
         r->ri_trace.recalculate_close_encounters_this_timestep = 0;
+    }
+    
+    if (r->steps_done > 14000 && r->steps_done < 14010){
+	    printf("Post-TS: Steps: %d ", r->steps_done);
+	    for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
+		for (int j = i + 1; j < N; j++){
+		    printf("i:%d j:%d -> K:%d ", i, j, ri_trace->current_Ks[i*N+j]);
+		}
+	    }
+	    printf("\n");
     }
 
     return new_close_encounter;
@@ -848,6 +876,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
         }
     }
     else{
+	// If force accept, collision has occured. Recalculate close encounters
         r->ri_trace.recalculate_close_encounters_this_timestep = 1;
     }
     reb_integrator_trace_dh_to_inertial(r);
