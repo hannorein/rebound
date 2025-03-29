@@ -158,7 +158,7 @@ void add_fragments(struct reb_simulation* const r, struct reb_collision c, struc
         Slr1.vz = com.vz + fragment_velocity*unit_viz;
 
         Slr1.r = get_radii(Slr1.m, rho);
-     //   sprintf(hash,"FRAG%d", tot_no_frags+1);
+        sprintf(hash,"FRAG%d", tot_no_frags+1);
         Slr1.hash = reb_hash(hash);
         printf("%s hash, mass:      %u %e\n", hash, Slr1.hash, Slr1.m);
         mxsum[0] += Slr1.m*Slr1.x;
@@ -188,7 +188,7 @@ void add_fragments(struct reb_simulation* const r, struct reb_collision c, struc
 
         fragment.r = get_radii(frag_mass, rho);
         fragment.last_collision = r->t;
-       // sprintf(hash, "FRAG%d", i);
+        sprintf(hash, "FRAG%d", i);
         fragment.hash = reb_hash(hash);
         printf("%s hash, mass:      %u %e\n", hash, fragment.hash, fragment.m);
         mxsum[0] +=fragment.m*fragment.x;
@@ -221,7 +221,7 @@ void add_fragments(struct reb_simulation* const r, struct reb_collision c, struc
 
     for (int i=(tot_no_frags-new_bodies)+1; i<(tot_no_frags+1); i++){ 
         char frag[10];
-        // sprintf(frag, "FRAG%d", i);
+        sprintf(frag, "FRAG%d", i);
         double mass_fraction = reb_simulation_particle_by_hash(r, reb_hash(frag))->m/initial_mass;
         reb_simulation_particle_by_hash(r, reb_hash(frag))->x += xoff[0]*mass_fraction;
         reb_simulation_particle_by_hash(r, reb_hash(frag))->y += xoff[1]*mass_fraction;
@@ -344,7 +344,7 @@ int hit_and_run(struct reb_simulation* const r, struct reb_collision c, struct c
 
 void print_collision_array(struct reb_simulation* const r, struct reb_collision c, struct collision_params *params){  
 //0=elastic bounce, 1=merger, 2=partial accretion, 3=partial erosion, 4=supercat
-    /*
+    
     FILE* of = fopen("collision_report.txt","a+");
     fprintf(of, "%e\t", r->t);     
     fprintf(of, "%d\t", params->collision_type);
@@ -360,7 +360,7 @@ void print_collision_array(struct reb_simulation* const r, struct reb_collision 
     }
     fprintf(of, "\n");   
     fclose(of);                        // close file
-    */
+    
 
 }
 //*** PRODUCING AN EJECTION FILE ***
@@ -381,10 +381,10 @@ void heartbeat(struct reb_simulation* sim){
                 reb_simulation_remove_particle_by_hash(sim, removed_hash, keepSorted);
                 printf("PARTICLE REMOVED: semi-major axis grew bigger than 100 au\n");
                 printf("particle hash:     %u\n", removed_hash);
-                //FILE* of_ejec = fopen("ejections.txt","a+");
-                //fprintf(of_ejec, "%e\t", sim->t);
-                //fprintf(of_ejec, "%u\n", removed_hash);
-                //fclose(of_ejec);
+                FILE* of_ejec = fopen("ejections.txt","a+");
+                fprintf(of_ejec, "%e\t", sim->t);
+                fprintf(of_ejec, "%u\n", removed_hash);
+                fclose(of_ejec);
         }
         }
         }
@@ -648,7 +648,7 @@ int main(int argc, char* argv[]){
     star.r = 0.1; 
     star.hash = 0; 
     reb_simulation_add(r, star);
-   // FILE* of_dbcti = fopen("dbct_input.txt","a+");
+    FILE* of_dbcti = fopen("dbct_input.txt","a+");
     
     // Add planetary embryos
     
@@ -668,10 +668,10 @@ int main(int argc, char* argv[]){
         
         reb_simulation_add(r, emb); 
 
-     //   fprintf(of_dbcti, "%u\t", emb.hash);
-     //   fprintf(of_dbcti, "%e\t", emb.m);
-     //   fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
-     //   fprintf(of_dbcti, "\n"); 
+        fprintf(of_dbcti, "%u\t", emb.hash);
+        fprintf(of_dbcti, "%e\t", emb.m);
+        fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
+        fprintf(of_dbcti, "\n"); 
     }
     //add planetesimals
     for (int i=0; i<n_pl; i++){
@@ -690,13 +690,13 @@ int main(int argc, char* argv[]){
         
         reb_simulation_add(r, pl); 
 
-     //   fprintf(of_dbcti, "%u\t", pl.hash);
-     //   fprintf(of_dbcti, "%e\t", pl.m);
-     //   fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
-     //   fprintf(of_dbcti, "\n"); 
+        fprintf(of_dbcti, "%u\t", pl.hash);
+        fprintf(of_dbcti, "%e\t", pl.m);
+        fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
+        fprintf(of_dbcti, "\n"); 
     }
 
-    //fclose(of_dbcti);
+    fclose(of_dbcti);
 
     
     double m,a,e,inc,Omega,omega,f; //Omega=longitude of ascending node, omega= argument of pericenter in RADIANS
