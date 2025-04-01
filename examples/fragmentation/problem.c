@@ -610,14 +610,21 @@ int main(int argc, char* argv[]){
       r->rand_seed = atoi(argv[1]);
       strcat(TITLE, argv[1]);
     }
- 
+
+    // MERCURIUS settings
+    // ---------------------------------------------------------
+    //r->integrator = REB_INTEGRATOR_MERCURIUS;
+    // ---------------------------------------------------------
+
+    // TRACE settings
+    // ---------------------------------------------------------
     r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.safe_mode = 0;
-    r->ri_trace.r_crit_hill = 10;
+    r->ri_trace.r_crit_hill = 10.;
+    r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none; // Can we try some with this, and some with default pericenter switching
+    // --------------------------------------------------------
     r->heartbeat = heartbeat;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_fragment;
-
     //Assigning mass and number of planetary embryos and planetesimals
     double rho = 5.05e6; //3 g/cm^3
     int n_emb = 14; //number of planetary embryos
