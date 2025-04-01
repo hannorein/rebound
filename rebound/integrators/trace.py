@@ -33,15 +33,13 @@ class IntegratorTRACE(ctypes.Structure):
 
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, safe_mode={3}, r_crit_hill={4}, peri_mode=={5}, peri_crit_eta=={6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.safe_mode, self.r_crit_hill, self.peri_mode, self.peri_crit_eta)
+        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_mode, self.peri_crit_eta)
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
                 ("peri_mode", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
-                ("safe_mode", ctypes.c_uint),
-                ("recalculate_close_encounters_this_timestep", ctypes.c_uint),
                 ("_mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),

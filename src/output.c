@@ -176,12 +176,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
     // TRACE Pericenter conditions used to have ids 166 - 168. Do not reuse.
     { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
-    // We need to store all these for safe mode now
-    { 170, REB_UINT,        "ri_trace.safe_mode",           offsetof(struct reb_simulation, ri_trace.safe_mode), 0, 0},
-    { 171, REB_UINT,        "ri_trace.recalculate_close_encounters_this_timestep",offsetof(struct reb_simulation, ri_trace.recalculate_close_encounters_this_timestep), 0, 0},
-    { 172, REB_UINT,        "ri_trace.current_C",           offsetof(struct reb_simulation, ri_trace.current_C), 0, 0},
-    // Not sure how to save this
-    //{ 173, REB_POINTER,     "ri_trace.current_Ks",           offsetof(struct reb_simulation, ri_trace.current_Ks), offsetof(struct reb_simulation, ri_trace.N_allocated*ri_trace.N_allocated), sizeof(double)},
 //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},

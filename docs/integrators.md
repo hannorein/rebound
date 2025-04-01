@@ -511,7 +511,7 @@ The `reb_integrator_trace` structure contains the configuration and data structu
     - Integrating only the Kepler Step with BS. 
     - Integrating the entire system with IAS15. 
         
-    Check [Lu, Hernandez & Rein 2024]() for details on what these pericenter switching modes entail. 
+    Check [Lu, Hernandez & Rein 2024](https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L/abstract) for details on what these pericenter switching modes entail. 
     The syntax to use them is 
     
     === "C"
@@ -527,15 +527,6 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         sim.ri_trace.peri_mode = "FULL_BS"    # or
         sim.ri_trace.peri_mode = "FULL_IAS15" # or
         ```
-
-    `unsigned int recalculate_close_encounters_this_timestep`
-    :   Setting this flag to one will recalculate the close encounter status for each particle pair in the next timestep. 
-        After the timestep, the flag gets set back to 0. If you want to re-check for close encounters after every timestep, you also need to set this flag to 1 before every timestep. Default is 0.
-
-    `unsigned int safe_mode`
-    :   If this flag is set (the default), TRACE will recalculate close encounter status between particles in between every timestep. 
-        Setting it to 0 will result in a speedup, but care must be taken to recalculate the close encounters when needed. See also the AdvTRACE.ipynb tutorial.
-
 ## SABA
 
 SABA are symplectic integrators developed by [Laskar & Robutel 2001](https://ui.adsabs.harvard.edu/abs/2001CeMDA..80...39L/abstract) and [Blanes et al. 2013](https://ui.adsabs.harvard.edu/abs/2012arXiv1208.0689B/abstract). 

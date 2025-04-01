@@ -507,25 +507,6 @@ class TestIntegratorTrace(unittest.TestCase):
         x0 = sim.particles[1].x
 
         self.assertEqual(x0,x1)
-    
-    def test_trace_safemode(self):
-        sim = chaotic_exchange_sim()
-        sim.integrator = "trace"
-        sim.dt = (8./365.)*2.*math.pi
-        sim.hillfac = 5 # change rcrit
-        sim.integrate(1000.,exact_finish_time=0)
-        x1 = sim.particles[1].x
-
-
-        sim = chaotic_exchange_sim()
-        sim.integrator = "trace"
-        sim.dt = (8./365.)*2.*math.pi
-        sim.hillfac = 5
-        sim.integrate(1000.,exact_finish_time=0)
-        sim.ri_trace.safe_mode = 0
-        x0 = sim.particles[1].x
-
-        self.assertEqual(x0,x1)
 
 if __name__ == "__main__":
     unittest.main()

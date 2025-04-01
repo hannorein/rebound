@@ -532,10 +532,6 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_trace->N_allocated = N;
     }
 
-    if (ri_trace->safe_mode){
-	ri_trace->recalculate_close_encounters_this_timestep = 1;
-    }
-
     // Calculate collisions only with DIRECT or LINE method
     if (r->collision != REB_COLLISION_NONE && (r->collision != REB_COLLISION_DIRECT && r->collision != REB_COLLISION_LINE)){
         reb_simulation_warning(r,"TRACE only works with a direct or line collision search.");
@@ -556,11 +552,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     const int Nactive = r->N_active==-1?r->N:r->N_active;
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
-
-    if (!ri_trace->safe_mode && !ri_trace->recalculate_close_encounters_this_timestep){
-       // Safe mode is off, and we don't need to recalculate. Nothing changes, and we don't need to do anything here
-       return;
-    }
    
     // Clear encounter map
     for (unsigned int i=1; i<r->N; i++){
@@ -696,15 +687,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
                     ri_trace->tponly_encounter = 0;
                 }
             }
-	    else{
-	        ri_trace->current_Ks[i*N+j] = 0; // Need this for not-safe mode now
-	    }
         }
-    }
-
-    // If not in safe mode and everything has gone right, no need to recalculate close encounters
-    if (!ri_trace->safe_mode){
-        r->ri_trace.recalculate_close_encounters_this_timestep = 0;
     }
     
     return new_close_encounter;
@@ -843,13 +826,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
             // Do step again
             reb_integrator_trace_step(r);
-	    // If step is re-done, need to recalculate close encounters
-	    r->ri_trace.recalculate_close_encounters_this_timestep = 1;
         }
-    }
-    else{
-	// If force accept, collision has occured. Recalculate close encounters
-        r->ri_trace.recalculate_close_encounters_this_timestep = 1;
     }
     reb_integrator_trace_dh_to_inertial(r);
     
@@ -866,8 +843,6 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.safe_mode= 1;
-    r->ri_trace.recalculate_close_encounters_this_timestep = 0;
     r->ri_trace.force_accept = 0;
 
     // Internal arrays (only used within one timestep)

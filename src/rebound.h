@@ -270,8 +270,6 @@ struct reb_integrator_trace {
 
     double r_crit_hill;
     double peri_crit_eta;
-    unsigned int safe_mode;             // Combine post- and pre- timestep checks
-    unsigned int recalculate_close_encounters_this_timestep; // Set to 1 if we need to re-do pre-timestep check
 
     // Internal use
     enum {
