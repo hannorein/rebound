@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.8
+* Added support for symplectic correctors with barycentric coordinates in WHFast.
+
 ### Version 4.4.7
 * Added option to disable SSL checks for Horizon queries with `rebound.horizons.SSL_CONTEXT = 'unverified'.`
 * Added unit tests.
