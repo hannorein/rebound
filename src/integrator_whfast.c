@@ -591,6 +591,10 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
             reb_whfast_interaction_step(r, b);
             reb_whfast_kepler_step(r, a);
             break;
+        case REB_WHFAST_COORDINATES_WHDS:
+        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            reb_simulation_error(r, "Coordinate system not supported.");
+            break;
     }
 }
 
