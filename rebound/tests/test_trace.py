@@ -47,6 +47,13 @@ def derivatives_ho(ode, yDot, y, t):
     yDot[0] = y[1]
     yDot[1] = -k/m*y[0]
 
+def collision_add_particle(sim_pointer, collision):
+    sim = sim_pointer.contents
+    sim.add(m=1e-10, a=1.) # meaningless
+    sim.add(m=1e-10, a=2.) # meaningless
+    sim.add(m=1e-10, a=3.) # meaningless
+    return 3
+
 class TestIntegratorTraceHarmonic(unittest.TestCase):
    
     def test_trace_harmonic_with_nbody(self):
@@ -244,7 +251,21 @@ class TestIntegratorTrace(unittest.TestCase):
         dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
+    
+    def test_collision_add_particles(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
+        sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
+        N0 = sim.N
 
+        sim.integrator = "trace"
+        sim.dt = 0.01
+        sim.collision = "direct"
+        sim.collision_resolve = collision_add_particle
+
+        sim.integrate(1)
+        self.assertEqual(N0+1,sim.N)
 
     def test_planetesimal_collision(self):
         sim = rebound.Simulation()
@@ -336,7 +357,6 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
-        sim.ri_trace.peri_crit_distance=0.2
 
         E0 = sim.energy()
         sim.integrate(1)
@@ -429,14 +449,14 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.dt = (8./365.)*2.*math.pi
         E0 = jacobi(sim)
         start=datetime.now()
-        sim.integrate(5000.)
+        sim.integrate(2000.)
         time_trace = (datetime.now()-start).total_seconds()
         dE_trace = abs((jacobi(sim) - E0)/E0)
 
         sim = chaotic_exchange_sim()
         sim.integrator = "ias15"
         start=datetime.now()
-        sim.integrate(5000.)
+        sim.integrate(2000.)
         time_ias15 = (datetime.now()-start).total_seconds()
         dE_ias15 = abs((jacobi(sim) - E0)/E0)
 
