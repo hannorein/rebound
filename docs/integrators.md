@@ -470,30 +470,12 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         ```c
         int reb_integrator_trace_switch_peri_default(const struct reb_simulation* const r, const unsigned int j);           
         ```
-    - Fdot switching function
-
-        This switching function checks if a body is close to its pericenter by measuring the rate of change of true anomaly, inspired by [Wisdom 2015](https://ui.adsabs.harvard.edu/abs/2015AJ....150..127W/abstract)
-
-        ```c
-        int reb_integrator_trace_switch_peri_fdot(const struct reb_simulation* const r, const unsigned int j);           
-        ```
-        
-    - Distance switching function
-
-        This switching function checks for close encounters with a simple heliocentric distance check
-
-        ```c
-        int reb_integrator_trace_switch_peri_distance(const struct reb_simulation* const r, const unsigned int j);           
-        ```
-
     The switching function can be manually set using this syntax:
 
     === "C"
         ```c
         struct reb_simulation* r = reb_create_simulation();
         r->ri_trace.S_peri = reb_integrator_trace_switch_peri_default; // default
-        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_fdot;
-        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_distance;
         r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none; // Turn off pericenter switching
         ```
 
@@ -501,8 +483,6 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         ```python
         sim = rebound.Simulation()
         sim.ri_trace.S_peri = "default" # Following Pham et al 2024
-        sim.ri_trace.S_peri = "fdot"
-        sim.ri_trace.S_peri = "distance"
         sim.ri_trace.S_peri = "none" # Turn off pericenter switching 
         ```
 
@@ -512,28 +492,18 @@ The `reb_integrator_trace` structure contains the configuration and data structu
 `double peri_crit_eta`
 :   The criteria for a pericenter approach with the central body. This criteria is used in the `default` pericenter switching condition. It flags a particle as in a close pericenter approach if the ratio of the timestep to the condition described in [Pham, Rein, and Spiegel 2024](https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract). The default value is 1.
 
-`double peri_crit_fdot`
-:   The criteria for a pericenter approach with the central body. This criteria is used in the `fdot` pericenter switching condition. It flags a particle as in a close pericenter approach if the effective period at pericenter (in units of the timestep) is less than the `peri_crit_fdot` parameter. The default value is 17.
-
-`double peri_crit_distance`
-:   The criteria for a pericenter approach with the central body. This criteria is used in the `distance` pericenter switching condition. It flags a particle as in a close pericenter approach if its heliocentric distance is less than the `peri_crit_distance` parameter.
-
-    These switching criteria can be manually set using this syntax:
+    The switching criteria can be manually set using this syntax:
 
     === "C"
         ```c
         struct reb_simulation* r = reb_create_simulation();
         r->ri_trace.peri_crit_eta = 0.5;    // or
-        r->ri_trace.peri_crit_fdot = 16;    // or
-        r->ri_trace.peri_crit_distance = 1;
         ```
 
     === "Python"
         ```python
         sim = rebound.Simulation()
         sim.ri_trace.peri_crit_eta = 0.5    # or
-        sim.ri_trace.peri_crit_fdot = 16    # or
-        sim.ri_trace.peri_crit_distance = 1 # or
         ```
 `unsigned int peri_mode`
 :   This variable determines how TRACE integrates close approaches with the central star. 
@@ -543,7 +513,7 @@ The `reb_integrator_trace` structure contains the configuration and data structu
     - Integrating only the Kepler Step with BS. 
     - Integrating the entire system with IAS15. 
         
-    Check [Lu, Hernandez & Rein 2024]() for details on what these kernel methods are. 
+    Check [Lu, Hernandez & Rein 2024](https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L/abstract) for details on what these pericenter switching modes entail. 
     The syntax to use them is 
     
     === "C"
@@ -559,7 +529,6 @@ The `reb_integrator_trace` structure contains the configuration and data structu
         sim.ri_trace.peri_mode = "FULL_BS"    # or
         sim.ri_trace.peri_mode = "FULL_IAS15" # or
         ```
-
 ## SABA
 
 SABA are symplectic integrators developed by [Laskar & Robutel 2001](https://ui.adsabs.harvard.edu/abs/2001CeMDA..80...39L/abstract) and [Blanes et al. 2013](https://ui.adsabs.harvard.edu/abs/2012arXiv1208.0689B/abstract). 

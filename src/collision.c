@@ -148,10 +148,6 @@ void reb_collision_search(struct reb_simulation* const r){
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                         }
-                        if (r->integrator==REB_INTEGRATOR_TRACE){
-                          // if collision, TRACE automatically accepts the step
-                          r->ri_trace.force_accept = 1;
-                        }
                         r->collisions[collisions_N].p1 = ip;
                         r->collisions[collisions_N].p2 = jp;
                         r->collisions[collisions_N].gb = gborig;
@@ -178,7 +174,11 @@ void reb_collision_search(struct reb_simulation* const r){
 #ifndef OPENMP
                     if (reb_sigint > 1) return;
 #endif // OPENMP
-                    struct reb_particle p1 = particles[i];
+                    int ip = i;
+                    if (trace_map){
+                        ip = trace_map[i];
+                    }
+                    struct reb_particle p1 = particles[ip];
                     struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                     struct reb_vec6d gb = gborig;
                     // Precalculate shifted position 
@@ -190,7 +190,11 @@ void reb_collision_search(struct reb_simulation* const r){
                     gb.vz += p1.vz;
                     // Loop over all particles again
                     for (int j=i+1;j<N;j++){
-                        struct reb_particle p2 = particles[j];
+                        int jp = j;
+                        if (trace_map){
+                            jp = trace_map[j];
+                        }
+                        struct reb_particle p2 = particles[jp];
                         const double dx1 = gb.x - p2.x; // distance at end
                         const double dy1 = gb.y - p2.y;
                         const double dz1 = gb.z - p2.z;
@@ -222,8 +226,8 @@ void reb_collision_search(struct reb_simulation* const r){
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                         }
-                        r->collisions[collisions_N].p1 = i;
-                        r->collisions[collisions_N].p2 = j;
+                        r->collisions[collisions_N].p1 = ip;
+                        r->collisions[collisions_N].p2 = jp;
                         r->collisions[collisions_N].gb = gborig;
                         collisions_N++;
                     }
