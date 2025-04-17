@@ -1036,6 +1036,10 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 const int encounter_N = r->ri_trace.encounter_N;
                                 int* map = r->ri_trace.encounter_map;
                                 
+                                double mtot = 0.0;
+                                for (int i=0; i<_N_real; i++){
+                                    mtot += particles[i].m;
+                                }
                                 for (int i=1; i<encounter_N; i++){
                                     int mi = map[i];
                                     particles[mi].ax = 0;
@@ -1063,6 +1067,17 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                         particles[mj].ay    += prefacti*dy;
                                         particles[mj].az    += prefacti*dz;
                                     }
+                                }
+                                for (int i=0; i<encounter_N; i++){
+                                    int mi = map[i];
+                                    const double dx = particles[mi].x;
+                                    const double dy = particles[mi].y;
+                                    const double dz = particles[mi].z;
+                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                    const double prefact = -mtot*G / (_r*_r*_r);
+                                    particles[mi].ax    += prefact*dx;
+                                    particles[mi].ay    += prefact*dy;
+                                    particles[mi].az    += prefact*dz;
                                 }
                             }
                             break;
