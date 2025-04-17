@@ -993,14 +993,16 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         switch (r->ri_trace.mode){
                             case REB_TRACE_MODE_INTERACTION: // Interaction step
                             {
+                                double mtot = 0.0;
                                 for (int i=0; i<_N_real; i++){
                                     particles[i].ax = 0;
                                     particles[i].ay = 0;
                                     particles[i].az = 0;
+                                    mtot += particles[i].m;
                                 }
-                                for (int i=2; i<_N_active; i++){
+                                for (int i=1; i<_N_active; i++){
                                     if (reb_sigint > 1) return;
-                                    for (int j=1; j<i; j++){
+                                    for (int j=0; j<i; j++){
                                         if (r->ri_trace.current_Ks[j*N+i]) continue;
                                         const double dx = particles[i].x - particles[j].x;
                                         const double dy = particles[i].y - particles[j].y;
@@ -1016,28 +1018,14 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                         particles[j].ay    += prefacti*dy;
                                         particles[j].az    += prefacti*dz;
                                     }
-                                }
-                                const int startitestp = MAX(_N_active,2);
-                                for (int i=startitestp; i<_N_real; i++){
-                                    if (reb_sigint > 1) return;
-                                    for (int j=1; j<_N_active; j++){
-                                        if (r->ri_trace.current_Ks[j*N+i]) continue;
-                                        const double dx = particles[i].x - particles[j].x;
-                                        const double dy = particles[i].y - particles[j].y;
-                                        const double dz = particles[i].z - particles[j].z;
-                                        const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                        const double prefact = G / (_r*_r*_r);
-                                        const double prefactj = -prefact*particles[j].m;
-                                        particles[i].ax    += prefactj*dx;
-                                        particles[i].ay    += prefactj*dy;
-                                        particles[i].az    += prefactj*dz;
-                                        if (_testparticle_type){
-                                            const double prefacti = prefact*particles[i].m;
-                                            particles[j].ax    += prefacti*dx;
-                                            particles[j].ay    += prefacti*dy;
-                                            particles[j].az    += prefacti*dz;
-                                        }
-                                    }
+                                    const double dx = particles[i].x;
+                                    const double dy = particles[i].y;
+                                    const double dz = particles[i].z;
+                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                    const double prefact = mtot*G / (_r*_r*_r);
+                                    particles[i].ax    += prefact*dx;
+                                    particles[i].ay    += prefact*dy;
+                                    particles[i].az    += prefact*dz;
                                 }
                             }
                             break;
