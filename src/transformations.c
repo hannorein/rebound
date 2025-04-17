@@ -508,40 +508,6 @@ void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* co
     particles[0].z *= m0i;
 }
 
-void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active) {
-    p_b[0].ax = particles[0].m*particles[0].ax;
-    p_b[0].ay = particles[0].m*particles[0].ay;
-    p_b[0].az = particles[0].m*particles[0].az;
-    p_b[0].m = particles[0].m;
-
-    double s_ax = 0.0;
-    double s_ay = 0.0;
-    double s_az = 0.0;
-    double s_m = 0.0;
-    for (unsigned int i = 1; i < N_active; i++) {
-        const double m = particles[i].m;
-        p_b[i].m = m;
-        s_ax += particles[i].ax * m;
-        s_ay += particles[i].ay * m;
-        s_az += particles[i].az * m;
-        s_m += m;
-    }
-
-    p_b[0].m += s_m;
-    p_b[0].ax += s_ax;
-    p_b[0].ay += s_ay;
-    p_b[0].az += s_az;
-    const double mi = 1.0 / p_b[0].m;
-    p_b[0].ax *= mi;
-    p_b[0].ay *= mi;
-    p_b[0].az *= mi;
-    for (unsigned int i = 1;i<N;i++) {
-        p_b[i].ax = particles[i].ax - p_b[0].ax;
-        p_b[i].ay = particles[i].ay - p_b[0].ay;
-        p_b[i].az = particles[i].az - p_b[0].az;
-    }
-}
-
 void reb_particles_transform_barycentric_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
     particles[0].ax = p_b[0].m*p_b[0].ax;
     particles[0].ay = p_b[0].m*p_b[0].ay;

@@ -428,16 +428,12 @@ void reb_whfast_interaction_step(struct reb_simulation* const r, const double _d
             }
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            reb_particles_transform_inertial_to_barycentric_acc(particles, p_j, N_real, N_active);
-            p_j[0].vx += _dt*p_j[0].ax;
-            p_j[0].vy += _dt*p_j[0].ay;
-            p_j[0].vz += _dt*p_j[0].az;
             for (unsigned int i=1;i<(int)N_real;i++){
                 const double dr = sqrt(p_j[i].x*p_j[i].x + p_j[i].y*p_j[i].y + p_j[i].z*p_j[i].z);
                 const double prefac = G*p_j[0].m/(dr*dr*dr);
-                p_j[i].vx += _dt*(prefac*p_j[i].x + p_j[i].ax);
-                p_j[i].vy += _dt*(prefac*p_j[i].y + p_j[i].ay);
-                p_j[i].vz += _dt*(prefac*p_j[i].z + p_j[i].az);
+                p_j[i].vx += _dt*(prefac*p_j[i].x + particles[i].ax);
+                p_j[i].vy += _dt*(prefac*p_j[i].y + particles[i].ay);
+                p_j[i].vz += _dt*(prefac*p_j[i].z + particles[i].az);
             }
             break;
     };
