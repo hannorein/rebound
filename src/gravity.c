@@ -1040,11 +1040,16 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                 for (int i=0; i<_N_real; i++){
                                     mtot += particles[i].m;
                                 }
-                                for (int i=1; i<encounter_N; i++){
+                                for (int i=0; i<encounter_N; i++){
                                     int mi = map[i];
-                                    particles[mi].ax = 0;
-                                    particles[mi].ay = 0;
-                                    particles[mi].az = 0;
+                                    const double dx = particles[mi].x;
+                                    const double dy = particles[mi].y;
+                                    const double dz = particles[mi].z;
+                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                    const double prefact = -mtot*G / (_r*_r*_r);
+                                    particles[mi].ax    = prefact*dx;
+                                    particles[mi].ay    = prefact*dy;
+                                    particles[mi].az    = prefact*dz;
                                 }
 
                                 for (int i=1; i<encounter_N; i++){
@@ -1067,17 +1072,6 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                                         particles[mj].ay    += prefacti*dy;
                                         particles[mj].az    += prefacti*dz;
                                     }
-                                }
-                                for (int i=0; i<encounter_N; i++){
-                                    int mi = map[i];
-                                    const double dx = particles[mi].x;
-                                    const double dy = particles[mi].y;
-                                    const double dz = particles[mi].z;
-                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                    const double prefact = -mtot*G / (_r*_r*_r);
-                                    particles[mi].ax    += prefact*dx;
-                                    particles[mi].ay    += prefact*dy;
-                                    particles[mi].az    += prefact*dz;
                                 }
                             }
                             break;

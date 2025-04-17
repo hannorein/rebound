@@ -6,13 +6,13 @@
 struct reb_simulation* setup(){
     struct reb_simulation* r = reb_simulation_create();
     
-    //reb_simulation_start_server(r, 1234);
-    r->rand_seed = 0;
+    reb_simulation_start_server(r, 1234);
+    r->rand_seed = 10;
     reb_simulation_add_fmt(r, "m", 1.);              
     for (int i=0; i<100;i++){
         reb_simulation_add_fmt(r, "m a e f", 1e-6, 1.+0.1*reb_random_normal(r,1.0), 0.1, reb_random_uniform(r,0,M_PI*2.0));
     }
-  //  reb_simulation_move_to_com(r);
+    reb_simulation_move_to_com(r);
  
     r->dt = 1e-2;
     return r;
