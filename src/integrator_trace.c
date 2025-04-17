@@ -77,7 +77,34 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     double dcritmax6 = r_crit_hill2 * r_crit_hill2 * r_crit_hill2 * MAX(dcriti6,dcritj6);
 
     if (rp*rp*rp < dcritmax6) return 1;
+
+    // Here compute the velocity-dependent MERCURIUS conditions
+    const double dvxi = r->particles[i].vx - r->particles[0].vx;
+    const double dvyi = r->particles[i].vy - r->particles[0].vy;
+    const double dvzi = r->particles[i].vz - r->particles[0].vz;
+    const double dvxj = r->particles[j].vx - r->particles[0].vx;
+    const double dvyj = r->particles[j].vy - r->particles[0].vy;
+    const double dvzj = r->particles[j].vz - r->particles[0].vz;
+
+//    const double ri = sqrt(dxi*dxi+dyi*dyi+dzi*dzi);
+//    const double rj = sqrt(dxj*dxj+dyj*dyj+dzj*dzj);
+    const double vi2 = dvxi*dvxi + dvyi*dvyi + dvzi*dvzi;
+    const double vj2 = dvxj*dvxj + dvyj*dvyj + dvzj*dvzj;
+    const double GM = r->G*m0;
+  //  const double inv_ai = 2./ri - vi2/GM;
+  //  const double inv_aj = 2./rj - vj2/GM;
+
+   // dcriti6 = MAX(dcriti6,0.004096*GM*GM*GM*inv_ai*inv_ai*inv_ai*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
+   // dcritj6 = MAX(dcritj6,0.004096*GM*GM*GM*inv_aj*inv_aj*inv_aj*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
+
+    dcriti6 = MAX(dcriti6,0.004096*vi2*vi2*vi2*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
+    dcritj6 = MAX(dcriti6,0.004096*vj2*vj2*vj2*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
+
+    dcritmax6 = MAX(dcritmax6, dcriti6);
+    dcritmax6 = MAX(dcritmax6, dcritj6);
     
+    if (rp*rp*rp < dcritmax6) return 1;
+
     const double dvx  = r->particles[i].vx - r->particles[j].vx;
     const double dvy  = r->particles[i].vy - r->particles[j].vy;
     const double dvz  = r->particles[i].vz - r->particles[j].vz;
@@ -855,6 +882,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 
             // Do step again
             reb_integrator_trace_step(r);
+	    ri_trace->step_rejections += 1;
         }
     }
 
