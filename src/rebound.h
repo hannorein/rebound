@@ -270,6 +270,10 @@ struct reb_integrator_trace {
 
     double r_crit_hill;
     double peri_crit_eta;
+    enum {
+        REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      // Democratic Heliocentric coordinates
+        REB_TRACE_COORDINATES_BARYCENTRIC = 3,                 // Barycentric coordinates
+    } coordinates;                                             // Coordinate system used
 
     // Internal use
     enum {
