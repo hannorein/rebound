@@ -995,6 +995,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             {
                                 double mtot = 0.0;
                                 for (int i=0; i<_N_real; i++){
+                                    // particles[0].a will not be used
                                     particles[i].ax = 0;
                                     particles[i].ay = 0;
                                     particles[i].az = 0;

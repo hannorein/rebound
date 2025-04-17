@@ -294,11 +294,16 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
     const int N = r->N;
     r->ri_trace.mode = REB_TRACE_MODE_INTERACTION;
     reb_simulation_update_acceleration(r);
-    const int starti = (r->ri_trace.coordinates == REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC) ? 1 : 0;
-    for (int i=starti;i<N;i++){
+    for (int i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
+        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_BARYCENTRIC){
+            // COM does not get a kick
+            particles[0].vx -= dt*particles[i].ax*particles[i].m/particles[0].m;
+            particles[0].vy -= dt*particles[i].ay*particles[i].m/particles[0].m;
+            particles[0].vz -= dt*particles[i].az*particles[i].m/particles[0].m;
+        }
     }
 }
 
