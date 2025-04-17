@@ -1033,77 +1033,35 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             case REB_TRACE_MODE_KEPLER: // BS part
                             // Kepler Step
                             {
-                                const double m0 = r->particles[0].m;
                                 const int encounter_N = r->ri_trace.encounter_N;
-                                const int encounter_N_active = r->ri_trace.encounter_N_active;
                                 int* map = r->ri_trace.encounter_map;
-                                particles[0].ax = 0; // map[0] is always 0
-                                particles[0].ay = 0;
-                                particles[0].az = 0;
-
-                                // Acceleration due to star
+                                
                                 for (int i=1; i<encounter_N; i++){
                                     int mi = map[i];
-                                    const double x = particles[mi].x;
-                                    const double y = particles[mi].y;
-                                    const double z = particles[mi].z;
-                                    const double _r = sqrt(x*x + y*y + z*z + softening2);
-                                    double prefact = -G * m0 / (_r*_r*_r);
-                                    particles[mi].ax    = prefact*x;
-                                    particles[mi].ay    = prefact*y;
-                                    particles[mi].az    = prefact*z;
+                                    particles[mi].ax = 0;
+                                    particles[mi].ay = 0;
+                                    particles[mi].az = 0;
                                 }
 
-                                // We're in a heliocentric coordinate system.
-                                // The star feels no acceleration
-                                // Interactions between active-active
-                                if (encounter_N_active > 2){ // if two or less, no active-active planets
-                                    for (int i=2; i<encounter_N_active; i++){
-                                        int mi = map[i];
-                                        for (int j=1; j<i; j++){
-                                            int mj = map[j];
-                                            if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
-                                            const double dx = particles[mi].x - particles[mj].x;
-                                            const double dy = particles[mi].y - particles[mj].y;
-                                            const double dz = particles[mi].z - particles[mj].z;
-                                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                            double prefact = G/(_r*_r*_r);
-                                            double prefactj = -prefact*particles[mj].m;
-                                            double prefacti = prefact*particles[mi].m;
-
-                                            particles[mi].ax    += prefactj*dx;
-                                            particles[mi].ay    += prefactj*dy;
-                                            particles[mi].az    += prefactj*dz;
-                                            particles[mj].ax    += prefacti*dx;
-                                            particles[mj].ay    += prefacti*dy;
-                                            particles[mj].az    += prefacti*dz;
-                                        }
-                                    }
-                                }
-
-                                // Interactions between active-testparticle
-                                const int startitestp = MAX(encounter_N_active,2);
-                                for (int i=startitestp; i<encounter_N; i++){
+                                for (int i=1; i<encounter_N; i++){
                                     int mi = map[i];
-                                    for (int j=1; j<encounter_N_active; j++){
+                                    if (reb_sigint > 1) return;
+                                    for (int j=0; j<i; j++){
                                         int mj = map[j];
                                         if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
                                         const double dx = particles[mi].x - particles[mj].x;
                                         const double dy = particles[mi].y - particles[mj].y;
                                         const double dz = particles[mi].z - particles[mj].z;
                                         const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                                        double prefact = G/(_r*_r*_r);
-                                        double prefactj = -prefact*particles[mj].m;
+                                        const double prefact = G / (_r*_r*_r);
+                                        const double prefactj = -prefact*particles[mj].m;
+                                        const double prefacti = prefact*particles[mi].m;
                                         particles[mi].ax    += prefactj*dx;
                                         particles[mi].ay    += prefactj*dy;
                                         particles[mi].az    += prefactj*dz;
-
-                                        if (_testparticle_type){
-                                            double prefacti = prefact*particles[mi].m;
-                                            particles[mj].ax    += prefacti*dx;
-                                            particles[mj].ay    += prefacti*dy;
-                                            particles[mj].az    += prefacti*dz;
-                                        }
+                                        particles[mj].ax    += prefacti*dx;
+                                        particles[mj].ay    += prefacti*dy;
+                                        particles[mj].az    += prefacti*dz;
                                     }
                                 }
                             }

@@ -685,7 +685,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*N+j] = 1;
-                printf("pp encounter\n");
                 if (ri_trace->encounter_map[i] == 0){
                     ri_trace->encounter_map[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
@@ -800,6 +799,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_interaction_step(r, r->dt/2.);
     }else{
+        printf("Peri step\n");
 	// Pericenter approach with one of the FULL prescriptions
         double t_needed = r->t + r->dt;
         const double old_dt = r->dt;
