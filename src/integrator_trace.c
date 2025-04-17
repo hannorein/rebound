@@ -190,7 +190,7 @@ void reb_integrator_trace_inertial_to_barycentric(struct reb_simulation* r){
     }
     com_pos.x /= mtot; com_pos.y /= mtot; com_pos.z /= mtot;
     com_vel.x /= mtot; com_vel.y /= mtot; com_vel.z /= mtot;
-    for (int i=0;i<N;i--){
+    for (int i=0;i<N;i++){
         particles[i].x -= com_pos.x;
         particles[i].y -= com_pos.y;
         particles[i].z -= com_pos.z;
@@ -350,6 +350,28 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     }
     for (int i=1;i<N;i++){
         reb_whfast_kepler_solver(r,r->particles,r->G*m,i,dt);
+    }
+    if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_BARYCENTRIC){
+        struct reb_particle* restrict const particles = r->particles;
+        struct reb_vec3d com_pos = {0};
+        struct reb_vec3d com_vel = {0};
+        const int N = r->N;
+        for (int i=1;i<N;i++){
+            double m = particles[i].m;
+            com_pos.x += m * particles[i].x;
+            com_pos.y += m * particles[i].y;
+            com_pos.z += m * particles[i].z;
+            com_vel.x += m * particles[i].vx;
+            com_vel.y += m * particles[i].vy;
+            com_vel.z += m * particles[i].vz;
+        }
+        particles[0].x = -com_pos.x/particles[0].m;
+        particles[0].y = -com_pos.y/particles[0].m;
+        particles[0].z = -com_pos.z/particles[0].m;
+        particles[0].vx = -com_vel.x/particles[0].m;
+        particles[0].vy = -com_vel.y/particles[0].m;
+        particles[0].vz = -com_vel.z/particles[0].m;
+
     }
 }
 
@@ -631,6 +653,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     for (int j = 1; j < Nactive; j++){
         if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
+            printf("peri encounter\n");
             if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
                 return;
@@ -657,6 +680,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*N+j] = 1;
+                printf("pp encounter\n");
                 if (ri_trace->encounter_map[i] == 0){
                     ri_trace->encounter_map[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
