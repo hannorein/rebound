@@ -270,8 +270,6 @@ struct reb_integrator_trace {
 
     double r_crit_hill;
     double peri_crit_eta;
-    double peri_crit_fdot;
-    double peri_crit_distance;
 
     // Internal use
     enum {
@@ -282,7 +280,6 @@ struct reb_integrator_trace {
     } mode;
     unsigned int encounter_N;           // Number of particles currently having an encounter
     unsigned int encounter_N_active;    // Number of active particles currently having an encounter
-    double last_dt_ias15;
 
     unsigned int N_allocated;
     unsigned int N_allocated_additional_forces;
@@ -345,6 +342,7 @@ struct reb_integrator_whfast {
         REB_WHFAST_COORDINATES_JACOBI = 0,                      // Jacobi coordinates (default)
         REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      // Democratic Heliocentric coordinates
         REB_WHFAST_COORDINATES_WHDS = 2,                        // WHDS coordinates (Hernandez and Dehnen, 2017)
+        REB_WHFAST_COORDINATES_BARYCENTRIC = 3,                 // Barycentric coordinates
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting
     unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
     unsigned int safe_mode;                                     // 0: Drift Kick Drift scheme (default), 1: combine first and last sub-step.
@@ -853,8 +851,6 @@ DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* cons
 // Built in trace switching functions
 
 DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 
@@ -1389,6 +1385,12 @@ DLLEXPORT void reb_particles_transform_inertial_to_whds_posvel(const struct reb_
 DLLEXPORT void reb_particles_transform_whds_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const unsigned int N_active);
 DLLEXPORT void reb_particles_transform_whds_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_h, const unsigned int N, const unsigned int N_active);
 
+// Barycentric coordinates
+DLLEXPORT void reb_particles_transform_inertial_to_barycentric_posvel(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
+DLLEXPORT void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
+DLLEXPORT void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
+DLLEXPORT void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
+DLLEXPORT void reb_particles_transform_barycentric_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
 
 // Temporary. Function declarations needed by REBOUNDx 
 DLLEXPORT void reb_integrator_ias15_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator

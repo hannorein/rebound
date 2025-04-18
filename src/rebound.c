@@ -69,7 +69,7 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.4.6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.4.8";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
@@ -92,7 +92,6 @@ void reb_simulation_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
-
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR)
 
@@ -610,12 +609,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_trace.encounter_N = 0;
     r->ri_trace.r_crit_hill = 3.;
     r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.peri_crit_fdot = 17.;
-    r->ri_trace.peri_crit_distance = 0.; // User should set this to appropriate value for system, but not strictly needed
     r->ri_trace.force_accept = 0;
-    r->ri_trace.last_dt_ias15 = 0;
-    
-    // debugging
     r->ri_trace.step_rejections = 0;
 
     // ********** EOS
@@ -885,7 +879,6 @@ static void* reb_simulation_integrate_raw(void* args){
             usleep(r->usleep);
         }
     }
-
     reb_simulation_synchronize(r);
     if(r->exact_finish_time==1){ // if finish_time = 1, r->dt could have been shrunk, so set to the last full timestep
         r->dt = last_full_dt; 

@@ -23,12 +23,6 @@ class IntegratorTRACE(ctypes.Structure):
         If set to 2, we use the FULL IAS15 prescription. This acts similarly to the PURE BS prescription, but uses IAS15 instead of BS to integrate the whole system.
     :ivar float peri_crit_eta:
         Pericenter switching condition: ratio of timestep to condition from Pham, Rein and Spiegel 2024.
-    :ivar float peri_crit_distance:
-        Pericenter switching condition: heliocentric distance
-    :ivar float peri_crit_fdot:
-        Pericenter switching condition: rate of change of true anomaly in units of 1/timestep.
-    :ivar float peri_crit_distance:
-        Pericenter switching condition: heliocentric distance
 
     Example usage:
 
@@ -36,24 +30,19 @@ class IntegratorTRACE(ctypes.Structure):
     >>> sim.integrator = "trace"
     >>> sim.ri_trace.r_crit_hill = 4
     >>> sim.ri_trace.peri_crit_eta = 1
-    >>> sim.ri_trace.peri_crit_fdot = 17
-    >>> sim.ri_trace.peri_crit_distance = 1
 
     """
     def __repr__(self):
-        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5},peri_crit_fdot=={6},peri_crit_distance={7}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_mode, self.peri_crit_eta, self.peri_crit_fdot, self.peri_crit_distance)
+        return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_mode, self.peri_crit_eta)
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
-                ("_peri_mode", ctypes.c_uint),
+                ("peri_mode", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
-                ("peri_crit_fdot", ctypes.c_double),
-                ("peri_crit_distance", ctypes.c_double),
-                ("mode", ctypes.c_uint),
+                ("_mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),
-                ("_last_dt_ias15", ctypes.c_double),
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_additionalforces", ctypes.c_uint),
                 ("_tponly_encounter", ctypes.c_uint),
@@ -66,6 +55,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),
                 ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
+                ("_step_rejections", ctypes.c_uint64),
                 ]
     @property
     def S(self):
@@ -85,10 +75,6 @@ class IntegratorTRACE(ctypes.Structure):
     def S_peri(self, func):
         if func == "default":
             self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_default,TRACECF)
-        elif func == "fdot":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_fdot,TRACECF)
-        elif func == "distance":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_distance,TRACECF)
         elif func == "none":
             self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_none,TRACECF)
         else:

@@ -40,6 +40,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
+    // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double h2 = r->dt/2.;
     
@@ -60,8 +61,14 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     double dcritj6 = 0.0;
 
     const double m0 = r->particles[0].m;
+    
+    // Check central body for physical radius ONLY
+    if (i == 0 && r->particles[i].r != 0){
+	const double rs = r->particles[0].r;
+	dcriti6 = rs*rs*rs*rs*rs*rs;
+    }
 
-    if (r->particles[i].m != 0){
+    else if (r->particles[i].m != 0){
         const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
         const double mr = r->particles[i].m/(3.*m0);
         dcriti6 = di2*di2*di2*mr*mr;
@@ -135,47 +142,6 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
     }
 
     return dmin2*dmin2*dmin2 < dcritmax6;
-}
-
-
-int reb_integrator_trace_switch_peri_distance(struct reb_simulation* const r, const unsigned int j){
-    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double peri = ri_trace->peri_crit_distance;
-    if (peri == 0.0){
-      reb_simulation_warning(r,"Pericenter distance parameter not set. Set with r->ri_trace.peri_crit_distance=");
-    }
-
-    const double dx = r->particles[0].x - r->particles[j].x;
-    const double dy = r->particles[0].y - r->particles[j].y;
-    const double dz = r->particles[0].z - r->particles[j].z;
-    const double d2 = dx*dx + dy*dy + dz*dz;
-
-    return d2 < peri*peri;
-}
-
-int reb_integrator_trace_switch_peri_fdot(struct reb_simulation* const r, const unsigned int j){
-    const struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const double pfdot = ri_trace->peri_crit_fdot;
-
-    const double dx = r->particles[j].x;
-    const double dy = r->particles[j].y;
-    const double dz = r->particles[j].z;
-    const double d2 = dx*dx + dy*dy + dz*dz;
-
-    const double dvx = r->particles[j].vx;
-    const double dvy = r->particles[j].vy;
-    const double dvz = r->particles[j].vz;
-
-    const double hx = (dy*dvz - dz*dvy);  // specific angular momentum vector
-    const double hy = (dz*dvx - dx*dvz);
-    const double hz = (dx*dvy - dy*dvx);
-    const double h2 = hx*hx + hy*hy + hz*hz;
-
-    // This only works for bound orbits!
-    const double fdot2 = h2 / (d2*d2);
-    const double peff2 = (4 * M_PI * M_PI) / fdot2; // effective period squared
-
-    return peff2 < pfdot*pfdot * r->dt*r->dt;
 }
 
 int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j){
@@ -510,14 +476,16 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             r->particles[0].vx = star.vx; // restore every timestep for collisions
             r->particles[0].vy = star.vy;
             r->particles[0].vz = star.vz;
-
-            reb_collision_search(r);
+            
+	    reb_collision_search(r);
+	    if (r->N_allocated_collisions) ri_trace->force_accept = 1;
 
             if (nbody_ode->length != ri_trace->encounter_N*3*2){
-                if (ri_trace->encounter_N*3*2 > nbody_ode->N_allocated){
-                    reb_simulation_error(r, "Cannot add particles during encounter step");
-                }
-                nbody_ode->length = ri_trace->encounter_N*3*2;
+		// Just re-create the ODE
+		reb_ode_free(nbody_ode);
+		nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
+                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
+                nbody_ode->needs_nbody = 0;
                 r->ri_bs.first_or_last_step = 1;
             }
 
@@ -539,7 +507,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 }
             }
         }
-
+  
         // if only test particles encountered massive bodies, reset the
         // massive body coordinates to their post Kepler step state
         if(ri_trace->tponly_encounter){
@@ -591,9 +559,9 @@ void reb_integrator_trace_part1(struct reb_simulation* r){
         ri_trace->N_allocated = N;
     }
 
-    // Calculate collisions only with DIRECT method
-    if (r->collision != REB_COLLISION_NONE && r->collision != REB_COLLISION_DIRECT){
-        reb_simulation_warning(r,"TRACE only works with a direct collision search.");
+    // Calculate collisions only with DIRECT or LINE method
+    if (r->collision != REB_COLLISION_NONE && (r->collision != REB_COLLISION_DIRECT && r->collision != REB_COLLISION_LINE)){
+        reb_simulation_warning(r,"TRACE only works with a direct or line collision search.");
     }
 
     // Calculate gravity with special function
@@ -611,7 +579,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     const int Nactive = r->N_active==-1?r->N:r->N_active;
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_trace->S ? ri_trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
-    
+   
     // Clear encounter map
     for (unsigned int i=1; i<r->N; i++){
         ri_trace->encounter_map[i] = 0;
@@ -660,7 +628,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
 
     // Body-body
     // there cannot be TP-TP CEs
-    for (int i = 1; i < Nactive; i++){
+    for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*N+j] = 1;
@@ -726,7 +694,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
 
     // Body-body
     // there cannot be TP-TP CEs
-    for (int i = 1; i < Nactive; i++){
+    for (int i = 0; i < Nactive; i++){ // Do not check for central body anymore
         for (int j = i + 1; j < N; j++){
             if (_switch(r, i, j)){
                 if (ri_trace->current_Ks[i*N+j] == 0){
@@ -748,6 +716,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    
     return new_close_encounter;
 }
 
@@ -795,6 +764,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         r->dt = t_needed-r->t;
                     }
                     reb_collision_search(r);
+		    if (r->N_allocated_collisions) r->ri_trace.force_accept = 1;
                 }
                 // Resetting IAS15 here reduces binary file size.
                 reb_integrator_ias15_reset(r);
@@ -837,6 +807,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
 
                         reb_collision_search(r);
+		        if (r->N_allocated_collisions) r->ri_trace.force_accept = 1;
                     }
                     reb_ode_free(nbody_ode);
                     // Resetting BS here reduces binary file size
@@ -885,12 +856,10 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
 	    ri_trace->step_rejections += 1;
         }
     }
-
+    reb_integrator_trace_dh_to_inertial(r);
+    
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-
-    reb_integrator_trace_dh_to_inertial(r);
-
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
@@ -901,9 +870,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_N = 0;
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
-    r->ri_trace.peri_crit_fdot = 17.;
-    r->ri_trace.peri_crit_distance = 0.;
     r->ri_trace.peri_crit_eta = 1.0;
+    r->ri_trace.force_accept = 0;
 
     // Internal arrays (only used within one timestep)
     free(r->ri_trace.particles_backup);
