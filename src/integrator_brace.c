@@ -221,10 +221,16 @@ void reb_integrator_brace_interaction_step(struct reb_simulation* const r, doubl
     const int N = r->N;
     r->ri_brace.mode = REB_BRACE_MODE_INTERACTION;
     reb_simulation_update_acceleration(r);
+    particles[0].vx = 0; particles[0].vy = 0; particles[0].vz = 0;
     for (int i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
+        // Set star's coordinates such that com is conserved
+        const double f = particles[i].m/particles[0].m;
+        particles[0].vx -= f * particles[i].vx;
+        particles[0].vy -= f * particles[i].vy;
+        particles[0].vz -= f * particles[i].vz;
     }
 }
 
@@ -291,7 +297,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     // No close encounters, skip
     if (!ri_brace->encounter_N) return;
 
-    for (unsigned int i=0; i<r->N; i++){
+    for (unsigned int i=1; i<r->N; i++){
         if(ri_brace->current_Ks[i]){ // Triggers for both PP and PS encounters
             if (r->N_active==-1 || i<r->N_active){
                 ri_brace->encounter_N_active++;

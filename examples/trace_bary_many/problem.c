@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
     
     struct reb_simulation* r;
     
-    r = setup();
-    test(r, "ias15");
+    //r = setup();
+    //test(r, "ias15");
     
     r = setup();
     r->integrator = REB_INTEGRATOR_WHFAST;
