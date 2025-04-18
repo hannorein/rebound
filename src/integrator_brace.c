@@ -380,8 +380,8 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
 }
 
 static void reb_integrator_brace_drift_step(struct reb_simulation* const r, const double _dt){
-    reb_integrator_brace_whfast_step(r, _dt);
-    reb_integrator_brace_bs_step(r, _dt);
+    reb_integrator_brace_bs_step(r, _dt);       // Integrate CE particles
+    reb_integrator_brace_whfast_step(r, _dt);   // Integrate non-CE particles
     // Set star's coordinates such that com is conserved
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;

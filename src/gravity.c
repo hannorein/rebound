@@ -1040,6 +1040,21 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     for (int i=0; i<_N_real; i++){
                         mtot += particles[i].m;
                     }
+                    // Determine coordinate of star
+                    particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
+                    for (int i=1; i<_N_real; i++){
+                        if (r->ri_brace.current_Ks[i]){
+                            const double f = particles[i].m/particles[0].m;
+                            particles[0].x  -= f * particles[i].x;
+                            particles[0].y  -= f * particles[i].y;
+                            particles[0].z  -= f * particles[i].z;
+                        }else{
+                            // TODO
+                            //use kepler solver
+                        }
+                    }
+
+
                     for (int i=0; i<encounter_N; i++){
                         int mi = map[i];
                         int PSenc = r->ri_brace.current_Ks[mi] & 1;
@@ -1053,9 +1068,14 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             particles[mi].ay    = prefact*dy;
                             particles[mi].az    = prefact*dz;
                         }else{
-                            particles[mi].ax    = 0.0;
-                            particles[mi].ay    = 0.0;
-                            particles[mi].az    = 0.0;
+                            const double dx = particles[mi].x - particles[0].x;
+                            const double dy = particles[mi].y - particles[0].y;
+                            const double dz = particles[mi].z - particles[0].z;
+                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                            const double prefact = -particles[0].m*G / (_r*_r*_r);
+                            particles[mi].ax    = prefact*dx;
+                            particles[mi].ay    = prefact*dy;
+                            particles[mi].az    = prefact*dz;
                         }
                     }
 
