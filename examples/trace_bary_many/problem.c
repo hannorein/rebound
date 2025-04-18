@@ -60,9 +60,8 @@ int main(int argc, char* argv[]) {
     test(r, "trace");
 
     r = setup();
-    r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.coordinates = REB_TRACE_COORDINATES_BARYCENTRIC;
-    test(r, "trace-bary");
+    r->integrator = REB_INTEGRATOR_BRACE;
+    test(r, "brace");
 
 }
 

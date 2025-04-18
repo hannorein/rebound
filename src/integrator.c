@@ -37,6 +37,7 @@
 #include "integrator_ias15.h"
 #include "integrator_mercurius.h"
 #include "integrator_trace.h"
+#include "integrator_brace.h"
 #include "integrator_leapfrog.h"
 #include "integrator_sei.h"
 #include "integrator_janus.h"
@@ -80,6 +81,9 @@ void reb_integrator_part1(struct reb_simulation* r){
 		case REB_INTEGRATOR_TRACE:
 			reb_integrator_trace_part1(r);
             break;
+		case REB_INTEGRATOR_BRACE:
+			reb_integrator_brace_part1(r);
+            break;
 		default:
 			break;
 	}
@@ -119,6 +123,9 @@ void reb_integrator_part2(struct reb_simulation* r){
 			break;
 		case REB_INTEGRATOR_TRACE:
 			reb_integrator_trace_part2(r);
+			break;
+		case REB_INTEGRATOR_BRACE:
+			reb_integrator_brace_part2(r);
 			break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
@@ -196,6 +203,9 @@ void reb_simulation_synchronize(struct reb_simulation* r){
 		case REB_INTEGRATOR_TRACE:
 			reb_integrator_trace_synchronize(r);
 			break;
+		case REB_INTEGRATOR_BRACE:
+			reb_integrator_brace_synchronize(r);
+			break;
 		default:
 			break;
 	}
@@ -234,7 +244,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 	if (r->N_var){
 		reb_calculate_acceleration_var(r);
 	}
-	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==0)){
+	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==0)&& (r->integrator != REB_INTEGRATOR_BRACE || r->ri_brace.mode==0)){
         // For Mercurius:
         // Additional forces are only calculated in the kick step, not during close encounter
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
@@ -247,6 +257,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
         }
+        // TODO for BRACE!
         if (r->integrator==REB_INTEGRATOR_TRACE){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
@@ -270,6 +281,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 particles[i].vz = backup[i].vz;
             }
         }
+        // TODO for BRACE!
         if (r->integrator==REB_INTEGRATOR_TRACE){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
