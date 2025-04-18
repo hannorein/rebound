@@ -1002,7 +1002,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     for (int i=1; i<_N_active; i++){
                         if (reb_sigint > 1) return;
                         for (int j=0; j<i; j++){
-                            if (r->ri_brace.current_Ks[j*N+i]) continue;
+                            int PPenc = (r->ri_brace.current_Ks[i] & 2) && (r->ri_brace.current_Ks[j] & 2);
+                            if (PPenc) continue;
                             const double dx = particles[i].x - particles[j].x;
                             const double dy = particles[i].y - particles[j].y;
                             const double dz = particles[i].z - particles[j].z;
@@ -1055,7 +1056,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         if (reb_sigint > 1) return;
                         for (int j=0; j<i; j++){
                             int mj = map[j];
-                            if (!r->ri_brace.current_Ks[mj*N+mi]) continue;
+                            int PPenc = (r->ri_brace.current_Ks[mi] & 2) && (r->ri_brace.current_Ks[mj] & 2);
+                            if (!PPenc) continue;
                             const double dx = particles[mi].x - particles[mj].x;
                             const double dy = particles[mi].y - particles[mj].y;
                             const double dz = particles[mi].z - particles[mj].z;

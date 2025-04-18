@@ -242,6 +242,7 @@ void reb_integrator_brace_whfast_step(struct reb_simulation* const r, double dt)
         m += r->particles[i].m;
     }
     for (int i=1;i<N;i++){
+        // TODO optimize by not advancing CE particles
         reb_whfast_kepler_solver(r,r->particles,r->G*m,i,dt);
     }
 }
@@ -292,19 +293,12 @@ void reb_integrator_brace_nbody_derivatives_barycentric(struct reb_ode* ode, dou
 void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     struct reb_integrator_brace* const ri_brace = &(r->ri_brace);
 
-    if (ri_brace->encounter_N < 1){
-        // No close encounters, skip
-        return;
-    }
-    //printf("encounter: %d\n", ri_brace->encounter_N);
+    // No close encounters, skip
+    if (!ri_brace->encounter_N) return;
 
-    int i_enc = 0;
-    ri_brace->encounter_N_active = 0;
     for (unsigned int i=0; i<r->N; i++){
-        if(ri_brace->encounter_map[i]){
+        if(ri_brace->current_Ks[i]){ // Triggers for both PP and PS encounters
             r->particles[i] = ri_brace->particles_backup_kepler[i]; // Coordinates before WHFast step, overwrite particles with close encounters
-            ri_brace->encounter_map[i_enc] = i;
-            i_enc++;
             if (r->N_active==-1 || i<r->N_active){
                 ri_brace->encounter_N_active++;
             }
@@ -423,8 +417,7 @@ void reb_integrator_brace_part1(struct reb_simulation* r){
         // Can be recreated without loosing bit-wise reproducibility.
         ri_brace->particles_backup       = realloc(ri_brace->particles_backup,sizeof(struct reb_particle)*N);
         ri_brace->particles_backup_kepler   = realloc(ri_brace->particles_backup_kepler,sizeof(struct reb_particle)*N);
-        ri_brace->current_Ks             = realloc(ri_brace->current_Ks,sizeof(int)*N*N);
-        ri_brace->current_Cs             = realloc(ri_brace->current_Cs,sizeof(int)*N);
+        ri_brace->current_Ks             = realloc(ri_brace->current_Ks,sizeof(int)*N);
         ri_brace->encounter_map          = realloc(ri_brace->encounter_map,sizeof(int)*N);
         ri_brace->N_allocated = N;
     }
@@ -450,41 +443,36 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_brace->S ? ri_brace->S : reb_integrator_brace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_brace->S_peri ? ri_brace->S_peri : reb_integrator_brace_switch_peri_default;
    
-    // Clear encounter map
-    for (unsigned int i=0; i<r->N; i++){
-        ri_brace->encounter_map[i] = 0;
-    }
-
+    // Clear previous data
     ri_brace->encounter_N = 0;
-
     for (int i=0; i<N; i++){
-        ri_brace->current_Cs[i] = 0;
-        for (unsigned int j = i + 1; j < N; j++){
-            ri_brace->current_Ks[i*N+j] = 0;
-        }
+        ri_brace->current_Ks[i] = 0;
     }
 
-    // Check for pericenter CE
+    // Planet-Star
     for (int i=1; i<Nactive; i++){
         if (_switch_peri(r, i)){
-            ri_brace->current_Cs[i] = 1;
-            printf("pre peri encounter\n");
+            ri_brace->current_Ks[i] |= 1;
+            ri_brace->encounter_map[ri_brace->encounter_N] = i; 
+            ri_brace->encounter_N++;
+            printf("pre PS encounter\n");
         }
     }
     
-    // Body-body
+    // Planet-Planet
     for (int i=1; i<Nactive; i++){
         for (int j=i+1; j<N; j++){
             if (_switch(r, i, j)){
-                ri_brace->current_Ks[i*N+j] = 1;
-                if (ri_brace->encounter_map[i] == 0){
-                    ri_brace->encounter_map[i] = 1; // trigger encounter
+                if (!ri_brace->current_Ks[i]){
+                    ri_brace->encounter_map[ri_brace->encounter_N] = i; 
                     ri_brace->encounter_N++;
                 }
-                if (ri_brace->encounter_map[j] == 0){
-                    ri_brace->encounter_map[j] = 1; // trigger encounter
+                ri_brace->current_Ks[i] |= 2;
+                if (!ri_brace->current_Ks[j]){
+                    ri_brace->encounter_map[ri_brace->encounter_N] = j; 
                     ri_brace->encounter_N++;
                 }
+                ri_brace->current_Ks[j] |= 2;
             }
         }
     }
@@ -499,39 +487,40 @@ int reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_brace->S_peri ? ri_brace->S_peri : reb_integrator_brace_switch_peri_default;
     int new_close_encounter = 0;
     
-    // Clear encounter maps
-    for (unsigned int i=0; i<r->N; i++){
-        ri_brace->encounter_map[i] = 0;
-    }
-    ri_brace->encounter_N = 0;
-    
     // Check for pericenter CE if not already triggered from pre-timstep.
     for (int i=1; i<Nactive; i++){
-        if (_switch_peri(r, i)){
-            if (!ri_brace->current_Cs[i]){
-                ri_brace->current_Cs[i] = 1;
-                printf("new post peri encounter\n");
+        if (!(ri_brace->current_Ks[i] & 1)){
+            if (_switch_peri(r, i)){
+                if (!ri_brace->current_Ks[i]){
+                    ri_brace->encounter_map[ri_brace->encounter_N] = i; 
+                    ri_brace->encounter_N++;
+                }
+                ri_brace->current_Ks[i] |= 1;
+                printf("new post PS encounter\n");
                 new_close_encounter = 1;
             }
         }
     }
-
     // Body-body
     for (int i=1; i<Nactive; i++){
         for (int j=i+1; j<N; j++){
             if (_switch(r, i, j)){
-                if (ri_brace->current_Ks[i*N+j] == 0){
-                      new_close_encounter = 1;
+                if (!(ri_brace->current_Ks[i] & 2)){
+                    new_close_encounter = 1;
                 }
-                ri_brace->current_Ks[i*N+j] = 1;
-                if (ri_brace->encounter_map[i] == 0){
-                    ri_brace->encounter_map[i] = 1; // trigger encounter
+                if (!ri_brace->current_Ks[i]){
+                    ri_brace->encounter_map[ri_brace->encounter_N] = i; 
                     ri_brace->encounter_N++;
                 }
-                if (ri_brace->encounter_map[j] == 0){
-                    ri_brace->encounter_map[j] = 1; // trigger encounter
+                ri_brace->current_Ks[i] |= 2;
+                if (!(ri_brace->current_Ks[j] & 2)){
+                    new_close_encounter = 1;
+                }
+                if (!ri_brace->current_Ks[j]){
+                    ri_brace->encounter_map[ri_brace->encounter_N] = j;
                     ri_brace->encounter_N++;
                 }
+                ri_brace->current_Ks[j] |= 2;
             }
         }
     }
@@ -607,8 +596,6 @@ void reb_integrator_brace_reset(struct reb_simulation* r){
 
     free(r->ri_brace.current_Ks);
     r->ri_brace.current_Ks = NULL;
-    free(r->ri_brace.current_Cs);
-    r->ri_brace.current_Cs = NULL;
 
     r->ri_brace.S = NULL;
     r->ri_brace.S_peri = NULL;

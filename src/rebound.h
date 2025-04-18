@@ -298,7 +298,7 @@ struct reb_integrator_trace {
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 
-// BRACE (Lu Hernandez & Rein 2024)
+// BRACE
 struct reb_integrator_brace {
     int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
     int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
@@ -333,8 +333,7 @@ struct reb_integrator_brace {
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
-    int* current_Ks; // Tracking K_ij for the entire timestep
-    int* current_Cs; // Tracking C_i for the entire timestep
+    int* current_Ks; // Tracking K_i for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 
