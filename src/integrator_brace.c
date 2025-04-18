@@ -625,13 +625,16 @@ void reb_integrator_brace_part2(struct reb_simulation* const r){
     
     //printf("%e %e %e %e %d\n", r->particles[0].x, r->particles[0].y, r->particles[1].x, r->particles[1].y, ri_brace->current_Ks[1]);
 
-    //int K_1 = 0;
-    //int K_2 = 0;
-    //for (int i=0; i<r->N; i++){
-    //    if (ri_brace->current_Ks[i] &1) K_1++;
-    //    if (ri_brace->current_Ks[i] &2) K_2++;
-    //}
-    //printf("%f %d %d\n", r->t, K_1, K_2);
+    if (0){
+        // Debug Stats // TODO
+        int K_1 = 0;
+        int K_2 = 0;
+        for (int i=0; i<r->N; i++){
+            if (ri_brace->current_Ks[i] &1) K_1++;
+            if (ri_brace->current_Ks[i] &2) K_2++;
+        }
+        printf("%f %d %d\n", r->t, K_1, K_2);
+    }
     
     r->t+=r->dt;
     r->dt_last_done = r->dt;
