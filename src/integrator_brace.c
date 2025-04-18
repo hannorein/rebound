@@ -320,89 +320,87 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     ri_brace->mode = REB_BRACE_MODE_KEPLER;
     
     // Only Partial BS uses this step 
-    if (ri_brace->peri_mode == REB_BRACE_PERI_PARTIAL_BS || !ri_brace->current_C){
-        // run
-        const double old_dt = r->dt;
-        const double old_t = r->t;
-        const double t_needed = r->t + dt;
-        reb_integrator_bs_reset(r);
-        
-        // Temporarily remove all odes for BS step
-        struct reb_ode** odes_backup = r->odes;
-        int N_allocated_odes_backup = r->N_allocated_odes;
-        int N_odes_backup = r->N_odes;
-        r->odes = NULL;
-        r->N_allocated_odes = 0;
-        r->N_odes = 0;
+    // run
+    const double old_dt = r->dt;
+    const double old_t = r->t;
+    const double t_needed = r->t + dt;
+    reb_integrator_bs_reset(r);
 
-        // Temporarily add new nbody ode for BS step
-        struct reb_ode* nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
-        nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
-        nbody_ode->needs_nbody = 0;
+    // Temporarily remove all odes for BS step
+    struct reb_ode** odes_backup = r->odes;
+    int N_allocated_odes_backup = r->N_allocated_odes;
+    int N_odes_backup = r->N_odes;
+    r->odes = NULL;
+    r->N_allocated_odes = 0;
+    r->N_odes = 0;
 
-        // TODO: Support backwards integrations
-        while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
-            double* y = nbody_ode->y;
+    // Temporarily add new nbody ode for BS step
+    struct reb_ode* nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
+    nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
+    nbody_ode->needs_nbody = 0;
 
-            // In case of overshoot
-            if (r->t + dt >  t_needed){
-                dt = t_needed - r->t;
-            }
+    // TODO: Support backwards integrations
+    while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
+        double* y = nbody_ode->y;
 
-            for (unsigned int i=0; i<ri_brace->encounter_N; i++){
-                const int mi = ri_brace->encounter_map[i];
-                const struct reb_particle p = r->particles[mi];
-                y[i*6+0] = p.x;
-                y[i*6+1] = p.y;
-                y[i*6+2] = p.z;
-                y[i*6+3] = p.vx;
-                y[i*6+4] = p.vy;
-                y[i*6+5] = p.vz;
-            }
-
-            int success = reb_integrator_bs_step(r, dt);
-            if (success){
-                r->t += dt;
-            }
-            dt = r->ri_bs.dt_proposed;
-            reb_integrator_brace_update_particles(r, nbody_ode->y);
-
-            reb_collision_search(r);
-            if (r->N_allocated_collisions) ri_brace->force_accept = 1;
-
-            if (nbody_ode->length != ri_brace->encounter_N*3*2){
-        		// Just re-create the ODE
-                printf("recreate ode\n");
-                reb_ode_free(nbody_ode);
-                nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
-                nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
-                nbody_ode->needs_nbody = 0;
-                r->ri_bs.first_or_last_step = 1;
-            }
-        }
-  
-        // if only test particles encountered massive bodies, reset the
-        // massive body coordinates to their post Kepler step state
-        if(ri_brace->tponly_encounter){
-            printf("Tp only\n");
-            for (unsigned int i=1; i < ri_brace->encounter_N_active; i++){
-                unsigned int mi = ri_brace->encounter_map[i];
-                r->particles[mi] = ri_brace->particles_backup_kepler[mi];
-            }
+        // In case of overshoot
+        if (r->t + dt >  t_needed){
+            dt = t_needed - r->t;
         }
 
-        // Restore odes
-        reb_ode_free(nbody_ode);
-        free(r->odes);
-        r->odes = odes_backup;
-        r->N_allocated_odes = N_allocated_odes_backup;
-        r->N_odes = N_odes_backup;
+        for (unsigned int i=0; i<ri_brace->encounter_N; i++){
+            const int mi = ri_brace->encounter_map[i];
+            const struct reb_particle p = r->particles[mi];
+            y[i*6+0] = p.x;
+            y[i*6+1] = p.y;
+            y[i*6+2] = p.z;
+            y[i*6+3] = p.vx;
+            y[i*6+4] = p.vy;
+            y[i*6+5] = p.vz;
+        }
 
-        r->t = old_t;
-        
-        // Resetting BS here reduces binary file size.
-        reb_integrator_bs_reset(r);
+        int success = reb_integrator_bs_step(r, dt);
+        if (success){
+            r->t += dt;
+        }
+        dt = r->ri_bs.dt_proposed;
+        reb_integrator_brace_update_particles(r, nbody_ode->y);
+
+        reb_collision_search(r);
+        if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+
+        if (nbody_ode->length != ri_brace->encounter_N*3*2){
+            // Just re-create the ODE
+            printf("recreate ode\n");
+            reb_ode_free(nbody_ode);
+            nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
+            nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
+            nbody_ode->needs_nbody = 0;
+            r->ri_bs.first_or_last_step = 1;
+        }
     }
+
+    // if only test particles encountered massive bodies, reset the
+    // massive body coordinates to their post Kepler step state
+    if(ri_brace->tponly_encounter){
+        printf("Tp only\n");
+        for (unsigned int i=1; i < ri_brace->encounter_N_active; i++){
+            unsigned int mi = ri_brace->encounter_map[i];
+            r->particles[mi] = ri_brace->particles_backup_kepler[mi];
+        }
+    }
+
+    // Restore odes
+    reb_ode_free(nbody_ode);
+    free(r->odes);
+    r->odes = odes_backup;
+    r->N_allocated_odes = N_allocated_odes_backup;
+    r->N_odes = N_odes_backup;
+
+    r->t = old_t;
+
+    // Resetting BS here reduces binary file size.
+    reb_integrator_bs_reset(r);
 }
 
 void reb_integrator_brace_kepler_step(struct reb_simulation* const r, const double _dt){
@@ -442,6 +440,7 @@ void reb_integrator_brace_part1(struct reb_simulation* r){
         ri_brace->particles_backup       = realloc(ri_brace->particles_backup,sizeof(struct reb_particle)*N);
         ri_brace->particles_backup_kepler   = realloc(ri_brace->particles_backup_kepler,sizeof(struct reb_particle)*N);
         ri_brace->current_Ks             = realloc(ri_brace->current_Ks,sizeof(int)*N*N);
+        ri_brace->current_Cs             = realloc(ri_brace->current_Cs,sizeof(int)*N);
         ri_brace->encounter_map          = realloc(ri_brace->encounter_map,sizeof(int)*N);
         ri_brace->N_allocated = N;
     }
@@ -474,10 +473,8 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
 
     ri_brace->encounter_N = 0;
 
-    // Reset encounter triggers.
-    ri_brace->current_C = 0;
-
-    for (int i = 0; i < N; i++){
+    for (int i=0; i<N; i++){
+        ri_brace->current_Cs[i] = 0;
         for (unsigned int j = i + 1; j < N; j++){
             ri_brace->current_Ks[i*N+j] = 0;
         }
@@ -490,35 +487,16 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
     }
 
     // Check for pericenter CE
-    for (int j = 1; j < Nactive; j++){
-        if (_switch_peri(r, j)){
-            // TODO: disables:
-            // ri_brace->current_C = 1;
+    for (int i=1; i<Nactive; i++){
+        if (_switch_peri(r, i)){
+            ri_brace->current_Cs[i] = 1;
             printf("pre peri encounter\n");
-            if (ri_brace->peri_mode == REB_BRACE_PERI_FULL_BS || ri_brace->peri_mode == REB_BRACE_PERI_FULL_IAS15){
-                // Everything will be integrated with BS/IAS15. No need to check any further.
-                return;
-            }
-            if (j < Nactive){ // Two massive particles have a close encounter
-                ri_brace->tponly_encounter = 0;
-                break; // No need to check other particles
-            }
         }
     }
     
-    if (ri_brace->current_C){
-        // Pericenter close encounter detected. We integrate the entire simulation with BS
-        ri_brace->encounter_N = N;
-        for (int i = 1; i < N; i++){
-            ri_brace->encounter_map[i] = 1; //  trigger encounter
-        }
-
-    }
-
     // Body-body
-    // there cannot be TP-TP CEs
-    for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
-        for (int j = i + 1; j < N; j++){
+    for (int i=1; i<Nactive; i++){
+        for (int j=i+1; j<N; j++){
             if (_switch(r, i, j)){
                 ri_brace->current_Ks[i*N+j] = 1;
                 if (ri_brace->encounter_map[i] == 0){
@@ -553,31 +531,14 @@ double reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
     }
     ri_brace->encounter_N = 0;
     
-    if (!ri_brace->current_C){
-        // Check for pericenter CE if not already triggered from pre-timstep.
-        for (int j = 1; j < Nactive; j++){
-            if (_switch_peri(r, j)){
-                // TODO: disabled:
-                // ri_brace->current_C = 1;
-                printf("post peri encounter\n");
+    // Check for pericenter CE if not already triggered from pre-timstep.
+    for (int i=1; i<Nactive; i++){
+        if (_switch_peri(r, i)){
+            if (!ri_brace->current_Cs[i]){
+                ri_brace->current_Cs[i] = 1;
+                printf("new post peri encounter\n");
                 new_close_encounter = 1;
-                if (ri_brace->peri_mode == REB_BRACE_PERI_FULL_BS || ri_brace->peri_mode == REB_BRACE_PERI_FULL_IAS15){
-                    // Everything will be integrated with BS/IAS15. No need to check any further.
-                    return new_close_encounter;
-                }
-
-                if (j < Nactive){ // Two massive particles have a close encounter
-                    ri_brace->tponly_encounter = 0;
-                    break; // No need to check other particles
-                }
             }
-        }
-    }
-    if (ri_brace->current_C){
-        // Pericenter close encounter detected. We integrate the entire simulation with BS
-        ri_brace->encounter_N = N;
-        for (int i = 0; i < N; i++){
-            ri_brace->encounter_map[i] = 1; // trigger encounter
         }
     }
 
@@ -610,106 +571,11 @@ double reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
     return new_close_encounter;
 }
 
-// TODO: Should be reused from BS
-static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
-    struct reb_simulation* const r = ode->r;
-    reb_integrator_bs_update_particles(r, y);
-    reb_simulation_update_acceleration(r);
-
-    for (unsigned int i=0; i<r->N; i++){
-        const struct reb_particle p = r->particles[i];
-        yDot[i*6+0] = p.vx;
-        yDot[i*6+1] = p.vy;
-        yDot[i*6+2] = p.vz;
-        yDot[i*6+3] = p.ax;
-        yDot[i*6+4] = p.ay;
-        yDot[i*6+5] = p.az;
-    }
-}
-
 static void reb_integrator_brace_step(struct reb_simulation* const r){
-    if (r->ri_brace.current_C == 0 || r->ri_brace.peri_mode == REB_BRACE_PERI_PARTIAL_BS){
-	    reb_integrator_brace_interaction_step(r, r->dt/2.);
-        reb_integrator_brace_kepler_step(r, r->dt);
-        reb_integrator_brace_com_step(r,r->dt);
-        reb_integrator_brace_interaction_step(r, r->dt/2.);
-    }else{
-        printf("Peri step\n");
-	// Pericenter approach with one of the FULL prescriptions
-        double t_needed = r->t + r->dt;
-        const double old_dt = r->dt;
-        const double old_t = r->t;
-        r->gravity = REB_GRAVITY_BASIC;
-        r->ri_brace.mode = REB_BRACE_MODE_FULL; // for collision search
-        switch (r->ri_brace.peri_mode){
-            case REB_BRACE_PERI_FULL_IAS15:
-                // Run default IAS15 integration
-                reb_integrator_ias15_reset(r);
-                while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
-                    reb_simulation_update_acceleration(r);
-                    reb_integrator_ias15_part2(r);
-                    if (r->t+r->dt >  t_needed){
-                        r->dt = t_needed-r->t;
-                    }
-                    reb_collision_search(r);
-		    if (r->N_allocated_collisions) r->ri_brace.force_accept = 1;
-                }
-                // Resetting IAS15 here reduces binary file size.
-                reb_integrator_ias15_reset(r);
-                break;
-            case REB_BRACE_PERI_FULL_BS:
-                {
-                    // Run default BS integration
-                    // TODO: Syntax should be similar to IAS
-                    struct reb_ode* nbody_ode = NULL;
-
-                    double* y;
-                    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
-                        if (!nbody_ode || nbody_ode->length != 6*r->N){
-                            if (nbody_ode){
-                                reb_ode_free(nbody_ode);
-                            }
-                            nbody_ode = reb_ode_create(r, 6*r->N);
-                            nbody_ode->derivatives = nbody_derivatives;
-                            nbody_ode->needs_nbody = 0;
-                            y = nbody_ode->y;
-                            reb_integrator_bs_reset(r);
-                        }
-
-                        for (unsigned int i=0; i<r->N; i++){
-                            const struct reb_particle p = r->particles[i];
-                            y[i*6+0] = p.x;
-                            y[i*6+1] = p.y;
-                            y[i*6+2] = p.z;
-                            y[i*6+3] = p.vx;
-                            y[i*6+4] = p.vy;
-                            y[i*6+5] = p.vz;
-                        }
-
-                        int success = reb_integrator_bs_step(r, r->dt);
-                        if (success){
-                            r->t += r->dt;
-                        }
-                        r->dt = r->ri_bs.dt_proposed;
-
-                        reb_integrator_bs_update_particles(r, nbody_ode->y);
-
-                        reb_collision_search(r);
-		        if (r->N_allocated_collisions) r->ri_brace.force_accept = 1;
-                    }
-                    reb_ode_free(nbody_ode);
-                    // Resetting BS here reduces binary file size
-                    reb_integrator_bs_reset(r);
-                }
-                break;
-            default:
-                reb_simulation_error(r,"Unsupport peri_mode encountered\n");
-                break;
-        }
-        r->gravity = REB_GRAVITY_BRACE;
-        r->t = old_t; // final time will be set later
-        r->dt = old_dt;
-    }
+    reb_integrator_brace_interaction_step(r, r->dt/2.);
+    reb_integrator_brace_kepler_step(r, r->dt);
+    reb_integrator_brace_com_step(r,r->dt);
+    reb_integrator_brace_interaction_step(r, r->dt/2.);
 }
 
 void reb_integrator_brace_part2(struct reb_simulation* const r){
@@ -771,9 +637,10 @@ void reb_integrator_brace_reset(struct reb_simulation* r){
     free(r->ri_brace.encounter_map);
     r->ri_brace.encounter_map = NULL;
 
-    r->ri_brace.current_C = 0;
     free(r->ri_brace.current_Ks);
     r->ri_brace.current_Ks = NULL;
+    free(r->ri_brace.current_Cs);
+    r->ri_brace.current_Cs = NULL;
 
     r->ri_brace.S = NULL;
     r->ri_brace.S_peri = NULL;

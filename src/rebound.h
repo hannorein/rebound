@@ -335,7 +335,7 @@ struct reb_integrator_brace {
     struct reb_vec3d com_vel;
 
     int* current_Ks; // Tracking K_ij for the entire timestep
-    unsigned int current_C; // Tracking C for the entire timestep
+    int* current_Cs; // Tracking C_i for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 
