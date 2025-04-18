@@ -1001,7 +1001,8 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     }
                     for (int i=1; i<_N_active; i++){
                         if (reb_sigint > 1) return;
-                        for (int j=0; j<i; j++){
+                        int PSenc = r->ri_brace.current_Ks[i] & 1;
+                        for (int j=PSenc?1:0; j<i; j++){
                             int PPenc = (r->ri_brace.current_Ks[i] & 2) && (r->ri_brace.current_Ks[j] & 2);
                             if (PPenc) continue;
                             const double dx = particles[i].x - particles[j].x;
@@ -1018,6 +1019,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                             particles[j].ay    += prefacti*dy;
                             particles[j].az    += prefacti*dz;
                         }
+                        if (PSenc) continue;
                         const double dx = particles[i].x;
                         const double dy = particles[i].y;
                         const double dz = particles[i].z;
@@ -1040,14 +1042,21 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     }
                     for (int i=0; i<encounter_N; i++){
                         int mi = map[i];
-                        const double dx = particles[mi].x;
-                        const double dy = particles[mi].y;
-                        const double dz = particles[mi].z;
-                        const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
-                        const double prefact = -mtot*G / (_r*_r*_r);
-                        particles[mi].ax    = prefact*dx;
-                        particles[mi].ay    = prefact*dy;
-                        particles[mi].az    = prefact*dz;
+                        int PSenc = r->ri_brace.current_Ks[mi] & 1;
+                        if (!PSenc){
+                            const double dx = particles[mi].x;
+                            const double dy = particles[mi].y;
+                            const double dz = particles[mi].z;
+                            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                            const double prefact = -mtot*G / (_r*_r*_r);
+                            particles[mi].ax    = prefact*dx;
+                            particles[mi].ay    = prefact*dy;
+                            particles[mi].az    = prefact*dz;
+                        }else{
+                            particles[mi].ax    = 0.0;
+                            particles[mi].ay    = 0.0;
+                            particles[mi].az    = 0.0;
+                        }
                     }
 
                     for (int i=1; i<encounter_N; i++){
