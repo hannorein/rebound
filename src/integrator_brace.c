@@ -354,6 +354,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
                         r->t += dt;
                     }
                     dt = r->ri_bs.dt_proposed;
+                    if (reb_sigint > 1) r->t = t_needed;// force quit
                     reb_integrator_brace_update_particles(r, nbody_ode->y);
 
                     reb_collision_search(r);
@@ -398,21 +399,28 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
                 r->N_allocated_odes = 0;
                 r->N_odes = 0;
 
+                // TODO: This is not nice.
+                if (ri_brace->nextias_dt){
+                    r->dt = MIN(r->dt/120.0, ri_brace->nextias_dt);
+                }else{
+                    r->dt /= 120.0; // slow start
+                }
                 // TODO: Support backwards integrations
-                r->dt /= 120.0; // slow start
                 while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
                     // In case of overshoot
                     if (r->t + dt >  t_needed){
                         dt = t_needed - r->t;
+                    }else{
+                        ri_brace->nextias_dt = r->dt;
                     }
 
                     reb_simulation_update_acceleration(r);
                     reb_integrator_ias15_part2(r);
+                    if (reb_sigint > 1) r->t = t_needed;// force quit
                     //   reb_collision_search(r);
                     // if (r->N_allocated_collisions) ri_brace->force_accept = 1;
 
                 }
-
                 // Restore odes
                 r->odes = odes_backup;
                 r->N_allocated_odes = N_allocated_odes_backup;
@@ -498,6 +506,7 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
     for (int i=1; i<Nactive; i++){
         if (_switch_peri(r, i)){
             ri_brace->current_Ks[i] |= 1;
+            ri_brace->current_Ks[i] |= 2; // also set PP flag such that all PP during pericenter are resolved.
             ri_brace->encounter_map[ri_brace->encounter_N] = i; 
             ri_brace->encounter_N++;
             //printf("pre PS encounter\n");
@@ -541,6 +550,7 @@ int reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
                     ri_brace->encounter_N++;
                 }
                 ri_brace->current_Ks[i] |= 1;
+                ri_brace->current_Ks[i] |= 2; // also set PP flag such that all PP during pericenter are resolved.
                 //printf("new post PS encounter\n");
                 new_close_encounter = 1;
             }
@@ -614,6 +624,14 @@ void reb_integrator_brace_part2(struct reb_simulation* const r){
     reb_integrator_brace_barycentric_to_inertial(r);
     
     //printf("%e %e %e %e %d\n", r->particles[0].x, r->particles[0].y, r->particles[1].x, r->particles[1].y, ri_brace->current_Ks[1]);
+
+    //int K_1 = 0;
+    //int K_2 = 0;
+    //for (int i=0; i<r->N; i++){
+    //    if (ri_brace->current_Ks[i] &1) K_1++;
+    //    if (ri_brace->current_Ks[i] &2) K_2++;
+    //}
+    //printf("%f %d %d\n", r->t, K_1, K_2);
     
     r->t+=r->dt;
     r->dt_last_done = r->dt;

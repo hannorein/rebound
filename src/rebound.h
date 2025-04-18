@@ -308,6 +308,7 @@ struct reb_integrator_brace {
 
     // Internal use
     double old_t; 
+    double nextias_dt; 
     enum {
         REB_BRACE_MODE_INTERACTION = 0, // Interaction step
         REB_BRACE_MODE_DRIFT = 1,       // Kepler step

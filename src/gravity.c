@@ -1042,20 +1042,32 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                         mtot += particles[i].m;
                     }
                     // Determine coordinate of star
-                    particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
-                    double dt = r->t - r->ri_brace.old_t;
-                    for (int i=1; i<_N_real; i++){
-                        const double f = particles[i].m/particles[0].m;
-                        if (r->ri_brace.current_Ks[i]){
-                            particles[0].x  -= f * particles[i].x;
-                            particles[0].y  -= f * particles[i].y;
-                            particles[0].z  -= f * particles[i].z;
-                        }else{
-                            struct reb_particle tmp = particles[i];
-                            reb_whfast_kepler_solver(r,&tmp,r->G*mtot,0,dt);
-                            particles[0].x  -= f * particles[i].x;
-                            particles[0].y  -= f * particles[i].y;
-                            particles[0].z  -= f * particles[i].z;
+                    int need_particle0 = 0;
+                    for (int i=0; i<encounter_N; i++){
+                        int mi = map[i];
+                        int PSenc = r->ri_brace.current_Ks[mi] & 1;
+                        if (PSenc){
+                            need_particle0 = 1;
+                            break;
+                        }
+                    }
+
+                    if (need_particle0){
+                        particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
+                        double dt = r->t - r->ri_brace.old_t;
+                        for (int i=1; i<_N_real; i++){
+                            const double f = particles[i].m/particles[0].m;
+                            if (r->ri_brace.current_Ks[i]){
+                                particles[0].x  -= f * particles[i].x;
+                                particles[0].y  -= f * particles[i].y;
+                                particles[0].z  -= f * particles[i].z;
+                            }else{
+                                struct reb_particle tmp = particles[i]; // particle before drift step
+                                reb_whfast_kepler_solver(r,&tmp,r->G*mtot,0,dt);
+                                particles[0].x  -= f * tmp.x;
+                                particles[0].y  -= f * tmp.y;
+                                particles[0].z  -= f * tmp.z;
+                            }
                         }
                     }
 
