@@ -641,24 +641,18 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
     reb_integrator_trace_bs_step(r, _dt);
     if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_BARYCENTRIC){
         struct reb_particle* restrict const particles = r->particles;
-        struct reb_vec3d com_pos = {0};
-        struct reb_vec3d com_vel = {0};
         const int N = r->N;
+        particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
+        particles[0].vx = 0; particles[0].vy = 0; particles[0].vz = 0;
         for (int i=1;i<N;i++){
-            double m = particles[i].m;
-            com_pos.x += m * particles[i].x;
-            com_pos.y += m * particles[i].y;
-            com_pos.z += m * particles[i].z;
-            com_vel.x += m * particles[i].vx;
-            com_vel.y += m * particles[i].vy;
-            com_vel.z += m * particles[i].vz;
+            const double f = particles[i].m/particles[0].m;
+            particles[0].x  -= f * particles[i].x;
+            particles[0].y  -= f * particles[i].y;
+            particles[0].z  -= f * particles[i].z;
+            particles[0].vx -= f * particles[i].vx;
+            particles[0].vy -= f * particles[i].vy;
+            particles[0].vz -= f * particles[i].vz;
         }
-        particles[0].x = -com_pos.x/particles[0].m;
-        particles[0].y = -com_pos.y/particles[0].m;
-        particles[0].z = -com_pos.z/particles[0].m;
-        particles[0].vx = -com_vel.x/particles[0].m;
-        particles[0].vy = -com_vel.y/particles[0].m;
-        particles[0].vz = -com_vel.z/particles[0].m;
     }
 }
 
