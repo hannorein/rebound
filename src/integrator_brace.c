@@ -308,7 +308,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     ri_brace->mode = REB_BRACE_MODE_DRIFT;
     
     const double old_dt = r->dt;
-    const double old_t = r->t;
+    ri_brace->old_t = r->t; // needed for gravity calculation
     const double t_needed = r->t + dt;
     reb_integrator_bs_reset(r);
 
@@ -373,7 +373,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     r->N_allocated_odes = N_allocated_odes_backup;
     r->N_odes = N_odes_backup;
 
-    r->t = old_t;
+    r->t = ri_brace->old_t;
 
     // Resetting BS here reduces binary file size.
     reb_integrator_bs_reset(r);
@@ -451,7 +451,7 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
             ri_brace->current_Ks[i] |= 1;
             ri_brace->encounter_map[ri_brace->encounter_N] = i; 
             ri_brace->encounter_N++;
-            printf("pre PS encounter\n");
+            //printf("pre PS encounter\n");
         }
     }
     
@@ -492,7 +492,7 @@ int reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
                     ri_brace->encounter_N++;
                 }
                 ri_brace->current_Ks[i] |= 1;
-                printf("new post PS encounter\n");
+                //printf("new post PS encounter\n");
                 new_close_encounter = 1;
             }
         }
@@ -563,6 +563,8 @@ void reb_integrator_brace_part2(struct reb_simulation* const r){
     }
     
     reb_integrator_brace_barycentric_to_inertial(r);
+    
+    //printf("%e %e %e %e %d\n", r->particles[0].x, r->particles[0].y, r->particles[1].x, r->particles[1].y, ri_brace->current_Ks[1]);
     
     r->t+=r->dt;
     r->dt_last_done = r->dt;

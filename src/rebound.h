@@ -307,6 +307,7 @@ struct reb_integrator_brace {
     double peri_crit_eta;
 
     // Internal use
+    double old_t; 
     enum {
         REB_BRACE_MODE_INTERACTION = 0, // Interaction step
         REB_BRACE_MODE_DRIFT = 1,       // Kepler step
