@@ -615,7 +615,6 @@ void reb_simulation_init(struct reb_simulation* r){
 
     // ********** BRACE
     r->ri_brace.mode = REB_BRACE_MODE_NONE;
-    r->ri_brace.peri_mode = REB_BRACE_PERI_FULL_BS;
     r->ri_brace.encounter_N = 0;
     r->ri_brace.r_crit_hill = 3.;
     r->ri_brace.peri_crit_eta = 1.0;

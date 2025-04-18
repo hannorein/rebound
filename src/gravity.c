@@ -1029,8 +1029,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
                     }
                 }
                 break;
-                case REB_BRACE_MODE_KEPLER: // BS part
-                // Kepler Step
+                case REB_BRACE_MODE_DRIFT:
                 {
                     const int encounter_N = r->ri_brace.encounter_N;
                     int* map = r->ri_brace.encounter_map;

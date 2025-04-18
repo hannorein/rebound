@@ -303,21 +303,14 @@ struct reb_integrator_brace {
     int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
     int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
 
-    enum {
-        REB_BRACE_PERI_PARTIAL_BS = 0,
-        REB_BRACE_PERI_FULL_BS = 1,
-        REB_BRACE_PERI_FULL_IAS15 = 2,
-    } peri_mode;
-
     double r_crit_hill;
     double peri_crit_eta;
 
     // Internal use
     enum {
         REB_BRACE_MODE_INTERACTION = 0, // Interaction step
-        REB_BRACE_MODE_KEPLER = 1,      // Kepler step
+        REB_BRACE_MODE_DRIFT = 1,       // Kepler step
         REB_BRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
-        REB_BRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
     } mode;
     unsigned int encounter_N;           // Number of particles currently having an encounter
     unsigned int encounter_N_active;    // Number of active particles currently having an encounter
@@ -326,15 +319,14 @@ struct reb_integrator_brace {
     unsigned int N_allocated_additional_forces;
 
     struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
-    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
 
     int* encounter_map;             // Map to represent which particles are integrated with BS
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
-    int* current_Ks; // Tracking K_i for the entire timestep
-    unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
+    int* current_Ks;                // 0=no CE, 1=PS, 2=PP
+    unsigned int force_accept;      // Force accept for irreversible steps: collisions and adding particles
 };
 
 // SABA Integrator (Laskar & Robutel 2001)

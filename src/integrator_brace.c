@@ -235,24 +235,25 @@ void reb_integrator_brace_com_step(struct reb_simulation* const r, double dt){
 }
 
 void reb_integrator_brace_whfast_step(struct reb_simulation* const r, double dt){
-    //struct reb_particle* restrict const particles = r->particles;
+    struct reb_integrator_brace* const ri_brace = &(r->ri_brace);
+    double mtot = r->particles[0].m;
     const int N = r->N;
-    double m = r->particles[0].m;
     for (int i=1;i<N;i++){
-        m += r->particles[i].m;
+        mtot += r->particles[i].m;
     }
     for (int i=1;i<N;i++){
-        // TODO optimize by not advancing CE particles
-        reb_whfast_kepler_solver(r,r->particles,r->G*m,i,dt);
+        if (!ri_brace->current_Ks[i]){  // Skip particles undergoing CE
+            reb_whfast_kepler_solver(r,r->particles,r->G*mtot,i,dt);
+        }
     }
 }
 
 void reb_integrator_brace_update_particles(struct reb_simulation* r, const double* y){
     int N = r->ri_brace.encounter_N;
-    int* map = r->ri_brace.encounter_map;
+    int* encounter_map = r->ri_brace.encounter_map;
 
     for (int i=0; i<N; i++){
-        int mi = map[i];
+        int mi = encounter_map[i];
         struct reb_particle* const p = &(r->particles[mi]);
         p->x  = y[i*6+0];
         p->y  = y[i*6+1];
@@ -265,22 +266,16 @@ void reb_integrator_brace_update_particles(struct reb_simulation* r, const doubl
 
 void reb_integrator_brace_nbody_derivatives_barycentric(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    // BRACE always needs this to ensure the right Hamiltonian is evolved
+    int* encounter_map = r->ri_brace.encounter_map;
+    int N = r->ri_brace.encounter_N;
+
     reb_integrator_brace_update_particles(r, y);
     reb_simulation_update_acceleration(r);
 
-    int* map = r->ri_brace.encounter_map;
-    int N = r->ri_brace.encounter_N;
-
-    if (map==NULL){
-        reb_simulation_error(r, "Cannot access BRACE map from BS.");
-        return;
-    }
-
     for (int i=0; i<N; i++){
-        int mi = map[i];
+        int mi = encounter_map[i];
         const struct reb_particle p = r->particles[mi];
-        yDot[i*6+0] = p.vx; // Already checked for current_L
+        yDot[i*6+0] = p.vx;
         yDot[i*6+1] = p.vy;
         yDot[i*6+2] = p.vz;
         yDot[i*6+3] = p.ax;
@@ -298,17 +293,14 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
 
     for (unsigned int i=0; i<r->N; i++){
         if(ri_brace->current_Ks[i]){ // Triggers for both PP and PS encounters
-            r->particles[i] = ri_brace->particles_backup_kepler[i]; // Coordinates before WHFast step, overwrite particles with close encounters
             if (r->N_active==-1 || i<r->N_active){
                 ri_brace->encounter_N_active++;
             }
         }
     }
 
-    ri_brace->mode = REB_BRACE_MODE_KEPLER;
+    ri_brace->mode = REB_BRACE_MODE_DRIFT;
     
-    // Only Partial BS uses this step 
-    // run
     const double old_dt = r->dt;
     const double old_t = r->t;
     const double t_needed = r->t + dt;
@@ -381,11 +373,10 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     reb_integrator_bs_reset(r);
 }
 
-void reb_integrator_brace_kepler_step(struct reb_simulation* const r, const double _dt){
-    struct reb_integrator_brace* const ri_brace = &(r->ri_brace);
-    memcpy(ri_brace->particles_backup_kepler,r->particles,r->N*sizeof(struct reb_particle));
+static void reb_integrator_brace_drift_step(struct reb_simulation* const r, const double _dt){
     reb_integrator_brace_whfast_step(r, _dt);
     reb_integrator_brace_bs_step(r, _dt);
+    // Set star's coordinates such that com is conserved
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
@@ -416,7 +407,6 @@ void reb_integrator_brace_part1(struct reb_simulation* r){
         // These arrays are only used within one timestep.
         // Can be recreated without loosing bit-wise reproducibility.
         ri_brace->particles_backup       = realloc(ri_brace->particles_backup,sizeof(struct reb_particle)*N);
-        ri_brace->particles_backup_kepler   = realloc(ri_brace->particles_backup_kepler,sizeof(struct reb_particle)*N);
         ri_brace->current_Ks             = realloc(ri_brace->current_Ks,sizeof(int)*N);
         ri_brace->encounter_map          = realloc(ri_brace->encounter_map,sizeof(int)*N);
         ri_brace->N_allocated = N;
@@ -530,7 +520,7 @@ int reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
 
 static void reb_integrator_brace_step(struct reb_simulation* const r){
     reb_integrator_brace_interaction_step(r, r->dt/2.);
-    reb_integrator_brace_kepler_step(r, r->dt);
+    reb_integrator_brace_drift_step(r, r->dt);
     reb_integrator_brace_com_step(r,r->dt);
     reb_integrator_brace_interaction_step(r, r->dt/2.);
 }
@@ -586,8 +576,6 @@ void reb_integrator_brace_reset(struct reb_simulation* r){
     // Internal arrays (only used within one timestep)
     free(r->ri_brace.particles_backup);
     r->ri_brace.particles_backup = NULL;
-    free(r->ri_brace.particles_backup_kepler);
-    r->ri_brace.particles_backup_kepler = NULL;
     free(r->ri_brace.particles_backup_additional_forces);
     r->ri_brace.particles_backup_additional_forces = NULL;
 
@@ -599,8 +587,6 @@ void reb_integrator_brace_reset(struct reb_simulation* r){
 
     r->ri_brace.S = NULL;
     r->ri_brace.S_peri = NULL;
-    
-    r->ri_brace.peri_mode = REB_BRACE_PERI_FULL_BS;
     
     r->ri_brace.N_allocated = 0;
     r->ri_brace.N_allocated_additional_forces = 0;
