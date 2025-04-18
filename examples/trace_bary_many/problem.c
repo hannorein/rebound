@@ -62,6 +62,11 @@ int main(int argc, char* argv[]) {
     r = setup();
     r->integrator = REB_INTEGRATOR_BRACE;
     test(r, "brace");
+    
+    r = setup();
+    r->integrator = REB_INTEGRATOR_BRACE;
+    r->ri_brace.encounter_integrator = REB_BRACE_EC_IAS15;
+    test(r, "brace-ias15");
 
 }
 

@@ -9,7 +9,7 @@ struct reb_simulation* setup(){
     reb_simulation_start_server(r, 1234);
     r->rand_seed = 0;
     reb_simulation_add_fmt(r, "m", 1.);              
-    for (int i=0; i<50;i++){
+    for (int i=0; i<10;i++){
         reb_simulation_add_fmt(r, "m a e f", 1e-6, 1.+0.1*reb_random_normal(r,1.0), 0.92, reb_random_uniform(r,0,M_PI*2.0));
     }
     reb_simulation_move_to_com(r);
@@ -64,6 +64,11 @@ int main(int argc, char* argv[]) {
     r = setup();
     r->integrator = REB_INTEGRATOR_BRACE;
     test(r, "brace");
+    
+    r = setup();
+    r->integrator = REB_INTEGRATOR_BRACE;
+    r->ri_brace.encounter_integrator = REB_BRACE_EC_IAS15;
+    test(r, "brace-ias15");
 
 }
 

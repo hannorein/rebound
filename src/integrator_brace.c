@@ -307,76 +307,125 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
 
     ri_brace->mode = REB_BRACE_MODE_DRIFT;
     
-    const double old_dt = r->dt;
-    ri_brace->old_t = r->t; // needed for gravity calculation
-    const double t_needed = r->t + dt;
-    reb_integrator_bs_reset(r);
 
-    // Temporarily remove all odes for BS step
-    struct reb_ode** odes_backup = r->odes;
-    int N_allocated_odes_backup = r->N_allocated_odes;
-    int N_odes_backup = r->N_odes;
-    r->odes = NULL;
-    r->N_allocated_odes = 0;
-    r->N_odes = 0;
+    switch (ri_brace->encounter_integrator){
+        case REB_BRACE_EC_BS:
+            {
+                const double old_dt = r->dt;
+                ri_brace->old_t = r->t; // needed for gravity calculation
+                const double t_needed = r->t + dt;
+                reb_integrator_bs_reset(r);
 
-    // Temporarily add new nbody ode for BS step
-    struct reb_ode* nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
-    nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
-    nbody_ode->needs_nbody = 0;
+                // Temporarily remove all odes for BS step
+                struct reb_ode** odes_backup = r->odes;
+                int N_allocated_odes_backup = r->N_allocated_odes;
+                int N_odes_backup = r->N_odes;
+                r->odes = NULL;
+                r->N_allocated_odes = 0;
+                r->N_odes = 0;
 
-    // TODO: Support backwards integrations
-    while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
-        double* y = nbody_ode->y;
+                // Temporarily add new nbody ode for BS step
+                struct reb_ode* nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
+                nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
+                nbody_ode->needs_nbody = 0;
 
-        // In case of overshoot
-        if (r->t + dt >  t_needed){
-            dt = t_needed - r->t;
-        }
+                // TODO: Support backwards integrations
+                while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
+                    double* y = nbody_ode->y;
 
-        for (unsigned int i=0; i<ri_brace->encounter_N; i++){
-            const int mi = ri_brace->encounter_map[i];
-            const struct reb_particle p = r->particles[mi];
-            y[i*6+0] = p.x;
-            y[i*6+1] = p.y;
-            y[i*6+2] = p.z;
-            y[i*6+3] = p.vx;
-            y[i*6+4] = p.vy;
-            y[i*6+5] = p.vz;
-        }
+                    // In case of overshoot
+                    if (r->t + dt >  t_needed){
+                        dt = t_needed - r->t;
+                    }
 
-        int success = reb_integrator_bs_step(r, dt);
-        if (success){
-            r->t += dt;
-        }
-        dt = r->ri_bs.dt_proposed;
-        reb_integrator_brace_update_particles(r, nbody_ode->y);
+                    for (unsigned int i=0; i<ri_brace->encounter_N; i++){
+                        const int mi = ri_brace->encounter_map[i];
+                        const struct reb_particle p = r->particles[mi];
+                        y[i*6+0] = p.x;
+                        y[i*6+1] = p.y;
+                        y[i*6+2] = p.z;
+                        y[i*6+3] = p.vx;
+                        y[i*6+4] = p.vy;
+                        y[i*6+5] = p.vz;
+                    }
 
-        reb_collision_search(r);
-        if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+                    int success = reb_integrator_bs_step(r, dt);
+                    if (success){
+                        r->t += dt;
+                    }
+                    dt = r->ri_bs.dt_proposed;
+                    reb_integrator_brace_update_particles(r, nbody_ode->y);
 
-        if (nbody_ode->length != ri_brace->encounter_N*3*2){
-            // Just re-create the ODE
-            printf("recreate ode\n");
-            reb_ode_free(nbody_ode);
-            nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
-            nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
-            nbody_ode->needs_nbody = 0;
-            r->ri_bs.first_or_last_step = 1;
-        }
+                    reb_collision_search(r);
+                    if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+
+                    if (nbody_ode->length != ri_brace->encounter_N*3*2){
+                        // Just re-create the ODE
+                        printf("recreate ode\n");
+                        reb_ode_free(nbody_ode);
+                        nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
+                        nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
+                        nbody_ode->needs_nbody = 0;
+                        r->ri_bs.first_or_last_step = 1;
+                    }
+                }
+
+                // Restore odes
+                reb_ode_free(nbody_ode);
+                free(r->odes);
+                r->odes = odes_backup;
+                r->N_allocated_odes = N_allocated_odes_backup;
+                r->N_odes = N_odes_backup;
+
+                r->t = ri_brace->old_t;
+
+                // Resetting BS here reduces binary file size.
+                reb_integrator_bs_reset(r);
+            }
+            break;
+        case REB_BRACE_EC_IAS15:
+            {
+                const double old_dt = r->dt;
+                ri_brace->old_t = r->t; // needed for gravity calculation
+                const double t_needed = r->t + dt;
+                reb_integrator_ias15_reset(r);
+
+                // Temporarily remove all odes for IAS15 step
+                struct reb_ode** odes_backup = r->odes;
+                int N_allocated_odes_backup = r->N_allocated_odes;
+                int N_odes_backup = r->N_odes;
+                r->odes = NULL;
+                r->N_allocated_odes = 0;
+                r->N_odes = 0;
+
+                // TODO: Support backwards integrations
+                r->dt /= 120.0; // slow start
+                while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
+                    // In case of overshoot
+                    if (r->t + dt >  t_needed){
+                        dt = t_needed - r->t;
+                    }
+
+                    reb_simulation_update_acceleration(r);
+                    reb_integrator_ias15_part2(r);
+                    //   reb_collision_search(r);
+                    // if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+
+                }
+
+                // Restore odes
+                r->odes = odes_backup;
+                r->N_allocated_odes = N_allocated_odes_backup;
+                r->N_odes = N_odes_backup;
+
+                r->t = ri_brace->old_t;
+                r->dt = old_dt;
+
+                // Resetting IAS15 here reduces binary file size.
+                reb_integrator_ias15_reset(r);
+            }
+            break;
     }
-
-    // Restore odes
-    reb_ode_free(nbody_ode);
-    free(r->odes);
-    r->odes = odes_backup;
-    r->N_allocated_odes = N_allocated_odes_backup;
-    r->N_odes = N_odes_backup;
-
-    r->t = ri_brace->old_t;
-
-    // Resetting BS here reduces binary file size.
-    reb_integrator_bs_reset(r);
 }
 
 static void reb_integrator_brace_drift_step(struct reb_simulation* const r, const double _dt){

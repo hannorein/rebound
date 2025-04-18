@@ -313,6 +313,12 @@ struct reb_integrator_brace {
         REB_BRACE_MODE_DRIFT = 1,       // Kepler step
         REB_BRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
     } mode;
+    
+    enum {
+        REB_BRACE_EC_BS = 0,
+        REB_BRACE_EC_IAS15 = 1,
+    } encounter_integrator;
+
     unsigned int encounter_N;           // Number of particles currently having an encounter
     unsigned int encounter_N_active;    // Number of active particles currently having an encounter
 

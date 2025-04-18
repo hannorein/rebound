@@ -169,6 +169,8 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         N3 = 3*r->ri_mercurius.encounter_N;// mercurius close encounter
     }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){
         N3 = 3*r->ri_trace.encounter_N;// trace close encounter
+    }else if (r->integrator==REB_INTEGRATOR_BRACE && r->ri_brace.mode == REB_BRACE_MODE_DRIFT){
+        N3 = 3*r->ri_brace.encounter_N;// brace close encounter
     }else{ 
         N3 = 3*r->N;
     }
@@ -224,6 +226,13 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         map = r->ri_trace.encounter_map;
         if (map==NULL){
             reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
+            return 0;
+        }
+    }else if (r->integrator==REB_INTEGRATOR_BRACE && r->ri_brace.mode == REB_BRACE_MODE_DRIFT){// brace close encounter
+        N = r->ri_brace.encounter_N;
+        map = r->ri_brace.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access BRACE map from IAS15.");
             return 0;
         }
     }else{ 
