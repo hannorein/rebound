@@ -302,17 +302,11 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     ri_brace->encounter_N_active = 0;
     for (unsigned int i=0; i<r->N; i++){
         if(ri_brace->encounter_map[i]){
-            struct reb_particle tmp = r->particles[i];      // Copy for potential use for tponly_encounter
             r->particles[i] = ri_brace->particles_backup_kepler[i]; // Coordinates before WHFast step, overwrite particles with close encounters
             ri_brace->encounter_map[i_enc] = i;
             i_enc++;
             if (r->N_active==-1 || i<r->N_active){
                 ri_brace->encounter_N_active++;
-                if (ri_brace->tponly_encounter){
-                    ri_brace->particles_backup_kepler[i] = tmp;         // Make copy of particles after the kepler step.
-                                                                  // used to restore the massive objects' states in the case
-                                                                  // of only massless test-particle encounters
-                }
             }
         }
     }
@@ -377,16 +371,6 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
             nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
             nbody_ode->needs_nbody = 0;
             r->ri_bs.first_or_last_step = 1;
-        }
-    }
-
-    // if only test particles encountered massive bodies, reset the
-    // massive body coordinates to their post Kepler step state
-    if(ri_brace->tponly_encounter){
-        printf("Tp only\n");
-        for (unsigned int i=1; i < ri_brace->encounter_N_active; i++){
-            unsigned int mi = ri_brace->encounter_map[i];
-            r->particles[mi] = ri_brace->particles_backup_kepler[mi];
         }
     }
 
@@ -480,12 +464,6 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
         }
     }
 
-    if (r->testparticle_type == 1){
-        ri_brace->tponly_encounter = 0; // testparticles affect massive particles
-    }else{
-        ri_brace->tponly_encounter = 1;
-    }
-
     // Check for pericenter CE
     for (int i=1; i<Nactive; i++){
         if (_switch_peri(r, i)){
@@ -507,23 +485,19 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
                     ri_brace->encounter_map[j] = 1; // trigger encounter
                     ri_brace->encounter_N++;
                 }
-
-                if (j < Nactive){ // Two massive particles have a close encounter
-                    ri_brace->tponly_encounter = 0;
-                }
             }
         }
     }
 }
 
-double reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
+int reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
     // This function returns 1 if any new encounters occured.
     struct reb_integrator_brace* const ri_brace = &(r->ri_brace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
     int (*_switch) (struct reb_simulation* const r, const unsigned int i, const unsigned int j) = ri_brace->S ? ri_brace->S : reb_integrator_brace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_brace->S_peri ? ri_brace->S_peri : reb_integrator_brace_switch_peri_default;
-    int new_close_encounter = 0; // New CEs
+    int new_close_encounter = 0;
     
     // Clear encounter maps
     for (unsigned int i=0; i<r->N; i++){
@@ -542,11 +516,9 @@ double reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
         }
     }
 
-
     // Body-body
-    // there cannot be TP-TP CEs
-    for (int i = 0; i < Nactive; i++){ // Do not check for central body anymore
-        for (int j = i + 1; j < N; j++){
+    for (int i=1; i<Nactive; i++){
+        for (int j=i+1; j<N; j++){
             if (_switch(r, i, j)){
                 if (ri_brace->current_Ks[i*N+j] == 0){
                       new_close_encounter = 1;
@@ -559,10 +531,6 @@ double reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
                 if (ri_brace->encounter_map[j] == 0){
                     ri_brace->encounter_map[j] = 1; // trigger encounter
                     ri_brace->encounter_N++;
-                }
-
-                if (j < Nactive){ // Two massive particles have a close encounter
-                    ri_brace->tponly_encounter = 0;
                 }
             }
         }

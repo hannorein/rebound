@@ -324,7 +324,6 @@ struct reb_integrator_brace {
 
     unsigned int N_allocated;
     unsigned int N_allocated_additional_forces;
-    unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
     struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
     struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
