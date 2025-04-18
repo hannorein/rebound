@@ -105,7 +105,7 @@ int reb_integrator_trace_switch_default(struct reb_simulation* const r, const un
    // dcritj6 = MAX(dcritj6,0.004096*GM*GM*GM*inv_aj*inv_aj*inv_aj*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
 
     dcriti6 = MAX(dcriti6,0.004096*vi2*vi2*vi2*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
-    dcritj6 = MAX(dcriti6,0.004096*vj2*vj2*vj2*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
+    dcritj6 = MAX(dcritj6,0.004096*vj2*vj2*vj2*r->dt*r->dt*r->dt*r->dt*r->dt*r->dt);
 
     dcritmax6 = MAX(dcritmax6, dcriti6);
     dcritmax6 = MAX(dcritmax6, dcritj6);
