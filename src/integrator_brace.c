@@ -201,37 +201,6 @@ void reb_integrator_brace_inertial_to_barycentric(struct reb_simulation* r){
     r->ri_brace.com_pos = com_pos;
     r->ri_brace.com_vel = com_vel;
 }
-void reb_integrator_brace_inertial_to_dh(struct reb_simulation* r){
-    struct reb_particle* restrict const particles = r->particles;
-    struct reb_vec3d com_pos = {0};
-    struct reb_vec3d com_vel = {0};
-    double mtot = 0.;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
-    const int N = r->N;
-    for (int i=0;i<N_active;i++){
-        double m = particles[i].m;
-        com_pos.x += m * particles[i].x;
-        com_pos.y += m * particles[i].y;
-        com_pos.z += m * particles[i].z;
-        com_vel.x += m * particles[i].vx;
-        com_vel.y += m * particles[i].vy;
-        com_vel.z += m * particles[i].vz;
-        mtot += m;
-    }
-    com_pos.x /= mtot; com_pos.y /= mtot; com_pos.z /= mtot;
-    com_vel.x /= mtot; com_vel.y /= mtot; com_vel.z /= mtot;
-    // Particle 0 is also changed to allow for easy collision detection
-    for (int i=N-1;i>=0;i--){
-        particles[i].x -= particles[0].x;
-        particles[i].y -= particles[0].y;
-        particles[i].z -= particles[0].z;
-        particles[i].vx -= com_vel.x;
-        particles[i].vy -= com_vel.y;
-        particles[i].vz -= com_vel.z;
-    }
-    r->ri_brace.com_pos = com_pos;
-    r->ri_brace.com_vel = com_vel;
-}
 
 void reb_integrator_brace_barycentric_to_inertial(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
@@ -247,48 +216,6 @@ void reb_integrator_brace_barycentric_to_inertial(struct reb_simulation* r){
     }
 }
 
-void reb_integrator_brace_dh_to_inertial(struct reb_simulation* r){
-    struct reb_particle* restrict const particles = r->particles;
-    struct reb_particle temp = {0};
-    const int N = r->N;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
-    for (int i=1;i<N_active;i++){
-        double m = particles[i].m;
-        temp.x += m * particles[i].x;
-        temp.y += m * particles[i].y;
-        temp.z += m * particles[i].z;
-        temp.vx += m * particles[i].vx;
-        temp.vy += m * particles[i].vy;
-        temp.vz += m * particles[i].vz;
-        temp.m += m;
-    }
-    temp.m += r->particles[0].m;
-    temp.x /= temp.m;
-    temp.y /= temp.m;
-    temp.z /= temp.m;
-    temp.vx /= particles[0].m;
-    temp.vy /= particles[0].m;
-    temp.vz /= particles[0].m;
-    // Use com to calculate central object's position.
-    // This ignores previous values stored in particles[0].
-    // Should not matter unless collisions occured.
-    particles[0].x = r->ri_brace.com_pos.x - temp.x;
-    particles[0].y = r->ri_brace.com_pos.y - temp.y;
-    particles[0].z = r->ri_brace.com_pos.z - temp.z;
-
-    for (int i=1;i<N;i++){
-        particles[i].x += particles[0].x;
-        particles[i].y += particles[0].y;
-        particles[i].z += particles[0].z;
-        particles[i].vx += r->ri_brace.com_vel.x;
-        particles[i].vy += r->ri_brace.com_vel.y;
-        particles[i].vz += r->ri_brace.com_vel.z;
-    }
-    particles[0].vx = r->ri_brace.com_vel.x - temp.vx;
-    particles[0].vy = r->ri_brace.com_vel.y - temp.vy;
-    particles[0].vz = r->ri_brace.com_vel.z - temp.vz;
-}
-
 void reb_integrator_brace_interaction_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
@@ -298,43 +225,6 @@ void reb_integrator_brace_interaction_step(struct reb_simulation* const r, doubl
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
-        if (r->ri_brace.coordinates == REB_BRACE_COORDINATES_BARYCENTRIC){
-            // COM does not get a kick
-            particles[0].vx -= dt*particles[i].ax*particles[i].m/particles[0].m;
-            particles[0].vy -= dt*particles[i].ay*particles[i].m/particles[0].m;
-            particles[0].vz -= dt*particles[i].az*particles[i].m/particles[0].m;
-        }
-    }
-}
-
-void reb_integrator_brace_jump_step(struct reb_simulation* const r, double dt){
-    struct reb_integrator_brace* ri_brace = &(r->ri_brace);
-    if (ri_brace->coordinates == REB_BRACE_COORDINATES_BARYCENTRIC) return;
-    
-    struct reb_particle* restrict const particles = r->particles;
-    const int current_C = ri_brace->current_C;
-    if (current_C) return; // No jump step for pericenter approaches
-
-    const int N_active = r->N_active==-1?r->N:r->N_active;
-
-    // If TP type 1, use r->N. Else, use N_active.
-    const int N = r->testparticle_type==0 ? N_active: r->N;
-
-    double px=0., py=0., pz=0.;
-    for (int i=1;i<N;i++){
-        px += r->particles[i].vx*r->particles[i].m; // in dh
-        py += r->particles[i].vy*r->particles[i].m;
-        pz += r->particles[i].vz*r->particles[i].m;
-    }
-    px *= dt/r->particles[0].m;
-    py *= dt/r->particles[0].m;
-    pz *= dt/r->particles[0].m;
-
-    const int N_all = r->N;
-    for (int i=1;i<N_all;i++){
-        particles[i].x += px;
-        particles[i].y += py;
-        particles[i].z += pz;
     }
 }
 
@@ -348,10 +238,8 @@ void reb_integrator_brace_whfast_step(struct reb_simulation* const r, double dt)
     //struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
     double m = r->particles[0].m;
-    if (r->ri_brace.coordinates == REB_BRACE_COORDINATES_BARYCENTRIC){
-        for (int i=1;i<N;i++){
-            m += r->particles[i].m;
-        }
+    for (int i=1;i<N;i++){
+        m += r->particles[i].m;
     }
     for (int i=1;i<N;i++){
         reb_whfast_kepler_solver(r,r->particles,r->G*m,i,dt);
@@ -374,53 +262,6 @@ void reb_integrator_brace_update_particles(struct reb_simulation* r, const doubl
     }
 }
 
-void reb_integrator_brace_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
-    struct reb_simulation* const r = ode->r;
-    // BRACE always needs this to ensure the right Hamiltonian is evolved
-    reb_integrator_brace_update_particles(r, y);
-    reb_simulation_update_acceleration(r);
-
-    double px=0., py=0., pz=0.;
-    int* map = r->ri_brace.encounter_map;
-    int N = r->ri_brace.encounter_N;
-
-    if (map==NULL){
-        reb_simulation_error(r, "Cannot access BRACE map from BS.");
-        return;
-    }
-
-    // Kepler Step
-    // This is only for pericenter approach
-    if (r->ri_brace.current_C){
-        for (int i=1;i<r->N;i++){ // all particles
-            px += r->particles[i].vx*r->particles[i].m; // in dh
-            py += r->particles[i].vy*r->particles[i].m;
-            pz += r->particles[i].vz*r->particles[i].m;
-        }
-        px /= r->particles[0].m;
-        py /= r->particles[0].m;
-        pz /= r->particles[0].m;
-
-    }
-    yDot[0*6+0] = 0.0;
-    yDot[0*6+1] = 0.0;
-    yDot[0*6+2] = 0.0;
-    yDot[0*6+3] = 0.0;
-    yDot[0*6+4] = 0.0;
-    yDot[0*6+5] = 0.0;
-
-    for (int i=1; i<N; i++){
-        int mi = map[i];
-        const struct reb_particle p = r->particles[mi];
-        yDot[i*6+0] = p.vx + px; // Already checked for current_L
-        yDot[i*6+1] = p.vy + py;
-        yDot[i*6+2] = p.vz + pz;
-        yDot[i*6+3] = p.ax;
-        yDot[i*6+4] = p.ay;
-        yDot[i*6+5] = p.az;
-    }
-}
-
 void reb_integrator_brace_nbody_derivatives_barycentric(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
     // BRACE always needs this to ensure the right Hamiltonian is evolved
@@ -435,19 +276,6 @@ void reb_integrator_brace_nbody_derivatives_barycentric(struct reb_ode* ode, dou
         return;
     }
 
-    // Kepler Step
-    // This is only for pericenter approach
-    //      if (r->ri_brace.current_C){
-    //          for (int i=1;i<r->N;i++){ // all particles
-    //              px += r->particles[i].vx*r->particles[i].m; // in dh
-    //              py += r->particles[i].vy*r->particles[i].m;
-    //              pz += r->particles[i].vz*r->particles[i].m;
-    //          }
-    //          px /= r->particles[0].m;
-    //          py /= r->particles[0].m;
-    //          pz /= r->particles[0].m;
-    //  
-    //      }
     for (int i=0; i<N; i++){
         int mi = map[i];
         const struct reb_particle p = r->particles[mi];
@@ -464,19 +292,9 @@ void reb_integrator_brace_nbody_derivatives_barycentric(struct reb_ode* ode, dou
 void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
     struct reb_integrator_brace* const ri_brace = &(r->ri_brace);
 
-    switch (ri_brace->coordinates){
-        case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            if (ri_brace->encounter_N < 2){
-                // No close encounters, skip
-                return;
-            }
-            break;
-        case REB_BRACE_COORDINATES_BARYCENTRIC:
-            if (ri_brace->encounter_N < 1){
-                // No close encounters, skip
-                return;
-            }
-            break;
+    if (ri_brace->encounter_N < 1){
+        // No close encounters, skip
+        return;
     }
     //printf("encounter: %d\n", ri_brace->encounter_N);
 
@@ -519,14 +337,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
 
         // Temporarily add new nbody ode for BS step
         struct reb_ode* nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
-        switch (ri_brace->coordinates){
-            case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-                nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives;
-                break;
-            case REB_BRACE_COORDINATES_BARYCENTRIC:
-                nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
-                break;
-        }
+        nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
         nbody_ode->needs_nbody = 0;
 
         // TODO: Support backwards integrations
@@ -536,13 +347,6 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
             // In case of overshoot
             if (r->t + dt >  t_needed){
                 dt = t_needed - r->t;
-            }
-
-            struct reb_particle star = r->particles[0]; // backup velocity
-            if (ri_brace->coordinates==REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                r->particles[0].vx = 0; // star does not move in dh
-                r->particles[0].vy = 0;
-                r->particles[0].vz = 0;
             }
 
             for (unsigned int i=0; i<ri_brace->encounter_N; i++){
@@ -563,50 +367,17 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
             dt = r->ri_bs.dt_proposed;
             reb_integrator_brace_update_particles(r, nbody_ode->y);
 
-            if (ri_brace->coordinates==REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                r->particles[0].vx = star.vx; // restore every timestep for collisions
-                r->particles[0].vy = star.vy;
-                r->particles[0].vz = star.vz;
-            }
-            
-	    reb_collision_search(r);
-	    if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+            reb_collision_search(r);
+            if (r->N_allocated_collisions) ri_brace->force_accept = 1;
 
             if (nbody_ode->length != ri_brace->encounter_N*3*2){
         		// Just re-create the ODE
                 printf("recreate ode\n");
                 reb_ode_free(nbody_ode);
                 nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
-                switch (ri_brace->coordinates){
-                    case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-                        nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives;
-                        break;
-                    case REB_BRACE_COORDINATES_BARYCENTRIC:
-                        nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
-                        break;
-                }
+                nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;
                 nbody_ode->needs_nbody = 0;
                 r->ri_bs.first_or_last_step = 1;
-            }
-
-            if (ri_brace->coordinates==REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
-                star.vy = r->particles[0].vy;
-                star.vz = r->particles[0].vz;
-
-                if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
-                    // Collision with star occured
-                    // Shift all particles back to heliocentric coordinates
-                    // Ignore stars velocity:
-                    //   - will not be used after this
-                    //   - com velocity is unchained. this velocity will be used
-                    //     to reconstruct star's velocity later.
-                    for (int i=r->N-1; i>=0; i--){
-                        r->particles[i].x -= r->particles[0].x;
-                        r->particles[i].y -= r->particles[0].y;
-                        r->particles[i].z -= r->particles[0].z;
-                    }
-                }
             }
         }
   
@@ -639,20 +410,18 @@ void reb_integrator_brace_kepler_step(struct reb_simulation* const r, const doub
     memcpy(ri_brace->particles_backup_kepler,r->particles,r->N*sizeof(struct reb_particle));
     reb_integrator_brace_whfast_step(r, _dt);
     reb_integrator_brace_bs_step(r, _dt);
-    if (r->ri_brace.coordinates == REB_BRACE_COORDINATES_BARYCENTRIC){
-        struct reb_particle* restrict const particles = r->particles;
-        const int N = r->N;
-        particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
-        particles[0].vx = 0; particles[0].vy = 0; particles[0].vz = 0;
-        for (int i=1;i<N;i++){
-            const double f = particles[i].m/particles[0].m;
-            particles[0].x  -= f * particles[i].x;
-            particles[0].y  -= f * particles[i].y;
-            particles[0].z  -= f * particles[i].z;
-            particles[0].vx -= f * particles[i].vx;
-            particles[0].vy -= f * particles[i].vy;
-            particles[0].vz -= f * particles[i].vz;
-        }
+    struct reb_particle* restrict const particles = r->particles;
+    const int N = r->N;
+    particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
+    particles[0].vx = 0; particles[0].vy = 0; particles[0].vz = 0;
+    for (int i=1;i<N;i++){
+        const double f = particles[i].m/particles[0].m;
+        particles[0].x  -= f * particles[i].x;
+        particles[0].y  -= f * particles[i].y;
+        particles[0].z  -= f * particles[i].z;
+        particles[0].vx -= f * particles[i].vx;
+        particles[0].vy -= f * particles[i].vy;
+        particles[0].vz -= f * particles[i].vz;
     }
 }
 
@@ -703,15 +472,7 @@ void reb_integrator_brace_pre_ts_check(struct reb_simulation* const r){
         ri_brace->encounter_map[i] = 0;
     }
 
-    switch (ri_brace->coordinates){
-        case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            ri_brace->encounter_map[0] = 1;
-            ri_brace->encounter_N = 1;
-            break;
-        case REB_BRACE_COORDINATES_BARYCENTRIC:
-            ri_brace->encounter_N = 0;
-            break;
-    }
+    ri_brace->encounter_N = 0;
 
     // Reset encounter triggers.
     ri_brace->current_C = 0;
@@ -790,15 +551,7 @@ double reb_integrator_brace_post_ts_check(struct reb_simulation* const r){
     for (unsigned int i=0; i<r->N; i++){
         ri_brace->encounter_map[i] = 0;
     }
-    switch (ri_brace->coordinates){
-        case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            ri_brace->encounter_map[0] = 1;
-            ri_brace->encounter_N = 1;
-            break;
-        case REB_BRACE_COORDINATES_BARYCENTRIC:
-            ri_brace->encounter_N = 0;
-            break;
-    }
+    ri_brace->encounter_N = 0;
     
     if (!ri_brace->current_C){
         // Check for pericenter CE if not already triggered from pre-timstep.
@@ -877,10 +630,8 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 static void reb_integrator_brace_step(struct reb_simulation* const r){
     if (r->ri_brace.current_C == 0 || r->ri_brace.peri_mode == REB_BRACE_PERI_PARTIAL_BS){
 	    reb_integrator_brace_interaction_step(r, r->dt/2.);
-        reb_integrator_brace_jump_step(r, r->dt/2.);
         reb_integrator_brace_kepler_step(r, r->dt);
         reb_integrator_brace_com_step(r,r->dt);
-        reb_integrator_brace_jump_step(r, r->dt/2.);
         reb_integrator_brace_interaction_step(r, r->dt/2.);
     }else{
         printf("Peri step\n");
@@ -890,7 +641,6 @@ static void reb_integrator_brace_step(struct reb_simulation* const r){
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
         r->ri_brace.mode = REB_BRACE_MODE_FULL; // for collision search
-	reb_integrator_brace_dh_to_inertial(r);
         switch (r->ri_brace.peri_mode){
             case REB_BRACE_PERI_FULL_IAS15:
                 // Run default IAS15 integration
@@ -959,7 +709,6 @@ static void reb_integrator_brace_step(struct reb_simulation* const r){
         r->gravity = REB_GRAVITY_BRACE;
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
-	reb_integrator_brace_inertial_to_dh(r);
     }
 }
 
@@ -967,15 +716,7 @@ void reb_integrator_brace_part2(struct reb_simulation* const r){
     struct reb_integrator_brace* const ri_brace = &(r->ri_brace);
     const int N = r->N;
     
-    switch (ri_brace->coordinates){
-        case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            reb_integrator_brace_inertial_to_dh(r);
-            break;
-        case REB_BRACE_COORDINATES_BARYCENTRIC:
-            reb_integrator_brace_inertial_to_barycentric(r);
-            break;
-    }
-
+    reb_integrator_brace_inertial_to_barycentric(r);
     
     // Create copy of all particle to allow for the step to be rejected.
     memcpy(ri_brace->particles_backup, r->particles, N*sizeof(struct reb_particle));
@@ -1002,14 +743,7 @@ void reb_integrator_brace_part2(struct reb_simulation* const r){
         }
     }
     
-    switch (ri_brace->coordinates){
-        case REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            reb_integrator_brace_dh_to_inertial(r);
-            break;
-        case REB_BRACE_COORDINATES_BARYCENTRIC:
-            reb_integrator_brace_barycentric_to_inertial(r);
-            break;
-    }
+    reb_integrator_brace_barycentric_to_inertial(r);
     
     r->t+=r->dt;
     r->dt_last_done = r->dt;
@@ -1020,7 +754,6 @@ void reb_integrator_brace_synchronize(struct reb_simulation* r){
 
 void reb_integrator_brace_reset(struct reb_simulation* r){
     r->ri_brace.mode = REB_BRACE_MODE_NONE;
-    r->ri_brace.coordinates = REB_BRACE_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->ri_brace.encounter_N = 0;
     r->ri_brace.encounter_N_active = 0;
     r->ri_brace.r_crit_hill = 3;

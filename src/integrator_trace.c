@@ -171,36 +171,6 @@ int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const 
     return 0;
 }
 
-void reb_integrator_trace_inertial_to_barycentric(struct reb_simulation* r){
-    struct reb_particle* restrict const particles = r->particles;
-    struct reb_vec3d com_pos = {0};
-    struct reb_vec3d com_vel = {0};
-    double mtot = 0.;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
-    const int N = r->N;
-    for (int i=0;i<N_active;i++){
-        double m = particles[i].m;
-        com_pos.x += m * particles[i].x;
-        com_pos.y += m * particles[i].y;
-        com_pos.z += m * particles[i].z;
-        com_vel.x += m * particles[i].vx;
-        com_vel.y += m * particles[i].vy;
-        com_vel.z += m * particles[i].vz;
-        mtot += m;
-    }
-    com_pos.x /= mtot; com_pos.y /= mtot; com_pos.z /= mtot;
-    com_vel.x /= mtot; com_vel.y /= mtot; com_vel.z /= mtot;
-    for (int i=0;i<N;i++){
-        particles[i].x -= com_pos.x;
-        particles[i].y -= com_pos.y;
-        particles[i].z -= com_pos.z;
-        particles[i].vx -= com_vel.x;
-        particles[i].vy -= com_vel.y;
-        particles[i].vz -= com_vel.z;
-    }
-    r->ri_trace.com_pos = com_pos;
-    r->ri_trace.com_vel = com_vel;
-}
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_vec3d com_pos = {0};
@@ -231,20 +201,6 @@ void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r){
     }
     r->ri_trace.com_pos = com_pos;
     r->ri_trace.com_vel = com_vel;
-}
-
-void reb_integrator_trace_barycentric_to_inertial(struct reb_simulation* r){
-    struct reb_particle* restrict const particles = r->particles;
-    const int N = r->N;
-    
-    for (int i=0;i<N;i++){
-        particles[i].x += r->ri_trace.com_pos.x;
-        particles[i].y += r->ri_trace.com_pos.y;
-        particles[i].z += r->ri_trace.com_pos.z;
-        particles[i].vx += r->ri_trace.com_vel.x;
-        particles[i].vy += r->ri_trace.com_vel.y;
-        particles[i].vz += r->ri_trace.com_vel.z;
-    }
 }
 
 void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
@@ -298,20 +254,13 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
         particles[i].vz += dt*particles[i].az;
-        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_BARYCENTRIC){
-            // COM does not get a kick
-            particles[0].vx -= dt*particles[i].ax*particles[i].m/particles[0].m;
-            particles[0].vy -= dt*particles[i].ay*particles[i].m/particles[0].m;
-            particles[0].vz -= dt*particles[i].az*particles[i].m/particles[0].m;
-        }
     }
 }
 
 void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
-    struct reb_integrator_trace* ri_trace = &(r->ri_trace);
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_BARYCENTRIC) return;
-    
     struct reb_particle* restrict const particles = r->particles;
+
+    struct reb_integrator_trace* ri_trace = &(r->ri_trace);
     const int current_C = ri_trace->current_C;
     if (current_C) return; // No jump step for pericenter approaches
 
@@ -347,14 +296,8 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
     //struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
-    double m = r->particles[0].m;
-    if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_BARYCENTRIC){
-        for (int i=1;i<N;i++){
-            m += r->particles[i].m;
-        }
-    }
     for (int i=1;i<N;i++){
-        reb_whfast_kepler_solver(r,r->particles,r->G*m,i,dt);
+        reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt);
     }
 }
 
@@ -421,64 +364,13 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     }
 }
 
-void reb_integrator_trace_nbody_derivatives_barycentric(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
-    struct reb_simulation* const r = ode->r;
-    // TRACE always needs this to ensure the right Hamiltonian is evolved
-    reb_integrator_trace_update_particles(r, y);
-    reb_simulation_update_acceleration(r);
-
-    int* map = r->ri_trace.encounter_map;
-    int N = r->ri_trace.encounter_N;
-
-    if (map==NULL){
-        reb_simulation_error(r, "Cannot access TRACE map from BS.");
-        return;
-    }
-
-    // Kepler Step
-    // This is only for pericenter approach
-    //      if (r->ri_trace.current_C){
-    //          for (int i=1;i<r->N;i++){ // all particles
-    //              px += r->particles[i].vx*r->particles[i].m; // in dh
-    //              py += r->particles[i].vy*r->particles[i].m;
-    //              pz += r->particles[i].vz*r->particles[i].m;
-    //          }
-    //          px /= r->particles[0].m;
-    //          py /= r->particles[0].m;
-    //          pz /= r->particles[0].m;
-    //  
-    //      }
-    for (int i=0; i<N; i++){
-        int mi = map[i];
-        const struct reb_particle p = r->particles[mi];
-        yDot[i*6+0] = p.vx; // Already checked for current_L
-        yDot[i*6+1] = p.vy;
-        yDot[i*6+2] = p.vz;
-        yDot[i*6+3] = p.ax;
-        yDot[i*6+4] = p.ay;
-        yDot[i*6+5] = p.az;
-    }
-}
-
-
 void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
 
-    switch (ri_trace->coordinates){
-        case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            if (ri_trace->encounter_N < 2){
-                // No close encounters, skip
-                return;
-            }
-            break;
-        case REB_TRACE_COORDINATES_BARYCENTRIC:
-            if (ri_trace->encounter_N < 1){
-                // No close encounters, skip
-                return;
-            }
-            break;
+    if (ri_trace->encounter_N < 2){
+        // No close encounters, skip
+        return;
     }
-    //printf("encounter: %d\n", ri_trace->encounter_N);
 
     int i_enc = 0;
     ri_trace->encounter_N_active = 0;
@@ -519,14 +411,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
         // Temporarily add new nbody ode for BS step
         struct reb_ode* nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
-        switch (ri_trace->coordinates){
-            case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
-                break;
-            case REB_TRACE_COORDINATES_BARYCENTRIC:
-                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives_barycentric;
-                break;
-        }
+        nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
         nbody_ode->needs_nbody = 0;
 
         // TODO: Support backwards integrations
@@ -539,11 +424,9 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             }
 
             struct reb_particle star = r->particles[0]; // backup velocity
-            if (ri_trace->coordinates==REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                r->particles[0].vx = 0; // star does not move in dh
-                r->particles[0].vy = 0;
-                r->particles[0].vz = 0;
-            }
+            r->particles[0].vx = 0; // star does not move in dh
+            r->particles[0].vy = 0;
+            r->particles[0].vz = 0;
 
             for (unsigned int i=0; i<ri_trace->encounter_N; i++){
                 const int mi = ri_trace->encounter_map[i];
@@ -563,49 +446,37 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             dt = r->ri_bs.dt_proposed;
             reb_integrator_trace_update_particles(r, nbody_ode->y);
 
-            if (ri_trace->coordinates==REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                r->particles[0].vx = star.vx; // restore every timestep for collisions
-                r->particles[0].vy = star.vy;
-                r->particles[0].vz = star.vz;
-            }
+            r->particles[0].vx = star.vx; // restore every timestep for collisions
+            r->particles[0].vy = star.vy;
+            r->particles[0].vz = star.vz;
             
 	    reb_collision_search(r);
 	    if (r->N_allocated_collisions) ri_trace->force_accept = 1;
 
             if (nbody_ode->length != ri_trace->encounter_N*3*2){
-        		// Just re-create the ODE
-                printf("recreate ode\n");
-                reb_ode_free(nbody_ode);
-                nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
-                switch (ri_trace->coordinates){
-                    case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-                        nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
-                        break;
-                    case REB_TRACE_COORDINATES_BARYCENTRIC:
-                        nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives_barycentric;
-                        break;
-                }
+		// Just re-create the ODE
+		reb_ode_free(nbody_ode);
+		nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
+                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
                 nbody_ode->needs_nbody = 0;
                 r->ri_bs.first_or_last_step = 1;
             }
 
-            if (ri_trace->coordinates==REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC){
-                star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
-                star.vy = r->particles[0].vy;
-                star.vz = r->particles[0].vz;
+            star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
+            star.vy = r->particles[0].vy;
+            star.vz = r->particles[0].vz;
 
-                if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
-                    // Collision with star occured
-                    // Shift all particles back to heliocentric coordinates
-                    // Ignore stars velocity:
-                    //   - will not be used after this
-                    //   - com velocity is unchained. this velocity will be used
-                    //     to reconstruct star's velocity later.
-                    for (int i=r->N-1; i>=0; i--){
-                        r->particles[i].x -= r->particles[0].x;
-                        r->particles[i].y -= r->particles[0].y;
-                        r->particles[i].z -= r->particles[0].z;
-                    }
+            if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
+                // Collision with star occured
+                // Shift all particles back to heliocentric coordinates
+                // Ignore stars velocity:
+                //   - will not be used after this
+                //   - com velocity is unchained. this velocity will be used
+                //     to reconstruct star's velocity later.
+                for (int i=r->N-1; i>=0; i--){
+                    r->particles[i].x -= r->particles[0].x;
+                    r->particles[i].y -= r->particles[0].y;
+                    r->particles[i].z -= r->particles[0].z;
                 }
             }
         }
@@ -613,7 +484,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         // if only test particles encountered massive bodies, reset the
         // massive body coordinates to their post Kepler step state
         if(ri_trace->tponly_encounter){
-            printf("Tp only\n");
             for (unsigned int i=1; i < ri_trace->encounter_N_active; i++){
                 unsigned int mi = ri_trace->encounter_map[i];
                 r->particles[mi] = ri_trace->particles_backup_kepler[mi];
@@ -639,21 +509,6 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
     memcpy(ri_trace->particles_backup_kepler,r->particles,r->N*sizeof(struct reb_particle));
     reb_integrator_trace_whfast_step(r, _dt);
     reb_integrator_trace_bs_step(r, _dt);
-    if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_BARYCENTRIC){
-        struct reb_particle* restrict const particles = r->particles;
-        const int N = r->N;
-        particles[0].x  = 0; particles[0].y  = 0; particles[0].z  = 0;
-        particles[0].vx = 0; particles[0].vy = 0; particles[0].vz = 0;
-        for (int i=1;i<N;i++){
-            const double f = particles[i].m/particles[0].m;
-            particles[0].x  -= f * particles[i].x;
-            particles[0].y  -= f * particles[i].y;
-            particles[0].z  -= f * particles[i].z;
-            particles[0].vx -= f * particles[i].vx;
-            particles[0].vy -= f * particles[i].vy;
-            particles[0].vz -= f * particles[i].vz;
-        }
-    }
 }
 
 
@@ -699,19 +554,11 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
    
     // Clear encounter map
-    for (unsigned int i=0; i<r->N; i++){
+    for (unsigned int i=1; i<r->N; i++){
         ri_trace->encounter_map[i] = 0;
     }
-
-    switch (ri_trace->coordinates){
-        case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            ri_trace->encounter_map[0] = 1;
-            ri_trace->encounter_N = 1;
-            break;
-        case REB_TRACE_COORDINATES_BARYCENTRIC:
-            ri_trace->encounter_N = 0;
-            break;
-    }
+    ri_trace->encounter_map[0] = 1;
+    ri_trace->encounter_N = 1;
 
     // Reset encounter triggers.
     ri_trace->current_C = 0;
@@ -731,9 +578,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
         if (_switch_peri(r, j)){
-            // TODO: disables:
-            // ri_trace->current_C = 1;
-            printf("pre peri encounter\n");
+            ri_trace->current_C = 1;
             if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
                 return;
@@ -787,26 +632,17 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     int new_close_encounter = 0; // New CEs
     
     // Clear encounter maps
-    for (unsigned int i=0; i<r->N; i++){
+    for (unsigned int i=1; i<r->N; i++){
         ri_trace->encounter_map[i] = 0;
     }
-    switch (ri_trace->coordinates){
-        case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            ri_trace->encounter_map[0] = 1;
-            ri_trace->encounter_N = 1;
-            break;
-        case REB_TRACE_COORDINATES_BARYCENTRIC:
-            ri_trace->encounter_N = 0;
-            break;
-    }
+    ri_trace->encounter_map[0] = 1;
+    ri_trace->encounter_N = 1;
     
     if (!ri_trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timstep.
         for (int j = 1; j < Nactive; j++){
             if (_switch_peri(r, j)){
-                // TODO: disabled:
-                // ri_trace->current_C = 1;
-                printf("post peri encounter\n");
+                ri_trace->current_C = 1;
                 new_close_encounter = 1;
                 if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
                     // Everything will be integrated with BS/IAS15. No need to check any further.
@@ -876,14 +712,13 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
 
 static void reb_integrator_trace_step(struct reb_simulation* const r){
     if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
-	    reb_integrator_trace_interaction_step(r, r->dt/2.);
+	reb_integrator_trace_interaction_step(r, r->dt/2.);
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_kepler_step(r, r->dt);
         reb_integrator_trace_com_step(r,r->dt);
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_interaction_step(r, r->dt/2.);
     }else{
-        printf("Peri step\n");
 	// Pericenter approach with one of the FULL prescriptions
         double t_needed = r->t + r->dt;
         const double old_dt = r->dt;
@@ -967,15 +802,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     
-    switch (ri_trace->coordinates){
-        case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            reb_integrator_trace_inertial_to_dh(r);
-            break;
-        case REB_TRACE_COORDINATES_BARYCENTRIC:
-            reb_integrator_trace_inertial_to_barycentric(r);
-            break;
-    }
-
+    reb_integrator_trace_inertial_to_dh(r);
     
     // Create copy of all particle to allow for the step to be rejected.
     memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
@@ -1001,15 +828,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
             reb_integrator_trace_step(r);
         }
     }
-    
-    switch (ri_trace->coordinates){
-        case REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            reb_integrator_trace_dh_to_inertial(r);
-            break;
-        case REB_TRACE_COORDINATES_BARYCENTRIC:
-            reb_integrator_trace_barycentric_to_inertial(r);
-            break;
-    }
+    reb_integrator_trace_dh_to_inertial(r);
     
     r->t+=r->dt;
     r->dt_last_done = r->dt;
@@ -1020,7 +839,6 @@ void reb_integrator_trace_synchronize(struct reb_simulation* r){
 
 void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.mode = REB_TRACE_MODE_NONE;
-    r->ri_trace.coordinates = REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
