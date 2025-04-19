@@ -571,6 +571,7 @@ struct reb_simulation {
     int collision_resolve_keep_sorted;      // 0 (default): may reorder particles during collisions, 1: keep particles sorted.
     struct reb_collision* collisions;       // Array of current collisions. Do not change manually
     int N_allocated_collisions;
+    unsigned int collisions_N;
     double minimum_collision_velocity;      // Ensure relative velocity during collisions is at least this much (to avoid particles sinking into each other)
     double collisions_plog;                 // Keeping track of momentum transfer in collisions (for ring simulations)
     double max_radius0;                     // The largest particle radius, set automatically, needed for collision search.
