@@ -415,7 +415,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         nbody_ode->needs_nbody = 0;
 
         // TODO: Support backwards integrations
-	unsigned int collisions_N = 0;
         while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
             double* y = nbody_ode->y;
 
@@ -491,7 +490,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         }
 
         // Restore odes
-	
         reb_ode_free(nbody_ode);
         free(r->odes);
         r->odes = odes_backup;
@@ -749,7 +747,6 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                     struct reb_ode* nbody_ode = NULL;
 
                     double* y;
-		    unsigned int collisions_N = 0;
                     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
                         if (!nbody_ode || nbody_ode->length != 6*r->N){
                             if (nbody_ode){
@@ -781,7 +778,6 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
 
                         reb_collision_search(r);
-			collisions_N += r->collisions_N;
                     }
                     reb_ode_free(nbody_ode);
                     // Resetting BS here reduces binary file size
