@@ -364,6 +364,8 @@ void reb_collision_search(struct reb_simulation* const r){
             reb_exit("Collision routine not implemented.");
     }
 
+    r->collisions_N += collisions_N;
+
     // randomize
     for (int i=0;i<collisions_N;i++){
         int new = rand_r(&(r->rand_seed))%collisions_N;
