@@ -81,6 +81,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 break;
         }
     }
+    r->collisions_N = 0;
     int collisions_N = 0;
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){

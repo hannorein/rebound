@@ -46,7 +46,6 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
 void reb_integrator_part1(struct reb_simulation* r){
-	r->collisions_N = 0; // Maybe a better place to put this? Just need to reset before every timestep
 	switch(r->integrator){
 		case REB_INTEGRATOR_IAS15:
 			reb_integrator_ias15_part1(r);
