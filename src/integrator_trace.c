@@ -478,7 +478,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             r->particles[0].vz = star.vz;
             
 	    reb_collision_search(r);
-	    if (r->N_allocated_collisions) ri_trace->force_accept = 1;
+	    if (r->collisions_N) r->ri_trace.force_accept = 1;
 
             if (nbody_ode->length != ri_trace->encounter_N*3*2){
 		// Just re-create the ODE
@@ -764,7 +764,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         r->dt = t_needed-r->t;
                     }
                     reb_collision_search(r);
-		    if (r->N_allocated_collisions) r->ri_trace.force_accept = 1;
+	            if (r->collisions_N) r->ri_trace.force_accept = 1;
                 }
                 // Resetting IAS15 here reduces binary file size.
                 reb_integrator_ias15_reset(r);
@@ -807,7 +807,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
 
                         reb_collision_search(r);
-		        if (r->N_allocated_collisions) r->ri_trace.force_accept = 1;
+	                if (r->collisions_N) r->ri_trace.force_accept = 1;
                     }
                     reb_ode_free(nbody_ode);
                     // Resetting BS here reduces binary file size

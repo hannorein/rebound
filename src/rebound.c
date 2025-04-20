@@ -534,6 +534,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->minimum_collision_velocity = 0;
     r->collisions_plog  = 0;
     r->collisions_log_n  = 0;    
+    r->collisions_N  = 0;    
     r->collision_resolve_keep_sorted   = 0;    
     
     r->simulationarchive_version       = 3;
