@@ -362,7 +362,6 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
 
                     if (nbody_ode->length != ri_brace->encounter_N*3*2){
                         // Just re-create the ODE
-                        printf("recreate ode = N= %d\n", ri_brace->encounter_N);
                         reb_ode_free(nbody_ode);
                         nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
                         nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;

@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <math.h>
 
+int reb_collision_resolve_add(struct reb_simulation* const r, struct reb_collision c){
+    r->status = REB_STATUS_COLLISION;
+    r->particles[c.p1].r = 0;
+    r->particles[c.p2].r = 0;
+    reb_simulation_add_fmt(r, "m a e E inc primary", 1e-6, 2.0, 0.05, reb_random_uniform(r,0,M_PI*2.0), 0.01*reb_random_normal(r, 1.0), r->particles[0]);
+
+    return 0; // don't remove either particle
+}
 struct reb_simulation* setup(){
     struct reb_simulation* r = reb_simulation_create();
     
@@ -24,7 +32,8 @@ struct reb_simulation* setup(){
     //r->dt = o.P/20.0;
     r->dt = 2.0*M_PI*1e-2;
     r->collision = REB_COLLISION_DIRECT;
-    r->collision_resolve = reb_collision_resolve_merge;
+//    r->collision_resolve = reb_collision_resolve_merge;
+    r->collision_resolve = reb_collision_resolve_add;
     return r;
 }
 

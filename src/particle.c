@@ -138,6 +138,30 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 	    
         }
     }
+    if (r->integrator == REB_INTEGRATOR_BRACE){
+        struct reb_integrator_brace* ri_brace = &(r->ri_brace);
+        if (r->ri_brace.mode == REB_BRACE_MODE_DRIFT){
+            const int old_N = r->N-1;
+            if (ri_brace->N_allocated < r->N){
+                ri_brace->current_Ks    = realloc(ri_brace->current_Ks, sizeof(int)*r->N*r->N);
+                ri_brace->particles_backup = realloc(ri_brace->particles_backup, sizeof(struct reb_particle)*r->N);
+                ri_brace->current_Ks    = realloc(ri_brace->current_Ks, sizeof(int)*r->N*r->N);
+                ri_brace->encounter_map = realloc(ri_brace->encounter_map, sizeof(int)*r->N);
+                ri_brace->N_allocated   = r->N;
+            }
+
+            // New particle is undergoing a PP close encounter
+            ri_brace->current_Ks[old_N] = 2;
+            ri_brace->encounter_map[ri_brace->encounter_N] = old_N;
+            ri_brace->encounter_N++;
+
+            if (r->N_active==-1){ 
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle. 
+                ri_brace->encounter_N_active++;
+            }
+        }
+    }
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
