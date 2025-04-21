@@ -6,12 +6,12 @@ from ..simulation import Simulation
 from ..particle import Particle
 from ..vectors import Vec3dBasic
 
-TRACE_PERI_MODES = {"FULL_BS": 1, "PARTIAL_BS": 0, "FULL_IAS15": 2}
+BRACE_PERI_MODES = {"FULL_BS": 1, "PARTIAL_BS": 0, "FULL_IAS15": 2}
 
-class IntegratorTRACE(ctypes.Structure):
+class IntegratorBRACE(ctypes.Structure):
     """
-    This class is an abstraction of the C-struct reb_integrator_trace.
-    It controls the behaviour of the TRACE integrator.  See Lu, Hernandez and Rein (2024)
+    This class is an abstraction of the C-struct reb_integrator_brace.
+    It controls the behaviour of the BRACE integrator.  See Lu, Hernandez and Rein (2024)
     for more details.
 
     :ivar float r_crit_hill:
@@ -27,9 +27,9 @@ class IntegratorTRACE(ctypes.Structure):
     Example usage:
 
     >>> sim = rebound.Simulation()
-    >>> sim.integrator = "trace"
-    >>> sim.ri_trace.r_crit_hill = 4
-    >>> sim.ri_trace.peri_crit_eta = 1
+    >>> sim.integrator = "brace"
+    >>> sim.ri_brace.r_crit_hill = 4
+    >>> sim.ri_brace.peri_crit_eta = 1
 
     """
     def __repr__(self):
@@ -37,23 +37,22 @@ class IntegratorTRACE(ctypes.Structure):
 
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
-                ("peri_mode", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
+                ("old_t", ctypes.c_double),
+                ("nextias_dt", ctypes.c_double),
                 ("_mode", ctypes.c_uint),
+                ("_encounter_integrator", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_additionalforces", ctypes.c_uint),
-                ("_tponly_encounter", ctypes.c_uint),
                 ("_particles_backup", ctypes.POINTER(Particle)),
-                ("_particles_backup_kepler", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
                 ("_encounter_map", ctypes.POINTER(ctypes.c_int)),
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),
-                ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
                 ]
     @property
@@ -62,9 +61,9 @@ class IntegratorTRACE(ctypes.Structure):
     @S.setter
     def S(self, func):
         if func == "default":
-            self._S = cast(clibrebound.reb_integrator_trace_switch_default,TRACEKF)
+            self._S = cast(clibrebound.reb_integrator_brace_switch_default,BRACEKF)
         else:
-            self._Sfp = TRACEKF(func)
+            self._Sfp = BRACEKF(func)
             self._S = self._Sfp
 
     @property
@@ -73,11 +72,11 @@ class IntegratorTRACE(ctypes.Structure):
     @S_peri.setter
     def S_peri(self, func):
         if func == "default":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_default,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_brace_switch_peri_default,BRACECF)
         elif func == "none":
-            self._S_peri = cast(clibrebound.reb_integrator_trace_switch_peri_none,TRACECF)
+            self._S_peri = cast(clibrebound.reb_integrator_brace_switch_peri_none,BRACECF)
         else:
-            self._S_perifp = TRACECF(func)
+            self._S_perifp = BRACECF(func)
             self._S_peri = self._S_perifp
     
     @property
@@ -92,7 +91,7 @@ class IntegratorTRACE(ctypes.Structure):
         - ``'FULL_IAS15'`` (Integrate entire system with IAS15)
         """
         i = self._peri_mode
-        for name, _i in TRACE_PERI_MODES.items():
+        for name, _i in BRACE_PERI_MODES.items():
             if i==_i:
                 return name
         return i
@@ -101,10 +100,10 @@ class IntegratorTRACE(ctypes.Structure):
         if isinstance(value, int):
             self._peri_mode = ctypes.c_uint(value)
         elif isinstance(value, basestring):
-            if value in TRACE_PERI_MODES: 
-                self._peri_mode = TRACE_PERI_MODES[value]
+            if value in BRACE_PERI_MODES: 
+                self._peri_mode = BRACE_PERI_MODES[value]
             else:
                 raise ValueError("Warning. Pericenter switching mode not found.")
 
-TRACEKF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
-TRACECF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)
+BRACEKF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
+BRACECF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)

@@ -1464,6 +1464,7 @@ from .integrators.ias15 import IntegratorIAS15
 from .integrators.saba import IntegratorSABA
 from .integrators.mercurius import IntegratorMercurius
 from .integrators.trace import IntegratorTRACE
+from .integrators.brace import IntegratorBRACE
 
 from .variation import Variation
 
@@ -1575,6 +1576,7 @@ Simulation._fields_ = [
                 ("ri_ias15", IntegratorIAS15),
                 ("ri_mercurius", IntegratorMercurius),
                 ("ri_trace", IntegratorTRACE),
+                ("ri_brace", IntegratorBRACE),
                 ("ri_janus", IntegratorJanus),
                 ("ri_eos", IntegratorEOS),
                 ("ri_bs", IntegratorBS),
