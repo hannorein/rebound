@@ -62,7 +62,7 @@ void reb_collision_search(struct reb_simulation* const r){
         }
     }
 
-    int* trace_map = NULL;
+    int* map = NULL;
     if (r->integrator==REB_INTEGRATOR_TRACE){
         switch (r->ri_trace.mode){
             case REB_TRACE_MODE_INTERACTION:
@@ -74,7 +74,7 @@ void reb_collision_search(struct reb_simulation* const r){
             case REB_TRACE_MODE_KEPLER:
                 N = r->ri_trace.encounter_N;
                 Ninner = N;
-                trace_map = r->ri_trace.encounter_map;
+                map = r->ri_trace.encounter_map;
                 break;
             case REB_TRACE_MODE_FULL:
                 // Do the default collision search
@@ -104,8 +104,8 @@ void reb_collision_search(struct reb_simulation* const r){
                     if (mercurius_map){
                         ip = mercurius_map[i];
                     }
-                    if (trace_map){
-                        ip = trace_map[i];
+                    if (map){
+                        ip = map[i];
                     }
                     struct reb_particle p1 = particles[ip];
                     struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
@@ -125,8 +125,8 @@ void reb_collision_search(struct reb_simulation* const r){
                         if (mercurius_map){
                             jp = mercurius_map[j];
                         }
-                        if (trace_map){
-                            jp = trace_map[j];
+                        if (map){
+                            jp = map[j];
                         }
                         struct reb_particle p2 = particles[jp];
                         double dx = gb.x - p2.x; 
@@ -175,8 +175,8 @@ void reb_collision_search(struct reb_simulation* const r){
                     if (reb_sigint > 1) return;
 #endif // OPENMP
                     int ip = i;
-                    if (trace_map){
-                        ip = trace_map[i];
+                    if (map){
+                        ip = map[i];
                     }
                     struct reb_particle p1 = particles[ip];
                     struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
@@ -191,8 +191,8 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Loop over all particles again
                     for (int j=i+1;j<N;j++){
                         int jp = j;
-                        if (trace_map){
-                            jp = trace_map[j];
+                        if (map){
+                            jp = map[j];
                         }
                         struct reb_particle p2 = particles[jp];
                         const double dx1 = gb.x - p2.x; // distance at end

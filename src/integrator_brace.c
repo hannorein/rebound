@@ -358,7 +358,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
                     reb_integrator_brace_update_particles(r, nbody_ode->y);
 
                     reb_collision_search(r);
-                    if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+                    if (r->collisions_N) ri_brace->force_accept = 1;
 
                     if (nbody_ode->length != ri_brace->encounter_N*3*2){
                         // Just re-create the ODE
@@ -417,8 +417,8 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
                     reb_simulation_update_acceleration(r);
                     reb_integrator_ias15_part2(r);
                     if (reb_sigint > 1) r->t = t_needed;// force quit
-                    //   reb_collision_search(r);
-                    // if (r->N_allocated_collisions) ri_brace->force_accept = 1;
+                    reb_collision_search(r);
+                    if (r->collisions_N) ri_brace->force_accept = 1;
 
                 }
                 // Restore odes
