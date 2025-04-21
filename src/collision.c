@@ -43,8 +43,8 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
-static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
-static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
 
 void reb_collision_search(struct reb_simulation* const r){
     int N = r->N - r->N_var;
@@ -82,7 +82,6 @@ void reb_collision_search(struct reb_simulation* const r){
         }
     }
     r->collisions_N = 0;
-    int collisions_N = 0;
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){
         case REB_COLLISION_NONE:
@@ -143,16 +142,16 @@ void reb_collision_search(struct reb_simulation* const r){
                         // Check if particles are approaching each other
                         if (dvx*dx + dvy*dy + dvz*dz >0) continue; 
                         // Add particles to collision array.
-                        if (r->N_allocated_collisions<=collisions_N){
+                        if (r->N_allocated_collisions<=r->collisions_N){
                             // Allocate memory if there is no space in array.
                             // Init to 32 if no space has been allocated yet, otherwise double it.
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                         }
-                        r->collisions[collisions_N].p1 = ip;
-                        r->collisions[collisions_N].p2 = jp;
-                        r->collisions[collisions_N].gb = gborig;
-                        collisions_N++;
+                        r->collisions[r->collisions_N].p1 = ip;
+                        r->collisions[r->collisions_N].p2 = jp;
+                        r->collisions[r->collisions_N].gb = gborig;
+                        r->collisions_N++;
                     }
                 }
             }
@@ -221,16 +220,16 @@ void reb_collision_search(struct reb_simulation* const r){
                         if (rmin2_ab>rsum*rsum) continue;
 
                         // Add particles to collision array.
-                        if (r->N_allocated_collisions<=collisions_N){
+                        if (r->N_allocated_collisions<=r->collisions_N){
                             // Allocate memory if there is no space in array.
                             // Init to 32 if no space has been allocated yet, otherwise double it.
                             r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                             r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                         }
-                        r->collisions[collisions_N].p1 = ip;
-                        r->collisions[collisions_N].p2 = jp;
-                        r->collisions[collisions_N].gb = gborig;
-                        collisions_N++;
+                        r->collisions[r->collisions_N].p1 = ip;
+                        r->collisions[r->collisions_N].p2 = jp;
+                        r->collisions[r->collisions_N].gb = gborig;
+                        r->collisions_N++;
                     }
                 }
             }
@@ -290,7 +289,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     for (int ri=0;ri<r->N_root;ri++){
                         struct reb_treecell* rootcell = r->tree_root[ri];
                         if (rootcell!=NULL){
-                            reb_tree_get_nearest_neighbour_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+                            reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
                         }
                     }
                 }
@@ -350,7 +349,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     for (int ri=0;ri<r->N_root;ri++){
                         struct reb_treecell* rootcell = r->tree_root[ri];
                         if (rootcell!=NULL){
-                            reb_tree_check_for_overlapping_trajectories_in_cell(r, &collisions_N, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
+                            reb_tree_check_for_overlapping_trajectories_in_cell(r, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
                         }
                     }
                 }
@@ -365,11 +364,9 @@ void reb_collision_search(struct reb_simulation* const r){
             reb_exit("Collision routine not implemented.");
     }
 
-    r->collisions_N += collisions_N;
-
     // randomize
-    for (int i=0;i<collisions_N;i++){
-        int new = rand_r(&(r->rand_seed))%collisions_N;
+    for (int i=0;i<r->collisions_N;i++){
+        int new = rand_r(&(r->rand_seed))%r->collisions_N;
         struct reb_collision c1 = r->collisions[i];
         r->collisions[i] = r->collisions[new];
         r->collisions[new] = c1;
@@ -386,7 +383,7 @@ void reb_collision_search(struct reb_simulation* const r){
         collision_resolve_keep_sorted = 1; // Force keep_sorted for hybrid integrator
     }
 
-    for (int i=0;i<collisions_N;i++){
+    for (int i=0;i<r->collisions_N;i++){
         
         struct reb_collision c = r->collisions[i];
         if (c.p1 != -1 && c.p2 != -1){
@@ -399,7 +396,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 int removedp1 = reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
                 if (removedp1){
                     if (r->tree_root){ // In a tree, particles get removed later. 
-                        for (int j=i+1;j<collisions_N;j++){ // Update other collisions
+                        for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involved the removed particle
                             if (cp->p1==c.p1 || cp->p2==c.p1){
@@ -418,7 +415,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 c.p2 = c.p1;
                             }
                         }
-                        for (int j=i+1;j<collisions_N;j++){ // Update other collisions
+                        for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involve the removed particle
                             if (cp->p1==c.p1 || cp->p2==c.p1){
@@ -450,7 +447,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 int removedp2 = reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
                 if (removedp2){ // Update other collisions
                     if (r->tree_root){ // In a tree, particles get removed later. 
-                        for (int j=i+1;j<collisions_N;j++){ // Update other collisions
+                        for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involved the removed particle
                             if (cp->p1==c.p2 || cp->p2==c.p2){
@@ -459,7 +456,7 @@ void reb_collision_search(struct reb_simulation* const r){
                             }
                         }
                     }else{ // Not in a tree, particles get removed immediately 
-                        for (int j=i+1;j<collisions_N;j++){
+                        for (int j=i+1;j<r->collisions_N;j++){
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involve the removed particle
                             if (cp->p1==c.p2 || cp->p2==c.p2){
@@ -509,10 +506,9 @@ void reb_simulation_set_collision_resolve(struct reb_simulation* r, int (*resolv
  * @param nearest_r2 Pointer to the nearest neighbour found so far.
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
- * @param collisions_N Pointer to current number of collisions
  * @param gbunmod Ghostbox unmodified
  */
-static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
     const struct reb_particle* const particles = r->particles;
     if (c->pt>=0){     
         // c is a leaf node
@@ -568,13 +564,13 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
             // Save collision in collisions array.
 #pragma omp critical
             {
-                if (r->N_allocated_collisions<=(*collisions_N)){
+                if (r->N_allocated_collisions<=r->collisions_N){
                     // Init to 32 if no space has been allocated yet, otherwise double it.
                     r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                     r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                 }
-                r->collisions[(*collisions_N)] = *collision_nearest;
-                (*collisions_N)++;
+                r->collisions[r->collisions_N] = *collision_nearest;
+                r->collisions_N++;
             }
         }
     }else{        
@@ -589,7 +585,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
             for (int o=0;o<8;o++){
                 struct reb_treecell* d = c->oct[o];
                 if (d!=NULL){
-                    reb_tree_get_nearest_neighbour_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
+                    reb_tree_get_nearest_neighbour_in_cell(r, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
                 }
             }
         }
@@ -597,7 +593,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 }
 
 
-static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift){
+static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift){
     const struct reb_particle* const particles = r->particles;
     if (c->pt>=0){     
         // c is a leaf node
@@ -633,13 +629,13 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
             // Save collision in collisions array.
 #pragma omp critical
             {
-                if (r->N_allocated_collisions<=(*collisions_N)){
+                if (r->N_allocated_collisions<=r->collisions_N){
                     // Init to 32 if no space has been allocated yet, otherwise double it.
                     r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
                     r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
                 }
-                r->collisions[(*collisions_N)] = *collision_nearest;
-                (*collisions_N)++;
+                r->collisions[r->collisions_N] = *collision_nearest;
+                r->collisions_N++;
             }
         }
     }else{        
@@ -654,7 +650,7 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
             for (int o=0;o<8;o++){
                 struct reb_treecell* d = c->oct[o];
                 if (d!=NULL){
-                    reb_tree_check_for_overlapping_trajectories_in_cell(r, collisions_N, gb,gbunmod,ri,p1_r,p1_r_plus_dtv,collision_nearest,d,maxdrift);
+                    reb_tree_check_for_overlapping_trajectories_in_cell(r, gb,gbunmod,ri,p1_r,p1_r_plus_dtv,collision_nearest,d,maxdrift);
                 }
             }
         }
