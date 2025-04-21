@@ -418,14 +418,8 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             }
 
             // reshuffle current_Ks
-            unsigned int counter = 0;
-            const int new_N = r->N-1;
-            for (unsigned int i = 0; i < new_N; i++){
-                if (i == index) counter += r->N;
-                for (unsigned int j = 0; j < new_N; j++){
-                    if (j == index) counter++;
-                    ri_brace->current_Ks[i*new_N+j] = ri_brace->current_Ks[i*new_N+j+counter];
-                }
+            for (unsigned int i=index; i<r->N-1; i++){
+                ri_brace->current_Ks[i] = ri_brace->current_Ks[i+1];
             }
             if (encounter_index<ri_brace->encounter_N_active){
                 ri_brace->encounter_N_active--;
