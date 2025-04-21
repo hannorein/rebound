@@ -47,41 +47,57 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
 
 void reb_collision_search(struct reb_simulation* const r){
+    r->collisions_N = 0;
     int N = r->N - r->N_var;
     int Ninner = N;
-    int* mercurius_map = NULL;
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-        if (r->ri_mercurius.mode==0){
-            // After jump step, only collisions with star might occur.
-            // All other collisions in encounter step/
-            Ninner = 1;
-        }else{
-            N = r->ri_mercurius.encounter_N;
-            Ninner = N;
-            mercurius_map = r->ri_mercurius.encounter_map;
-        }
-    }
 
     int* map = NULL;
-    if (r->integrator==REB_INTEGRATOR_TRACE){
-        switch (r->ri_trace.mode){
-            case REB_TRACE_MODE_INTERACTION:
-            case REB_TRACE_MODE_NONE:
+    switch (r->integrator){
+        case REB_INTEGRATOR_MERCURIUS:
+            if (r->ri_mercurius.mode==0){
                 // After jump step, only collisions with star might occur.
                 // All other collisions in encounter step/
                 Ninner = 1;
-                break;
-            case REB_TRACE_MODE_KEPLER:
-                N = r->ri_trace.encounter_N;
+            }else{
+                N = r->ri_mercurius.encounter_N;
                 Ninner = N;
-                map = r->ri_trace.encounter_map;
-                break;
-            case REB_TRACE_MODE_FULL:
-                // Do the default collision search
-                break;
-        }
+                map = r->ri_mercurius.encounter_map;
+            }
+            break;
+        case REB_INTEGRATOR_TRACE:
+            switch (r->ri_trace.mode){
+                case REB_TRACE_MODE_INTERACTION:
+                case REB_TRACE_MODE_NONE:
+                    // After jump step, only collisions with star might occur.
+                    // All other collisions in encounter step/
+                    Ninner = 1;
+                    break;
+                case REB_TRACE_MODE_KEPLER:
+                    N = r->ri_trace.encounter_N;
+                    Ninner = N;
+                    map = r->ri_trace.encounter_map;
+                    break;
+                case REB_TRACE_MODE_FULL:
+                    // Do the default collision search
+                    break;
+            }
+            break;
+        case REB_INTEGRATOR_BRACE:
+            switch (r->ri_brace.mode){
+                case REB_BRACE_MODE_DRIFT:
+                    N = r->ri_brace.encounter_N;
+                    Ninner = N;
+                    map = r->ri_brace.encounter_map;
+                    break;
+                default:
+                    // Collisions only occur during drift step.
+                    return; 
+            }
+            break;
+        default:
+            // map = NULL
+            break;
     }
-    r->collisions_N = 0;
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){
         case REB_COLLISION_NONE:
@@ -101,9 +117,6 @@ void reb_collision_search(struct reb_simulation* const r){
                     if (reb_sigint > 1) return;
 #endif // OPENMP
                     int ip = i;
-                    if (mercurius_map){
-                        ip = mercurius_map[i];
-                    }
                     if (map){
                         ip = map[i];
                     }
@@ -122,9 +135,6 @@ void reb_collision_search(struct reb_simulation* const r){
                         // Do not collide particle with itself.
                         if (i==j) continue;
                         int jp = j;
-                        if (mercurius_map){
-                            jp = mercurius_map[j];
-                        }
                         if (map){
                             jp = map[j];
                         }

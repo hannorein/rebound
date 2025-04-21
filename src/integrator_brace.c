@@ -61,14 +61,16 @@ int reb_integrator_brace_switch_default(struct reb_simulation* const r, const un
     double dcritj6 = 0.0;
 
     const double m0 = r->particles[0].m;
+       
+    // Physical overlap 
+    const double r2 = r->particles[i].r + r->particles[j].r;
+    if (r2*r2 > rp) return 1;
     
     // Check central body for physical radius ONLY
     if (i == 0 && r->particles[i].r != 0){
-	const double rs = r->particles[0].r;
-	dcriti6 = rs*rs*rs*rs*rs*rs;
-    }
-
-    else if (r->particles[i].m != 0){
+        const double rs = r->particles[0].r;
+        dcriti6 = rs*rs*rs*rs*rs*rs;
+    } else if (r->particles[i].m != 0){
         const double di2 = dxi*dxi + dyi*dyi + dzi*dzi;
         const double mr = r->particles[i].m/(3.*m0);
         dcriti6 = di2*di2*di2*mr*mr;
@@ -95,23 +97,20 @@ int reb_integrator_brace_switch_default(struct reb_simulation* const r, const un
 
     if (qv == 0.0){ // Small
         // minimum is at present, which is already checked for
-	return 0;
-    }
-    else if (qv < 0){
+        return 0;
+    } else if (qv < 0){
         d = 1; 
-    }
-    else{
+    } else{
         d = -1;
     }
 
     double dmin2;
     double tmin = -d*qv/v2;
     if (tmin < h2){
-	// minimum is in the window
-	dmin2 = rp - qv*qv/v2;
-    }
-    else{
-	dmin2 = rp + 2*d*qv*h2 + v2*h2*h2;
+        // minimum is in the window
+        dmin2 = rp - qv*qv/v2;
+    } else {
+        dmin2 = rp + 2*d*qv*h2 + v2*h2*h2;
     }
 
     return dmin2*dmin2*dmin2 < dcritmax6;
@@ -358,6 +357,7 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
                     reb_integrator_brace_update_particles(r, nbody_ode->y);
 
                     reb_collision_search(r);
+                    r->status = REB_STATUS_PAUSED;
                     if (r->collisions_N) ri_brace->force_accept = 1;
 
                     if (nbody_ode->length != ri_brace->encounter_N*3*2){
