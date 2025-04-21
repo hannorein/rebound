@@ -176,6 +176,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
     // TRACE Pericenter conditions used to have ids 166 - 168. Do not reuse.
     { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
+    { 170, REB_INT, "ri_trace.peri_mode", offsetof(struct reb_simulation, ri_trace.peri_mode), 0, 0},
 //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},

@@ -251,6 +251,7 @@ class TestIntegratorTrace(unittest.TestCase):
         dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
+        self.assertEqual(0,sim.ri_trace._force_accept) # check force_accept bug
     
     def test_collision_add_particles(self):
         sim = rebound.Simulation()
