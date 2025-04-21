@@ -357,12 +357,12 @@ void reb_integrator_brace_bs_step(struct reb_simulation* const r, double dt){
                     reb_integrator_brace_update_particles(r, nbody_ode->y);
 
                     reb_collision_search(r);
-                    r->status = REB_STATUS_PAUSED;
+                    //r->status = REB_STATUS_PAUSED;
                     if (r->collisions_N) ri_brace->force_accept = 1;
 
                     if (nbody_ode->length != ri_brace->encounter_N*3*2){
                         // Just re-create the ODE
-                        printf("recreate ode\n");
+                        printf("recreate ode = N= %d\n", ri_brace->encounter_N);
                         reb_ode_free(nbody_ode);
                         nbody_ode = reb_ode_create(r, ri_brace->encounter_N*3*2);
                         nbody_ode->derivatives = reb_integrator_brace_nbody_derivatives_barycentric;

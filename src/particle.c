@@ -399,6 +399,40 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             ri_trace->encounter_N--;
         }
     }
+    
+    if (r->integrator == REB_INTEGRATOR_BRACE){
+        keep_sorted = 1;
+        struct reb_integrator_brace* ri_brace = &(r->ri_brace);
+        reb_integrator_bs_reset(r);
+        if (r->ri_brace.mode == REB_BRACE_MODE_DRIFT){
+            int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
+            for (int i=0;i<ri_brace->encounter_N;i++){
+                if (after_to_be_removed_particle == 1){
+                    ri_brace->encounter_map[i-1] = ri_brace->encounter_map[i] - 1;
+                }
+                if (ri_brace->encounter_map[i]==index){
+                    encounter_index = i;
+                    after_to_be_removed_particle = 1;
+                }
+            }
+
+            // reshuffle current_Ks
+            unsigned int counter = 0;
+            const int new_N = r->N-1;
+            for (unsigned int i = 0; i < new_N; i++){
+                if (i == index) counter += r->N;
+                for (unsigned int j = 0; j < new_N; j++){
+                    if (j == index) counter++;
+                    ri_brace->current_Ks[i*new_N+j] = ri_brace->current_Ks[i*new_N+j+counter];
+                }
+            }
+            if (encounter_index<ri_brace->encounter_N_active){
+                ri_brace->encounter_N_active--;
+            }
+            ri_brace->encounter_N--;
+        }
+    }
 
 	if (r->N==1){
 	    r->N = 0;
