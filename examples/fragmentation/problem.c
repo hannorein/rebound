@@ -549,7 +549,7 @@ int add_particles_from_file(struct reb_simulation* r, char* filename, double m){
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_start_server(r, 1234);
+    //reb_simulation_start_server(r, 1234);
     r->G = 39.476926421373;
     r->dt = 6./365.;
 
@@ -558,6 +558,8 @@ int main(int argc, char* argv[]){
         return -1;
     }
     r->rand_seed = atoi(argv[2]);
+    char filename[1024];
+    sprintf(filename, "%s_simarchive_%d",argv[1],r->rand_seed);
     if (strcmp(argv[1],"mercurius")==0){
         r->integrator = REB_INTEGRATOR_MERCURIUS;
     }
@@ -566,9 +568,14 @@ int main(int argc, char* argv[]){
         r->ri_trace.r_crit_hill = 3.*1.21;
         r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none;
     }
+    
+    if (strcmp(argv[1],"brace")==0){
+        r->integrator = REB_INTEGRATOR_BRACE;
+        r->ri_trace.r_crit_hill = 3.*1.21; // S below uses trace value, not brace
+        r->ri_brace.S_peri = reb_integrator_trace_switch_peri_none;
+        r->ri_brace.S = reb_integrator_trace_switch_default;
+    }
 
-    char filename[1024];
-    sprintf(filename, "%s_%2d.bin",argv[2],r->rand_seed);
 
     r->heartbeat = heartbeat;
     r->collision = REB_COLLISION_DIRECT;
