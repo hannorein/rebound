@@ -394,39 +394,8 @@ void heartbeat(struct reb_simulation* sim){
         reb_simulation_move_to_com(sim);
 }
 
-void init_collision_params(struct collision_params* params){
-    params->target=0;
-    params->projectile=0;
-    params->dx=0;
-    params->dy=0;
-    params->dz=0;
-    params->b=0;
-    params->Vix=0;
-    params->Viy=0;
-    params->Viz=0;
-    params->Vi=0;
-    params->l=0;
-    params->rho1=0;
-    params->cstar=0;
-    params->mu=0;
-    params->QR=0;
-    params->QpRD=0;
-    params->V_esc=0;
-    params->separation_distance=0;
-    params->Mlr=0;
-    params->Mslr=0;
-    params->Q=0;
-    params->Mlr_dag=0;
-    params->Q_star=0;
-    params->vrel=0;
-    params->xrel=0;
-    params->collision_type=0;
-    params->no_frags = 0;
-}
-
 struct collision_params* create_collision_params(){
     struct collision_params* params = calloc(1,sizeof(struct reb_simulation));
-    init_collision_params(params);
     return params;
 }
 
@@ -614,9 +583,10 @@ int add_particles_from_file(struct reb_simulation* r, char* filename, double m){
         double omega = reb_random_uniform(r,0,2*M_PI);
         double Omega = reb_random_uniform(r,0,2*M_PI);
         double f = reb_random_uniform(r,0,2*M_PI);
-        struct reb_particle emb = reb_particle_from_orbit(r->G, r->particles[0], m, a, ecc, inc, Omega, omega, f);
-        emb.r = get_radii(m, rho);
-        reb_simulation_add(r, emb); 
+        struct reb_particle p = reb_particle_from_orbit(r->G, r->particles[0], m, a, ecc, inc, Omega, omega, f);
+        p.r = get_radii(m, rho);
+        p.hash = r->N;
+        reb_simulation_add(r, p); 
         added += 1;
     }
     fclose(file);
@@ -651,12 +621,11 @@ int main(int argc, char* argv[]){
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_fragment;
 
-    //Assigning mass and number of planetary embryos and planetesimals
+
 
     struct reb_particle star = {0};
     star.m = 1.00;
     star.r = 0.1; 
-    star.hash = 0; 
     reb_simulation_add(r, star);
     
     // You can substitute your own input file of semi major axis here. 
