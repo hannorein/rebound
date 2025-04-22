@@ -4,11 +4,9 @@
 #include <math.h>
 #include "rebound.h"
 
-char TITLE[100] = "trace_simarchive_";
 
 double min_frag_mass = 1.4e-8;
 int tot_no_frags = 0;  //if restarting a simulation this needs to be changed to the last number of frags in the simulation, otherwise new fragments added will rewrite exisiting frags
-		       //
 int trace_close_encounters = 0;
 int mercurius_close_encounters = 0;
 
@@ -602,124 +600,79 @@ return swap;
 
 void heartbeat(struct reb_simulation* r);
 
+int add_particles_from_file(struct reb_simulation* r, char* filename, double m){
+    double rho = 5.05e6; //3 g/cm^3
+    size_t len = 0;
+    char *line = NULL;
+    FILE* file = fopen(filename, "r");
+    int added = 0;
+    while (getline(&line, &len, file) != -1) {
+        double a;
+        sscanf(line, "%lf", &a);
+        double inc = reb_random_uniform(r,0,0.0175);
+        double ecc = reb_random_uniform(r,0,0.01);
+        double omega = reb_random_uniform(r,0,2*M_PI);
+        double Omega = reb_random_uniform(r,0,2*M_PI);
+        double f = reb_random_uniform(r,0,2*M_PI);
+        struct reb_particle emb = reb_particle_from_orbit(r->G, r->particles[0], m, a, ecc, inc, Omega, omega, f);
+        emb.r = get_radii(m, rho);
+        reb_simulation_add(r, emb); 
+        added += 1;
+    }
+    fclose(file);
+    return added;
+}
 
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_start_server(r, 1234);
     r->G = 39.476926421373;
     r->dt = 6./365.;
-    //r->exit_max_distance = 100.; 
 
-    // The random seed is passed as a command line argument
-    if (argc == 2){
-      r->rand_seed = atoi(argv[1]);
-      strcat(TITLE, argv[1]);
+    if (argc < 3){
+        printf("Usage: ./rebound INTEGRATOR SEED\n");
+        return -1;
+    }
+    r->rand_seed = atoi(argv[2]);
+    if (strcmp(argv[1],"mercurius")==0){
+        r->integrator = REB_INTEGRATOR_MERCURIUS;
+    }
+    if (strcmp(argv[1],"trace")==0){
+        r->integrator = REB_INTEGRATOR_TRACE;
+        r->ri_trace.r_crit_hill = 3.*1.21;
+        r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none;
     }
 
-    // MERCURIUS settings
-    // ---------------------------------------------------------
-//    r->integrator = REB_INTEGRATOR_MERCURIUS;
-    // ---------------------------------------------------------
+    char filename[1024];
+    sprintf(filename, "%s_%2d.bin",argv[2],r->rand_seed);
 
-    // TRACE settings
-    // ---------------------------------------------------------
-    r->integrator = REB_INTEGRATOR_TRACE;
-    r->ri_trace.r_crit_hill = 3.*1.21;
-    r->ri_trace.S_peri = reb_integrator_trace_switch_peri_none;
-    // --------------------------------------------------------
     r->heartbeat = heartbeat;
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_fragment;
+
     //Assigning mass and number of planetary embryos and planetesimals
-    double rho = 5.05e6; //3 g/cm^3
-    int n_emb = 14; //number of planetary embryos
-    double m_emb = 2.8e-7; //mass of each embryo
-    int n_pl = 140; //number of planetesimals
-    double m_pl = 2.8e-08;
-    int ef = 1;
-    double a_pl[n_pl];  // Array to hold the values of planetesimal semi-major axis
-    double a_emb[n_emb]; // Same for embryos
-
-    // You can substitute your own input file of semi major axis here. 
-    // Here, I am using the disk from Chambers et al. 2013
-    FILE *file_pl = fopen("semis_pl_chambers.txt", "r");
-    for (int i = 0; i < n_pl; i++) {
-        fscanf(file_pl, "%lf", &a_pl[i]);}
-    // Close the file after reading
-    fclose(file_pl);
-
-    FILE *file_emb = fopen("semis_emb_chambers.txt", "r");
-    for (int i = 0; i < n_emb; i++) {
-        fscanf(file_emb, "%lf", &a_emb[i]);}
-    // Close the file after reading
-    fclose(file_emb);
-
 
     struct reb_particle star = {0};
     star.m = 1.00;
     star.r = 0.1; 
     star.hash = 0; 
     reb_simulation_add(r, star);
-    //FILE* of_dbcti = fopen("dbct_input.txt","a+");
     
-    // Add planetary embryos
-    
-    for (int i=0; i<n_emb; i++){
-        double a = a_emb[i];      // semi major axis
-        double m = m_emb;
-        double inc = reb_random_uniform(r,0,0.0175);
-        double ecc = reb_random_uniform(r,0,0.01);
-        double omega = reb_random_uniform(r,0,2*M_PI);
-        double Omega = reb_random_uniform(r,0,2*M_PI);
-        double f = reb_random_uniform(r,0,2*M_PI);
-        double hash = i + 1;
-        //now build particle from orbit
-        struct reb_particle emb = reb_particle_from_orbit(r->G, star, m, a, ecc, inc, Omega, omega, f);
-        emb.r = get_radii(m, rho)*ef;
-        emb.hash = hash;
-        
-        reb_simulation_add(r, emb); 
+    // You can substitute your own input file of semi major axis here. 
+    // Here, I am using the disk from Chambers et al. 2013
+    add_particles_from_file(r, "semis_emb_chambers.txt", 2.8e-7);
+    add_particles_from_file(r, "semis_pl_chambers.txt", 2.8e-8);
 
-        //fprintf(of_dbcti, "%u\t", emb.hash);
-        //fprintf(of_dbcti, "%e\t", emb.m);
-        //fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
-        //fprintf(of_dbcti, "\n"); 
-    }
-    //add planetesimals
-    for (int i=0; i<n_pl; i++){
-        double a = a_pl[i];      // semi major axis
-        double m = m_pl;
-        double inc = reb_random_uniform(r,0,0.0175);
-        double ecc = reb_random_uniform(r,0,0.01);
-        double omega = reb_random_uniform(r,0,2*M_PI);
-        double Omega = reb_random_uniform(r,0,2*M_PI);
-        double f = reb_random_uniform(r,0,2*M_PI);
-        double hash = n_emb + i + 1;
-        //now build particle from orbit
-        struct reb_particle pl = reb_particle_from_orbit(r->G, star, m, a, ecc, inc, Omega, omega, f);
-        pl.r = get_radii(m, rho)*ef;
-        pl.hash = hash;
-        
-        reb_simulation_add(r, pl); 
-
-        //fprintf(of_dbcti, "%u\t", pl.hash);
-        //fprintf(of_dbcti, "%e\t", pl.m);
-        //fprintf(of_dbcti, "%e\t", 0.3); //core frac of body
-        //fprintf(of_dbcti, "\n"); 
-    }
-
-    //fclose(of_dbcti);
-
-    
-    double m,a,e,inc,Omega,omega,f; //Omega=longitude of ascending node, omega= argument of pericenter in RADIANS
 
     //Add Jupiter and Saturn
-    struct reb_particle Jup = reb_particle_from_orbit(r->G, r->particles[0], m=9.543e-4, a=5.20349, e=0.048381, inc=0.365*(M_PI/180), Omega=0.0, omega=68.3155*(M_PI/180), f=227.0537*(M_PI/180));
+    double rho = 5.05e6; //3 g/cm^3
+    struct reb_particle Jup = reb_particle_from_orbit(r->G, r->particles[0], 9.543e-4, 5.20349, 0.048381, 0.365*(M_PI/180), 0.0, 68.3155*(M_PI/180), 227.0537*(M_PI/180));
     Jup.r = get_radii(Jup.m, rho); 
     Jup.hash = reb_hash("JUPITER");
     reb_simulation_add(r,Jup);
 
-    struct reb_particle Sat = reb_particle_from_orbit(r->G, r->particles[0], m=0.0002857, a=9.54309, e=0.052519, inc=0.8892*(M_PI/180), Omega=M_PI, omega=324.5263*(M_PI/180),f=256.9188*(M_PI/180));
+    struct reb_particle Sat = reb_particle_from_orbit(r->G, r->particles[0], 0.0002857, 9.54309, 0.052519, 0.8892*(M_PI/180), M_PI, 324.5263*(M_PI/180), 256.9188*(M_PI/180));
     Sat.r = get_radii(Sat.m, rho);
     Sat.hash = reb_hash("SATURN");
     reb_simulation_add(r,Sat);
@@ -727,16 +680,8 @@ int main(int argc, char* argv[]){
 
     reb_simulation_move_to_com(r);  // This makes sure the planetary systems stays within the computational domain and doesn't drift.
     double run_time = 2e7;
-    reb_simulation_save_to_file_interval(r,TITLE,1.e5);
+    reb_simulation_save_to_file_interval(r,filename,1.e5);
     reb_simulation_integrate(r, run_time);
 
-    printf("Total Steps: %d Rejected Steps: %ld MERCRUIUS Encounters: %d TRACE encounters: %d\n", r->steps_done, r->ri_trace.step_rejections, mercurius_close_encounters, trace_close_encounters);
+    //printf("Total Steps: %d Rejected Steps: %ld MERCRUIUS Encounters: %d TRACE encounters: %d\n", r->steps_done, r->ri_trace.step_rejections, mercurius_close_encounters, trace_close_encounters);
 }
-
-//void heartbeat(struct reb_simulation* r){
-//    if (reb_simulation_output_check(r, 1.e3)){  
-//        reb_simulation_output_timing(r, 0);
-//        printf("Walltime(s) = %f \n", r->walltime); 
-//    }
-//}
-
