@@ -54,15 +54,10 @@ __build__ = c_char_p.in_dll(clibrebound, "reb_build_str").value.decode('ascii')
 __githash__ = c_char_p.in_dll(clibrebound, "reb_githash_str").value.decode('ascii')
 
 # Check for version
-try:
-    import pkg_resources
-    moduleversion = pkg_resources.require("rebound")[0].version
-    libreboundversion = __version__
-    if moduleversion != libreboundversion:
-        warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
-except:
-    # Might fail in some python3 setups, but not important
-    pass
+moduleversion = sys.modules["rebound"].__version__
+libreboundversion = __version__
+if moduleversion != libreboundversion:
+    warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
         
 # Exceptions
 class GenericError(Exception):
