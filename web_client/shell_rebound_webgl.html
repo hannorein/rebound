@@ -87,14 +87,16 @@
       }
       #overlay {
           top: 5px;
-          width: 2.2em;
+          width: max(200px,2.2em);
           left: 5px;
           z-index: 10;
           font-size: 6.5cqw;
       }
       #overlay-help {
           top: 50%;
-          width: 10em;
+          width: max(400px,10em);
+          max-height: 90%;
+          overflow: auto;
           left: 50%;
           transform:translate(-50%, -50%);
           z-index: 20;
@@ -132,7 +134,7 @@
       <div id="clickToStartBanner" onclick="if (reboundRuntimeInitialized == true){Module.callMain([]); this.remove();}"><div class="reboundlogofull"></div><div id="loadingtext">Loading ...</div></div>
       <div id="container">
           <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
-          <div id="overlay" onclick="document.getElementById('overlay-toggle').innerHTML='1'; console.log('no');">
+          <div id="overlay" onclick="document.getElementById('overlay-toggle').innerHTML='1';">
               <div id="overlaytext">
                   <div class="reboundlogo"></div>
                   REBOUND v4.4.8  <!-- VERSIONLINE -->
