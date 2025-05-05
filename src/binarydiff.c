@@ -173,9 +173,9 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 }
             };
             if (notfound == 1){
-                // Output field with size 0
                 pos1 += field1.size; // For next search
-                pos2 = 64; // For next search
+                pos2 = 64;           // For next search
+                field1.size = 0;     // Output field with size 0
                 are_different = 1.;
                 if (output_option==0){
                     reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
