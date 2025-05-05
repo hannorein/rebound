@@ -770,7 +770,7 @@ DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulatio
 // Diangnostic functions
 
 // Return the sum of potential and kinetic energy
-DLLEXPORT double reb_simulation_energy(const struct reb_simulation* const r);
+DLLEXPORT double reb_simulation_energy(struct reb_simulation* const r);
 // Returns the angular momentum.
 DLLEXPORT struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* const r);
 // Returns the center of mass of a simulation.

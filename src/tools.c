@@ -33,6 +33,7 @@
 #endif // _WIN32
 #include <stdint.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "rebound.h"
 #include "particle.h"
 #include "rebound.h"
@@ -95,7 +96,10 @@ double reb_random_rayleigh(struct reb_simulation* r, double sigma){
 }
 
 /// Other helper routines
-double reb_simulation_energy(const struct reb_simulation* const r){
+double reb_simulation_energy(struct reb_simulation* const r){
+#ifdef MPI
+    reb_communication_mpi_distribute_particles(r);
+#endif
     const int N = r->N;
     const int N_var = r->N_var;
     const int _N_active = (r->N_active==-1)?(N-N_var):r->N_active;
@@ -117,8 +121,36 @@ double reb_simulation_energy(const struct reb_simulation* const r){
             e_pot -= r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
         }
     }
-    
+#ifdef MPI
+    assert(r->testparticle_type==0); // ==1 not yet implemented
+    reb_communication_mpi_distribute_particles_all_to_all(r);
+	for (int m=0;m<r->mpi_num;m++){
+		if (m==r->mpi_id) continue;
+        for (int i=0;i<_N_active;i++){
+            struct reb_particle pi = particles[i];
+            // TODO: Use N_interact from other node for test_particle_type==1
+            for (int j=0;j<r->N_particles_recv[m];j++){
+                struct reb_particle pj = r->particles_recv[m][j];
+                double dx = pi.x - pj.x;
+                double dy = pi.y - pj.y;
+                double dz = pi.z - pj.z;
+                // Factor of 0.5 because two nodes will contribute.
+                e_pot -= 0.5* r->G*pj.m*pi.m/sqrt(dx*dx + dy*dy + dz*dz);
+            }
+        }
+    }
+	for (int i=0;i<r->mpi_num;i++){
+        r->N_particles_recv[i] = 0;
+	}
+
+    MPI_Allreduce(MPI_IN_PLACE, &e_kin, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &e_pot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    double energy_offset_sum = 0; 
+    MPI_Allreduce(&energy_offset_sum, &r->energy_offset, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    return e_kin + e_pot + energy_offset_sum;
+#else // MPI
     return e_kin + e_pot + r->energy_offset;
+#endif // MPI
 }
 
 struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* const r){
@@ -441,28 +473,27 @@ struct reb_particle reb_simulation_com(struct reb_simulation* r){
 #ifdef MPI
     reb_communication_mpi_distribute_particles(r);
     int N_real = r->N-r->N_var;
-    struct reb_particle com_local = reb_simulation_com_range(r, 0, N_real);
-	struct reb_particle com = {0};
-    com_local.x  *= com_local.m;
-    com_local.y  *= com_local.m;
-    com_local.z  *= com_local.m;
-    com_local.vx *= com_local.m;
-    com_local.vy *= com_local.m;
-    com_local.vz *= com_local.m;
-    com_local.ax *= com_local.m;
-    com_local.ay *= com_local.m;
-    com_local.az *= com_local.m;
+    struct reb_particle com = reb_simulation_com_range(r, 0, N_real);
+    com.x  *= com.m;
+    com.y  *= com.m;
+    com.z  *= com.m;
+    com.vx *= com.m;
+    com.vy *= com.m;
+    com.vz *= com.m;
+    com.ax *= com.m;
+    com.ay *= com.m;
+    com.az *= com.m;
 
-    MPI_Allreduce(&com_local.x, &com.x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.x, &com.y, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.x, &com.z, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.vx, &com.vx, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.vx, &com.vy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.vx, &com.vz, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.ax, &com.ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.ax, &com.ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.ax, &com.az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(&com_local.m, &com.m, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.y, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.z, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.vx, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.vy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.vz, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &com.m, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     
     if (com.m > 0){
         com.x  /= com.m;

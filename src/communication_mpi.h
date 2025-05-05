@@ -68,6 +68,12 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 void reb_communication_mpi_distribute_particles(struct reb_simulation* const r);
 
 /**
+ * Send all particles to all nodes. Does not add particles to simulation.
+ * Needs manual cleanup. Used for energy calculation.
+ */
+void reb_communication_mpi_distribute_particles_all_to_all(struct reb_simulation* const r);
+
+/**
  * Places a particle in the send queue.  
  * @param pt reb_particle to be added to the send queue.
  * @param proc_id reb_particle will be send to this MPI node on next call of communication_mpi_distribute_particles();

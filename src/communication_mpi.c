@@ -128,6 +128,43 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
 	}
 }
 
+void reb_communication_mpi_distribute_particles_all_to_all(struct reb_simulation* const r){
+	// Distribute the number of particles to be transferred.
+	MPI_Allgather(&r->N, 1, MPI_INT, r->N_particles_recv, 1, MPI_INT, MPI_COMM_WORLD);
+
+	// Allocate memory for incoming particles
+	for (int i=0;i<r->mpi_num;i++){
+		if  (i==r->mpi_id) continue;
+		while (r->N_particles_recv_max[i]<r->N_particles_recv[i]){
+			r->N_particles_recv_max[i] += 32;
+			r->particles_recv[i] = realloc(r->particles_recv[i],sizeof(struct reb_particle)*r->N_particles_recv_max[i]);
+		}
+	}
+
+	// Exchange particles via MPI.
+	// Using non-blocking receive call.
+	MPI_Request request[r->mpi_num];
+	for (int i=0;i<r->mpi_num;i++){
+		if (i==r->mpi_id) continue;
+		if (r->N_particles_recv[i]==0) continue;
+		MPI_Irecv(r->particles_recv[i], sizeof(struct reb_particle)*r->N_particles_recv[i], MPI_CHAR, i, i*r->mpi_num+r->mpi_id, MPI_COMM_WORLD, &(request[i]));
+	}
+	// Using blocking send call.
+	for (int i=0;i<r->mpi_num;i++){
+		if (i==r->mpi_id) continue;
+		if (r->N==0) continue;
+		MPI_Send(r->particles, sizeof(struct reb_particle)* r->N, MPI_CHAR, i, r->mpi_id*r->mpi_num+i, MPI_COMM_WORLD);
+	}
+	// Wait for all particles to be received.
+	for (int i=0;i<r->mpi_num;i++){
+		if (i==r->mpi_id) continue;
+		if (r->N_particles_recv[i]==0) continue;
+		MPI_Status status;
+		MPI_Wait(&(request[i]), &status);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+}
+
 void reb_communication_mpi_add_particle_to_send_queue(struct reb_simulation* const r, struct reb_particle pt, int proc_id){
 	int send_N = r->N_particles_send[proc_id];
 	while (r->N_particles_send_max[proc_id] <= send_N){

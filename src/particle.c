@@ -295,23 +295,22 @@ struct reb_particle* reb_simulation_particle_by_hash(struct reb_simulation* cons
 struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* const r, uint32_t hash){
 #ifdef MPI
     struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
-    int found = p==0?0:1;
-    int found_sum = 0;
-    MPI_Allreduce(&found, &found_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    if (found_sum == 0){
+    int found = (p==NULL)?0:1;
+    MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    if (found == 0){
         return reb_particle_nan();
     }
-    if (found_sum > 1){
+    if (found > 1){
         reb_simulation_error(r, "Multiple particles with same hash found.");
+        return reb_particle_nan();
     }
-    int root;
-    int mayberoot = found ? r->mpi_id : 0;
-    MPI_Allreduce(&mayberoot, &root, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     struct reb_particle ph = {0};
-    if (found){
+    if (p!=NULL){
         ph = *p;
         ph.sim = NULL;
     }
+    int root = (p==NULL) ? 0 : r->mpi_id;
+    MPI_Allreduce(MPI_IN_PLACE, &root, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
     return ph;
 #else // MPI
