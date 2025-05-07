@@ -55,6 +55,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),
                 ("_current_C", ctypes.c_uint),
                 ("_force_accept", ctypes.c_uint),
+                ("_step_rejections", ctypes.c_uint64),
                 ]
     @property
     def S(self):

@@ -296,6 +296,9 @@ struct reb_integrator_trace {
     int* current_Ks; // Tracking K_ij for the entire timestep
     unsigned int current_C; // Tracking C for the entire timestep
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
+
+    // For debugging, but maybe this is useful to have anyway?
+    uint64_t step_rejections;
 };
 
 // SABA Integrator (Laskar & Robutel 2001)
