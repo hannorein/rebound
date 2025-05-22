@@ -1468,6 +1468,7 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
     r->megno_var_t = 0.;
     r->megno_n = 0;
     r->megno_mean_Y = 0;
+    r->megno_initial_t = r->t;
     r->megno_mean_t = 0;
     int i = reb_simulation_add_variation_1st_order(r,-1);
     r->calculate_megno = i;
@@ -1497,8 +1498,8 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
     }
 }
 double reb_simulation_megno(struct reb_simulation* r){ // Returns the MEGNO <Y>
-    if (r->t==0.) return 0.;
-    return r->megno_Yss/r->t;
+    if (r->t==r->megno_initial_t) return 0.;
+    return r->megno_Yss/(r->t-r->megno_initial_t);
 }
 double reb_simulation_lyapunov(struct reb_simulation* r){ 
     // Returns the largest Lyapunov characteristic number (LCN)
@@ -1534,21 +1535,21 @@ double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
 void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done){
     // Calculate running Y(t)
     r->megno_Ys += dY;
-    double Y = r->megno_Ys/r->t;
+    double Y = r->megno_Ys/(r->t-r->megno_initial_t);
     // Calculate averge <Y> 
     r->megno_Yss += Y * dt_done;
     // Update covariance of (Y,t) and variance of t
     r->megno_n++;
-    double _d_t = r->t - r->megno_mean_t;
+    double _d_t = r->t - r->megno_initial_t - r->megno_mean_t;
     r->megno_mean_t += _d_t/(double)r->megno_n;
     double _d_Y = reb_simulation_megno(r) - r->megno_mean_Y;
     r->megno_mean_Y += _d_Y/(double)r->megno_n;
     r->megno_cov_Yt += ((double)r->megno_n-1.)/(double)r->megno_n 
-        *(r->t-r->megno_mean_t)
+        *(r->t - r->megno_initial_t - r->megno_mean_t)
         *(reb_simulation_megno(r)-r->megno_mean_Y);
     r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
-        *(r->t-r->megno_mean_t)
-        *(r->t-r->megno_mean_t);
+        *(r->t - r->megno_initial_t - r->megno_mean_t)
+        *(r->t - r->megno_initial_t - r->megno_mean_t);
 }
 
 #define ROT32(x, y) ((x << y) | (x >> (32 - y))) // avoid effort

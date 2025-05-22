@@ -297,7 +297,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     double integrator_megno_thisdt = 0.;
     double integrator_megno_thisdt_init = 0.;
     if (r->calculate_megno){
-        integrator_megno_thisdt_init = w[0]* r->t * reb_tools_megno_deltad_delta(r);
+        integrator_megno_thisdt_init = w[0]* (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
     }
 
     double t_beginning = r->t;
@@ -372,7 +372,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
 
             reb_simulation_update_acceleration(r);             // Calculate forces at interval n
             if (r->calculate_megno){
-                integrator_megno_thisdt += w[n] * r->t * reb_tools_megno_deltad_delta(r);
+                integrator_megno_thisdt += w[n] * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
             }
 
             for(int k=0;k<N;++k) {

@@ -1240,7 +1240,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
 
         // Update MEGNO in middle of timestep as we need synchonized x/v/a.
         if (r->calculate_megno){
-            double dY = r->dt * 2. * r->t * reb_tools_megno_deltad_delta(r);
+            double dY = r->dt * 2. * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
             reb_tools_megno_update(r, dY, dt);
         }
         if (ri_whfast->keep_unsynchronized){

@@ -18,6 +18,17 @@ class TestMegno(unittest.TestCase):
         self.sim.integrate(10000.)
         self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
+    
+    def test_initial_t(self):
+        self.sim.integrator = "ias15"
+        self.sim.t = 1e6
+        self.sim.add(m=1)
+        self.sim.add(m=1e-3,a=1.5,e=0.1,inc=0.1)
+        self.sim.add(m=1.e-3, a=15., e=0.1, inc=0.1)
+        self.sim.init_megno(seed=0)
+        self.sim.integrate(self.sim.t + 10000.)
+        self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
+        self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
 
     def test_whfast(self):
         self.sim.integrator = "whfast"

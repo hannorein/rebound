@@ -586,6 +586,7 @@ struct reb_simulation {
     double megno_var_t;     // variance of t 
     double megno_mean_t;    // mean of t
     double megno_mean_Y;    // mean of MEGNO Y
+    double megno_initial_t; // Time when MENGO was initialized
     int64_t   megno_n;         // number of covariance updates
 
     unsigned int rand_seed; // seed for random number generator, used by MEGNO and other random number generators in REBOUND.
