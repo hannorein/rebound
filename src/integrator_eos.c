@@ -59,7 +59,7 @@ static const double plf7_6_4_a[2] = {0.5600879810924619,-0.060087981092461900000
 static const double plf7_6_4_b[2] = {1.5171479707207228, -2.0342959414414456000};
 static const double plf7_6_4_z[6] = {-0.3346222298730800, 1.0975679907321640, -1.0380887460967830, 0.6234776317921379, -1.1027532063031910, -0.0141183222088869};
 static const double plf7_6_4_y[6] = {-1.6218101180868010, 0.0061709468110142, 0.8348493592472594, -0.0511253369989315, 0.5633782670698199, -0.5};
-                
+
 static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* r, double y, double v){
     // Calculate gravity using standard gravity routine
     r->gravity_ignore_terms = 2;
@@ -80,15 +80,15 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
 
 static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* r, double y, double v){
     const int N = r->N;
-	const int N_real   = N - r->N_var;
+    const int N_real   = N - r->N_var;
     const int N_active = r->N_active==-1?N_real:r->N_active;
     const int testparticle_type   = r->testparticle_type;
     struct reb_particle* restrict const particles = r->particles;
 
     const double G = r->G;
-    
+
     if (v!=0.){ // is jerk even used?
-        // Normal force calculation 
+                // Normal force calculation 
         particles[0].ax = 0;
         particles[0].ay = 0;
         particles[0].az = 0;
@@ -134,7 +134,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             const double dx = particles[0].x - particles[i].x; 
             const double dy = particles[0].y - particles[i].y; 
             const double dz = particles[0].z - particles[i].z; 
-            
+
             const double dax = particles[0].ax - particles[i].ax; 
             const double day = particles[0].ay - particles[i].ay; 
             const double daz = particles[0].az - particles[i].az; 
@@ -159,7 +159,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             const double dx = particles[0].x - particles[i].x; 
             const double dy = particles[0].y - particles[i].y; 
             const double dz = particles[0].z - particles[i].z; 
-            
+
             const double dax = particles[0].ax - particles[i].ax; 
             const double day = particles[0].ay - particles[i].ay; 
             const double daz = particles[0].az - particles[i].az; 
@@ -332,13 +332,13 @@ static inline void reb_integrator_eos_postprocessor(struct reb_simulation* const
             for (int i=5;i>=0;i--){
                 interaction_step(r, -dt*pmlf6_y[i], -dt*dt*dt*pmlf6_v[i]); 
                 drift_step(r, -dt*pmlf6_z[i]);
-             }
+            }
             break;
         case REB_EOS_PMLF4:
             for (int i=2;i>=0;i--){
                 drift_step(r, -dt*pmlf4_z[i]);
                 interaction_step(r, -dt*pmlf4_y[i], 0.); 
-             }
+            }
             break;
         case REB_EOS_PLF7_6_4:
             for (int i=5;i>=0;i--){
@@ -671,10 +671,10 @@ void reb_integrator_eos_part2(struct reb_simulation* const r){
     if (reos->safe_mode){
         reb_integrator_eos_synchronize(r);
     }
-    
+
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-    
+
     if (r->calculate_megno){
         r->gravity_ignore_terms = 0;
         reb_calculate_acceleration_var(r);

@@ -318,7 +318,7 @@ void reb_particles_transform_inertial_to_whds_posvel(const struct reb_particle* 
     p_h[0].vy = vy0/m0;
     p_h[0].vz = vz0/m0;
     p_h[0].m = m0;
-    
+
     m0 = particles[0].m;
 #pragma omp parallel for
     for (unsigned int i=1;i<N_active;i++){
@@ -411,7 +411,7 @@ void reb_particles_transform_inertial_to_democraticheliocentric_posvel(const str
     p_h[0].vy = vy0/m0;
     p_h[0].vz = vz0/m0;
     p_h[0].m = m0;
-    
+
 #pragma omp parallel for 
     for (unsigned int i=1;i<N;i++){
         p_h[i].x  = particles[i].x  - particles[0].x ;
@@ -473,14 +473,14 @@ void reb_particles_transform_democraticheliocentric_to_inertial_posvel(struct re
 }
 
 /***************
-* Barycentric */
+ * Barycentric */
 
 void reb_particles_transform_barycentric_to_inertial_pos(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active){
     particles[0].x = p_b[0].m*p_b[0].x;
     particles[0].y = p_b[0].m*p_b[0].y;
     particles[0].z = p_b[0].m*p_b[0].z;
     particles[0].m = p_b[0].m;
-     
+
     double s_x = 0.0;
     double s_y = 0.0;
     double s_z = 0.0;
@@ -513,7 +513,7 @@ void reb_particles_transform_barycentric_to_inertial_acc(struct reb_particle* co
     particles[0].ay = p_b[0].m*p_b[0].ay;
     particles[0].az = p_b[0].m*p_b[0].az;
     particles[0].m = p_b[0].m;
-     
+
     double s_ax = 0.0;
     double s_ay = 0.0;
     double s_az = 0.0;
@@ -549,7 +549,7 @@ void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle*
     particles[0].vy = p_b[0].m*p_b[0].vy;
     particles[0].vz = p_b[0].m*p_b[0].vz;
     particles[0].m = p_b[0].m;
-    
+
     double s_x = 0.0;
     double s_y = 0.0;
     double s_z = 0.0;

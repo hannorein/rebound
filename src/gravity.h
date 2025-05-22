@@ -27,21 +27,21 @@
 struct reb_simulation;
 
 /**
-  * The function loops over all ghostboxs and calls calculate_forces_for_particle() to sum up the forces on each particle.
-  * Calculate all the gravitational acceleration for all particles.
-  * Different methods implement this function in a different way.
-  */
+ * The function loops over all ghostboxs and calls calculate_forces_for_particle() to sum up the forces on each particle.
+ * Calculate all the gravitational acceleration for all particles.
+ * Different methods implement this function in a different way.
+ */
 void reb_calculate_acceleration(struct reb_simulation* r);
 
 /**
-  * The function calculates the acceleration for the variational equations.
-  */
+ * The function calculates the acceleration for the variational equations.
+ */
 void reb_calculate_acceleration_var(struct reb_simulation* r);
 
 
 /**
-  * The function calculates the jerk (derivative of the acceleration) and applies it to the particles' velocity.
-  */
+ * The function calculates the jerk (derivative of the acceleration) and applies it to the particles' velocity.
+ */
 void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v);
 
 #endif

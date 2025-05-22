@@ -46,88 +46,88 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
 void reb_integrator_part1(struct reb_simulation* r){
-	switch(r->integrator){
-		case REB_INTEGRATOR_IAS15:
-			reb_integrator_ias15_part1(r);
-			break;
-		case REB_INTEGRATOR_LEAPFROG:
-			reb_integrator_leapfrog_part1(r);
-			break;
-		case REB_INTEGRATOR_SEI:
-			reb_integrator_sei_part1(r);
-			break;
-		case REB_INTEGRATOR_WHFAST:
-			reb_integrator_whfast_part1(r);
-			break;
-		case REB_INTEGRATOR_WHFAST512:
-			reb_integrator_whfast512_part1(r);
-			break;
-		case REB_INTEGRATOR_SABA:
-			reb_integrator_saba_part1(r);
-			break;
-		case REB_INTEGRATOR_MERCURIUS:
-			reb_integrator_mercurius_part1(r);
-			break;
-		case REB_INTEGRATOR_JANUS:
-			reb_integrator_janus_part1(r);
-			break;
-		case REB_INTEGRATOR_EOS:
-			reb_integrator_eos_part1(r);
-			break;
-		case REB_INTEGRATOR_BS:
-			reb_integrator_bs_part1(r);
-			break;
-		case REB_INTEGRATOR_TRACE:
-			reb_integrator_trace_part1(r);
+    switch(r->integrator){
+        case REB_INTEGRATOR_IAS15:
+            reb_integrator_ias15_part1(r);
             break;
-		default:
-			break;
-	}
+        case REB_INTEGRATOR_LEAPFROG:
+            reb_integrator_leapfrog_part1(r);
+            break;
+        case REB_INTEGRATOR_SEI:
+            reb_integrator_sei_part1(r);
+            break;
+        case REB_INTEGRATOR_WHFAST:
+            reb_integrator_whfast_part1(r);
+            break;
+        case REB_INTEGRATOR_WHFAST512:
+            reb_integrator_whfast512_part1(r);
+            break;
+        case REB_INTEGRATOR_SABA:
+            reb_integrator_saba_part1(r);
+            break;
+        case REB_INTEGRATOR_MERCURIUS:
+            reb_integrator_mercurius_part1(r);
+            break;
+        case REB_INTEGRATOR_JANUS:
+            reb_integrator_janus_part1(r);
+            break;
+        case REB_INTEGRATOR_EOS:
+            reb_integrator_eos_part1(r);
+            break;
+        case REB_INTEGRATOR_BS:
+            reb_integrator_bs_part1(r);
+            break;
+        case REB_INTEGRATOR_TRACE:
+            reb_integrator_trace_part1(r);
+            break;
+        default:
+            break;
+    }
 }
 
 void reb_integrator_part2(struct reb_simulation* r){
-	switch(r->integrator){
-		case REB_INTEGRATOR_IAS15:
-			reb_integrator_ias15_part2(r);
-			break;
-		case REB_INTEGRATOR_LEAPFROG:
-			reb_integrator_leapfrog_part2(r);
-			break;
-		case REB_INTEGRATOR_SEI:
-			reb_integrator_sei_part2(r);
-			break;
-		case REB_INTEGRATOR_WHFAST:
-			reb_integrator_whfast_part2(r);
-			break;
-		case REB_INTEGRATOR_WHFAST512:
-			reb_integrator_whfast512_part2(r);
-			break;
-		case REB_INTEGRATOR_SABA:
-			reb_integrator_saba_part2(r);
-			break;
-		case REB_INTEGRATOR_MERCURIUS:
-			reb_integrator_mercurius_part2(r);
-			break;
-		case REB_INTEGRATOR_JANUS:
-			reb_integrator_janus_part2(r);
-			break;
-		case REB_INTEGRATOR_EOS:
-			reb_integrator_eos_part2(r);
-			break;
-		case REB_INTEGRATOR_BS:
-			reb_integrator_bs_part2(r);
-			break;
-		case REB_INTEGRATOR_TRACE:
-			reb_integrator_trace_part2(r);
-			break;
+    switch(r->integrator){
+        case REB_INTEGRATOR_IAS15:
+            reb_integrator_ias15_part2(r);
+            break;
+        case REB_INTEGRATOR_LEAPFROG:
+            reb_integrator_leapfrog_part2(r);
+            break;
+        case REB_INTEGRATOR_SEI:
+            reb_integrator_sei_part2(r);
+            break;
+        case REB_INTEGRATOR_WHFAST:
+            reb_integrator_whfast_part2(r);
+            break;
+        case REB_INTEGRATOR_WHFAST512:
+            reb_integrator_whfast512_part2(r);
+            break;
+        case REB_INTEGRATOR_SABA:
+            reb_integrator_saba_part2(r);
+            break;
+        case REB_INTEGRATOR_MERCURIUS:
+            reb_integrator_mercurius_part2(r);
+            break;
+        case REB_INTEGRATOR_JANUS:
+            reb_integrator_janus_part2(r);
+            break;
+        case REB_INTEGRATOR_EOS:
+            reb_integrator_eos_part2(r);
+            break;
+        case REB_INTEGRATOR_BS:
+            reb_integrator_bs_part2(r);
+            break;
+        case REB_INTEGRATOR_TRACE:
+            reb_integrator_trace_part2(r);
+            break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
             r->dt_last_done = r->dt;
             break;
-		default:
-			break;
-	}
-    
+        default:
+            break;
+    }
+
     // Integrate other ODEs
     if (r->integrator != REB_INTEGRATOR_BS && r->N_odes){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
@@ -160,81 +160,81 @@ void reb_integrator_part2(struct reb_simulation* r){
         }
     }
 }
-	
+
 void reb_simulation_synchronize(struct reb_simulation* r){
-	switch(r->integrator){
-		case REB_INTEGRATOR_IAS15:
-			reb_integrator_ias15_synchronize(r);
-			break;
-		case REB_INTEGRATOR_LEAPFROG:
-			reb_integrator_leapfrog_synchronize(r);
-			break;
-		case REB_INTEGRATOR_SEI:
-			reb_integrator_sei_synchronize(r);
-			break;
-		case REB_INTEGRATOR_WHFAST:
-			reb_integrator_whfast_synchronize(r);
-			break;
-		case REB_INTEGRATOR_WHFAST512:
-			reb_integrator_whfast512_synchronize(r);
-			break;
-		case REB_INTEGRATOR_SABA:
-			reb_integrator_saba_synchronize(r);
-			break;
-		case REB_INTEGRATOR_MERCURIUS:
-			reb_integrator_mercurius_synchronize(r);
-			break;
-		case REB_INTEGRATOR_JANUS:
-			reb_integrator_janus_synchronize(r);
-			break;
-		case REB_INTEGRATOR_EOS:
-			reb_integrator_eos_synchronize(r);
-			break;
-		case REB_INTEGRATOR_BS:
-			reb_integrator_bs_synchronize(r);
-			break;
-		case REB_INTEGRATOR_TRACE:
-			reb_integrator_trace_synchronize(r);
-			break;
-		default:
-			break;
-	}
+    switch(r->integrator){
+        case REB_INTEGRATOR_IAS15:
+            reb_integrator_ias15_synchronize(r);
+            break;
+        case REB_INTEGRATOR_LEAPFROG:
+            reb_integrator_leapfrog_synchronize(r);
+            break;
+        case REB_INTEGRATOR_SEI:
+            reb_integrator_sei_synchronize(r);
+            break;
+        case REB_INTEGRATOR_WHFAST:
+            reb_integrator_whfast_synchronize(r);
+            break;
+        case REB_INTEGRATOR_WHFAST512:
+            reb_integrator_whfast512_synchronize(r);
+            break;
+        case REB_INTEGRATOR_SABA:
+            reb_integrator_saba_synchronize(r);
+            break;
+        case REB_INTEGRATOR_MERCURIUS:
+            reb_integrator_mercurius_synchronize(r);
+            break;
+        case REB_INTEGRATOR_JANUS:
+            reb_integrator_janus_synchronize(r);
+            break;
+        case REB_INTEGRATOR_EOS:
+            reb_integrator_eos_synchronize(r);
+            break;
+        case REB_INTEGRATOR_BS:
+            reb_integrator_bs_synchronize(r);
+            break;
+        case REB_INTEGRATOR_TRACE:
+            reb_integrator_trace_synchronize(r);
+            break;
+        default:
+            break;
+    }
 }
 
 void reb_integrator_init(struct reb_simulation* r){
-	switch(r->integrator){
-		case REB_INTEGRATOR_SEI:
-			reb_integrator_sei_init(r);
-			break;
-		default:
-			break;
-	}
+    switch(r->integrator){
+        case REB_INTEGRATOR_SEI:
+            reb_integrator_sei_init(r);
+            break;
+        default:
+            break;
+    }
 }
 
 void reb_simulation_reset_integrator(struct reb_simulation* r){
-	r->integrator = REB_INTEGRATOR_IAS15;
-	r->gravity_ignore_terms = 0;
-	reb_integrator_ias15_reset(r);
-	reb_integrator_mercurius_reset(r);
-	reb_integrator_sei_reset(r);
-	reb_integrator_whfast_reset(r);
-	reb_integrator_whfast512_reset(r);
-	reb_integrator_saba_reset(r);
-	reb_integrator_janus_reset(r);
-	reb_integrator_eos_reset(r);
-	reb_integrator_bs_reset(r);
-	reb_integrator_trace_reset(r);
+    r->integrator = REB_INTEGRATOR_IAS15;
+    r->gravity_ignore_terms = 0;
+    reb_integrator_ias15_reset(r);
+    reb_integrator_mercurius_reset(r);
+    reb_integrator_sei_reset(r);
+    reb_integrator_whfast_reset(r);
+    reb_integrator_whfast512_reset(r);
+    reb_integrator_saba_reset(r);
+    reb_integrator_janus_reset(r);
+    reb_integrator_eos_reset(r);
+    reb_integrator_bs_reset(r);
+    reb_integrator_trace_reset(r);
 }
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
-	// This should probably go elsewhere
-	PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
-	PROFILING_START();
-	reb_calculate_acceleration(r);
-	if (r->N_var){
-		reb_calculate_acceleration_var(r);
-	}
-	if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==0 || r->ri_trace.mode==3)){
+    // This should probably go elsewhere
+    PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
+    PROFILING_START();
+    reb_calculate_acceleration(r);
+    if (r->N_var){
+        reb_calculate_acceleration_var(r);
+    }
+    if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==0 || r->ri_trace.mode==3)){
         // For Mercurius:
         // Additional forces are only calculated in the kick step, not during close encounter
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
@@ -283,7 +283,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
     }
-	PROFILING_STOP(PROFILING_CAT_GRAVITY);
-	PROFILING_START();
+    PROFILING_STOP(PROFILING_CAT_GRAVITY);
+    PROFILING_START();
 }
 

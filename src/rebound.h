@@ -199,7 +199,7 @@ struct reb_integrator_ias15 {
                                             // 1: fractional error is calculated globally (default)
                                             // 2: Dang, Rein & Spiegel (2023) timestep criterion
                                             // 3: Aarseth (1985) timestep criterion
-    // Internal use
+                                            // Internal use
     uint64_t iterations_max_exceeded; // Counter how many times the iteration did not converge. 
     unsigned int N_allocated;          
     double* REB_RESTRICT at;
@@ -226,7 +226,7 @@ struct reb_integrator_mercurius {
     unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
     unsigned int recalculate_r_crit_this_timestep;      // Set to 1 if to recalculate critical switching radii
     unsigned int safe_mode;                             // Combine Kick steps at beginning and end of timestep
-   
+
     // Internal use
     unsigned int is_synchronized;   
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
@@ -536,7 +536,7 @@ struct reb_simulation {
     uint32_t python_unit_l;         // Only used for when working with units in python.
     uint32_t python_unit_m;         // Only used for when working with units in python.
     uint32_t python_unit_t;         // Only used for when working with units in python.
-    
+
     // Simulation domain and ghost boxes 
     struct  reb_vec3d boxsize;      // Size of the entire simulation box, root_x*boxsize. Set in box_init().
     double  boxsize_max;            // Maximum size of the entire box in any direction. Set in box_init().
@@ -577,7 +577,7 @@ struct reb_simulation {
     double max_radius0;                     // The largest particle radius, set automatically, needed for collision search.
     double max_radius1;                     // The second largest particle radius, set automatically, needed for collision search.
     int64_t collisions_log_n;                  // Cumulative number of collisions in entire simulation.
-    
+
     // MEGNO Chaos indicator. These variables should not be accessed directly. Use functions provided instead.
     int calculate_megno;    // Do not change manually. Internal flag that determines if megno is calculated (default=0, but megno_init() sets it to the index of variational particles used for megno)
     double megno_Ys;        // Running megno sum (internal use)
@@ -589,8 +589,8 @@ struct reb_simulation {
     int64_t   megno_n;         // number of covariance updates
 
     unsigned int rand_seed; // seed for random number generator, used by MEGNO and other random number generators in REBOUND.
-    
-     // Simulationarchive. These variables should not be accessed directly. Use functions provided instead. 
+
+    // Simulationarchive. These variables should not be accessed directly. Use functions provided instead. 
     int    simulationarchive_version;               // Version of the SA binary format (1=original/, 2=incremental)
     double simulationarchive_auto_interval;         // Current sampling cadence, in code units
     double simulationarchive_auto_walltime;         // Current sampling cadence, in wall time
@@ -606,7 +606,7 @@ struct reb_simulation {
         REB_COLLISION_TREE = 2,         // Tree based collision search O(N log(N))
         REB_COLLISION_LINE = 4,         // Direct collision search O(N^2), looks for collisions by assuming a linear path over the last timestep
         REB_COLLISION_LINETREE = 5,     // Tree-based collision search O(N log(N)), looks for collisions by assuming a linear path over the last timestep
-        } collision;
+    } collision;
     enum {
         REB_INTEGRATOR_IAS15 = 0,       // IAS15 integrator, 15th order, non-symplectic (default)
         REB_INTEGRATOR_WHFAST = 1,      // WHFast integrator, symplectic, 2nd order, up to 11th order correctors
@@ -618,16 +618,16 @@ struct reb_simulation {
         REB_INTEGRATOR_SABA = 10,       // SABA integrator family (Laskar and Robutel 2001)
         REB_INTEGRATOR_EOS = 11,        // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
         REB_INTEGRATOR_BS = 12,         // Gragg-Bulirsch-Stoer 
-        // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
+                                        // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,  // WHFast integrator, optimized for AVX512
         REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu, Hernandez and Rein 2024)
-        } integrator;
+    } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
         REB_BOUNDARY_OPEN = 1,          // Open boundary conditions. Removes particles if they leave the box 
         REB_BOUNDARY_PERIODIC = 2,      // Periodic boundary conditions
         REB_BOUNDARY_SHEAR = 3,         // Shear periodic boundary conditions, needs OMEGA variable
-        } boundary;
+    } boundary;
     enum {
         REB_GRAVITY_NONE = 0,           // Do not calculate graviational forces
         REB_GRAVITY_BASIC = 1,          // Basic O(N^2) direct summation algorithm, choose this for shearing sheet and periodic boundary conditions
@@ -636,7 +636,7 @@ struct reb_simulation {
         REB_GRAVITY_MERCURIUS = 4,      // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,         // Special gravity routine which includes the Jacobi terms for WH integrators 
         REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
-        } gravity;
+    } gravity;
 
     // Datastructures for integrators
     struct reb_integrator_sei ri_sei;               // The SEI struct 
@@ -656,7 +656,7 @@ struct reb_simulation {
     int N_allocated_odes;
     int ode_warnings;
 
-     // Callback functions
+    // Callback functions
     void (*additional_forces) (struct reb_simulation* const r);             // Implement any additional (non-gravitational) forces here.
     void (*pre_timestep_modifications) (struct reb_simulation* const r);    // Executed just before eaach timestep. Used by REBOUNDx.
     void (*post_timestep_modifications) (struct reb_simulation* const r);   // Executed just after each timestep. Used by REBOUNDx.

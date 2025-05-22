@@ -177,7 +177,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     // TRACE Pericenter conditions used to have ids 166 - 168. Do not reuse.
     { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
     { 170, REB_INT, "ri_trace.peri_mode", offsetof(struct reb_simulation, ri_trace.peri_mode), 0, 0},
-//    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
+    //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
@@ -205,7 +205,7 @@ void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, 
     int increased = 0;
     while (*allocatedsize==0 || (*sizep)+size>(*allocatedsize)){
         increased = 1;
-	    *allocatedsize = (*allocatedsize) ? (*allocatedsize) * 2 : 32;
+        *allocatedsize = (*allocatedsize) ? (*allocatedsize) * 2 : 32;
     }
     if (increased){
         *bufp = realloc(*bufp,*allocatedsize);
@@ -257,16 +257,16 @@ void profiling_stop(int cat){
 #ifdef __EMSCRIPTEN__
 // fflush does not work in emscripten. Workaround.
 EM_JS(void, reb_remove_last_line, (), {
-    var output = document.getElementById("output");
-    if (output){
+        var output = document.getElementById("output");
+        if (output){
         const lastIndex1 = output.value.lastIndexOf("\n");
         const lastIndex2 = output.value.lastIndexOf("\n",lastIndex1-1);
         const lastIndexNtot = output.value.lastIndexOf("N_tot=");
         if(lastIndex1>0 && lastIndex2<lastIndexNtot){
-            output.value = output.value.substring(0, lastIndex2+1);
+        output.value = output.value.substring(0, lastIndex2+1);
         }
-    }
-});
+        }
+        });
 #endif
 
 int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filename){
@@ -296,7 +296,7 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
             r->status = REB_STATUS_SIGINT;
         }
     }
-            
+
     // Lock mutex again before continuing
     if (r->server_data->mutex_locked_by_integrate){
 #ifdef _WIN32
@@ -305,7 +305,7 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
         pthread_mutex_lock(&(r->server_data->mutex)); 
 #endif // _WIN32
     }
-    
+
     r->status = r->server_data->status_before_screenshot;
 
     if (r->server_data->screenshot){
@@ -464,13 +464,13 @@ void reb_simulation_output_orbits(struct reb_simulation* r, char* filename){
 // Memset forces padding to be set to 0 (not necessary but
 // helps when comparing binary files)
 #define WRITE_FIELD_TYPE(typen, value, length) {\
-        struct reb_binary_field field;\
-        memset(&field,0,sizeof(struct reb_binary_field));\
-        field.type = typen;\
-        field.size = (length);\
-        reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));\
-        reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
-    }
+    struct reb_binary_field field;\
+    memset(&field,0,sizeof(struct reb_binary_field));\
+    field.type = typen;\
+    field.size = (length);\
+    reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));\
+    reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
+}
 
 
 void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
@@ -545,7 +545,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             field.type = reb_binary_field_descriptor_list[i].type;
             unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
-                
+
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
@@ -559,7 +559,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
             field.size = reb_binary_field_descriptor_list[i].element_size;
-                
+
             char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
             pointer = *(char**)pointer;
             if (pointer){
@@ -574,7 +574,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             field.type = reb_binary_field_descriptor_list[i].type;
             unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binary_field_descriptor_list[i].element_size;
-                
+
             if (field.size){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binary_field_descriptor_list[i].offset;
@@ -594,13 +594,13 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
     // Write function pointer warning flag
     int functionpointersused = 0;
     if (r->coefficient_of_restitution ||
-        r->collision_resolve ||
-        r->additional_forces ||
-        r->heartbeat ||
-        r->ri_trace.S ||
-        r->ri_trace.S_peri ||
-        r->post_timestep_modifications ||
-        r->free_particle_ap){
+            r->collision_resolve ||
+            r->additional_forces ||
+            r->heartbeat ||
+            r->ri_trace.S ||
+            r->ri_trace.S_peri ||
+            r->post_timestep_modifications ||
+            r->free_particle_ap){
         functionpointersused = 1;
     }
 
@@ -612,7 +612,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
     reb_output_stream_write(bufp, &allocatedsize, sizep, &functionpointersused, field_functionp.size);
 
     int end_null = 0;
-    
+
     struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
     WRITE_FIELD_TYPE(fd_end.type, &end_null, 0);
     struct reb_simulationarchive_blob blob = {0};

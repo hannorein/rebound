@@ -204,7 +204,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     }
 
 }
- 
+
 // Does the actual timestep.
 static int reb_integrator_ias15_step(struct reb_simulation* r) {
     reb_integrator_ias15_alloc(r);
@@ -231,9 +231,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         map = r->ri_ias15.map; // identity map
     }
     const int N3 = 3*N;
-    
+
     // reb_simulation_update_acceleration(); // Not needed. Forces are already calculated in main routine.
-    
+
     double* restrict const csx = r->ri_ias15.csx; 
     double* restrict const csv = r->ri_ias15.csv; 
     double* restrict const csa0 = r->ri_ias15.csa0; 
@@ -463,50 +463,50 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                         add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
                     } break;
                 case 7:
-                {
-                    double maxak = 0.0;
-                    double maxb6ktmp = 0.0;
-                    for(int k=0;k<N3;++k) {
-                        double tmp = g.p6[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
-                        tmp = g.p6[k] - tmp;    
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
-                        add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
-                        add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
-                        add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
-                        
-                        // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+                    {
+                        double maxak = 0.0;
+                        double maxb6ktmp = 0.0;
+                        for(int k=0;k<N3;++k) {
+                            double tmp = g.p6[k];
+                            double gk = at[k];
+                            double gk_cs = ((double*)(gravity_cs))[k];
+                            add_cs(&gk, &gk_cs, -a0[k]);
+                            add_cs(&gk, &gk_cs, csa0[k]);
+                            g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+                            tmp = g.p6[k] - tmp;    
+                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
+                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
+                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
+                            add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
+                            add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
+                            add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
+                            add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
+
+                            // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+                            if (r->ri_ias15.adaptive_mode!=0){
+                                const double ak  = fabs(at[k]);
+                                if (isnormal(ak) && ak>maxak){
+                                    maxak = ak;
+                                }
+                                const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
+                                if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
+                                    maxb6ktmp = b6ktmp;
+                                }
+                            }else{
+                                const double ak  = at[k];
+                                const double b6ktmp = tmp; 
+                                const double errork = fabs(b6ktmp/ak);
+                                if (isnormal(errork) && errork>predictor_corrector_error){
+                                    predictor_corrector_error = errork;
+                                }
+                            }
+                        } 
                         if (r->ri_ias15.adaptive_mode!=0){
-                            const double ak  = fabs(at[k]);
-                            if (isnormal(ak) && ak>maxak){
-                                maxak = ak;
-                            }
-                            const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
-                            if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
-                                maxb6ktmp = b6ktmp;
-                            }
-                        }else{
-                            const double ak  = at[k];
-                            const double b6ktmp = tmp; 
-                            const double errork = fabs(b6ktmp/ak);
-                            if (isnormal(errork) && errork>predictor_corrector_error){
-                                predictor_corrector_error = errork;
-                            }
+                            predictor_corrector_error = maxb6ktmp/maxak;
                         }
-                    } 
-                    if (r->ri_ias15.adaptive_mode!=0){
-                        predictor_corrector_error = maxb6ktmp/maxak;
+
+                        break;
                     }
-                    
-                    break;
-                }
             }
         }
     }
@@ -514,7 +514,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     r->t = t_beginning;
     // Find new timestep
     const double dt_done = r->dt;
-    
+
     double dt_new;
     if (r->ri_ias15.epsilon>0){
         // Estimate error (given by last term in series expansion) 
@@ -533,8 +533,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double maxa = 0.0;
                 double maxj = 0.0;
                 for(unsigned int i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
-                                          // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
-                                          // close encounters more stable if variational particles are present.
+                                                   // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
+                                                   // close encounters more stable if variational particles are present.
                     int mi = map[i];
                     const double v2 = particles[mi].vx*particles[mi].vx+particles[mi].vy*particles[mi].vy+particles[mi].vz*particles[mi].vz;
                     const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
@@ -576,7 +576,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double y3 = 0;  //jerk
                 double y4 = 0;  //snap
                 double y5 = 0; // crackle
-                // All of the above are squared.
+                               // All of the above are squared.
                 for(unsigned int k=3*i;k<3*(i+1);k++) {
                     a0i += a0[k]*a0[k];
                     double tmp = a0[k] + b.p0[k] + b.p1[k] + b.p2[k] + b.p3[k] + b.p4[k] + b.p5[k] + b.p6[k];
@@ -613,9 +613,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         }
 
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
-        
+
         if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
-            // Reset particles
+                                                    // Reset particles
             for(int k=0;k<N;++k) {
                 int mk = map[k];
                 particles[mk].x = x0[3*k+0]; // Set inital position
@@ -625,7 +625,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 particles[mk].vx = v0[3*k+0];    // Set inital velocity
                 particles[mk].vy = v0[3*k+1];
                 particles[mk].vz = v0[3*k+2];
-                
+
                 particles[mk].ax = a0[3*k+0];    // Set inital acceleration
                 particles[mk].ay = a0[3*k+1];
                 particles[mk].az = a0[3*k+2];
@@ -635,7 +635,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 double ratio = r->dt/r->dt_last_done;
                 predict_next_step(ratio, N3, er, br, e, b);
             }
-            
+
             return 0; // Step rejected. Do again. 
         }       
         if (fabs(dt_new/dt_done) > 1.0) {   // New timestep is larger.
@@ -754,10 +754,10 @@ static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 
         _b.p5[i] = _a.p5[i];
         _b.p6[i] = _a.p6[i];
     }
-// The above code seems faster than the code below, probably due to some compiler optimizations. 
-//  for (int i=0;i<7;i++){  
-//      memcpy(_b[i],_a[i], sizeof(double)*N3);
-//  }
+    // The above code seems faster than the code below, probably due to some compiler optimizations. 
+    //  for (int i=0;i<7;i++){  
+    //      memcpy(_b[i],_a[i], sizeof(double)*N3);
+    //  }
 }
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
@@ -769,7 +769,7 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 #ifdef GENERATE_CONSTANTS
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
-    // Try until a step was successful.
+        // Try until a step was successful.
     while(!reb_integrator_ias15_step(r));
 }
 
@@ -869,20 +869,20 @@ void integrator_generate_constants(void){
     // Output   
     printf("double rr[28] = {");
     for (int i=0;i<28;i++){
-         gmp_printf ("%.*Ff", 25, _r[i]);
-         if (i!=27) printf(", ");
+        gmp_printf ("%.*Ff", 25, _r[i]);
+        if (i!=27) printf(", ");
     }
     printf("};\n");
     printf("double c[21] = {");
     for (int i=0;i<21;i++){
-         gmp_printf ("%.*Ff", 25, _c[i]);
-         if (i!=20) printf(", ");
+        gmp_printf ("%.*Ff", 25, _c[i]);
+        if (i!=20) printf(", ");
     }
     printf("};\n");
     printf("double d[21] = {");
     for (int i=0;i<21;i++){
-         gmp_printf ("%.*Ff", 25, _d[i]);
-         if (i!=20) printf(", ");
+        gmp_printf ("%.*Ff", 25, _d[i]);
+        if (i!=20) printf(", ");
     }
     printf("};\n");
     exit(0);

@@ -372,11 +372,11 @@ struct reb_mat4df reb_mat4df_translate(struct reb_mat4df m, float x, float y, fl
 struct reb_mat4df reb_mat4df_multiply(struct reb_mat4df A, struct reb_mat4df B){
     struct reb_mat4df C = {0};
     for(int i=0;i<4;i++)
-    for(int j=0;j<4;j++){
-        C.m[i+4*j] = 0.;
-    for(int k=0;k<4;k++){
-        C.m[i+4*j] += A.m[k+4*j]*B.m[i+4*k];
-    }}
+        for(int j=0;j<4;j++){
+            C.m[i+4*j] = 0.;
+            for(int k=0;k<4;k++){
+                C.m[i+4*j] += A.m[k+4*j]*B.m[i+4*k];
+            }}
     return C;
 }
 

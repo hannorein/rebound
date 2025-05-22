@@ -35,35 +35,35 @@
 // for non-rotating frame.
 void reb_integrator_leapfrog_part1(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
-	const unsigned int N = r->N;
-	struct reb_particle* restrict const particles = r->particles;
-	const double dt = r->dt;
+    const unsigned int N = r->N;
+    struct reb_particle* restrict const particles = r->particles;
+    const double dt = r->dt;
 #pragma omp parallel for schedule(guided)
-	for (unsigned int i=0;i<N;i++){
-		particles[i].x  += 0.5* dt * particles[i].vx;
-		particles[i].y  += 0.5* dt * particles[i].vy;
-		particles[i].z  += 0.5* dt * particles[i].vz;
-	}
-	r->t+=dt/2.;
+    for (unsigned int i=0;i<N;i++){
+        particles[i].x  += 0.5* dt * particles[i].vx;
+        particles[i].y  += 0.5* dt * particles[i].vy;
+        particles[i].z  += 0.5* dt * particles[i].vz;
+    }
+    r->t+=dt/2.;
 }
 void reb_integrator_leapfrog_part2(struct reb_simulation* r){
-	const unsigned int N = r->N;
-	struct reb_particle* restrict const particles = r->particles;
-	const double dt = r->dt;
+    const unsigned int N = r->N;
+    struct reb_particle* restrict const particles = r->particles;
+    const double dt = r->dt;
 #pragma omp parallel for schedule(guided)
-	for (unsigned int i=0;i<N;i++){
-		particles[i].vx += dt * particles[i].ax;
-		particles[i].vy += dt * particles[i].ay;
-		particles[i].vz += dt * particles[i].az;
-		particles[i].x  += 0.5* dt * particles[i].vx;
-		particles[i].y  += 0.5* dt * particles[i].vy;
-		particles[i].z  += 0.5* dt * particles[i].vz;
-	}
-	r->t+=dt/2.;
-	r->dt_last_done = r->dt;
+    for (unsigned int i=0;i<N;i++){
+        particles[i].vx += dt * particles[i].ax;
+        particles[i].vy += dt * particles[i].ay;
+        particles[i].vz += dt * particles[i].az;
+        particles[i].x  += 0.5* dt * particles[i].vx;
+        particles[i].y  += 0.5* dt * particles[i].vy;
+        particles[i].z  += 0.5* dt * particles[i].vz;
+    }
+    r->t+=dt/2.;
+    r->dt_last_done = r->dt;
 }
-	
+
 void reb_integrator_leapfrog_synchronize(struct reb_simulation* r){
-	// Do nothing.
+    // Do nothing.
 }
 

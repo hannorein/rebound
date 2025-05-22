@@ -85,281 +85,281 @@ void reb_collision_search(struct reb_simulation* const r){
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){
         case REB_COLLISION_NONE:
-        break;
+            break;
         case REB_COLLISION_DIRECT:
-        {
-            // Loop over ghost boxes, but only the inner most ring.
-            int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-            int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-            int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-            for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-            for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
-                // Loop over all particles
-                for (int i=0;i<N;i++){
+            {
+                // Loop over ghost boxes, but only the inner most ring.
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                    for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                        for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                            // Loop over all particles
+                            for (int i=0;i<N;i++){
 #ifndef OPENMP
-                    if (reb_sigint > 1) return;
+                                if (reb_sigint > 1) return;
 #endif // OPENMP
-                    int ip = i;
-                    if (mercurius_map){
-                        ip = mercurius_map[i];
-                    }
-                    if (trace_map){
-                        ip = trace_map[i];
-                    }
-                    struct reb_particle p1 = particles[ip];
-                    struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
-                    struct reb_vec6d gb = gborig;
-                    // Precalculate shifted position 
-                    gb.x += p1.x;
-                    gb.y += p1.y;
-                    gb.z += p1.z;
-                    gb.vx += p1.vx;
-                    gb.vy += p1.vy;
-                    gb.vz += p1.vz;
-                    // Loop over all particles again
-                    for (int j=0;j<Ninner;j++){
-                        // Do not collide particle with itself.
-                        if (i==j) continue;
-                        int jp = j;
-                        if (mercurius_map){
-                            jp = mercurius_map[j];
+                                int ip = i;
+                                if (mercurius_map){
+                                    ip = mercurius_map[i];
+                                }
+                                if (trace_map){
+                                    ip = trace_map[i];
+                                }
+                                struct reb_particle p1 = particles[ip];
+                                struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+                                struct reb_vec6d gb = gborig;
+                                // Precalculate shifted position 
+                                gb.x += p1.x;
+                                gb.y += p1.y;
+                                gb.z += p1.z;
+                                gb.vx += p1.vx;
+                                gb.vy += p1.vy;
+                                gb.vz += p1.vz;
+                                // Loop over all particles again
+                                for (int j=0;j<Ninner;j++){
+                                    // Do not collide particle with itself.
+                                    if (i==j) continue;
+                                    int jp = j;
+                                    if (mercurius_map){
+                                        jp = mercurius_map[j];
+                                    }
+                                    if (trace_map){
+                                        jp = trace_map[j];
+                                    }
+                                    struct reb_particle p2 = particles[jp];
+                                    double dx = gb.x - p2.x; 
+                                    double dy = gb.y - p2.y; 
+                                    double dz = gb.z - p2.z; 
+                                    double sr = p1.r + p2.r; 
+                                    double r2 = dx*dx+dy*dy+dz*dz;
+                                    // Check if particles are overlapping 
+                                    if (r2>sr*sr) continue;    
+                                    double dvx = gb.vx - p2.vx; 
+                                    double dvy = gb.vy - p2.vy; 
+                                    double dvz = gb.vz - p2.vz; 
+                                    // Check if particles are approaching each other
+                                    if (dvx*dx + dvy*dy + dvz*dz >0) continue; 
+                                    // Add particles to collision array.
+                                    if (r->N_allocated_collisions<=r->collisions_N){
+                                        // Allocate memory if there is no space in array.
+                                        // Init to 32 if no space has been allocated yet, otherwise double it.
+                                        r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
+                                        r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
+                                    }
+                                    r->collisions[r->collisions_N].p1 = ip;
+                                    r->collisions[r->collisions_N].p2 = jp;
+                                    r->collisions[r->collisions_N].gb = gborig;
+                                    r->collisions_N++;
+                                }
+                            }
                         }
-                        if (trace_map){
-                            jp = trace_map[j];
-                        }
-                        struct reb_particle p2 = particles[jp];
-                        double dx = gb.x - p2.x; 
-                        double dy = gb.y - p2.y; 
-                        double dz = gb.z - p2.z; 
-                        double sr = p1.r + p2.r; 
-                        double r2 = dx*dx+dy*dy+dz*dz;
-                        // Check if particles are overlapping 
-                        if (r2>sr*sr) continue;    
-                        double dvx = gb.vx - p2.vx; 
-                        double dvy = gb.vy - p2.vy; 
-                        double dvz = gb.vz - p2.vz; 
-                        // Check if particles are approaching each other
-                        if (dvx*dx + dvy*dy + dvz*dz >0) continue; 
-                        // Add particles to collision array.
-                        if (r->N_allocated_collisions<=r->collisions_N){
-                            // Allocate memory if there is no space in array.
-                            // Init to 32 if no space has been allocated yet, otherwise double it.
-                            r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
-                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
-                        }
-                        r->collisions[r->collisions_N].p1 = ip;
-                        r->collisions[r->collisions_N].p2 = jp;
-                        r->collisions[r->collisions_N].gb = gborig;
-                        r->collisions_N++;
                     }
                 }
             }
-            }
-            }
-        }
-        break;
+            break;
         case REB_COLLISION_LINE:
-        {
-            double dt_last_done = r->dt_last_done;
-            // Loop over ghost boxes, but only the inner most ring.
-            int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-            int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-            int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-            for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-            for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
-                // Loop over all particles
-                for (int i=0;i<N;i++){
+            {
+                double dt_last_done = r->dt_last_done;
+                // Loop over ghost boxes, but only the inner most ring.
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                    for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                        for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                            // Loop over all particles
+                            for (int i=0;i<N;i++){
 #ifndef OPENMP
-                    if (reb_sigint > 1) return;
+                                if (reb_sigint > 1) return;
 #endif // OPENMP
-                    int ip = i;
-                    if (trace_map){
-                        ip = trace_map[i];
-                    }
-                    struct reb_particle p1 = particles[ip];
-                    struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
-                    struct reb_vec6d gb = gborig;
-                    // Precalculate shifted position 
-                    gb.x += p1.x;
-                    gb.y += p1.y;
-                    gb.z += p1.z;
-                    gb.vx += p1.vx;
-                    gb.vy += p1.vy;
-                    gb.vz += p1.vz;
-                    // Loop over all particles again
-                    for (int j=i+1;j<N;j++){
-                        int jp = j;
-                        if (trace_map){
-                            jp = trace_map[j];
-                        }
-                        struct reb_particle p2 = particles[jp];
-                        const double dx1 = gb.x - p2.x; // distance at end
-                        const double dy1 = gb.y - p2.y;
-                        const double dz1 = gb.z - p2.z;
-                        const double r1 = (dx1*dx1 + dy1*dy1 + dz1*dz1);
-                        const double dvx1 = gb.vx - p2.vx; 
-                        const double dvy1 = gb.vy - p2.vy;
-                        const double dvz1 = gb.vz - p2.vz;
-                        const double dx2 = dx1 -dt_last_done*dvx1; // distance at beginning
-                        const double dy2 = dy1 -dt_last_done*dvy1;
-                        const double dz2 = dz1 -dt_last_done*dvz1;
-                        const double r2 = (dx2*dx2 + dy2*dy2 + dz2*dz2);
-                        const double t_closest = (dx1*dvx1 + dy1*dvy1 + dz1*dvz1)/(dvx1*dvx1 + dvy1*dvy1 + dvz1*dvz1);
+                                int ip = i;
+                                if (trace_map){
+                                    ip = trace_map[i];
+                                }
+                                struct reb_particle p1 = particles[ip];
+                                struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+                                struct reb_vec6d gb = gborig;
+                                // Precalculate shifted position 
+                                gb.x += p1.x;
+                                gb.y += p1.y;
+                                gb.z += p1.z;
+                                gb.vx += p1.vx;
+                                gb.vy += p1.vy;
+                                gb.vz += p1.vz;
+                                // Loop over all particles again
+                                for (int j=i+1;j<N;j++){
+                                    int jp = j;
+                                    if (trace_map){
+                                        jp = trace_map[j];
+                                    }
+                                    struct reb_particle p2 = particles[jp];
+                                    const double dx1 = gb.x - p2.x; // distance at end
+                                    const double dy1 = gb.y - p2.y;
+                                    const double dz1 = gb.z - p2.z;
+                                    const double r1 = (dx1*dx1 + dy1*dy1 + dz1*dz1);
+                                    const double dvx1 = gb.vx - p2.vx; 
+                                    const double dvy1 = gb.vy - p2.vy;
+                                    const double dvz1 = gb.vz - p2.vz;
+                                    const double dx2 = dx1 -dt_last_done*dvx1; // distance at beginning
+                                    const double dy2 = dy1 -dt_last_done*dvy1;
+                                    const double dz2 = dz1 -dt_last_done*dvz1;
+                                    const double r2 = (dx2*dx2 + dy2*dy2 + dz2*dz2);
+                                    const double t_closest = (dx1*dvx1 + dy1*dvy1 + dz1*dvz1)/(dvx1*dvx1 + dvy1*dvy1 + dvz1*dvz1);
 
-                        double rmin2_ab = MIN(r1,r2);
-                        if (t_closest/dt_last_done>=0. && t_closest/dt_last_done<=1.){
-                            const double dx3 = dx1-t_closest*dvx1; // closest approach
-                            const double dy3 = dy1-t_closest*dvy1;
-                            const double dz3 = dz1-t_closest*dvz1;
-                            const double r3 = (dx3*dx3 + dy3*dy3 + dz3*dz3);
-                            rmin2_ab = MIN(rmin2_ab, r3);
-                        }
-                        double rsum = p1.r + p2.r;
-                        if (rmin2_ab>rsum*rsum) continue;
+                                    double rmin2_ab = MIN(r1,r2);
+                                    if (t_closest/dt_last_done>=0. && t_closest/dt_last_done<=1.){
+                                        const double dx3 = dx1-t_closest*dvx1; // closest approach
+                                        const double dy3 = dy1-t_closest*dvy1;
+                                        const double dz3 = dz1-t_closest*dvz1;
+                                        const double r3 = (dx3*dx3 + dy3*dy3 + dz3*dz3);
+                                        rmin2_ab = MIN(rmin2_ab, r3);
+                                    }
+                                    double rsum = p1.r + p2.r;
+                                    if (rmin2_ab>rsum*rsum) continue;
 
-                        // Add particles to collision array.
-                        if (r->N_allocated_collisions<=r->collisions_N){
-                            // Allocate memory if there is no space in array.
-                            // Init to 32 if no space has been allocated yet, otherwise double it.
-                            r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
-                            r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
+                                    // Add particles to collision array.
+                                    if (r->N_allocated_collisions<=r->collisions_N){
+                                        // Allocate memory if there is no space in array.
+                                        // Init to 32 if no space has been allocated yet, otherwise double it.
+                                        r->N_allocated_collisions = r->N_allocated_collisions ? r->N_allocated_collisions * 2 : 32;
+                                        r->collisions = realloc(r->collisions,sizeof(struct reb_collision)*r->N_allocated_collisions);
+                                    }
+                                    r->collisions[r->collisions_N].p1 = ip;
+                                    r->collisions[r->collisions_N].p2 = jp;
+                                    r->collisions[r->collisions_N].gb = gborig;
+                                    r->collisions_N++;
+                                }
+                            }
                         }
-                        r->collisions[r->collisions_N].p1 = ip;
-                        r->collisions[r->collisions_N].p2 = jp;
-                        r->collisions[r->collisions_N].gb = gborig;
-                        r->collisions_N++;
                     }
                 }
             }
-            }
-            }
-        }
-        break;
+            break;
         case REB_COLLISION_TREE:
-        {
-            // Update and simplify tree. 
-            // Prepare particles for distribution to other nodes. 
-            reb_simulation_update_tree(r);          
+            {
+                // Update and simplify tree. 
+                // Prepare particles for distribution to other nodes. 
+                reb_simulation_update_tree(r);          
 
 #ifdef MPI
-            // Distribute particles and add newly received particles to tree.
-            reb_communication_mpi_distribute_particles(r);
-            
-            // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-            reb_tree_prepare_essential_tree_for_collisions(r);
+                // Distribute particles and add newly received particles to tree.
+                reb_communication_mpi_distribute_particles(r);
 
-            // Transfer essential tree and particles needed for collisions.
-            reb_communication_mpi_distribute_essential_tree_for_collisions(r);
+                // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+                reb_tree_prepare_essential_tree_for_collisions(r);
+
+                // Transfer essential tree and particles needed for collisions.
+                reb_communication_mpi_distribute_essential_tree_for_collisions(r);
 #endif // MPI
 
-            // Loop over ghost boxes, but only the inner most ring.
-            int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-            int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-            int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-            const struct reb_particle* const particles = r->particles;
-            const int N = r->N - r->N_var;
-            // Loop over all particles
+                // Loop over ghost boxes, but only the inner most ring.
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                const struct reb_particle* const particles = r->particles;
+                const int N = r->N - r->N_var;
+                // Loop over all particles
 #pragma omp parallel for schedule(guided)
-            for (int i=0;i<N;i++){
+                for (int i=0;i<N;i++){
 #ifndef OPENMP
-                if (reb_sigint > 1) return;
+                    if (reb_sigint > 1) return;
 #endif // OPENMP
-                struct reb_particle p1 = particles[i];
-                struct reb_collision collision_nearest;
-                collision_nearest.p1 = i;
-                collision_nearest.p2 = -1;
-                double p1_r = p1.r;
-                double nearest_r2 = r->boxsize_max*r->boxsize_max/4.;
-                // Loop over ghost boxes.
-                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
-                    // Calculated shifted position (for speedup). 
-                    struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
-                    struct reb_vec6d gbunmod = gb;
-                    gb.x += p1.x; 
-                    gb.y += p1.y; 
-                    gb.z += p1.z; 
-                    gb.vx += p1.vx; 
-                    gb.vy += p1.vy; 
-                    gb.vz += p1.vz; 
-                    // Loop over all root boxes.
-                    for (int ri=0;ri<r->N_root;ri++){
-                        struct reb_treecell* rootcell = r->tree_root[ri];
-                        if (rootcell!=NULL){
-                            reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+                    struct reb_particle p1 = particles[i];
+                    struct reb_collision collision_nearest;
+                    collision_nearest.p1 = i;
+                    collision_nearest.p2 = -1;
+                    double p1_r = p1.r;
+                    double nearest_r2 = r->boxsize_max*r->boxsize_max/4.;
+                    // Loop over ghost boxes.
+                    for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                        for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                                // Calculated shifted position (for speedup). 
+                                struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+                                struct reb_vec6d gbunmod = gb;
+                                gb.x += p1.x; 
+                                gb.y += p1.y; 
+                                gb.z += p1.z; 
+                                gb.vx += p1.vx; 
+                                gb.vy += p1.vy; 
+                                gb.vz += p1.vz; 
+                                // Loop over all root boxes.
+                                for (int ri=0;ri<r->N_root;ri++){
+                                    struct reb_treecell* rootcell = r->tree_root[ri];
+                                    if (rootcell!=NULL){
+                                        reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+                                    }
+                                }
+                            }
                         }
                     }
+                    // Continue if no collision was found
+                    if (collision_nearest.p2==-1) continue;
                 }
-                }
-                }
-                // Continue if no collision was found
-                if (collision_nearest.p2==-1) continue;
             }
-        }
-        break;
+            break;
         case REB_COLLISION_LINETREE:
-        {
-            // Calculate max drift (can also be stored in tree for further speedup)
-            double vmax2 = 0.;
-            for (int i=0;i<N;i++){
-                struct reb_particle p1 = particles[i];
-                vmax2 = MAX(vmax2, p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
-            }
-            double maxdrift = r->dt_last_done*sqrt(vmax2);
-            // Update and simplify tree. 
-            // Prepare particles for distribution to other nodes. 
-            reb_simulation_update_tree(r);          
+            {
+                // Calculate max drift (can also be stored in tree for further speedup)
+                double vmax2 = 0.;
+                for (int i=0;i<N;i++){
+                    struct reb_particle p1 = particles[i];
+                    vmax2 = MAX(vmax2, p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
+                }
+                double maxdrift = r->dt_last_done*sqrt(vmax2);
+                // Update and simplify tree. 
+                // Prepare particles for distribution to other nodes. 
+                reb_simulation_update_tree(r);          
 
-            // Loop over ghost boxes, but only the inner most ring.
-            int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-            int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-            int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-            const struct reb_particle* const particles = r->particles;
-            const int N = r->N - r->N_var;
-            // Loop over all particles
+                // Loop over ghost boxes, but only the inner most ring.
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                const struct reb_particle* const particles = r->particles;
+                const int N = r->N - r->N_var;
+                // Loop over all particles
 #pragma omp parallel for schedule(guided)
-            for (int i=0;i<N;i++){
+                for (int i=0;i<N;i++){
 #ifndef OPENMP
-                if (reb_sigint > 1) return;
+                    if (reb_sigint > 1) return;
 #endif // OPENMP
-                struct reb_particle p1 = particles[i];
-                struct reb_collision collision_nearest;
-                collision_nearest.p1 = i;
-                collision_nearest.p2 = -1;
-                double p1_r = p1.r;
-                // Add drift during last timestep
-                double p1_r_plus_dtv = p1_r + r->dt_last_done*sqrt(p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
-                // Loop over ghost boxes.
-                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
-                    // Calculated shifted position (for speedup). 
-                    struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
-                    struct reb_vec6d gbunmod = gb;
-                    gb.x += p1.x; 
-                    gb.y += p1.y; 
-                    gb.z += p1.z; 
-                    gb.vx += p1.vx; 
-                    gb.vy += p1.vy; 
-                    gb.vz += p1.vz; 
-                    // Loop over all root boxes.
-                    for (int ri=0;ri<r->N_root;ri++){
-                        struct reb_treecell* rootcell = r->tree_root[ri];
-                        if (rootcell!=NULL){
-                            reb_tree_check_for_overlapping_trajectories_in_cell(r, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
+                    struct reb_particle p1 = particles[i];
+                    struct reb_collision collision_nearest;
+                    collision_nearest.p1 = i;
+                    collision_nearest.p2 = -1;
+                    double p1_r = p1.r;
+                    // Add drift during last timestep
+                    double p1_r_plus_dtv = p1_r + r->dt_last_done*sqrt(p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
+                    // Loop over ghost boxes.
+                    for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                        for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                                // Calculated shifted position (for speedup). 
+                                struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+                                struct reb_vec6d gbunmod = gb;
+                                gb.x += p1.x; 
+                                gb.y += p1.y; 
+                                gb.z += p1.z; 
+                                gb.vx += p1.vx; 
+                                gb.vy += p1.vy; 
+                                gb.vz += p1.vz; 
+                                // Loop over all root boxes.
+                                for (int ri=0;ri<r->N_root;ri++){
+                                    struct reb_treecell* rootcell = r->tree_root[ri];
+                                    if (rootcell!=NULL){
+                                        reb_tree_check_for_overlapping_trajectories_in_cell(r, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
+                                    }
+                                }
+                            }
                         }
                     }
+                    // Continue if no collision was found
+                    if (collision_nearest.p2==-1) continue;
                 }
-                }
-                }
-                // Continue if no collision was found
-                if (collision_nearest.p2==-1) continue;
             }
-        }
-        break;
+            break;
         default:
             reb_exit("Collision routine not implemented.");
     }
@@ -372,7 +372,7 @@ void reb_collision_search(struct reb_simulation* const r){
         r->collisions[new] = c1;
     }
     // Loop over all collisions previously found in reb_collision_search().
-    
+
     int (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
     if (resolve==NULL){
         // Default is to throw an exception
@@ -384,12 +384,12 @@ void reb_collision_search(struct reb_simulation* const r){
     }
 
     for (int i=0;i<r->collisions_N;i++){
-        
+
         struct reb_collision c = r->collisions[i];
         if (c.p1 != -1 && c.p2 != -1){
             // Resolve collision
             int outcome = resolve(r, c);
-            
+
             // Remove particles
             if (outcome & 1){
                 // Remove p1
@@ -405,7 +405,7 @@ void reb_collision_search(struct reb_simulation* const r){
                             }
                         }
                     }else{ // Not in a tree, particles get removed immediately 
-                        // Update p2 of current collision
+                           // Update p2 of current collision
                         if (collision_resolve_keep_sorted){
                             if (c.p2 > c.p1){
                                 c.p2--;
@@ -676,7 +676,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
         p2 = r->particles_recv[proc_id][c.p2];
     }
 #endif // MPI
-//    if (p1.last_collision==t || p2.last_collision==t) return;
+       //    if (p1.last_collision==t || p2.last_collision==t) return;
     struct reb_vec6d gb = c.gb;
     double x21  = p1.x + gb.x  - p2.x; 
     double y21  = p1.y + gb.y  - p2.y; 
@@ -684,7 +684,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
     double rp   = p1.r+p2.r;
     double oldvyouter;
     if (x21>0){
-         oldvyouter = p1.vy;
+        oldvyouter = p1.vy;
     }else{
         oldvyouter = p2.vy;
     }
@@ -693,14 +693,14 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
     double vy21 = p1.vy + gb.vy - p2.vy; 
     double vz21 = p1.vz + gb.vz - p2.vz; 
     if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
-    // Bring the to balls in the xy plane.
-    // NOTE: this could probabely be an atan (which is faster than atan2)
+                                                     // Bring the to balls in the xy plane.
+                                                     // NOTE: this could probabely be an atan (which is faster than atan2)
     double theta = atan2(z21,y21);
     double stheta = sin(theta);
     double ctheta = cos(theta);
     double vy21n = ctheta * vy21 + stheta * vz21;    
     double y21n = ctheta * y21 + stheta * z21;    
-    
+
     // Bring the two balls onto the positive x axis.
     double phi = atan2(y21n,x21);
     double cphi = cos(phi);
@@ -731,11 +731,11 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
 #ifdef MPI
     if (isloc==1){
 #endif // MPI
-    const double p2pf = p1.m/(p1.m+p2.m);
-    particles[c.p2].vx -=    p2pf*dvx2n;
-    particles[c.p2].vy -=    p2pf*dvy2nn;
-    particles[c.p2].vz -=    p2pf*dvz2nn;
-    particles[c.p2].last_collision = r->t;
+        const double p2pf = p1.m/(p1.m+p2.m);
+        particles[c.p2].vx -=    p2pf*dvx2n;
+        particles[c.p2].vy -=    p2pf*dvy2nn;
+        particles[c.p2].vz -=    p2pf*dvz2nn;
+        particles[c.p2].last_collision = r->t;
 #ifdef MPI
     }
 #endif // MPI
@@ -744,7 +744,7 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
     particles[c.p1].vy +=    p1pf*dvy2nn; 
     particles[c.p1].vz +=    p1pf*dvz2nn; 
     particles[c.p1].last_collision = r->t;
-        
+
     // Return y-momentum change
     if (x21>0){
         r->collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p1].vy) * p1.m;
@@ -780,9 +780,9 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
 
     struct reb_particle* pi = &(r->particles[i]);
     struct reb_particle* pj = &(r->particles[j]);
-                
+
     double invmass = 1.0/(pi->m + pj->m);
-    
+
     //Scale out energy from collision - initial energy
     double Ei=0, Ef=0;
     if(r->track_energy_offset){
@@ -834,7 +834,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
             Ei += - r->G*pi->m*pj->m/_r;
         }
     }
-    
+
     // Merge by conserving mass, volume and momentum
     pi->vx = (pi->vx*pi->m + pj->vx*pj->m)*invmass;
     pi->vy = (pi->vy*pi->m + pj->vy*pj->m)*invmass;
@@ -869,6 +869,6 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
         }
         r->energy_offset += Ei - Ef;
     }
-    
+
     return swap?1:2; // Remove particle p2 from simulation
 }

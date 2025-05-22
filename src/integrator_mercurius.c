@@ -220,16 +220,16 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
             const double tmin2 = (-b - sr)/(2.*a); 
             if (tmin1>0. && tmin1<1.){
                 const double rmin1 = (1.-tmin1)*(1.-tmin1)*(1.+2.*tmin1)*ro
-                                     + tmin1*tmin1*(3.-2.*tmin1)*rn
-                                     + tmin1*(1.-tmin1)*(1.-tmin1)*dt*drodt
-                                     - tmin1*tmin1*(1.-tmin1)*dt*drndt;
+                    + tmin1*tmin1*(3.-2.*tmin1)*rn
+                    + tmin1*(1.-tmin1)*(1.-tmin1)*dt*drodt
+                    - tmin1*tmin1*(1.-tmin1)*dt*drndt;
                 rmin = MIN(MAX(rmin1,0.),rmin);
             }
             if (tmin2>0. && tmin2<1.){
                 const double rmin2 = (1.-tmin2)*(1.-tmin2)*(1.+2.*tmin2)*ro
-                                     + tmin2*tmin2*(3.-2.*tmin2)*rn
-                                     + tmin2*(1.-tmin2)*(1.-tmin2)*dt*drodt
-                                     - tmin2*tmin2*(1.-tmin2)*dt*drndt;
+                    + tmin2*tmin2*(3.-2.*tmin2)*rn
+                    + tmin2*(1.-tmin2)*(1.-tmin2)*dt*drodt
+                    - tmin2*tmin2*(1.-tmin2)*dt*drndt;
                 rmin = MIN(MAX(rmin2,0.),rmin);
             }
 
@@ -251,7 +251,7 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
         }
     }
 }
-    
+
 void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
@@ -324,17 +324,17 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     }
 
     rim->mode = 1;
-    
+
     // run
     const double old_dt = r->dt;
     const double dtsign = old_dt>=0.?1.:-1.;
     const double old_t = r->t;
     double t_needed = r->t + _dt; 
-        
+
     reb_integrator_ias15_reset(r);
-    
+
     r->dt = 0.0001*_dt; // start with a small timestep.
-    
+
     while(dtsign*r->t < dtsign*t_needed && fabs(r->dt/old_dt)>1e-14 ){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh 
@@ -345,7 +345,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
-        
+
         if (dtsign*(r->t+r->dt) > dtsign*t_needed){
             r->dt = t_needed-r->t;
         }
@@ -429,10 +429,10 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
     if (r->N_var_config){
         reb_simulation_warning(r,"Mercurius does not work with variational equations.");
     }
-    
+
     struct reb_integrator_mercurius* const rim = &(r->ri_mercurius);
     const unsigned int N = r->N;
-    
+
     if (rim->N_allocated_dcrit<N){
         // Need to safe these arrays in Simulationarchive
         rim->dcrit              = realloc(rim->dcrit, sizeof(double)*N);
@@ -472,19 +472,19 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
             rim->dcrit[i] = reb_integrator_mercurius_calculate_dcrit_for_particle(r, i);
         }
     }
-    
+
     // Calculate collisions only with DIRECT method
     if (r->collision != REB_COLLISION_NONE && r->collision != REB_COLLISION_DIRECT){
         reb_simulation_warning(r,"Mercurius only works with a direct collision search.");
     }
-    
+
     // Calculate gravity with special function
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_MERCURIUS){
         reb_simulation_warning(r,"Mercurius has it's own gravity routine. Gravity routine set by the user will be ignored.");
     }
     r->gravity = REB_GRAVITY_MERCURIUS;
     rim->mode = 0;
-    
+
     if (rim->L == NULL){
         // Setting default switching function
         rim->L = reb_integrator_mercurius_L_mercury;
@@ -494,7 +494,7 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
 void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     struct reb_integrator_mercurius* const rim = &(r->ri_mercurius);
     const int N = r->N;
-   
+
     if (rim->is_synchronized){
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
     }else{
@@ -502,7 +502,7 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     }
     reb_integrator_mercurius_jump_step(r,r->dt/2.);
     reb_integrator_mercurius_com_step(r,r->dt); 
-    
+
     // Make copy of particles before the kepler step.
     // Then evolve all particles in kepler step.
     // Result will be used in encounter prediction.
@@ -512,11 +512,11 @@ void reb_integrator_mercurius_part2(struct reb_simulation* const r){
     reb_integrator_mercurius_kepler_step(r,r->dt);
 
     reb_mercurius_encounter_predict(r);
-   
+
     reb_mercurius_encounter_step(r,r->dt);
-    
+
     reb_integrator_mercurius_jump_step(r,r->dt/2.);
-        
+
     rim->is_synchronized = 0;
     if (rim->safe_mode){
         reb_integrator_mercurius_synchronize(r);
@@ -537,7 +537,7 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
         }
         reb_simulation_update_acceleration(r);
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
-        
+
         reb_integrator_mercurius_dh_to_inertial(r);
 
         rim->recalculate_coordinates_this_timestep = 1; 

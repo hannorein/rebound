@@ -60,7 +60,7 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
     }else{
         scale = r->boxsize_max/2.;
     }
-    
+
     struct reb_mat4df oldview = s->view;
     s->view = reb_mat4df_scale(reb_mat4df_identity(), 1./scale, 1./scale, 1./scale);
     if (oldview.m[1]==0. && oldview.m[2]==0. && oldview.m[4]==0. && oldview.m[6]==0.){
@@ -126,39 +126,39 @@ void emscripten_glDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, G
 
 
 EM_JS(void, reb_overlay_update, (const char* text, int status), {
-    var overlaytext = document.getElementById("overlaytext");
-    if (overlaytext){
+        var overlaytext = document.getElementById("overlaytext");
+        if (overlaytext){
         overlaytext.innerHTML = UTF8ToString(text);
-    }
-    var overlay = document.getElementById("overlay");
-    if (overlay){
+        }
+        var overlay = document.getElementById("overlay");
+        if (overlay){
         if (status==-3){ // Pause
-            overlay.style.backgroundColor = "rgba(100.0, 100.0, 0.0, 0.5)";
+        overlay.style.backgroundColor = "rgba(100.0, 100.0, 0.0, 0.5)";
         }else if (status==0 || status==5){ // Finished.
-            overlay.style.backgroundColor = "rgba(0.0, 255.0, 0.0, 0.5)";
+        overlay.style.backgroundColor = "rgba(0.0, 255.0, 0.0, 0.5)";
         }else if (status==10){ // Connection error.
-            overlay.style.backgroundColor = "rgba(255.0, 0.0, 0.0, 0.5)";
+        overlay.style.backgroundColor = "rgba(255.0, 0.0, 0.0, 0.5)";
         }else{
-            overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
         }
-    }
-});
+        }
+        });
 EM_JS(int, reb_overlay_help_show, (int show), {
-    var overlaytoggle = document.getElementById("overlay-toggle");
-    if (overlaytoggle){
+        var overlaytoggle = document.getElementById("overlay-toggle");
+        if (overlaytoggle){
         if (overlaytoggle.innerHTML == "1"){
-            overlaytoggle.innerHTML = "";
-            show = !show;
+        overlaytoggle.innerHTML = "";
+        show = !show;
         }
-    }
-    var overlayhelp = document.getElementById("overlay-help");
-    if (show){
+        }
+        var overlayhelp = document.getElementById("overlay-help");
+        if (show){
         overlayhelp.style.display = "block";
-    }else{
+        }else{
         overlayhelp.style.display = "none";
-    }
-    return show;
-});
+        }
+        return show;
+        });
 
 #else
 #define reb_glVertexAttribDivisor glVertexAttribDivisor
@@ -166,40 +166,40 @@ EM_JS(int, reb_overlay_help_show, (int show), {
 #endif
 
 void reb_render_frame(void* p);
-                
+
 static const char* onscreenhelp[] = { 
-                "REBOUND mouse and keyboard commands",
-                "----------------------------------------------------",
-                " To rotate the view, simply drag the simulation",
-                " with the mouse. To zoom in, press the shift key ",
-                " and then drag the simulation with the mouse.",
-                "----------------------------------------------------",
-                " h       | Show/hide this page",
-                " q       | Quit simulation",
-                " (space) | Pause simulation",
-                " (ar dwn)| Perform one single time step",
-                " (pg dwn)| Perform 50 time steps",
+    "REBOUND mouse and keyboard commands",
+    "----------------------------------------------------",
+    " To rotate the view, simply drag the simulation",
+    " with the mouse. To zoom in, press the shift key ",
+    " and then drag the simulation with the mouse.",
+    "----------------------------------------------------",
+    " h       | Show/hide this page",
+    " q       | Quit simulation",
+    " (space) | Pause simulation",
+    " (ar dwn)| Perform one single time step",
+    " (pg dwn)| Perform 50 time steps",
 #ifdef __EMSCRIPTEN__
-                " e       | Take screenshot and export as png file",
+    " e       | Take screenshot and export as png file",
 #else // __EMSCRIPTEN__
-                " e       | Take screenshot and export as tga file",
+    " e       | Take screenshot and export as tga file",
 #endif // __EMSCRIPTEN__
-                " d       | Pause real-time visualization", 
-                "         | (the simulation continues)",
-                " r       | Reset view. Press multiple times to",
-                "         | change orientation",
-                " x/X     | Move to a coordinate system centered",
-                "         | on a particle (note: does not work if", 
-                "         | particle array is resorted)",
-                " t       | Show/hide logo, time, timestep, number",
-                "         | of particles, and scale",
-                " s       | Toggle points/spheres/points+spheres/none",
-                " g       | Toggle ghost boxes",
-                " m       | Toggle multisampling",
-                " w       | Toggle orbit mode (none/wire/plane)",
-                " i / o   | Increase / decrease number of breadcrumbs",
-                " c       | Clear breadcrumb data",
-                "----------------------------------------------------"
+    " d       | Pause real-time visualization", 
+    "         | (the simulation continues)",
+    " r       | Reset view. Press multiple times to",
+    "         | change orientation",
+    " x/X     | Move to a coordinate system centered",
+    "         | on a particle (note: does not work if", 
+    "         | particle array is resorted)",
+    " t       | Show/hide logo, time, timestep, number",
+    "         | of particles, and scale",
+    " s       | Toggle points/spheres/points+spheres/none",
+    " g       | Toggle ghost boxes",
+    " m       | Toggle multisampling",
+    " w       | Toggle orbit mode (none/wire/plane)",
+    " i / o   | Increase / decrease number of breadcrumbs",
+    " c       | Clear breadcrumb data",
+    "----------------------------------------------------"
 };
 
 
@@ -215,11 +215,11 @@ static int convertLine(const char* in, float* out){
 
 static unsigned int compileShader(int* shader, int type, const char* source){
     GLint status;
-    
+
     *shader = glCreateShader(type);
     glShaderSource(*shader, 1, &source, NULL);
     glCompileShader(*shader);
-    
+
     GLint logLength;
     glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &logLength);
     if (logLength > 0) {
@@ -228,20 +228,20 @@ static unsigned int compileShader(int* shader, int type, const char* source){
         printf("\n\n%s\n\n",log);
         free(log);
     }
-    
+
     glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
     if (status == 0) {
         glDeleteShader(*shader);
         return 0;
     }
-    
+
     return 1;
 }
 
 static unsigned int linkProgram(int prog){
     GLint status;
     glLinkProgram(prog);
-    
+
     GLint logLength;
     glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
     if (logLength > 1) { // 0 should work - bug in emscripten?
@@ -250,33 +250,33 @@ static unsigned int linkProgram(int prog){
         printf("\n\n%s\n\n",log);
         free(log);
     }
-    
+
     glGetProgramiv(prog, GL_LINK_STATUS, &status);
     if (status == 0) {
         return 0;
     }
-    
+
     return 1;
 }
 
 static int loadShader(const char* vert_source, const char* frag_source){
     GLint vertShader, fragShader;
-    
+
     GLuint _program = glCreateProgram();
-    
+
     if(!compileShader(&vertShader, GL_VERTEX_SHADER, vert_source)) {
         printf("Failed to compile vertex shader.\n");
         return -1;
     }
-    
+
     if (!compileShader(&fragShader, GL_FRAGMENT_SHADER, frag_source)){
         printf("Failed to compile fragment shader.\n");
         return -1;
     }
-    
+
     glAttachShader(_program, vertShader);
     glAttachShader(_program, fragShader);
-    
+
     if (!linkProgram(_program)) {
         printf("Failed to link shader.\n");
         return -1;
@@ -367,7 +367,7 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
         return;
     }
 }
-                
+
 #define xstr(s) ystr(s)
 #define ystr(s) #s
 static void reb_display_clear_particle_data(struct reb_display_data* data){
@@ -540,7 +540,7 @@ void reb_render_frame(void* p){
         data->r_copy = reb_simulation_create();
         r_copy = data->r_copy;
     }
-    
+
     // lock mutex for update
     data->need_copy = 1;
     int wait_count = 0;
@@ -561,7 +561,7 @@ void reb_render_frame(void* p){
         data->need_copy = 0;
         pthread_mutex_unlock(&(data->mutex));  
     }
-    
+
     if (r_copy->display_settings){
         // User provided settings server-side. Will overwrite our own.
         data->s = *r_copy->display_settings;
@@ -569,31 +569,31 @@ void reb_render_frame(void* p){
 
     // prepare data (incl orbit calculation)
     const int N_real = r_copy->N - r_copy->N_var;
-        
+
     if (N_real > data->N_allocated || data->s.breadcrumbs+1 != data->breadcrumb_N_allocated){
         data->N_allocated = N_real;
         data->breadcrumb_N_allocated = data->s.breadcrumbs+1;
-        
+
         data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_vec4df));
         data->orbit_data = realloc(data->orbit_data, data->N_allocated*sizeof(struct reb_orbit_opengl));
-        
+
         // Resize memory if needed
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
         glBufferData(GL_ARRAY_BUFFER, data->breadcrumb_N_allocated*data->N_allocated*sizeof(struct reb_vec4df), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
         glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_vec4df), NULL, GL_STATIC_DRAW);
-        
+
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
         glBufferData(GL_ARRAY_BUFFER, data->breadcrumb_N_allocated*data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
         glBufferData(GL_ARRAY_BUFFER, data->N_allocated*sizeof(struct reb_orbit_opengl), NULL, GL_STATIC_DRAW);
-        
+
         reb_display_clear_particle_data(data);
     }
 
     // this only does something for WHFAST
     reb_simulation_synchronize(r_copy);
-       
+
     // Update data on GPU 
     for (unsigned int i=0;i<N_real;i++){
         struct reb_particle p = r_copy->particles[i];
@@ -637,7 +637,7 @@ void reb_render_frame(void* p){
             glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
             glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_vec4df), data->particle_data);
         }
-            
+
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
         glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
         if (data->s.wire){
@@ -654,7 +654,7 @@ void reb_render_frame(void* p){
 #ifndef __EMSCRIPTEN__
     glPointSize(15.*data->retina);
 #endif
-   
+
     // Precalculate matricies 
     struct reb_mat4df projection = reb_mat4df_ortho( -1.6*ratio, 1.6*ratio, -1.6,1.6, -2.5,2.5);
     struct reb_mat4df view = data->s.view;
@@ -662,99 +662,99 @@ void reb_render_frame(void* p){
         struct reb_particle p = data->r_copy->particles[data->s.reference];
         view = reb_mat4df_translate(view, -p.x, -p.y, -p.z);
     }
-    
-    for (int i=-data->s.ghostboxes*data->r_copy->N_ghost_x;i<=data->s.ghostboxes*data->r_copy->N_ghost_x;i++){
-    for (int j=-data->s.ghostboxes*data->r_copy->N_ghost_y;j<=data->s.ghostboxes*data->r_copy->N_ghost_y;j++){
-    for (int k=-data->s.ghostboxes*data->r_copy->N_ghost_z;k<=data->s.ghostboxes*data->r_copy->N_ghost_z;k++){
-        struct reb_vec6d gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
-        struct reb_mat4df model = reb_mat4df_translate(reb_mat4df_identity(), gb.x, gb.y, gb.z);
-        { // Particles
-            struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, model));
-            if (data->s.wire==2){
-                // Orbit Planes
-                glDisable(GL_CULL_FACE);
-                glUseProgram(data->shader_plane.program);
-                glUniformMatrix4fv(data->shader_plane.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                glBindVertexArray(data->shader_plane.particle_vao_current);
-                glUniform1i(data->shader_plane.vertex_count_location, data->shader_plane.vertex_count);
-                reb_glDrawArraysInstanced(GL_TRIANGLES, 0, data->shader_plane.vertex_count, N_real-1);
-                glBindVertexArray(0);
-                glEnable(GL_CULL_FACE);
-            }
-            if(data->s.spheres==1||data->s.spheres==2){
-                // Solid Spheres
-                glEnable(GL_DEPTH_TEST);
-                glUseProgram(data->shader_sphere.program);
-                glUniformMatrix4fv(data->shader_sphere.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                if (data->breadcrumb_N_allocated>1){
-                    glBindVertexArray(data->shader_sphere.particle_vao);
-                    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real*data->breadcrumb_N_allocated);
-                }else{
-                    glBindVertexArray(data->shader_sphere.particle_vao_current);
-                    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real);
-                }
-                glBindVertexArray(0);
-                glDisable(GL_DEPTH_TEST);
-            }
 
-            if(data->s.spheres%2==0){
-                glUseProgram(data->shader_point.program);
-                glBindVertexArray(data->shader_point.particle_vao);
-                glUniformMatrix4fv(data->shader_point.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                glUniform1i(data->shader_point.breadcrumb_N_location, data->breadcrumb_N_allocated);
-                if (data->breadcrumb_N_allocated>1){
-                    glUniform4f(data->shader_point.color_location, 1.,1.,1.,0.8);
-                    glUniform1i(data->shader_point.N_real_location, N_real);
-                    glUniform1i(data->shader_point.current_index_location, data->breadcrumb_current_index);
-                    glDrawArrays(GL_POINTS, 0, N_real*data->breadcrumb_N_allocated);
+    for (int i=-data->s.ghostboxes*data->r_copy->N_ghost_x;i<=data->s.ghostboxes*data->r_copy->N_ghost_x;i++){
+        for (int j=-data->s.ghostboxes*data->r_copy->N_ghost_y;j<=data->s.ghostboxes*data->r_copy->N_ghost_y;j++){
+            for (int k=-data->s.ghostboxes*data->r_copy->N_ghost_z;k<=data->s.ghostboxes*data->r_copy->N_ghost_z;k++){
+                struct reb_vec6d gb = reb_boundary_get_ghostbox(data->r_copy, i,j,k);
+                struct reb_mat4df model = reb_mat4df_translate(reb_mat4df_identity(), gb.x, gb.y, gb.z);
+                { // Particles
+                    struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, model));
+                    if (data->s.wire==2){
+                        // Orbit Planes
+                        glDisable(GL_CULL_FACE);
+                        glUseProgram(data->shader_plane.program);
+                        glUniformMatrix4fv(data->shader_plane.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
+                        glBindVertexArray(data->shader_plane.particle_vao_current);
+                        glUniform1i(data->shader_plane.vertex_count_location, data->shader_plane.vertex_count);
+                        reb_glDrawArraysInstanced(GL_TRIANGLES, 0, data->shader_plane.vertex_count, N_real-1);
+                        glBindVertexArray(0);
+                        glEnable(GL_CULL_FACE);
+                    }
+                    if(data->s.spheres==1||data->s.spheres==2){
+                        // Solid Spheres
+                        glEnable(GL_DEPTH_TEST);
+                        glUseProgram(data->shader_sphere.program);
+                        glUniformMatrix4fv(data->shader_sphere.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
+                        if (data->breadcrumb_N_allocated>1){
+                            glBindVertexArray(data->shader_sphere.particle_vao);
+                            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real*data->breadcrumb_N_allocated);
+                        }else{
+                            glBindVertexArray(data->shader_sphere.particle_vao_current);
+                            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real);
+                        }
+                        glBindVertexArray(0);
+                        glDisable(GL_DEPTH_TEST);
+                    }
+
+                    if(data->s.spheres%2==0){
+                        glUseProgram(data->shader_point.program);
+                        glBindVertexArray(data->shader_point.particle_vao);
+                        glUniformMatrix4fv(data->shader_point.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
+                        glUniform1i(data->shader_point.breadcrumb_N_location, data->breadcrumb_N_allocated);
+                        if (data->breadcrumb_N_allocated>1){
+                            glUniform4f(data->shader_point.color_location, 1.,1.,1.,0.8);
+                            glUniform1i(data->shader_point.N_real_location, N_real);
+                            glUniform1i(data->shader_point.current_index_location, data->breadcrumb_current_index);
+                            glDrawArrays(GL_POINTS, 0, N_real*data->breadcrumb_N_allocated);
+                        }
+                        // Points
+                        glUniform4f(data->shader_point.color_location, 1.,1.,0.,0.8);
+                        glUniform1i(data->shader_point.N_real_location, 0);
+                        glDrawArrays(GL_POINTS, N_real*data->breadcrumb_current_index, N_real);
+                        glBindVertexArray(0);
+                    }
+                    if (data->s.wire>=1){
+                        // Orbits
+                        glUseProgram(data->shader_orbit.program);
+                        glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
+                        glUniform1i(data->shader_orbit.breadcrumb_N_location, data->breadcrumb_N_allocated);
+                        glUniform1i(data->shader_orbit.vertex_count_location, data->shader_orbit.vertex_count);
+                        if (data->breadcrumb_N_allocated>1){
+                            glBindVertexArray(data->shader_orbit.particle_vao);
+                            glUniform1i(data->shader_orbit.N_real_location, N_real-1);
+                            glUniform1i(data->shader_orbit.current_index_location, data->breadcrumb_current_index);
+                            reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->breadcrumb_N_allocated*(N_real-1));
+                        }else{
+                            glBindVertexArray(data->shader_orbit.particle_vao_current);
+                            glUniform1i(data->shader_orbit.N_real_location, 0);
+                            reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, N_real-1);
+                        }
+                        glBindVertexArray(0);
+                    }
                 }
-                // Points
-                glUniform4f(data->shader_point.color_location, 1.,1.,0.,0.8);
-                glUniform1i(data->shader_point.N_real_location, 0);
-                glDrawArrays(GL_POINTS, N_real*data->breadcrumb_current_index, N_real);
-                glBindVertexArray(0);
-            }
-            if (data->s.wire>=1){
-                // Orbits
-                glUseProgram(data->shader_orbit.program);
-                glUniformMatrix4fv(data->shader_orbit.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-                glUniform1i(data->shader_orbit.breadcrumb_N_location, data->breadcrumb_N_allocated);
-                glUniform1i(data->shader_orbit.vertex_count_location, data->shader_orbit.vertex_count);
-                if (data->breadcrumb_N_allocated>1){
-                    glBindVertexArray(data->shader_orbit.particle_vao);
-                    glUniform1i(data->shader_orbit.N_real_location, N_real-1);
-                    glUniform1i(data->shader_orbit.current_index_location, data->breadcrumb_current_index);
-                    reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->breadcrumb_N_allocated*(N_real-1));
-                }else{
-                    glBindVertexArray(data->shader_orbit.particle_vao_current);
-                    glUniform1i(data->shader_orbit.N_real_location, 0);
-                    reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, N_real-1);
+                { // Box
+                    glUseProgram(data->shader_box.program);
+                    struct reb_mat4df boxmodel =  model;
+                    if (data->r_copy->boundary == REB_BOUNDARY_NONE){
+                        struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
+                        glBindVertexArray(data->shader_box.cross_vao);
+                        boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
+                    }else{
+                        glBindVertexArray(data->shader_box.box_vao);
+                        boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
+                    }
+                    struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
+                    glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
+                    glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
+                    if (data->r_copy->boundary == REB_BOUNDARY_NONE){
+                        glDrawArrays(GL_LINES, 0, 6);
+                    }else{
+                        glDrawArrays(GL_LINES, 0, 24);
+                    }
+                    glBindVertexArray(0);
                 }
-                glBindVertexArray(0);
-            }
-        }
-        { // Box
-            glUseProgram(data->shader_box.program);
-            struct reb_mat4df boxmodel =  model;
-            if (data->r_copy->boundary == REB_BOUNDARY_NONE){
-                struct reb_vec3df scale = reb_mat4df_get_scale(view); // Extract scale from view matrix so it can be undone
-                glBindVertexArray(data->shader_box.cross_vao);
-                boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
-            }else{
-                glBindVertexArray(data->shader_box.box_vao);
-                boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
-            }
-            struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
-            glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
-            glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
-            if (data->r_copy->boundary == REB_BOUNDARY_NONE){
-                glDrawArrays(GL_LINES, 0, 6);
-            }else{
-                glDrawArrays(GL_LINES, 0, 24);
-            }
-            glBindVertexArray(0);
-        }
-    }}}
+            }}}
 
 
     // Ruler
@@ -807,105 +807,105 @@ void reb_render_frame(void* p){
 #ifdef __EMSCRIPTEN__
     }
 #else // __EMSCRIPTEN__
-        // Logo
-        char_size = data->retina*4.; // px per char
-        scale = 2.*char_size/height; // size of one char in screen coordinates
-        float logo_width = 42.0*0.5 *scale*screen_aspect;     //  41=num char, 0.5=aspect
-        float logo_height = 26.0 *scale;         //  26=num char
-        glUniform2f(data->shader_simplefont.pos_location, -1.,-1.+logo_height);
-        glUniform1f(data->shader_simplefont.aspect_location, 0.5);
-        glUniform1i(data->shader_simplefont.rotation_location, 0);
-        glUniform1f(data->shader_simplefont.scale_location, scale);
-        for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
-            int j = convertLine(reb_logo[i],val);
-            glUniform1f(data->shader_simplefont.ypos_location, (float)i);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-        }
-        
-        // Status text
-        char_size = data->retina*16.; // px per char
-        scale = 2.*char_size/height; // size of one char in screen coordinates
-
-        int ypos = 1;
-        glUniform2f(data->shader_simplefont.pos_location, -1+logo_width,-1.+logo_height);
-        glUniform1f(data->shader_simplefont.aspect_location,0.75);
-        glUniform1f(data->shader_simplefont.scale_location, scale);
-        
-        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-        sprintf(str,"REBOUND v%s",reb_version_str);
-        j = convertLine(str,val);
+      // Logo
+    char_size = data->retina*4.; // px per char
+    scale = 2.*char_size/height; // size of one char in screen coordinates
+    float logo_width = 42.0*0.5 *scale*screen_aspect;     //  41=num char, 0.5=aspect
+    float logo_height = 26.0 *scale;         //  26=num char
+    glUniform2f(data->shader_simplefont.pos_location, -1.,-1.+logo_height);
+    glUniform1f(data->shader_simplefont.aspect_location, 0.5);
+    glUniform1i(data->shader_simplefont.rotation_location, 0);
+    glUniform1f(data->shader_simplefont.scale_location, scale);
+    for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
+        int j = convertLine(reb_logo[i],val);
+        glUniform1f(data->shader_simplefont.ypos_location, (float)i);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
         reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-        
-        if (data->r_copy->status == REB_STATUS_RUNNING){
-            sprintf(str, "Simulation is running  ");
-        }else if (data->r_copy->status == REB_STATUS_PAUSED){
-            sprintf(str, "Simulation is paused   ");
-        }else if (data->r_copy->status <= REB_STATUS_SINGLE_STEP){
-            if (data->r_copy->status == REB_STATUS_SINGLE_STEP){
-                sprintf(str, "Integrating 1 step");
-            }else{
-                sprintf(str, "Integrating %d steps",REB_STATUS_SINGLE_STEP - data->r_copy->status + 1);
-            }
-        }
-        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-        j = convertLine(str,val);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-        
-        if (!r_copy->display_settings){
-            sprintf(str, "Press h for help ");
-        }else{
-            sprintf(str, "User interaction disabled");
-        }
-        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-        j = convertLine(str,val);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-
-        
-        sprintf(str, "N = %d ",data->r_copy->N);
-        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-        j = convertLine(str,val);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-        
-        glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-        if (data->r_copy->integrator==REB_INTEGRATOR_SEI){
-            sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->ri_sei.OMEGA/2./M_PI);
-        }else{
-            sprintf(str, "t = %f  ", data->r_copy->t);
-        }
-        j = convertLine(str,val);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
-        
     }
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D,0);
-    if (data->s.onscreenhelp){ // On screen help
-        glUseProgram(data->shader_simplefont.program);
-        glBindVertexArray(data->shader_simplefont.vao);
-        glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
-        glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
-        glUniform1f(data->shader_simplefont.aspect_location, 0.75);
-        glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
-        glUniform1i(data->shader_simplefont.rotation_location, 0);
-        glUniform1f(data->shader_simplefont.scale_location, 0.035);
-        glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
-        float val[200] = {0.};
-        for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
-            int j = convertLine(onscreenhelp[i],val);
-            glUniform1f(data->shader_simplefont.ypos_location, (float)i);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
-            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+    // Status text
+    char_size = data->retina*16.; // px per char
+    scale = 2.*char_size/height; // size of one char in screen coordinates
+
+    int ypos = 1;
+    glUniform2f(data->shader_simplefont.pos_location, -1+logo_width,-1.+logo_height);
+    glUniform1f(data->shader_simplefont.aspect_location,0.75);
+    glUniform1f(data->shader_simplefont.scale_location, scale);
+
+    glUniform1f(data->shader_simplefont.ypos_location, ypos++);
+    sprintf(str,"REBOUND v%s",reb_version_str);
+    j = convertLine(str,val);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+    if (data->r_copy->status == REB_STATUS_RUNNING){
+        sprintf(str, "Simulation is running  ");
+    }else if (data->r_copy->status == REB_STATUS_PAUSED){
+        sprintf(str, "Simulation is paused   ");
+    }else if (data->r_copy->status <= REB_STATUS_SINGLE_STEP){
+        if (data->r_copy->status == REB_STATUS_SINGLE_STEP){
+            sprintf(str, "Integrating 1 step");
+        }else{
+            sprintf(str, "Integrating %d steps",REB_STATUS_SINGLE_STEP - data->r_copy->status + 1);
         }
     }
+    glUniform1f(data->shader_simplefont.ypos_location, ypos++);
+    j = convertLine(str,val);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+    if (!r_copy->display_settings){
+        sprintf(str, "Press h for help ");
+    }else{
+        sprintf(str, "User interaction disabled");
+    }
+    glUniform1f(data->shader_simplefont.ypos_location, ypos++);
+    j = convertLine(str,val);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+
+    sprintf(str, "N = %d ",data->r_copy->N);
+    glUniform1f(data->shader_simplefont.ypos_location, ypos++);
+    j = convertLine(str,val);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+    glUniform1f(data->shader_simplefont.ypos_location, ypos++);
+    if (data->r_copy->integrator==REB_INTEGRATOR_SEI){
+        sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->ri_sei.OMEGA/2./M_PI);
+    }else{
+        sprintf(str, "t = %f  ", data->r_copy->t);
+    }
+    j = convertLine(str,val);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+    reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+
+}
+glBindVertexArray(0);
+glBindTexture(GL_TEXTURE_2D,0);
+if (data->s.onscreenhelp){ // On screen help
+    glUseProgram(data->shader_simplefont.program);
+    glBindVertexArray(data->shader_simplefont.vao);
+    glBindTexture(GL_TEXTURE_2D,data->shader_simplefont.texture);
+    glUniform2f(data->shader_simplefont.pos_location, -0.67,0.7);
+    glUniform1f(data->shader_simplefont.aspect_location, 0.75);
+    glUniform1f(data->shader_simplefont.screen_aspect_location, 1./ratio);
+    glUniform1i(data->shader_simplefont.rotation_location, 0);
+    glUniform1f(data->shader_simplefont.scale_location, 0.035);
+    glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
+    float val[200] = {0.};
+    for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
+        int j = convertLine(onscreenhelp[i],val);
+        glUniform1f(data->shader_simplefont.ypos_location, (float)i);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
+        reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
+    }
+}
 #endif // __EMSCRIPTEN__
 
-    glfwSwapBuffers(data->window);
-    glfwPollEvents();
+glfwSwapBuffers(data->window);
+glfwPollEvents();
 }
 
 #ifdef __EMSCRIPTEN__
@@ -920,13 +920,13 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
     }
     reb_render_frame(data);
     EM_ASM({
-        var overlay = document.getElementById("overlay");
-        if ($0){
+            var overlay = document.getElementById("overlay");
+            if ($0){
             overlay.style.display = "none";
-        }else{
+            }else{
             overlay.style.display = "block";
-        }
-        }, !data->s.onscreentext);
+            }
+            }, !data->s.onscreentext);
     if (data->s.onscreentext){ 
         char str[10240] = "\0";
         char line[1024];
@@ -982,7 +982,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
             EM_ASM({
                     var overlaytext = document.getElementById("overlaytext-help");
                     if (overlaytext){
-                        overlaytext.innerHTML = UTF8ToString($0);
+                    overlaytext.innerHTML = UTF8ToString($0);
                     }}, str);
         }
     }
@@ -1043,7 +1043,7 @@ void reb_display_init(struct reb_simulation * const r){
 #ifndef __EMSCRIPTEN__
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 #endif // __EMSCRIPTEN__
-    
+
     glfwSetWindowUserPointer(window,data); 
 
     // Default parameters
@@ -1123,7 +1123,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_simplefont.texture_location = glGetUniformLocation(data->shader_simplefont.program, "tex");
         data->shader_simplefont.aspect_location = glGetUniformLocation(data->shader_simplefont.program, "aspect");
         data->shader_simplefont.screen_aspect_location = glGetUniformLocation(data->shader_simplefont.program, "screen_aspect");
-    
+
         glUseProgram(data->shader_simplefont.program);
         glGenVertexArrays(1, &data->shader_simplefont.vao);
         glBindVertexArray(data->shader_simplefont.vao);
@@ -1145,7 +1145,7 @@ void reb_display_init(struct reb_simulation * const r){
         glGenBuffers(1, &simplefont_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, simplefont_buffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(simplefont_data), simplefont_data, GL_STATIC_DRAW);
-        
+
         glVertexAttribPointer(sfvp, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, NULL);
         glVertexAttribPointer(sftexcoordp, 2, GL_FLOAT, GL_FALSE, sizeof(float)*4, (void *)(sizeof(float)*2));
 
@@ -1189,7 +1189,7 @@ void reb_display_init(struct reb_simulation * const r){
         glBindTexture(GL_TEXTURE_2D,0);
 
     }
-    
+
     {
         // POINT shader
         const char* vertex_shader =
@@ -1242,7 +1242,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_point.current_index_location = glGetUniformLocation(data->shader_point.program, "current_index");
         data->shader_point.breadcrumb_N_location = glGetUniformLocation(data->shader_point.program, "breadcrumb_N");
         data->shader_point.N_real_location = glGetUniformLocation(data->shader_point.program, "N_real");
-        
+
         glUseProgram(data->shader_point.program);
         glGenVertexArrays(1, &data->shader_point.particle_vao);
         glBindVertexArray(data->shader_point.particle_vao);
@@ -1324,7 +1324,7 @@ void reb_display_init(struct reb_simulation * const r){
 
         glVertexAttribPointer(vp, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
-        
+
         // Create ruler mesh
         glGenVertexArrays(1, &data->shader_box.ruler_vao);
         glBindVertexArray(data->shader_box.ruler_vao);
@@ -1382,7 +1382,7 @@ void reb_display_init(struct reb_simulation * const r){
 
         data->shader_sphere.program = loadShader(vertex_shader, fragment_shader);
         data->shader_sphere.mvp_location = glGetUniformLocation(data->shader_sphere.program, "mvp");
-    
+
         // Sphere data
         float* sphere_data = malloc(sizeof(float)*3*800);
         int count = 0; // will be 800 by end
@@ -1457,7 +1457,7 @@ void reb_display_init(struct reb_simulation * const r){
 
         glBindVertexArray(0);
     }
-    
+
     {
         // ORBIT shader
         const char* vertex_shader =
@@ -1550,7 +1550,7 @@ void reb_display_init(struct reb_simulation * const r){
             reb_glVertexAttribDivisor(oaefp, 1);
             reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
         }
-        
+
         { // Past
             glGenVertexArrays(1, &data->shader_orbit.particle_vao);
             glBindVertexArray(data->shader_orbit.particle_vao);
@@ -1572,7 +1572,7 @@ void reb_display_init(struct reb_simulation * const r){
 
         glBindVertexArray(0);
     }
-    
+
     {
         // PLANE shader
         const char* vertex_shader =
@@ -1648,7 +1648,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_plane.program = loadShader(vertex_shader, fragment_shader);
         data->shader_plane.mvp_location = glGetUniformLocation(data->shader_plane.program, "mvp");
         data->shader_plane.vertex_count_location = glGetUniformLocation(data->shader_plane.program, "vertex_count");
-    
+
         // Orbit data
         data->shader_plane.vertex_count = 3*200; // higher number = smoother orbits // must be multiple of 3
 
@@ -1675,11 +1675,11 @@ void reb_display_init(struct reb_simulation * const r){
             reb_glVertexAttribDivisor(oaefp, 1);
             reb_glVertexAttribDivisor(oomegaOmegaincp, 1);
         }
-        
+
         glBindVertexArray(0);
-    
+
     }
-    
+
 
     // Main display loop
 #ifdef __EMSCRIPTEN__
