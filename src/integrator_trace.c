@@ -415,7 +415,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         nbody_ode->needs_nbody = 0;
 
         // TODO: Support backwards integrations
-        while(r->t < t_needed && fabs(dt/old_dt)>1e-14 ){
+        while(r->t < t_needed && fabs(dt/old_dt)>1e-14 && r->status<=0){
             double* y = nbody_ode->y;
 
             // In case of overshoot
@@ -730,7 +730,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
             case REB_TRACE_PERI_FULL_IAS15:
                 // Run default IAS15 integration
                 reb_integrator_ias15_reset(r);
-                while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+                while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
                     reb_simulation_update_acceleration(r);
                     reb_integrator_ias15_part2(r);
                     if (r->t+r->dt >  t_needed){
@@ -749,7 +749,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                     struct reb_ode* nbody_ode = NULL;
 
                     double* y;
-                    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 ){
+                    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
                         if (!nbody_ode || nbody_ode->length != 6*r->N){
                             if (nbody_ode){
                                 reb_ode_free(nbody_ode);
