@@ -47,41 +47,45 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
 
 void reb_collision_search(struct reb_simulation* const r){
+    r->collisions_N = 0;
     int N = r->N - r->N_var;
     int Ninner = N;
-    int* mercurius_map = NULL;
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-        if (r->ri_mercurius.mode==0){
-            // After jump step, only collisions with star might occur.
-            // All other collisions in encounter step/
-            Ninner = 1;
-        }else{
-            N = r->ri_mercurius.encounter_N;
-            Ninner = N;
-            mercurius_map = r->ri_mercurius.encounter_map;
-        }
-    }
 
-    int* trace_map = NULL;
-    if (r->integrator==REB_INTEGRATOR_TRACE){
-        switch (r->ri_trace.mode){
-            case REB_TRACE_MODE_INTERACTION:
-            case REB_TRACE_MODE_NONE:
+    int* map = NULL;
+    switch (r->integrator){
+        case REB_INTEGRATOR_MERCURIUS:
+            if (r->ri_mercurius.mode==0){
                 // After jump step, only collisions with star might occur.
                 // All other collisions in encounter step/
                 Ninner = 1;
-                break;
-            case REB_TRACE_MODE_KEPLER:
-                N = r->ri_trace.encounter_N;
+            }else{
+                N = r->ri_mercurius.encounter_N;
                 Ninner = N;
-                trace_map = r->ri_trace.encounter_map;
-                break;
-            case REB_TRACE_MODE_FULL:
-                // Do the default collision search
-                break;
-        }
+                map = r->ri_mercurius.encounter_map;
+            }
+            break;
+        case REB_INTEGRATOR_TRACE:
+            switch (r->ri_trace.mode){
+                case REB_TRACE_MODE_INTERACTION:
+                case REB_TRACE_MODE_NONE:
+                    // After jump step, only collisions with star might occur.
+                    // All other collisions in encounter step/
+                    Ninner = 1;
+                    break;
+                case REB_TRACE_MODE_KEPLER:
+                    N = r->ri_trace.encounter_N;
+                    Ninner = N;
+                    map = r->ri_trace.encounter_map;
+                    break;
+                case REB_TRACE_MODE_FULL:
+                    // Do the default collision search
+                    break;
+            }
+            break;
+        default:
+            // map = NULL
+            break;
     }
-    r->collisions_N = 0;
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){
         case REB_COLLISION_NONE:
@@ -101,11 +105,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
                                 int ip = i;
-                                if (mercurius_map){
-                                    ip = mercurius_map[i];
-                                }
-                                if (trace_map){
-                                    ip = trace_map[i];
+                                if (map){
+                                    ip = map[i];
                                 }
                                 struct reb_particle p1 = particles[ip];
                                 struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
@@ -122,11 +123,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                     // Do not collide particle with itself.
                                     if (i==j) continue;
                                     int jp = j;
-                                    if (mercurius_map){
-                                        jp = mercurius_map[j];
-                                    }
-                                    if (trace_map){
-                                        jp = trace_map[j];
+                                    if (map){
+                                        jp = map[j];
                                     }
                                     struct reb_particle p2 = particles[jp];
                                     double dx = gb.x - p2.x; 
@@ -175,8 +173,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
                                 int ip = i;
-                                if (trace_map){
-                                    ip = trace_map[i];
+                                if (map){
+                                    ip = map[i];
                                 }
                                 struct reb_particle p1 = particles[ip];
                                 struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
@@ -191,8 +189,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                 // Loop over all particles again
                                 for (int j=i+1;j<N;j++){
                                     int jp = j;
-                                    if (trace_map){
-                                        jp = trace_map[j];
+                                    if (map){
+                                        jp = map[j];
                                     }
                                     struct reb_particle p2 = particles[jp];
                                     const double dx1 = gb.x - p2.x; // distance at end
