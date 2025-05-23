@@ -646,7 +646,7 @@ struct reb_simulation {
     struct reb_integrator_saba ri_saba;             // The SABA struct 
     struct reb_integrator_ias15 ri_ias15;           // The IAS15 struct
     struct reb_integrator_mercurius ri_mercurius;   // The MERCURIUS struct
-    struct reb_integrator_trace ri_trace;              // The TRACE struct
+    struct reb_integrator_trace ri_trace;           // The TRACE struct
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
