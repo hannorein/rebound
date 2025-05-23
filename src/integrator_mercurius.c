@@ -335,7 +335,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
 
     r->dt = 0.0001*_dt; // start with a small timestep.
 
-    while(dtsign*r->t < dtsign*t_needed && fabs(r->dt/old_dt)>1e-14 ){
+    while(dtsign*r->t < dtsign*t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh 
         r->particles[0].vy = 0;
