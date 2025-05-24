@@ -4,6 +4,20 @@ import math
 import rebound.data
 import warnings
 
+class TestIntegratorIAS15Timescale(unittest.TestCase):
+    def test_ias15_timescale(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(a=1)
+        tau = sim.ias15_timescale()
+        self.assertAlmostEqual(tau, 1., delta=1e-15)
+    def test_ias15_timescale2(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(P=2.0)
+        tau = sim.ias15_timescale()*math.pi*2.0
+        self.assertAlmostEqual(tau, 2., delta=1e-15)
+
 class TestIntegratorWHFastHyper(unittest.TestCase):
     def test_whfast_veryhyperbolic(self):
         sim = rebound.Simulation()

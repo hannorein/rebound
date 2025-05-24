@@ -1228,6 +1228,13 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_angular_momentum.restype = Vec3dBasic
         return Vec3d(clibrebound.reb_simulation_angular_momentum(byref(self)))
+    
+    def ias15_timescale(self):
+        """
+        Returns the gravitational timescale in code units. See Pham, Rein, Spiegel 2023 for details. 
+        """
+        clibrebound.reb_integrator_ias15_timescale.restype = c_double
+        return clibrebound.reb_integrator_ias15_timescale(byref(self))
 
     def configure_box(self, boxsize, N_root_x=1, N_root_y=1, N_root_z=1):
         """
