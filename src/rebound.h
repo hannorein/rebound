@@ -781,7 +781,7 @@ DLLEXPORT struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, s
 // Returns the center of mass of particles in the simulation within a given range.
 DLLEXPORT struct reb_particle reb_simulation_com_range(struct reb_simulation* r, int first, int last);
 // Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
-double reb_integrator_ias15_timescale(struct reb_simulation* r);
+DLLEXPORT double reb_integrator_ias15_timescale(struct reb_simulation* r);
 
 // Functions to add and initialize particles
 
