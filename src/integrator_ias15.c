@@ -568,7 +568,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
-        }else{ // adaptive_mode >= 2 (New adaptive timestepping method, default since January 2024)
+        }else if (r->ri_ias15.adaptive_mode <=3) { // adaptive_mode = 2 or 3 (New adaptive timestepping method, default since January 2024)
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){
                 double a0i = 0; // (acceleration at beginning of timestep)^2
@@ -609,6 +609,17 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
+        }else if (r->ri_ias15.adaptive_mode ==5){
+            double timescale = reb_integrator_ias15_timescale(r);
+            if (isnormal(timescale)){
+                // Numerical factor below is there to match timestep to that of adaptive_mode==0 and default epsilon
+                dt_new = timescale * sqrt7(r->ri_ias15.epsilon*5040.0);
+            }else{
+                dt_new = dt_done/safety_factor; // by default, increase timestep a little
+            }
+        }else{
+            reb_simulation_error(r, "Unknown adaptive_mode");
+            return 0;
         }
 
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
@@ -805,7 +816,8 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
 
 double reb_integrator_ias15_timescale(struct reb_simulation* r){
     // Returns a timescale according to Pham, Rein, Spiegel 2023 (PRS23)
-    reb_simulation_update_acceleration(r);
+    // Calculates this timescale for all pairs
+    // Used in adaptive_mode=5
     int N;
     int* map; // this map allow for integrating only a selection of particles 
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
@@ -839,31 +851,19 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
     for (int i=0; i<N; i++) {
         int mi = map[i];
         struct reb_particle* p_i = &(r->particles[mi]);
-        double y2 = p_i->ax*p_i->ax + p_i->ay*p_i->ay + p_i->az*p_i->az; 
-        struct reb_vec3d vec_y3 = {0};
-        struct reb_vec3d vec_y4 = {0};
-
-        if (!isnormal(y2)){
-            // Skipp particles which do not experience any acceleration or
-            // have acceleration which is inf or Nan.
-            continue;
-        }
         for (int j=0; j<N; j++) { // N^2 loop could be optimized to N^2/2
             int mj = map[j];
             if (mi==mj) continue;
+
+            struct reb_vec3d vec_y2 = {0};
+            struct reb_vec3d vec_y3 = {0};
+            struct reb_vec3d vec_y4 = {0};
 
             struct reb_particle* p_j = &(r->particles[mj]);
 
             double rij_x = p_j->x - p_i->x;
             double rij_y = p_j->y - p_i->y;
             double rij_z = p_j->z - p_i->z;
-            double vij_x = p_j->vx - p_i->vx;
-            double vij_y = p_j->vy - p_i->vy;
-            double vij_z = p_j->vz - p_i->vz;
-            double aij_x = p_j->ax - p_i->ax;
-            double aij_y = p_j->ay - p_i->ay;
-            double aij_z = p_j->az - p_i->az;
-
             double r_sq = rij_x * rij_x + rij_y * rij_y + rij_z * rij_z;
 
             double r_mag = sqrt(r_sq);      // |r_ij|
@@ -871,16 +871,33 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             double r_fifth = r_cubed * r_sq; // |r_ij|^5
             double r_seventh = r_fifth * r_sq;// |r_ij|^7
 
+            // --- Acceleration Calculation for particle i due to particle j ---
+            double ac_factor = r->G/r_cubed; 
+            vec_y2.x += ac_factor*p_j->m * rij_x;
+            vec_y2.y += ac_factor*p_j->m * rij_y;
+            vec_y2.z += ac_factor*p_j->m * rij_z;
+
+            // Other relative terms needed 
+            double vij_x = p_j->vx - p_i->vx;
+            double vij_y = p_j->vy - p_i->vy;
+            double vij_z = p_j->vz - p_i->vz;
+            double aij_x = vec_y2.x*(p_i->m-p_j->m);
+            double aij_y = vec_y2.y*(p_i->m-p_j->m);
+            double aij_z = vec_y2.z*(p_i->m-p_j->m);
+
+
             // Dot products
             double r_dot_v = rij_x * vij_x + rij_y * vij_y + rij_z * vij_z; // (r_ij . v_ij)
             double r_dot_a = rij_x * aij_x + rij_y * aij_y + rij_z * aij_z; // (r_ij . a_ij)
             double v_sq = vij_x * vij_x + vij_y * vij_y + vij_z * vij_z;    // v_ij^2
 
+
+
             // --- Jerk Calculation for particle i due to particle j ---
             // Term 1: v_ij / |r_ij|^3
             // Term 2: -3 * r_ij * (r_ij . v_ij) / |r_ij|^5
-            double jerk_factor1 = p_j->m / r_cubed;
-            double jerk_factor2 = -3.0 * p_j->m * r_dot_v / r_fifth;
+            double jerk_factor1 = r->G*p_j->m / r_cubed;
+            double jerk_factor2 = -3.0 * r->G*p_j->m * r_dot_v / r_fifth;
 
             vec_y3.x += jerk_factor1 * vij_x + jerk_factor2 * rij_x;
             vec_y3.y += jerk_factor1 * vij_y + jerk_factor2 * rij_y;
@@ -893,27 +910,28 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             // Term 4: -3 * r_ij * (r_ij . a_ij) / |r_ij|^5
             // Term 5: +15 * r_ij * (r_ij . v_ij)^2 / |r_ij|^7
 
-            double snap_c1 = p_j->m / r_cubed;                         // for a_ij term
-            double snap_c2 = -6.0 * p_j->m * r_dot_v / r_fifth;        // for v_ij term
-            double snap_c3_rij = -3.0 * p_j->m * v_sq / r_fifth;       // for r_ij term (from v_ij^2)
-            double snap_c4_rij = -3.0 * p_j->m * r_dot_a / r_fifth;    // for r_ij term (from r_ij . a_ij)
-            double snap_c5_rij = 15.0 * p_j->m * r_dot_v * r_dot_v / r_seventh; // for r_ij term (from (r_ij . v_ij)^2)
+            double snap_c1 = r->G*p_j->m / r_cubed;                         // for a_ij term
+            double snap_c2 = -6.0 * r->G*p_j->m * r_dot_v / r_fifth;        // for v_ij term
+            double snap_c3_rij = -3.0 * r->G*p_j->m * v_sq / r_fifth;       // for r_ij term (from v_ij^2)
+            double snap_c4_rij = -3.0 * r->G*p_j->m * r_dot_a / r_fifth;    // for r_ij term (from r_ij . a_ij)
+            double snap_c5_rij = 15.0 * r->G*p_j->m * r_dot_v * r_dot_v / r_seventh; // for r_ij term (from (r_ij . v_ij)^2)
 
             vec_y4.x += snap_c1 * aij_x + snap_c2 * vij_x + (snap_c3_rij + snap_c4_rij + snap_c5_rij) * rij_x;
             vec_y4.y += snap_c1 * aij_y + snap_c2 * vij_y + (snap_c3_rij + snap_c4_rij + snap_c5_rij) * rij_y;
             vec_y4.z += snap_c1 * aij_z + snap_c2 * vij_z + (snap_c3_rij + snap_c4_rij + snap_c5_rij) * rij_z;
-        }
-        vec_y3.x *= r->G;
-        vec_y3.y *= r->G;
-        vec_y3.z *= r->G;
-        vec_y4.x *= r->G;
-        vec_y4.y *= r->G;
-        vec_y4.z *= r->G;
-        double y3 = vec_y3.x*vec_y3.x + vec_y3.y*vec_y3.y + vec_y3.z*vec_y3.z; 
-        double y4 = vec_y4.x*vec_y4.x + vec_y4.y*vec_y4.y + vec_y4.z*vec_y4.z; 
-        double timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
-        if (isnormal(timescale2) && timescale2<min_timescale2){
-            min_timescale2 = timescale2;
+            double y2 = vec_y2.x*vec_y2.x + vec_y2.y*vec_y2.y + vec_y2.z*vec_y2.z; 
+            double y3 = vec_y3.x*vec_y3.x + vec_y3.y*vec_y3.y + vec_y3.z*vec_y3.z; 
+            double y4 = vec_y4.x*vec_y4.x + vec_y4.y*vec_y4.y + vec_y4.z*vec_y4.z; 
+            double timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
+            if (!isnormal(y2)){
+                // Skipp particles which do not experience any acceleration or
+                // have acceleration which is inf or Nan.
+                continue;
+            }
+
+            if (isnormal(timescale2) && timescale2<min_timescale2){
+                min_timescale2 = timescale2;
+            }
         }
     }
     return sqrt(min_timescale2); // Multiply by sqrt7(r->ri_ias15.epsilon*5040.0) to get IAS default timestep.
