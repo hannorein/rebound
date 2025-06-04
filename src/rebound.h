@@ -248,7 +248,7 @@ struct reb_integrator_mercurius {
 struct reb_integrator_sei {
     double OMEGA;       // Epicyclic frequency
     double OMEGAZ;      // Epicyclic frequency in z direction (if not set, use OMEGA)
-    double Q_e;        // Nonlinearity parameter
+    double Q_NL;        // Nonlinearity parameter
 
     // Internal use
     double lastdt;      // Cached sin(), tan() for this value of dt.

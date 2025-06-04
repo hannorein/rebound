@@ -32,9 +32,9 @@ int main(int argc, char* argv[]) {
     r->collision         = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     double OMEGA         = 0.00013143527;       // 1/s
-    double Q_e          = 0.1;
+    double Q_NL          = 0.1;
     r->ri_sei.OMEGA      = OMEGA;
-    r->ri_sei.Q_e       = Q_e;
+    r->ri_sei.Q_NL       = Q_NL;
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
     r->dt                = 1e-3*2.*M_PI/OMEGA;  // s
@@ -73,11 +73,11 @@ int main(int argc, char* argv[]) {
         double x_0 = reb_random_uniform(r, -r->boxsize.x / 2., r->boxsize.x / 2.);
         double y_0 = reb_random_uniform(r, -r->boxsize.y / 2., r->boxsize.y / 2.);
         
-        pt.x         = x_0-Q_e*x_0*cos(OMEGA*r->t);
-        pt.y         = y_0-1.5*x_0*OMEGA*r->t+2.0*Q_e*x_0*sin(OMEGA*r->t);
+        pt.x         = x_0-Q_NL*x_0*cos(OMEGA*r->t);
+        pt.y         = y_0-1.5*x_0*OMEGA*r->t+2.0*Q_NL*x_0*sin(OMEGA*r->t);
         pt.z         = reb_random_normal(r, 1.);                    // m
-        pt.vx         = Q_e*pt.x*OMEGA*sin(OMEGA*r->t);
-        pt.vy         = -1.5*pt.x*OMEGA+2.0*Q_e*pt.x*OMEGA*cos(OMEGA*r->t);
+        pt.vx         = Q_NL*pt.x*OMEGA*sin(OMEGA*r->t);
+        pt.vy         = -1.5*pt.x*OMEGA+2.0*Q_NL*pt.x*OMEGA*cos(OMEGA*r->t);
         pt.vz         = 0;
         pt.ax         = 0;
         pt.ay         = 0;
