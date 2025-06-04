@@ -108,7 +108,7 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 		int o2 = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
         if (o1==o2){ // If they fall in the same octant, check if they have same coordinates to avoid infinite recursion
             if (particles[pt].x == particles[node->pt].x && particles[pt].y == particles[node->pt].y && particles[pt].z == particles[node->pt].z){
-				reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");
+                reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");
                 return node;
             }
         }
