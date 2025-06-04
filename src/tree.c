@@ -77,22 +77,16 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
 
 static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation* const r, struct reb_treecell *node, int pt, struct reb_treecell *parent, int o){
 	struct reb_particle* const particles = r->particles;
-	const double OMEGA = r->ri_sei.OMEGA;
-	const double q = r->ri_sei.Q_NL;  // Nonlinearity parameter
-	const double Lx0 = r->boxsize.x;
-
-	// Compute time-dependent width of the shearing box
-	double Lx_t = Lx0*(1-q*cos(OMEGA*r->t));
 	// Initialize a new node
 	if (node == NULL) {  
 		node = calloc(1, sizeof(struct reb_treecell));
 		struct reb_particle p = particles[pt];
 		if (parent == NULL){ // The new node is a root
 			node->w = r->root_size;
-			int i = ((int)floor((p.x + Lx_t/2.)/r->root_size))%r->N_root_x;
+			int i = ((int)floor((p.x + r->boxsize.x/2.)/r->root_size))%r->N_root_x;
 			int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
 			int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
-			node->x = -Lx_t/2.+r->root_size*(0.5+(double)i);
+			node->x = -r->boxsize.x/2.+r->root_size*(0.5+(double)i);
 			node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
 			node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
 		}else{ // The new node is a normal node

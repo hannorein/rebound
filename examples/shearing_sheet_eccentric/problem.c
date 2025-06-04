@@ -7,6 +7,8 @@
  * the ghost boxes which are used to calculate gravity and collisions.
  * Particle properties resemble those found in Saturn's rings. 
  */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -25,12 +27,14 @@ int main(int argc, char* argv[]) {
     // Setup constants
     r->opening_angle2    = .5;                  // This determines the precission of the tree code gravity calculation.
     r->integrator        = REB_INTEGRATOR_SEI;
-    r->boundary          = REB_BOUNDARY_SHEAR;
-    r->gravity           = REB_GRAVITY_TREE;
-    r->collision         = REB_COLLISION_TREE;
+    r->boundary          = REB_BOUNDARY_SHEAR_E;
+    r->gravity           = REB_GRAVITY_BASIC;
+    r->collision         = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     double OMEGA         = 0.00013143527;       // 1/s
+    double Q_NL          = 0.1;
     r->ri_sei.OMEGA      = OMEGA;
+    r->ri_sei.Q_NL       = Q_NL;
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
     r->dt                = 1e-3*2.*M_PI/OMEGA;  // s
@@ -43,7 +47,7 @@ int main(int argc, char* argv[]) {
     double particle_radius_min     = 1;       // m
     double particle_radius_max     = 4;       // m
     double particle_radius_slope   = -3;    
-    double boxsize             = 100;         // m
+    double boxsize                 = 50;         // m
     if (argc>1){                              // Try to read boxsize from command line
         boxsize = atof(argv[1]);
     }
@@ -66,11 +70,14 @@ int main(int argc, char* argv[]) {
     double mass = 0;
     while(mass<total_mass){
         struct reb_particle pt;
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        double x_0 = reb_random_uniform(r, -r->boxsize.x / 2., r->boxsize.x / 2.);
+        double y_0 = reb_random_uniform(r, -r->boxsize.y / 2., r->boxsize.y / 2.);
+        
+        pt.x         = x_0-Q_NL*x_0*cos(OMEGA*r->t);
+        pt.y         = y_0-1.5*x_0*OMEGA*r->t+2.0*Q_NL*x_0*sin(OMEGA*r->t);
         pt.z         = reb_random_normal(r, 1.);                    // m
-        pt.vx         = 0;
-        pt.vy         = -1.5*pt.x*OMEGA;
+        pt.vx         = Q_NL*pt.x*OMEGA*sin(OMEGA*r->t);
+        pt.vy         = -1.5*pt.x*OMEGA+2.0*Q_NL*pt.x*OMEGA*cos(OMEGA*r->t);
         pt.vz         = 0;
         pt.ax         = 0;
         pt.ay         = 0;
@@ -104,3 +111,5 @@ void heartbeat(struct reb_simulation* const r){
         //reb_simulation_output_ascii("position.txt");
     }
 }
+
+
