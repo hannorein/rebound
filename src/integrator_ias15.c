@@ -610,6 +610,20 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
         }else if (r->ri_ias15.adaptive_mode ==5){
+            // Set final positions and velocities for timescale estimate.
+            // This will be overwritten later, using compensated summation.
+            for(int i=0;i<N;i++) {
+                int k = 3*i;
+                int mi = map[i];
+                particles[mi].x = x0[k+0] + dt_done *(v0[k+0] + dt_done *(a0[k+0]/2.0 + b.p0[k+0]/6.0 + b.p1[k+0]/12.0 + b.p2[k+0]/20.0 + b.p3[k+0]/30.0 + b.p4[k+0]/42.0 + b.p5[k+0]/56.0 + b.p6[k+0]/72.0)); 
+                particles[mi].y = x0[k+1] + dt_done *(v0[k+1] + dt_done *(a0[k+1]/2.0 + b.p0[k+1]/6.0 + b.p1[k+1]/12.0 + b.p2[k+1]/20.0 + b.p3[k+1]/30.0 + b.p4[k+1]/42.0 + b.p5[k+1]/56.0 + b.p6[k+1]/72.0)); 
+                particles[mi].z = x0[k+2] + dt_done *(v0[k+2] + dt_done *(a0[k+2]/2.0 + b.p0[k+2]/6.0 + b.p1[k+2]/12.0 + b.p2[k+2]/20.0 + b.p3[k+2]/30.0 + b.p4[k+2]/42.0 + b.p5[k+2]/56.0 + b.p6[k+2]/72.0)); 
+
+                particles[mi].vx = v0[k+0] + dt_done *(a0[k+0] + b.p0[k+0]/2.0 + b.p1[k+0]/3.0 + b.p2[k+0]/4.0 + b.p3[k+0]/5.0 + b.p4[k+0]/6.0 + b.p5[k+0]/7.0 + b.p6[k+0]/8.0); 
+                particles[mi].vy = v0[k+1] + dt_done *(a0[k+1] + b.p0[k+1]/2.0 + b.p1[k+1]/3.0 + b.p2[k+1]/4.0 + b.p3[k+1]/5.0 + b.p4[k+1]/6.0 + b.p5[k+1]/7.0 + b.p6[k+1]/8.0); 
+                particles[mi].vz = v0[k+2] + dt_done *(a0[k+2] + b.p0[k+2]/2.0 + b.p1[k+2]/3.0 + b.p2[k+2]/4.0 + b.p3[k+2]/5.0 + b.p4[k+2]/6.0 + b.p5[k+2]/7.0 + b.p6[k+2]/8.0); 
+            }
+
             double timescale = reb_integrator_ias15_timescale(r);
             if (isnormal(timescale)){
                 // Numerical factor below is there to match timestep to that of adaptive_mode==0 and default epsilon
@@ -922,11 +936,7 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             double y2 = vec_y2.x*vec_y2.x + vec_y2.y*vec_y2.y + vec_y2.z*vec_y2.z; 
             double y3 = vec_y3.x*vec_y3.x + vec_y3.y*vec_y3.y + vec_y3.z*vec_y3.z; 
             double y4 = vec_y4.x*vec_y4.x + vec_y4.y*vec_y4.y + vec_y4.z*vec_y4.z; 
-                    printf("y2 = %e\n", y2);
-                    printf("y3 = %e\n", y3);
-                    printf("y4 = %e\n", y4);
             double timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
-                   // printf("       t2 = %f\n", timescale2);
             if (!isnormal(y2)){
                 // Skipp particles which do not experience any acceleration or
                 // have acceleration which is inf or Nan.
