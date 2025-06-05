@@ -881,9 +881,9 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             double vij_x = p_j->vx - p_i->vx;
             double vij_y = p_j->vy - p_i->vy;
             double vij_z = p_j->vz - p_i->vz;
-            double aij_x = vec_y2.x*(p_i->m-p_j->m);
-            double aij_y = vec_y2.y*(p_i->m-p_j->m);
-            double aij_z = vec_y2.z*(p_i->m-p_j->m);
+            double aij_x = ac_factor * rij_x * (-p_i->m - p_j->m);
+            double aij_y = ac_factor * rij_y * (-p_i->m - p_j->m);
+            double aij_z = ac_factor * rij_z * (-p_i->m - p_j->m);
 
 
             // Dot products
@@ -922,7 +922,11 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             double y2 = vec_y2.x*vec_y2.x + vec_y2.y*vec_y2.y + vec_y2.z*vec_y2.z; 
             double y3 = vec_y3.x*vec_y3.x + vec_y3.y*vec_y3.y + vec_y3.z*vec_y3.z; 
             double y4 = vec_y4.x*vec_y4.x + vec_y4.y*vec_y4.y + vec_y4.z*vec_y4.z; 
+                    printf("y2 = %e\n", y2);
+                    printf("y3 = %e\n", y3);
+                    printf("y4 = %e\n", y4);
             double timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
+                   // printf("       t2 = %f\n", timescale2);
             if (!isnormal(y2)){
                 // Skipp particles which do not experience any acceleration or
                 // have acceleration which is inf or Nan.
