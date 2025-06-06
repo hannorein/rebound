@@ -570,7 +570,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
-        }else if (r->ri_ias15.adaptive_mode <=3) { // adaptive_mode = 2 or 3 (New adaptive timestepping method, default since January 2024)
+        }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PRS23 || r->ri_ias15.adaptive_mode == REB_IAS15_AARSETH85) { // New adaptive timestepping method, default since January 2024
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){
                 double a0i = 0; // (acceleration at beginning of timestep)^2
@@ -611,7 +611,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
-        }else if (r->ri_ias15.adaptive_mode ==5){
+        }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE){
             // Set final positions and velocities for timescale estimate.
             // This will be overwritten later, using compensated summation.
             for(int i=0;i<N;i++) {
