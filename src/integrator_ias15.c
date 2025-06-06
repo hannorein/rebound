@@ -483,7 +483,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                             add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
 
                             // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
-                            if (r->ri_ias15.adaptive_mode!=0){
+                            if (r->ri_ias15.adaptive_mode!=REB_IAS15_INDIVIDUAL){
                                 const double ak  = fabs(at[k]);
                                 if (isnormal(ak) && ak>maxak){
                                     maxak = ak;
@@ -501,7 +501,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                                 }
                             }
                         } 
-                        if (r->ri_ias15.adaptive_mode!=0){
+                        if (r->ri_ias15.adaptive_mode!=REB_IAS15_INDIVIDUAL){
                             predictor_corrector_error = maxb6ktmp/maxak;
                         }
 
@@ -519,17 +519,19 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     if (r->ri_ias15.epsilon>0){
         // Estimate error (given by last term in series expansion) 
         // There are two options:
-        // TODO: There are now three options. Update documentation.
-        // r->ri_ias15.adaptive_mode==1 (used to be default until January 2024)
+        // r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL (used to be default until January 2024)
         //   First, we determine the maximum acceleration and the maximum of the last term in the series. 
         //   Then, the two are divided.
-        // r->ri_ias15.adaptive_mode==0
+        // r->ri_ias15.adaptive_mode==REB_IAS15_INDIVIDUAL
         //   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
         //   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
+        // r->ri_ias15.adaptive_mode==REB_IAS15_PRS23
+        //   Here, the acceleration, jerk and snap are used to estimate the new timestep. 
+        //   The method is described in detail in Pham, Rein, Spiegel 2023
         unsigned int Nreal = N - r->N_var;
-        if (r->ri_ias15.adaptive_mode<2){ // Old adaptive timestepping methods
+        if (r->ri_ias15.adaptive_mode==REB_IAS15_INDIVIDUAL || r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
-            if (r->ri_ias15.adaptive_mode==1){
+            if (r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){
                 double maxa = 0.0;
                 double maxj = 0.0;
                 for(unsigned int i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
@@ -552,7 +554,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     }
                     integrator_error = maxj/maxa;
                 }
-            }else{ // adaptive_mode == 0
+            }else{ // adaptive_mode == REB_IAS15_INDIVIDUAL
                 for(unsigned int k=0;k<N3;k++) {
                     const double ak  = at[k];
                     const double bk = b.p6[k];
@@ -593,9 +595,9 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     continue;
                 }
                 double timescale2 = 0;
-                if (r->ri_ias15.adaptive_mode==2){
+                if (r->ri_ias15.adaptive_mode == REB_IAS15_PRS23){
                     timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
-                }else if (r->ri_ias15.adaptive_mode==3){ // adaptive_mode==3
+                }else if (r->ri_ias15.adaptive_mode == REB_IAS15_AARSETH85){
                     timescale2 = (sqrt(y2*y4)+y3) / (sqrt(y3*y5)+y4); // A85
                 }
 
@@ -604,7 +606,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 }
             }
             if (isnormal(min_timescale2)){
-                // Numerical factor below is there to match timestep to that of adaptive_mode==0 and default epsilon
+                // Numerical factor below is there to match timestep to that of adaptive_mode==REB_IAS15_GLOBAL and default epsilon
                 dt_new = sqrt(min_timescale2) * dt_done * sqrt7(r->ri_ias15.epsilon*5040.0);
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
