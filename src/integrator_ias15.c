@@ -217,14 +217,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         map = r->ri_mercurius.encounter_map;
         if (map==NULL){
             reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
-            return 0;
+            return -1;
         }
     }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){// trace close encounter
         N = r->ri_trace.encounter_N;
         map = r->ri_trace.encounter_map;
         if (map==NULL){
             reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
-            return 0;
+            return -1;
         }
     }else{ 
         N = r->N;
@@ -232,6 +232,19 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     }
     const int N3 = 3*N;
 
+    if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE){
+        if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_COMPENSATED){
+            reb_simulation_error(r, "REB_IAS15_PAIRWISE is only compatible witb REB_GRAVITY_BASIC or REB_GRAVITY_COMPENSATED.");
+            return -1;
+        }
+    }
+    if (r->ri_ias15.adaptive_mode == REB_IAS15_USER){
+        if (r->ri_ias15.timescale == NULL){
+            reb_simulation_error(r, "REB_IAS15_USER requires a user defined callback function r->ri_ias15.timescale to be set.");
+            return -1;
+        }
+    }
+    
     // reb_simulation_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
     double* restrict const csx = r->ri_ias15.csx; 
@@ -518,7 +531,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     double dt_new;
     if (r->ri_ias15.epsilon>0){
         // Estimate error (given by last term in series expansion) 
-        // There are two options:
+        // There are several options:
         // r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL (used to be default until January 2024)
         //   First, we determine the maximum acceleration and the maximum of the last term in the series. 
         //   Then, the two are divided.
@@ -528,6 +541,11 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         // r->ri_ias15.adaptive_mode==REB_IAS15_PRS23
         //   Here, the acceleration, jerk and snap are used to estimate the new timestep. 
         //   The method is described in detail in Pham, Rein, Spiegel 2023
+        // r->ri_ias15.adaptive_mode==REB_IAS15_USER
+        //   The user-provided call-back function is called. The function should return the dynamical timescale of the problem.
+        // r->ri_ias15.adaptive_mode==REB_IAS15_PAIRWISE
+        //   Acceleration, jerk, and snap are calculated for all particle paris. This is an O(N^2) algorithm.
+        //   Then PRS23 is used to estimate an appropriate timestep. This algorithm is better with close encounters of small objects.
         unsigned int Nreal = N - r->N_var;
         if (r->ri_ias15.adaptive_mode==REB_IAS15_INDIVIDUAL || r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
@@ -611,7 +629,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
-        }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE){
+        }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE || r->ri_ias15.adaptive_mode == REB_IAS15_USER){
             // Set final positions and velocities for timescale estimate.
             // This will be overwritten later, using compensated summation.
             for(int i=0;i<N;i++) {
@@ -626,7 +644,12 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 particles[mi].vz = v0[k+2] + dt_done *(a0[k+2] + b.p0[k+2]/2.0 + b.p1[k+2]/3.0 + b.p2[k+2]/4.0 + b.p3[k+2]/5.0 + b.p4[k+2]/6.0 + b.p5[k+2]/7.0 + b.p6[k+2]/8.0); 
             }
 
-            double timescale = reb_integrator_ias15_timescale(r);
+            double timescale;
+            if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE){
+                timescale = reb_integrator_ias15_timescale(r);
+            }else{ // REB_IAS15_USER
+                timescale = r->ri_ias15.timescale(r);
+            }
             if (isnormal(timescale)){
                 // Numerical factor below is there to match timestep to that of adaptive_mode==0 and default epsilon
                 dt_new = timescale * sqrt7(r->ri_ias15.epsilon*5040.0);
@@ -635,7 +658,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }
         }else{
             reb_simulation_error(r, "Unknown adaptive_mode");
-            return 0;
+            return -1;
         }
 
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
@@ -795,8 +818,8 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 #ifdef GENERATE_CONSTANTS
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
-        // Try until a step was successful.
-    while(!reb_integrator_ias15_step(r));
+    // Try until a step was successful.
+    while(reb_integrator_ias15_step(r)==0);
 }
 
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){

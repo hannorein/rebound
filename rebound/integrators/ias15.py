@@ -1,7 +1,8 @@
 import ctypes
+from ..simulation import Simulation
 
 
-IAS15_ADAPTIVE_MODES = {"individual": 0, "global": 1, "prs23": 2, "aarseth85": 3}
+IAS15_ADAPTIVE_MODES = {"individual": 0, "global": 1, "prs23": 2, "aarseth85": 3, "pairwise": 5}
 class reb_dp7(ctypes.Structure):
     _fields_ = [("p0", ctypes.POINTER(ctypes.c_double)),
                 ("p1", ctypes.POINTER(ctypes.c_double)),
@@ -68,10 +69,19 @@ class IntegratorIAS15(ctypes.Structure):
                 self._adaptive_mode = IAS15_ADAPTIVE_MODES[value]
             else:
                 raise ValueError("Warning. Kernel not found.")
+    @property
+    def timescale(self):
+        raise AttributeError("You can only set C function pointers from python.")
+    @timescale.setter
+    def timescale(self, func):
+        self._timescalefp = IAS15TIMESCALEF(func)
+        self._timescale = self._timescalefp
+
     
     _fields_ = [("epsilon", ctypes.c_double),
                 ("min_dt", ctypes.c_double),
                 ("_adaptive_mode", ctypes.c_uint),
+                ("_timescale", ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation))),
                 ("_iterations_max_exceeded", ctypes.c_uint64),
                 ("_N_allocated", ctypes.c_uint),
                 ("_at", ctypes.POINTER(ctypes.c_double)),
@@ -90,3 +100,5 @@ class IntegratorIAS15(ctypes.Structure):
                 ("_map", ctypes.POINTER(ctypes.c_int)),
                 ("_map_allocated_n", ctypes.c_uint),
                 ]
+
+IASTIMESCALEF = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.POINTER(Simulation))

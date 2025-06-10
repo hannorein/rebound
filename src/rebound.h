@@ -200,8 +200,10 @@ struct reb_integrator_ias15 {
         REB_IAS15_GLOBAL = 1,       // fractional error is calculated globally (was default until 01/2024)
         REB_IAS15_PRS23 = 2,        // Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)
         REB_IAS15_AARSETH85 = 3,    // Aarseth (1985) timestep criterion
+        REB_IAS15_USER = 4,         // User-provided callback function is used to get the current timescale of the problem
         REB_IAS15_PAIRWISE = 5,     // Applying the PRS23 criteria, but on pairwise interactions
     } adaptive_mode;
+    double (*timescale) (const struct reb_simulation* const r); // For adaptive_mode = REB_IAS15_USER 
     uint64_t iterations_max_exceeded; // Counter how many times the iteration did not converge. 
     unsigned int N_allocated;          
     double* REB_RESTRICT at;
