@@ -244,7 +244,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             return -1;
         }
     }
-    
+
     // reb_simulation_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
     double* restrict const csx = r->ri_ias15.csx; 
@@ -818,7 +818,7 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
 #ifdef GENERATE_CONSTANTS
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
-    // Try until a step was successful.
+        // Try until a step was successful.
     while(reb_integrator_ias15_step(r)==0);
 }
 
