@@ -90,11 +90,11 @@ class ParticleNotFound(Exception):
 
 from .hash import hash
 from .tools import mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
-from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic
+from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic, CollisionS # CollisionS is the collision struct, not the exception
 from .rotation import Rotation
 from .orbit import Orbit
 from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import Simulationarchive
 
-__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Simulationarchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "GenericError", "Encounter", "Collision", "Escape", "NoParticles", "ParticleNotFound", "Variation", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Simulationarchive", "Simulation", "Orbit", "OrbitPlot", "OrbitPlotSet", "Particle", "GenericError", "Encounter", "Collision", "CollisionS", "Escape", "NoParticles", "ParticleNotFound", "Variation", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]
