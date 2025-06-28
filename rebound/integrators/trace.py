@@ -45,7 +45,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_encounter_N_active", ctypes.c_uint),
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_additionalforces", ctypes.c_uint),
-                ("_tponly_encounter", ctypes.c_uint),
+                ("tponly_encounter", ctypes.c_uint),
                 ("_particles_backup", ctypes.POINTER(Particle)),
                 ("_particles_backup_kepler", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),

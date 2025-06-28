@@ -33,7 +33,7 @@ class IntegratorMercurius(ctypes.Structure):
                 ("mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),
-                ("_tponly_encounter", ctypes.c_uint),
+                ("tponly_encounter", ctypes.c_uint),
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_additional_forces", ctypes.c_uint),
                 ("_N_allocated_dcrit", ctypes.c_uint),
