@@ -186,7 +186,7 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
             }
         }
         if (found_issue){
-            return 0;
+            return 1;
         }
     }
     return 0;

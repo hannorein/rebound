@@ -41,7 +41,7 @@ void run_sim(){
 
     // Setup particles
     double disc_mass = 2e-1;    // Total disc mass
-    int N = 2000;            // Number of particles
+    int N = 200;            // Number of particles
     // Initial conditions
     struct reb_particle star = {0};
     star.m         = 1;
