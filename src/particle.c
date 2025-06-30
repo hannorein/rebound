@@ -177,11 +177,16 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
     }
     // Check if testparticle of type 0 has mass!=0
     if (r->testparticle_type == 0){
+        int found_issue = 0;
         const int N_real = r->N - r->N_var;
+#pragma omp parallel for
         for (int i=r->N_active; i<N_real; i++){
             if (r->particles[i].m!=0.){
-                return 1;
+                found_issue = 1;
             }
+        }
+        if (found_issue){
+            return 0;
         }
     }
     return 0;
