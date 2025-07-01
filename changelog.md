@@ -4,6 +4,13 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.9
+* Fixes a bug that affected collisions searches with a tree code.
+* Support for mid-timestep add/remove of particles with TRACE.
+* Various small improvements and bugfixes for TRACE.
+* IAS15's `adaptive_mode` is now an ENUM.
+* Some OpenMP improvements.
+
 ### Version 4.4.8
 * Added support for symplectic correctors with barycentric coordinates in WHFast.
 
