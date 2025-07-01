@@ -49,8 +49,12 @@ extern double gravity_minimum_mass;
 
 static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
     if (reb_boundary_particle_is_in_box(r, pt)==0){
-        // reb_particle has left the box. Do not add.
-        reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
+        if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
+            reb_simulation_error(r,"Cannot add particle because simulation box not initialized. Call reb_simulation_configure_box() before adding particles.");
+        }else{
+            // reb_particle has left the box. Do not add.
+            reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
+        }
         return;
     }
     while (r->N_allocated<=r->N){

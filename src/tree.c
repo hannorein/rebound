@@ -65,6 +65,10 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
         r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
     }
     struct reb_particle p = r->particles[pt];
+    if (!isfinite(p.x) || !isfinite(p.y) || !isfinite(p.z)){
+        reb_simulation_error(r, "Particle has non-finite coordinates. Cannot add to tree.");
+        return;
+    } 
     int rootbox = reb_get_rootbox_for_particle(r, p);
 #ifdef MPI
     // Do not add particles that do not belong to this tree (avoid removing active particles)
@@ -95,11 +99,16 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
             node->y 	= parent->y + node->w/2.*((o>>1)%2==0?1.:-1);
             node->z 	= parent->z + node->w/2.*((o>>2)%2==0?1.:-1);
         }
-        node->pt = pt; 
-        particles[pt].c = node;
         for (int i=0; i<8; i++){
             node->oct[i] = NULL;
         }
+        if (node->w<=0.0){
+            reb_simulation_error(r, "Tree cell has size zero.");
+            free(node);
+            return NULL;
+        }
+        node->pt = pt; 
+        particles[pt].c = node;
         return node;
     }
     // In a existing node
