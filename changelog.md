@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.10
+* Version bump to rerun github workflows for pypi uploads
+
 ### Version 4.4.9
 * Fixes a bug that affected collisions searches with a tree code.
 * Support for mid-timestep add/remove of particles with TRACE.
