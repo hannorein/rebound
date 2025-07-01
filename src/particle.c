@@ -34,9 +34,7 @@
 #include "integrator_bs.h"
 #include "integrator_mercurius.h"
 #include "integrator_trace.h"
-#ifndef COLLISIONS_NONE
 #include "collision.h"
-#endif // COLLISIONS_NONE
 #ifdef MPI
 #include "communication_mpi.h"
 #endif // MPI
@@ -141,7 +139,6 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
-#ifndef COLLISIONS_NONE
     if (pt.r>=r->max_radius0){
         r->max_radius1 = r->max_radius0;
         r->max_radius0 = pt.r;
@@ -150,7 +147,6 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
             r->max_radius1 = pt.r;
         }
     }
-#endif 	// COLLISIONS_NONE
 #ifdef GRAVITY_GRAPE
     if (pt.m<gravity_minimum_mass){
         gravity_minimum_mass = pt.m;
