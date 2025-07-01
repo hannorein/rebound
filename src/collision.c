@@ -43,7 +43,7 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
-static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r,  double second_largest_radius, struct reb_collision* collision_nearest, struct reb_treecell* c);
 static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
 
 void reb_collision_search(struct reb_simulation* const r){
@@ -258,6 +258,15 @@ void reb_collision_search(struct reb_simulation* const r){
                 int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
                 const int N = r->N - r->N_var;
+                // Find second largest radius
+                int l1 = -1;
+                int l2 = -1;
+                reb_simulation_two_largest_particles(r, &l1, &l2);
+                double second_largest_radius = 0;
+                if (l2 != -1){
+                    second_largest_radius = r->particles[l2].r;
+                }
+
                 // Loop over all particles
 #pragma omp parallel for schedule(guided)
                 for (int i=0;i<N;i++){
@@ -269,7 +278,6 @@ void reb_collision_search(struct reb_simulation* const r){
                     collision_nearest.p1 = i;
                     collision_nearest.p2 = -1;
                     double p1_r = p1.r;
-                    double nearest_r2 = r->boxsize_max*r->boxsize_max/4.;
                     // Loop over ghost boxes.
                     for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
                         for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
@@ -287,7 +295,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 for (int ri=0;ri<r->N_root;ri++){
                                     struct reb_treecell* rootcell = r->tree_root[ri];
                                     if (rootcell!=NULL){
-                                        reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod,ri,p1_r,&nearest_r2,&collision_nearest,rootcell);
+                                        reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod, ri, p1_r, second_largest_radius, &collision_nearest, rootcell);
                                     }
                                 }
                             }
@@ -501,12 +509,12 @@ void reb_simulation_set_collision_resolve(struct reb_simulation* r, int (*resolv
  * @param gb (Shifted) position and velocity of the particle.
  * @param ri Index of the root box currently being searched in.
  * @param p1_r Radius of the particle (this is not in gb).
- * @param nearest_r2 Pointer to the nearest neighbour found so far.
+ * @param second_largest_radius The radius of the second largest particles.
  * @param collision_nearest Pointer to the nearest collision found so far.
  * @param c Pointer to the cell currently being searched in.
  * @param gbunmod Ghostbox unmodified
  */
-static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c){
+static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double second_largest_radius, struct reb_collision* collision_nearest, struct reb_treecell* c){
     const struct reb_particle* const particles = r->particles;
     if (c->pt>=0){     
         // c is a leaf node
@@ -545,7 +553,6 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
             double dz = gb.z - p2.z;
             double r2 = dx*dx+dy*dy+dz*dz;
             // A closer neighbour has already been found 
-            //if (r2 > *nearest_r2) return;
             double rp = p1_r+p2.r;
             // reb_particles are not overlapping 
             if (r2 > rp*rp) return;
@@ -555,7 +562,6 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
             // reb_particles are not approaching each other
             if (dvx*dx + dvy*dy + dvz*dz >0) return;
             // Found a new nearest neighbour. Save it for later.
-            *nearest_r2 = r2;
             collision_nearest->ri = ri;
             collision_nearest->p2 = c->pt;
             collision_nearest->gb = gbunmod;
@@ -577,13 +583,13 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
         double dy = gb.y - c->y;
         double dz = gb.z - c->z;
         double r2 = dx*dx + dy*dy + dz*dz;
-        double rp  = p1_r + r->max_radius1 + 0.86602540378443*c->w;
+        double rp  = p1_r + second_largest_radius + 0.86602540378443*c->w;
         // Check if we need to decent into daughter cells
         if (r2 < rp*rp ){
             for (int o=0;o<8;o++){
                 struct reb_treecell* d = c->oct[o];
                 if (d!=NULL){
-                    reb_tree_get_nearest_neighbour_in_cell(r, gb,gbunmod,ri,p1_r,nearest_r2,collision_nearest,d);
+                    reb_tree_get_nearest_neighbour_in_cell(r, gb,gbunmod,ri,p1_r,second_largest_radius,collision_nearest,d);
                 }
             }
         }

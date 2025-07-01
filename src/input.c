@@ -165,14 +165,6 @@ next_field:
         }
 
         // Fields with types that require special handling
-        if (field.type == 35){
-            // Only kept for backwards compatability. Can be removed in future version.
-            double max_radius[2];
-            fread(&max_radius, field.size,1,inf);
-            r->max_radius0 = max_radius[0];
-            r->max_radius1 = max_radius[1];
-            goto next_field;
-        }
         if (field.type == fd_functionpointers.type){
             // Warning for when function pointers were used. 
             // No effect on simulation.

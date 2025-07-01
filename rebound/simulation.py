@@ -1553,7 +1553,6 @@ Simulation._fields_ = [
                 ("collisions_N", c_uint),
                 ("minimum_collision_velocity", c_double),
                 ("collisions_plog", c_double),
-                ("max_radius", c_double*2),
                 ("collisions_log_n", c_int64),
                 ("_calculate_megno", c_int),
                 ("_megno_Ys", c_double),

@@ -83,7 +83,14 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
 }
 
 void reb_display_settings_init(struct reb_simulation*r, struct reb_display_settings* s){
-    if (r->max_radius0 > 0.0){
+    int l1 = -1;
+    int l2 = -1;
+    reb_simulation_two_largest_particles(r, &l1, &l2);
+    double largest_radius = 0;
+    if (l1!=-1){
+        largest_radius = r->particles[l1].r;
+    }
+    if (largest_radius > 0.0){
         s->spheres       = 1; 
     }else{
         s->spheres       = 0; 

@@ -516,8 +516,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    
     r->exit_max_distance    = 0;    
-    r->max_radius0    = 0.;   
-    r->max_radius1    = 0.;   
     r->status       = REB_STATUS_SUCCESS;
     r->exact_finish_time    = 1;
     r->force_is_velocity_dependent = 0;

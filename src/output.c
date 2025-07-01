@@ -184,8 +184,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 391, REB_UINT,        "ri_whfast512.is_synchronized", offsetof(struct reb_simulation, ri_whfast512.is_synchronized), 0, 0},
     { 392, REB_UINT,        "ri_whfast512.gr_potential",    offsetof(struct reb_simulation, ri_whfast512.gr_potential), 0, 0},
     { 394, REB_POINTER_ALIGNED, "ri_whfast512.pjh",         offsetof(struct reb_simulation, ri_whfast512.p_jh), offsetof(struct reb_simulation, ri_whfast512.N_allocated), sizeof(struct reb_particle_avx512)},
-    { 396, REB_DOUBLE,      "max_radius0",                  offsetof(struct reb_simulation, max_radius0), 0, 0},
-    { 397, REB_DOUBLE,      "max_radius1",                  offsetof(struct reb_simulation, max_radius1), 0, 0},
+    // 396, 397 used to be max_radius0 and max_radius1
     { 398, REB_UINT,        "ri_whfast512.N_systems",       offsetof(struct reb_simulation, ri_whfast512.N_systems), 0, 0},
     { 399, REB_PARTICLE4,   "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
     { 1329743186, REB_OTHER,"header", 0, 0, 0},

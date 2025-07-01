@@ -255,7 +255,7 @@ double reb_communication_distance2_of_proc_to_node(struct reb_simulation* const 
     return distance2;
 }
 
-void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct reb_simulation* const r, struct reb_treecell* node, int proc){
+void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct reb_simulation* const r, struct reb_treecell* node, int proc, double largest_radius){
     // Add essential cell to tree_essential_send
     if (r->N_tree_essential_send[proc]>=r->N_tree_essential_send_max[proc]){
         r->N_tree_essential_send_max[proc] += 32;
@@ -277,22 +277,29 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
         r->N_particles_send[proc]++;
     }else{		// Not a leaf. Check if we need to transfer daughters.
         double distance2 = reb_communication_distance2_of_proc_to_node(r, proc,node);
-        double rp  = 2.*r->max_radius0 + 0.86602540378443*node->w;
+        double rp  = 2.*largest_radius + 0.86602540378443*node->w;
         if (distance2 < rp*rp ){
             for (int o=0;o<8;o++){
                 struct reb_treecell* d = node->oct[o];
                 if (d==NULL) continue;
-                reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(r, d,proc);
+                reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(r, d,proc,largest_radius);
             }
         }
     }
 }
 void reb_communication_mpi_prepare_essential_tree_for_collisions(struct reb_simulation* const r, struct reb_treecell* root){
     if (root==NULL) return;
+    int l1 = -1;
+    int l2 = -1;
+    reb_simulation_two_largest_particles(r, &l1, &l2);
+    double largest_radius = 0;
+    if (l1!=-1){
+        largest_radius = r->particles[l1].r;
+    }
     // Find out which cells are needed by every other node
     for (int i=0; i<r->mpi_num; i++){
         if (i==r->mpi_id) continue;
-        reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(r, root,i);	
+        reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(r, root,i,largest_radius);	
     }
 }
 

@@ -575,8 +575,6 @@ struct reb_simulation {
     unsigned int collisions_N;              // Number of collisions found during last collision search.
     double minimum_collision_velocity;      // Ensure relative velocity during collisions is at least this much (to avoid particles sinking into each other)
     double collisions_plog;                 // Keeping track of momentum transfer in collisions (for ring simulations)
-    double max_radius0;                     // The largest particle radius, set automatically, needed for collision search.
-    double max_radius1;                     // The second largest particle radius, set automatically, needed for collision search.
     int64_t collisions_log_n;                  // Cumulative number of collisions in entire simulation.
 
     // MEGNO Chaos indicator. These variables should not be accessed directly. Use functions provided instead.
@@ -767,6 +765,8 @@ DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, 
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but substract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
+// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indicies of the largest particles.
+DLLEXPORT void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
 
 
 // Diangnostic functions
