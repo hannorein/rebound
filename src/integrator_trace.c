@@ -779,6 +779,9 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                             r->t += r->dt;
                         }
                         r->dt = r->ri_bs.dt_proposed;
+                        if (r->t+r->dt >  t_needed){
+                            r->dt = t_needed-r->t;
+                        }
 
                         reb_integrator_bs_update_particles(r, nbody_ode->y);
 
