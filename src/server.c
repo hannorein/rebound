@@ -269,7 +269,7 @@ static void reb_server_cerror(SOCKET clientS, char cause[]){
             if (listen(data->socket, 5) < 0) /* allow 5 requests to queue up */
                 reb_exit("ERROR on listen");
 
-            printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
+            printf("REBOUND Webserver listening on http://localhost:%d (not secure) ...\n",data->port);
             /*
              * main loop: wait for a connection request, parse HTTP,
              * serve requested content, close connection.
@@ -498,7 +498,7 @@ screenshot_finish:
                 exit(1);
             }
 
-            printf("REBOUND Webserver listening on http://localhost:%d ...\n",data->port);
+            printf("REBOUND Webserver listening on http://localhost:%d (not secure) ...\n",data->port);
 
             while(1){
                 data->ready = 1;
