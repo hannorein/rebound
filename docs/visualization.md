@@ -40,7 +40,7 @@ The following code shows how to start the server:
 By default, the server opens port 1234 on your computer. 
 Now all you have to do to see the visualization is to open your browser and go to [http://localhost:1234/](http://localhost:1234/) or [http://127.0.0.1:1234/](http://127.0.0.1:1234/).
 
-!!! warning inline "Security Warning"
+!!! warning "Security Warning"
     When using this visualization feature REBOUND opens a network port on your computer. 
     The traffic over this port is unencrypted. 
     Anyone with access to the port can see your simulation data, control the simulation, and very likely do other bad things.
