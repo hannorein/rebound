@@ -568,33 +568,41 @@ double reb_mod2pi(double f){
 
 double reb_M_to_E(double e, double M){
     double E;
-    if(e < 1.){
+    double F;
+    if (e < 1.){
         M = reb_mod2pi(M); // avoid numerical artefacts for negative numbers
-        E = e < 0.8 ? M : M_PI;
-        double F = E - e*sin(E) - M;
+
+        // Previous REBOUND initial guess
+        // E = e < 0.8 ? M : M_PI;
+
+        // Guess from Danby & Burkadt 1983 and Napier 2024
+        double sigma = 1.;
+        if (M > M_PI) sigma = -1;
+        E = M + sigma * 0.71 * e;
+
+        F = E - e*sin(E) - M;
         for(int i=0; i<100; i++){
             E = E - F/(1.-e*cos(E));
             F = E - e*sin(E) - M;
-            if(fabs(F) < 1.e-16){
+            if(fabs(F) < 1.e-15){
                 break;
             }
         }
         E = reb_mod2pi(E);
-        return E;
     }
     else{
         E = M/fabs(M)*log(2.*fabs(M)/e + 1.8);
 
-        double F = E - e*sinh(E) + M;
+        F = E - e*sinh(E) + M;
         for(int i=0; i<100; i++){
             E = E - F/(1.0 - e*cosh(E));
             F = E - e*sinh(E) + M;
-            if(fabs(F) < 1.e-16){
+            if(fabs(F) < 1.e-15){
                 break;
             }
         }
-        return E;
     }
+    return E;
 }
 
 double reb_E_to_f(double e, double E){
@@ -1669,4 +1677,4 @@ void reb_tools_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, d
     *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
     *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
     *phi = atan2(xyz.y, xyz.x);
-}  
+}
