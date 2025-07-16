@@ -569,11 +569,10 @@ double reb_mod2pi(double f){
 double reb_M_to_E(double e, double M){
     double E;
     double F;
-
-    int converged = 0;
     if (e < 1.){
         M = reb_mod2pi(M); // avoid numerical artefacts for negative numbers
 
+        // Previous REBOUND initial guess
         // E = e < 0.8 ? M : M_PI;
 
         // Guess from Danby & Burkadt 1983 and Napier 2024
@@ -586,7 +585,6 @@ double reb_M_to_E(double e, double M){
             E = E - F/(1.-e*cos(E));
             F = E - e*sin(E) - M;
             if(fabs(F) < 1.e-15){
-                converged = 1;
                 break;
             }
         }
@@ -600,13 +598,9 @@ double reb_M_to_E(double e, double M){
             E = E - F/(1.0 - e*cosh(E));
             F = E - e*sinh(E) + M;
             if(fabs(F) < 1.e-15){
-                converged = 1;
                 break;
             }
         }
-    }
-    if (converged == 0){
-        printf("reb_M_to_E failed to converge. M = %g, e = %g, E = %g\n", M, e, E);
     }
     return E;
 }
