@@ -36,7 +36,7 @@ struct reb_treecell {
 	double y; /**< The y position of the center of a cell */
 	double z; /**< The z position of the center of a cell */
 	double w; /**< The width of a cell */
-    double l; /**< The length of a cell */
+	double l; /**< The length of a cell */
 	double m; /**< The total mass of a cell */
 	double mx; /**< The x position of the center of mass of a cell */
 	double my; /**< The y position of the center of mass of a cell */
@@ -53,7 +53,7 @@ struct reb_treecell {
 	int pt;		/**< It has double usages: in a leaf node, it stores the index 
 			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
 			  * Number of particles within that cell. */ 
-    int remote; /**< 0 by default. Set to 1 if this cell is part of an essential tree (MPI).*/ 
+	int remote; /**< 0 by default. Set to 1 if this cell is part of an essential tree (MPI).*/ 
 };
 
 /**
