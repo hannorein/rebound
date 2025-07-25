@@ -1,5 +1,5 @@
-export OPENGL=1# Set this to 1 to enable OpenGL
-export SERVER=0# Set this to 1 to enable the visualization web server
+export OPENGL=0# Set this to 1 to enable OpenGL
+export SERVER=1# Set this to 1 to enable the visualization web server
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for

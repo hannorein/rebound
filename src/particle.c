@@ -47,7 +47,13 @@ extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
 static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
-	if (reb_boundary_particle_is_in_box(r, pt)==0){
+    const struct reb_vec3d boxsize = r->boxsize;
+	const double OMEGA = r->ri_sei.OMEGA;
+	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+    
+    
+    if (reb_boundary_particle_is_in_box(r, pt)==0){
 		// reb_particle has left the box. Do not add.
 		reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
 		return;
@@ -66,7 +72,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
             return;
         }
-        if(fabs(pt.x)>r->boxsize.x/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
+        if(fabs(pt.x)>Lx_t/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
             reb_simulation_error(r,"Cannot add particle outside of simulation box.");
             return;
         }
@@ -157,7 +163,15 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
 	if (r->root_size==-1) return 0;
-	int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
+
+    const struct reb_vec3d boxsize = r->boxsize;
+	const double OMEGA = r->ri_sei.OMEGA;
+
+	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+	const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
+
+	int i = ((int)floor((pt.x + Lx_t/2.)/Rx_t)+r->N_root_x)%r->N_root_x;
 	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
 	int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
 	int index = (k*r->N_root_y+j)*r->N_root_x+i;

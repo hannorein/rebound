@@ -28,8 +28,8 @@ int main(int argc, char* argv[]) {
     r->opening_angle2    = .5;                  // This determines the precission of the tree code gravity calculation.
     r->integrator        = REB_INTEGRATOR_SEI;
     r->boundary          = REB_BOUNDARY_SHEAR_E;
-    r->gravity           = REB_GRAVITY_BASIC;
-    r->collision         = REB_COLLISION_DIRECT;
+    r->gravity           = REB_GRAVITY_TREE;
+    r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     double OMEGA         = 0.00013143527;       // 1/s
     double Q_NL          = 0.1;
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     double particle_radius_min     = 1;       // m
     double particle_radius_max     = 4;       // m
     double particle_radius_slope   = -3;    
-    double boxsize                 = 50;         // m
+    double boxsize                 = 100;         // m
     if (argc>1){                              // Try to read boxsize from command line
         boxsize = atof(argv[1]);
     }

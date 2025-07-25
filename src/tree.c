@@ -77,23 +77,36 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
 
 static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation* const r, struct reb_treecell *node, int pt, struct reb_treecell *parent, int o){
 	struct reb_particle* const particles = r->particles;
+
+
+
 	// Initialize a new node
 	if (node == NULL) {  
 		node = calloc(1, sizeof(struct reb_treecell));
 		struct reb_particle p = particles[pt];
+
 		if (parent == NULL){ // The new node is a root
-			node->w = r->root_size;
-			int i = ((int)floor((p.x + r->boxsize.x/2.)/r->root_size))%r->N_root_x;
+            const struct reb_vec3d boxsize = r->boxsize;
+	        const double OMEGA = r->ri_sei.OMEGA;
+            const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+		    const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
+		    const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+
+			node->w = Rx_t;
+            node->l = r->root_size;
+			int i = ((int)floor((p.x + Lx_t/2.)/Rx_t))%r->N_root_x;
 			int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
 			int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
-			node->x = -r->boxsize.x/2.+r->root_size*(0.5+(double)i);
+			
+            node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
 			node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
 			node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
 		}else{ // The new node is a normal node
 			node->w 	= parent->w/2.;
+            node->l     = parent->l/2.;
 			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
-			node->y 	= parent->y + node->w/2.*((o>>1)%2==0?1.:-1);
-			node->z 	= parent->z + node->w/2.*((o>>2)%2==0?1.:-1);
+			node->y 	= parent->y + node->l/2.*((o>>1)%2==0?1.:-1);
+			node->z 	= parent->z + node->l/2.*((o>>2)%2==0?1.:-1);
 		}
 		node->pt = pt; 
 		particles[pt].c = node;
@@ -140,8 +153,8 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
   */
 static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r, struct reb_treecell *node){
 	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
-		fabs(r->particles[node->pt].y-node->y) > node->w/2. || 
-		fabs(r->particles[node->pt].z-node->z) > node->w/2. || 
+		fabs(r->particles[node->pt].y-node->y) > node->l/2. || 
+		fabs(r->particles[node->pt].z-node->z) > node->l/2. || 
         isnan(r->particles[node->pt].y)) {
 		return 0;
 	}
@@ -154,15 +167,40 @@ static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r
   * @param r REBOUND simulation to operate on
   * @param node is the pointer to a node cell
   */
-static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulation* const r, struct reb_treecell *node){
+static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulation* const r, struct reb_treecell *node, struct reb_treecell *parent){
 	int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
 	if (node == NULL) {
 		return NULL;
 	}
+	const struct reb_vec3d boxsize = r->boxsize;
+	const double OMEGA = r->ri_sei.OMEGA;
+	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+	const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
+	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
+
+    for (int i = 0; i < num_rootboxes; i++) {    
+		if (node == r->tree_root[i] && r->tree_root[i]->w != Rx_t) {
+			node->w = Rx_t;
+			if (i % 2 == 0) {
+				node->x = node->w / 2.;
+			} else {
+				node->x = -1.*node->w / 2.;
+			}
+
+		}
+		printf("Rootbox %d.x", i);
+		printf(": %f\n", 0.0);
+		if (r->tree_root[i] != NULL) {
+			printf("Rootbox %d.x", i);
+			printf(": %f\n", r->tree_root[i]->x);
+		}
+	}
+
 	// Non-leaf nodes	
 	if (node->pt < 0) {
 		for (int o=0; o<8; o++) {
-			node->oct[o] = reb_simulation_update_tree_cell(r, node->oct[o]);
+			node->oct[o] = reb_simulation_update_tree_cell(r, node->oct[o], node);
 		}
 		node->pt = 0;
 		for (int o=0; o<8; o++) {
@@ -186,8 +224,33 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 			r->particles[node->pt].c = node;
 			free(node->oct[test]);
 			node->oct[test]=NULL;
+
+            if (parent != NULL && node->w != parent->w/2) {
+				node->w = parent->w/2;
+				int oct = reb_reb_tree_get_octant_for_particle_in_cell(r->particles[node->pt], parent);
+				//change center of octant depending on which octant the particle is in
+				if (oct % 2 == 0) {
+					node->x = parent->x + node->w / 2;
+				} else {
+					node->x = parent->x - node->w / 2;
+				}
+
+			}
+
 			return node;
 		}
+
+        if (parent != NULL && node->w != parent->w/2) {
+            node->w = parent->w/2;
+            int oct = reb_reb_tree_get_octant_for_particle_in_cell(r->particles[node->pt], parent);
+            //change center of octant depending on which octant the particle is in
+            if (oct % 2 == 0) {
+                node->x = parent->x + node->w / 2;
+            } else {
+                node->x = parent->x - node->w / 2;
+            }
+        }
+
 		return node;
 	} 
 	// Leaf nodes
@@ -206,6 +269,18 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 		return NULL; 
 	} else {
 		r->particles[node->pt].c = node;
+
+        if (parent != NULL && node->w != parent->w/2) {
+            node->w = parent->w/2;
+            int oct = reb_reb_tree_get_octant_for_particle_in_cell(r->particles[node->pt], parent);
+            //change center of octant depending on which octant the particle is in
+            if (oct % 2 == 0) {
+                node->x = parent->x + node->w / 2;
+            } else {
+                node->x = parent->x - node->w / 2;
+            }
+
+        }
 		return node;
 	}
 }
@@ -298,7 +373,7 @@ void reb_simulation_update_tree(struct reb_simulation* const r){
 #ifdef MPI
 		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
-			r->tree_root[i] = reb_simulation_update_tree_cell(r, r->tree_root[i]);
+			r->tree_root[i] = reb_simulation_update_tree_cell(r, r->tree_root[i], NULL);
 #ifdef MPI
 		}
 #endif // MPI
