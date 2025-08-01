@@ -122,7 +122,10 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 		if (o1==o2){ // If they fall in the same octant, check if they have same coordinates to avoid infinite recursion
 			if (particles[pt].x == particles[node->pt].x && particles[pt].y == particles[node->pt].y && particles[pt].z == particles[node->pt].z){
 				reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");
-				return node;
+				printf("node->pt: %d\n", node->pt);
+				printf("pt: %d\n", pt);
+                
+                return node;
 			}
 		}
 		node->oct[o1] = reb_tree_add_particle_to_cell(r, node->oct[o1], node->pt, node, o1); 
@@ -179,23 +182,25 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 	const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
 	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
 
-	for (int i = 0; i < num_rootboxes; i++) {    
-		if (node == r->tree_root[i] && r->tree_root[i]->w != Rx_t) {
-			node->w = Rx_t;
-			if (i % 2 == 0) {
-				node->x = node->w / 2.;
-			} else {
-				node->x = -1.*node->w / 2.;
-			}
+    if (parent != NULL) {
+        node->w = parent->w/2;
+        //change center of octant depending on which octant the particle is in
+        if (node->x > parent->x) {
+            node->x = parent->x + node->w/2;
+        } else {
+            node->x = parent->x - node->w/2;
+        }
+    } else {
+        for (int n = 0; n < num_rootboxes; n++) {    
+            if (node == r->tree_root[n] && r->tree_root[n]->w != Rx_t) {
+                node->w = Rx_t;
 
-		}
-		printf("Rootbox %d.x", i);
-		printf(": %f\n", 0.0);
-		if (r->tree_root[i] != NULL) {
-			printf("Rootbox %d.x", i);
-			printf(": %f\n", r->tree_root[i]->x);
-		}
-	}
+                int i = ((int)floor((node->x + Lx_t/2.)/Rx_t))%r->N_root_x;
+                node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
+            }
+	    }
+    }
+	
 
 	// Non-leaf nodes	
 	if (node->pt < 0) {
@@ -225,30 +230,7 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 			free(node->oct[test]);
 			node->oct[test]=NULL;
 
-			if (parent != NULL && node->w != parent->w/2) {
-				node->w = parent->w/2;
-				int oct = reb_reb_tree_get_octant_for_particle_in_cell(r->particles[node->pt], parent);
-				//change center of octant depending on which octant the particle is in
-				if (oct % 2 == 0) {
-					node->x = parent->x + node->w / 2;
-				} else {
-					node->x = parent->x - node->w / 2;
-				}
-
-			}
-
 			return node;
-		}
-
-		if (parent != NULL && node->w != parent->w/2) {
-			node->w = parent->w/2;
-			int oct = reb_reb_tree_get_octant_for_particle_in_cell(r->particles[node->pt], parent);
-			//change center of octant depending on which octant the particle is in
-			if (oct % 2 == 0) {
-				node->x = parent->x + node->w / 2;
-			} else {
-				node->x = parent->x - node->w / 2;
-			}
 		}
 
 		return node;
@@ -269,18 +251,6 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 		return NULL; 
 	} else {
 		r->particles[node->pt].c = node;
-
-		if (parent != NULL && node->w != parent->w/2) {
-			node->w = parent->w/2;
-			int oct = reb_reb_tree_get_octant_for_particle_in_cell(r->particles[node->pt], parent);
-			//change center of octant depending on which octant the particle is in
-			if (oct % 2 == 0) {
-				node->x = parent->x + node->w / 2;
-			} else {
-				node->x = parent->x - node->w / 2;
-			}
-
-		}
 		return node;
 	}
 }
