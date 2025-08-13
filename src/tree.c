@@ -175,33 +175,6 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 	if (node == NULL) {
 		return NULL;
 	}
-	const struct reb_vec3d boxsize = r->boxsize;
-	const double OMEGA = r->ri_sei.OMEGA;
-	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
-	const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
-	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
-
-    if (parent != NULL) {
-        node->w = parent->w/2;
-        //change center of octant depending on which octant the particle is in
-        if (node->x > parent->x) {
-            node->x = parent->x + node->w/2;
-        } else {
-            node->x = parent->x - node->w/2;
-        }
-    } else {
-        for (int n = 0; n < num_rootboxes; n++) {    
-            if (node == r->tree_root[n] && r->tree_root[n]->w != Rx_t) {
-                node->w = Rx_t;
-
-                int i = ((int)floor((node->x + Lx_t/2.)/Rx_t))%r->N_root_x;
-                node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
-            }
-	    }
-    }
-	
-
 	// Non-leaf nodes	
 	if (node->pt < 0) {
 		for (int o=0; o<8; o++) {
@@ -334,10 +307,53 @@ void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r){
 	}
 }
 
-void reb_simulation_update_tree(struct reb_simulation* const r){
+struct reb_treecell* reb_simulation_update_tree_size(struct reb_simulation* const r, struct reb_treecell* node, struct reb_treecell* parent) {
+    if (node == NULL) return NULL;
+    
+    const struct reb_vec3d boxsize = r->boxsize;
+	const double OMEGA = r->ri_sei.OMEGA;
+	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+	const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
+	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
+
+    if (parent != NULL) {
+        node->w = parent->w/2;
+        //change center of octant depending on which octant the particle is in
+        if (node->x > parent->x) {
+            node->x = parent->x + node->w/2;
+        } else {
+            node->x = parent->x - node->w/2;
+        }
+    } else {
+        for (int n = 0; n < num_rootboxes; n++) {    
+            if (node == r->tree_root[n] && r->tree_root[n]->w != Rx_t) {
+                node->w = Rx_t;
+
+                int i = ((int)floor((node->x + Lx_t/2.)/Rx_t))%r->N_root_x;
+                node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
+            }
+	    }
+    }
+
+    if (node->pt < 0) {
+        for (int o = 0; o < 8; o++) {
+            node->oct[o] = reb_simulation_update_tree_size(r, node->oct[o], node);
+        }
+    }
+
+    return node;
+}
+
+void reb_simulation_update_tree(struct reb_simulation* const r) {
 	if (r->tree_root==NULL){
 		r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
 	}
+
+    for(int i = 0; i < r->N_root; i++) {
+        r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
+    }
+
 	for(int i=0;i<r->N_root;i++){
 
 #ifdef MPI

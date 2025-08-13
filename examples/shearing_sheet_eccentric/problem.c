@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 	// Add all ring paricles
 	double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
 	double mass = 0;
-	while(mass<total_mass){
+	while(mass < total_mass) {
 		struct reb_particle pt;
 		double x_0 = reb_random_uniform(r, -r->boxsize.x / 2., r->boxsize.x / 2.);
 		double y_0 = reb_random_uniform(r, -r->boxsize.y / 2., r->boxsize.y / 2.);
