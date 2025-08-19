@@ -273,6 +273,7 @@ static int reb_simulation_error_message_waiting(struct reb_simulation* const r){
 
 void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const int N_root_x, const int N_root_y, const int N_root_z){
     r->root_size = root_size;
+    
     r->N_root_x = N_root_x;
     r->N_root_y = N_root_y;
     r->N_root_z = N_root_z;
@@ -282,6 +283,15 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
     r->boxsize.z = r->root_size *(double)r->N_root_z;
     r->N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
+    
+    if (r->boundary == REB_BOUNDARY_SHEAR_E) {
+        r->Lx_t = r->boxsize.x*(1-r->ri_sei.Q_NL*cos(r->ri_sei.OMEGA*r->t)); // Time dependent box size
+        r->Rx_t = r->root_size*(1-r->ri_sei.Q_NL*cos(r->ri_sei.OMEGA*r->t)); // Time dependent box size
+    } else {
+        r->Lx_t = r->boxsize.x;
+        r->Rx_t = r->root_size;
+    }
+
     if (r->N_root_x <=0 || r->N_root_y <=0 || r->N_root_z <= 0){
         reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
     }

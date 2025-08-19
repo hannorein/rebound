@@ -542,6 +542,8 @@ struct reb_simulation {
     
     // Simulation domain and ghost boxes 
     struct  reb_vec3d boxsize;      // Size of the entire simulation box, root_x*boxsize. Set in box_init().
+    double  Lx_t;                   // Time dependent boxsize in the x direction
+    double  Rx_t;
     double  boxsize_max;            // Maximum size of the entire box in any direction. Set in box_init().
     double  root_size;              // Size of a root box. 
     int     N_root;                 // Total number of root boxes in all directions, N_root_x*N_root_y*N_root_z. Default: 1. Set in box_init().

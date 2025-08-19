@@ -89,8 +89,8 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 			const struct reb_vec3d boxsize = r->boxsize;
 			const double OMEGA = r->ri_sei.OMEGA;
 			const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-			const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
-			const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+			const double Lx_t = r->Lx_t;
+			const double Rx_t = r->Rx_t;
 
 			node->w = Rx_t;
 			node->l = r->root_size;
@@ -310,11 +310,8 @@ void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r){
 struct reb_treecell* reb_simulation_update_tree_size(struct reb_simulation* const r, struct reb_treecell* node, struct reb_treecell* parent) {
     if (node == NULL) return NULL;
     
-    const struct reb_vec3d boxsize = r->boxsize;
-	const double OMEGA = r->ri_sei.OMEGA;
-	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
-	const double Rx_t = r->root_size*(1-q*cos(OMEGA*r->t));
+	const double Lx_t = r->Lx_t;
+	const double Rx_t = r->Rx_t;
 	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
 
     if (parent != NULL) {
@@ -350,8 +347,10 @@ void reb_simulation_update_tree(struct reb_simulation* const r) {
 		r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
 	}
 
-    for(int i = 0; i < r->N_root; i++) {
-        r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
+    if (r->boundary == REB_BOUNDARY_SHEAR_E) {
+        for(int i = 0; i < r->N_root; i++) {
+            r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
+        }
     }
 
 	for(int i=0;i<r->N_root;i++){

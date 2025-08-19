@@ -38,6 +38,7 @@ void reb_boundary_check(struct reb_simulation* const r){
 	struct reb_particle* const particles = r->particles;
 	int N = r->N;
 	const struct reb_vec3d boxsize = r->boxsize;
+
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:
 			for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
@@ -143,7 +144,9 @@ void reb_boundary_check(struct reb_simulation* const r){
 			// The offset of ghostcell is time dependent.
 			const double OMEGA = r->ri_sei.OMEGA;
 			const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-			const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+			r->Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+			r->Rx_t = r->root_size*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+            double Lx_t = r->Lx_t;
 			const double offsetp1 = -fmod(-1.5*OMEGA*boxsize.x*r->t+boxsize.y/2.+2.0*q*boxsize.x*sin(OMEGA*r->t),boxsize.y)-boxsize.y/2.; 
     		const double offsetm1 = -fmod(1.5*OMEGA*boxsize.x*r->t-boxsize.y/2.-2.0*q*boxsize.x*sin(OMEGA*r->t),boxsize.y)+boxsize.y/2.; 
 			struct reb_particle* const particles = r->particles;
