@@ -38,7 +38,6 @@ void reb_boundary_check(struct reb_simulation* const r){
 	struct reb_particle* const particles = r->particles;
 	int N = r->N;
 	const struct reb_vec3d boxsize = r->boxsize;
-
 	switch(r->boundary){
 		case REB_BOUNDARY_OPEN:
 			for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing

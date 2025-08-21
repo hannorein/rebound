@@ -120,7 +120,7 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 		if (o1==o2){ // If they fall in the same octant, check if they have same coordinates to avoid infinite recursion
 			if (particles[pt].x == particles[node->pt].x && particles[pt].y == particles[node->pt].y && particles[pt].z == particles[node->pt].z){
 				reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");                
-                return node;
+				return node;
 			}
 		}
 		node->oct[o1] = reb_tree_add_particle_to_cell(r, node->oct[o1], node->pt, node, o1); 
@@ -303,38 +303,34 @@ void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r){
 }
 
 struct reb_treecell* reb_simulation_update_tree_size(struct reb_simulation* const r, struct reb_treecell* node, struct reb_treecell* parent) {
-    if (node == NULL) return NULL;
-    
+	if (node == NULL) return NULL;
+	
 	const double Lx_t = r->Lx_t;
 	const double Rx_t = r->Rx_t;
 	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
-
-    if (parent != NULL) {
-        node->w = parent->w/2;
-        //change center of octant depending on which octant the particle is in
-        if (node->x > parent->x) {
-            node->x = parent->x + node->w/2;
-        } else {
-            node->x = parent->x - node->w/2;
-        }
-    } else {
-        for (int n = 0; n < num_rootboxes; n++) {    
-            if (node == r->tree_root[n] && r->tree_root[n]->w != Rx_t) {
-                node->w = Rx_t;
-
-                int i = ((int)floor((node->x + Lx_t/2.)/Rx_t))%r->N_root_x;
-                node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
-            }
-	    }
-    }
-
-    if (node->pt < 0) {
-        for (int o = 0; o < 8; o++) {
-            node->oct[o] = reb_simulation_update_tree_size(r, node->oct[o], node);
-        }
-    }
-
-    return node;
+	if (parent != NULL) {
+		node->w = parent->w/2;
+		//change center of octant depending on which octant the particle is in
+		if (node->x > parent->x) {
+			node->x = parent->x + node->w/2;
+		} else {
+			node->x = parent->x - node->w/2;
+		}
+	} else {
+		for (int n = 0; n < num_rootboxes; n++) {    
+			if (node == r->tree_root[n] && r->tree_root[n]->w != Rx_t) {
+				node->w = Rx_t;
+				int i = ((int)floor((node->x + Lx_t/2.)/Rx_t))%r->N_root_x;
+				node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
+			}
+		}
+	}
+	if (node->pt < 0) {
+		for (int o = 0; o < 8; o++) {
+			node->oct[o] = reb_simulation_update_tree_size(r, node->oct[o], node);
+		}
+	}
+	return node;
 }
 
 void reb_simulation_update_tree(struct reb_simulation* const r) {
@@ -342,14 +338,12 @@ void reb_simulation_update_tree(struct reb_simulation* const r) {
 		r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
 	}
 
-    if (r->boundary == REB_BOUNDARY_SHEAR_E) {
-        for(int i = 0; i < r->N_root; i++) {
-            r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
-        }
-    }
-
+	if (r->boundary == REB_BOUNDARY_SHEAR_E) {
+		for(int i = 0; i < r->N_root; i++) {
+			r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
+		}
+	}
 	for(int i=0;i<r->N_root;i++){
-
 #ifdef MPI
 		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI

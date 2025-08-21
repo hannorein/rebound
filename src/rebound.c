@@ -273,7 +273,6 @@ static int reb_simulation_error_message_waiting(struct reb_simulation* const r){
 
 void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const int N_root_x, const int N_root_y, const int N_root_z){
     r->root_size = root_size;
-    
     r->N_root_x = N_root_x;
     r->N_root_y = N_root_y;
     r->N_root_z = N_root_z;
