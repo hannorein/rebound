@@ -84,24 +84,24 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 		struct reb_particle p = particles[pt];
 
 		if (parent == NULL){ // The new node is a root
-			const struct reb_vec3d boxsize = r->boxsize;
-			const double OMEGA = r->ri_sei.OMEGA;
-			const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-			const double Lx_t = r->Lx_t;
+            const struct reb_vec3d boxsize = r->boxsize;
+	        const double OMEGA = r->ri_sei.OMEGA;
+		    const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+		    const double Lx_t = r->Lx_t;
 			const double Rx_t = r->Rx_t;
 
 			node->w = Rx_t;
-			node->l = r->root_size;
+            node->l = r->root_size;
 			int i = ((int)floor((p.x + Lx_t/2.)/Rx_t))%r->N_root_x;
 			int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
 			int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
 			
-			node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
+            node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
 			node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
 			node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
 		}else{ // The new node is a normal node
 			node->w 	= parent->w/2.;
-			node->l     = parent->l/2.;
+            node->l     = parent->l/2.;
 			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
 			node->y 	= parent->y + node->l/2.*((o>>1)%2==0?1.:-1);
 			node->z 	= parent->z + node->l/2.*((o>>2)%2==0?1.:-1);
@@ -153,7 +153,7 @@ static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r
 	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
 		fabs(r->particles[node->pt].y-node->y) > node->l/2. || 
 		fabs(r->particles[node->pt].z-node->z) > node->l/2. || 
-		isnan(r->particles[node->pt].y)) {
+        isnan(r->particles[node->pt].y)) {
 		return 0;
 	}
 	return 1;
@@ -205,16 +205,16 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 	} 
 	// Leaf nodes
 	if (reb_tree_particle_is_inside_cell(r, node) == 0) {
-		int oldpos = node->pt;
-		struct reb_particle reinsertme = r->particles[oldpos];
-		if (r->N){ // Check if there remains any particle in the simulation 
-			(r->N)--;
-			r->particles[oldpos] = r->particles[r->N];
-			r->particles[oldpos].c->pt = oldpos;
-			if (!isnan(reinsertme.y)){ // Do not reinsert if flagged for removal
-				reb_simulation_add(r, reinsertme);
-			}
-		}
+        int oldpos = node->pt;
+        struct reb_particle reinsertme = r->particles[oldpos];
+        if (r->N){ // Check if there remains any particle in the simulation 
+            (r->N)--;
+            r->particles[oldpos] = r->particles[r->N];
+            r->particles[oldpos].c->pt = oldpos;
+            if (!isnan(reinsertme.y)){ // Do not reinsert if flagged for removal
+                reb_simulation_add(r, reinsertme);
+            }
+        }
 		free(node);
 		return NULL; 
 	} else {
@@ -352,15 +352,15 @@ void reb_simulation_update_tree(struct reb_simulation* const r) {
 		}
 #endif // MPI
 	}
-	r->tree_needs_update= 0;
+    r->tree_needs_update= 0;
 }
 static void reb_tree_delete_cell(struct reb_treecell* node){
 	if (node==NULL){
 		return;
 	}
-	if (node->remote==1){
-		return;
-	}
+    if (node->remote==1){
+        return;
+    }
 	for (int o=0; o<8; o++) {
 		reb_tree_delete_cell(node->oct[o]);
 	}
@@ -423,7 +423,7 @@ void reb_tree_add_essential_node_to_node(struct reb_treecell* nnode, struct reb_
 }
 
 void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_treecell* node){
-	node->remote = 1;
+    node->remote = 1;
 	// Add essential node to appropriate parent.
 	for (int o=0;o<8;o++){
 		node->oct[o] = NULL;	
