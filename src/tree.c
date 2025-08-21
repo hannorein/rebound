@@ -152,13 +152,13 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
  * @return 0 is particle is not in cell, 1 if it is.
  */
 static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r, struct reb_treecell *node){
-	if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
-		fabs(r->particles[node->pt].y-node->y) > node->l/2. || 
-		fabs(r->particles[node->pt].z-node->z) > node->l/2. || 
+    if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
+        fabs(r->particles[node->pt].y-node->y) > node->l/2. || 
+        fabs(r->particles[node->pt].z-node->z) > node->l/2. || 
         isnan(r->particles[node->pt].y)) {
-		return 0;
-	}
-	return 1;
+        return 0;
+    }
+    return 1;
 }
 
 /**
@@ -168,43 +168,43 @@ static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r
   * @param node is the pointer to a node cell
   */
 static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulation* const r, struct reb_treecell *node, struct reb_treecell *parent){
-	int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
-	if (node == NULL) {
-		return NULL;
-	}
-	// Non-leaf nodes	
-	if (node->pt < 0) {
-		for (int o=0; o<8; o++) {
-			node->oct[o] = reb_simulation_update_tree_cell(r, node->oct[o], node);
-		}
-		node->pt = 0;
-		for (int o=0; o<8; o++) {
-			struct reb_treecell *d = node->oct[o];
-			if (d != NULL) {
-				// Update node->pt
-				if (d->pt >= 0) {	// The child is a leaf
-					node->pt--;
-					test = o;
-				}else{				// The child cell contains several particles
-					node->pt += d->pt;
-				}
-			}		
-		}
-		// Check if the node requires derefinement.
-		if (node->pt == 0) {	// The node is empty.
-			free(node);
-			return NULL;
-		} else if (node->pt == -1) { // The node becomes a leaf.
-			node->pt = node->oct[test]->pt;
-			r->particles[node->pt].c = node;
-			free(node->oct[test]);
-			node->oct[test]=NULL;
-			return node;
-		}
-		return node;
-	} 
-	// Leaf nodes
-	if (reb_tree_particle_is_inside_cell(r, node) == 0) {
+    int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
+    if (node == NULL) {
+        return NULL;
+    }
+    // Non-leaf nodes	
+    if (node->pt < 0) {
+        for (int o=0; o<8; o++) {
+            node->oct[o] = reb_simulation_update_tree_cell(r, node->oct[o], node);
+        }
+        node->pt = 0;
+        for (int o=0; o<8; o++) {
+            struct reb_treecell *d = node->oct[o];
+            if (d != NULL) {
+                // Update node->pt
+                if (d->pt >= 0) {	// The child is a leaf
+                    node->pt--;
+                    test = o;
+                }else{				// The child cell contains several particles
+                    node->pt += d->pt;
+                }
+            }		
+        }
+        // Check if the node requires derefinement.
+        if (node->pt == 0) {	// The node is empty.
+            free(node);
+            return NULL;
+        } else if (node->pt == -1) { // The node becomes a leaf.
+            node->pt = node->oct[test]->pt;
+            r->particles[node->pt].c = node;
+            free(node->oct[test]);
+            node->oct[test]=NULL;
+            return node;
+        }
+        return node;
+    } 
+    // Leaf nodes
+    if (reb_tree_particle_is_inside_cell(r, node) == 0) {
         int oldpos = node->pt;
         struct reb_particle reinsertme = r->particles[oldpos];
         if (r->N){ // Check if there remains any particle in the simulation 
@@ -337,7 +337,6 @@ void reb_simulation_update_tree(struct reb_simulation* const r) {
 	if (r->tree_root==NULL){
 		r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
 	}
-
 	if (r->boundary == REB_BOUNDARY_SHEAR_E) {
 		for(int i = 0; i < r->N_root; i++) {
 			r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
@@ -347,7 +346,7 @@ void reb_simulation_update_tree(struct reb_simulation* const r) {
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
-			r->tree_root[i] = reb_simulation_update_tree_cell(r, r->tree_root[i], NULL);
+            r->tree_root[i] = reb_simulation_update_tree_cell(r, r->tree_root[i], NULL);
 #ifdef MPI
         }
 #endif // MPI

@@ -49,11 +49,11 @@ struct reb_treecell {
     double myz; /**< The yz component of the quadrupole tensor of mass of a cell */
     double mzz; /**< The zz component of the quadrupole tensor of mass of a cell */
 #endif // QUADRUPOLE
-	struct reb_treecell *oct[8]; /**< The pointer array to the octants of a cell */
-	int pt;		/**< It has double usages: in a leaf node, it stores the index 
-			  * of a particle; in a non-leaf node, it equals to (-1)*Total 
-			  * Number of particles within that cell. */ 
-	int remote; /**< 0 by default. Set to 1 if this cell is part of an essential tree (MPI).*/ 
+    struct reb_treecell *oct[8]; /**< The pointer array to the octants of a cell */
+    int pt;		/**< It has double usages: in a leaf node, it stores the index 
+              * of a particle; in a non-leaf node, it equals to (-1)*Total 
+              * Number of particles within that cell. */ 
+    int remote; /**< 0 by default. Set to 1 if this cell is part of an essential tree (MPI).*/ 
 };
 
 /**
