@@ -77,12 +77,10 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
 
 static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation* const r, struct reb_treecell *node, int pt, struct reb_treecell *parent, int o){
 	struct reb_particle* const particles = r->particles;
-
 	// Initialize a new node
 	if (node == NULL) {  
 		node = calloc(1, sizeof(struct reb_treecell));
 		struct reb_particle p = particles[pt];
-
 		if (parent == NULL){ // The new node is a root
             const struct reb_vec3d boxsize = r->boxsize;
 	        const double OMEGA = r->ri_sei.OMEGA;
@@ -119,7 +117,7 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 		int o2 = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
         if (o1==o2){ // If they fall in the same octant, check if they have same coordinates to avoid infinite recursion
             if (particles[pt].x == particles[node->pt].x && particles[pt].y == particles[node->pt].y && particles[pt].z == particles[node->pt].z){
-                reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");                
+                reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");
                 return node;
             }
         }
@@ -197,10 +195,8 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 			r->particles[node->pt].c = node;
 			free(node->oct[test]);
 			node->oct[test]=NULL;
-
 			return node;
 		}
-
 		return node;
 	} 
 	// Leaf nodes
