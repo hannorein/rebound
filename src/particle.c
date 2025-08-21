@@ -317,9 +317,9 @@ static void reb_update_particle_lookup_table(struct reb_simulation* const r){
             }
         }
         else{                   
-        	r->particle_lookup_table[N_hash].hash = particles[i].hash;
-        	r->particle_lookup_table[N_hash].index = i;
-        	N_hash++;
+            r->particle_lookup_table[N_hash].hash = particles[i].hash;
+            r->particle_lookup_table[N_hash].index = i;
+            N_hash++;
         }
     }
     r->N_lookup = N_hash;
