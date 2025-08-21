@@ -35,38 +35,38 @@
 #include "tree.h"
 
 void reb_boundary_check(struct reb_simulation* const r){
-	struct reb_particle* const particles = r->particles;
-	int N = r->N;
-	const struct reb_vec3d boxsize = r->boxsize;
-	switch(r->boundary){
-		case REB_BOUNDARY_OPEN:
-			for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
-				int removep = 0;
-				if(particles[i].x>boxsize.x/2.){
-					removep = 1;
-				}
-				if(particles[i].x<-boxsize.x/2.){
-					removep = 1;
-				}
-				if(particles[i].y>boxsize.y/2.){
-					removep = 1;
-				}
-				if(particles[i].y<-boxsize.y/2.){
-					removep = 1;
-				}
-				if(particles[i].z>boxsize.z/2.){
-					removep = 1;
-				}
-				if(particles[i].z<-boxsize.z/2.){
-					removep = 1;
-				}
-				if (removep==1){
+    struct reb_particle* const particles = r->particles;
+    int N = r->N;
+    const struct reb_vec3d boxsize = r->boxsize;
+    switch(r->boundary){
+        case REB_BOUNDARY_OPEN:
+            for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
+                int removep = 0;
+                if(particles[i].x>boxsize.x/2.){
+                    removep = 1;
+                }
+                if(particles[i].x<-boxsize.x/2.){
+                    removep = 1;
+                }
+                if(particles[i].y>boxsize.y/2.){
+                    removep = 1;
+                }
+                if(particles[i].y<-boxsize.y/2.){
+                    removep = 1;
+                }
+                if(particles[i].z>boxsize.z/2.){
+                    removep = 1;
+                }
+                if(particles[i].z<-boxsize.z/2.){
+                    removep = 1;
+                }
+                if (removep==1){
                     if(r->track_energy_offset){
                         double Ei = reb_simulation_energy(r);
                         reb_simulation_remove_particle(r, i,1);
                         r->energy_offset += Ei - reb_simulation_energy(r);
                     } else {
-                    reb_simulation_remove_particle(r, i,0); // keep_sorted=0 by default in C version
+                        reb_simulation_remove_particle(r, i,0); // keep_sorted=0 by default in C version
                     }
                     if (r->tree_root==NULL){
                         i--; // need to recheck the particle that replaced the removed one
@@ -75,47 +75,47 @@ void reb_boundary_check(struct reb_simulation* const r){
                         // particle just marked, will be removed later
                         r->tree_needs_update= 1;
                     }
-				}
-			}
-			break;
-		case REB_BOUNDARY_SHEAR:
-		{
-			// The offset of ghostcell is time dependent.
-			const double OMEGA = r->ri_sei.OMEGA;
-			const double offsetp1 = -fmod(-1.5*OMEGA*boxsize.x*r->t+boxsize.y/2.,boxsize.y)-boxsize.y/2.; 
-			const double offsetm1 = -fmod( 1.5*OMEGA*boxsize.x*r->t-boxsize.y/2.,boxsize.y)+boxsize.y/2.; 
-			struct reb_particle* const particles = r->particles;
+                }
+            }
+            break;
+        case REB_BOUNDARY_SHEAR:
+            {
+                // The offset of ghostcell is time dependent.
+                const double OMEGA = r->ri_sei.OMEGA;
+                const double offsetp1 = -fmod(-1.5*OMEGA*boxsize.x*r->t+boxsize.y/2.,boxsize.y)-boxsize.y/2.; 
+                const double offsetm1 = -fmod( 1.5*OMEGA*boxsize.x*r->t-boxsize.y/2.,boxsize.y)+boxsize.y/2.; 
+                struct reb_particle* const particles = r->particles;
 #pragma omp parallel for schedule(guided)
-			for (int i=0;i<N;i++){
-				// Radial
-				while(particles[i].x>boxsize.x/2.){
-					particles[i].x -= boxsize.x;
-					particles[i].y += offsetp1;
-					particles[i].vy += 3./2.*OMEGA*boxsize.x;
-				}
-				while(particles[i].x<-boxsize.x/2.){
-					particles[i].x += boxsize.x;
-					particles[i].y += offsetm1;
-					particles[i].vy -= 3./2.*OMEGA*boxsize.x;
-				}
-				// Azimuthal
-				while(particles[i].y>boxsize.y/2.){
-					particles[i].y -= boxsize.y;
-				}
-				while(particles[i].y<-boxsize.y/2.){
-					particles[i].y += boxsize.y;
-				}
-				// Vertical (there should be no boundary, but periodic makes life easier)
-				while(particles[i].z>boxsize.z/2.){
-					particles[i].z -= boxsize.z;
-				}
-				while(particles[i].z<-boxsize.z/2.){
-					particles[i].z += boxsize.z;
-				}
-			}
-		}
-		break;
-		case REB_BOUNDARY_PERIODIC:
+                for (int i=0;i<N;i++){
+                    // Radial
+                    while(particles[i].x>boxsize.x/2.){
+                        particles[i].x -= boxsize.x;
+                        particles[i].y += offsetp1;
+                        particles[i].vy += 3./2.*OMEGA*boxsize.x;
+                    }
+                    while(particles[i].x<-boxsize.x/2.){
+                        particles[i].x += boxsize.x;
+                        particles[i].y += offsetm1;
+                        particles[i].vy -= 3./2.*OMEGA*boxsize.x;
+                    }
+                    // Azimuthal
+                    while(particles[i].y>boxsize.y/2.){
+                        particles[i].y -= boxsize.y;
+                    }
+                    while(particles[i].y<-boxsize.y/2.){
+                        particles[i].y += boxsize.y;
+                    }
+                    // Vertical (there should be no boundary, but periodic makes life easier)
+                    while(particles[i].z>boxsize.z/2.){
+                        particles[i].z -= boxsize.z;
+                    }
+                    while(particles[i].z<-boxsize.z/2.){
+                        particles[i].z += boxsize.z;
+                    }
+                }
+            }
+            break;
+        case REB_BOUNDARY_PERIODIC:
 #pragma omp parallel for schedule(guided)
 			for (int i=0;i<N;i++){
 				while(particles[i].x>boxsize.x/2.){
@@ -312,9 +312,9 @@ int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct
 			return 1;
 		}
         default:
-		case REB_BOUNDARY_NONE:
-			return 1;
-	}
+        case REB_BOUNDARY_NONE:
+            return 1;
+    }
 }
 
 

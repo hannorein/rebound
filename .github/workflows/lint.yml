@@ -1,0 +1,22 @@
+name: REBOUND (lint)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    name: Linting all C files 
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install vim
+        run: |
+          sudo apt-get install -y -q vim
+          ex --version
+      - name: Run vim linter 
+        run: |
+          bash .github/lint.bash
+      - name: Check if any files changed
+        run: |
+          git diff --exit-code

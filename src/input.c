@@ -38,25 +38,25 @@
 
 // Macro to read a single field from a binary file.
 #define CASE(typename, value) case REB_BINARY_FIELD_TYPE_##typename: \
-    {\
-        fread(value, field.size,1,inf);\
-        goto next_field;\
-    }\
-    break;
+{\
+    fread(value, field.size,1,inf);\
+    goto next_field;\
+}\
+break;
 
 #define CASE_CONTROL_VARS(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
-    {\
-        fread(&valueref->size, sizeof(uint32_t),1,inf);\
-        fread(valueref->p0, valueref->size,1,inf);\
-        fread(valueref->p1, valueref->size,1,inf);\
-        fread(valueref->p2, valueref->size,1,inf);\
-        fread(valueref->p3, valueref->size,1,inf);\
-        fread(valueref->p4, valueref->size,1,inf);\
-        fread(valueref->p5, valueref->size,1,inf);\
-        fread(valueref->p6, valueref->size,1,inf);\
-        goto next_field;\
-    }\
-    break;        
+{\
+    fread(&valueref->size, sizeof(uint32_t),1,inf);\
+    fread(valueref->p0, valueref->size,1,inf);\
+    fread(valueref->p1, valueref->size,1,inf);\
+    fread(valueref->p2, valueref->size,1,inf);\
+    fread(valueref->p3, valueref->size,1,inf);\
+    fread(valueref->p4, valueref->size,1,inf);\
+    fread(valueref->p5, valueref->size,1,inf);\
+    fread(valueref->p6, valueref->size,1,inf);\
+    goto next_field;\
+}\
+break;        
 
 
 void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
@@ -65,7 +65,7 @@ void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_b
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
     struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
     struct reb_binary_field_descriptor fd_functionpointers = reb_binary_field_descriptor_for_name("functionpointers");
-    
+
 next_field:
     // Loop over all fields
     while(1){
@@ -165,14 +165,6 @@ next_field:
         }
 
         // Fields with types that require special handling
-        if (field.type == 35){
-            // Only kept for backwards compatability. Can be removed in future version.
-            double max_radius[2];
-            fread(&max_radius, field.size,1,inf);
-            r->max_radius0 = max_radius[0];
-            r->max_radius1 = max_radius[1];
-            goto next_field;
-        }
         if (field.type == fd_functionpointers.type){
             // Warning for when function pointers were used. 
             // No effect on simulation.
@@ -290,7 +282,7 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
 struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot){
     enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
     struct reb_simulation* r = reb_simulation_create();
-    
+
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
     reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
     if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){

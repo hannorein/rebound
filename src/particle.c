@@ -34,9 +34,10 @@
 #include "integrator_bs.h"
 #include "integrator_mercurius.h"
 #include "integrator_trace.h"
-#ifndef COLLISIONS_NONE
 #include "collision.h"
-#endif // COLLISIONS_NONE
+#ifdef OPENMP
+#include <omp.h>
+#endif
 #ifdef MPI
 #include "communication_mpi.h"
 #endif // MPI
@@ -114,20 +115,10 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
-#ifndef COLLISIONS_NONE
-	if (pt.r>=r->max_radius0){
-		r->max_radius1 = r->max_radius0;
-		r->max_radius0 = pt.r;
-	}else{
-		if (pt.r>=r->max_radius1){
-			r->max_radius1 = pt.r;
-		}
-	}
-#endif 	// COLLISIONS_NONE
 #ifdef GRAVITY_GRAPE
-	if (pt.m<gravity_minimum_mass){
-		gravity_minimum_mass = pt.m;
-	}
+    if (pt.m<gravity_minimum_mass){
+        gravity_minimum_mass = pt.m;
+    }
 #endif // GRAVITY_GRAPE
 #ifdef MPI
 	int rootbox = reb_get_rootbox_for_particle(r, pt);
@@ -140,8 +131,8 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
 		return;
 	}
 #endif // MPI
-	// Add particle to local partical array.
-	reb_simulation_add_local(r, pt);
+       // Add particle to local partical array.
+    reb_simulation_add_local(r, pt);
 }
 
 int reb_particle_check_testparticles(struct reb_simulation* const r){
@@ -160,6 +151,90 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
 	return 0;
 }
 
+// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indicies of the particles.
+void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2) {
+    struct reb_particle* particles = r->particles;
+    *p1 = -1;
+    *p2 = -1;
+    double largest1 = -1.0;
+    double largest2 = -1.0;
+#ifdef OPENMP
+    int num_threads;
+    // A struct to hold the two largest values found by each thread
+    struct two_max {
+        double largest1;
+        double largest2;
+        int p1;
+        int p2;
+    };
+
+    // Array to store the two largest values from each thread
+    struct two_max *thread_max;
+#pragma omp parallel
+    {
+        num_threads = omp_get_num_threads();
+#pragma omp master
+        {
+            thread_max = (struct two_max *)malloc(num_threads * sizeof(struct two_max));
+        }
+
+#pragma omp barrier
+        int thread_id = omp_get_thread_num();
+        thread_max[thread_id].largest1 = -1.0;
+        thread_max[thread_id].largest2 = -1.0;
+        thread_max[thread_id].p1 = -1;
+        thread_max[thread_id].p2 = -1;
+
+#pragma omp for
+        for (int i=0; i<r->N; i++) {
+            if (particles[i].r > thread_max[thread_id].largest1) {
+                thread_max[thread_id].largest2 = thread_max[thread_id].largest1;
+                thread_max[thread_id].p2 = thread_max[thread_id].p1;
+                thread_max[thread_id].largest1 = particles[i].r;
+                thread_max[thread_id].p1 = i;
+            } else if (particles[i].r > thread_max[thread_id].largest2) {
+                thread_max[thread_id].largest2 = particles[i].r;
+                thread_max[thread_id].p2 = i;
+            }
+        }
+    }
+
+    // Reduce the results from all threads
+    for (int i=0; i<num_threads; i++) {
+        if (thread_max[i].largest1 > largest1) {
+            largest2 = largest1;
+            *p2 = *p1;
+            largest1 = thread_max[i].largest1;
+            *p1 = thread_max[i].p1;
+        } else if (thread_max[i].largest1 > largest2) {
+            largest2 = thread_max[i].largest1;
+            *p2 = thread_max[i].p1;
+        }
+
+        if (thread_max[i].largest2 > largest2) {
+            largest2 = thread_max[i].largest2;
+            *p2 = thread_max[i].p2;
+        }
+    }
+
+    free(thread_max);
+#else // OPENMP
+    for (int i=0; i<r->N; i++) {
+        if (particles[i].r > largest1) {
+            largest2 = largest1;
+            *p2 = *p1;
+            largest1 = particles[i].r;
+            *p1 = i;
+        }else{
+            if (particles[i].r > largest2) {
+                largest2 = particles[i].r;
+                *p2 = i;
+            }
+        }
+    }
+#endif // OPENMP
+}
+
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
 	if (r->root_size==-1) return 0;
@@ -175,16 +250,16 @@ int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct re
 }
 
 int reb_simulation_particle_index(struct reb_particle* p){
-	struct reb_simulation* r = p->sim;
-	int i = 0;
-	const int N = r->N;
-	while(&r->particles[i] != p){
-		i++;
-		if(i>=N){
-			return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
-		}	
-	}
-	return i;
+    struct reb_simulation* r = p->sim;
+    int i = 0;
+    const int N = r->N;
+    while(&r->particles[i] != p){
+        i++;
+        if(i>=N){
+            return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
+        }	
+    }
+    return i;
 }
 
 static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
@@ -302,12 +377,12 @@ struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* c
 }
 
 void reb_simulation_remove_all_particles(struct reb_simulation* const r){
-	r->N 		= 0;
-	r->N_allocated 	= 0;
-	r->N_active 	= -1;
-	r->N_var 	= 0;
-	free(r->particles);
-	r->particles 	= NULL;
+    r->N 		= 0;
+    r->N_allocated 	= 0;
+    r->N_active 	= -1;
+    r->N_var 	= 0;
+    free(r->particles);
+    r->particles 	= NULL;
 }
 
 int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted){
@@ -428,7 +503,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
 		}
 	}
 
-	return 1;
+    return 1;
 }
 
 int reb_simulation_remove_particle_by_hash(struct reb_simulation* const r, uint32_t hash, int keep_sorted){

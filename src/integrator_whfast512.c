@@ -74,7 +74,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
     const unsigned int N_systems = ri_whfast512->N_systems;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
-    
+
 
 #ifdef AVX512
     double m[8];
@@ -92,7 +92,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
     _mm512_storeu_pd(&vy, p_jh->vy);
     _mm512_storeu_pd(&vz, p_jh->vz);
 #else // AVX512
-    // Fallback for synchronization for when AVX512 is not available
+      // Fallback for synchronization for when AVX512 is not available
     double* m = (double*)p_jh->m;
     double* x = (double*)p_jh->x;
     double* y = (double*)p_jh->y;
@@ -170,8 +170,8 @@ static void inline mm_stiefel_Gs13_avx512(__m512d * Gs1, __m512d * Gs2, __m512d 
 
     // stumpff_cs. Note: assuming n = 0
     const int nmax = 19;
-   *Gs3 = invfactorial512[nmax]; 
-   *Gs2 = invfactorial512[nmax-1]; 
+    *Gs3 = invfactorial512[nmax]; 
+    *Gs2 = invfactorial512[nmax-1]; 
 
     for(int np=nmax-2;np>=3;np-=2){
         *Gs3 = _mm512_fnmadd_pd(z, *Gs3, invfactorial512[np]);
@@ -190,8 +190,8 @@ static void inline mm_stiefel_Gs03_avx512(__m512d * Gs0, __m512d * Gs1, __m512d 
 
     // stumpff_cs. Note: assuming n = 0
     const int nmax = 11; // Note: reduced! needs to be improved with mm_stiefel_Gs13_avx512 on last step(s)
-   *Gs3 = invfactorial512[nmax]; 
-   *Gs2 = invfactorial512[nmax-1]; 
+    *Gs3 = invfactorial512[nmax]; 
+    *Gs2 = invfactorial512[nmax-1]; 
 
     for(int np=nmax-2;np>=3;np-=2){
         *Gs3 = _mm512_fnmadd_pd(z, *Gs3, invfactorial512[np]);
@@ -212,7 +212,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
 #endif
     struct reb_particle_avx512 * restrict p512  = r->ri_whfast512.p_jh;
     __m512d _dt = _mm512_set1_pd(dt); 
-        
+
     __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
     r2 = _mm512_fmadd_pd(p512->y, p512->y, r2);
     r2 = _mm512_fmadd_pd(p512->z, p512->z, r2);
@@ -222,7 +222,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     __m512d v2 = _mm512_mul_pd(p512->vx, p512->vx);
     v2 = _mm512_fmadd_pd(p512->vy, p512->vy, v2);
     v2 = _mm512_fmadd_pd(p512->vz, p512->vz, v2);
-    
+
     __m512d beta = _mm512_mul_pd(two, _M);
     beta = _mm512_fmsub_pd(beta, r0i, v2);
 
@@ -288,7 +288,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     HALLEY_STEP();
     NEWTON_STEP();
     // +1 below
-    
+
     // Final Newton step (note: X not needed after this) 
     mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);
     eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); 
@@ -361,7 +361,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
-    
+
     __m512d x_j =  p_jh->x;
     __m512d y_j =  p_jh->y;
     __m512d z_j =  p_jh->z;
@@ -381,12 +381,12 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
-       
+
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
         dvx = _mm512_mul_pd(gr_prefac2, dvx); 
         dvy = _mm512_mul_pd(gr_prefac2, dvy); 
         dvz = _mm512_mul_pd(gr_prefac2, dvz); 
-    
+
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
         dvx = _mm512_add_pd(_mm512_shuffle_f64x2(dvx,dvx, 78), dvx);
@@ -396,7 +396,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
         dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
         dvz = _mm512_add_pd(_mm512_shuffle_f64x2(dvz,dvz, 78), dvz);
-        
+
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
@@ -423,14 +423,14 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->vx); 
         p_jh->vy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->vz); 
-        
-        
+
+
         dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC); // within 256
         dy_j    = _mm512_permutex_pd(dy_j,    _MM_PERM_ABDC);
         dz_j    = _mm512_permutex_pd(dz_j,    _MM_PERM_ABDC);
         prefact = _mm512_permutex_pd(prefact, _MM_PERM_ABDC);
         m_j     = _mm512_permute_pd(m_j,      0x55);    // within 128
- 
+
         // 0123 4567
         // 2310 6754
         __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
@@ -443,11 +443,11 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
         z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
         m_j = _mm512_permutex_pd(m_j, _MM_PERM_ABDC); 
-       
+
         const __m512d dx_j = _mm512_sub_pd(p_jh->x, x_j);
         const __m512d dy_j = _mm512_sub_pd(p_jh->y, y_j);
         const __m512d dz_j = _mm512_sub_pd(p_jh->z, z_j);
-        
+
         // 0123 4567
         // 1032 5476 
         const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
@@ -455,11 +455,11 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vy = _mm512_fnmadd_pd(prefact, dy_j, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact, dz_j, p_jh->vz); 
     }
-    
+
     // //////////////////////////////////////
     // 256 bit lane crossing
     // //////////////////////////////////////
-    
+
     __m512d dvx; // delta vx for 4567 1230
     __m512d dvy;
     __m512d dvz;
@@ -469,7 +469,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         y_j = _mm512_permutexvar_pd(so1, y_j);
         z_j = _mm512_permutexvar_pd(so1, z_j);
         m_j = _mm512_permutexvar_pd(so1, m_j);
-        
+
         __m512d dx_j = _mm512_sub_pd(p_jh->x, x_j);
         __m512d dy_j = _mm512_sub_pd(p_jh->y, y_j);
         __m512d dz_j = _mm512_sub_pd(p_jh->z, z_j);
@@ -497,7 +497,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         y_j = _mm512_permutex_pd(y_j, _MM_PERM_ADCB);
         z_j = _mm512_permutex_pd(z_j, _MM_PERM_ADCB);
         m_j = _mm512_permutex_pd(m_j, _MM_PERM_ADCB);
-        
+
         __m512d dx_j = _mm512_sub_pd(p_jh->x, x_j);
         __m512d dy_j = _mm512_sub_pd(p_jh->y, y_j);
         __m512d dz_j = _mm512_sub_pd(p_jh->z, z_j);
@@ -510,8 +510,8 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->vz); 
 
-        
-        
+
+
         dx_j         = _mm512_permutex_pd(dx_j,         _MM_PERM_CBAD); // within 256
         dy_j         = _mm512_permutex_pd(dy_j,         _MM_PERM_CBAD);
         dz_j         = _mm512_permutex_pd(dz_j,         _MM_PERM_CBAD);
@@ -524,9 +524,9 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         dvx = _mm512_fmadd_pd(prefact, dx_j, dvx); 
         dvy = _mm512_fmadd_pd(prefact, dy_j, dvy); 
         dvz = _mm512_fmadd_pd(prefact, dz_j, dvz); 
-        
+
     }
-        
+
     // //////////////////////////////////////
     // 256 bit lane crossing for final add
     // //////////////////////////////////////
@@ -535,7 +535,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         dvx = _mm512_permutexvar_pd(so2, dvx); //across 512
         dvy = _mm512_permutexvar_pd(so2, dvy);
         dvz = _mm512_permutexvar_pd(so2, dvz);
-        
+
         p_jh->vx = _mm512_add_pd(dvx, p_jh->vx); 
         p_jh->vy = _mm512_add_pd(dvy, p_jh->vy); 
         p_jh->vz = _mm512_add_pd(dvz, p_jh->vz); 
@@ -556,7 +556,7 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
-    
+
     __m512d x_j =  p_jh->x;
     __m512d y_j =  p_jh->y;
     __m512d z_j =  p_jh->z;
@@ -576,19 +576,19 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
-       
+
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
         dvx = _mm512_mul_pd(gr_prefac2, dvx); 
         dvy = _mm512_mul_pd(gr_prefac2, dvy); 
         dvz = _mm512_mul_pd(gr_prefac2, dvz); 
-   
+
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
         dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
         dvy = _mm512_add_pd(_mm512_permutex_pd(dvy, _MM_PERM_ABCD), dvy);
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
         dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
-        
+
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
@@ -614,14 +614,14 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         p_jh->vx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->vx); 
         p_jh->vy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->vz); 
-        
-        
+
+
         dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC); // within 256
         dy_j    = _mm512_permutex_pd(dy_j,    _MM_PERM_ABDC);
         dz_j    = _mm512_permutex_pd(dz_j,    _MM_PERM_ABDC);
         prefact = _mm512_permutex_pd(prefact, _MM_PERM_ABDC);
         m_j     = _mm512_permute_pd(m_j,      0x55);    // within 128
- 
+
         // 0123 4567
         // 2310 6754
         __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
@@ -634,11 +634,11 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
         z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
         m_j = _mm512_permutex_pd(m_j, _MM_PERM_ABDC); 
-       
+
         const __m512d dx_j = _mm512_sub_pd(p_jh->x, x_j);
         const __m512d dy_j = _mm512_sub_pd(p_jh->y, y_j);
         const __m512d dz_j = _mm512_sub_pd(p_jh->z, z_j);
-        
+
         // 0123 4567
         // 1032 5476 
         const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
@@ -646,7 +646,7 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         p_jh->vy = _mm512_fnmadd_pd(prefact, dy_j, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact, dz_j, p_jh->vz); 
     }
-    
+
 
 #ifdef PROF
     struct reb_timeval time_end;
@@ -662,7 +662,7 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
-    
+
     __m512d x_j =  p_jh->x;
     __m512d y_j =  p_jh->y;
     __m512d z_j =  p_jh->z;
@@ -682,16 +682,16 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
-       
+
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
         dvx = _mm512_mul_pd(gr_prefac2, dvx); 
         dvy = _mm512_mul_pd(gr_prefac2, dvy); 
         dvz = _mm512_mul_pd(gr_prefac2, dvz); 
-   
+
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
-        
+
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
@@ -709,12 +709,12 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
 
         __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
 
-         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
         p_jh->vx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->vx); 
         p_jh->vy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->vz); 
     }
-    
+
 
 #ifdef PROF
     struct reb_timeval time_end;
@@ -738,7 +738,7 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
     //                    0    1  2  3   4    5  6  7
     // particles array    star p0 p1 p2  star p0 p1 p2
     // avx512 register    p0   p1 p2 NA  p0   p1 p2 NA
-    
+
     // Layout (4x 2 planet systems)
     //                    0    1  2  3    4  5  6    7  8  9    10 11
     // particles array    star p0 p1 star p0 p1 star p0 p1 star p0 p1
@@ -795,7 +795,7 @@ static void inertial_to_democraticheliocentric_posvel(struct reb_simulation* r){
             vz[s*p_per_system+(i-1)] = particles[s*N_per_system+i].vz - ri_whfast512->p_jh0[s].vz;
         }
     }
-    
+
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
     p_jh->m = _mm512_loadu_pd(m);
     p_jh->x = _mm512_loadu_pd(x);
@@ -817,9 +817,9 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
     struct reb_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
     double m0 = r->particles[0].m;
-    
+
     __m512d pf512 = _mm512_set1_pd(_dt/m0);
-    
+
     __m512d sumx = _mm512_mul_pd(p_jh->m, p_jh->vx);
     __m512d sumy = _mm512_mul_pd(p_jh->m, p_jh->vy);
     __m512d sumz = _mm512_mul_pd(p_jh->m, p_jh->vz);
@@ -916,7 +916,7 @@ void static recalculate_constants(struct reb_simulation* r){
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     const double dt = r->dt;
-    
+
     if (ri_whfast512->N_allocated==0){
         // Check if all assumptions are satisfied.
         // Note: These are not checked every timestep. 
@@ -1017,19 +1017,19 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         reb_whfast512_interaction_step_2planets(r, dt);
     }
 
-    
+
     if (ri_whfast512->gr_potential){
         reb_whfast512_jump_step(r, dt/2.);
     }
-   
+
     ri_whfast512->is_synchronized = 0;
-    
+
     r->t += dt;
     r->dt_last_done = dt;
 }
 
 #else // AVX512
-// Dummy function when AVX512 is not available
+      // Dummy function when AVX512 is not available
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     reb_simulation_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
     r->status = REB_STATUS_GENERIC_ERROR;

@@ -3,9 +3,8 @@
 ## Detecting collisions
 
 REBOUND comes with several collision detection modules. 
-These modules check for physical collisions, not close encounters.
-Particles need to have a finite radius for collisions to occur.
-By default, collision detection is turned off.
+These modules check for physical collisions (the distance between two particles is closer than the sum of the radii), not close encounters.
+For a collision to occur between two particles, at least one of them needs to have a finite radius and collision detection needs to be turned on (it is turned off by default).
 
 
 ### No collisions

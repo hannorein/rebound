@@ -40,6 +40,14 @@ The following code shows how to start the server:
 By default, the server opens port 1234 on your computer. 
 Now all you have to do to see the visualization is to open your browser and go to [http://localhost:1234/](http://localhost:1234/) or [http://127.0.0.1:1234/](http://127.0.0.1:1234/).
 
+!!! warning "Security Warning"
+    When using this visualization feature REBOUND opens a network port on your computer. 
+    The traffic over this port is unencrypted. 
+    Anyone with access to the port can see your simulation data, control the simulation, and very likely do other bad things.
+    It is therefore highly recommended to *not* expose this port to the network or the internet. 
+    Luckily, modern operating systems do not allow remote access to this port and are secure by default but you might need to be careful if running REBOUND on a server.
+    To access a simulation running on a remote server, use an SSH tunnel (see below).
+
 When you open the page the REBOUND web server accepts your request and serves you a `rebound.html` file which includes all the code required to visualize a simulation using WebGL. 
 The cool thing is, the visualization code is just REBOUND itself, compiled to WebAssembly using emscripten. 
 So the visualization that you see in your web browser is exactly the same as the one you see when compiling REBOUND with the `OPENGL=1` option but without all the hassles associated with using OpenGL/glut/GLFW libraries.

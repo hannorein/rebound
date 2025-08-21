@@ -14,6 +14,14 @@
 #include "rebound.h"
 #include "tools.h"
 
+void print_N(struct reb_simulation* r){
+    int N_to_send;
+    N_to_send = 0;
+    for (int i=0; i<r->mpi_num;i++){
+        N_to_send += r->N_particles_send[i];
+    }
+    printf("Node %d:   N = %d (+%d to send)\n", r->mpi_id, r->N, N_to_send);
+}
 
 void test_twobody(){
     struct reb_simulation* const r = reb_simulation_create();
@@ -23,23 +31,24 @@ void test_twobody(){
     r->opening_angle2   = 1.5; 
     r->G                = 1;        
     r->dt               = 0.1;
-    reb_simulation_configure_box(r,10,2,2,1);
+    reb_simulation_configure_box(r,30,2,2,1);
 
     printf("MPI init...\n");
     reb_mpi_init(r);
     if (r->mpi_id==0){
-        reb_simulation_add_fmt(r, "m hash", 2., reb_hash("star1"));
+        reb_simulation_add_fmt(r, "m y hash", 2., 4.0, reb_hash("star1"));
     }
     struct reb_particle com = reb_simulation_com(r); // Need to call this on all machines. 
+    assert(com.y==4.0);
     if (r->mpi_id==0){
         reb_simulation_add_fmt(r, "m a e primary hash", 1., 1., 0.1, com, reb_hash("star2"));
     }
-    printf("Init done. (%d)   N = %d\n", r->mpi_id, r->N);
 
     printf("Moving to com...\n"); // Will also distribute particles
     reb_simulation_move_to_com(r);
+    print_N(r);
     
-    printf("Checking com...\n");
+    printf("Checking com ...\n");
     com = reb_simulation_com(r);
     assert(fabs(com.x)<1e-15);
     assert(fabs(com.y)<1e-15);
@@ -47,6 +56,11 @@ void test_twobody(){
     assert(fabs(com.vx)<1e-15);
     assert(fabs(com.vy)<1e-15);
     assert(fabs(com.vz)<1e-15);
+
+    printf("Checking energy...\n");
+    double energy = reb_simulation_energy(r);
+    printf("energy = %.20f\n", energy);
+    assert(fabs(energy+1.0)<1e-15);
 
     printf("Starting the integration...\n");
     reb_simulation_integrate(r, 10.);
@@ -64,7 +78,7 @@ void test_twobody(){
     com = reb_simulation_com(r); // Need to call this on all machines. 
     if (r->mpi_id==0){
         for (int i=0; i<10; i++){
-            reb_simulation_add_fmt(r, "m a primary hash", 0.01, 2.0+0.1*i, com, i);
+            reb_simulation_add_fmt(r, "m a primary hash", 0.0001, 2.0+0.1*i, com, i);
         }
     }
     reb_simulation_steps(r, 1);
@@ -97,14 +111,10 @@ void test_twobody(){
     }
 
 
-
-
     printf("Cleanup...\n");
     reb_mpi_finalize(r);
     reb_simulation_free(r); 
     reb_simulation_free(r2); 
-
-
 }
 
 int main(int argc, char* argv[]){

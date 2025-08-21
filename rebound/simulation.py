@@ -1228,6 +1228,13 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_angular_momentum.restype = Vec3dBasic
         return Vec3d(clibrebound.reb_simulation_angular_momentum(byref(self)))
+    
+    def ias15_timescale(self):
+        """
+        Returns the gravitational timescale in code units. See Pham, Rein, Spiegel 2023 for details. 
+        """
+        clibrebound.reb_integrator_ias15_timescale.restype = c_double
+        return clibrebound.reb_integrator_ias15_timescale(byref(self))
 
     def configure_box(self, boxsize, N_root_x=1, N_root_y=1, N_root_z=1):
         """
@@ -1543,9 +1550,9 @@ Simulation._fields_ = [
                 ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
                 ("N_allocated_collisions", c_int),
+                ("collisions_N", c_uint),
                 ("minimum_collision_velocity", c_double),
                 ("collisions_plog", c_double),
-                ("max_radius", c_double*2),
                 ("collisions_log_n", c_int64),
                 ("_calculate_megno", c_int),
                 ("_megno_Ys", c_double),
@@ -1554,6 +1561,7 @@ Simulation._fields_ = [
                 ("_megno_var_t", c_double),
                 ("_megno_mean_t", c_double),
                 ("_megno_mean_Y", c_double),
+                ("_megno_initial_t", c_double),
                 ("_megno_n", c_int64),
                 ("rand_seed",c_uint),
                 ("simulationarchive_version", c_int),

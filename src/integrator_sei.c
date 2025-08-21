@@ -47,9 +47,9 @@ void reb_integrator_sei_init(struct reb_simulation* const r){
     /**
      * Pre-calculates sin() and tan() needed for SEI. 
      */
-	if (r->ri_sei.OMEGAZ==-1){
-		r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
-	}
+    if (r->ri_sei.OMEGAZ==-1){
+        r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
+    }
     r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
     r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
     r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
@@ -59,38 +59,38 @@ void reb_integrator_sei_init(struct reb_simulation* const r){
 
 void reb_integrator_sei_part1(struct reb_simulation* const r){
     r->gravity_ignore_terms = 0;
-	const int N = r->N;
-	struct reb_particle* const particles = r->particles;
-	if (r->ri_sei.lastdt!=r->dt){
+    const int N = r->N;
+    struct reb_particle* const particles = r->particles;
+    if (r->ri_sei.lastdt!=r->dt){
         reb_integrator_sei_init(r);
-	}
-	const struct reb_integrator_sei ri_sei = r->ri_sei;
+    }
+    const struct reb_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		operator_H012(r->dt, ri_sei, &(particles[i]));
-	}
-	r->t+=r->dt/2.;
+    for (int i=0;i<N;i++){
+        operator_H012(r->dt, ri_sei, &(particles[i]));
+    }
+    r->t+=r->dt/2.;
 }
 
 void reb_integrator_sei_part2(struct reb_simulation* r){
-	const int N = r->N;
-	struct reb_particle* const particles = r->particles;
-	const struct reb_integrator_sei ri_sei = r->ri_sei;
+    const int N = r->N;
+    struct reb_particle* const particles = r->particles;
+    const struct reb_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
-	for (int i=0;i<N;i++){
-		operator_phi1(r->dt, &(particles[i]));
-		operator_H012(r->dt, ri_sei, &(particles[i]));
-	}
-	r->t+=r->dt/2.;
-	r->dt_last_done = r->dt;
+    for (int i=0;i<N;i++){
+        operator_phi1(r->dt, &(particles[i]));
+        operator_H012(r->dt, ri_sei, &(particles[i]));
+    }
+    r->t+=r->dt/2.;
+    r->dt_last_done = r->dt;
 }
 
 void reb_integrator_sei_synchronize(struct reb_simulation* r){
-	// Do nothing.
+    // Do nothing.
 }
 
 void reb_integrator_sei_reset(struct reb_simulation* r){
-	r->ri_sei.lastdt = 0;	
+    r->ri_sei.lastdt = 0;	
 }
 
 /**
@@ -101,36 +101,36 @@ void reb_integrator_sei_reset(struct reb_simulation* r){
  * @param ri_sei Integrator struct
  */
 static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p){
-		
-	// Integrate vertical motion
-	const double zx = p->z * ri_sei.OMEGAZ;
-	const double zy = p->vz;
-	
-	// Rotation implemeted as 3 shear operators
-	// to avoid round-off errors
-	const double zt1 =  zx - ri_sei.tandtz*zy;			
-	const double zyt =  ri_sei.sindtz*zt1 + zy;
-	const double zxt =  zt1 - ri_sei.tandtz*zyt;	
-	p->z  = zxt/ri_sei.OMEGAZ;
-	p->vz = zyt;
 
-	// Integrate motion in xy directions
-	const double aO = 2.*p->vy + 4.*p->x*ri_sei.OMEGA;	// Center of epicyclic motion
-	const double bO = p->y*ri_sei.OMEGA - 2.*p->vx;	
+    // Integrate vertical motion
+    const double zx = p->z * ri_sei.OMEGAZ;
+    const double zy = p->vz;
 
-	const double ys = (p->y*ri_sei.OMEGA-bO)/2.; 		// Epicycle vector
-	const double xs = (p->x*ri_sei.OMEGA-aO); 
-	
-	// Rotation implemeted as 3 shear operators
-	// to avoid round-off errors
-	const double xst1 =  xs - ri_sei.tandt*ys;			
-	const double yst  =  ri_sei.sindt*xst1 + ys;
-	const double xst  =  xst1 - ri_sei.tandt*yst;	
+    // Rotation implemeted as 3 shear operators
+    // to avoid round-off errors
+    const double zt1 =  zx - ri_sei.tandtz*zy;			
+    const double zyt =  ri_sei.sindtz*zt1 + zy;
+    const double zxt =  zt1 - ri_sei.tandtz*zyt;	
+    p->z  = zxt/ri_sei.OMEGAZ;
+    p->vz = zyt;
 
-	p->x  = (xst+aO)    /ri_sei.OMEGA;			
-	p->y  = (yst*2.+bO) /ri_sei.OMEGA - 3./4.*aO*dt;	
-	p->vx = yst;
-	p->vy = -xst*2. -3./2.*aO;
+    // Integrate motion in xy directions
+    const double aO = 2.*p->vy + 4.*p->x*ri_sei.OMEGA;	// Center of epicyclic motion
+    const double bO = p->y*ri_sei.OMEGA - 2.*p->vx;	
+
+    const double ys = (p->y*ri_sei.OMEGA-bO)/2.; 		// Epicycle vector
+    const double xs = (p->x*ri_sei.OMEGA-aO); 
+
+    // Rotation implemeted as 3 shear operators
+    // to avoid round-off errors
+    const double xst1 =  xs - ri_sei.tandt*ys;			
+    const double yst  =  ri_sei.sindt*xst1 + ys;
+    const double xst  =  xst1 - ri_sei.tandt*yst;	
+
+    p->x  = (xst+aO)    /ri_sei.OMEGA;			
+    p->y  = (yst*2.+bO) /ri_sei.OMEGA - 3./4.*aO*dt;	
+    p->vx = yst;
+    p->vy = -xst*2. -3./2.*aO;
 }
 
 /**
@@ -143,10 +143,10 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
  * @param dt Timestep
  */
 static void operator_phi1(double dt, struct reb_particle* p){
-	// The force used here is for test cases 2 and 3 
-	// in Rein & Tremaine 2011. 
-	p->vx += p->ax * dt;
-	p->vy += p->ay * dt;
-	p->vz += p->az * dt;
+    // The force used here is for test cases 2 and 3 
+    // in Rein & Tremaine 2011. 
+    p->vx += p->ax * dt;
+    p->vy += p->ay * dt;
+    p->vz += p->az * dt;
 }
 

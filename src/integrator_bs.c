@@ -64,7 +64,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 //#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
-    
+
 // Default configuration parameter. 
 // They are hard coded here because it
 // is unlikely that these need to be changed by the user.
@@ -201,8 +201,8 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     //
     //                return 1;
     //            }
-    
-    
+
+
     // Modified Midpoint method
     // first substep
     t += subStep;
@@ -311,7 +311,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
     }
     for (int j = 1; j <= k; ++j) {
         for (int i = 0; i < length; ++i) {
-        y1[i] += D[j][i];
+            y1[i] += D[j][i];
         }
     }
 }
@@ -341,7 +341,7 @@ void reb_integrator_bs_part1(struct reb_simulation* r){
     if (r->calculate_megno){
         reb_simulation_error(r, "The BS integrator does currently not support MEGNO.");
     }
-            
+
     struct reb_ode** odes = r->odes;
     int Ns = r->N_odes;
     for (int s=0; s < Ns; s++){
@@ -362,10 +362,10 @@ static void allocate_sequence_arrays(struct reb_integrator_bs* ri_bs){
     ri_bs->optimal_step     = malloc(sizeof(double)*sequence_length);
 
     // step size sequence: 2, 6, 10, 14, ...  // only needed for dense output
-     for (int k = 0; k < sequence_length; ++k) {
+    for (int k = 0; k < sequence_length; ++k) {
         ri_bs->sequence[k] = 4 * k + 2;
     }
-    
+
     // step size sequence: 1,2,3,4,5 ...
     //for (int k = 0; k < sequence_length; ++k) {
     //    ri_bs->sequence[k] = 2*( k+1);
@@ -400,7 +400,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     //        0 if rejected 
     //
     struct reb_integrator_bs* ri_bs = &r->ri_bs;
-    
+
     if (ri_bs->sequence==NULL){
         allocate_sequence_arrays(ri_bs);
     }
@@ -457,7 +457,7 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
     for (int loop = 1; loop; ) {
 
         ++k;
-        
+
         // modified midpoint integration with the current substep
         if ( ! tryStep(r, Ns, k, ri_bs->sequence[k], t, dt)) {
 
@@ -514,8 +514,8 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
                     return 0;
                 }
 
-                if ((error > 1.0e25)){ // TODO: Think about what to do when error increases: || ((k > 1) && (error > maxError))) {
-                    // error is too big, we reduce the global step
+                if ((error > 1.0e25)){ // TODO: Think about what to do when error increases: || ((k > 1) && (error > maxError))) 
+                                       // error is too big, we reduce the global step
 #if DEBUG
                     printf("R (error= %.5e)",error);
 #endif
@@ -715,14 +715,14 @@ int reb_integrator_bs_step(struct reb_simulation* r, double dt){
 
 struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     struct reb_ode* ode = malloc(sizeof(struct reb_ode));
-    
+
     memset(ode, 0, sizeof(struct reb_ode)); // not really necessaery
 
     if (r->N_allocated_odes <= r->N_odes){
         r->N_allocated_odes += 32;
         r->odes = realloc(r->odes,sizeof(struct reb_ode*)*r->N_allocated_odes);
     }
-    
+
     r->odes[r->N_odes] = ode;
     r->N_odes += 1;
 
@@ -756,7 +756,7 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
 
 void reb_integrator_bs_part2(struct reb_simulation* r){
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
-    
+
     unsigned int nbody_length = r->N*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
@@ -771,7 +771,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->first_or_last_step = 1;
     }
-    
+
     for (int s=0; s < r->N_odes; s++){
         if (r->odes[s]->needs_nbody){
             ri_bs->user_ode_needs_nbody = 1;
@@ -813,7 +813,7 @@ void reb_ode_free(struct reb_ode* ode){
     ode->C = NULL;
     free(ode->scale);
     ode->scale = NULL;
-    
+
     if (ode->D){
         for (int k=0; k < sequence_length; k++) {
             free(ode->D[k]);
@@ -827,7 +827,7 @@ void reb_ode_free(struct reb_ode* ode){
     ode->yTmp = NULL;
     free(ode->yDot);
     ode->yDot = NULL;
-    
+
     struct reb_simulation* r = ode->r;
     if (r){ // only do this is ode is in a simulation
         struct reb_integrator_bs* ri_bs = &r->ri_bs;
@@ -852,7 +852,7 @@ void reb_ode_free(struct reb_ode* ode){
 
 void reb_integrator_bs_reset(struct reb_simulation* r){
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
-    
+
     // Delete nbody ode but not others
     if (ri_bs->nbody_ode){
         reb_ode_free(ri_bs->nbody_ode);
@@ -862,7 +862,7 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     // Free sequence arrays
     free(ri_bs->sequence);
     ri_bs->sequence = NULL;
-    
+
     free(ri_bs->coeff);
     ri_bs->coeff = NULL;
     free(ri_bs->cost_per_step);
@@ -871,8 +871,8 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->cost_per_time_unit = NULL;
     free(ri_bs->optimal_step);
     ri_bs->optimal_step = NULL;
-    
-    
+
+
     // Default settings
     ri_bs->eps_abs          = 1e-8;
     ri_bs->eps_rel          = 1e-8;
@@ -881,5 +881,5 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->first_or_last_step  = 1;
     ri_bs->previous_rejected = 0;
     ri_bs->target_iter       = 0;
-        
+
 }

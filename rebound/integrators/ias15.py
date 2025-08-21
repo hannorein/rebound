@@ -1,6 +1,7 @@
 import ctypes
 
 
+IAS15_ADAPTIVE_MODES = {"individual": 0, "global": 1, "prs23": 2, "aarseth85": 3}
 class reb_dp7(ctypes.Structure):
     _fields_ = [("p0", ctypes.POINTER(ctypes.c_double)),
                 ("p1", ctypes.POINTER(ctypes.c_double)),
@@ -40,9 +41,37 @@ class IntegratorIAS15(ctypes.Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, epsilon={3}, min_dt={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.epsilon, self.min_dt)
     
+    @property
+    def adaptive_mode(self):
+        """
+        Get or set the adaptive mode that determines how the timestep is chosen in IAS15.
+
+        Available adaptive_modes are:
+
+        - ``'individual'`` (timescale estimate based on individual particles)
+        - ``'global'`` (used to be the default until 01/2024, global estimate)
+        - ``'PRS23'`` (The default. Described in Pham, Rein, Spiegel 2023)
+        - ``'Aarseth85'`` (Aarseth 1985 algorithm)
+        """
+        i = self._adaptive_mode
+        for name, _i in IAS15_ADAPTIVE_MODES.items():
+            if i==_i:
+                return name
+        return i
+    @adaptive_mode.setter
+    def adaptive_mode(self, value):
+        if isinstance(value, int):
+            self._adaptive_mode = ctypes.c_uint(value)
+        elif isinstance(value, basestring):
+            value = value.lower().replace(" ", "")
+            if value in IAS15_ADAPTIVE_MODES: 
+                self._adaptive_mode = IAS15_ADAPTIVE_MODES[value]
+            else:
+                raise ValueError("Warning. Kernel not found.")
+    
     _fields_ = [("epsilon", ctypes.c_double),
                 ("min_dt", ctypes.c_double),
-                ("adaptive_mode", ctypes.c_uint),
+                ("_adaptive_mode", ctypes.c_uint),
                 ("_iterations_max_exceeded", ctypes.c_uint64),
                 ("_N_allocated", ctypes.c_uint),
                 ("_at", ctypes.POINTER(ctypes.c_double)),

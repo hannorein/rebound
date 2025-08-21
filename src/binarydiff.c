@@ -117,7 +117,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
     }
 
     int are_different = 0;
-    
+
     if (output_option==0){
         *bufp = NULL;
         *sizep = 0;
@@ -135,7 +135,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
 
     size_t pos1 = 64;
     size_t pos2 = 64;
-    
+
     struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
 
     while(1){
@@ -148,7 +148,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
         if (pos2+sizeof(struct reb_binary_field)>size2) pos2 = 64;
         struct reb_binary_field field2 = *(struct reb_binary_field*)(buf2+pos2);
         pos2 += sizeof(struct reb_binary_field);
-        
+
         // Fields might not be in the same order.
         if (field1.type!=field2.type){
             // Will search for element in buf2, starting at beginning just past header
@@ -173,9 +173,9 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 }
             };
             if (notfound == 1){
-                // Output field with size 0
                 pos1 += field1.size; // For next search
-                pos2 = 64; // For next search
+                pos2 = 64;           // For next search
+                field1.size = 0;     // Output field with size 0
                 are_different = 1.;
                 if (output_option==0){
                     reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
@@ -299,7 +299,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
         if (pos1+sizeof(struct reb_binary_field)>size1) pos1 = 64;
         struct reb_binary_field field1 = *(struct reb_binary_field*)(buf1+pos1);
         pos1 += sizeof(struct reb_binary_field);
-        
+
         if (field1.type==field2.type){
             // Not a new field. Skip.
             pos1 += field1.size;

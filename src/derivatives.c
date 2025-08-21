@@ -45,7 +45,7 @@ struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle
     double clp = cos(lambda+p);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_dlambda = a*(dclp_dlambda + dp_dlambda/(2.-l)*h);
     double deta_dlambda = a*(dslp_dlambda - dp_dlambda/(2.-l)*k);
@@ -59,9 +59,9 @@ struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dlambda  = an/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
-    + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+        + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
     double ddeta_dlambda = an/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
-    + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+        + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
     double ddW_dlambda = ddeta_dlambda*ix-ddxi_dlambda*iy;
     np.vx = ddxi_dlambda+0.5*iy*ddW_dlambda;
     np.vy = ddeta_dlambda-0.5*ix*ddW_dlambda;
@@ -82,7 +82,7 @@ struct reb_particle reb_particle_derivative_h(double G, struct reb_particle prim
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dp_dh = 1./(1.-q)*(-clp);
@@ -100,9 +100,9 @@ struct reb_particle reb_particle_derivative_h(double G, struct reb_particle prim
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+        + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
     double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+        + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
 
     np.vx = ddxi_dh+0.5*iy*ddW_dh;
@@ -124,7 +124,7 @@ struct reb_particle reb_particle_derivative_k(double G, struct reb_particle prim
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double dp_dk = 1./(1.-q)*(slp);
@@ -142,9 +142,9 @@ struct reb_particle reb_particle_derivative_k(double G, struct reb_particle prim
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dk  = dq_dk*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
+        + an/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
     double ddeta_dk = dq_dk*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
+        + an/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
     double ddW_dk = ddeta_dk*ix-ddxi_dk*iy;
 
     np.vx = ddxi_dk+0.5*iy*ddW_dk;
@@ -166,7 +166,7 @@ struct reb_particle reb_particle_derivative_k_k(double G, struct reb_particle pr
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double dl_dkk = 1./sqrt(1.-h*h-k*k) + (k*k)/(sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k));
@@ -179,7 +179,7 @@ struct reb_particle reb_particle_derivative_k_k(double G, struct reb_particle pr
 
     double dxi_dkk = a*(dclp_dkk + dp_dkk/(2.-l)*h + dl_dk*dp_dk/((2.-l)*(2.-l))*h + dp_dk/((2.-l)*(2.-l))*dl_dk*h + 2.*dl_dk*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*h + p/((2.-l)*(2.-l))*dl_dkk*h);
     double deta_dkk = a*(dslp_dkk - dp_dkk/(2.-l)*k - dl_dk*dp_dk/((2.-l)*(2.-l))*k - dp_dk/(2.-l) - dp_dk/(2.-l) - dl_dk*p/((2.-l)*(2.-l)) 
-                - dp_dk/((2.-l)*(2.-l))*dl_dk*k - 2.*dl_dk*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*k - p/((2.-l)*(2.-l))*dl_dkk*k - p/((2.-l)*(2.-l))*dl_dk);
+            - dp_dk/((2.-l)*(2.-l))*dl_dk*k - 2.*dl_dk*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*k - p/((2.-l)*(2.-l))*dl_dkk*k - p/((2.-l)*(2.-l))*dl_dk);
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double dW_dkk = deta_dkk*ix-dxi_dkk*iy;
@@ -190,14 +190,14 @@ struct reb_particle reb_particle_derivative_k_k(double G, struct reb_particle pr
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dkk  = dq_dkk*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dk*dq_dk*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
-                + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
-                + an/(1.-q)*(-dslp_dkk + dq_dkk/(2.-l)*h + dl_dk*dq_dk/((2.-l)*(2.-l))*h 
+        + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
+        + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
+        + an/(1.-q)*(-dslp_dkk + dq_dkk/(2.-l)*h + dl_dk*dq_dk/((2.-l)*(2.-l))*h 
                 + dl_dkk*q/((2.-l)*(2.-l))*h + dl_dk*dq_dk/((2.-l)*(2.-l))*h + 2.*dl_dk*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*h );
     double ddeta_dkk = dq_dkk*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dk*dq_dk*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
-                + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
-                + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
-                + an/(1.-q)*(+dclp_dkk - dq_dkk/(2.-l)*k - dq_dk*dl_dk/((2.-l)*(2.-l))*k - dq_dk/(2.-l) 
+        + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
+        + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
+        + an/(1.-q)*(+dclp_dkk - dq_dkk/(2.-l)*k - dq_dk*dl_dk/((2.-l)*(2.-l))*k - dq_dk/(2.-l) 
                 - dl_dkk*q/((2.-l)*(2.-l))*k - dl_dk*dq_dk/((2.-l)*(2.-l))*k - 2.*dl_dk*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*k - dl_dk*q/((2.-l)*(2.-l)) - dq_dk/(2.-l) - dl_dk*q/((2.-l)*(2.-l)) );
     double ddW_dkk = ddeta_dkk*ix-ddxi_dkk*iy;
 
@@ -220,7 +220,7 @@ struct reb_particle reb_particle_derivative_h_h(double G, struct reb_particle pr
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dl_dhh = 1./sqrt(1.-h*h-k*k) + (h*h)/(sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k)*sqrt(1.-h*h-k*k));
@@ -232,7 +232,7 @@ struct reb_particle reb_particle_derivative_h_h(double G, struct reb_particle pr
     double dslp_dhh = -1./((1.-q)*(1.-q))*dq_dh*(clp*clp) - 2./(1.-q)*(clp*dclp_dh);
 
     double dxi_dhh = a*(dclp_dhh + (dp_dhh/(2.-l)*h + dl_dh*dp_dh/((2.-l)*(2.-l))*h + dp_dh/(2.-l)) + (dp_dh/(2.-l)+ dl_dh*p/((2.-l)*(2.-l)))
-        + (dp_dh/((2.-l)*(2.-l))*dl_dh*h + 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dh*dl_dh*h + p/((2.-l)*(2.-l))*dl_dhh*h + p/((2.-l)*(2.-l))*dl_dh));
+            + (dp_dh/((2.-l)*(2.-l))*dl_dh*h + 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dh*dl_dh*h + p/((2.-l)*(2.-l))*dl_dhh*h + p/((2.-l)*(2.-l))*dl_dh));
     double deta_dhh = a*(dslp_dhh + (-dp_dhh/(2.-l)*k - dl_dh*dp_dh/((2.-l)*(2.-l))*k) +(- dp_dh/((2.-l)*(2.-l))*k*dl_dh - 2.*p/((2.-l)*(2.-l)*(2.-l))*k*dl_dh*dl_dh- p/((2.-l)*(2.-l))*k*dl_dhh ));
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
@@ -244,14 +244,14 @@ struct reb_particle reb_particle_derivative_h_h(double G, struct reb_particle pr
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dhh  = dq_dhh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h) 
-                + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l))
-                + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l)) 
-                + an/(1.-q)*(-dslp_dhh + (dq_dhh/(2.-l)*h+dl_dh*dq_dh/((2.-l)*(2.-l))*h+dq_dh/(2.-l)) 
+        + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l))
+        + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l)) 
+        + an/(1.-q)*(-dslp_dhh + (dq_dhh/(2.-l)*h+dl_dh*dq_dh/((2.-l)*(2.-l))*h+dq_dh/(2.-l)) 
                 + (dl_dhh*q/((2.-l)*(2.-l))*h+dl_dh*dq_dh/((2.-l)*(2.-l))*h+2.*dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*h+dl_dh*q/((2.-l)*(2.-l))) + (dq_dh/(2.-l)+dl_dh*q/((2.-l)*(2.-l)))  );
     double ddeta_dhh = dq_dhh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dh*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
-                + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
-                + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
-                + an/(1.-q)*(+dclp_dhh - dq_dhh/(2.-l)*k - dl_dh*dq_dh/((2.-l)*(2.-l))*k 
+        + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
+        + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
+        + an/(1.-q)*(+dclp_dhh - dq_dhh/(2.-l)*k - dl_dh*dq_dh/((2.-l)*(2.-l))*k 
                 - dl_dhh*q/((2.-l)*(2.-l))*k - dl_dh*dq_dh/((2.-l)*(2.-l))*k - 2.*dl_dh*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*k );
 
     double ddW_dhh = ddeta_dhh*ix-ddxi_dhh*iy;
@@ -282,7 +282,7 @@ struct reb_particle reb_particle_derivative_lambda_lambda(double G, struct reb_p
     double dslp_dlambda = 1./(1.-q)*clp;
     double dclp_dlambdalambda = -1./((1.-q)*(1.-q))*dq_dlambda*slp -1./(1.-q)*dslp_dlambda;
     double dslp_dlambdalambda = 1./((1.-q)*(1.-q))*dq_dlambda*clp + 1./(1.-q)*dclp_dlambda;    
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_dlambdalambda = a*(dclp_dlambdalambda + dp_dlambdalambda/(2.-l)*h);
     double deta_dlambdalambda = a*(dslp_dlambdalambda - dp_dlambdalambda/(2.-l)*k);
@@ -296,11 +296,11 @@ struct reb_particle reb_particle_derivative_lambda_lambda(double G, struct reb_p
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dlambdalambda  = 2.*an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(-slp+q/(2.-l)*h) 
-                + an/((1.-q)*(1.-q))*dq_dlambdalambda*(-slp+q/(2.-l)*h) + an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
-                + an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h) + an/(1.-q)*(-dslp_dlambdalambda+dq_dlambdalambda/(2.-l)*h);
+        + an/((1.-q)*(1.-q))*dq_dlambdalambda*(-slp+q/(2.-l)*h) + an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
+        + an/((1.-q)*(1.-q))*dq_dlambda*(-dslp_dlambda+dq_dlambda/(2.-l)*h) + an/(1.-q)*(-dslp_dlambdalambda+dq_dlambdalambda/(2.-l)*h);
     double ddeta_dlambdalambda = 2.*an/((1.-q)*(1.-q)*(1.-q))*dq_dlambda*dq_dlambda*(+clp-q/(2.-l)*k) 
-                + an/((1.-q)*(1.-q))*dq_dlambdalambda*(+clp-q/(2.-l)*k) + an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k)
-                + an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k) + an/(1.-q)*(dclp_dlambdalambda-dq_dlambdalambda/(2.-l)*k);
+        + an/((1.-q)*(1.-q))*dq_dlambdalambda*(+clp-q/(2.-l)*k) + an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k)
+        + an/((1.-q)*(1.-q))*dq_dlambda*(dclp_dlambda-dq_dlambda/(2.-l)*k) + an/(1.-q)*(dclp_dlambdalambda-dq_dlambdalambda/(2.-l)*k);
 
     double ddW_dlambdalambda = ddeta_dlambdalambda*ix-ddxi_dlambdalambda*iy;
     np.vx = ddxi_dlambdalambda+0.5*iy*ddW_dlambdalambda;
@@ -324,7 +324,7 @@ struct reb_particle reb_particle_derivative_k_lambda(double G, struct reb_partic
     double dslp_dk = -1./(1.-q)*(-slp*clp);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double dp_dk = 1./(1.-q)*(slp);
@@ -349,13 +349,13 @@ struct reb_particle reb_particle_derivative_k_lambda(double G, struct reb_partic
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dklambda  = dq_dklambda*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dk*dq_dlambda*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h) 
-                + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
-                + dq_dlambda*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
-                + an/(1.-q)*(-dslp_dklambda+dq_dklambda/(2.-l)*h+dl_dk*dq_dlambda/((2.-l)*(2.-l))*h);
+        + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
+        + dq_dlambda*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h)
+        + an/(1.-q)*(-dslp_dklambda+dq_dklambda/(2.-l)*h+dl_dk*dq_dlambda/((2.-l)*(2.-l))*h);
     double ddeta_dklambda = dq_dklambda*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dk*dq_dlambda*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
-                + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dlambda-dq_dlambda/(2.-l)*k)
-                + dq_dlambda*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l)) 
-                + an/(1.-q)*(+dclp_dklambda-dq_dklambda/(2.-l)*k-dl_dk*dq_dlambda/((2.-l)*(2.-l))*k-dq_dlambda/(2.-l));
+        + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dlambda-dq_dlambda/(2.-l)*k)
+        + dq_dlambda*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l)) 
+        + an/(1.-q)*(+dclp_dklambda-dq_dklambda/(2.-l)*k-dl_dk*dq_dlambda/((2.-l)*(2.-l))*k-dq_dlambda/(2.-l));
     double ddW_dklambda = ddeta_dklambda*ix-ddxi_dklambda*iy;
 
     np.vx = ddxi_dklambda+0.5*iy*ddW_dklambda;
@@ -379,7 +379,7 @@ struct reb_particle reb_particle_derivative_h_lambda(double G, struct reb_partic
     double dslp_dh = -1./(1.-q)*(clp*clp);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dp_dh = 1./(1.-q)*(-clp);
@@ -403,13 +403,13 @@ struct reb_particle reb_particle_derivative_h_lambda(double G, struct reb_partic
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dhlambda  = dq_dhlambda*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dlambda*dq_dh*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h) 
-                + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
-                + dq_dlambda*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l)) 
-                + an/(1.-q)*(-dslp_dhlambda+dq_dhlambda/(2.-l)*h+dl_dh*dq_dlambda/((2.-l)*(2.-l))*h+dq_dlambda/(2.-l));
+        + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dlambda+dq_dlambda/(2.-l)*h)
+        + dq_dlambda*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l)) 
+        + an/(1.-q)*(-dslp_dhlambda+dq_dhlambda/(2.-l)*h+dl_dh*dq_dlambda/((2.-l)*(2.-l))*h+dq_dlambda/(2.-l));
     double ddeta_dhlambda = dq_dhlambda*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dh*dq_dlambda*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
-                + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dlambda-dq_dlambda/(2.-l)*k)
-                + dq_dlambda*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k) 
-                + an/(1.-q)*(+dclp_dhlambda-dq_dhlambda/(2.-l)*k-dl_dh*dq_dlambda/((2.-l)*(2.-l))*k);
+        + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dlambda-dq_dlambda/(2.-l)*k)
+        + dq_dlambda*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k) 
+        + an/(1.-q)*(+dclp_dhlambda-dq_dhlambda/(2.-l)*k-dl_dh*dq_dlambda/((2.-l)*(2.-l))*k);
     double ddW_dhlambda = ddeta_dhlambda*ix-ddxi_dhlambda*iy;
 
     np.vx = ddxi_dhlambda+0.5*iy*ddW_dhlambda;
@@ -433,7 +433,7 @@ struct reb_particle reb_particle_derivative_k_h(double G, struct reb_particle pr
     double dslp_dk = -1./(1.-q)*(-slp*clp);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dp_dh = 1./(1.-q)*(-clp);
@@ -448,9 +448,9 @@ struct reb_particle reb_particle_derivative_k_h(double G, struct reb_particle pr
     double dslp_dkh = -1./((1.-q)*(1.-q))*dq_dh*(-slp*clp) -1./(1.-q)*(-dslp_dh*clp) -1./(1.-q)*(-slp*dclp_dh);
 
     double dxi_dkh = a*(dclp_dkh + dp_dkh/(2.-l)*h + dl_dh*dp_dk/((2.-l)*(2.-l))*h + dp_dk/(2.-l) 
-                + dp_dh/((2.-l)*(2.-l))*dl_dk*h + 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*dl_dh*h + p/((2.-l)*(2.-l))*dl_dkh*h + p/((2.-l)*(2.-l))*dl_dk);
+            + dp_dh/((2.-l)*(2.-l))*dl_dk*h + 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*dl_dh*h + p/((2.-l)*(2.-l))*dl_dkh*h + p/((2.-l)*(2.-l))*dl_dk);
     double deta_dkh = a*(dslp_dkh - dp_dkh/(2.-l)*k - dl_dh*dp_dk/((2.-l)*(2.-l))*k - dp_dh/(2.-l)- dl_dh*p/((2.-l)*(2.-l)) 
-                - dp_dh/((2.-l)*(2.-l))*dl_dk*k - p/((2.-l)*(2.-l))*dl_dkh*k - 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*dl_dh*k);
+            - dp_dh/((2.-l)*(2.-l))*dl_dk*k - p/((2.-l)*(2.-l))*dl_dkh*k - 2.*p/((2.-l)*(2.-l)*(2.-l))*dl_dk*dl_dh*k);
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double dW_dkh = deta_dkh*ix-dxi_dkh*iy;
@@ -461,14 +461,14 @@ struct reb_particle reb_particle_derivative_k_h(double G, struct reb_particle pr
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dkh = dq_dkh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h) + 2.*dq_dh*dq_dk*an/((1.-q)*(1.-q)*(1.-q))*(-slp+q/(2.-l)*h) 
-                + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h + dl_dh*q/((2.-l)*(2.-l))*h + q/(2.-l))
-                + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h) 
-                + an/(1.-q)*(-dslp_dkh+(dq_dkh/(2.-l)*h+dl_dh*dq_dk/((2.-l)*(2.-l))*h+dq_dk/(2.-l)) 
+        + dq_dk*an/((1.-q)*(1.-q))*(-dslp_dh+dq_dh/(2.-l)*h + dl_dh*q/((2.-l)*(2.-l))*h + q/(2.-l))
+        + dq_dh*an/((1.-q)*(1.-q))*(-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h) 
+        + an/(1.-q)*(-dslp_dkh+(dq_dkh/(2.-l)*h+dl_dh*dq_dk/((2.-l)*(2.-l))*h+dq_dk/(2.-l)) 
                 + dl_dkh*q/((2.-l)*(2.-l))*h + dl_dk*dq_dh/((2.-l)*(2.-l))*h + 2.*dl_dh*dl_dk*q/((2.-l)*(2.-l)*(2.-l))*h + dl_dk*q/((2.-l)*(2.-l)));
     double ddeta_dkh = dq_dkh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k) + 2.*dq_dh*dq_dk*an/((1.-q)*(1.-q)*(1.-q))*(+clp-q/(2.-l)*k) 
-                + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
-                + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
-                + an/(1.-q)*(+dclp_dkh-dq_dkh/(2.-l)*k-dl_dh*dq_dk/((2.-l)*(2.-l))*k 
+        + dq_dk*an/((1.-q)*(1.-q))*(+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k)
+        + dq_dh*an/((1.-q)*(1.-q))*(+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l))
+        + an/(1.-q)*(+dclp_dkh-dq_dkh/(2.-l)*k-dl_dh*dq_dk/((2.-l)*(2.-l))*k 
                 -dl_dkh*q/((2.-l)*(2.-l))*k -dl_dk*dq_dh/((2.-l)*(2.-l))*k -2.*dl_dk*dl_dh*q/((2.-l)*(2.-l)*(2.-l))*k -dq_dh/(2.-l)-dl_dh*q/((2.-l)*(2.-l)) );
     double ddW_dkh = ddeta_dkh*ix-ddxi_dkh*iy;
 
@@ -490,7 +490,7 @@ struct reb_particle reb_particle_derivative_a(double G, struct reb_particle prim
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_da = clp + p/(2.-l)*h -k;
     double deta_da = slp - p/(2.-l)*k -h;
@@ -525,7 +525,7 @@ struct reb_particle reb_particle_derivative_a_a(double G, struct reb_particle pr
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_daa = 0.0;//clp + p/(2.-l)*h -k;
     double deta_daa = 0.0;//slp - p/(2.-l)*k -h;
@@ -559,7 +559,7 @@ struct reb_particle reb_particle_derivative_ix(double G, struct reb_particle pri
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double xi = a*(clp + p/(2.-l)*h -k);
     double eta = a*(slp - p/(2.-l)*k -h);
@@ -596,7 +596,7 @@ struct reb_particle reb_particle_derivative_ix_ix(double G, struct reb_particle 
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double xi = a*(clp + p/(2.-l)*h -k);
     double eta = a*(slp - p/(2.-l)*k -h);
@@ -636,7 +636,7 @@ struct reb_particle reb_particle_derivative_iy(double G, struct reb_particle pri
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double xi = a*(clp + p/(2.-l)*h -k);
     double eta = a*(slp - p/(2.-l)*k -h);
@@ -673,7 +673,7 @@ struct reb_particle reb_particle_derivative_iy_iy(double G, struct reb_particle 
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double xi = a*(clp + p/(2.-l)*h -k);
     double eta = a*(slp - p/(2.-l)*k -h);
@@ -715,7 +715,7 @@ struct reb_particle reb_particle_derivative_k_ix(double G, struct reb_particle p
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double dp_dk = 1./(1.-q)*(slp);
@@ -735,9 +735,9 @@ struct reb_particle reb_particle_derivative_k_ix(double G, struct reb_particle p
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dk  = dq_dk*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
+        + an/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
     double ddeta_dk = dq_dk*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
+        + an/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
     double ddW_dk = ddeta_dk*ix-ddxi_dk*iy;
     double ddW_dkix = ddeta_dk;
 
@@ -760,7 +760,7 @@ struct reb_particle reb_particle_derivative_h_ix(double G, struct reb_particle p
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dp_dh = 1./(1.-q)*(-clp);
@@ -780,9 +780,9 @@ struct reb_particle reb_particle_derivative_h_ix(double G, struct reb_particle p
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+        + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
     double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+        + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
     double ddW_dhix = ddeta_dh;
 
@@ -808,7 +808,7 @@ struct reb_particle reb_particle_derivative_lambda_ix(double G, struct reb_parti
     double clp = cos(lambda+p);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_dlambda = a*(dclp_dlambda + dp_dlambda/(2.-l)*h);
     double deta_dlambda = a*(dslp_dlambda - dp_dlambda/(2.-l)*k);
@@ -824,9 +824,9 @@ struct reb_particle reb_particle_derivative_lambda_ix(double G, struct reb_parti
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dlambda  = an/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
-    + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+        + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
     double ddeta_dlambda = an/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
-    + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+        + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
     double ddW_dlambda = ddeta_dlambda*ix-ddxi_dlambda*iy;
     double ddW_dlambdaix = ddeta_dlambda;
     np.vx = 0.5*iy*ddW_dlambdaix;
@@ -851,7 +851,7 @@ struct reb_particle reb_particle_derivative_lambda_iy(double G, struct reb_parti
     double clp = cos(lambda+p);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_dlambda = a*(dclp_dlambda + dp_dlambda/(2.-l)*h);
     double deta_dlambda = a*(dslp_dlambda - dp_dlambda/(2.-l)*k);
@@ -866,9 +866,9 @@ struct reb_particle reb_particle_derivative_lambda_iy(double G, struct reb_parti
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dlambda  = an/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
-    + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+        + an/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
     double ddeta_dlambda = an/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
-    + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+        + an/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
     double ddW_dlambda = ddeta_dlambda*ix-ddxi_dlambda*iy;
     double ddW_dlambdaiy = -ddxi_dlambda;
     np.vx = 0.5*ddW_dlambda+0.5*iy*ddW_dlambdaiy;
@@ -890,7 +890,7 @@ struct reb_particle reb_particle_derivative_h_iy(double G, struct reb_particle p
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dp_dh = 1./(1.-q)*(-clp);
@@ -909,9 +909,9 @@ struct reb_particle reb_particle_derivative_h_iy(double G, struct reb_particle p
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dh  = dq_dh*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+        + an/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
     double ddeta_dh = dq_dh*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+        + an/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dh = ddeta_dh*ix-ddxi_dh*iy;
     double ddW_dhiy = -ddxi_dh;
     np.vx = 0.5*ddW_dh+0.5*iy*ddW_dhiy;
@@ -933,7 +933,7 @@ struct reb_particle reb_particle_derivative_k_iy(double G, struct reb_particle p
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double dp_dk = 1./(1.-q)*(slp);
@@ -952,9 +952,9 @@ struct reb_particle reb_particle_derivative_k_iy(double G, struct reb_particle p
 
     double an = sqrt(G*(po.m+primary.m)/a);
     double ddxi_dk  = dq_dk*an/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + an/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
+        + an/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
     double ddeta_dk = dq_dk*an/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + an/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
+        + an/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
     double ddW_dk = ddeta_dk*ix-ddxi_dk*iy;
     double ddW_dkiy = -ddxi_dk;
     np.vx = 0.5*ddW_dk+0.5*iy*ddW_dkiy;
@@ -974,7 +974,7 @@ struct reb_particle reb_particle_derivative_ix_iy(double G, struct reb_particle 
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double xi = a*(clp + p/(2.-l)*h -k);
     double eta = a*(slp - p/(2.-l)*k -h);
@@ -1016,7 +1016,7 @@ struct reb_particle reb_particle_derivative_a_ix(double G, struct reb_particle p
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double deta_da = (slp - p/(2.-l)*k -h);
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
@@ -1052,7 +1052,7 @@ struct reb_particle reb_particle_derivative_a_iy(double G, struct reb_particle p
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
 
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
@@ -1094,7 +1094,7 @@ struct reb_particle reb_particle_derivative_a_lambda(double G, struct reb_partic
     double clp = cos(lambda+p);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dxi_dalambda = (dclp_dlambda + dp_dlambda/(2.-l)*h);
     double deta_dalambda = (dslp_dlambda - dp_dlambda/(2.-l)*k);
@@ -1108,9 +1108,9 @@ struct reb_particle reb_particle_derivative_a_lambda(double G, struct reb_partic
 
     double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
     double ddxi_dalambda  = dan_da/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
-    + dan_da/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+        + dan_da/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
     double ddeta_dalambda = dan_da/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
-    + dan_da/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+        + dan_da/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
     double ddW_dalambda = ddeta_dalambda*ix-ddxi_dalambda*iy;
     np.vx = ddxi_dalambda+0.5*iy*ddW_dalambda;
     np.vy = ddeta_dalambda-0.5*ix*ddW_dalambda;
@@ -1131,7 +1131,7 @@ struct reb_particle reb_particle_derivative_a_h(double G, struct reb_particle pr
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double dp_dh = 1./(1.-q)*(-clp);
@@ -1149,9 +1149,9 @@ struct reb_particle reb_particle_derivative_a_h(double G, struct reb_particle pr
 
     double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
     double ddxi_dah  = dq_dh*dan_da/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + dan_da/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+        + dan_da/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
     double ddeta_dah = dq_dh*dan_da/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + dan_da/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+        + dan_da/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dah = ddeta_dah*ix-ddxi_dah*iy;
 
     np.vx = ddxi_dah+0.5*iy*ddW_dah;
@@ -1173,7 +1173,7 @@ struct reb_particle reb_particle_derivative_a_k(double G, struct reb_particle pr
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double dp_dk = 1./(1.-q)*(slp);
@@ -1191,9 +1191,9 @@ struct reb_particle reb_particle_derivative_a_k(double G, struct reb_particle pr
 
     double dan_da = -0.5*sqrt(G*(po.m+primary.m)/(a*a*a));
     double ddxi_dak  = dq_dk*dan_da/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + dan_da/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
+        + dan_da/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
     double ddeta_dak = dq_dk*dan_da/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + dan_da/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
+        + dan_da/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
     double ddW_dak = ddeta_dak*ix-ddxi_dak*iy;
 
     np.vx = ddxi_dak+0.5*iy*ddW_dak;
@@ -1214,7 +1214,7 @@ struct reb_particle reb_particle_derivative_m(double G, struct reb_particle prim
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     np.x = 0.0;
@@ -1275,7 +1275,7 @@ struct reb_particle reb_particle_derivative_m_lambda(double G, struct reb_partic
     double clp = cos(lambda+p);
     double dclp_dlambda = -1./(1.-q)*slp;
     double dslp_dlambda = 1./(1.-q)*clp;
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
 
@@ -1285,9 +1285,9 @@ struct reb_particle reb_particle_derivative_m_lambda(double G, struct reb_partic
 
     double dan_dm = 0.5*sqrt(G/(a*(po.m+primary.m)));
     double ddxi_dmlambda  = dan_dm/((1.-q)*(1.-q))*dq_dlambda*(-slp+q/(2.-l)*h)
-    + dan_dm/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
+        + dan_dm/(1.-q)*(-dslp_dlambda+dq_dlambda/(2.-l)*h);
     double ddeta_dmlambda = dan_dm/((1.-q)*(1.-q))*dq_dlambda*(+clp-q/(2.-l)*k)
-    + dan_dm/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
+        + dan_dm/(1.-q)*(dclp_dlambda-dq_dlambda/(2.-l)*k);
     double ddW_dmlambda = ddeta_dmlambda*ix-ddxi_dmlambda*iy;
     np.vx = ddxi_dmlambda+0.5*iy*ddW_dmlambda;
     np.vy = ddeta_dmlambda-0.5*ix*ddW_dmlambda;
@@ -1307,7 +1307,7 @@ struct reb_particle reb_particle_derivative_m_h(double G, struct reb_particle pr
     double clp = cos(lambda+p);
     double dclp_dh = -1./(1.-q)*(-slp*clp);
     double dslp_dh = -1./(1.-q)*(clp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dh = 1./sqrt(1.-h*h-k*k)*h;
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
@@ -1320,9 +1320,9 @@ struct reb_particle reb_particle_derivative_m_h(double G, struct reb_particle pr
 
     double dan_dm = 0.5*sqrt(G/(a*(po.m+primary.m)));
     double ddxi_dmh  = dq_dh*dan_dm/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + dan_dm/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
+        + dan_dm/(1.-q) * (-dslp_dh+dq_dh/(2.-l)*h+dl_dh*q/((2.-l)*(2.-l))*h+q/(2.-l));
     double ddeta_dmh = dq_dh*dan_dm/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + dan_dm/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
+        + dan_dm/(1.-q) * (+dclp_dh-dq_dh/(2.-l)*k-dl_dh*q/((2.-l)*(2.-l))*k);
     double ddW_dmh = ddeta_dmh*ix-ddxi_dmh*iy;
 
     np.vx = ddxi_dmh+0.5*iy*ddW_dmh;
@@ -1343,7 +1343,7 @@ struct reb_particle reb_particle_derivative_m_k(double G, struct reb_particle pr
     double clp = cos(lambda+p);
     double dclp_dk = -1./(1.-q)*(slp*slp);
     double dslp_dk = -1./(1.-q)*(-slp*clp);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double dl_dk = 1./sqrt(1.-h*h-k*k)*k;
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
@@ -1356,9 +1356,9 @@ struct reb_particle reb_particle_derivative_m_k(double G, struct reb_particle pr
 
     double dan_dm = 0.5*sqrt(G/(a*(po.m+primary.m)));
     double ddxi_dmk  = dq_dk*dan_dm/((1.-q)*(1.-q))*(-slp+q/(2.-l)*h)
-                + dan_dm/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
+        + dan_dm/(1.-q) * (-dslp_dk+dq_dk/(2.-l)*h+dl_dk*q/((2.-l)*(2.-l))*h);
     double ddeta_dmk = dq_dk*dan_dm/((1.-q)*(1.-q))*(+clp-q/(2.-l)*k)
-                + dan_dm/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
+        + dan_dm/(1.-q) * (+dclp_dk-dq_dk/(2.-l)*k-dl_dk*q/((2.-l)*(2.-l))*k-q/(2.-l));
     double ddW_dmk = ddeta_dmk*ix-ddxi_dmk*iy;
 
     np.vx = ddxi_dmk+0.5*iy*ddW_dmk;
@@ -1377,7 +1377,7 @@ struct reb_particle reb_particle_derivative_m_ix(double G, struct reb_particle p
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double diz_dix = -ix/sqrt(fabs(4.-ix*ix-iy*iy));
@@ -1408,7 +1408,7 @@ struct reb_particle reb_particle_derivative_m_iy(double G, struct reb_particle p
     reb_tools_solve_kepler_pal(h, k, lambda, &p, &q);
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     double diz_diy = -iy/sqrt(fabs(4.-ix*ix-iy*iy));
@@ -1440,7 +1440,7 @@ struct reb_particle reb_particle_derivative_m_m(double G, struct reb_particle pr
 
     double slp = sin(lambda+p);
     double clp = cos(lambda+p);
-    
+
     double l = 1.-sqrt(1.-h*h-k*k);
     double iz = sqrt(fabs(4.-ix*ix-iy*iy));
     np.x = 0.0;
@@ -1475,7 +1475,7 @@ struct reb_particle reb_particle_derivative_e(double G, struct reb_particle prim
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z = dr*(so*cf+co*sf)*si;
@@ -1483,7 +1483,7 @@ struct reb_particle reb_particle_derivative_e(double G, struct reb_particle prim
     p.vx = dv0*((o.e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
     p.vy = dv0*((o.e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
     p.vz = dv0*((o.e+cf)*co*si - sf*si*so);
-    
+
     p.vx += v0*(-ci*co*sO - cO*so);
     p.vy += v0*(ci*co*cO - sO*so);
     p.vz += v0*(co*si);
@@ -1510,7 +1510,7 @@ struct reb_particle reb_particle_derivative_e_e(double G, struct reb_particle pr
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z = ddr*(so*cf+co*sf)*si;
@@ -1518,7 +1518,7 @@ struct reb_particle reb_particle_derivative_e_e(double G, struct reb_particle pr
     p.vx = ddv0*((o.e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
     p.vy = ddv0*((o.e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
     p.vz = ddv0*((o.e+cf)*co*si - sf*si*so);
-    
+
     p.vx += 2.*dv0*(-ci*co*sO - cO*so);
     p.vy += 2.*dv0*(ci*co*cO - sO*so);
     p.vz += 2.*dv0*(co*si);
@@ -1540,7 +1540,7 @@ struct reb_particle reb_particle_derivative_inc(double G, struct reb_particle pr
     double sf = sin(o.f);
     double dci = -sin(o.inc);
     double dsi = cos(o.inc);
-    
+
     p.x = r*(- sO*(so*cf+co*sf)*dci);
     p.y = r*(+ cO*(so*cf+co*sf)*dci);
     p.z = r*(so*cf+co*sf)*dsi;
@@ -1548,7 +1548,7 @@ struct reb_particle reb_particle_derivative_inc(double G, struct reb_particle pr
     p.vx = v0*((o.e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
     p.vy = v0*((o.e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
     p.vz = v0*((o.e+cf)*co*dsi - sf*dsi*so);
-    
+
 
     return p;
 }
@@ -1567,7 +1567,7 @@ struct reb_particle reb_particle_derivative_inc_inc(double G, struct reb_particl
     double sf = sin(o.f);
     double ddci = -cos(o.inc);
     double ddsi = -sin(o.inc);
-    
+
     p.x = r*(- sO*(so*cf+co*sf)*ddci);
     p.y = r*(+ cO*(so*cf+co*sf)*ddci);
     p.z = r*(so*cf+co*sf)*ddsi;
@@ -1592,7 +1592,7 @@ struct reb_particle reb_particle_derivative_Omega(double G, struct reb_particle 
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.x = r*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
     p.y = r*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
     p.z = 0.;
@@ -1617,7 +1617,7 @@ struct reb_particle reb_particle_derivative_Omega_Omega(double G, struct reb_par
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.x = r*(ddcO*(co*cf-so*sf) - ddsO*(so*cf+co*sf)*ci);
     p.y = r*(ddsO*(co*cf-so*sf) + ddcO*(so*cf+co*sf)*ci);
     p.z = 0.;
@@ -1643,7 +1643,7 @@ struct reb_particle reb_particle_derivative_omega(double G, struct reb_particle 
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = r*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
     p.y = r*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
     p.z = r*(dso*cf+dco*sf)*si;
@@ -1651,7 +1651,7 @@ struct reb_particle reb_particle_derivative_omega(double G, struct reb_particle 
     p.vx = v0*((o.e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
     p.vy = v0*((o.e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
     p.vz = v0*((o.e+cf)*dco*si - sf*si*dso);
-    
+
     return p;
 }
 
@@ -1669,7 +1669,7 @@ struct reb_particle reb_particle_derivative_omega_omega(double G, struct reb_par
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = r*(cO*(ddco*cf-ddso*sf) - sO*(ddso*cf+ddco*sf)*ci);
     p.y = r*(sO*(ddco*cf-ddso*sf) + cO*(ddso*cf+ddco*sf)*ci);
     p.z = r*(ddso*cf+ddco*sf)*si;
@@ -1677,7 +1677,7 @@ struct reb_particle reb_particle_derivative_omega_omega(double G, struct reb_par
     p.vx = v0*((o.e+cf)*(-ci*ddco*sO - cO*ddso) - sf*(ddco*cO - ci*ddso*sO));
     p.vy = v0*((o.e+cf)*(ci*ddco*cO - sO*ddso)  - sf*(ddco*sO + ci*ddso*cO));
     p.vz = v0*((o.e+cf)*ddco*si - sf*si*ddso);
-    
+
     return p;
 }
 
@@ -1698,11 +1698,11 @@ struct reb_particle reb_particle_derivative_f(double G, struct reb_particle prim
     double dsf = cos(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = dr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y = dr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z = dr*(so*cf+co*sf)*si;
-    
+
     p.x += r*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
     p.y += r*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
     p.z += r*(so*dcf+co*dsf)*si;
@@ -1710,7 +1710,7 @@ struct reb_particle reb_particle_derivative_f(double G, struct reb_particle prim
     p.vx = v0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
     p.vy = v0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
     p.vz = v0*(dcf*co*si - dsf*si*so);
-    
+
     return p;
 }
 
@@ -1734,15 +1734,15 @@ struct reb_particle reb_particle_derivative_f_f(double G, struct reb_particle pr
     double ddsf = -sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z = ddr*(so*cf+co*sf)*si;
-    
+
     p.x += 2.*dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
     p.y += 2.*dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
     p.z += 2.*dr*(so*dcf+co*dsf)*si;
-    
+
     p.x += r*(cO*(co*ddcf-so*ddsf) - sO*(so*ddcf+co*ddsf)*ci);
     p.y += r*(sO*(co*ddcf-so*ddsf) + cO*(so*ddcf+co*ddsf)*ci);
     p.z += r*(so*ddcf+co*ddsf)*si;
@@ -1750,7 +1750,7 @@ struct reb_particle reb_particle_derivative_f_f(double G, struct reb_particle pr
     p.vx = v0*(ddcf*(-ci*co*sO - cO*so) - ddsf*(co*cO - ci*so*sO));
     p.vy = v0*(ddcf*(ci*co*cO - sO*so)  - ddsf*(co*sO + ci*so*cO));
     p.vz = v0*(ddcf*co*si - ddsf*si*so);
-    
+
     return p;
 }
 
@@ -1761,7 +1761,7 @@ struct reb_particle reb_particle_derivative_a_e(double G, struct reb_particle pr
     double cosf = cos(o.f);
     double ddr = -(cosf*o.e*o.e+cosf+2.*o.e)/((cosf*o.e+1.)*(cosf*o.e+1.));
     double dv0_da = -0.5/sqrt(G*(po.m+primary.m)/o.a/(1.-o.e*o.e))*G*(po.m+primary.m)/(o.a*o.a)/(1.-o.e*o.e); 
-    
+
     double dv0_da_de = o.e*dv0_da/(1.-o.e*o.e); 
 
     double cO = cos(o.Omega);
@@ -1772,7 +1772,7 @@ struct reb_particle reb_particle_derivative_a_e(double G, struct reb_particle pr
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y = ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z = ddr*(so*cf+co*sf)*si;
@@ -1780,7 +1780,7 @@ struct reb_particle reb_particle_derivative_a_e(double G, struct reb_particle pr
     p.vx = dv0_da_de*((o.e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
     p.vy = dv0_da_de*((o.e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
     p.vz = dv0_da_de*((o.e+cf)*co*si - sf*si*so);
-    
+
     p.vx += dv0_da*(-ci*co*sO - cO*so);
     p.vy += dv0_da*(ci*co*cO - sO*so);
     p.vz += dv0_da*(co*si);
@@ -1802,7 +1802,7 @@ struct reb_particle reb_particle_derivative_a_inc(double G, struct reb_particle 
     double sf = sin(o.f);
     double dci = -sin(o.inc);
     double dsi = cos(o.inc);
-    
+
     p.x = dr*(- sO*(so*cf+co*sf)*dci);
     p.y = dr*(+ cO*(so*cf+co*sf)*dci);
     p.z = dr*(so*cf+co*sf)*dsi;
@@ -1810,7 +1810,7 @@ struct reb_particle reb_particle_derivative_a_inc(double G, struct reb_particle 
     p.vx = dv0*((o.e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
     p.vy = dv0*((o.e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
     p.vz = dv0*((o.e+cf)*co*dsi - sf*dsi*so);
-    
+
     return p;
 }
 
@@ -1827,13 +1827,13 @@ struct reb_particle reb_particle_derivative_a_Omega(double G, struct reb_particl
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.x = dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
     p.y = dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
 
     p.vx = dv0*((o.e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
     p.vy = dv0*((o.e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
-    
+
     return p;
 }
 
@@ -1851,7 +1851,7 @@ struct reb_particle reb_particle_derivative_a_omega(double G, struct reb_particl
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
     p.y = dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
     p.z = dr*(dso*cf+dco*sf)*si;
@@ -1859,7 +1859,7 @@ struct reb_particle reb_particle_derivative_a_omega(double G, struct reb_particl
     p.vx = dv0*((o.e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
     p.vy = dv0*((o.e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
     p.vz = dv0*((o.e+cf)*dco*si - sf*si*dso);
-    
+
     return p;
 }
 
@@ -1880,11 +1880,11 @@ struct reb_particle reb_particle_derivative_a_f(double G, struct reb_particle pr
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
     p.y = dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
     p.z = dr*(so*dcf+co*dsf)*si;
-    
+
     p.x += ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y += ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z += ddr*(so*cf+co*sf)*si;
@@ -1892,7 +1892,7 @@ struct reb_particle reb_particle_derivative_a_f(double G, struct reb_particle pr
     p.vx = dv0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
     p.vy = dv0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
     p.vz = dv0*(dcf*co*si - dsf*si*so);
-    
+
     return p;
 }
 
@@ -1912,7 +1912,7 @@ struct reb_particle reb_particle_derivative_e_inc(double G, struct reb_particle 
     double sf = sin(o.f);
     double dci = -sin(o.inc);
     double dsi = cos(o.inc);
-    
+
     p.x = dr*(- sO*(so*cf+co*sf)*dci);
     p.y = dr*(+ cO*(so*cf+co*sf)*dci);
     p.z = dr*(so*cf+co*sf)*dsi;
@@ -1920,7 +1920,7 @@ struct reb_particle reb_particle_derivative_e_inc(double G, struct reb_particle 
     p.vx = dv0*((o.e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
     p.vy = dv0*((o.e+cf)*(dci*co*cO)  - sf*(+ dci*so*cO));
     p.vz = dv0*((o.e+cf)*co*dsi - sf*dsi*so);
-    
+
     p.vx += v0*(-dci*co*sO);
     p.vy += v0*(dci*co*cO);
     p.vz += v0*(co*dsi);
@@ -1944,13 +1944,13 @@ struct reb_particle reb_particle_derivative_e_Omega(double G, struct reb_particl
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.x = dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
     p.y = dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
 
     p.vx = dv0*((o.e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
     p.vy = dv0*((o.e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
-    
+
     p.vx += v0*(-ci*co*dsO - dcO*so);
     p.vy += v0*(ci*co*dcO - dsO*so);
 
@@ -1973,7 +1973,7 @@ struct reb_particle reb_particle_derivative_e_omega(double G, struct reb_particl
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
     p.y = dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
     p.z = dr*(dso*cf+dco*sf)*si;
@@ -1981,7 +1981,7 @@ struct reb_particle reb_particle_derivative_e_omega(double G, struct reb_particl
     p.vx = dv0*((o.e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
     p.vy = dv0*((o.e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
     p.vz = dv0*((o.e+cf)*dco*si - sf*si*dso);
-    
+
     p.vx += v0*(-ci*dco*sO - cO*dso);
     p.vy += v0*(ci*dco*cO - sO*dso);
     p.vz += v0*(dco*si);
@@ -1994,7 +1994,7 @@ struct reb_particle reb_particle_derivative_e_f(double G, struct reb_particle pr
     double cosf = cos(o.f);
     double dr = -o.a*(cosf*o.e*o.e+cosf+2.*o.e)/((cosf*o.e+1.)*(cosf*o.e+1.));
     double ddr = -o.a*(-sin(o.f)*o.e*o.e-sin(o.f))/((cosf*o.e+1.)*(cosf*o.e+1.))
-                -2.*o.e*sin(o.f) * o.a*(cosf*o.e*o.e+cosf+2.*o.e)/((cosf*o.e+1.)*(cosf*o.e+1.)*(cosf*o.e+1.));
+        -2.*o.e*sin(o.f) * o.a*(cosf*o.e*o.e+cosf+2.*o.e)/((cosf*o.e+1.)*(cosf*o.e+1.)*(cosf*o.e+1.));
     double dv0 = sqrt(G*(po.m+primary.m)/o.a)*o.e/((1.-o.e*o.e)*sqrt(1.-o.e*o.e)); 
 
     double cO = cos(o.Omega);
@@ -2007,19 +2007,19 @@ struct reb_particle reb_particle_derivative_e_f(double G, struct reb_particle pr
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = dr*(cO*(co*dcf-so*dsf) - sO*(so*dcf+co*dsf)*ci);
     p.y = dr*(sO*(co*dcf-so*dsf) + cO*(so*dcf+co*dsf)*ci);
     p.z = dr*(so*dcf+co*dsf)*si;
-    
+
     p.x += ddr*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci);
     p.y += ddr*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci);
     p.z += ddr*(so*cf+co*sf)*si;
-    
+
     p.vx = dv0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
     p.vy = dv0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
     p.vz = dv0*(dcf*co*si - dsf*si*so);
-    
+
     return p;
 }
 struct reb_particle reb_particle_derivative_m_e(double G, struct reb_particle primary, struct reb_particle po){
@@ -2036,11 +2036,11 @@ struct reb_particle reb_particle_derivative_m_e(double G, struct reb_particle pr
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.vx = dv0ea*((o.e+cf)*(-ci*co*sO - cO*so) - sf*(co*cO - ci*so*sO));
     p.vy = dv0ea*((o.e+cf)*(ci*co*cO - sO*so)  - sf*(co*sO + ci*so*cO));
     p.vz = dv0ea*((o.e+cf)*co*si - sf*si*so);
-    
+
     p.vx += dv0m*(-ci*co*sO - cO*so);
     p.vy += dv0m*(ci*co*cO - sO*so);
     p.vz += dv0m*(co*si);
@@ -2061,7 +2061,7 @@ struct reb_particle reb_particle_derivative_inc_Omega(double G, struct reb_parti
     double cf = cos(o.f);
     double sf = sin(o.f);
     double dci = -sin(o.inc);
-    
+
     p.x = r*(- dsO*(so*cf+co*sf)*dci);
     p.y = r*(+ dcO*(so*cf+co*sf)*dci);
 
@@ -2085,7 +2085,7 @@ struct reb_particle reb_particle_derivative_inc_omega(double G, struct reb_parti
     double sf = sin(o.f);
     double dci = -sin(o.inc);
     double dsi = cos(o.inc);
-    
+
     p.x = r*(- sO*(dso*cf+dco*sf)*dci);
     p.y = r*(+ cO*(dso*cf+dco*sf)*dci);
     p.z = r*(dso*cf+dco*sf)*dsi;
@@ -2114,11 +2114,11 @@ struct reb_particle reb_particle_derivative_inc_f(double G, struct reb_particle 
     double sf = sin(o.f);
     double dci = -sin(o.inc);
     double dsi = cos(o.inc);
-    
+
     p.x = r*(- sO*(so*dcf+co*dsf)*dci);
     p.y = r*(+ cO*(so*dcf+co*dsf)*dci);
     p.z = r*(so*dcf+co*dsf)*dsi;
-    
+
     p.x += dr*(- sO*(so*cf+co*sf)*dci);
     p.y += dr*(+ cO*(so*cf+co*sf)*dci);
     p.z += dr*(so*cf+co*sf)*dsi;
@@ -2143,11 +2143,11 @@ struct reb_particle reb_particle_derivative_m_inc(double G, struct reb_particle 
     double sf = sin(o.f);
     double dci = -sin(o.inc);
     double dsi = cos(o.inc);
-    
+
     p.vx = dv0*((o.e+cf)*(-dci*co*sO) - sf*(- dci*so*sO));
     p.vy = dv0*((o.e+cf)*(dci*co*cO)  - sf*(dci*so*cO));
     p.vz = dv0*((o.e+cf)*co*dsi - sf*dsi*so);
-    
+
     return p;
 }
 
@@ -2164,7 +2164,7 @@ struct reb_particle reb_particle_derivative_omega_Omega(double G, struct reb_par
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.x = r*(dcO*(dco*cf-dso*sf) - dsO*(dso*cf+dco*sf)*ci);
     p.y = r*(dsO*(dco*cf-dso*sf) + dcO*(dso*cf+dco*sf)*ci);
 
@@ -2190,10 +2190,10 @@ struct reb_particle reb_particle_derivative_Omega_f(double G, struct reb_particl
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.x = r*(dcO*(co*dcf-so*dsf) - dsO*(so*dcf+co*dsf)*ci);
     p.y = r*(dsO*(co*dcf-so*dsf) + dcO*(so*dcf+co*dsf)*ci);
-    
+
     p.x += dr*(dcO*(co*cf-so*sf) - dsO*(so*cf+co*sf)*ci);
     p.y += dr*(dsO*(co*cf-so*sf) + dcO*(so*cf+co*sf)*ci);
 
@@ -2215,7 +2215,7 @@ struct reb_particle reb_particle_derivative_m_Omega(double G, struct reb_particl
     double cf = cos(o.f);
     double sf = sin(o.f);
     double ci = cos(o.inc);
-    
+
     p.vx = dv0*((o.e+cf)*(-ci*co*dsO - dcO*so) - sf*(co*dcO - ci*so*dsO));
     p.vy = dv0*((o.e+cf)*(ci*co*dcO - dsO*so)  - sf*(co*dsO + ci*so*dcO));
 
@@ -2239,11 +2239,11 @@ struct reb_particle reb_particle_derivative_omega_f(double G, struct reb_particl
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.x = r*(cO*(dco*dcf-dso*dsf) - sO*(dso*dcf+dco*dsf)*ci);
     p.y = r*(sO*(dco*dcf-dso*dsf) + cO*(dso*dcf+dco*dsf)*ci);
     p.z = r*(dso*dcf+dco*dsf)*si;
-    
+
     p.x += dr*(cO*(dco*cf-dso*sf) - sO*(dso*cf+dco*sf)*ci);
     p.y += dr*(sO*(dco*cf-dso*sf) + cO*(dso*cf+dco*sf)*ci);
     p.z += dr*(dso*cf+dco*sf)*si;
@@ -2251,7 +2251,7 @@ struct reb_particle reb_particle_derivative_omega_f(double G, struct reb_particl
     p.vx = v0*((dcf)*(-ci*dco*sO - cO*dso) - dsf*(dco*cO - ci*dso*sO));
     p.vy = v0*((dcf)*(ci*dco*cO - sO*dso)  - dsf*(dco*sO + ci*dso*cO));
     p.vz = v0*((dcf)*dco*si - dsf*si*dso);
-    
+
     return p;
 }
 
@@ -2268,11 +2268,11 @@ struct reb_particle reb_particle_derivative_m_omega(double G, struct reb_particl
     double sf = sin(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.vx = dv0*((o.e+cf)*(-ci*dco*sO - cO*dso) - sf*(dco*cO - ci*dso*sO));
     p.vy = dv0*((o.e+cf)*(ci*dco*cO - sO*dso)  - sf*(dco*sO + ci*dso*cO));
     p.vz = dv0*((o.e+cf)*dco*si - sf*si*dso);
-    
+
     return p;
 }
 
@@ -2289,10 +2289,10 @@ struct reb_particle reb_particle_derivative_m_f(double G, struct reb_particle pr
     double dsf = cos(o.f);
     double ci = cos(o.inc);
     double si = sin(o.inc);
-    
+
     p.vx = dv0*(dcf*(-ci*co*sO - cO*so) - dsf*(co*cO - ci*so*sO));
     p.vy = dv0*(dcf*(ci*co*cO - sO*so)  - dsf*(co*sO + ci*so*cO));
     p.vz = dv0*(dcf*co*si - dsf*si*so);
-    
+
     return p;
 }
