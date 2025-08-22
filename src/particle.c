@@ -48,70 +48,70 @@ extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
 static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
-	const struct reb_vec3d boxsize = r->boxsize;
-	const double OMEGA = r->ri_sei.OMEGA;
-	const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-	const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
-	
-	
-	if (reb_boundary_particle_is_in_box(r, pt)==0){
-		// reb_particle has left the box. Do not add.
-		reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
-		return;
-	}
-	while (r->N_allocated<=r->N){
-		unsigned int old_N_allocated = r->N_allocated;
-		r->N_allocated = r->N_allocated ? r->N_allocated * 2 : 128;
-		r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->N_allocated);
-		memset(r->particles + old_N_allocated, 0, (r->N_allocated - old_N_allocated) * sizeof(struct reb_particle));
-	}
+    const struct reb_vec3d boxsize = r->boxsize;
+    const double OMEGA = r->ri_sei.OMEGA;
+    const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+    const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+    
+    
+    if (reb_boundary_particle_is_in_box(r, pt)==0){
+        // reb_particle has left the box. Do not add.
+        reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
+        return;
+    }
+    while (r->N_allocated<=r->N){
+        unsigned int old_N_allocated = r->N_allocated;
+        r->N_allocated = r->N_allocated ? r->N_allocated * 2 : 128;
+        r->particles = realloc(r->particles,sizeof(struct reb_particle)*r->N_allocated);
+        memset(r->particles + old_N_allocated, 0, (r->N_allocated - old_N_allocated) * sizeof(struct reb_particle));
+    }
 
-	r->particles[r->N] = pt;
-	r->particles[r->N].sim = r;
-	if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-		if (r->root_size==-1){
-			reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
-			return;
-		}
-		if(fabs(pt.x)>r->Lx_t/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
-			reb_simulation_error(r,"Cannot add particle outside of simulation box.");
-			return;
-		}
-		reb_tree_add_particle_to_tree(r, r->N);
-	}
-	(r->N)++;
-	if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-		struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
-		if (r->ri_mercurius.mode==0){ //WHFast part
-			rim->recalculate_r_crit_this_timestep       = 1;
-			rim->recalculate_coordinates_this_timestep = 1;
-		}else{  // IAS15 part
-			reb_integrator_ias15_reset(r);
-			if (rim->N_allocated_dcrit<r->N){
-				rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
-				rim->N_allocated_dcrit = r->N;
-			}
-			rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
-			if (rim->N_allocated<r->N){
-				rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
-				rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*r->N);
-				rim->N_allocated = r->N;
-			}
-			rim->encounter_map[rim->encounter_N] = r->N-1;
-			rim->encounter_N++;
-			if (r->N_active==-1){ 
-				// If global N_active is not set, then all particles are active, so the new one as well.
-				// Otherwise, assume we're adding non active particle. 
-				rim->encounter_N_active++;
-			}
-		}
-	}
-	if (r->integrator == REB_INTEGRATOR_TRACE){
-		if (r->ri_trace.mode==1){ // BS part
-			reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
-			return;
-		}
-	}
+    r->particles[r->N] = pt;
+    r->particles[r->N].sim = r;
+    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
+        if (r->root_size==-1){
+            reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
+            return;
+        }
+        if(fabs(pt.x)>r->Lx_t/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
+            reb_simulation_error(r,"Cannot add particle outside of simulation box.");
+            return;
+        }
+        reb_tree_add_particle_to_tree(r, r->N);
+    }
+    (r->N)++;
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+        struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+        if (r->ri_mercurius.mode==0){ //WHFast part
+            rim->recalculate_r_crit_this_timestep       = 1;
+            rim->recalculate_coordinates_this_timestep = 1;
+        }else{  // IAS15 part
+            reb_integrator_ias15_reset(r);
+            if (rim->N_allocated_dcrit<r->N){
+                rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
+                rim->N_allocated_dcrit = r->N;
+            }
+            rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
+            if (rim->N_allocated<r->N){
+                rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
+                rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*r->N);
+                rim->N_allocated = r->N;
+            }
+            rim->encounter_map[rim->encounter_N] = r->N-1;
+            rim->encounter_N++;
+            if (r->N_active==-1){ 
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle. 
+                rim->encounter_N_active++;
+            }
+        }
+    }
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        if (r->ri_trace.mode==1){ // BS part
+            reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
+            return;
+        }
+    }
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
@@ -237,14 +237,14 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int
 
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
-	if (r->root_size==-1) return 0;
-	const double Lx_t = r->Lx_t; // Time dependent box size
-	const double Rx_t = r->Rx_t;
-	int i = ((int)floor((pt.x + Lx_t/2.)/Rx_t)+r->N_root_x)%r->N_root_x;
-	int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
-	int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
-	int index = (k*r->N_root_y+j)*r->N_root_x+i;
-	return index;
+    if (r->root_size==-1) return 0;
+    const double Lx_t = r->Lx_t; // Time dependent box size
+    const double Rx_t = r->Rx_t;
+    int i = ((int)floor((pt.x + Lx_t/2.)/Rx_t)+r->N_root_x)%r->N_root_x;
+    int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
+    int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
+    int index = (k*r->N_root_y+j)*r->N_root_x+i;
+    return index;
 }
 
 int reb_simulation_particle_index(struct reb_particle* p){
