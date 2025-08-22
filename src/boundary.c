@@ -194,51 +194,51 @@ static const struct reb_vec6d nan_ghostbox = {.x = 0, .y = 0, .z = 0, .vx = 0, .
 struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k){
     switch(r->boundary){
         case REB_BOUNDARY_OPEN:
-        {
-            struct reb_vec6d gb;
-            gb.x = r->boxsize.x*(double)i;
-            gb.y = r->boxsize.y*(double)j;
-            gb.z = r->boxsize.z*(double)k;
-            gb.vx = 0;
-            gb.vy = 0;
-            gb.vz = 0;
-            return gb;
-        }
-        case REB_BOUNDARY_SHEAR:
-        {
-            const double OMEGA = r->ri_sei.OMEGA;
-            struct reb_vec6d gb;
-            // Ghostboxes habe a finite velocity.
-            gb.vx = 0.;
-            gb.vy = -1.5*(double)i*OMEGA*r->boxsize.x;
-            gb.vz = 0.;
-            // The shift in the y direction is time dependent. 
-            double shift;
-            if (i==0){
-            	shift = -fmod(gb.vy*r->t,r->boxsize.y); 
-            }else{
-                if (i>0){
-                    shift = -fmod(gb.vy*r->t-r->boxsize.y/2.,r->boxsize.y)-r->boxsize.y/2.; 
-                }else{
-                    shift = -fmod(gb.vy*r->t+r->boxsize.y/2.,r->boxsize.y)+r->boxsize.y/2.; 
-                }	
+            {
+                struct reb_vec6d gb;
+                gb.x = r->boxsize.x*(double)i;
+                gb.y = r->boxsize.y*(double)j;
+                gb.z = r->boxsize.z*(double)k;
+                gb.vx = 0;
+                gb.vy = 0;
+                gb.vz = 0;
+                return gb;
             }
-            gb.x = r->boxsize.x*(double)i;
-            gb.y = r->boxsize.y*(double)j-shift;
-            gb.z = r->boxsize.z*(double)k;
-            return gb;
-        }
+        case REB_BOUNDARY_SHEAR:
+            {
+                const double OMEGA = r->ri_sei.OMEGA;
+                struct reb_vec6d gb;
+                // Ghostboxes habe a finite velocity.
+                gb.vx = 0.;
+                gb.vy = -1.5*(double)i*OMEGA*r->boxsize.x;
+                gb.vz = 0.;
+                // The shift in the y direction is time dependent. 
+                double shift;
+                if (i==0){
+                    shift = -fmod(gb.vy*r->t,r->boxsize.y); 
+                }else{
+                    if (i>0){
+                        shift = -fmod(gb.vy*r->t-r->boxsize.y/2.,r->boxsize.y)-r->boxsize.y/2.; 
+                    }else{
+                        shift = -fmod(gb.vy*r->t+r->boxsize.y/2.,r->boxsize.y)+r->boxsize.y/2.; 
+                    }	
+                }
+                gb.x = r->boxsize.x*(double)i;
+                gb.y = r->boxsize.y*(double)j-shift;
+                gb.z = r->boxsize.z*(double)k;
+                return gb;
+            }
         case REB_BOUNDARY_PERIODIC:
-        {
-            struct reb_vec6d gb;
-            gb.x = r->boxsize.x*(double)i;
-            gb.y = r->boxsize.y*(double)j;
-            gb.z = r->boxsize.z*(double)k;
-            gb.vx = 0;
-            gb.vy = 0;
-            gb.vz = 0;
-            return gb;
-        }
+            {
+                struct reb_vec6d gb;
+                gb.x = r->boxsize.x*(double)i;
+                gb.y = r->boxsize.y*(double)j;
+                gb.z = r->boxsize.z*(double)k;
+                gb.vx = 0;
+                gb.vy = 0;
+                gb.vz = 0;
+                return gb;
+            }
         case REB_BOUNDARY_SHEAR_E:
         {
             const double OMEGA = r->ri_sei.OMEGA;
