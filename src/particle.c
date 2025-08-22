@@ -384,122 +384,122 @@ void reb_simulation_remove_all_particles(struct reb_simulation* const r){
 }
 
 int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted){
-	if (r->integrator == REB_INTEGRATOR_MERCURIUS){
-		keep_sorted = 1; // Force keep_sorted for hybrid integrator
-		struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
-		if (rim->N_allocated_dcrit>0 && index<(int)rim->N_allocated_dcrit){
-			for (unsigned int i=0;i<r->N-1;i++){
-				if ((int)i>=index){
-					rim->dcrit[i] = rim->dcrit[i+1];
-				}
-			}
-		}
-		reb_integrator_ias15_reset(r);
-		if (r->ri_mercurius.mode==1){
-			struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
-			int after_to_be_removed_particle = 0;
-			int encounter_index = -1;
-			for (unsigned int i=0;i<rim->encounter_N;i++){
-				if (after_to_be_removed_particle == 1){
-					rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
-				}
-				if (rim->encounter_map[i]==index){
-					encounter_index = i;
-					after_to_be_removed_particle = 1;
-				}
-			}
-			if (encounter_index<(int)rim->encounter_N_active){
-				rim->encounter_N_active--;
-			}
-			rim->encounter_N--;
-		}
-	}
+    if (r->integrator == REB_INTEGRATOR_MERCURIUS){
+        keep_sorted = 1; // Force keep_sorted for hybrid integrator
+        struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+        if (rim->N_allocated_dcrit>0 && index<(int)rim->N_allocated_dcrit){
+            for (unsigned int i=0;i<r->N-1;i++){
+                if ((int)i>=index){
+                    rim->dcrit[i] = rim->dcrit[i+1];
+                }
+            }
+        }
+        reb_integrator_ias15_reset(r);
+        if (r->ri_mercurius.mode==1){
+            struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+            int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
+            for (unsigned int i=0;i<rim->encounter_N;i++){
+                if (after_to_be_removed_particle == 1){
+                    rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
+                }
+                if (rim->encounter_map[i]==index){
+                    encounter_index = i;
+                    after_to_be_removed_particle = 1;
+                }
+            }
+            if (encounter_index<(int)rim->encounter_N_active){
+                rim->encounter_N_active--;
+            }
+            rim->encounter_N--;
+        }
+    }
 
-	if (r->integrator == REB_INTEGRATOR_TRACE){
-		keep_sorted = 1; // Force keepSorted for hybrid integrator
-		struct reb_integrator_trace* ri_trace = &(r->ri_trace);
-		reb_integrator_bs_reset(r);
-		if (r->ri_trace.mode==1){
-			// Only removed mid-timestep if collision - BS Step!
-			// Need to fix current_Ks still, and double check logic
-			int after_to_be_removed_particle = 0;
-			int encounter_index = -1;
-			for (int i=0;i<ri_trace->encounter_N;i++){
-				if (after_to_be_removed_particle == 1){
-					ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
-				}
-				if (ri_trace->encounter_map[i]==index){
-					encounter_index = i;
-					after_to_be_removed_particle = 1;
-				}
-			}
+    if (r->integrator == REB_INTEGRATOR_TRACE){
+        keep_sorted = 1; // Force keepSorted for hybrid integrator
+        struct reb_integrator_trace* ri_trace = &(r->ri_trace);
+        reb_integrator_bs_reset(r);
+        if (r->ri_trace.mode==1){
+            // Only removed mid-timestep if collision - BS Step!
+            // Need to fix current_Ks still, and double check logic
+            int after_to_be_removed_particle = 0;
+            int encounter_index = -1;
+            for (int i=0;i<ri_trace->encounter_N;i++){
+                if (after_to_be_removed_particle == 1){
+                    ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
+                }
+                if (ri_trace->encounter_map[i]==index){
+                    encounter_index = i;
+                    after_to_be_removed_particle = 1;
+                }
+            }
 
-			// reshuffle current_Ks.
-			for (unsigned int i = index; i<r->N-1; i++){
-				for (unsigned int j = 0; j<r->N; j++){
-					ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j];
-				}
-			}
-			for (unsigned int i = 0; i<r->N-1; i++){
-				for (unsigned int j = index; j<r->N-1; j++){
-					ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[i*r->N+(j+1)];
-				}
-			}
-			if (encounter_index<ri_trace->encounter_N_active){
-				ri_trace->encounter_N_active--;
-			}
-			ri_trace->encounter_N--;
-		}
-	}
+            // reshuffle current_Ks.
+            for (unsigned int i = index; i<r->N-1; i++){
+                for (unsigned int j = 0; j<r->N; j++){
+                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j];
+                }
+            }
+            for (unsigned int i = 0; i<r->N-1; i++){
+                for (unsigned int j = index; j<r->N-1; j++){
+                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[i*r->N+(j+1)];
+                }
+            }
+            if (encounter_index<ri_trace->encounter_N_active){
+                ri_trace->encounter_N_active--;
+            }
+            ri_trace->encounter_N--;
+        }
+    }
 
-	if (r->N==1){
-		r->N = 0;
-		if(r->free_particle_ap){
-			r->free_particle_ap(&r->particles[index]);
-		}
-		reb_simulation_warning(r, "Last particle removed.");
-		return 1;
-	}
-	if (index >= (int)r->N || index < 0){
-		char warning[1024];
-		sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
-		reb_simulation_error(r, warning);
-		return 0;
-	}
-	if (r->N_var){
-		reb_simulation_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
-		return 0;
-	}
-	if(keep_sorted){
-		r->N--;
-		if(r->free_particle_ap){
-			r->free_particle_ap(&r->particles[index]);
-		}
-		if(index<r->N_active){
-			r->N_active--;
-		}
-		for(unsigned int j=index; j<r->N; j++){
-			r->particles[j] = r->particles[j+1];
-		}
-		if (r->tree_root){
-			reb_simulation_error(r, "REBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.");
-			return 0;
-		}
-	}else{
-		if (r->tree_root){
-			// Just flag particle, will be removed in update_tree.
-			r->particles[index].y = nan("");
-			if(r->free_particle_ap){
-				r->free_particle_ap(&r->particles[index]);
-			}
-		}else{
-			r->N--;
-			if(r->free_particle_ap){
-				r->free_particle_ap(&r->particles[index]);
-			}
-			r->particles[index] = r->particles[r->N];
-		}
-	}
+    if (r->N==1){
+        r->N = 0;
+        if(r->free_particle_ap){
+            r->free_particle_ap(&r->particles[index]);
+        }
+        reb_simulation_warning(r, "Last particle removed.");
+        return 1;
+    }
+    if (index >= (int)r->N || index < 0){
+        char warning[1024];
+        sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
+        reb_simulation_error(r, warning);
+        return 0;
+    }
+    if (r->N_var){
+        reb_simulation_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
+        return 0;
+    }
+    if(keep_sorted){
+        r->N--;
+        if(r->free_particle_ap){
+            r->free_particle_ap(&r->particles[index]);
+        }
+        if(index<r->N_active){
+            r->N_active--;
+        }
+        for(unsigned int j=index; j<r->N; j++){
+            r->particles[j] = r->particles[j+1];
+        }
+        if (r->tree_root){
+            reb_simulation_error(r, "REBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.");
+            return 0;
+        }
+    }else{
+        if (r->tree_root){
+            // Just flag particle, will be removed in update_tree.
+            r->particles[index].y = nan("");
+            if(r->free_particle_ap){
+                r->free_particle_ap(&r->particles[index]);
+            }
+        }else{
+            r->N--;
+            if(r->free_particle_ap){
+                r->free_particle_ap(&r->particles[index]);
+            }
+            r->particles[index] = r->particles[r->N];
+        }
+    }
 
     return 1;
 }

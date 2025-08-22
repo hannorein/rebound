@@ -32,15 +32,15 @@ struct reb_treecell;
  * @brief The data structure of one node of a tree 
  */
 struct reb_treecell {
-	double x; /**< The x position of the center of a cell */
-	double y; /**< The y position of the center of a cell */
-	double z; /**< The z position of the center of a cell */
-	double w; /**< The width of a cell */
-	double l; /**< The length of a cell */
-	double m; /**< The total mass of a cell */
-	double mx; /**< The x position of the center of mass of a cell */
-	double my; /**< The y position of the center of mass of a cell */
-	double mz; /**< The z position of the center of mass of a cell */
+    double x; /**< The x position of the center of a cell */
+    double y; /**< The y position of the center of a cell */
+    double z; /**< The z position of the center of a cell */
+    double w; /**< The width of a cell */
+    double l; /**< The length of a cell */
+    double m; /**< The total mass of a cell */
+    double mx; /**< The x position of the center of mass of a cell */
+    double my; /**< The y position of the center of mass of a cell */
+    double mz; /**< The z position of the center of mass of a cell */
 #ifdef QUADRUPOLE
     double mxx; /**< The xx component of the quadrupole tensor of mass of a cell */
     double mxy; /**< The xy component of the quadrupole tensor of mass of a cell */
