@@ -80,45 +80,45 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
 }
 
 static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation* const r, struct reb_treecell *node, int pt, struct reb_treecell *parent, int o){
-	struct reb_particle* const particles = r->particles;
-	// Initialize a new node
-	if (node == NULL) {  
-		node = calloc(1, sizeof(struct reb_treecell));
-		struct reb_particle p = particles[pt];
-		if (parent == NULL){ // The new node is a root
+    struct reb_particle* const particles = r->particles;
+    // Initialize a new node
+    if (node == NULL) {  
+        node = calloc(1, sizeof(struct reb_treecell));
+        struct reb_particle p = particles[pt];
+        if (parent == NULL){ // The new node is a root
             const struct reb_vec3d boxsize = r->boxsize;
-	        const double OMEGA = r->ri_sei.OMEGA;
-		    const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
-		    const double Lx_t = r->Lx_t;
-			const double Rx_t = r->Rx_t;
+            const double OMEGA = r->ri_sei.OMEGA;
+            const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+            const double Lx_t = r->Lx_t;
+            const double Rx_t = r->Rx_t;
 
-			node->w = Rx_t;
+            node->w = Rx_t;
             node->l = r->root_size;
-			int i = ((int)floor((p.x + Lx_t/2.)/Rx_t))%r->N_root_x;
-			int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
-			int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
-			
+            int i = ((int)floor((p.x + Lx_t/2.)/Rx_t))%r->N_root_x;
+            int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
+            int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
+
             node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
-			node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
-			node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
-		}else{ // The new node is a normal node
-			node->w 	= parent->w/2.;
+            node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
+            node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
+        }else{ // The new node is a normal node
+            node->w 	= parent->w/2.;
             node->l     = parent->l/2.;
-			node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
-			node->y 	= parent->y + node->l/2.*((o>>1)%2==0?1.:-1);
-			node->z 	= parent->z + node->l/2.*((o>>2)%2==0?1.:-1);
-		}
-		node->pt = pt; 
-		particles[pt].c = node;
-		for (int i=0; i<8; i++){
-			node->oct[i] = NULL;
-		}
-		return node;
-	}
-	// In a existing node
-	if (node->pt >= 0) { // It's a leaf node
-		int o1 = reb_reb_tree_get_octant_for_particle_in_cell(particles[node->pt], node);
-		int o2 = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
+            node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
+            node->y 	= parent->y + node->l/2.*((o>>1)%2==0?1.:-1);
+            node->z 	= parent->z + node->l/2.*((o>>2)%2==0?1.:-1);
+        }
+        node->pt = pt; 
+        particles[pt].c = node;
+        for (int i=0; i<8; i++){
+            node->oct[i] = NULL;
+        }
+        return node;
+    }
+    // In a existing node
+    if (node->pt >= 0) { // It's a leaf node
+        int o1 = reb_reb_tree_get_octant_for_particle_in_cell(particles[node->pt], node);
+        int o2 = reb_reb_tree_get_octant_for_particle_in_cell(particles[pt], node);
         if (o1==o2){ // If they fall in the same octant, check if they have same coordinates to avoid infinite recursion
             if (particles[pt].x == particles[node->pt].x && particles[pt].y == particles[node->pt].y && particles[pt].z == particles[node->pt].z){
                 reb_simulation_error(r, "Cannot add two particles with the same coordinates to the tree.");
@@ -334,15 +334,15 @@ struct reb_treecell* reb_simulation_update_tree_size(struct reb_simulation* cons
 }
 
 void reb_simulation_update_tree(struct reb_simulation* const r) {
-	if (r->tree_root==NULL){
-		r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
-	}
-	if (r->boundary == REB_BOUNDARY_SHEAR_E) {
-		for(int i = 0; i < r->N_root; i++) {
-			r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
-		}
-	}
-	for(int i=0;i<r->N_root;i++){
+    if (r->tree_root==NULL){
+        r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
+    }
+    if (r->boundary == REB_BOUNDARY_SHEAR_E) {
+        for(int i = 0; i < r->N_root; i++) {
+            r->tree_root[i] = reb_simulation_update_tree_size(r, r->tree_root[i], NULL);
+        }
+    }
+    for(int i=0;i<r->N_root;i++){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
