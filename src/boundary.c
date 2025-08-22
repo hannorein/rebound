@@ -117,27 +117,27 @@ void reb_boundary_check(struct reb_simulation* const r){
             break;
         case REB_BOUNDARY_PERIODIC:
 #pragma omp parallel for schedule(guided)
-			for (int i=0;i<N;i++){
-				while(particles[i].x>boxsize.x/2.){
-					particles[i].x -= boxsize.x;
-				}
-				while(particles[i].x<-boxsize.x/2.){
-					particles[i].x += boxsize.x;
-				}
-				while(particles[i].y>boxsize.y/2.){
-					particles[i].y -= boxsize.y;
-				}
-				while(particles[i].y<-boxsize.y/2.){
-					particles[i].y += boxsize.y;
-				}
-				while(particles[i].z>boxsize.z/2.){
-					particles[i].z -= boxsize.z;
-				}
-				while(particles[i].z<-boxsize.z/2.){
-					particles[i].z += boxsize.z;
-				}
-			}
-		break;
+            for (int i=0;i<N;i++){
+                while(particles[i].x>boxsize.x/2.){
+                    particles[i].x -= boxsize.x;
+                }
+                while(particles[i].x<-boxsize.x/2.){
+                    particles[i].x += boxsize.x;
+                }
+                while(particles[i].y>boxsize.y/2.){
+                    particles[i].y -= boxsize.y;
+                }
+                while(particles[i].y<-boxsize.y/2.){
+                    particles[i].y += boxsize.y;
+                }
+                while(particles[i].z>boxsize.z/2.){
+                    particles[i].z -= boxsize.z;
+                }
+                while(particles[i].z<-boxsize.z/2.){
+                    particles[i].z += boxsize.z;
+                }
+            }
+            break;
 		case REB_BOUNDARY_SHEAR_E:
 		{
 			// The offset of ghostcell is time dependent.
