@@ -162,11 +162,11 @@ static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r
 }
 
 /**
-* @brief The function is called to walk through the whole tree to update its structure and node->pt at the end of each time step.
-*
-* @param r REBOUND simulation to operate on
-* @param node is the pointer to a node cell
-*/
+ * @brief The function is called to walk through the whole tree to update its structure and node->pt at the end of each time step.
+ *
+ * @param r REBOUND simulation to operate on
+ * @param node is the pointer to a node cell
+ */
 static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulation* const r, struct reb_treecell *node, struct reb_treecell *parent){
     int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
     if (node == NULL) {
