@@ -958,6 +958,10 @@ class Particle(Structure):
     def jacobi_com(self):
         clibrebound.reb_simulation_jacobi_com.restype = Particle
         return clibrebound.reb_simulation_jacobi_com(byref(self))
+    # Calculate center of mass with another particle
+    def com_with(self, p):
+        clibrebound.reb_particle_com_of_pair.restype = Particle
+        return clibrebound.reb_particle_com_of_pair(p, self)
     @property
     def hash(self):
         """

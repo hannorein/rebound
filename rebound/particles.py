@@ -35,6 +35,11 @@ class Particles(MutableMapping):
         else:
             string_types = basestring,
             int_types = int, long,
+        try:
+            import numpy as np
+            int_types += np.int64,
+        except:
+            pass
        
         if isinstance(key, slice):
             return [self[i] for i in range(*key.indices(len(self)))]
