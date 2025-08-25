@@ -138,9 +138,55 @@ void reb_boundary_check(struct reb_simulation* const r){
                 }
             }
             break;
-        default:
-            break;
-    }
+		case REB_BOUNDARY_SHEAR_E:
+		{
+			// The offset of ghostcell is time dependent.
+			const double OMEGA = r->ri_sei.OMEGA;
+			const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+			r->Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+			r->Rx_t = r->root_size*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+            double Lx_t = r->Lx_t;
+			const double offsetp1 = -fmod(-1.5*OMEGA*boxsize.x*r->t+boxsize.y/2.+2.0*q*boxsize.x*sin(OMEGA*r->t),boxsize.y)-boxsize.y/2.; 
+    		const double offsetm1 = -fmod(1.5*OMEGA*boxsize.x*r->t-boxsize.y/2.-2.0*q*boxsize.x*sin(OMEGA*r->t),boxsize.y)+boxsize.y/2.; 
+			struct reb_particle* const particles = r->particles;
+
+#pragma omp parallel for schedule(guided)
+			for (int i=0;i<N;i++){
+				// Radial
+				while (particles[i].x > Lx_t / 2.) {
+					particles[i].x -= Lx_t;
+					particles[i].y += offsetp1;
+					// Apply epicyclic adjustments to velocity
+					particles[i].vx -= q*boxsize.x*OMEGA*sin(OMEGA*r->t);
+					particles[i].vy += (1.5*boxsize.x*OMEGA-2.0*q*boxsize.x*OMEGA*cos(OMEGA*r->t));
+				}
+				while (particles[i].x < -Lx_t / 2.) {
+					particles[i].x += Lx_t;
+					particles[i].y += offsetm1;
+					// Apply epicyclic adjustments to velocity
+					particles[i].vx += q*boxsize.x*OMEGA*sin(OMEGA*r->t);
+					particles[i].vy += -(1.5*boxsize.x*OMEGA-2.0*q*boxsize.x*OMEGA*cos(OMEGA*r->t));
+				}
+				// Azimuthal
+				while(particles[i].y>boxsize.y/2.){
+					particles[i].y -= boxsize.y;
+				}
+				while(particles[i].y<-boxsize.y/2.){
+					particles[i].y += boxsize.y;
+				}
+				// Vertical (there should be no boundary, but periodic makes life easier)
+				while(particles[i].z>boxsize.z/2.){
+					particles[i].z -= boxsize.z;
+				}
+				while(particles[i].z<-boxsize.z/2.){
+					particles[i].z += boxsize.z;
+				}
+			}
+		}
+		break;
+		default:
+		break;
+	}
 }
 
 static const struct reb_vec6d nan_ghostbox = {.x = 0, .y = 0, .z = 0, .vx = 0, .vy = 0, .vz = 0};
@@ -193,6 +239,35 @@ struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i
                 gb.vz = 0;
                 return gb;
             }
+        case REB_BOUNDARY_SHEAR_E:
+        {
+            const double OMEGA = r->ri_sei.OMEGA;
+            const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+            const double Lx_t = r->boxsize.x*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+
+            struct reb_vec6d gb;
+
+            // Ghostboxes habe a finite velocity.
+            gb.vx = 0.;
+            gb.vy = -1.5*(double)i*OMEGA*r->boxsize.x + 2.0*q*i*r->boxsize.x*OMEGA*cos(OMEGA * r->t); 
+            gb.vz = 0.;
+
+            // The shift in the y direction is time dependent. 
+            double shift;
+            if (i==0){
+                shift = -fmod(gb.vy*r->t,r->boxsize.y); 
+            }else{
+                if (i>0){
+                    shift = -fmod(-1.5*(double)i*OMEGA*r->boxsize.x*r->t + 2*q*i*r->boxsize.x*sin(OMEGA*r->t),r->boxsize.y); 
+                }else{
+                    shift = -fmod(-1.5*(double)i*OMEGA*r->boxsize.x*r->t + 2*q*i*r->boxsize.x*sin(OMEGA*r->t),r->boxsize.y); 
+                }	
+            }
+            gb.x = Lx_t*(double)i;
+            gb.y = r->boxsize.y*(double)j-shift;
+            gb.z = r->boxsize.z*(double)k;
+            return gb;
+        }
         default:
             return nan_ghostbox;
     }
@@ -222,6 +297,20 @@ int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct
                 return 0;
             }
             return 1;
+        case REB_BOUNDARY_SHEAR_E:
+        {
+            const double OMEGA = r->ri_sei.OMEGA;
+            const double q = r->ri_sei.Q_NL;  // Nonlinearity parameter
+            double Lx_t = r->boxsize.x*(1-q*cos(OMEGA*r->t)); // Time dependent box size
+
+            // Check boundaries with time dependent changing Lx_t
+            if (p.x > Lx_t / 2. || p.x < -Lx_t / 2.) return 0;
+            if (p.y > r->boxsize.y / 2.) return 0;
+            if (p.y < -r->boxsize.y / 2.) return 0;
+            if (p.z > r->boxsize.z / 2.) return 0;
+            if (p.z < -r->boxsize.z / 2.) return 0;
+            return 1;
+        }
         default:
         case REB_BOUNDARY_NONE:
             return 1;
