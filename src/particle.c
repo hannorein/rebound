@@ -55,8 +55,12 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
     
     
     if (reb_boundary_particle_is_in_box(r, pt)==0){
-        // reb_particle has left the box. Do not add.
-        reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
+        if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
+            reb_simulation_error(r,"Cannot add particle because simulation box not initialized. Call reb_simulation_configure_box() before adding particles.");
+        }else{
+            // reb_particle has left the box. Do not add.
+            reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
+        }
         return;
     }
     while (r->N_allocated<=r->N){
@@ -107,9 +111,39 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
         }
     }
     if (r->integrator == REB_INTEGRATOR_TRACE){
-        if (r->ri_trace.mode==1){ // BS part
-            reb_simulation_error(r,"TRACE does not support adding particles mid-timestep\n");
-            return;
+        struct reb_integrator_trace* ri_trace = &(r->ri_trace);
+        if (r->ri_trace.mode==1 || r->ri_trace.mode==3){ // BS part
+            const int old_N = r->N-1;
+            if (ri_trace->N_allocated < r->N){
+                ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
+                ri_trace->particles_backup = realloc(ri_trace->particles_backup, sizeof(struct reb_particle)*r->N);
+                ri_trace->particles_backup_kepler = realloc(ri_trace->particles_backup_kepler, sizeof(struct reb_particle)*r->N);
+                ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
+                ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(int)*r->N);
+                ri_trace->N_allocated   = r->N;
+            }
+
+            // First reshuffle existing Ks
+            for (int i = old_N-1; i >= 0; i--){
+                for (int j = old_N-1; j >= 0; j--){ 
+                    ri_trace->current_Ks[i*old_N+j+i] = ri_trace->current_Ks[i*old_N+j];
+                }
+            }
+
+            // add in new particle, we want it to interact with all currently interacting particles
+            // exclude star
+            for (int i = 1; i < ri_trace->encounter_N; i++){
+                ri_trace->current_Ks[ri_trace->encounter_map[i]*r->N+old_N] = 1;
+            }
+
+            ri_trace->encounter_map[ri_trace->encounter_N] = old_N;
+            ri_trace->encounter_N++;
+
+            if (r->N_active==-1){ 
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle. 
+                ri_trace->encounter_N_active++;
+            }
         }
     }
 }
@@ -136,19 +170,24 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
 }
 
 int reb_particle_check_testparticles(struct reb_simulation* const r){
-	if (r->N_active == (int)r->N || r->N_active == -1){
-		return 0;
-	}
-	// Check if testparticle of type 0 has mass!=0
-	if (r->testparticle_type == 0){
-		const int N_real = r->N - r->N_var;
-		for (int i=r->N_active; i<N_real; i++){
-			if (r->particles[i].m!=0.){
-				return 1;
-			}
-		}
-	}
-	return 0;
+    if (r->N_active == (int)r->N || r->N_active == -1){
+        return 0;
+    }
+    // Check if testparticle of type 0 has mass!=0
+    if (r->testparticle_type == 0){
+        int found_issue = 0;
+        const int N_real = r->N - r->N_var;
+#pragma omp parallel for
+        for (int i=r->N_active; i<N_real; i++){
+            if (r->particles[i].m!=0.){
+                found_issue = 1;
+            }
+        }
+        if (found_issue){
+            return 1;
+        }
+    }
+    return 0;
 }
 
 // Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indicies of the particles.
@@ -345,7 +384,7 @@ struct reb_particle* reb_simulation_particle_by_hash(struct reb_simulation* cons
 struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* const r, uint32_t hash){
 #ifdef MPI
     struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
-    int found = p==NULL?0:1;
+    int found = (p==NULL)?0:1;
     MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (found == 0){
         return reb_particle_nan();
@@ -418,7 +457,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
         keep_sorted = 1; // Force keepSorted for hybrid integrator
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         reb_integrator_bs_reset(r);
-        if (r->ri_trace.mode==1){
+        if (r->ri_trace.mode==1 || r->ri_trace.mode==3){
             // Only removed mid-timestep if collision - BS Step!
             // Need to fix current_Ks still, and double check logic
             int after_to_be_removed_particle = 0;
@@ -433,15 +472,14 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
                 }
             }
 
-            // reshuffle current_Ks.
-            for (unsigned int i = index; i<r->N-1; i++){
-                for (unsigned int j = 0; j<r->N; j++){
-                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[(i+1)*r->N+j];
-                }
-            }
-            for (unsigned int i = 0; i<r->N-1; i++){
-                for (unsigned int j = index; j<r->N-1; j++){
-                    ri_trace->current_Ks[i*r->N+j] = ri_trace->current_Ks[i*r->N+(j+1)];
+            // reshuffle current_Ks
+            unsigned int counter = 0;
+            const int new_N = r->N-1;
+            for (unsigned int i = 0; i < new_N; i++){
+                if (i == index) counter += r->N;
+                for (unsigned int j = 0; j < new_N; j++){
+                    if (j == index) counter++;
+                    ri_trace->current_Ks[i*new_N+j] = ri_trace->current_Ks[i*new_N+j+counter];
                 }
             }
             if (encounter_index<ri_trace->encounter_N_active){
