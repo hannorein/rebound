@@ -110,6 +110,8 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             }
         }
     }
+
+    // TRACE can add particles mid-timestep now
     if (r->integrator == REB_INTEGRATOR_TRACE){
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         if (r->ri_trace.mode==1 || r->ri_trace.mode==3){ // BS part
@@ -144,6 +146,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
                 // Otherwise, assume we're adding non active particle. 
                 ri_trace->encounter_N_active++;
             }
+
         }
     }
 }
