@@ -104,4 +104,4 @@ void heartbeat(struct reb_simulation* const r){
         //reb_simulation_output_ascii("position.txt");
     }
 }
-    
+	
