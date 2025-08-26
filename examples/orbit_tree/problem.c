@@ -137,13 +137,31 @@ void print_orbit_node(struct reb_simulation* r, struct reb_orbit_node* on, int l
     }
 }
 
+int orbit_node_is_jacobi(struct reb_orbit_node* on) {
+    int is_particle = on->primary==NULL && on->secondary==NULL;
+    if (is_particle) return 1;
+    int primary_is_particle = on->primary->primary==NULL && on->primary->secondary==NULL;
+    int secondary_is_particle = on->secondary->primary==NULL && on->secondary->secondary==NULL;
+    if (primary_is_particle && secondary_is_particle) return 1;
+    if (!secondary_is_particle) return 0;
+    return orbit_node_is_jacobi(on->primary);
+}
+
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
     
     reb_simulation_add_fmt(r, "m", 1.);
-    reb_simulation_add_fmt(r, "m P primary", 0.01, 2.0, r->particles[0]);
-    reb_simulation_add_fmt(r, "m P primary", 0.01, 1.0, r->particles[0]);
-    reb_simulation_add_fmt(r, "m a e", 0.01, -1.0, 9.3);
+    reb_simulation_add_fmt(r, "m P", 1e-6, 1.0);
+    reb_simulation_add_fmt(r, "m P", 1e-6, 2.0);
+    reb_simulation_add_fmt(r, "m P", 1e-6, 5.0);
+    reb_simulation_add_fmt(r, "m P", 1e-6, 4.0);
+    reb_simulation_add_fmt(r, "m P", 1e-6, 3.0);
+    reb_simulation_add_fmt(r, "m P primary", 1e-6, 0.01, r->particles[2]);
+    
+//    reb_simulation_add_fmt(r, "m", 1.);
+//    reb_simulation_add_fmt(r, "m P primary", 0.01, 2.0, r->particles[0]);
+//    reb_simulation_add_fmt(r, "m P primary", 0.01, 1.0, r->particles[0]);
+//    reb_simulation_add_fmt(r, "m a e", 0.01, -1.0, 9.3);
 
 //    reb_simulation_add_fmt(r, "m", 1.);
 //    reb_simulation_add_fmt(r, "m P e", 1e-3, 9., 0.1);
@@ -153,7 +171,9 @@ int main(int argc, char* argv[]) {
 
     struct reb_orbit_node* on = hierarchy(r);
     print_orbit_node(r, on,0);
+    printf("Orbit node is Jacobi: %d\n", orbit_node_is_jacobi(on));
     free_orbit_node(on);
+
 
 
     reb_simulation_free(r);
