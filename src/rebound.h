@@ -952,6 +952,7 @@ struct reb_orbit {
 };
 // Calculates all orbital elements of the particle p, assuming gravitational constant G and the given primary.
 DLLEXPORT struct reb_orbit reb_orbit_from_particle(double G, struct reb_particle p, struct reb_particle primary);
+DLLEXPORT struct reb_orbit reb_orbit_nan(void);  // Returns an orbit structure with all NaNs (used for errors).
 
 
 // ODE functions
