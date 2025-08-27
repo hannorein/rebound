@@ -1,5 +1,5 @@
 /**
- * @file 	orbit_hierarchy.h
+ * @file 	orbithierarchy.h
  * @brief 	Tools for creating and working with a tree that represents the orbital architecture.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 

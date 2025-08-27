@@ -1,5 +1,5 @@
 /**
- * @file 	orbit_hierarchy.c
+ * @file 	orbithierarchy.c
  * @brief 	Tools for creating and working with a tree that represents the orbital architecture.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include "rebound.h"
 
-double reb_orbit_hierarchy_period(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2){
+double reb_orbithierarchy_period(double G, struct reb_orbithierarchy* p1, struct reb_orbithierarchy* p2){
     double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,n,a,d;
     mu = G*(p1->com->m+p2->com->m);
     dx = p1->com->x - p2->com->x;
@@ -43,7 +43,7 @@ double reb_orbit_hierarchy_period(double G, struct reb_orbit_hierarchy* p1, stru
     return 2*M_PI/n;						// period (negative if hyperbolic)
 }
     
-double reb_orbit_hierarchy_eccentricity(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2){
+double reb_orbithierarchy_eccentricity(double G, struct reb_orbithierarchy* p1, struct reb_orbithierarchy* p2){
     double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,d;
     double ex, ey, ez, vr, rvr, vdiffsquared, muinv;
     mu = G*(p1->com->m+p2->com->m);
@@ -68,19 +68,19 @@ double reb_orbit_hierarchy_eccentricity(double G, struct reb_orbit_hierarchy* p1
     return sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
 }
 
-void reb_orbit_hierarchy_free(struct reb_orbit_hierarchy* on) {
+void reb_orbithierarchy_free(struct reb_orbithierarchy* on) {
     if (!on) return;
     if (on->primary || on->secondary) free(on->com); // not a leaf node
-    reb_orbit_hierarchy_free(on->primary);
-    reb_orbit_hierarchy_free(on->secondary);
+    reb_orbithierarchy_free(on->primary);
+    reb_orbithierarchy_free(on->secondary);
     free(on);
 }
 
-struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_simulation* r) {
+struct reb_orbithierarchy* reb_simulation_create_orbithierarchy(struct reb_simulation* r) {
     int N = r->N; // number of objects to be sorted
-    struct reb_orbit_hierarchy** to_be_sorted = calloc(N,sizeof(struct reb_orbit_hierarchy*));
+    struct reb_orbithierarchy** to_be_sorted = calloc(N,sizeof(struct reb_orbithierarchy*));
     for(int i=0;i<N;i++){
-        to_be_sorted[i] = calloc(1,sizeof(struct reb_orbit_hierarchy));
+        to_be_sorted[i] = calloc(1,sizeof(struct reb_orbithierarchy));
         to_be_sorted[i]->com = &(r->particles[i]);
     }
     while (N>1){
@@ -89,7 +89,7 @@ struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_sim
         double Pmin = INFINITY;
         for(int i=1;i<N;i++){
             for(int j=0;j<i;j++){
-                double Pij = reb_orbit_hierarchy_period(r->G, to_be_sorted[i], to_be_sorted[j]);
+                double Pij = reb_orbithierarchy_period(r->G, to_be_sorted[i], to_be_sorted[j]);
                 if (Pij>0 && Pij<Pmin){
                     Pmin = Pij;
                     imin = i; jmin=j;
@@ -97,7 +97,7 @@ struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_sim
             }
         }
         if (Pmin < INFINITY){
-            struct reb_orbit_hierarchy* on = calloc(1,sizeof(struct reb_orbit_hierarchy));
+            struct reb_orbithierarchy* on = calloc(1,sizeof(struct reb_orbithierarchy));
             if (to_be_sorted[imin]->com->m>to_be_sorted[jmin]->com->m){ 
                 on->primary = to_be_sorted[imin]; 
                 on->secondary = to_be_sorted[jmin]; 
@@ -113,18 +113,18 @@ struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_sim
         }else{
             printf("Error: Cannot find bound orbit.\n");
             for(int i=0;i<N;i++){
-                reb_orbit_hierarchy_free(to_be_sorted[i]);
+                reb_orbithierarchy_free(to_be_sorted[i]);
             }
             free(to_be_sorted);
             return NULL;
         }
     }
-    struct reb_orbit_hierarchy* root = to_be_sorted[0];
+    struct reb_orbithierarchy* root = to_be_sorted[0];
     free(to_be_sorted);
     return root;
 }
 
-void reb_orbit_hierarchy_print(struct reb_orbit_hierarchy* on, struct reb_simulation* r, int level) {
+void reb_orbithierarchy_print(struct reb_orbithierarchy* on, struct reb_simulation* r, int level) {
     if (!on) {
         printf("NULL Orbit Node\n");
         return;
@@ -133,8 +133,8 @@ void reb_orbit_hierarchy_print(struct reb_orbit_hierarchy* on, struct reb_simula
         printf("  ");
     }
     if (on->primary && on->secondary){
-        double e = reb_orbit_hierarchy_eccentricity(r->G, on->primary, on->secondary);
-        double P = reb_orbit_hierarchy_period(r->G, on->primary, on->secondary);
+        double e = reb_orbithierarchy_eccentricity(r->G, on->primary, on->secondary);
+        double P = reb_orbithierarchy_period(r->G, on->primary, on->secondary);
         printf("binary   m= %f    P = %f   e = %f",on->com->m, P, e);
     }else{
         int pid = -1;
@@ -148,14 +148,14 @@ void reb_orbit_hierarchy_print(struct reb_orbit_hierarchy* on, struct reb_simula
     }
     printf("\n");
     if (on->primary){
-        reb_orbit_hierarchy_print(on->primary, r, level+1);
+        reb_orbithierarchy_print(on->primary, r, level+1);
     }
     if (on->secondary){
-        reb_orbit_hierarchy_print(on->secondary, r, level+1);
+        reb_orbithierarchy_print(on->secondary, r, level+1);
     }
 }
 
-int reb_orbit_hierarchy_is_jacobi(struct reb_orbit_hierarchy* on) {
+int reb_orbithierarchy_is_jacobi(struct reb_orbithierarchy* on) {
     if (!on) return 0;
     int is_particle = on->primary==NULL && on->secondary==NULL;
     if (is_particle) return 1;
@@ -163,11 +163,11 @@ int reb_orbit_hierarchy_is_jacobi(struct reb_orbit_hierarchy* on) {
     int secondary_is_particle = on->secondary->primary==NULL && on->secondary->secondary==NULL;
     if (primary_is_particle && secondary_is_particle) return 1;
     if (!secondary_is_particle) return 0;
-    return reb_orbit_hierarchy_is_jacobi(on->primary);
+    return reb_orbithierarchy_is_jacobi(on->primary);
 }
 
-int reb_orbit_hierarchy_is_jacobi_ordered(struct reb_simulation* r, struct reb_orbit_hierarchy* on) {
-    if (reb_orbit_hierarchy_is_jacobi(on)==0) return 0;
+int reb_orbithierarchy_is_jacobi_ordered(struct reb_simulation* r, struct reb_orbithierarchy* on) {
+    if (reb_orbithierarchy_is_jacobi(on)==0) return 0;
     for (int i=r->N-1;i>=1;i--){
         if (on->secondary->com != &(r->particles[i])) return 0;
         on = on->primary;

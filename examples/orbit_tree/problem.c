@@ -27,11 +27,11 @@ int main(int argc, char* argv[]) {
 //    reb_simulation_add_fmt(r, "P e", 10.0, 0.1);
 //    reb_simulation_add_fmt(r, "m P e primary", 1e-6, 4.0, 0.1, r->particles[1]);
 
-    struct reb_orbit_hierarchy* oh = reb_simulation_create_orbit_hierarchy(r);
-    reb_orbit_hierarchy_print(oh,r,0);
-    printf("Orbit node is Jacobi: %d\n", reb_orbit_hierarchy_is_jacobi(oh));
-    printf("Orbit node is Jacobi ordered: %d\n", reb_orbit_hierarchy_is_jacobi_ordered(r, oh));
-    reb_orbit_hierarchy_free(oh);
+    struct reb_orbithierarchy* oh = reb_simulation_create_orbithierarchy(r);
+    reb_orbithierarchy_print(oh,r,0);
+    printf("Orbit node is Jacobi: %d\n", reb_orbithierarchy_is_jacobi(oh));
+    printf("Orbit node is Jacobi ordered: %d\n", reb_orbithierarchy_is_jacobi_ordered(r, oh));
+    reb_orbithierarchy_free(oh);
 
 
 
