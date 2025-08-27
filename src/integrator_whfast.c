@@ -840,7 +840,10 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
 
         if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI && ri_whfast->jacobi_ordered_warning == 0){
             struct reb_orbit_hierarchy* oh = reb_orbit_hierarchy_create_from_simulation(r);
-            if (reb_orbit_hierarchy_is_jacobi(oh)==0){
+            if (oh==NULL){
+                reb_simulation_warning(r, "The integrator is using Jacobi coordinates but REBOUND cannot determine the orbit hierarchy of the system. You can silence this warning by setting ri_whfast->jacobi_ordered_warning = -1.");
+                ri_whfast->jacobi_ordered_warning = 1;
+            }else if (reb_orbit_hierarchy_is_jacobi(oh)==0){
                 reb_simulation_warning(r, "The integrator is using Jacobi coordinates but not all particles appear to orbit the central object. You can silence this warning by setting ri_whfast->jacobi_ordered_warning = -1.");
                 ri_whfast->jacobi_ordered_warning = 1;
             }else if (reb_orbit_hierarchy_is_jacobi_ordered(oh, r)==0){
