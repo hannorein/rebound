@@ -562,6 +562,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_whfast.recalculate_coordinates_this_timestep = 0;
     r->ri_whfast.is_synchronized = 1;
     r->ri_whfast.timestep_warning = 0;
+    r->ri_whfast.jacobi_ordered_warning = 0;
     r->ri_whfast.recalculate_coordinates_but_not_synchronized_warning = 0;
 
     // ********** WHFAST512

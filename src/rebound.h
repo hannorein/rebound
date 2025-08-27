@@ -353,6 +353,7 @@ struct reb_integrator_whfast {
     unsigned int N_allocated;
     unsigned int N_allocated_tmp;               // Used for lazy implementer's kernel 
     unsigned int timestep_warning;
+    unsigned int jacobi_ordered_warning;
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 

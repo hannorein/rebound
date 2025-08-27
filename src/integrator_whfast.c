@@ -837,6 +837,18 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
         ri_whfast->N_allocated = N;
         ri_whfast->p_jh = realloc(ri_whfast->p_jh,sizeof(struct reb_particle)*N);
         ri_whfast->recalculate_coordinates_this_timestep = 1;
+
+        if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI && ri_whfast->jacobi_ordered_warning == 0){
+            struct reb_orbit_hierarchy* oh = reb_orbit_hierarchy_create_from_simulation(r);
+            if (reb_orbit_hierarchy_is_jacobi(oh)==0){
+                reb_simulation_warning(r, "The integrator is using Jacobi coordinates but not all particles appear to orbit the central object. You can silence this warning by setting ri_whfast->jacobi_ordered_warning = -1.");
+                ri_whfast->jacobi_ordered_warning = 1;
+            }else if (reb_orbit_hierarchy_is_jacobi_ordered(oh, r)==0){
+                reb_simulation_warning(r, "The integrator is using Jacobi coordinates but particles appear to be out of order. You can silence this warning by setting ri_whfast->jacobi_ordered_warning = -1.");
+                ri_whfast->jacobi_ordered_warning = 1;
+            }
+            reb_orbit_hierarchy_free(oh);
+        }
     }
     return 0;
 }
@@ -1264,6 +1276,7 @@ void reb_integrator_whfast_reset(struct reb_simulation* const r){
     ri_whfast->N_allocated = 0;
     ri_whfast->N_allocated_tmp = 0;
     ri_whfast->timestep_warning = 0;
+    ri_whfast->jacobi_ordered_warning = 0;
     ri_whfast->recalculate_coordinates_but_not_synchronized_warning = 0;
     if (ri_whfast->p_jh){
         free(ri_whfast->p_jh);

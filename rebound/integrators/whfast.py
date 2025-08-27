@@ -64,6 +64,7 @@ class IntegratorWHFast(ctypes.Structure):
                 ("_N_allocated", ctypes.c_uint),
                 ("_N_allocated_tmp", ctypes.c_uint),
                 ("_timestep_warning", ctypes.c_uint),
+                ("_jacobi_ordered_warning", ctypes.c_uint),
                 ("_recalculate_coordinates_but_not_synchronized_warning", ctypes.c_uint)]
 
     def __repr__(self):
