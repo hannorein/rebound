@@ -12,6 +12,8 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "m P", 1e-6, 3.0);
     reb_simulation_add_fmt(r, "m P", 1e-6, 4.0);
     reb_simulation_add_fmt(r, "m P", 1e-6, 5.0);
+    reb_simulation_add_fmt(r, "m a e", 1e-6, -5.0, 2.0);
+    reb_simulation_add_fmt(r, "m a e", 1e-6, -10.0, 2.0);
  //   reb_simulation_add_fmt(r, "m P", 10.0, 105.0);
 //    reb_simulation_add_fmt(r, "m P primary", 1e-6, 1.0, r->particles[5]);
   //  reb_simulation_add_fmt(r, "m P primary", 1e-6, 0.01, r->particles[2]);

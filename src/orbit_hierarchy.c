@@ -87,28 +87,38 @@ struct reb_orbit_hierarchy* reb_orbit_hierarchy_create_from_simulation(struct re
                 }
             }
         }
-        if (Pmin < INFINITY){
-            struct reb_orbit_hierarchy* oh = calloc(1,sizeof(struct reb_orbit_hierarchy));
-            if (to_be_sorted[imin]->com->m>to_be_sorted[jmin]->com->m){ 
-                oh->primary = to_be_sorted[imin]; 
-                oh->secondary = to_be_sorted[jmin]; 
-            }else{
-                oh->primary = to_be_sorted[jmin]; 
-                oh->secondary = to_be_sorted[imin]; 
+        if (Pmin == INFINITY){
+            // No bound orbits found. Look for unbound ones.
+            for(int i=1;i<N;i++){
+                for(int j=0;j<i;j++){
+                    struct reb_orbit o = reb_orbit_from_particle(r->G, *(to_be_sorted[i]->com), *(to_be_sorted[j]->com));
+                    double q = fabs(o.e*(1.0-o.e));
+                    double mu = r->G*(to_be_sorted[i]->com->m + to_be_sorted[j]->com->m);
+                    double Pperi = sqrt(q*q*q/(mu*(1.0+o.e))); // Crossing time at pericenter ~ q/v_p
+                    if (Pperi<Pmin){
+                        Pmin = Pperi;
+                        imin = i; jmin=j;
+                    }
+                }
             }
-            oh->com = malloc(sizeof(struct reb_particle));
-            *(oh->com) = reb_particle_com_of_pair(*(oh->primary->com), *(oh->secondary->com));
-            to_be_sorted[imin] = oh;
-            to_be_sorted[jmin] = to_be_sorted[N-1];
-            N--;
-        }else{
-            printf("Error: Cannot find bound orbit.\n");
-            for(int i=0;i<N;i++){
-                reb_orbit_hierarchy_free(to_be_sorted[i]);
-            }
-            free(to_be_sorted);
+        }
+        if (Pmin == INFINITY){
+            printf("Error. Cannot determine orbit hierarchy.\n");
             return NULL;
         }
+        struct reb_orbit_hierarchy* oh = calloc(1,sizeof(struct reb_orbit_hierarchy));
+        if (to_be_sorted[imin]->com->m>to_be_sorted[jmin]->com->m){ 
+            oh->primary = to_be_sorted[imin]; 
+            oh->secondary = to_be_sorted[jmin]; 
+        }else{
+            oh->primary = to_be_sorted[jmin]; 
+            oh->secondary = to_be_sorted[imin]; 
+        }
+        oh->com = malloc(sizeof(struct reb_particle));
+        *(oh->com) = reb_particle_com_of_pair(*(oh->primary->com), *(oh->secondary->com));
+        to_be_sorted[imin] = oh;
+        to_be_sorted[jmin] = to_be_sorted[N-1];
+        N--;
     }
     struct reb_orbit_hierarchy* root = to_be_sorted[0];
     free(to_be_sorted);
