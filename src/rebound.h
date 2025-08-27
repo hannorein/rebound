@@ -891,13 +891,11 @@ struct reb_orbit_hierarchy {
     struct reb_orbit_hierarchy* secondary;  // Secondary (less massive) component.
     struct reb_particle* com;               // center of mass of this node. If primary and secondary are not NULL, then the memory is owned by this node. Otherwise memory is owened by simulation.
 };
-DLLEXPORT struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_simulation* r);            // Creates a new orbit hierarchy from a simulation
+DLLEXPORT struct reb_orbit_hierarchy* reb_orbit_hierarchy_create_from_simulation(struct reb_simulation* r);            // Creates a new orbit hierarchy from a simulation
 DLLEXPORT void reb_orbit_hierarchy_free(struct reb_orbit_hierarchy* oh);                                          // Frees an orbit hierarchy node and all children
 DLLEXPORT void reb_orbit_hierarchy_print(struct reb_orbit_hierarchy* oh, struct reb_simulation* r, int level);    // Prints an orbit hierarchy on the screen. Call with level=0.
-DLLEXPORT double reb_orbit_hierarchy_period(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2);   
-DLLEXPORT double reb_orbit_hierarchy_eccentricity(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2);
 DLLEXPORT int reb_orbit_hierarchy_is_jacobi(struct reb_orbit_hierarchy* oh);
-DLLEXPORT int reb_orbit_hierarchy_is_jacobi_ordered(struct reb_simulation* r, struct reb_orbit_hierarchy* oh);
+DLLEXPORT int reb_orbit_hierarchy_is_jacobi_ordered(struct reb_orbit_hierarchy* oh, struct reb_simulation* r);
 
 // Simulationarchive
 

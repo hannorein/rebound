@@ -33,7 +33,7 @@ struct reb_orbit reb_orbit_from_orbit_hierarchy(double G, struct reb_orbit_hiera
     }
     return reb_orbit_from_particle(G, *(oh->secondary->com), *(oh->primary->com));
 }
-    
+
 double reb_orbit_hierarchy_eccentricity(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2){
     double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,d;
     double ex, ey, ez, vr, rvr, vdiffsquared, muinv;
@@ -67,7 +67,7 @@ void reb_orbit_hierarchy_free(struct reb_orbit_hierarchy* oh) {
     free(oh);
 }
 
-struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_simulation* r) {
+struct reb_orbit_hierarchy* reb_orbit_hierarchy_create_from_simulation(struct reb_simulation* r) {
     int N = r->N; // number of objects to be sorted
     struct reb_orbit_hierarchy** to_be_sorted = calloc(N,sizeof(struct reb_orbit_hierarchy*));
     for(int i=0;i<N;i++){
@@ -156,7 +156,7 @@ int reb_orbit_hierarchy_is_jacobi(struct reb_orbit_hierarchy* oh) {
     return reb_orbit_hierarchy_is_jacobi(oh->primary);
 }
 
-int reb_orbit_hierarchy_is_jacobi_ordered(struct reb_simulation* r, struct reb_orbit_hierarchy* oh) {
+int reb_orbit_hierarchy_is_jacobi_ordered(struct reb_orbit_hierarchy* oh, struct reb_simulation* r) {
     if (reb_orbit_hierarchy_is_jacobi(oh)==0) return 0;
     for (int i=r->N-1;i>=1;i--){
         if (oh->secondary->com != &(r->particles[i])) return 0;
