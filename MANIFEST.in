@@ -20,6 +20,7 @@ include src/input.c
 include src/display.c
 include src/rebound.c
 include src/tools.c
+include src/orbit_hierarchy.c
 include src/fmemopen.c
 include src/rotations.c
 include src/derivatives.c
@@ -44,6 +45,7 @@ include src/server.h
 include src/tree.h
 include src/tree.c
 include src/tools.h
+include src/orbit_hierarchy.h
 include src/fmemopen.h
 include src/rotations.h
 include src/derivatives.h

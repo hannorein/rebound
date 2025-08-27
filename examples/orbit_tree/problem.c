@@ -2,161 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct reb_orbit_node {
-    struct reb_orbit_node* primary;
-    struct reb_orbit_node* secondary;
-    struct reb_particle* com;
-};
-
-double reb_orbit_node_period(double G, struct reb_orbit_node* p1, struct reb_orbit_node* p2){
-    double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,n,a,d;
-    mu = G*(p1->com->m+p2->com->m);
-    dx = p1->com->x - p2->com->x;
-    dy = p1->com->y - p2->com->y;
-    dz = p1->com->z - p2->com->z;
-    dvx = p1->com->vx - p2->com->vx;
-    dvy = p1->com->vy - p2->com->vy;
-    dvz = p1->com->vz - p2->com->vz;
-    d = sqrt ( dx*dx + dy*dy + dz*dz );
-    vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
-    vcircsquared = mu/d;	
-    a = -mu/( vsquared - 2.*vcircsquared );	// semi major axis
-    n = a/fabs(a)*sqrt(fabs(mu/(a*a*a)));	// mean motion (negative if hyperbolic)
-    return 2*M_PI/n;						// period (negative if hyperbolic)
-}
-    
-double reb_orbit_node_eccentricity(double G, struct reb_orbit_node* p1, struct reb_orbit_node* p2){
-    double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,d;
-    double ex, ey, ez, vr, rvr, vdiffsquared, muinv;
-    mu = G*(p1->com->m+p2->com->m);
-    dx = p1->com->x - p2->com->x;
-    dy = p1->com->y - p2->com->y;
-    dz = p1->com->z - p2->com->z;
-    dvx = p1->com->vx - p2->com->vx;
-    dvy = p1->com->vy - p2->com->vy;
-    dvz = p1->com->vz - p2->com->vz;
-    d = sqrt ( dx*dx + dy*dy + dz*dz );
-    vsquared = dvx*dvx + dvy*dvy + dvz*dvz;
-    vcircsquared = mu/d;	
-
-    vdiffsquared = vsquared - vcircsquared;	
-    vr = (dx*dvx + dy*dvy + dz*dvz)/d;	
-    rvr = d*vr;
-    muinv = 1./mu;
-
-    ex = muinv*( vdiffsquared*dx - rvr*dvx );
-    ey = muinv*( vdiffsquared*dy - rvr*dvy );
-    ez = muinv*( vdiffsquared*dz - rvr*dvz );
-    return sqrt( ex*ex + ey*ey + ez*ez );		// eccentricity
-}
-
-void free_orbit_node(struct reb_orbit_node* on) {
-    if (!on) return;
-    if (on->primary || on->secondary) free(on->com); // not a leaf node
-    free_orbit_node(on->primary);
-    free_orbit_node(on->secondary);
-    free(on);
-}
-
-struct reb_orbit_node* hierarchy(struct reb_simulation* r) {
-    int N = r->N; // number of objects to be sorted
-    struct reb_orbit_node** to_be_sorted = calloc(N,sizeof(struct reb_orbit_node*));
-    for(int i=0;i<N;i++){
-        to_be_sorted[i] = calloc(1,sizeof(struct reb_orbit_node));
-        to_be_sorted[i]->com = &(r->particles[i]);
-    }
-    while (N>1){
-        int imin = -1;
-        int jmin = -1;
-        double Pmin = INFINITY;
-        for(int i=1;i<N;i++){
-            for(int j=0;j<i;j++){
-                double Pij = reb_orbit_node_period(r->G, to_be_sorted[i], to_be_sorted[j]);
-                if (Pij>0 && Pij<Pmin){
-                    Pmin = Pij;
-                    imin = i; jmin=j;
-                }
-            }
-        }
-        if (Pmin < INFINITY){
-            struct reb_orbit_node* on = calloc(1,sizeof(struct reb_orbit_node));
-            if (to_be_sorted[imin]->com->m>to_be_sorted[jmin]->com->m){ 
-                on->primary = to_be_sorted[imin]; 
-                on->secondary = to_be_sorted[jmin]; 
-            }else{
-                on->primary = to_be_sorted[jmin]; 
-                on->secondary = to_be_sorted[imin]; 
-            }
-            on->com = malloc(sizeof(struct reb_particle));
-            *(on->com) = reb_particle_com_of_pair(*(on->primary->com), *(on->secondary->com));
-            to_be_sorted[imin] = on;
-            to_be_sorted[jmin] = to_be_sorted[N-1];
-            N--;
-        }else{
-            printf("Error: Cannot find bound orbit.\n");
-            for(int i=0;i<N;i++){
-                free_orbit_node(to_be_sorted[i]);
-            }
-            free(to_be_sorted);
-            return NULL;
-        }
-    }
-    struct reb_orbit_node* root = to_be_sorted[0];
-    free(to_be_sorted);
-    return root;
-}
-
-void print_orbit_node(struct reb_simulation* r, struct reb_orbit_node* on, int level) {
-    if (!on) {
-        printf("NULL Orbit Node\n");
-        return;
-    }
-    for (int i=0;i<level;i++){
-        printf("  ");
-    }
-    if (on->primary && on->secondary){
-        double e = reb_orbit_node_eccentricity(r->G, on->primary, on->secondary);
-        double P = reb_orbit_node_period(r->G, on->primary, on->secondary);
-        printf("binary   m= %f    P = %f   e = %f",on->com->m, P, e);
-    }else{
-        int pid = -1;
-        for (int i=0; i<r->N;i++){
-            if (on->com == &(r->particles[i])){
-                pid = i;
-                break;
-            }
-        }
-        printf("particle id=%d   m= %f    x = %f y = %f", pid, on->com->m, on->com->x, on->com->y);
-    }
-    printf("\n");
-    if (on->primary){
-        print_orbit_node(r, on->primary, level+1);
-    }
-    if (on->secondary){
-        print_orbit_node(r, on->secondary, level+1);
-    }
-}
-
-int reb_orbit_node_is_jacobi(struct reb_orbit_node* on) {
-    if (!on) return 0;
-    int is_particle = on->primary==NULL && on->secondary==NULL;
-    if (is_particle) return 1;
-    int primary_is_particle = on->primary->primary==NULL && on->primary->secondary==NULL;
-    int secondary_is_particle = on->secondary->primary==NULL && on->secondary->secondary==NULL;
-    if (primary_is_particle && secondary_is_particle) return 1;
-    if (!secondary_is_particle) return 0;
-    return reb_orbit_node_is_jacobi(on->primary);
-}
-
-int reb_orbit_node_is_jacobi_ordered(struct reb_simulation* r, struct reb_orbit_node* on) {
-    if (reb_orbit_node_is_jacobi(on)==0) return 0;
-    for (int i=r->N-1;i>=1;i--){
-        if (on->secondary->com != &(r->particles[i])) return 0;
-        on = on->primary;
-    }
-    if (on->com != &(r->particles[0])) return 0;
-    return 1;
-}
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
@@ -167,6 +12,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "m P", 1e-6, 3.0);
     reb_simulation_add_fmt(r, "m P", 1e-6, 4.0);
     reb_simulation_add_fmt(r, "m P", 1e-6, 5.0);
+    reb_simulation_add_fmt(r, "m P", 10.0, 105.0);
 //    reb_simulation_add_fmt(r, "m P primary", 1e-6, 1.0, r->particles[5]);
   //  reb_simulation_add_fmt(r, "m P primary", 1e-6, 0.01, r->particles[2]);
     
@@ -181,11 +27,11 @@ int main(int argc, char* argv[]) {
 //    reb_simulation_add_fmt(r, "P e", 10.0, 0.1);
 //    reb_simulation_add_fmt(r, "m P e primary", 1e-6, 4.0, 0.1, r->particles[1]);
 
-    struct reb_orbit_node* on = hierarchy(r);
-    print_orbit_node(r, on,0);
-    printf("Orbit node is Jacobi: %d\n", reb_orbit_node_is_jacobi(on));
-    printf("Orbit node is Jacobi ordered: %d\n", reb_orbit_node_is_jacobi_ordered(r, on));
-    free_orbit_node(on);
+    struct reb_orbit_hierarchy* oh = reb_simulation_create_orbit_hierarchy(r);
+    reb_orbit_hierarchy_print(oh,r,0);
+    printf("Orbit node is Jacobi: %d\n", reb_orbit_hierarchy_is_jacobi(oh));
+    printf("Orbit node is Jacobi ordered: %d\n", reb_orbit_hierarchy_is_jacobi_ordered(r, oh));
+    reb_orbit_hierarchy_free(oh);
 
 
 

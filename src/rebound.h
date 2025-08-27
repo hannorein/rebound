@@ -884,6 +884,20 @@ DLLEXPORT double reb_E_to_f(double e, double M);
 // Eccentric anomaly for a given eccentricity and mean anomaly
 DLLEXPORT double reb_M_to_E(double e, double M);
 
+// Orbit Hierarchy
+// These structures and functions create a tree representing the hierarchical architecture of a system.
+struct reb_orbit_hierarchy {
+    struct reb_orbit_hierarchy* primary;    // Primary (more massive) component of this orbit. 
+    struct reb_orbit_hierarchy* secondary;  // Secondary (less massive) component.
+    struct reb_particle* com;               // center of mass of this node. If primary and secondary are not NULL, then the memory is owned by this node. Otherwise memory is owened by simulation.
+};
+struct reb_orbit_hierarchy* reb_simulation_create_orbit_hierarchy(struct reb_simulation* r);            // Creates a new orbit hierarchy from a simulation
+void reb_orbit_hierarchy_free(struct reb_orbit_hierarchy* oh);                                          // Frees an orbit hierarchy node and all children
+void reb_orbit_hierarchy_print(struct reb_orbit_hierarchy* oh, struct reb_simulation* r, int level);    // Prints an orbit hierarchy on the screen. Call with level=0.
+double reb_orbit_hierarchy_period(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2);   
+double reb_orbit_hierarchy_eccentricity(double G, struct reb_orbit_hierarchy* p1, struct reb_orbit_hierarchy* p2);
+int reb_orbit_hierarchy_is_jacobi(struct reb_orbit_hierarchy* oh);
+int reb_orbit_hierarchy_is_jacobi_ordered(struct reb_simulation* r, struct reb_orbit_hierarchy* oh);
 
 // Simulationarchive
 
