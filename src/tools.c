@@ -435,30 +435,41 @@ void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, uint3
     }
 }
 
-struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_particle p2){
-    p1.x   = p1.x*p1.m + p2.x*p2.m;		
-    p1.y   = p1.y*p1.m + p2.y*p2.m;
-    p1.z   = p1.z*p1.m + p2.z*p2.m;
-    p1.vx  = p1.vx*p1.m + p2.vx*p2.m;
-    p1.vy  = p1.vy*p1.m + p2.vy*p2.m;
-    p1.vz  = p1.vz*p1.m + p2.vz*p2.m;
-    p1.ax  = p1.ax*p1.m + p2.ax*p2.m;
-    p1.ay  = p1.ay*p1.m + p2.ay*p2.m;
-    p1.az  = p1.az*p1.m + p2.az*p2.m;
+struct reb_particle reb_particle_com_of_pair(const struct reb_particle p1, const struct reb_particle p2){
+    struct reb_particle p = {0};
+    p.x   = p1.x*p1.m + p2.x*p2.m;		
+    p.y   = p1.y*p1.m + p2.y*p2.m;
+    p.z   = p1.z*p1.m + p2.z*p2.m;
+    p.vx  = p1.vx*p1.m + p2.vx*p2.m;
+    p.vy  = p1.vy*p1.m + p2.vy*p2.m;
+    p.vz  = p1.vz*p1.m + p2.vz*p2.m;
+    p.ax  = p1.ax*p1.m + p2.ax*p2.m;
+    p.ay  = p1.ay*p1.m + p2.ay*p2.m;
+    p.az  = p1.az*p1.m + p2.az*p2.m;
 
-    p1.m  += p2.m;
-    if (p1.m>0.){
-        p1.x  /= p1.m;
-        p1.y  /= p1.m;
-        p1.z  /= p1.m;
-        p1.vx /= p1.m;
-        p1.vy /= p1.m;
-        p1.vz /= p1.m;
-        p1.ax /= p1.m;
-        p1.ay /= p1.m;
-        p1.az /= p1.m;
+    p.m   = p1.m + p2.m;
+    if (p.m>0.){
+        p.x  /= p.m;
+        p.y  /= p.m;
+        p.z  /= p.m;
+        p.vx /= p.m;
+        p.vy /= p.m;
+        p.vz /= p.m;
+        p.ax /= p.m;
+        p.ay /= p.m;
+        p.az /= p.m;
+    }else{ // For two massless particles, calculate the average.
+        p.x  /= 2.0;
+        p.y  /= 2.0;
+        p.z  /= 2.0;
+        p.vx /= 2.0;
+        p.vy /= 2.0;
+        p.vz /= 2.0;
+        p.ax /= 2.0;
+        p.ay /= 2.0;
+        p.az /= 2.0;
     }
-    return p1;
+    return p;
 }
 
 struct reb_particle reb_simulation_com_range(struct reb_simulation* r, int first, int last){

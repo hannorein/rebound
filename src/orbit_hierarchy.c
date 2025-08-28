@@ -81,6 +81,7 @@ struct reb_orbit_hierarchy* reb_orbit_hierarchy_create_from_simulation(struct re
         for(int i=1;i<N;i++){
             for(int j=0;j<i;j++){
                 double Pij = reb_orbit_from_particle(r->G, *(to_be_sorted[i]->com), *(to_be_sorted[j]->com)).P;
+                printf("%d %d   %f\n", i, j, Pij);
                 if (Pij>0 && Pij<Pmin){
                     Pmin = Pij;
                     imin = i; jmin=j;
