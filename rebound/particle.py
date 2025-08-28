@@ -500,7 +500,7 @@ class Particle(Structure):
 
         return o
     
-    def sample_orbit(self, Npts=100, primary=None, samplingAngle=None, duplicateEndpoint=None):
+    def sample_orbit(self, Npts=100, primary=None, samplingAngle=None, duplicateEndpoint=None, scale=1.0):
         """
         Returns a nested list of xyz positions along the osculating orbit of the particle. 
         If primary is not passed, returns xyz positions along the Jacobi osculating orbit
@@ -603,7 +603,7 @@ class Particle(Structure):
         #primary = clibrebound.reb_particle_com_of_pair(primary, self)
 
         for f in phases_f:
-            newp = Particle(a=o.a, f=f, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
+            newp = Particle(a=o.a*scale, f=f, inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=self.m, primary=primary, simulation=self._sim.contents)
             if f<=o.f:
                 pts_pre.append(newp.xyz)
             else:

@@ -116,6 +116,7 @@ struct reb_orbit_hierarchy* reb_orbit_hierarchy_create_from_simulation(struct re
         }
         oh->com = malloc(sizeof(struct reb_particle));
         *(oh->com) = reb_particle_com_of_pair(*(oh->primary->com), *(oh->secondary->com));
+        oh->com->sim = r;
         to_be_sorted[imin] = oh;
         to_be_sorted[jmin] = to_be_sorted[N-1];
         N--;

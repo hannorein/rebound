@@ -1053,7 +1053,9 @@ class Simulation(Structure):
     def orbit_hierarchy(self):
         from .orbit_hierarchy import OrbitHierarchy
         clibrebound.reb_orbit_hierarchy_create_from_simulation.restype = POINTER(OrbitHierarchy)
-        return clibrebound.reb_orbit_hierarchy_create_from_simulation(byref(self)).contents
+        oh = clibrebound.reb_orbit_hierarchy_create_from_simulation(byref(self)).contents
+        oh._needsfree = True
+        return oh
 
 
 # COM calculation 
