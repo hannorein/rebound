@@ -52,7 +52,7 @@ def create_whfast_testparticle_withplanet(coordinates, N, N_active):
         sim.add(m=1e-3,P=0.4)
         sim.add(m=1e-3,P=0.7)
         for i in range(N):
-            sim.add(m=0,P=1,e=0.1,f=i)
+            sim.add(m=0,P=1.2+i*0.1,e=0.1,f=i)
   
         sim2 = sim.copy()
         if N_active>0:

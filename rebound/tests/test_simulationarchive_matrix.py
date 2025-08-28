@@ -21,6 +21,7 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
         sim.integrator = integrator
         sim.dt = 0.1313
         sim.simulationarchive_version = simulationarchive_version
+        sim.ri_whfast.jacobi_ordered_warning = -1
         if safe_mode==False:
             sim.ri_whfast.safe_mode = 1
             sim.ri_mercurius.safe_mode = 1
