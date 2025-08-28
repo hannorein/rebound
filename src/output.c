@@ -108,6 +108,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 64, REB_UINT,         "ri_whfast.keep_unsynchronized",offsetof(struct reb_simulation, ri_whfast.keep_unsynchronized), 0, 0},
     { 65, REB_UINT,         "ri_whfast.is_synchronized",    offsetof(struct reb_simulation, ri_whfast.is_synchronized), 0, 0},
     { 66, REB_UINT,         "ri_whfast.timestep_warnning",  offsetof(struct reb_simulation, ri_whfast.timestep_warning), 0, 0},
+    { 67, REB_UINT,         "ri_whfast.jacobi_ordered_warning", offsetof(struct reb_simulation, ri_whfast.jacobi_ordered_warning), 0, 0},
     { 69, REB_DOUBLE,       "ri_ias15.epsilon",             offsetof(struct reb_simulation, ri_ias15.epsilon), 0, 0},
     { 70, REB_DOUBLE,       "ri_ias15.min_dt",              offsetof(struct reb_simulation, ri_ias15.min_dt), 0, 0},
     { 71, REB_UINT,         "ri_ias15.adaptive_mode",       offsetof(struct reb_simulation, ri_ias15.adaptive_mode), 0, 0},

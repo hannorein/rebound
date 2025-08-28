@@ -126,6 +126,7 @@ def create_whfast_massivetestparticle(coordinates, N):
         sim.dt=1e-3
         sim.add(m=1)
         sim.add(m=1e-3,P=0.4)
+        sim.ri_whfast.jacobi_ordered_warning = -1
         for i in range(N):
             sim.add(m=0,P=1,e=0.1,f=i)
   
