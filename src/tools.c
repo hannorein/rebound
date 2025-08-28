@@ -1089,8 +1089,8 @@ static double acos2(double num, double denom, double disambiguator){
 
 struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err){
     struct reb_orbit o;
-    if (primary.m <= TINY){	
-        *err = 1;			// primary has no mass.
+    if (primary.m + p.m <= TINY){	
+        *err = 1;			// primary and secondary have no mass.
         return reb_orbit_nan();
     }
     double mu,dx,dy,dz,dvx,dvy,dvz,vsquared,vcircsquared,vdiffsquared;
