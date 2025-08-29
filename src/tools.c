@@ -997,7 +997,7 @@ struct reb_particle reb_particle_from_orbit_err(double G, struct reb_particle pr
         *err = 5;		// Unbound orbit can't have f set beyond the range allowed by the asymptotes set by the parabola.
         return reb_particle_nan();
     }
-    if(primary.m < TINY){
+    if(m + primary.m < TINY){
         *err = 6;       // Primary has no mass.
         return reb_particle_nan();
     }

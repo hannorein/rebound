@@ -403,7 +403,7 @@ class Particle(Structure):
                 if err.value == 5:
                     raise ValueError("Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.")
                 if err.value == 6:
-                    raise ValueError("Primary has no mass.")
+                    raise ValueError("Particles have no mass.")
             self.x = p.x
             self.y = p.y
             self.z = p.z

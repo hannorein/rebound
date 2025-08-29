@@ -270,7 +270,6 @@ class OrbitPlot:
                 p = self.sim.particles[particles[j]]
             else:
                 p, com, scale = next(orbit_generator)
-                print(p, com)
 
             px, py = getattr(p,projection[0])+offset_x, getattr(p,projection[1])+offset_y
             
