@@ -8,7 +8,7 @@ class OrbitPlot:
     Class for visualizing simulations using instantaneous orbits.
     """
 
-    def __init__(self, sim, fig=None, ax=None, figsize=(5,5), projection="xy", xlim=None, ylim=None, unitlabel=None, color=False, periastron=False, orbit_style="trail", lw=1., particles=None, primary=None, show_primary=True, origin=None, Narc=128, hierarchy=None):
+    def __init__(self, sim, fig=None, ax=None, figsize=(5,5), projection="xy", xlim=None, ylim=None, unitlabel=None, color=False, periastron=False, orbit_style="trail", lw=1., particles=None, primary=None, show_primary=True, origin=None, Narc=128, style="complex"):
         """
         Initializer for OrbitPlot class
 
@@ -77,6 +77,7 @@ class OrbitPlot:
         
         self._xlim = xlim
         self._ylim = ylim
+        self.style = style
         self.color = color
         self.projection = projection
         self._periastron = periastron # cannot be changed later
@@ -89,7 +90,6 @@ class OrbitPlot:
         self._Narc = Narc # cannot be changed later
         self._particles = particles # cannot be changed later
         self.origin = origin
-        self.hierarchy = hierarchy
            
         updateLimits = True
         if fig is not None:
@@ -168,10 +168,7 @@ class OrbitPlot:
         if not particles:
             particles = range(1, self.sim.N_real)
         
-        if self.hierarchy is None:
-            Norbits = len(particles)
-        else:
-            Norbits = self.hierarchy.Norbits()
+        self.Norbits = len(list(self.sim.orbit_hierarchy().orbit_generator(style=self.style)))
 
 
         # Color stuff
@@ -189,7 +186,7 @@ class OrbitPlot:
              colors = [(0.,0.,0.)]
         coloriterator = cycle(colors)
         color_list = []
-        for i in range(Norbits):
+        for i in range(self.Norbits):
             colori = next(coloriterator)
             color_list.append(colori)
 
@@ -205,7 +202,7 @@ class OrbitPlot:
         lcs = []
     
 
-        for j in range(Norbits):
+        for j in range(self.Norbits):
             if self._orbit_style is not None:
                 lc = LineCollection([], lw=self._lw)
 
@@ -249,11 +246,11 @@ class OrbitPlot:
         if not particles:
             particles = range(1, self.sim.N_real)
         
-        if self.hierarchy is None:
-            Norbits = len(particles)
-        else:
-            Norbits = self.hierarchy.Norbits()
-            orbit_generator = self.hierarchy.orbit_generator()
+        hierarchy = self.sim.orbit_hierarchy()
+        Norbits = len(list(hierarchy.orbit_generator(style=self.style)))
+        if self.Norbits != Norbits:
+            raise RuntimeError("Cannot update plot as orbit hierarchy changed")
+        orbit_generator = hierarchy.orbit_generator(style=self.style)
         
         prim = self.sim.particles[0] if self._primary is None else self._primary 
         px, py = getattr(prim,projection[0])+offset_x, getattr(prim,projection[1])+offset_y
@@ -266,19 +263,13 @@ class OrbitPlot:
         periastrons = []
         proj = {"x": 0, "y": 1, "z": 2}
         for j in range(Norbits):
-            if self.hierarchy is None:
-                p = self.sim.particles[particles[j]]
-            else:
-                p, com, scale = next(orbit_generator)
-
+            orbit, com, p = next(orbit_generator)
             px, py = getattr(p,projection[0])+offset_x, getattr(p,projection[1])+offset_y
+
             
             if len(self.orbits): # no need to update if orbit_style = None
                 # Need many line segments here so we can color it.
-                if self.hierarchy is None:
-                    pts = np.array(p.sample_orbit(Npts=self._Narc+1, primary=self._primary))
-                else:
-                    pts = np.array(p.sample_orbit(Npts=self._Narc+1, primary=com, scale=scale))
+                pts = np.array(orbit.sample(com, Npts=self._Narc+1))
                 segments = np.zeros((self._Narc,2,2))
                 x, y = pts[:,proj[projection[0]]], pts[:,proj[projection[1]]]
                 segments[:,0,0] = x[:-1] + offset_x
@@ -288,17 +279,8 @@ class OrbitPlot:
                 lc = self.orbits[j]
                 lc.set_segments(segments)
            
-                if self.hierarchy is None:
-                    if self._primary is None:
-                        pprimary = p.jacobi_com
-                    else:
-                        pprimary = self._primary
-                else:
-                    pprimary = com
-                o = p.orbit(primary = pprimary)
-                
                 if updateLimits:
-                    if o.a < 0.: # hyperbolic, avoid zooming out too much
+                    if orbit.a < 0.: # hyperbolic, avoid zooming out too much
                         limits_x = [min(limits_x[0], px), max(limits_x[1], px)] 
                         limits_y = [min(limits_y[0], py), max(limits_y[1], py)] 
                     else:
@@ -309,7 +291,7 @@ class OrbitPlot:
                     
 
                 if self._periastron:
-                    newp = Particle(a=o.a, f=0., inc=o.inc, omega=o.omega, Omega=o.Omega, e=o.e, m=p.m, primary=pprimary, simulation=self.sim)
+                    newp = Particle(a=orbit.a, f=0., inc=orbit.inc, omega=orbit.omega, Omega=orbit.Omega, e=orbit.e, m=p.m, primary=com, simulation=self.sim)
                     periastrons.append([[getattr(prim,projection[0])+offset_x, getattr(prim,projection[1])+offset_y], 
                                         [getattr(newp,projection[0])+offset_x, getattr(newp,projection[1])+offset_y]])
             else:

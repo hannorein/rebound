@@ -1,6 +1,9 @@
 import ctypes
+import math
 from .tools import M_to_E
 from .vectors import Vec3dBasic
+from .tools import E_to_f, M_to_f, mod2pi
+from .particle import Particle
 
 class Orbit(ctypes.Structure):
     """
@@ -99,4 +102,107 @@ class Orbit(ctypes.Structure):
     @property 
     def E(self):
         return M_to_E(self.e, self.M)
+    
+    def sample(self, primary, Npts=100, samplingAngle=None, duplicateEndpoint=None):
+        """
+        Returns a nested list of xyz positions along the osculating orbit of the particle. 
+        If primary is not passed, returns xyz positions along the Jacobi osculating orbit
+        (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive). 
+
+        Parameters
+        ----------
+        Npts    : int, optional  
+            Number of points along the orbit to return  (default: 100)
+        primary : rebound.Particle, optional
+            Primary to use for the osculating orbit (default: Jacobi center of mass)
+        samplingAngle: str, optional
+            This determines which angle is sampled linearly. Can be:
+              - "M" (mean anomaly)
+              - "E" (eccentric anomaly) 
+              - "f" (true anomaly)
+        duplicateEndpoint: bool, optional
+            If true, then the first and last point will be identical for closed orbits. This is useful for some plotting tools. The default is true for eccentric orbits. The argument has no effect for hyperbolic orbits (because the endpoints are not identical).
+        """
+
+        phases_f = []
+        if samplingAngle is not None:
+            if any(c not in "EMf" for c in samplingAngle):
+                raise ValueError("Unknown character in samplingAngle.")
+        
+        if self.a < 0.: # hyperbolic orbit
+            if samplingAngle is None:
+                samplingAngle = "Mf"
+            Nptsangle = {}
+            for angle in samplingAngle[1:]:
+                Nptsangle[angle] = (Npts-1)//len(samplingAngle) # one point is reserved for actual position
+            Nptsangle[samplingAngle[0]] = Npts-1-sum(Nptsangle.values())
+            if "M" in samplingAngle:
+                phi = math.acos(-1./self.e)*0.999
+                Npts = Nptsangle["M"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
+                    f = M_to_f(self.e, phi)
+                    phases_f.append(f)
+                    phi -= dphi
+            if "E" in samplingAngle:
+                phi = math.acos(-1./self.e)*0.999
+                Npts = Nptsangle["E"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
+                    f = E_to_f(self.e, phi)
+                    phases_f.append(f)
+                    phi -= dphi
+            if "f" in samplingAngle:
+                phi = math.acos(-1./self.e)*0.999
+                Npts = Nptsangle["f"]
+                dphi = 2*phi/(Npts-1)
+                for i in range(Npts):
+                    f = mod2pi(phi)
+                    phases_f.append(f)
+                    phi -= dphi
+        else:       # circular orbit
+            if samplingAngle is None:
+                samplingAngle = "Ef"
+            if duplicateEndpoint is None:
+                duplicateEndpoint = True
+            Nptsangle = {}
+            for angle in samplingAngle[1:]:
+                Nptsangle[angle] = (Npts-1)//len(samplingAngle) # one point is reserved for actual position
+            Nptsangle[samplingAngle[0]] = Npts-1-sum(Nptsangle.values())
+            if "M" in samplingAngle:
+                Npts = Nptsangle["M"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
+                    f = M_to_f(self.e, i*dphi)
+                    phases_f.append(f)
+            if "E" in samplingAngle:
+                Npts = Nptsangle["E"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
+                    f = E_to_f(self.e, i*dphi)
+                    phases_f.append(f)
+            if "f" in samplingAngle:
+                Npts = Nptsangle["f"]
+                dphi = 2.*math.pi/(Npts-1 if duplicateEndpoint else Npts)  # one point is reserved for the end point
+                for i in range(Npts):
+                    f = i*dphi
+                    f = mod2pi(f)
+                    phases_f.append(f)
+
+        # add actual position
+        f = mod2pi(self.f)
+        phases_f.append(f)
+        phases_f.sort()
+      
+        pts_pre = []
+        pts_post = []
+        
+        for f in phases_f:
+            newp = Particle(a=self.a, f=f, inc=self.inc, omega=self.omega, Omega=self.Omega, e=self.e, primary=primary, simulation=primary._sim.contents)
+            if f<=self.f:
+                pts_pre.append(newp.xyz)
+            else:
+                pts_post.append(newp.xyz)
+        
+        return pts_post + pts_pre
 
