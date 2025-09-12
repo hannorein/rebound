@@ -1599,6 +1599,9 @@ Simulation._fields_ = [
                 ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),
                 ("_extras_cleanup", CFUNCTYPE(None, POINTER(Simulation))),
                 ("extras", c_void_p),
+                ("Lx_t", c_double),
+                ("Rx_t", c_double),
+                ("Q_NL", c_double)
                  ]
 
 
