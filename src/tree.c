@@ -92,8 +92,9 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
             const double Lx_t = r->Lx_t;
             const double Rx_t = r->Rx_t;
 
-            node->w = Rx_t;
-            node->l = r->root_size;
+            node->size.x = Rx_t;
+            node->size.y = r->root_size;
+            node->size.z = r->root_size;
             int i = ((int)floor((p.x + Lx_t/2.)/Rx_t))%r->N_root_x;
             int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
             int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
@@ -102,11 +103,12 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
             node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
             node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
         }else{ // The new node is a normal node
-            node->w 	= parent->w/2.;
-            node->l     = parent->l/2.;
-            node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
-            node->y 	= parent->y + node->l/2.*((o>>1)%2==0?1.:-1);
-            node->z 	= parent->z + node->l/2.*((o>>2)%2==0?1.:-1);
+            node->size.x 	= parent->size.x/2.;
+            node->size.y    = parent->size.y/2.;
+            node->size.z    = parent->size.z/2.;
+            node->x 	= parent->x + node->size.x/2.*((o>>0)%2==0?1.:-1);
+            node->y 	= parent->y + node->size.y/2.*((o>>1)%2==0?1.:-1);
+            node->z 	= parent->z + node->size.z/2.*((o>>2)%2==0?1.:-1);
         }
         node->pt = pt; 
         particles[pt].c = node;
@@ -152,9 +154,9 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
  * @return 0 is particle is not in cell, 1 if it is.
  */
 static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r, struct reb_treecell *node){
-    if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
-            fabs(r->particles[node->pt].y-node->y) > node->l/2. || 
-            fabs(r->particles[node->pt].z-node->z) > node->l/2. || 
+    if (fabs(r->particles[node->pt].x-node->x) > node->size.x/2. || 
+            fabs(r->particles[node->pt].y-node->y) > node->size.y/2. || 
+            fabs(r->particles[node->pt].z-node->z) > node->size.z/2. || 
             isnan(r->particles[node->pt].y)) {
         return 0;
     }
@@ -309,17 +311,17 @@ struct reb_treecell* reb_simulation_update_tree_size(struct reb_simulation* cons
 	const double Rx_t = r->Rx_t;
 	int num_rootboxes = r->N_root_x*r->N_root_y*r->N_root_z;
 	if (parent != NULL) {
-		node->w = parent->w/2;
+		node->size.x = parent->size.x/2;
 		//change center of octant depending on which octant the particle is in
 		if (node->x > parent->x) {
-			node->x = parent->x + node->w/2;
+			node->x = parent->x + node->size.x/2;
 		} else {
-			node->x = parent->x - node->w/2;
+			node->x = parent->x - node->size.x/2;
 		}
 	} else {
 		for (int n = 0; n < num_rootboxes; n++) {    
-			if (node == r->tree_root[n] && r->tree_root[n]->w != Rx_t) {
-				node->w = Rx_t;
+			if (node == r->tree_root[n] && r->tree_root[n]->size.x != Rx_t) {
+				node->size.x = Rx_t;
 				int i = ((int)floor((node->x + Lx_t/2.)/Rx_t))%r->N_root_x;
 				node->x = -Lx_t/2.+Rx_t*(0.5+(double)i);
 			}
