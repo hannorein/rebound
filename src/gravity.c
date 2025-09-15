@@ -1448,7 +1448,7 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
     const double dz = gb.z - node->mz;
     const double r2 = dx*dx + dy*dy + dz*dz;
     if ( node->pt < 0 ) { // Not a leaf
-        if ( node->w*node->w > r->opening_angle2*r2 ){
+        if ( node->size.x*node->size.x > r->opening_angle2*r2 ){
             for (int o=0; o<8; o++) {
                 if (node->oct[o] != NULL) {
                     reb_calculate_acceleration_for_particle_from_cell(r, pt, node->oct[o], gb);
