@@ -379,7 +379,7 @@ void reb_collision_search(struct reb_simulation* const r){
     }
     // Loop over all collisions previously found in reb_collision_search().
 
-    int (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
+    enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c) = r->collision_resolve;
     if (resolve==NULL){
         // Default is to throw an exception
         resolve = reb_collision_resolve_halt;
@@ -394,10 +394,10 @@ void reb_collision_search(struct reb_simulation* const r){
         struct reb_collision c = r->collisions[i];
         if (c.p1 != -1 && c.p2 != -1){
             // Resolve collision
-            int outcome = resolve(r, c);
+            enum REB_COLLISION_RESOLVE_OUTCOME outcome = resolve(r, c);
 
             // Remove particles
-            if (outcome & 1){
+            if (outcome & REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1){
                 // Remove p1
                 int removedp1 = reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
                 if (removedp1){
@@ -448,7 +448,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     }
                 }
             }
-            if (outcome & 2){
+            if (outcome & REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2){
                 // Remove p1
                 int removedp2 = reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
                 if (removedp2){ // Update other collisions
@@ -496,7 +496,7 @@ void reb_collision_search(struct reb_simulation* const r){
 /**
  * @brief Workaround for python setters.
  **/
-void reb_simulation_set_collision_resolve(struct reb_simulation* r, int (*resolve) (struct reb_simulation* const r, struct reb_collision c)){
+void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)){
     r->collision_resolve = resolve;
 }
 
@@ -664,7 +664,7 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
 
 
 
-int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c){
     struct reb_particle* const particles = r->particles;
     struct reb_particle p1 = particles[c.p1];
     struct reb_particle p2;
@@ -757,17 +757,17 @@ int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_
         r->collisions_plog += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
         r->collisions_log_n ++;
     }
-    return 0;
+    return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE;
 }
 
-int reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c){
     r->status = REB_STATUS_COLLISION;
     r->particles[c.p1].last_collision = r->t;
     r->particles[c.p2].last_collision = r->t;
-    return 0; // don't remove either particle
+    return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // don't remove either particle
 }
 
-int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c){
     if (r->particles[c.p1].last_collision==r->t || r->particles[c.p2].last_collision==r->t) return 0;
 
     // Every collision will cause two callbacks (with p1/p2 interchanged).
@@ -775,7 +775,7 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
     // This will keep N_active meaningful even after mergers.
     int swap = 0;
     unsigned int i = c.p1;
-    unsigned int j = c.p2;   //want j to be removed particle
+    unsigned int j = c.p2;
     if (j<i){
         swap = 1;
         i = c.p2;
@@ -874,5 +874,5 @@ int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_colli
         r->energy_offset += Ei - Ef;
     }
 
-    return swap?1:2; // Remove particle p2 from simulation
+    return swap ? REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1 : REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2; // Remove particle with higher index
 }
