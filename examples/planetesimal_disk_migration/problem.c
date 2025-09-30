@@ -19,7 +19,7 @@
 void heartbeat(struct reb_simulation* r);
 double E0;
 
-int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c);
+enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c);
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
@@ -112,12 +112,12 @@ int main(int argc, char* argv[]){
     reb_simulation_free(r);
 }
 
-int reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c){
     // This function passes the collision to the default merging routine. 
     // If a merger occured, that routine will return a value other than 0.
     // This function then outputs some information about the merger.
-    int result = reb_collision_resolve_merge(r, c);
-    if (result!=0){
+    enum REB_COLLISION_RESOLVE_OUTCOME result = reb_collision_resolve_merge(r, c);
+    if (result!=REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE){
         printf("A merger occured! Particles involved: %d, %d.\n",c.p1,c.p2);
     }
     return result;

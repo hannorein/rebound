@@ -11,7 +11,7 @@
 #include <math.h>
 #include "rebound.h"
 
-int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
+enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
 void heartbeat(struct reb_simulation* r);
 int N_border;
 
@@ -89,7 +89,7 @@ void heartbeat(struct reb_simulation* r){
     }
 }
 
-int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c){
     const double t = r->t;
     struct reb_particle* particles = r->particles;
     struct reb_particle p1 = particles[c.p1];
@@ -143,5 +143,5 @@ int collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb
         particles[c.p1].vz +=    dvz2nn; 
         particles[c.p1].last_collision = t;
     }
-    return 0; // Do not remove any particle from simulation.
+    return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // Do not remove any particle from simulation.
 }
