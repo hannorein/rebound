@@ -1538,6 +1538,8 @@ Simulation._fields_ = [
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),
                 ("boxsize", Vec3dBasic),
+                ("Lx_t", c_double),
+                ("Rx_t", c_double),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
                 ("N_root", c_int),
@@ -1599,9 +1601,6 @@ Simulation._fields_ = [
                 ("_free_particle_ap", CFUNCTYPE(None, POINTER(Particle))),
                 ("_extras_cleanup", CFUNCTYPE(None, POINTER(Simulation))),
                 ("extras", c_void_p),
-                ("Lx_t", c_double),
-                ("Rx_t", c_double),
-                ("Q_NL", c_double)
                  ]
 
 
