@@ -97,10 +97,10 @@ int main(int argc, char* argv[]) {
     //reb_simulation_integrate(r, tmax);      // Integrates only to tmax
 
     double e_final = reb_simulation_energy(r);
+    printf("\nDone. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
 
     // Cleanup
     reb_simulation_free(r);
-    printf("\nDone. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
 }
 
 void heartbeat(struct reb_simulation* const r) {
