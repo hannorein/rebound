@@ -9,6 +9,7 @@ class TestEccentricShearingSheat(unittest.TestCase):
         sim = rebound.Simulation()
         OMEGA = 0.00013143527     # [1/s]
         sim.ri_sei.OMEGA = OMEGA
+        sim.ri_sei.Q_NL = 0.1
         surface_density = 400.    # kg/m^2
         particle_density = 400.   # kg/m^3
         sim.G = 6.67428e-11       # N m^2 / kg^2
@@ -37,20 +38,27 @@ class TestEccentricShearingSheat(unittest.TestCase):
             pow_min = pow(min_v, slope+1.)
             return pow((pow_max-pow_min)*y + pow_min, 1./(slope+1.))
         total_mass = 0.
-        while total_mass < surface_density*(boxsize**2):
-            radius = powerlaw(slope=-3, min_v=1, max_v=4)  # [m]    
-            mass = particle_density*4./3.*math.pi*(radius**3)
-            x = random.uniform(-boxsize/2., boxsize/2.)
-            sim.add(
-                m=mass,
-                r=radius,
-                x=x,
-                y=random.uniform(-boxsize/2., boxsize/2.),
-                z=random.normalvariate(mu=0.0, sigma=1.0),
-                vx = 0.,
-                vy = -3./2.*x*OMEGA, 
-                vz = 0.)
-            total_mass += mass
+        radius = powerlaw(slope=-3, min_v=1, max_v=4)  # [m]    
+        mass = particle_density*4./3.*math.pi*(radius**3)
+        x = random.uniform(-boxsize/2., boxsize/2.)
+        y = 30.433231
+        sim.add(
+            m=mass,
+            r=radius,
+            x=0.,
+            y=y,
+            z=0.,
+            vx = 0.002,
+            vy = 0., 
+            vz = 0.)
+        sim.integrate(2.*math.pi/(4*OMEGA))
+        self.assertAlmostEqual(sim.particles[0].x, y/2)
+        sim.integrate(2.*math.pi/(4*OMEGA))
+        self.assertAlmostEqual(sim.particles[0].y, -y)
+        sim.integrate(2.*math.pi/(4*OMEGA))
+        self.assertAlmostEqual(sim.particles[0].x, y/2)
+        sim.integrate(2.*math.pi/OMEGA)
+        self.assertAlmostEqual(sim.particles[0].x, y/2)
         self.assertGreater(sim.N,50)
         sim.integrate(2.*math.pi/OMEGA)
         self.assertGreater(sim.collisions_log_n,1000)
@@ -63,7 +71,6 @@ class TestEccentricShearingSheat(unittest.TestCase):
         self.assertNotEqual(sim.ri_sei._lastdt,0.0)
         sim.reset_integrator()
         self.assertEqual(sim.ri_sei._lastdt,0.0)
-
 
 if __name__ == "__main__":
     unittest.main()
