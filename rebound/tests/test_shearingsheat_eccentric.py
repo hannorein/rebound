@@ -15,7 +15,7 @@ class TestEccentricShearingSheat(unittest.TestCase):
         sim.G = 6.67428e-11       # N m^2 / kg^2
         sim.dt = 1e-3*2.*math.pi/OMEGA
         sim.softening = 0.2       # [m]
-        boxsize = 50.            # [m]
+        boxsize = 100.            # [m]
         sim.configure_box(boxsize)
         sim.N_ghost_x = 2
         sim.N_ghost_y = 2
