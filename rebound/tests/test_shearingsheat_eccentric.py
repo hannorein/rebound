@@ -14,7 +14,7 @@ class TestEccentricShearingSheat(unittest.TestCase):
         particle_density = 400.   # kg/m^3
         sim.G = 6.67428e-11       # N m^2 / kg^2
         sim.dt = 1e-3*2.*math.pi/OMEGA
-        sim.softening = 0.2       # [m]
+        sim.softening = 0.1       # [m]
         boxsize = 100.            # [m]
         sim.configure_box(boxsize)
         sim.N_ghost_x = 2
@@ -55,9 +55,9 @@ class TestEccentricShearingSheat(unittest.TestCase):
         self.assertAlmostEqual(sim.particles[0].x, y/2, 4)
         sim.integrate(2.*math.pi/(2*OMEGA))
         self.assertAlmostEqual(sim.particles[0].y, -y, 4)
-        sim.integrate(2.*math.pi/((3/2)*OMEGA))
+        sim.integrate(2.*math.pi/((4/3)*OMEGA))
         self.assertAlmostEqual(sim.particles[0].x, -y/2, 4)
-        sim.integrate(2.*math.pi/((3/5)*OMEGA))
+        sim.integrate(2.*math.pi/((4/7)*OMEGA))
         self.assertAlmostEqual(sim.particles[0].x, -y/2, 4)
         sim.integrate(2.*math.pi/((2/3)*OMEGA))
         self.assertAlmostEqual(sim.particles[0].y, -y, 4)
