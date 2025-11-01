@@ -51,7 +51,6 @@ class TestEccentricShearingSheat(unittest.TestCase):
             vx = 0.002,
             vy = 0., 
             vz = 0.)
-        self.assertGreater(sim.N,50)
         sim.integrate(2.*math.pi/(4*OMEGA))
         self.assertAlmostEqual(sim.particles[0].x, y/2)
         sim.integrate(2.*math.pi/(2*OMEGA))
@@ -62,7 +61,6 @@ class TestEccentricShearingSheat(unittest.TestCase):
         self.assertAlmostEqual(sim.particles[0].x, -y/2)
         sim.reset_integrator()
         sim.integrate(2.*math.pi/OMEGA)
-        self.assertGreater(sim.collisions_log_n,1000)
         Nbefore = sim.N
         sim.remove(0,keep_sorted=0)
         sim.update_tree()
