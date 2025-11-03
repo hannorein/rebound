@@ -57,6 +57,7 @@ nav:
         - c_examples/kozai.md
         - c_examples/eccentric_orbit.md
         - c_examples/restricted_threebody.md
+        - c_examples/api.md
         - ipython_examples/Horizons.ipynb
         - ipython_examples/Starman.ipynb
         - ipython_examples/RadialVelocity.ipynb
