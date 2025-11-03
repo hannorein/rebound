@@ -1401,6 +1401,9 @@ DLLEXPORT void reb_particles_transform_barycentric_to_inertial_posvel(struct reb
 DLLEXPORT void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
 DLLEXPORT void reb_particles_transform_barycentric_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
 
+// Potentially useful API functions
+DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
+
 // Temporary. Function declarations needed by REBOUNDx 
 DLLEXPORT void reb_integrator_ias15_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
 DLLEXPORT void reb_integrator_ias15_part2(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
