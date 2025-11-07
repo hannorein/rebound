@@ -66,6 +66,8 @@ struct reb_dpconst7 {
 // Helper functions for resetting the b and e coefficients
 static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, int N3);
 static void predict_next_step(double ratio, int N3,  const struct reb_dpconst7 _e, const struct reb_dpconst7 _b, const struct reb_dpconst7 e, const struct reb_dpconst7 b);
+double reb_integrator_ias15_timescale2(struct reb_simulation* r);
+double reb_integrator_ias15_timescale3(struct reb_simulation* r);
 
 
 /////////////////////////
@@ -217,20 +219,33 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         map = r->ri_mercurius.encounter_map;
         if (map==NULL){
             reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
-            return 0;
+            return -1;
         }
     }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){// trace close encounter
         N = r->ri_trace.encounter_N;
         map = r->ri_trace.encounter_map;
         if (map==NULL){
             reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
-            return 0;
+            return -1;
         }
     }else{ 
         N = r->N;
         map = r->ri_ias15.map; // identity map
     }
     const int N3 = 3*N;
+
+    if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE2){
+        if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_COMPENSATED){
+            reb_simulation_error(r, "REB_IAS15_PAIRWISE2 is only compatible witb REB_GRAVITY_BASIC or REB_GRAVITY_COMPENSATED.");
+            return -1;
+        }
+    }
+    if (r->ri_ias15.adaptive_mode == REB_IAS15_USER){
+        if (r->ri_ias15.timescale == NULL){
+            reb_simulation_error(r, "REB_IAS15_USER requires a user defined callback function r->ri_ias15.timescale to be set.");
+            return -1;
+        }
+    }
 
     // reb_simulation_update_acceleration(); // Not needed. Forces are already calculated in main routine.
 
@@ -518,7 +533,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     double dt_new;
     if (r->ri_ias15.epsilon>0){
         // Estimate error (given by last term in series expansion) 
-        // There are two options:
+        // There are several options:
         // r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL (used to be default until January 2024)
         //   First, we determine the maximum acceleration and the maximum of the last term in the series. 
         //   Then, the two are divided.
@@ -528,6 +543,15 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         // r->ri_ias15.adaptive_mode==REB_IAS15_PRS23
         //   Here, the acceleration, jerk and snap are used to estimate the new timestep. 
         //   The method is described in detail in Pham, Rein, Spiegel 2023
+        // r->ri_ias15.adaptive_mode==REB_IAS15_USER
+        //   The user-provided call-back function is called. The function should return the dynamical timescale of the problem.
+        // r->ri_ias15.adaptive_mode==REB_IAS15_PAIRWISE
+        //   Acceleration, jerk, and snap are calculated for all particle pairs. This is an O(N^2) algorithm.
+        //   Then PRS23 is used to estimate an appropriate timestep. This algorithm is better with close encounters of small objects.
+	    // r->ri_ias15.adaptive_mode==REB_IAS15PAIRWISE2
+	    //   Relative velocity and acceleration are calculated for all particle pairs. Local dynamical timescale is calculated as v_rel / a_rel. 
+        //   Updated PW2: pairwise relative version of PRS23 
+
         unsigned int Nreal = N - r->N_var;
         if (r->ri_ias15.adaptive_mode==REB_IAS15_INDIVIDUAL || r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
@@ -570,7 +594,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
-        }else{ // adaptive_mode >= 2 (New adaptive timestepping method, default since January 2024)
+        }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PRS23 || r->ri_ias15.adaptive_mode == REB_IAS15_AARSETH85) { // New adaptive timestepping method, default since January 2024
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
             for(unsigned int i=0;i<Nreal;i++){
                 double a0i = 0; // (acceleration at beginning of timestep)^2
@@ -611,6 +635,43 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
+
+            }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE
+                         || r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE2
+                        || r->ri_ias15.adaptive_mode == REB_IAS15_USER){
+            // Set final positions and velocities for timescale estimate.
+            // This will be overwritten later, using compensated summation.
+                    for (int i=0;i<N;i++) {int k  = 3*i; int mi = map[i];
+                            particles[mi].x  = x0[k+0] + dt_done*(v0[k+0] + dt_done*(a0[k+0]/2.0 + b.p0[k+0]/6.0 + b.p1[k+0]/12.0 + b.p2[k+0]/20.0 + b.p3[k+0]/30.0 + b.p4[k+0]/42.0 + b.p5[k+0]/56.0 + b.p6[k+0]/72.0));
+                            particles[mi].y  = x0[k+1] + dt_done*(v0[k+1] + dt_done*(a0[k+1]/2.0 + b.p0[k+1]/6.0 + b.p1[k+1]/12.0 + b.p2[k+1]/20.0 + b.p3[k+1]/30.0 + b.p4[k+1]/42.0 + b.p5[k+1]/56.0 + b.p6[k+1]/72.0));
+                            particles[mi].z  = x0[k+2] + dt_done*(v0[k+2] + dt_done*(a0[k+2]/2.0 + b.p0[k+2]/6.0 + b.p1[k+2]/12.0 + b.p2[k+2]/20.0 + b.p3[k+2]/30.0 + b.p4[k+2]/42.0 + b.p5[k+2]/56.0 + b.p6[k+2]/72.0));
+                            particles[mi].vx = v0[k+0] + dt_done*(a0[k+0] + b.p0[k+0]/2.0 + b.p1[k+0]/3.0 + b.p2[k+0]/4.0 + b.p3[k+0]/5.0 + b.p4[k+0]/6.0 + b.p5[k+0]/7.0 + b.p6[k+0]/8.0);
+                            particles[mi].vy = v0[k+1] + dt_done*(a0[k+1] + b.p0[k+1]/2.0 + b.p1[k+1]/3.0 + b.p2[k+1]/4.0 + b.p3[k+1]/5.0 + b.p4[k+1]/6.0 + b.p5[k+1]/7.0 + b.p6[k+1]/8.0);
+                            particles[mi].vz = v0[k+2] + dt_done*(a0[k+2] + b.p0[k+2]/2.0 + b.p1[k+2]/3.0 + b.p2[k+2]/4.0 + b.p3[k+2]/5.0 + b.p4[k+2]/6.0 + b.p5[k+2]/7.0 + b.p6[k+2]/8.0);
+                            }
+
+                double timescale;
+                switch (r->ri_ias15.adaptive_mode){
+                case REB_IAS15_PAIRWISE:
+                    timescale = reb_integrator_ias15_timescale(r);
+                    break;
+                case REB_IAS15_PAIRWISE2:
+                    timescale = reb_integrator_ias15_timescale3(r);
+                    break;
+                case REB_IAS15_USER:
+                    timescale = r->ri_ias15.timescale(r);
+                }
+
+                if (isnormal(timescale)){
+                // Numerical factor below matches adaptive_mode==REB_IAS15_GLOBAL with default epsilon
+                    dt_new = timescale * sqrt7(r->ri_ias15.epsilon*5040.0);
+                 }else{
+                    dt_new = dt_done/safety_factor; // by default, increase timestep a little
+                 }
+
+        }else{
+            reb_simulation_error(r, "Unknown adaptive_mode");
+            return -1;
         }
 
         if (fabs(dt_new)<r->ri_ias15.min_dt) dt_new = copysign(r->ri_ias15.min_dt,dt_new);
@@ -637,6 +698,10 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 predict_next_step(ratio, N3, er, br, e, b);
             }
 
+            if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
+                fprintf(stderr, "[STEP REJECTED]");
+                fflush(stderr);
+            }
             return 0; // Step rejected. Do again. 
         }       
         if (fabs(dt_new/dt_done) > 1.0) {   // New timestep is larger.
@@ -644,6 +709,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
             }
         }
+        
         r->dt = dt_new;
     }
 
@@ -771,7 +837,7 @@ void reb_integrator_ias15_part2(struct reb_simulation* r){
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
         // Try until a step was successful.
-    while(!reb_integrator_ias15_step(r));
+    while(reb_integrator_ias15_step(r)==0);
 }
 
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){
@@ -807,7 +873,8 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
 
 double reb_integrator_ias15_timescale(struct reb_simulation* r){
     // Returns a timescale according to Pham, Rein, Spiegel 2023 (PRS23)
-    reb_simulation_update_acceleration(r);
+    // Calculates this timescale for all pairs
+    // Used in adaptive_mode=5
     int N;
     int* map; // this map allow for integrating only a selection of particles 
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
@@ -841,37 +908,39 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
     for (int i=0; i<N; i++) {
         int mi = map[i];
         struct reb_particle* p_i = &(r->particles[mi]);
-        double y2 = p_i->ax*p_i->ax + p_i->ay*p_i->ay + p_i->az*p_i->az; 
-        struct reb_vec3d vec_y3 = {0};
-        struct reb_vec3d vec_y4 = {0};
-
-        if (!isnormal(y2)){
-            // Skipp particles which do not experience any acceleration or
-            // have acceleration which is inf or Nan.
-            continue;
-        }
         for (int j=0; j<N; j++) { // N^2 loop could be optimized to N^2/2
             int mj = map[j];
             if (mi==mj) continue;
+
+            struct reb_vec3d vec_y2 = {0};
+            struct reb_vec3d vec_y3 = {0};
+            struct reb_vec3d vec_y4 = {0};
 
             struct reb_particle* p_j = &(r->particles[mj]);
 
             double rij_x = p_j->x - p_i->x;
             double rij_y = p_j->y - p_i->y;
             double rij_z = p_j->z - p_i->z;
-            double vij_x = p_j->vx - p_i->vx;
-            double vij_y = p_j->vy - p_i->vy;
-            double vij_z = p_j->vz - p_i->vz;
-            double aij_x = p_j->ax - p_i->ax;
-            double aij_y = p_j->ay - p_i->ay;
-            double aij_z = p_j->az - p_i->az;
-
             double r_sq = rij_x * rij_x + rij_y * rij_y + rij_z * rij_z;
 
             double r_mag = sqrt(r_sq);      // |r_ij|
             double r_cubed = r_sq * r_mag;  // |r_ij|^3
             double r_fifth = r_cubed * r_sq; // |r_ij|^5
             double r_seventh = r_fifth * r_sq;// |r_ij|^7
+
+            // --- Acceleration Calculation for particle i due to particle j ---
+            double ac_factor = r->G/r_cubed; 
+            vec_y2.x += ac_factor*p_j->m * rij_x;
+            vec_y2.y += ac_factor*p_j->m * rij_y;
+            vec_y2.z += ac_factor*p_j->m * rij_z;
+
+            // Other relative terms needed 
+            double vij_x = p_j->vx - p_i->vx;
+            double vij_y = p_j->vy - p_i->vy;
+            double vij_z = p_j->vz - p_i->vz;
+            double aij_x = ac_factor * rij_x * (-p_i->m - p_j->m);
+            double aij_y = ac_factor * rij_y * (-p_i->m - p_j->m);
+            double aij_z = ac_factor * rij_z * (-p_i->m - p_j->m);
 
             // Dot products
             double r_dot_v = rij_x * vij_x + rij_y * vij_y + rij_z * vij_z; // (r_ij . v_ij)
@@ -881,8 +950,8 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             // --- Jerk Calculation for particle i due to particle j ---
             // Term 1: v_ij / |r_ij|^3
             // Term 2: -3 * r_ij * (r_ij . v_ij) / |r_ij|^5
-            double jerk_factor1 = p_j->m / r_cubed;
-            double jerk_factor2 = -3.0 * p_j->m * r_dot_v / r_fifth;
+            double jerk_factor1 = r->G*p_j->m / r_cubed;
+            double jerk_factor2 = -3.0 * r->G*p_j->m * r_dot_v / r_fifth;
 
             vec_y3.x += jerk_factor1 * vij_x + jerk_factor2 * rij_x;
             vec_y3.y += jerk_factor1 * vij_y + jerk_factor2 * rij_y;
@@ -895,31 +964,294 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             // Term 4: -3 * r_ij * (r_ij . a_ij) / |r_ij|^5
             // Term 5: +15 * r_ij * (r_ij . v_ij)^2 / |r_ij|^7
 
-            double snap_c1 = p_j->m / r_cubed;                         // for a_ij term
-            double snap_c2 = -6.0 * p_j->m * r_dot_v / r_fifth;        // for v_ij term
-            double snap_c3_rij = -3.0 * p_j->m * v_sq / r_fifth;       // for r_ij term (from v_ij^2)
-            double snap_c4_rij = -3.0 * p_j->m * r_dot_a / r_fifth;    // for r_ij term (from r_ij . a_ij)
-            double snap_c5_rij = 15.0 * p_j->m * r_dot_v * r_dot_v / r_seventh; // for r_ij term (from (r_ij . v_ij)^2)
+            double snap_c1 = r->G*p_j->m / r_cubed;                         // for a_ij term
+            double snap_c2 = -6.0 * r->G*p_j->m * r_dot_v / r_fifth;        // for v_ij term
+            double snap_c3_rij = -3.0 * r->G*p_j->m * v_sq / r_fifth;       // for r_ij term (from v_ij^2)
+            double snap_c4_rij = -3.0 * r->G*p_j->m * r_dot_a / r_fifth;    // for r_ij term (from r_ij . a_ij)
+            double snap_c5_rij = 15.0 * r->G*p_j->m * r_dot_v * r_dot_v / r_seventh; // for r_ij term (from (r_ij . v_ij)^2)
 
             vec_y4.x += snap_c1 * aij_x + snap_c2 * vij_x + (snap_c3_rij + snap_c4_rij + snap_c5_rij) * rij_x;
             vec_y4.y += snap_c1 * aij_y + snap_c2 * vij_y + (snap_c3_rij + snap_c4_rij + snap_c5_rij) * rij_y;
             vec_y4.z += snap_c1 * aij_z + snap_c2 * vij_z + (snap_c3_rij + snap_c4_rij + snap_c5_rij) * rij_z;
-        }
-        vec_y3.x *= r->G;
-        vec_y3.y *= r->G;
-        vec_y3.z *= r->G;
-        vec_y4.x *= r->G;
-        vec_y4.y *= r->G;
-        vec_y4.z *= r->G;
-        double y3 = vec_y3.x*vec_y3.x + vec_y3.y*vec_y3.y + vec_y3.z*vec_y3.z; 
-        double y4 = vec_y4.x*vec_y4.x + vec_y4.y*vec_y4.y + vec_y4.z*vec_y4.z; 
-        double timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
-        if (isnormal(timescale2) && timescale2<min_timescale2){
-            min_timescale2 = timescale2;
+            double y2 = vec_y2.x*vec_y2.x + vec_y2.y*vec_y2.y + vec_y2.z*vec_y2.z; 
+            double y3 = vec_y3.x*vec_y3.x + vec_y3.y*vec_y3.y + vec_y3.z*vec_y3.z; 
+            double y4 = vec_y4.x*vec_y4.x + vec_y4.y*vec_y4.y + vec_y4.z*vec_y4.z; 
+            double timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
+            if (!isnormal(y2)){
+                // Skipp particles which do not experience any acceleration or
+                // have acceleration which is inf or Nan.
+                continue;
+            }
+
+            if (isnormal(timescale2) && timescale2<min_timescale2){
+                min_timescale2 = timescale2;
+            }
         }
     }
     return sqrt(min_timescale2); // Multiply by sqrt7(r->ri_ias15.epsilon*5040.0) to get IAS default timestep.
 }
+
+double reb_integrator_ias15_timescale3(struct reb_simulation* r){
+    // Returns a timescale according to a pairwise relative PRS23
+    // Calculates this timescale for all pairs
+    // Used in adaptive_mode=6
+    int N;
+    int* map; // this map allow for integrating only a selection of particles 
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
+        N = r->ri_mercurius.encounter_N;
+        map = r->ri_mercurius.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
+            return 0;
+        }
+    }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){// trace close encounter
+        N = r->ri_trace.encounter_N;
+        map = r->ri_trace.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
+            return 0;
+        }
+    }else{ 
+        N = r->N;
+        if (N > r->ri_ias15.N_allocated_map){
+            r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*N);
+            for (unsigned int i=0;i<N;i++){
+                r->ri_ias15.map[i] = i;
+            }
+            r->ri_ias15.N_allocated_map = N;
+        }
+        map = r->ri_ias15.map; // identity map
+    }
+
+    double min_timescale2 = INFINITY; 
+
+    // DIAG 4: Print initial-condition snapshot (once)
+    int    min_i  = -1, min_j = -1;
+    double min_vrel = 0.0, min_arel = 0.0, min_tau = 0.0;
+
+    for (int ii=0; ii<N; ++ii){
+        int mi = map[ii];
+        struct reb_particle* p_i = &(r->particles[mi]);
+
+        for (int jj=ii+1; jj<N; ++jj){          // i<j avoids double work
+            int mj = map[jj];
+            struct reb_particle* p_j = &(r->particles[mj]);
+
+            // Geometry & kinematics
+            const double rij_x = p_j->x  - p_i->x;
+            const double rij_y = p_j->y  - p_i->y;
+            const double rij_z = p_j->z  - p_i->z;
+            const double r_sq  = rij_x*rij_x + rij_y*rij_y + rij_z*rij_z;
+            if (!(r_sq > 0.0) || !isfinite(r_sq)) continue;  // excludes 0, NaN, Inf
+            // if (!isnormal(r_sq)) continue;
+            const double r_mag = sqrt(r_sq);
+            const double r3    = r_mag * r_sq;
+            const double r5    = r3 * r_sq;
+            const double r7    = r5 * r_sq;
+
+            const double vij_x = p_j->vx - p_i->vx;
+            const double vij_y = p_j->vy - p_i->vy;
+            const double vij_z = p_j->vz - p_i->vz;
+            const double v2    = vij_x*vij_x + vij_y*vij_y + vij_z*vij_z;
+
+            const double Mij   = p_i->m + p_j->m;     // total mass
+            const double GM    = r->G * Mij;
+
+            const double rdotv = rij_x*vij_x + rij_y*vij_y + rij_z*vij_z;
+
+            // a_rel = -GM * r_ij / r^3
+            const double fac_a = - GM / r3;
+            double a_x = fac_a * rij_x;
+            double a_y = fac_a * rij_y;
+            double a_z = fac_a * rij_z;
+
+            // j_rel = -GM * [ v_ij / r^3 - 3 r_ij (r·v)/r^5 ]
+            const double fac_j1 = - GM / r3;
+            const double fac_j2 = + 3.0 * GM * rdotv / r5; // note overall signs
+            double j_x = fac_j1 * vij_x - fac_j2 * rij_x;
+            double j_y = fac_j1 * vij_y - fac_j2 * rij_y;
+            double j_z = fac_j1 * vij_z - fac_j2 * rij_z;
+
+            // s_rel = -GM * [ a_rel / r^3 - 6 v (r·v)/r^5 - 3 r v^2 / r^5
+            //                       - 3 r (r·a_rel)/r^5 + 15 r (r·v)^2 / r^7 ]
+            const double rdotA  = rij_x*a_x + rij_y*a_y + rij_z*a_z;
+
+            const double c1 = - GM / r3;                         // multiplies a_rel
+            const double c2 = + 6.0 * GM * rdotv / r5;            // multiplies v_ij
+            const double c3 = + 3.0 * GM * v2    / r5;           // multiplies r_ij
+            const double c4 = + 3.0 * GM * rdotA  / r5;           // multiplies r_ij
+            const double c5 = - 15.0* GM * rdotv*rdotv / r7;      // multiplies r_ij
+
+            double s_x = c1*a_x + c2*vij_x + (c3 + c4 + c5)*rij_x;
+            double s_y = c1*a_y + c2*vij_y + (c3 + c4 + c5)*rij_y;
+            double s_z = c1*a_z + c2*vij_z + (c3 + c4 + c5)*rij_z;
+
+            // PRS23 ingredients (squared norms)
+            const double y2 = a_x*a_x + a_y*a_y + a_z*a_z;
+            if (!isnormal(y2)) continue;
+            const double y3 = j_x*j_x + j_y*j_y + j_z*j_z;
+            const double y4 = s_x*s_x + s_y*s_y + s_z*s_z;
+
+            const double timescale2 = 2.0*y2 / ( y3 + sqrt(y4*y2) );  // PRS23
+
+            // Keep diagnostics similar to before
+            const double v_rel = isnormal(v2) ? sqrt(v2) : 0.0;
+            const double a_rel = sqrt(y2);
+            const double dt_i  = (a_rel>0.0 && isnormal(a_rel)) ? (v_rel/a_rel) : 0.0;
+            if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
+                fprintf(stderr,
+                    "[DIAG] t=%.6f  pair=(%d,%d) r=%.6e  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e  tau_ij=%.6e\n",
+                    r->t, mi, mj, r_mag, v_rel, a_rel, dt_i,
+                    (isnormal(timescale2) ? sqrt(timescale2) : 0.0));
+                fflush(stderr);
+            }
+
+            if (isnormal(timescale2) && timescale2 < min_timescale2){
+                min_timescale2 = timescale2;
+                min_i  = mi;
+                min_j  = mj;
+                min_vrel = v_rel;
+                min_arel = a_rel;
+                min_tau  = sqrt(timescale2);
+            }
+        }
+    }
+
+    if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1 && min_i>=0 && min_j>=0){
+        fprintf(stderr,
+            "[DIAG-MIN] t=%.6f  pair=(%d,%d)  v_rel=%.6e  a_rel=%.6e  tau=%.6e\n",
+            r->t, min_i, min_j, min_vrel, min_arel, min_tau);
+        fflush(stderr);
+    }
+    return sqrt(min_timescale2); 
+}
+
+
+// Unused version: 
+double reb_integrator_ias15_timescale2(struct reb_simulation* r){
+    // Returns a timescale according to PAIRWISE2
+    // Calculates this timescale for all pairs
+    // Used in adaptive_mode=6
+    int N;
+    int* map; // this map allow for integrating only a selection of particles 
+    if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
+        N = r->ri_mercurius.encounter_N;
+        map = r->ri_mercurius.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
+            return 0;
+        }
+    }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){// trace close encounter
+        N = r->ri_trace.encounter_N;
+        map = r->ri_trace.encounter_map;
+        if (map==NULL){
+            reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
+            return 0;
+        }
+    }else{ 
+        N = r->N;
+        if (N > r->ri_ias15.N_allocated_map){
+            r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(int)*N);
+            for (unsigned int i=0;i<N;i++){
+                r->ri_ias15.map[i] = i;
+            }
+            r->ri_ias15.N_allocated_map = N;
+        }
+        map = r->ri_ias15.map; // identity map
+    }
+
+    double min_timescale2 = INFINITY;
+    // ---- DIAG 4: Print initial-condition snapshot (once) ----
+
+
+    int min_i = -1, min_j = -1;
+    double min_vrel = 0.0, min_arel = 0.0, min_dt_i = 0.0; 
+    
+    for (int i=0; i<N; i++) {
+        int mi = map[i];
+        struct reb_particle* p_i = &(r->particles[mi]);
+        for (int j=0; j<N; j++) { // N^2 loop could be optimized to N^2/2
+            int mj = map[j];
+            if (mi==mj) continue;
+
+            // The vec_y2, y3, y4 were unused and removed.
+
+            struct reb_particle* p_j = &(r->particles[mj]);
+
+            double rij_x = p_j->x - p_i->x;
+            double rij_y = p_j->y - p_i->y;
+            double rij_z = p_j->z - p_i->z;
+            double r_sq = rij_x * rij_x + rij_y * rij_y + rij_z * rij_z;
+
+            double r_mag = sqrt(r_sq);      // |r_ij|
+            double r_cubed = r_sq * r_mag;  // |r_ij|^3
+            
+	    // r^5 and r^7 unused and removed. 
+
+            // --- Acceleration Calculation for particle i due to particle j ---
+            double ac_factor = r->G/r_cubed; 
+
+            // Other relative terms needed 
+            double vij_x = p_j->vx - p_i->vx;
+            double vij_y = p_j->vy - p_i->vy;
+            double vij_z = p_j->vz - p_i->vz;
+            // acceleration on i due to j (i is test particle, j is perturber)
+            double aij_x = -ac_factor * p_j->m * rij_x;
+            double aij_y = -ac_factor * p_j->m * rij_y;
+            double aij_z = -ac_factor * p_j->m * rij_z;
+            // double aij_x = ac_factor * rij_x * (-p_i->m - p_j->m);
+            // double aij_y = ac_factor * rij_y * (-p_i->m - p_j->m);
+            // double aij_z = ac_factor * rij_z * (-p_i->m - p_j->m); // Don't understand the -1 factor in this case, but doesn't make a difference physically. 
+	    // The remaining calculations for jerk, snap,crackle and dot products in the original version aren't needed here, and were deleted.
+
+	    double v_sq = vij_x*vij_x + vij_y*vij_y + vij_z*vij_z;
+	    if (!isnormal(v_sq)) continue;
+	    double v_rel = sqrt(v_sq);
+
+	    double a_sq = aij_x*aij_x + aij_y*aij_y + aij_z*aij_z;
+	    if (!isnormal(a_sq) || a_sq == 0.0) continue;
+	    double a_rel = sqrt(a_sq);
+
+	    double dt_i = (v_rel/a_rel);
+	     //  double dt_done = r->dt;
+        
+        // --- Diagnostic: print every pair ---
+        if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
+        fprintf(stderr,
+                "[DIAG] t=%.6f  pair=(%d,%d) r_mag=%.6e  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e\n",
+        r       ->t, mi, mj, r_mag, v_rel, a_rel, dt_i);
+        fflush(stderr);
+        }
+
+        double timescale2 = (dt_i)*(dt_i); // PAIRWISE2
+
+        if (isnormal(timescale2) && timescale2 < min_timescale2){
+            min_timescale2 = timescale2;
+            min_i = mi;           // particle ids (mapped)
+            min_j = mj;
+            min_vrel = v_rel;
+            min_arel = a_rel;
+            min_dt_i = dt_i;
+            }   
+        }
+    }
+    double tau = sqrt(min_timescale2);
+    if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
+        fprintf(stderr,
+                "[DIAG-MIN] t=%.6f  pair=(%d,%d)  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e  tau=%.6e\n",
+                r->t, min_i, min_j, min_vrel, min_arel, min_dt_i, tau);
+        fflush(stderr);
+    }
+    return tau; 
+    // return sqrt(min_timescale2); // Multiply by sqrt7(r->ri_ias15.epsilon*5040.0) to get IAS default timestep.
+}
+
+
+
+
+
+
+
 
 #ifdef GENERATE_CONSTANTS
 void integrator_generate_constants(void){
