@@ -548,8 +548,8 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
         // r->ri_ias15.adaptive_mode==REB_IAS15_PAIRWISE
         //   Acceleration, jerk, and snap are calculated for all particle pairs. This is an O(N^2) algorithm.
         //   Then PRS23 is used to estimate an appropriate timestep. This algorithm is better with close encounters of small objects.
-	    // r->ri_ias15.adaptive_mode==REB_IAS15PAIRWISE2
-	    //   Relative velocity and acceleration are calculated for all particle pairs. Local dynamical timescale is calculated as v_rel / a_rel. 
+        // r->ri_ias15.adaptive_mode==REB_IAS15PAIRWISE2
+        //   Relative velocity and acceleration are calculated for all particle pairs. Local dynamical timescale is calculated as v_rel / a_rel. 
         //   Updated PW2: pairwise relative version of PRS23 
 
         unsigned int Nreal = N - r->N_var;
@@ -636,22 +636,22 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             }
 
-            }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE
-                         || r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE2
-                        || r->ri_ias15.adaptive_mode == REB_IAS15_USER){
+        }else if (r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE
+                || r->ri_ias15.adaptive_mode == REB_IAS15_PAIRWISE2
+                || r->ri_ias15.adaptive_mode == REB_IAS15_USER){
             // Set final positions and velocities for timescale estimate.
             // This will be overwritten later, using compensated summation.
-                    for (int i=0;i<N;i++) {int k  = 3*i; int mi = map[i];
-                            particles[mi].x  = x0[k+0] + dt_done*(v0[k+0] + dt_done*(a0[k+0]/2.0 + b.p0[k+0]/6.0 + b.p1[k+0]/12.0 + b.p2[k+0]/20.0 + b.p3[k+0]/30.0 + b.p4[k+0]/42.0 + b.p5[k+0]/56.0 + b.p6[k+0]/72.0));
-                            particles[mi].y  = x0[k+1] + dt_done*(v0[k+1] + dt_done*(a0[k+1]/2.0 + b.p0[k+1]/6.0 + b.p1[k+1]/12.0 + b.p2[k+1]/20.0 + b.p3[k+1]/30.0 + b.p4[k+1]/42.0 + b.p5[k+1]/56.0 + b.p6[k+1]/72.0));
-                            particles[mi].z  = x0[k+2] + dt_done*(v0[k+2] + dt_done*(a0[k+2]/2.0 + b.p0[k+2]/6.0 + b.p1[k+2]/12.0 + b.p2[k+2]/20.0 + b.p3[k+2]/30.0 + b.p4[k+2]/42.0 + b.p5[k+2]/56.0 + b.p6[k+2]/72.0));
-                            particles[mi].vx = v0[k+0] + dt_done*(a0[k+0] + b.p0[k+0]/2.0 + b.p1[k+0]/3.0 + b.p2[k+0]/4.0 + b.p3[k+0]/5.0 + b.p4[k+0]/6.0 + b.p5[k+0]/7.0 + b.p6[k+0]/8.0);
-                            particles[mi].vy = v0[k+1] + dt_done*(a0[k+1] + b.p0[k+1]/2.0 + b.p1[k+1]/3.0 + b.p2[k+1]/4.0 + b.p3[k+1]/5.0 + b.p4[k+1]/6.0 + b.p5[k+1]/7.0 + b.p6[k+1]/8.0);
-                            particles[mi].vz = v0[k+2] + dt_done*(a0[k+2] + b.p0[k+2]/2.0 + b.p1[k+2]/3.0 + b.p2[k+2]/4.0 + b.p3[k+2]/5.0 + b.p4[k+2]/6.0 + b.p5[k+2]/7.0 + b.p6[k+2]/8.0);
-                            }
+            for (int i=0;i<N;i++) {int k  = 3*i; int mi = map[i];
+                particles[mi].x  = x0[k+0] + dt_done*(v0[k+0] + dt_done*(a0[k+0]/2.0 + b.p0[k+0]/6.0 + b.p1[k+0]/12.0 + b.p2[k+0]/20.0 + b.p3[k+0]/30.0 + b.p4[k+0]/42.0 + b.p5[k+0]/56.0 + b.p6[k+0]/72.0));
+                particles[mi].y  = x0[k+1] + dt_done*(v0[k+1] + dt_done*(a0[k+1]/2.0 + b.p0[k+1]/6.0 + b.p1[k+1]/12.0 + b.p2[k+1]/20.0 + b.p3[k+1]/30.0 + b.p4[k+1]/42.0 + b.p5[k+1]/56.0 + b.p6[k+1]/72.0));
+                particles[mi].z  = x0[k+2] + dt_done*(v0[k+2] + dt_done*(a0[k+2]/2.0 + b.p0[k+2]/6.0 + b.p1[k+2]/12.0 + b.p2[k+2]/20.0 + b.p3[k+2]/30.0 + b.p4[k+2]/42.0 + b.p5[k+2]/56.0 + b.p6[k+2]/72.0));
+                particles[mi].vx = v0[k+0] + dt_done*(a0[k+0] + b.p0[k+0]/2.0 + b.p1[k+0]/3.0 + b.p2[k+0]/4.0 + b.p3[k+0]/5.0 + b.p4[k+0]/6.0 + b.p5[k+0]/7.0 + b.p6[k+0]/8.0);
+                particles[mi].vy = v0[k+1] + dt_done*(a0[k+1] + b.p0[k+1]/2.0 + b.p1[k+1]/3.0 + b.p2[k+1]/4.0 + b.p3[k+1]/5.0 + b.p4[k+1]/6.0 + b.p5[k+1]/7.0 + b.p6[k+1]/8.0);
+                particles[mi].vz = v0[k+2] + dt_done*(a0[k+2] + b.p0[k+2]/2.0 + b.p1[k+2]/3.0 + b.p2[k+2]/4.0 + b.p3[k+2]/5.0 + b.p4[k+2]/6.0 + b.p5[k+2]/7.0 + b.p6[k+2]/8.0);
+            }
 
-                double timescale;
-                switch (r->ri_ias15.adaptive_mode){
+            double timescale;
+            switch (r->ri_ias15.adaptive_mode){
                 case REB_IAS15_PAIRWISE:
                     timescale = reb_integrator_ias15_timescale(r);
                     break;
@@ -660,14 +660,14 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                     break;
                 case REB_IAS15_USER:
                     timescale = r->ri_ias15.timescale(r);
-                }
+            }
 
-                if (isnormal(timescale)){
+            if (isnormal(timescale)){
                 // Numerical factor below matches adaptive_mode==REB_IAS15_GLOBAL with default epsilon
-                    dt_new = timescale * sqrt7(r->ri_ias15.epsilon*5040.0);
-                 }else{
-                    dt_new = dt_done/safety_factor; // by default, increase timestep a little
-                 }
+                dt_new = timescale * sqrt7(r->ri_ias15.epsilon*5040.0);
+            }else{
+                dt_new = dt_done/safety_factor; // by default, increase timestep a little
+            }
 
         }else{
             reb_simulation_error(r, "Unknown adaptive_mode");
@@ -709,7 +709,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
                 dt_new = dt_done /safety_factor; // Don't increase the timestep by too much compared to the last one.
             }
         }
-        
+
         r->dt = dt_new;
     }
 
@@ -1043,7 +1043,7 @@ double reb_integrator_ias15_timescale3(struct reb_simulation* r){
             const double rij_z = p_j->z  - p_i->z;
             const double r_sq  = rij_x*rij_x + rij_y*rij_y + rij_z*rij_z;
             if (!(r_sq > 0.0) || !isfinite(r_sq)) continue;  // excludes 0, NaN, Inf
-            // if (!isnormal(r_sq)) continue;
+                                                             // if (!isnormal(r_sq)) continue;
             const double r_mag = sqrt(r_sq);
             const double r3    = r_mag * r_sq;
             const double r5    = r3 * r_sq;
@@ -1100,9 +1100,9 @@ double reb_integrator_ias15_timescale3(struct reb_simulation* r){
             const double dt_i  = (a_rel>0.0 && isnormal(a_rel)) ? (v_rel/a_rel) : 0.0;
             if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
                 fprintf(stderr,
-                    "[DIAG] t=%.6f  pair=(%d,%d) r=%.6e  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e  tau_ij=%.6e\n",
-                    r->t, mi, mj, r_mag, v_rel, a_rel, dt_i,
-                    (isnormal(timescale2) ? sqrt(timescale2) : 0.0));
+                        "[DIAG] t=%.6f  pair=(%d,%d) r=%.6e  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e  tau_ij=%.6e\n",
+                        r->t, mi, mj, r_mag, v_rel, a_rel, dt_i,
+                        (isnormal(timescale2) ? sqrt(timescale2) : 0.0));
                 fflush(stderr);
             }
 
@@ -1119,8 +1119,8 @@ double reb_integrator_ias15_timescale3(struct reb_simulation* r){
 
     if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1 && min_i>=0 && min_j>=0){
         fprintf(stderr,
-            "[DIAG-MIN] t=%.6f  pair=(%d,%d)  v_rel=%.6e  a_rel=%.6e  tau=%.6e\n",
-            r->t, min_i, min_j, min_vrel, min_arel, min_tau);
+                "[DIAG-MIN] t=%.6f  pair=(%d,%d)  v_rel=%.6e  a_rel=%.6e  tau=%.6e\n",
+                r->t, min_i, min_j, min_vrel, min_arel, min_tau);
         fflush(stderr);
     }
     return sqrt(min_timescale2); 
@@ -1166,7 +1166,7 @@ double reb_integrator_ias15_timescale2(struct reb_simulation* r){
 
     int min_i = -1, min_j = -1;
     double min_vrel = 0.0, min_arel = 0.0, min_dt_i = 0.0; 
-    
+
     for (int i=0; i<N; i++) {
         int mi = map[i];
         struct reb_particle* p_i = &(r->particles[mi]);
@@ -1185,8 +1185,8 @@ double reb_integrator_ias15_timescale2(struct reb_simulation* r){
 
             double r_mag = sqrt(r_sq);      // |r_ij|
             double r_cubed = r_sq * r_mag;  // |r_ij|^3
-            
-	    // r^5 and r^7 unused and removed. 
+
+            // r^5 and r^7 unused and removed. 
 
             // --- Acceleration Calculation for particle i due to particle j ---
             double ac_factor = r->G/r_cubed; 
@@ -1202,36 +1202,36 @@ double reb_integrator_ias15_timescale2(struct reb_simulation* r){
             // double aij_x = ac_factor * rij_x * (-p_i->m - p_j->m);
             // double aij_y = ac_factor * rij_y * (-p_i->m - p_j->m);
             // double aij_z = ac_factor * rij_z * (-p_i->m - p_j->m); // Don't understand the -1 factor in this case, but doesn't make a difference physically. 
-	    // The remaining calculations for jerk, snap,crackle and dot products in the original version aren't needed here, and were deleted.
+            // The remaining calculations for jerk, snap,crackle and dot products in the original version aren't needed here, and were deleted.
 
-	    double v_sq = vij_x*vij_x + vij_y*vij_y + vij_z*vij_z;
-	    if (!isnormal(v_sq)) continue;
-	    double v_rel = sqrt(v_sq);
+            double v_sq = vij_x*vij_x + vij_y*vij_y + vij_z*vij_z;
+            if (!isnormal(v_sq)) continue;
+            double v_rel = sqrt(v_sq);
 
-	    double a_sq = aij_x*aij_x + aij_y*aij_y + aij_z*aij_z;
-	    if (!isnormal(a_sq) || a_sq == 0.0) continue;
-	    double a_rel = sqrt(a_sq);
+            double a_sq = aij_x*aij_x + aij_y*aij_y + aij_z*aij_z;
+            if (!isnormal(a_sq) || a_sq == 0.0) continue;
+            double a_rel = sqrt(a_sq);
 
-	    double dt_i = (v_rel/a_rel);
-	     //  double dt_done = r->dt;
-        
-        // --- Diagnostic: print every pair ---
-        if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
-        fprintf(stderr,
-                "[DIAG] t=%.6f  pair=(%d,%d) r_mag=%.6e  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e\n",
-        r       ->t, mi, mj, r_mag, v_rel, a_rel, dt_i);
-        fflush(stderr);
-        }
+            double dt_i = (v_rel/a_rel);
+            //  double dt_done = r->dt;
 
-        double timescale2 = (dt_i)*(dt_i); // PAIRWISE2
+            // --- Diagnostic: print every pair ---
+            if (fabs(r->t - 3.494917*2.0*M_PI) < 0.1){
+                fprintf(stderr,
+                        "[DIAG] t=%.6f  pair=(%d,%d) r_mag=%.6e  v_rel=%.6e  a_rel=%.6e  dt_i=%.6e\n",
+                        r       ->t, mi, mj, r_mag, v_rel, a_rel, dt_i);
+                fflush(stderr);
+            }
 
-        if (isnormal(timescale2) && timescale2 < min_timescale2){
-            min_timescale2 = timescale2;
-            min_i = mi;           // particle ids (mapped)
-            min_j = mj;
-            min_vrel = v_rel;
-            min_arel = a_rel;
-            min_dt_i = dt_i;
+            double timescale2 = (dt_i)*(dt_i); // PAIRWISE2
+
+            if (isnormal(timescale2) && timescale2 < min_timescale2){
+                min_timescale2 = timescale2;
+                min_i = mi;           // particle ids (mapped)
+                min_j = mj;
+                min_vrel = v_rel;
+                min_arel = a_rel;
+                min_dt_i = dt_i;
             }   
         }
     }
