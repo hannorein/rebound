@@ -1,7 +1,7 @@
 import ctypes
 
 
-IAS15_ADAPTIVE_MODES = {"individual": 0, "global": 1, "prs23": 2, "aarseth85": 3}
+IAS15_ADAPTIVE_MODES = {"individual": 0, "global": 1, "prs23": 2, "aarseth85": 3, "prs23_pairwise": 4}
 class reb_dp7(ctypes.Structure):
     _fields_ = [("p0", ctypes.POINTER(ctypes.c_double)),
                 ("p1", ctypes.POINTER(ctypes.c_double)),
@@ -51,6 +51,7 @@ class IntegratorIAS15(ctypes.Structure):
         - ``'individual'`` (timescale estimate based on individual particles)
         - ``'global'`` (used to be the default until 01/2024, global estimate)
         - ``'PRS23'`` (The default. Described in Pham, Rein, Spiegel 2023)
+        - ``'PRS23_PAIRWISE'`` (Like PRS23 but for each particle pair. Better for close encounters.
         - ``'Aarseth85'`` (Aarseth 1985 algorithm)
         """
         i = self._adaptive_mode
