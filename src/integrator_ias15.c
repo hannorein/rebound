@@ -900,10 +900,10 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             double r_cubed = r_sq * r_mag;  // |r_ij|^3
 
             // --- Acceleration Calculation for particle i due to particle j ---
-            double ac_factor = r->G*p_j->m/r_cubed; 
-            vec_y2.x += ac_factor * rij_x;
-            vec_y2.y += ac_factor * rij_y;
-            vec_y2.z += ac_factor * rij_z;
+            double ac_factor = r->G*(p_j->m+p_i->m)/r_cubed; 
+            vec_y2.x = -ac_factor * rij_x;
+            vec_y2.y = -ac_factor * rij_y;
+            vec_y2.z = -ac_factor * rij_z;
 
             // Other relative terms needed 
             double vij_x = p_j->vx - p_i->vx;

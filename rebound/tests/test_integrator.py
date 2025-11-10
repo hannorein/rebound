@@ -17,6 +17,22 @@ class TestIntegratorIAS15Timescale(unittest.TestCase):
         sim.add(P=2.0)
         tau = sim.ias15_timescale()*math.pi*2.0
         self.assertAlmostEqual(tau, 2., delta=1e-15)
+    def test_ias15_timescaleG(self):
+        sim = rebound.Simulation()
+        sim.G = 100.0;
+        sim.add(m=1.)
+        sim.add(P=2.0)
+        tau = sim.ias15_timescale()*math.pi*2.0
+        self.assertAlmostEqual(tau, 2., delta=1e-15)
+    def test_ias15_timescale_order(self):
+        sim = rebound.Simulation()
+        sim.add(m=1.)
+        sim.add(P=2.0)
+        p = sim.particles[0].copy()
+        sim.remove(0)
+        sim.add(p)
+        tau = sim.ias15_timescale()*math.pi*2.0
+        self.assertAlmostEqual(tau, 2., delta=1e-15)
 
 class TestIntegratorWHFastHyper(unittest.TestCase):
     def test_whfast_veryhyperbolic(self):
