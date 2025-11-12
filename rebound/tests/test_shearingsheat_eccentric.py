@@ -54,7 +54,7 @@ class TestEccentricShearingSheat(unittest.TestCase):
             vz = 0.)
         period = 2.*math.pi/OMEGA
         A_0 = 0
-        for i in range(1, 1e3):
+        for i in range(1, 1000):
             sim.integrate((0.5 + i)*period)
             x_s = -3*sim.particles[0].x*OMEGA - 2*sim.particles[0].vy
             y_s = sim.particles[0].vx
