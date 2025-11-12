@@ -10,15 +10,17 @@ class TestEccentricShearingSheat(unittest.TestCase):
         OMEGA = 0.00013143527     # [1/s]
         sim.ri_sei.OMEGA = OMEGA
         sim.ri_sei.Q_NL = 0.1
+        Q_NL = sim.ri_sei.Q_NL
         surface_density = 400.    # kg/m^2
         particle_density = 400.   # kg/m^3
         sim.G = 6.67428e-11       # N m^2 / kg^2
         sim.dt = 1e-3*2.*math.pi/OMEGA
         sim.softening = 0.1       # [m]
         boxsize = 100.            # [m]
-        sim.configure_box(boxsize)
+        sim.configure_box(boxsize, 2, 2, 1)
         sim.N_ghost_x = 2
         sim.N_ghost_y = 2
+        sim.N_ghost_z = 0
         sim.integrator = "sei"
         sim.boundary   = "shear_e"
         sim.gravity    = "tree"
@@ -37,31 +39,31 @@ class TestEccentricShearingSheat(unittest.TestCase):
             pow_max = pow(max_v, slope+1.)
             pow_min = pow(min_v, slope+1.)
             return pow((pow_max-pow_min)*y + pow_min, 1./(slope+1.))
-        total_mass = 0.
         radius = powerlaw(slope=-3, min_v=1, max_v=4)  # [m]    
         mass = particle_density*4./3.*math.pi*(radius**3)
         x = random.uniform(-boxsize/2., boxsize/2.)
-        y = 30.433231
+        y = random.uniform(-boxsize/2., boxsize/2.)
         sim.add(
             m=mass,
             r=radius,
-            x=0.,
-            y=y,
-            z=0.,
-            vx = 0.002,
-            vy = 0., 
+            x=x-Q_NL*x*math.cos(OMEGA*sim.t),
+            y=y-1.5*x*OMEGA*sim.t+2.0*Q_NL*x*math.sin(OMEGA*sim.t),
+            z=0.0,
+            vx = Q_NL*x*OMEGA*math.sin(OMEGA*sim.t),
+            vy = -1.5*x*OMEGA+2.0*Q_NL*x*OMEGA*math.cos(OMEGA*sim.t), 
             vz = 0.)
-        sim.integrate(2.*math.pi/(4*OMEGA))
-        self.assertAlmostEqual(sim.particles[0].x, y/2, 4)
-        sim.integrate(2.*math.pi/(2*OMEGA))
-        self.assertAlmostEqual(sim.particles[0].y, -y, 4)
-        sim.integrate(2.*math.pi/((4/3)*OMEGA))
-        self.assertAlmostEqual(sim.particles[0].x, -y/2, 4)
-        sim.integrate(2.*math.pi/((4/7)*OMEGA))
-        self.assertAlmostEqual(sim.particles[0].x, -y/2, 4)
-        sim.integrate(2.*math.pi/((2/3)*OMEGA))
-        self.assertAlmostEqual(sim.particles[0].y, -y, 4)
-        sim.integrate(2.*math.pi/OMEGA)
+        period = 2.*math.pi/OMEGA
+        A_0 = 0
+        for i in range(1, 1e3):
+            sim.integrate((0.5 + i)*period)
+            x_s = -3*sim.particles[0].x*OMEGA - 2*sim.particles[0].vy
+            y_s = sim.particles[0].vx
+            A = math.sqrt(pow(x_s, 2) + pow(y_s, 2))
+            if i != 1:
+                self.assertAlmostEqual(A_0, A, 6)
+            else:
+                A_0 = A
+        sim.integrate(period)
         Nbefore = sim.N
         sim.remove(0,keep_sorted=0)
         sim.update_tree()
