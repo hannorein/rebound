@@ -4,6 +4,12 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.4.11
+* The collision resolve function now returns a type `enum REB_COLLISION_RESOLVE_OUTCOME`. The actual integer values remain unchanged.
+* Bug in TRACE was fixed.
+* Convergence check for M_to_E function.
+* New API example that shows how to use the Kepler solver without a REBOUND simulation. Updated other examples.
+
 ### Version 4.4.10
 * Version bump to rerun github workflows for pypi uploads
 
