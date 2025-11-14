@@ -48,6 +48,12 @@ extern double gravity_minimum_mass;
 #endif // GRAVITY_GRAPE
 
 static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
+    const struct reb_vec3d boxsize = r->boxsize;
+    const double OMEGA = r->ri_sei.OMEGA;
+    const double q = r->ri_sei.Q_NL; // Nonlinearity parameter, 0 < q < 1
+    const double Lx_t = boxsize.x*(1-q*cos(OMEGA*r->t));
+    
+    
     if (reb_boundary_particle_is_in_box(r, pt)==0){
         if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
             reb_simulation_error(r,"Cannot add particle because simulation box not initialized. Call reb_simulation_configure_box() before adding particles.");
@@ -71,7 +77,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
             return;
         }
-        if(fabs(pt.x)>r->boxsize.x/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
+        if(fabs(pt.x)>r->Lx_t/2. || fabs(pt.y)>r->boxsize.y/2. || fabs(pt.z)>r->boxsize.z/2.){
             reb_simulation_error(r,"Cannot add particle outside of simulation box.");
             return;
         }
@@ -274,7 +280,9 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
     if (r->root_size==-1) return 0;
-    int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
+    const double Lx_t = r->Lx_t; // Time dependent box size
+    const double Rx_t = r->Rx_t;
+    int i = ((int)floor((pt.x + Lx_t/2.)/Rx_t)+r->N_root_x)%r->N_root_x;
     int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
     int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
     int index = (k*r->N_root_y+j)*r->N_root_x+i;
