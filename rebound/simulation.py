@@ -924,7 +924,7 @@ class Simulation(Structure):
                     raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
                 if particle._sim:
                     if not self.equal_units(particle._sim.contents):
-                        warnings.warn("Particle is being adding from a simulation that uses different units.", RuntimeWarning)
+                        warnings.warn("Particle added is from a simulation that uses different units.", RuntimeWarning)
                 clibrebound.reb_simulation_add(byref(self), particle)
             elif isinstance(particle, list):
                 for p in particle:
