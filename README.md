@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v4.4.11-green.svg?style=flat)](https://rebound.readthedocs.org)
+[![Version](https://img.shields.io/badge/rebound-v4.4.11-green.svg?style=flat)](https://rebound.hanno-rein.de)
 [![codecov](https://codecov.io/github/hannorein/rebound/graph/badge.svg?token=Zmynoi99Vl)](https://codecov.io/github/hannorein/rebound)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
@@ -10,7 +10,7 @@
 [![Paper](https://img.shields.io/badge/arXiv-1704.07715-green.svg?style=flat)](https://arxiv.org/abs/1704.07715)
 [![Paper](https://img.shields.io/badge/arXiv-1903.04972-green.svg?style=flat)](https://arxiv.org/abs/1903.04972)
 [![Paper](https://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat)](https://arxiv.org/abs/1907.11335)
-[![Docs](https://readthedocs.org/projects/rebound/badge/?version=latest)](https://rebound.readthedocs.io/en/latest/?badge=latest)
+[![Docs](https://img.shields.io/badge/Documentation-green.svg?style=flat)](https://rebound.hanno-rein.de/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/hannorein/rebound/main)
 [![REBOUND (C)](https://github.com/hannorein/rebound/actions/workflows/c.yml/badge.svg)](https://github.com/hannorein/rebound/actions/workflows/c.yml)
 [![REBOUND (python)](https://github.com/hannorein/rebound/actions/workflows/python.yml/badge.svg)](https://github.com/hannorein/rebound/actions/workflows/python.yml)
@@ -45,7 +45,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 ## Try out REBOUND 
 
 You can try out REBOUND without installing it. 
-Simply head over to [readthedocs.org](https://rebound.readthedocs.io/en/latest/examples/).
+Simply head over to [the documentation](https://rebound.hanno-rein.de/).
 All the C examples have been compiled with emscripten and can run directly in your browser.
 
 ## One minute installation
@@ -75,7 +75,7 @@ git clone https://github.com/hannorein/rebound && cd rebound/examples/shearing_s
 ## Documentation
 The full documentation with many examples, changelogs and tutorials can be found at
 
-<https://rebound.readthedocs.org>
+<https://rebound.hanno-rein.de>
 
 If you have trouble installing or using REBOUND, please open an issue on github and we'll try to help as much as we can.
 
