@@ -213,6 +213,7 @@ void reb_integrator_init(struct reb_simulation* r){
 
 void reb_simulation_reset_integrator(struct reb_simulation* r){
     r->integrator = REB_INTEGRATOR_IAS15;
+    r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
     r->gravity_ignore_terms = 0;
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
