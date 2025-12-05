@@ -448,213 +448,205 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
     if (filename==NULL) filename = r->simulationarchive_filename;
     struct stat buffer;
 #ifdef MPI
+#define filename_combined filename_mpi
     char filename_mpi[1024];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-    if (stat(filename_mpi, &buffer) < 0){
 #else // MPI
-        if (stat(filename, &buffer) < 0){
+#define filename_combined filename
 #endif // MPI
-       // File does not exist. Output binary.
-#ifdef MPI
-            FILE* of = fopen(filename_mpi,"wb"); 
-#else // MPI
-            FILE* of = fopen(filename,"wb"); 
-#endif // MPI
-            if (of==NULL){
-                reb_simulation_error(r, "Can not open file.");
-                return;
-            }
-            char* bufp;
-            size_t sizep;
-            reb_simulation_save_to_stream(r, &bufp,&sizep);
-            fwrite(bufp,sizep,1,of);
-            free(bufp);
-            fclose(of);
-        }else{
-            // File exists, append snapshot.
-            struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
-            // Create buffer containing original binary file
-#ifdef MPI
-            char filename_mpi[1024];
-            sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-            FILE* of = fopen(filename_mpi,"r+b");
-#else // MPI
-            FILE* of = fopen(filename,"r+b");
-#endif // MPI
-            fseek(of, 64, SEEK_SET); // Header
-            struct reb_binary_field field = {0};
-            struct reb_simulationarchive_blob blob = {0};
-            int bytesread;
-            do{
-                bytesread = (int)fread(&field,sizeof(struct reb_binary_field),1,of);
-                fseek(of, field.size, SEEK_CUR);
-            }while(field.type!=fd_end.type && bytesread);
-            int64_t size_old = ftell(of);
-            if (bytesread!=1){
-                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
-                return;
-            }
+    if (stat(filename_combined, &buffer) < 0){
+        // File does not exist. Output binary.
+        FILE* of = fopen(filename_combined,"wb"); 
+        if (of==NULL){
+            reb_simulation_error(r, "Can not open file.");
+            return;
+        }
+        char* bufp;
+        size_t sizep;
+        reb_simulation_save_to_stream(r, &bufp,&sizep);
+        fwrite(bufp,sizep,1,of);
+        free(bufp);
+        fclose(of);
+    }else{
+        // File exists, append snapshot.
+        struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+        // Create buffer containing original binary file
+        FILE* of = fopen(filename_combined,"r+b");
+        fseek(of, 64, SEEK_SET); // Header
+        struct reb_binary_field field = {0};
+        struct reb_simulationarchive_blob blob = {0};
+        int bytesread;
+        do{
+            bytesread = (int)fread(&field,sizeof(struct reb_binary_field),1,of);
+            fseek(of, field.size, SEEK_CUR);
+        }while(field.type!=fd_end.type && bytesread);
+        int64_t size_old = ftell(of);
+        if (bytesread!=1){
+            reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
+            return;
+        }
 
-            bytesread = (int)fread(&blob,sizeof(struct reb_simulationarchive_blob),1,of);
-            if (bytesread!=1){
-                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
-                return;
-            }
-            int archive_contains_more_than_one_blob = 0;
-            if (blob.offset_next>0){
-                archive_contains_more_than_one_blob = 1;
-            }
+        bytesread = (int)fread(&blob,sizeof(struct reb_simulationarchive_blob),1,of);
+        if (bytesread!=1){
+            reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
+            return;
+        }
+        int archive_contains_more_than_one_blob = 0;
+        if (blob.offset_next>0){
+            archive_contains_more_than_one_blob = 1;
+        }
 
 
-            char* buf_old = malloc(size_old);
-            fseek(of, 0, SEEK_SET);  
-            fread(buf_old, size_old,1,of);
+        char* buf_old = malloc(size_old);
+        fseek(of, 0, SEEK_SET);  
+        fread(buf_old, size_old,1,of);
 
-            // Create buffer containing current binary file
-            char* buf_new;
-            size_t size_new;
-            reb_simulation_save_to_stream(r, &buf_new, &size_new);
+        // Create buffer containing current binary file
+        char* buf_new;
+        size_t size_new;
+        reb_simulation_save_to_stream(r, &buf_new, &size_new);
 
-            // Create buffer containing diff
-            char* buf_diff;
-            size_t size_diff;
-            reb_binary_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff, 0);
+        // Create buffer containing diff
+        char* buf_diff;
+        size_t size_diff;
+        reb_binary_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff, 0);
 
-            int file_corrupt = 0;
-            int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
-            int blobs_read = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-            if (seek_ok !=0 || blobs_read != 1){ // cannot read blob
+        int file_corrupt = 0;
+        int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
+        int blobs_read = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        if (seek_ok !=0 || blobs_read != 1){ // cannot read blob
+            file_corrupt = 1;
+        }
+        if ( (archive_contains_more_than_one_blob && blob.offset_prev <=0) || blob.offset_next != 0){ // blob contains unexpected data. Note: First blob is all zeros.
+            file_corrupt = 1;
+        }
+        if (file_corrupt==0 && archive_contains_more_than_one_blob ){
+            // Check if last two blobs are consistent.
+            seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binary_field), SEEK_CUR);  
+            bytesread = (int)fread(&field, sizeof(struct reb_binary_field), 1, of);
+            if (seek_ok!=0 || bytesread!=1){
                 file_corrupt = 1;
             }
-            if ( (archive_contains_more_than_one_blob && blob.offset_prev <=0) || blob.offset_next != 0){ // blob contains unexpected data. Note: First blob is all zeros.
+            if (field.type != fd_end.type || field.size !=0){
+                // expected an END field
                 file_corrupt = 1;
             }
-            if (file_corrupt==0 && archive_contains_more_than_one_blob ){
-                // Check if last two blobs are consistent.
-                seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binary_field), SEEK_CUR);  
+            seek_ok = fseek(of, -blob.offset_prev - sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+            struct reb_simulationarchive_blob blob2 = {0};
+            blobs_read = (int)fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
+            if (seek_ok!=0 || blobs_read!=1 || blob2.offset_next != blob.offset_prev){
+                file_corrupt = 1;
+            }
+        }
+
+        if (file_corrupt){
+            // Find last valid snapshot to allow for restarting and appending to archives where last snapshot was cut off
+            reb_simulation_warning(r, "Simulationarchive appears to be corrupted. REBOUND will attempt to fix it before appending more snapshots.\n");
+            int seek_ok;
+            seek_ok = fseek(of, size_old, SEEK_SET);
+            int64_t last_blob = size_old + sizeof(struct reb_simulationarchive_blob);
+            do
+            {
+                seek_ok = fseek(of, -sizeof(struct reb_binary_field), SEEK_CUR);
+                if (seek_ok != 0){
+                    break;
+                }
                 bytesread = (int)fread(&field, sizeof(struct reb_binary_field), 1, of);
-                if (seek_ok!=0 || bytesread!=1){
-                    file_corrupt = 1;
+                if (bytesread != 1 || field.type != fd_end.type){ // could be EOF or corrupt snapshot
+                    break;
                 }
-                if (field.type != fd_end.type || field.size !=0){
-                    // expected an END field
-                    file_corrupt = 1;
+                bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+                if (bytesread != 1){
+                    break;
                 }
-                seek_ok = fseek(of, -blob.offset_prev - sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
-                struct reb_simulationarchive_blob blob2 = {0};
-                blobs_read = (int)fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
-                if (seek_ok!=0 || blobs_read!=1 || blob2.offset_next != blob.offset_prev){
-                    file_corrupt = 1;
+                last_blob = ftell(of);
+                if (blob.offset_next>0){
+                    seek_ok = fseek(of, blob.offset_next, SEEK_CUR);
+                }else{
+                    break;
                 }
-            }
+                if (seek_ok != 0){
+                    break;
+                }
+            } while(1);
 
-            if (file_corrupt){
-                // Find last valid snapshot to allow for restarting and appending to archives where last snapshot was cut off
-                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. REBOUND will attempt to fix it before appending more snapshots.\n");
-                int seek_ok;
-                seek_ok = fseek(of, size_old, SEEK_SET);
-                int64_t last_blob = size_old + sizeof(struct reb_simulationarchive_blob);
-                do
-                {
-                    seek_ok = fseek(of, -sizeof(struct reb_binary_field), SEEK_CUR);
-                    if (seek_ok != 0){
-                        break;
-                    }
-                    bytesread = (int)fread(&field, sizeof(struct reb_binary_field), 1, of);
-                    if (bytesread != 1 || field.type != fd_end.type){ // could be EOF or corrupt snapshot
-                        break;
-                    }
-                    bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-                    if (bytesread != 1){
-                        break;
-                    }
-                    last_blob = ftell(of);
-                    if (blob.offset_next>0){
-                        seek_ok = fseek(of, blob.offset_next, SEEK_CUR);
-                    }else{
-                        break;
-                    }
-                    if (seek_ok != 0){
-                        break;
-                    }
-                } while(1);
-
-                // To append diff, seek to last valid location (=EOF if all snapshots valid)
-                fseek(of, last_blob, SEEK_SET);
-            }else{
-                // File is not corrupt. Start at end to save time.
-                fseek(of, 0, SEEK_END);  
-            }
-
-            // Update blob info and Write diff to binary file
-            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
-            fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-            blob.offset_next = (int32_t)size_diff+sizeof(struct reb_binary_field);
-            fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
-            fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-            fwrite(buf_diff, size_diff, 1, of); 
-            field.type = fd_end.type;
-            field.size = 0;
-            fwrite(&field,sizeof(struct reb_binary_field), 1, of);
-            blob.index++;
-            blob.offset_prev = blob.offset_next;
-            blob.offset_next = 0;
-            fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-
-            fclose(of);
-            free(buf_new);
-            free(buf_old);
-            free(buf_diff);
+            // To append diff, seek to last valid location (=EOF if all snapshots valid)
+            fseek(of, last_blob, SEEK_SET);
+        }else{
+            // File is not corrupt. Start at end to save time.
+            fseek(of, 0, SEEK_END);  
         }
+
+        // Update blob info and Write diff to binary file
+        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+        fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        blob.offset_next = (int32_t)size_diff+sizeof(struct reb_binary_field);
+        fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+        fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        fwrite(buf_diff, size_diff, 1, of); 
+        field.type = fd_end.type;
+        field.size = 0;
+        fwrite(&field,sizeof(struct reb_binary_field), 1, of);
+        blob.index++;
+        blob.offset_prev = blob.offset_next;
+        blob.offset_next = 0;
+        fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+
+        fclose(of);
+        free(buf_new);
+        free(buf_old);
+        free(buf_diff);
     }
+}
 
-    static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* const r, const char* filename){
-        if (r==NULL) return -1;
-        if (filename==NULL){
-            reb_simulation_error(r, "Filename missing.");
-            return -1;
-        }
-        struct stat buffer;
+static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* const r, const char* filename){
+    if (r==NULL) return -1;
+    if (filename==NULL){
+        reb_simulation_error(r, "Filename missing.");
+        return -1;
+    }
+    struct stat buffer;
 #ifdef MPI
-        char filename_mpi[1024];
-        sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
-        if (stat(filename_mpi, &buffer) == 0){
+#define filename_combined filename_mpi
+    char filename_mpi[1024];
+    sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 #else // MPI
-            if (stat(filename, &buffer) == 0){
+#define filename_combined filename
 #endif // MPI
-                reb_simulation_warning(r, "File in use for Simulationarchive already exists. Snapshots will be appended.");
-            }
-            free(r->simulationarchive_filename);
-            r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
-            strcpy(r->simulationarchive_filename, filename);
-            return 0;
-        }
+    if (stat(filename_combined, &buffer) == 0){
+        reb_simulation_warning(r, "File in use for Simulationarchive already exists. Snapshots will be appended.");
+    }
+    free(r->simulationarchive_filename);
+    r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
+    strcpy(r->simulationarchive_filename, filename);
+    return 0;
+}
 
-        void reb_simulation_save_to_file_interval(struct reb_simulation* const r, const char* filename, double interval){
-            if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
-            if(r->simulationarchive_auto_interval != interval){
-                // Only update simulationarchive_next if interval changed. 
-                // This ensures that interrupted simulations will continue
-                // after being restarted from a simulationarchive
-                r->simulationarchive_auto_interval = interval;
-                r->simulationarchive_next = r->t;
-            }
-        }
+void reb_simulation_save_to_file_interval(struct reb_simulation* const r, const char* filename, double interval){
+    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    if(r->simulationarchive_auto_interval != interval){
+        // Only update simulationarchive_next if interval changed. 
+        // This ensures that interrupted simulations will continue
+        // after being restarted from a simulationarchive
+        r->simulationarchive_auto_interval = interval;
+        r->simulationarchive_next = r->t;
+    }
+}
 
-        void reb_simulation_save_to_file_walltime(struct reb_simulation* const r, const char* filename, double walltime){
-            if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
-            // Note that this will create two snapshots if restarted.
-            r->simulationarchive_auto_walltime = walltime;
-            r->simulationarchive_next = r->walltime;
-        }
+void reb_simulation_save_to_file_walltime(struct reb_simulation* const r, const char* filename, double walltime){
+    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    // Note that this will create two snapshots if restarted.
+    r->simulationarchive_auto_walltime = walltime;
+    r->simulationarchive_next = r->walltime;
+}
 
-        void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step){
-            if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
-            if(r->simulationarchive_auto_step != step){
-                // Only update simulationarchive_next if interval changed. 
-                // This ensures that interrupted simulations will continue
-                // after being restarted from a simulationarchive
-                r->simulationarchive_auto_step = step;
-                r->simulationarchive_next_step = r->steps_done;
-            }
-        }
+void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step){
+    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    if(r->simulationarchive_auto_step != step){
+        // Only update simulationarchive_next if interval changed. 
+        // This ensures that interrupted simulations will continue
+        // after being restarted from a simulationarchive
+        r->simulationarchive_auto_step = step;
+        r->simulationarchive_next_step = r->steps_done;
+    }
+}
