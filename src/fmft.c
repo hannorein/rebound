@@ -495,9 +495,10 @@ double bracket(double *powsd, long ndata){
 
     if(maxpow == 0) printf("DFT has no maximum ...");
 
-    double freq;
-    if(maxj < ndata/2) freq = -(maxj-1);  
-    if(maxj > ndata/2) freq = -(maxj-ndata-1);
+    double freq = -1.11111; // fix this
+    if(maxj < ndata/2-1) freq = -(maxj);  
+    if(maxj > ndata/2-1) freq = -(maxj-ndata);
+    if (freq==-1.11111) printf("Error occured -1.11111\n");
 
     return (TWOPI*freq / ndata);
 
