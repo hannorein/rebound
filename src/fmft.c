@@ -329,7 +329,7 @@ void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int fla
         }
     }
 
-   // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
+    // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
     if(flag==0){ 
         dsort(nfreq, &output[1*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
     }
