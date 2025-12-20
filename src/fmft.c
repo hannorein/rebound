@@ -82,17 +82,13 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
 
     for(int l=0; l<=flag; l++){
-
         if(l==0){
-
             /* SEPARATE REAL AND IMAGINERY PARTS */ 
             for(int j=0;j<ndata;j++){
                 xdata[j] = input[j*2];
                 ydata[j] = input[j*2+1];
             }
-
         } else {
-
             /* GENERATE THE QUASIPERIODIC FUNCTION COMPUTED BY MFT */
             for(int i=0;i<ndata;i++){
                 xdata[i] = 0; 
@@ -102,7 +98,6 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                     ydata[i] += amp[l*nfreq+k]*sin(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
                 }
             }
-
         }
 
         /* MULTIPLY THE SIGNAL BY A WINDOW FUNCTION, STORE RESULT IN x AND y */
@@ -111,12 +106,9 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
         /* COMPUTE POWER SPECTRAL DENSITY USING FAST FOURIER TRANSFORM */
         power(powsd, x, y, ndata);
 
-
         if(l==0){ 
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
-
-
                 /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
@@ -153,12 +145,10 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
         }    
 
         /* HERE STARTS THE MAIN LOOP  *************************************/ 
-
         Q[0] = 1;
         alpha[0] = 1;
 
         for(int m=1;m<nfreq;m++){
-
             /* MULTIPLY SIGNAL BY WINDOW FUNCTION */
             window(x, y, xdata, ydata, ndata);
 
@@ -166,9 +156,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
             power(powsd, x, y, ndata);
 
             if(l==0){
-
                 centerf = bracket(powsd, ndata);
-
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
 
@@ -185,7 +173,6 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
 
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
                 while(f[m] < minfreq || f[m] > maxfreq || nearfreqflag == 1){
-
                     /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
                     leftf = centerf - TWOPI / ndata;
                     rightf = centerf + TWOPI / ndata;
@@ -220,15 +207,11 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 }   
 
             } else {  
-
                 centerf = freq[m];
-
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
-
                 /* DETERMINE THE NEXT FREQUENCY */
                 f[m] = golden(leftf, centerf, rightf, x, y, ndata);
-
             }
 
             /* COMPUTE ITS AMPLITUDE AND PHASE */
@@ -608,11 +591,11 @@ void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     dindex(n, ra, iwksp);
 
     for (int j=0;j<n;j++) wksp[j] = rb[j];
-    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j]];
+    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j-1]];
     for (int j=0;j<n;j++) wksp[j] = rc[j];
-    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n-j]];
+    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n-j-1]];
     for (int j=0;j<n;j++) wksp[j] = rd[j];
-    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n-j]];
+    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n-j-1]];
 
     free(wksp);
     free(iwksp);
