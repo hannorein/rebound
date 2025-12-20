@@ -213,6 +213,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 /* DETERMINE THE NEXT FREQUENCY */
                 f[m] = golden(leftf, centerf, rightf, x, y, ndata);
             }
+            printf("%d %f\n",m,f[m]);
 
             /* COMPUTE ITS AMPLITUDE AND PHASE */
             amph(&A[m], &psi[m], f[m], x, y, ndata);
@@ -220,14 +221,14 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
 
             /* EQUATION (3) in Sidlichovsky and Nesvorny (1997) */
             Q[m*nfreq+m] = 1;
-            for(int j=0;j<m-1;j++){
+            for(int j=0;j<=m-1;j++){
                 double fac = (f[m] - f[j]) * (ndata - 1.) / 2.;
                 Q[m*nfreq+j] = sin(fac)/fac * M_PI*M_PI / (M_PI*M_PI - fac*fac);
                 Q[j*nfreq+m] = Q[m*nfreq+j];
             }
 
             /* EQUATION (17) */
-            for(int k=0;k<m-1;k++){
+            for(int k=0;k<=m-1;k++){
                 B[k] = 0;
                 for(int j=0;j<k;j++)
                     B[k] += -alpha[k*nfreq+j]*Q[m*nfreq+j];
@@ -235,15 +236,15 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
 
             /* EQUATION (18) */
             alpha[m*nfreq+m] = 1;
-            for(int j=0;j<m-1;j++)
+            for(int j=0;j<=m-1;j++)
                 alpha[m*nfreq+m] -= B[j]*B[j];
             alpha[m*nfreq+m] = 1. / sqrt(alpha[m*nfreq+m]);
 
 
             /* EQUATION (19) */
-            for(int k=0;k<m-1;k++){
+            for(int k=0;k<=m-1;k++){
                 alpha[m*nfreq+k] = 0;
-                for(int j=k;j<m-1;j++)
+                for(int j=k;j<=m-1;j++)
                     alpha[m*nfreq+k] += B[j]*alpha[j*nfreq+k];
                 alpha[m*nfreq+k] = alpha[m*nfreq+m]*alpha[m*nfreq+k];
             }
@@ -252,7 +253,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
             for(int i=0;i<ndata;i++){
                 double xsum=0; 
                 double ysum=0;
-                for(int j=0;j<m;j++){
+                for(int j=0;j<=m;j++){
                     double fac = f[j]*i + (f[m]-f[j])*(ndata-1.)/2. + psi[m];
                     xsum += alpha[m*nfreq+j]*cos(fac);
                     ysum += alpha[m*nfreq+j]*sin(fac);
