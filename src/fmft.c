@@ -84,7 +84,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     double *powsd;
     double *xdata, *ydata, *x, *y;
     double centerf, leftf, rightf, fac, xsum, ysum;
-    double **freq, **amp, **phase, *f, *A, *psi;
+    double *freq, *amp, *phase, *f, *A, *psi;
     double **Q, **alpha, *B;
 
 
@@ -96,9 +96,9 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     y = malloc(sizeof(double)*ndata);
     powsd = malloc(sizeof(double)* ndata);
 
-    freq = dmatrix(1, 3*flag, 1, nfreq); 
-    amp = dmatrix(1, 3*flag, 1, nfreq);
-    phase = dmatrix(1, 3*flag, 1, nfreq);
+    freq = malloc(sizeof(double)*3*(flag+1)*nfreq); 
+    amp = malloc(sizeof(double)*3*(flag+1)*nfreq);
+    phase = malloc(sizeof(double)*3*(flag+1)*nfreq);
 
     f = malloc(sizeof(double)* nfreq);
     A = malloc(sizeof(double)* nfreq);
@@ -129,8 +129,8 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
                 xdata[i] = 0; 
                 ydata[i] = 0; 
                 for(k=0;k<nfreq;k++){
-                    xdata[i] += amp[l][k]*cos(freq[l][k]*i + phase[l][k]);
-                    ydata[i] += amp[l][k]*sin(freq[l][k]*i + phase[l][k]);
+                    xdata[i] += amp[l*nfreq+k]*cos(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
+                    ydata[i] += amp[l*nfreq+k]*sin(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
                 }
             }
 
@@ -168,7 +168,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
             }   
 
         else 
-            centerf = freq[0][0];
+            centerf = freq[0];
 
         leftf = centerf - TWOPI / ndata;
         rightf = centerf + TWOPI / ndata;
@@ -249,7 +249,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
             } else {  
 
-                centerf = freq[0][m];
+                centerf = freq[m];
 
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
@@ -320,18 +320,18 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
         /* REMEMBER THE COMPUTED VALUES FOR THE FMFT */
         for(k=0;k<nfreq;k++){
-            freq[l][k] = f[k];
-            amp[l][k] = A[k];
-            phase[l][k] = psi[k];
+            freq[l*nfreq+k] = f[k];
+            amp[l*nfreq+k] = A[k];
+            phase[l*nfreq+k] = psi[k];
         }
     }
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
 
     for(k=0;k<nfreq;k++){
-        output[0][k] = freq[0][k];            
-        output[1][k] = amp[0][k];
-        output[2][k] = phase[0][k];
+        output[0][k] = freq[k];            
+        output[1][k] = amp[0*nfreq+k];
+        output[2][k] = phase[0*nfreq+k];
 
         if(output[2][k] < -M_PI) output[2][k] += TWOPI;
         if(output[2][k] >= M_PI) output[2][k] -= TWOPI;
@@ -339,9 +339,9 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
     if(flag==1 || flag==2)
         for(k=0;k<nfreq;k++){
-            output[3][k] = freq[0][k] + (freq[0][k] - freq[1][k]);            
-            output[4][k] = amp[0][k] + (amp[0][k] - amp[1][k]);
-            output[5][k] = phase[0][k] + (phase[0][k] - phase[1][k]);
+            output[3][k] = freq[k] + (freq[k] - freq[1*nfreq+k]);            
+            output[4][k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
+            output[5][k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
 
             if(output[5][k] < -M_PI) output[5][k] += TWOPI;
             if(output[5][k] >= M_PI) output[5][k] -= TWOPI;
@@ -350,23 +350,23 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     if(flag==2)
         for(k=0;k<nfreq;k++){
 
-            output[6][k] = freq[0][k];
-            if(fabs((fac = freq[1][k] - freq[2][k])/freq[1][k]) > FMFT_TOL)
-                output[6][k] += DSQR(freq[0][k] - freq[1][k]) / fac;
+            output[6][k] = freq[0*nfreq+k];
+            if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL)
+                output[6][k] += DSQR(freq[0*nfreq+k] - freq[1*nfreq+k]) / fac;
             else 
-                output[6][k] += freq[0][k] - freq[1][k]; 
+                output[6][k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
 
-            output[7][k] = amp[0][k];
-            if(fabs((fac = amp[1][k] - amp[2][k])/amp[1][k]) > FMFT_TOL)
-                output[7][k] += DSQR(amp[0][k] - amp[1][k]) / fac;
+            output[7][k] = amp[0*nfreq+k];
+            if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL)
+                output[7][k] += DSQR(amp[0*nfreq+k] - amp[1*nfreq+k]) / fac;
             else
-                output[7][k] += amp[0][k] - amp[1][k]; 
+                output[7][k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
 
-            output[8][k] = phase[0][k];
-            if(fabs((fac = phase[1][k] - phase[2][k])/phase[1][k]) > FMFT_TOL)
-                output[8][k] += DSQR(phase[0][k] - phase[1][k]) / fac;
+            output[8][k] = phase[0*nfreq+k];
+            if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL)
+                output[8][k] += DSQR(phase[0*nfreq+k] - phase[1*nfreq+k]) / fac;
             else
-                output[8][k] += phase[0][k] - phase[1][k]; 
+                output[8][k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
 
             if(output[8][k] < -M_PI) output[8][k] += TWOPI;
             if(output[8][k] >= M_PI) output[8][k] -= TWOPI;
@@ -394,9 +394,9 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     free(y);
     free(powsd);
 
-    free_dmatrix(freq, 1, 3*flag, 1, nfreq); 
-    free_dmatrix(amp, 1, 3*flag, 1, nfreq);
-    free_dmatrix(phase, 1, 3*flag, 1, nfreq);
+    free(freq); 
+    free(amp); 
+    free(phase); 
 
     free(f);
     free(A);
