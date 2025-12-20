@@ -64,10 +64,9 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
        number of frequencies to be computed (the units are rad/sep, where sep is the 
        `time' separation between i and i+1. The algorithm is  
 
-       Basic Fourier Transform algorithm           if   flag = 0;   not implemented   
-       Modified Fourier Transform                  if   flag = 1;
-       Frequency Modified Fourier Transform        if   flag = 2;
-       FMFT with additional non-linear correction  if   flag = 3
+       Modified Fourier Transform                  if   flag = 0;
+       Frequency Modified Fourier Transform        if   flag = 1;
+       FMFT with additional non-linear correction  if   flag = 2
 
        (while the first algorithm is app. 3 times faster than the third one, 
        the third algorithm should be in general much more precise).  
@@ -113,24 +112,25 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
 
-    for(l=1; l<=flag; l++){
+    for(l=0; l<flag; l++){
 
-        if(l==1){
+        if(l==0){
 
             /* SEPARATE REAL AND IMAGINERY PARTS */ 
-            for(j=1;j<=ndata;j++){
-                xdata[j] = input[1][j];
-                ydata[j] = input[2][j];
+            for(j=0;j<ndata;j++){
+                xdata[j] = input[0][j];
+                ydata[j] = input[1][j];
             }
 
         } else {
 
             /* GENERATE THE QUASIPERIODIC FUNCTION COMPUTED BY MFT */
-            for(i=1;i<=ndata;i++){
-                xdata[i] = 0; ydata[i] = 0; 
-                for(k=1;k<=nfreq;k++){
-                    xdata[i] += amp[l-1][k]*cos(freq[l-1][k]*(i-1) + phase[l-1][k]);
-                    ydata[i] += amp[l-1][k]*sin(freq[l-1][k]*(i-1) + phase[l-1][k]);
+            for(i=0;i<ndata;i++){
+                xdata[i] = 0; 
+                ydata[i] = 0; 
+                for(k=0;k<nfreq;k++){
+                    xdata[i] += amp[l][k]*cos(freq[l][k]*i + phase[l][k]);
+                    ydata[i] += amp[l][k]*sin(freq[l][k]*i + phase[l][k]);
                 }
             }
 
@@ -143,7 +143,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         power(powsd, x, y, ndata);
 
 
-        if(l==1) 
+        if(l==0) 
 
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
@@ -153,13 +153,13 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
 
-                f[1] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+                f[0] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
 
-                amph(&A[1], &psi[1], f[1], x, y, ndata);
+                amph(&A[0], &psi[0], f[0], x, y, ndata);
 
-                for(j=1;j<=ndata;j++){
-                    xdata[j] -= A[1]*cos( f[1]*(j-1) + psi[1] );
-                    ydata[j] -= A[1]*sin( f[1]*(j-1) + psi[1] );
+                for(j=0;j<ndata;j++){
+                    xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
+                    ydata[j] -= A[0]*sin( f[0]*j + psi[0] );
                 }
 
                 window(x, y, xdata, ydata, ndata);
@@ -168,29 +168,29 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
             }   
 
         else 
-            centerf = freq[1][1];
+            centerf = freq[0][0];
 
         leftf = centerf - TWOPI / ndata;
         rightf = centerf + TWOPI / ndata;
 
         /* DETERMINE THE FIRST FREQUENCY */
-        f[1] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+        f[0] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
 
         /* COMPUTE AMPLITUDE AND PHASE */
-        amph(&A[1], &psi[1], f[1], x, y, ndata);
+        amph(&A[0], &psi[0], f[0], x, y, ndata);
 
         /* SUBSTRACT THE FIRST HARMONIC FROM THE SIGNAL */
-        for(j=1;j<=ndata;j++){
-            xdata[j] -= A[1]*cos( f[1]*(j-1) + psi[1] );
-            ydata[j] -= A[1]*sin( f[1]*(j-1) + psi[1] );
+        for(j=0;j<ndata;j++){
+            xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
+            ydata[j] -= A[0]*sin( f[0]*j + psi[0] );
         }    
 
         /* HERE STARTS THE MAIN LOOP  *************************************/ 
 
-        Q[1][1] = 1;
-        alpha[1][1] = 1;
+        Q[0][0] = 1;
+        alpha[0][0] = 1;
 
-        for(m=2;m<=nfreq;m++){
+        for(m=1;m<nfreq;m++){
 
             /* MULTIPLY SIGNAL BY WINDOW FUNCTION */
             window(x, y, xdata, ydata, ndata);
@@ -198,7 +198,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
             /* COMPUTE POWER SPECTRAL DENSITY USING FAST FOURIER TRANSFORM */
             power(powsd, x, y, ndata);
 
-            if(l==1){
+            if(l==0){
 
                 centerf = bracket(powsd, ndata);
 
@@ -210,7 +210,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
                 /* CHECK WHETHER THE NEW FREQUENCY IS NOT TOO CLOSE TO ANY PREVIOUSLY
                    DETERMINED ONE */
                 nearfreqflag = 0.;
-                for(k=1;k<=m-1;k++)
+                for(k=0;k<m-1;k++)
                     if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata )   nearfreqflag = 1; 
 
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
@@ -224,9 +224,9 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
                     amph(&A[m], &psi[m], f[m], x, y, ndata);
 
-                    for(j=1;j<=ndata;j++){
-                        xdata[j] -= A[m]*cos( f[m]*(j-1) + psi[m] );
-                        ydata[j] -= A[m]*sin( f[m]*(j-1) + psi[m] );
+                    for(j=0;j<ndata;j++){
+                        xdata[j] -= A[m]*cos( f[m]*j + psi[m] );
+                        ydata[j] -= A[m]*sin( f[m]*j + psi[m] );
                     }
 
                     /* AND RECOMPUTE THE NEW ONE */
@@ -242,14 +242,14 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
                     f[m] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
 
                     nearfreqflag = 0.;
-                    for(k=1;k<=m-1;k++)
+                    for(k=0;k<m-1;k++)
                         if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata )   nearfreqflag = 1; 
 
                 }   
 
             } else {  
 
-                centerf = freq[1][m];
+                centerf = freq[0][m];
 
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
@@ -265,39 +265,39 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
             /* EQUATION (3) in Sidlichovsky and Nesvorny (1997) */
             Q[m][m] = 1;
-            for(j=1;j<=m-1;j++){
+            for(j=0;j<m-1;j++){
                 fac = (f[m] - f[j]) * (ndata - 1.) / 2.;
                 Q[m][j] = sin(fac)/fac * M_PI*M_PI / (M_PI*M_PI - fac*fac);
                 Q[j][m] = Q[m][j];
             }
 
             /* EQUATION (17) */
-            for(k=1;k<=m-1;k++){
+            for(k=0;k<m-1;k++){
                 B[k] = 0;
-                for(j=1;j<=k;j++)
+                for(j=0;j<k;j++)
                     B[k] += -alpha[k][j]*Q[m][j];
             }
 
             /* EQUATION (18) */
             alpha[m][m] = 1;
-            for(j=1;j<=m-1;j++)
+            for(j=0;j<m-1;j++)
                 alpha[m][m] -= B[j]*B[j];
             alpha[m][m] = 1. / sqrt(alpha[m][m]);
 
 
             /* EQUATION (19) */
-            for(k=1;k<=m-1;k++){
+            for(k=0;k<m-1;k++){
                 alpha[m][k] = 0;
-                for(j=k;j<=m-1;j++)
+                for(j=k;j<m-1;j++)
                     alpha[m][k] += B[j]*alpha[j][k];
                 alpha[m][k] = alpha[m][m]*alpha[m][k];
             }
 
             /* EQUATION (22) */
-            for(i=1;i<=ndata;i++){
+            for(i=0;i<ndata;i++){
                 xsum=0; ysum=0;
-                for(j=1;j<=m;j++){
-                    fac = f[j]*(i-1) + (f[m]-f[j])*(ndata-1.)/2. + psi[m];
+                for(j=0;j<m;j++){
+                    fac = f[j]*i + (f[m]-f[j])*(ndata-1.)/2. + psi[m];
                     xsum += alpha[m][j]*cos(fac);
                     ysum += alpha[m][j]*sin(fac);
                 }
@@ -307,9 +307,9 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         }
 
         /* EQUATION (26) */
-        for(k=1;k<=nfreq;k++){
+        for(k=0;k<nfreq;k++){
             xsum=0; ysum=0;
-            for(j=k;j<=nfreq;j++){
+            for(j=k;j<nfreq;j++){
                 fac = (f[j]-f[k])*(ndata-1.)/2. + psi[j];
                 xsum += alpha[j][j]*alpha[j][k]*A[j]*cos(fac);
                 ysum += alpha[j][j]*alpha[j][k]*A[j]*sin(fac);
@@ -319,7 +319,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         }
 
         /* REMEMBER THE COMPUTED VALUES FOR THE FMFT */
-        for(k=1;k<=nfreq;k++){
+        for(k=0;k<nfreq;k++){
             freq[l][k] = f[k];
             amp[l][k] = A[k];
             phase[l][k] = psi[k];
@@ -328,63 +328,63 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
 
-    for(k=1;k<=nfreq;k++){
-        output[1][k] = freq[1][k];            
-        output[2][k] = amp[1][k];
-        output[3][k] = phase[1][k];
+    for(k=0;k<nfreq;k++){
+        output[0][k] = freq[0][k];            
+        output[1][k] = amp[0][k];
+        output[2][k] = phase[0][k];
 
-        if(output[3][k] < -M_PI) output[3][k] += TWOPI;
-        if(output[3][k] >= M_PI) output[3][k] -= TWOPI;
+        if(output[2][k] < -M_PI) output[2][k] += TWOPI;
+        if(output[2][k] >= M_PI) output[2][k] -= TWOPI;
     }
 
-    if(flag==2 || flag==3)
-        for(k=1;k<=nfreq;k++){
-            output[4][k] = freq[1][k] + (freq[1][k] - freq[2][k]);            
-            output[5][k] = amp[1][k] + (amp[1][k] - amp[2][k]);
-            output[6][k] = phase[1][k] + (phase[1][k] - phase[2][k]);
+    if(flag==1 || flag==2)
+        for(k=0;k<nfreq;k++){
+            output[3][k] = freq[0][k] + (freq[0][k] - freq[1][k]);            
+            output[4][k] = amp[0][k] + (amp[0][k] - amp[1][k]);
+            output[5][k] = phase[0][k] + (phase[0][k] - phase[1][k]);
 
-            if(output[6][k] < -M_PI) output[6][k] += TWOPI;
-            if(output[6][k] >= M_PI) output[6][k] -= TWOPI;
+            if(output[5][k] < -M_PI) output[5][k] += TWOPI;
+            if(output[5][k] >= M_PI) output[5][k] -= TWOPI;
         }
 
-    if(flag==3)
-        for(k=1;k<=nfreq;k++){
+    if(flag==2)
+        for(k=0;k<nfreq;k++){
 
-            output[7][k] = freq[1][k];
-            if(fabs((fac = freq[2][k] - freq[3][k])/freq[2][k]) > FMFT_TOL)
-                output[7][k] += DSQR(freq[1][k] - freq[2][k]) / fac;
+            output[6][k] = freq[0][k];
+            if(fabs((fac = freq[1][k] - freq[2][k])/freq[1][k]) > FMFT_TOL)
+                output[6][k] += DSQR(freq[0][k] - freq[1][k]) / fac;
             else 
-                output[7][k] += freq[1][k] - freq[2][k]; 
+                output[6][k] += freq[0][k] - freq[1][k]; 
 
-            output[8][k] = amp[1][k];
-            if(fabs((fac = amp[2][k] - amp[3][k])/amp[2][k]) > FMFT_TOL)
-                output[8][k] += DSQR(amp[1][k] - amp[2][k]) / fac;
+            output[7][k] = amp[0][k];
+            if(fabs((fac = amp[1][k] - amp[2][k])/amp[1][k]) > FMFT_TOL)
+                output[7][k] += DSQR(amp[0][k] - amp[1][k]) / fac;
             else
-                output[8][k] += amp[1][k] - amp[2][k]; 
+                output[7][k] += amp[0][k] - amp[1][k]; 
 
-            output[9][k] = phase[1][k];
-            if(fabs((fac = phase[2][k] - phase[3][k])/phase[2][k]) > FMFT_TOL)
-                output[9][k] += DSQR(phase[1][k] - phase[2][k]) / fac;
+            output[8][k] = phase[0][k];
+            if(fabs((fac = phase[1][k] - phase[2][k])/phase[1][k]) > FMFT_TOL)
+                output[8][k] += DSQR(phase[0][k] - phase[1][k]) / fac;
             else
-                output[9][k] += phase[1][k] - phase[2][k]; 
+                output[8][k] += phase[0][k] - phase[1][k]; 
 
-            if(output[9][k] < -M_PI) output[9][k] += TWOPI;
-            if(output[9][k] >= M_PI) output[9][k] -= TWOPI;
+            if(output[8][k] < -M_PI) output[8][k] += TWOPI;
+            if(output[8][k] >= M_PI) output[8][k] -= TWOPI;
         }
 
     /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
-    if(flag==1) 
-        dsort(nfreq, output[2], output[1], output[2], output[3]);
+    if(flag==0) 
+        dsort(nfreq, output[1], output[0], output[1], output[2]);
 
-    if(flag==2){
-        dsort(nfreq, output[5], output[1], output[2], output[3]);
-        dsort(nfreq, output[5], output[4], output[5], output[6]);
+    if(flag==1){
+        dsort(nfreq, output[4], output[0], output[1], output[2]);
+        dsort(nfreq, output[4], output[3], output[4], output[5]);
     }
 
-    if(flag==3){
-        dsort(nfreq, output[8], output[1], output[2], output[3]);
-        dsort(nfreq, output[8], output[4], output[5], output[6]);   
-        dsort(nfreq, output[8], output[7], output[8], output[9]);
+    if(flag==2){
+        dsort(nfreq, output[7], output[0], output[1], output[2]);
+        dsort(nfreq, output[7], output[3], output[4], output[5]);   
+        dsort(nfreq, output[7], output[6], output[7], output[8]);
     }
 
     /* FREE THE ALLOCATED VARIABLES */
@@ -417,9 +417,9 @@ void window(double *x, double *y, double *xdata, double *ydata, long ndata)
     long j;
     double window;
 
-    for(j=1;j<=ndata;j++) {
+    for(j=0;j<ndata;j++) {
 
-        window = TWOPI*(j-1) / (ndata-1);
+        window = TWOPI*j / (ndata-1);
         window = (1. - cos(window)) / 2.;
 
         x[j] = xdata[j]*window;
@@ -440,15 +440,15 @@ void power(double *powsd, double *x, double *y, long ndata)
 
     z = malloc(sizeof(double)*2*ndata);
 
-    for(j=1;j<=ndata;j++){
-        z[2*j-1] = x[j];
-        z[2*j] = y[j];
+    for(j=0;j<ndata;j++){
+        z[2*j] = x[j];
+        z[2*j+1] = y[j];
     }
 
     four1(z, ndata, 1);
 
-    for(j=1;j<=ndata;j++)
-        powsd[j] = DSQR(z[2*j-1]) + DSQR(z[2*j]);
+    for(j=0;j<ndata;j++)
+        powsd[j] = DSQR(z[2*j]) + DSQR(z[2*j+1]);
 
     free(z);
 }
@@ -464,8 +464,8 @@ void four1(double data[], unsigned long nn, int isign)
     double tempr,tempi;
 
     n=nn<<1;
-    j=1;
-    for(i=1;i<n;i+=2){ /* bit-reversal section */
+    j=0;
+    for(i=0;i<n-1;i+=2){ /* bit-reversal section */
         if(j>i){
             double t = data[j];
             data[j] = data[i];
@@ -491,8 +491,8 @@ void four1(double data[], unsigned long nn, int isign)
         wpi=sin(theta);
         wr=1.0;
         wi=0.0;
-        for(m=1;m<mmax;m+=2){ /* two inner loops */
-            for(i=m;i<=n;i+=istep){
+        for(m=0;m<mmax-1;m+=2){ /* two inner loops */
+            for(i=m;i<n;i+=istep){
                 j=i+mmax; /* D-L formula */
                 tempr=wr*data[j]-wi*data[j+1];
                 tempi=wr*data[j+1]+wi*data[j];
@@ -519,14 +519,14 @@ double bracket(double *powsd, long ndata)
     maxj = 0;
     maxpow = 0;
 
-    for(j=2;j<=ndata/2-2;j++)
+    for(j=1;j<ndata/2-2;j++)
         if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1])
             if(powsd[j] > maxpow){ 
                 maxj = j;
                 maxpow = powsd[j];
             }  
 
-    for(j=ndata/2+2;j<=ndata-1;j++)
+    for(j=ndata/2+1;j<ndata-1;j++)
         if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1])
             if(powsd[j] > maxpow){ 
                 maxj = j;
@@ -631,10 +631,10 @@ void phifun(double *xphi, double *yphi, double freq,
     xdata2 = malloc(sizeof(double)* n);
     ydata2 = malloc(sizeof(double)* n);
 
-    xdata2[1] = xdata[1] / 2; ydata2[1] = ydata[1] / 2;
-    xdata2[n] = xdata[n] / 2; ydata2[n] = ydata[n] / 2;
+    xdata2[0] = xdata[0] / 2; ydata2[0] = ydata[0] / 2;
+    xdata2[n-1] = xdata[n-1] / 2; ydata2[n-1] = ydata[n-1] / 2;
 
-    for(i=2;i<=n-1;i++){
+    for(i=0;i<n-2;i++){
         xdata2[i] = xdata[i];
         ydata2[i] = ydata[i];
     }
@@ -648,7 +648,7 @@ void phifun(double *xphi, double *yphi, double freq,
         c = cos(-nn*freq);
         s = sin(-nn*freq);
 
-        for(i=1;i<=nn;i++){
+        for(i=0;i<nn;i++){
             j=i+nn;
             xdata2[i] += c*xdata2[j] - s*ydata2[j];
             ydata2[i] += c*ydata2[j] + s*xdata2[j];
@@ -656,8 +656,8 @@ void phifun(double *xphi, double *yphi, double freq,
 
     }
 
-    *xphi = 2*xdata2[1] / (n-1);
-    *yphi = 2*ydata2[1] / (n-1);
+    *xphi = 2*xdata2[0] / (n-1);
+    *yphi = 2*ydata2[0] / (n-1);
 
     free(xdata2);
     free(ydata2);
@@ -680,12 +680,12 @@ void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[])
 
     dindex(n, ra, iwksp);
 
-    for (j=1;j<=n;j++) wksp[j] = rb[j];
-    for(j=1;j<=n;j++) rb[j] = wksp[iwksp[n2-j]];
-    for (j=1;j<=n;j++) wksp[j] = rc[j];
-    for(j=1;j<=n;j++) rc[j] = wksp[iwksp[n2-j]];
-    for (j=1;j<=n;j++) wksp[j] = rd[j];
-    for(j=1;j<=n;j++) rd[j] = wksp[iwksp[n2-j]];
+    for (j=0;j<n;j++) wksp[j] = rb[j];
+    for(j=0;j<n;j++) rb[j] = wksp[iwksp[n2-j]];
+    for (j=0;j<n;j++) wksp[j] = rc[j];
+    for(j=0;j<n;j++) rc[j] = wksp[iwksp[n2-j]];
+    for (j=0;j<n;j++) wksp[j] = rd[j];
+    for(j=0;j<n;j++) rd[j] = wksp[iwksp[n2-j]];
 
     free(wksp);
     free(iwksp);
@@ -694,18 +694,18 @@ void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[])
 
 void dindex(unsigned long n, double arr[], unsigned long indx[])
 {
-    unsigned long i,indxt,ir=n,j,k,l=1;
+    unsigned long i,indxt,ir=n,j,k,l=0;
     int jstack=0,*istack;
     double a;
 
     istack=malloc(sizeof(int)*SORT_NSTACK);
-    for (j=1;j<=n;j++) indx[j]=j;
+    for (j=0;j<n;j++) indx[j]=j;
     for(;;){
         if(ir-l < SORT_M) {
-            for(j=l+1;j<=ir;j++) {
+            for(j=l+1;j<ir;j++) {
                 indxt=indx[j];
                 a=arr[indxt];
-                for(i=j-1;i>=1;i--) {
+                for(i=j-1;i>=0;i--) {
                     if(arr[indx[i]] <= a) break;
                     indx[i+1]=indx[i];
                 }
