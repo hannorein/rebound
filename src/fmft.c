@@ -352,21 +352,20 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
             if(output[8*nfreq+k] >= M_PI) output[8*nfreq+k] -= TWOPI;
         }
 
-   // Not sorted yet
    // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
-   // if(flag==0) 
-   //     dsort(nfreq, output[1], output[0], output[1], output[2]);
+    if(flag==0) 
+        dsort(nfreq, &output[1*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
 
-   // if(flag==1){
-   //     dsort(nfreq, output[4], output[0], output[1], output[2]);
-   //     dsort(nfreq, output[4], output[3], output[4], output[5]);
-   // }
+    if(flag==1){
+        dsort(nfreq, &output[4*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
+        dsort(nfreq, &output[4*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);
+    }
 
-   // if(flag==2){
-   //     dsort(nfreq, output[7], output[0], output[1], output[2]);
-   //     dsort(nfreq, output[7], output[3], output[4], output[5]);   
-   //     dsort(nfreq, output[7], output[6], output[7], output[8]);
-   // }
+    if(flag==2){
+        dsort(nfreq, &output[7*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
+        dsort(nfreq, &output[7*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);   
+        dsort(nfreq, &output[7*nfreq], &output[6*nfreq], &output[7*nfreq], &output[8*nfreq]);
+    }
 
     /* FREE THE ALLOCATED VARIABLES */
     free(xdata);
