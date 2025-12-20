@@ -442,7 +442,6 @@ void power(double *powsd, double *x, double *y, long ndata){
 void four1(double data[], unsigned long nn, int isign){
     /* data[1..2*nn] replaces by DFS, nn must be a power of 2 */
     unsigned long n;
-    double tempr,tempi;
 
     n=nn<<1;
     int j=0;
@@ -475,8 +474,8 @@ void four1(double data[], unsigned long nn, int isign){
         for(int m=0;m<mmax-1;m+=2){ /* two inner loops */
             for(int i=m;i<n;i+=istep){
                 j=i+mmax; /* D-L formula */
-                tempr=wr*data[j]-wi*data[j+1];
-                tempi=wr*data[j+1]+wi*data[j];
+                double tempr=wr*data[j]-wi*data[j+1];
+                double tempi=wr*data[j+1]+wi*data[j];
                 data[j]=data[i]-tempr;
                 data[j+1]=data[i+1]-tempi;
                 data[i]+=tempr;
@@ -489,25 +488,20 @@ void four1(double data[], unsigned long nn, int isign){
     }
 }
 
-double bracket(double *powsd, long ndata)
-
+double bracket(double *powsd, long ndata){
     /* FINDS THE MAXIMUM OF THE POWER SPECTRAL DENSITY  */ 
 
-{
-    long j, maxj;
-    double freq, maxpow;
+    int maxj = 0;
+    double maxpow = 0;
 
-    maxj = 0;
-    maxpow = 0;
-
-    for(j=1;j<ndata/2-2;j++)
+    for(int j=1;j<ndata/2-2;j++)
         if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1])
             if(powsd[j] > maxpow){ 
                 maxj = j;
                 maxpow = powsd[j];
             }  
 
-    for(j=ndata/2+1;j<ndata-1;j++)
+    for(int j=ndata/2+1;j<ndata-1;j++)
         if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1])
             if(powsd[j] > maxpow){ 
                 maxj = j;
@@ -522,6 +516,7 @@ double bracket(double *powsd, long ndata)
 
     if(maxpow == 0) printf("DFT has no maximum ...");
 
+    double freq;
     if(maxj < ndata/2) freq = -(maxj-1);  
     if(maxj > ndata/2) freq = -(maxj-ndata-1);
 
@@ -534,18 +529,13 @@ double bracket(double *powsd, long ndata)
 #define GOLD_R 0.61803399
 #define GOLD_C (1.0 - GOLD_R)
 
-double golden(double (*f)(double, double *, double *, long), 
-        double ax, double bx, double cx,
-        double xdata[], double ydata[], long n)
-
+double golden(double (*f)(double, double *, double *, long), double ax, double bx, double cx, double xdata[], double ydata[], long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
 
-{
-    double f1,f2,x0,x1,x2,x3;
+    double x0=ax;
+    double x3=cx;
 
-    x0=ax;
-    x3=cx;
-
+    double x1,x2;
     if(fabs(cx-bx) > fabs(bx-ax)){
         x1 = bx;
         x2 = bx + GOLD_C*(cx-bx);
@@ -554,8 +544,8 @@ double golden(double (*f)(double, double *, double *, long),
         x1 = bx - GOLD_C*(bx-ax);
     }
 
-    f1 = (*f)(x1, xdata, ydata, n);
-    f2 = (*f)(x2, xdata, ydata, n);
+    double f1 = (*f)(x1, xdata, ydata, n);
+    double f2 = (*f)(x2, xdata, ydata, n);
 
     while(fabs(x3-x0) > FMFT_TOL*(fabs(x1)+fabs(x2))){
         if(f2 > f1){
@@ -571,14 +561,10 @@ double golden(double (*f)(double, double *, double *, long),
     else return x2;
 }
 
-void amph(double *amp, double *phase, double freq, 
-        double xdata[], double ydata[], long ndata){
-
+void amph(double *amp, double *phase, double freq, double xdata[], double ydata[], long ndata){
     /* CALCULATES THE AMPLITUDE AND PHASE */
-
-    double xphi,yphi;
-
-    xphi = yphi = 0;
+    double xphi = 0;
+    double yphi = 0;
 
     phifun(&xphi, &yphi, freq, xdata, ydata, ndata);
 
@@ -586,51 +572,40 @@ void amph(double *amp, double *phase, double freq,
     *phase = atan2(yphi, xphi);
 }
 
-double phisqr(double freq, double xdata[], double ydata[], long ndata)
-
+double phisqr(double freq, double xdata[], double ydata[], long ndata){
     /* COMPUTES A SQUARE POWER OF THE FUNCTION PHI */
-
-{	
-    double xphi,yphi;
-
-    xphi = yphi = 0;
+    double xphi = 0;
+    double yphi = 0;
 
     phifun(&xphi, &yphi, freq, xdata, ydata, ndata);
 
     return xphi*xphi + yphi*yphi;
 }
 
-void phifun(double *xphi, double *yphi, double freq,  
-        double xdata[], double ydata[], long n)
-
+void phifun(double *xphi, double *yphi, double freq, double xdata[], double ydata[], long n){
     /* COMPUTES THE FUNCTION PHI */   
-
-{
-    long i, j, nn;
-    double c, s, *xdata2, *ydata2;
-
-    xdata2 = malloc(sizeof(double)* n);
-    ydata2 = malloc(sizeof(double)* n);
+    double* xdata2 = malloc(sizeof(double)* n);
+    double* ydata2 = malloc(sizeof(double)* n);
 
     xdata2[0] = xdata[0] / 2; ydata2[0] = ydata[0] / 2;
     xdata2[n-1] = xdata[n-1] / 2; ydata2[n-1] = ydata[n-1] / 2;
 
-    for(i=0;i<n-2;i++){
+    for(int i=0;i<n-2;i++){
         xdata2[i] = xdata[i];
         ydata2[i] = ydata[i];
     }
 
-    nn = n;
+    int nn = n;
 
     while(nn != 1){
 
         nn = nn / 2;
 
-        c = cos(-nn*freq);
-        s = sin(-nn*freq);
+        double c = cos(-nn*freq);
+        double s = sin(-nn*freq);
 
-        for(i=0;i<nn;i++){
-            j=i+nn;
+        for(int i=0;i<nn;i++){
+            int j=i+nn;
             xdata2[i] += c*xdata2[j] - s*ydata2[j];
             ydata2[i] += c*ydata2[j] + s*xdata2[j];
         }
@@ -647,45 +622,36 @@ void phifun(double *xphi, double *yphi, double freq,
 #define SORT_M 7 
 #define SORT_NSTACK 50
 
-void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[])
-
+void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[]){
     /* SORTING PROCEDURE FROM NUMERICAL RECIPES */
-
-{
-    unsigned long j,*iwksp,n2;
-    double *wksp;
-
-    n2 = n+1;
-    iwksp = malloc(sizeof(unsigned long)*n);
-    wksp = malloc(sizeof(double)* n);
+    unsigned long* iwksp = malloc(sizeof(unsigned long)*n);
+    double* wksp = malloc(sizeof(double)* n);
 
     dindex(n, ra, iwksp);
 
-    for (j=0;j<n;j++) wksp[j] = rb[j];
-    for(j=0;j<n;j++) rb[j] = wksp[iwksp[n2-j]];
-    for (j=0;j<n;j++) wksp[j] = rc[j];
-    for(j=0;j<n;j++) rc[j] = wksp[iwksp[n2-j]];
-    for (j=0;j<n;j++) wksp[j] = rd[j];
-    for(j=0;j<n;j++) rd[j] = wksp[iwksp[n2-j]];
+    for (int j=0;j<n;j++) wksp[j] = rb[j];
+    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n+1-j]];
+    for (int j=0;j<n;j++) wksp[j] = rc[j];
+    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n+1-j]];
+    for (int j=0;j<n;j++) wksp[j] = rd[j];
+    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n+1-j]];
 
     free(wksp);
     free(iwksp);
 }
 
 
-void dindex(unsigned long n, double arr[], unsigned long indx[])
-{
-    unsigned long i,indxt,ir=n,j,k,l=0;
-    int jstack=0,*istack;
-    double a;
+void dindex(unsigned long n, double arr[], unsigned long indx[]) {
+    unsigned long i,indxt,ir=n,j,l=0;
+    int jstack=0;
 
-    istack=malloc(sizeof(int)*SORT_NSTACK);
+    int* istack=malloc(sizeof(int)*SORT_NSTACK);
     for (j=0;j<n;j++) indx[j]=j;
     for(;;){
         if(ir-l < SORT_M) {
             for(j=l+1;j<ir;j++) {
                 indxt=indx[j];
-                a=arr[indxt];
+                double a=arr[indxt];
                 for(i=j-1;i>=0;i--) {
                     if(arr[indx[i]] <= a) break;
                     indx[i+1]=indx[i];
@@ -696,7 +662,7 @@ void dindex(unsigned long n, double arr[], unsigned long indx[])
             ir=istack[jstack--];
             l=istack[jstack--];
         } else {
-            k=(l+ir) >> 1;
+            unsigned long k=(l+ir) >> 1;
             ULSWAP(indx[k],indx[l+1]);
             if (arr[indx[l+1]] > arr[indx[ir]]) {
                 ULSWAP(indx[l+1],indx[ir]);
@@ -710,7 +676,7 @@ void dindex(unsigned long n, double arr[], unsigned long indx[])
             i=l+1;
             j=ir;
             indxt=indx[l];
-            a=arr[indxt];
+            double a=arr[indxt];
             for(;;) {
                 do i++; while (arr[indx[i]] < a);
                 do j--; while (arr[indx[j]] > a);
