@@ -11,32 +11,28 @@ X(t) + iY(t) = Sum_j=1^N [ A_j * exp i (f_j * t + psi_j) ] */
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 
-#define PI 3.14159265358979
-#define TWOPI (2.*PI)
+#define TWOPI (2.*M_PI)
 
 static int itemp;
 static unsigned long ultemp;
-static float ftemp;
 static double dtemp;
 
-#define FSQR(a) ((ftemp=(a)) == 0.0 ? 0.0 : ftemp*ftemp)
 #define DSQR(a) ((dtemp=(a)) == 0.0 ? 0.0 : dtemp*dtemp)
 
 #define SHFT3(a,b,c) (a)=(b);(b)=(c)
 #define SHFT4(a,b,c,d) (a)=(b);(b)=(c);(c)=(d)
 
-#define ISWAP(a,b) itemp=(a);(a)=(b);(b)=itemp
 #define ULSWAP(a,b) ultemp=(a);(a)=(b);(b)=ultemp
-#define FSWAP(a,b) ftemp=(a);(a)=(b);(b)=ftemp
 
 void window(double *x, double *y, double *xdata, double *ydata, long ndata);
 
-void power(float *powsd, double *x, double *y, long ndata);
+void power(double *powsd, double *x, double *y, long ndata);
 
-void four1(float data[], unsigned long n, int isign);
+void four1(double data[], unsigned long n, int isign);
 
-double bracket(float *powsd, long ndata);
+double bracket(double *powsd, long ndata);
 
 double golden(double (*f)(double, double *, double *, long), 
 	      double leftf, double centerf, double rightf, 
@@ -86,35 +82,33 @@ be a power of 2), are the input data X(j-1) and Y(j-1).
 {
   int nearfreqflag;
   long i,j,k,l,m;
-  float *powsd;
+  double *powsd;
   double *xdata, *ydata, *x, *y;
   double centerf, leftf, rightf, fac, xsum, ysum;
   double **freq, **amp, **phase, *f, *A, *psi;
   double **Q, **alpha, *B;
 
-  FILE *fp;
-
   
   /* ALLOCATION OF VARIABLES */
 
-  xdata = dvector(1,ndata);
-  ydata = dvector(1,ndata);
-  x = dvector(1,ndata);
-  y = dvector(1,ndata);
-  powsd = vector(1, ndata);
+  xdata = malloc(sizeof(double)*ndata);
+  ydata = malloc(sizeof(double)*ndata);
+  x = malloc(sizeof(double)*ndata);
+  y = malloc(sizeof(double)*ndata);
+  powsd = malloc(sizeof(double)* ndata);
   
   freq = dmatrix(1, 3*flag, 1, nfreq); 
   amp = dmatrix(1, 3*flag, 1, nfreq);
   phase = dmatrix(1, 3*flag, 1, nfreq);
 
-  f = dvector(1, nfreq);
-  A = dvector(1, nfreq);
-  psi = dvector(1, nfreq);
+  f = malloc(sizeof(double)* nfreq);
+  A = malloc(sizeof(double)* nfreq);
+  psi = malloc(sizeof(double)* nfreq);
 
   
   Q = dmatrix(1, nfreq, 1, nfreq); 
   alpha = dmatrix(1, nfreq, 1, nfreq);
-  B = dvector(1, nfreq);
+  B = malloc(sizeof(double)* nfreq);
 
 
   /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
@@ -273,7 +267,7 @@ be a power of 2), are the input data X(j-1) and Y(j-1).
       Q[m][m] = 1;
       for(j=1;j<=m-1;j++){
 	fac = (f[m] - f[j]) * (ndata - 1.) / 2.;
-	Q[m][j] = sin(fac)/fac * PI*PI / (PI*PI - fac*fac);
+	Q[m][j] = sin(fac)/fac * M_PI*M_PI / (M_PI*M_PI - fac*fac);
 	Q[j][m] = Q[m][j];
       }
       
@@ -339,8 +333,8 @@ be a power of 2), are the input data X(j-1) and Y(j-1).
     output[2][k] = amp[1][k];
     output[3][k] = phase[1][k];
 
-    if(output[3][k] < -PI) output[3][k] += TWOPI;
-    if(output[3][k] >= PI) output[3][k] -= TWOPI;
+    if(output[3][k] < -M_PI) output[3][k] += TWOPI;
+    if(output[3][k] >= M_PI) output[3][k] -= TWOPI;
   }
   
   if(flag==2 || flag==3)
@@ -349,8 +343,8 @@ be a power of 2), are the input data X(j-1) and Y(j-1).
       output[5][k] = amp[1][k] + (amp[1][k] - amp[2][k]);
       output[6][k] = phase[1][k] + (phase[1][k] - phase[2][k]);
       
-      if(output[6][k] < -PI) output[6][k] += TWOPI;
-      if(output[6][k] >= PI) output[6][k] -= TWOPI;
+      if(output[6][k] < -M_PI) output[6][k] += TWOPI;
+      if(output[6][k] >= M_PI) output[6][k] -= TWOPI;
     }
   
   if(flag==3)
@@ -374,8 +368,8 @@ be a power of 2), are the input data X(j-1) and Y(j-1).
       else
 	output[9][k] += phase[1][k] - phase[2][k]; 
 
-      if(output[9][k] < -PI) output[9][k] += TWOPI;
-      if(output[9][k] >= PI) output[9][k] -= TWOPI;
+      if(output[9][k] < -M_PI) output[9][k] += TWOPI;
+      if(output[9][k] >= M_PI) output[9][k] -= TWOPI;
     }
 
   /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
@@ -394,23 +388,23 @@ be a power of 2), are the input data X(j-1) and Y(j-1).
   }
 
   /* FREE THE ALLOCATED VARIABLES */
-  free_dvector(xdata, 1, ndata);
-  free_dvector(ydata, 1, ndata);
-  free_dvector(x, 1, ndata);
-  free_dvector(y, 1, ndata);
-  free_vector(powsd, 1, ndata);
+  free(xdata);
+  free(ydata);
+  free(x);
+  free(y);
+  free(powsd);
   
   free_dmatrix(freq, 1, 3*flag, 1, nfreq); 
   free_dmatrix(amp, 1, 3*flag, 1, nfreq);
   free_dmatrix(phase, 1, 3*flag, 1, nfreq);
 
-  free_dvector(f, 1, nfreq);
-  free_dvector(A, 1, nfreq);
-  free_dvector(psi, 1, nfreq);
+  free(f);
+  free(A);
+  free(psi);
  
   free_dmatrix(Q, 1, nfreq, 1, nfreq); 
   free_dmatrix(alpha, 1, nfreq, 1, nfreq);
-  free_dvector(B, 1, nfreq);
+  free(B);
 
   return 1;
 }
@@ -435,16 +429,16 @@ void window(double *x, double *y, double *xdata, double *ydata, long ndata)
 }
 
 
-void power(float *powsd, double *x, double *y, long ndata)
+void power(double *powsd, double *x, double *y, long ndata)
 
 /* REARRANGES DATA FOR THE FAST FOURIER TRANSFORM, 
 CALLS FFT AND RETURNS POWER SPECTRAL DENSITY */
 
 {
   long j;
-  float *z;
+  double *z;
 
-  z = vector(1, 2*ndata);
+  z = malloc(sizeof(double)*2*ndata);
 
   for(j=1;j<=ndata;j++){
     z[2*j-1] = x[j];
@@ -454,27 +448,31 @@ CALLS FFT AND RETURNS POWER SPECTRAL DENSITY */
   four1(z, ndata, 1);
 
   for(j=1;j<=ndata;j++)
-    powsd[j] = FSQR(z[2*j-1]) + FSQR(z[2*j]);
+    powsd[j] = DSQR(z[2*j-1]) + DSQR(z[2*j]);
  
-  free_vector(z, 1, 2*ndata);
+  free(z);
 }
 
 
-void four1(float data[], unsigned long nn, int isign)
+void four1(double data[], unsigned long nn, int isign)
 
 /* data[1..2*nn] replaces by DFS, nn must be a power of 2 */
 
 {
   unsigned long n,mmax,m,j,istep,i;
   double wtemp,wr,wpr,wpi,wi,theta; /* double for recurrences */
-  float tempr,tempi;
+  double tempr,tempi;
   
   n=nn<<1;
   j=1;
   for(i=1;i<n;i+=2){ /* bit-reversal section */
     if(j>i){
-      FSWAP(data[j],data[i]);
-      FSWAP(data[j+1],data[i+1]);
+        double t = data[j];
+        data[j] = data[i];
+        data[i] = t;
+        t = data[j+1];
+        data[j+1] = data[i+1];
+        data[i+1] = t;
     }
     m=n>>1;
     while(m>=2 && j>m){
@@ -510,7 +508,7 @@ void four1(float data[], unsigned long nn, int isign)
   }
 }
 
-double bracket(float *powsd, long ndata)
+double bracket(double *powsd, long ndata)
 
 /* FINDS THE MAXIMUM OF THE POWER SPECTRAL DENSITY  */ 
 
@@ -630,8 +628,8 @@ void phifun(double *xphi, double *yphi, double freq,
   long i, j, nn;
   double c, s, *xdata2, *ydata2;
   
-  xdata2 = dvector(1, n);
-  ydata2 = dvector(1, n);
+  xdata2 = malloc(sizeof(double)* n);
+  ydata2 = malloc(sizeof(double)* n);
   
   xdata2[1] = xdata[1] / 2; ydata2[1] = ydata[1] / 2;
   xdata2[n] = xdata[n] / 2; ydata2[n] = ydata[n] / 2;
@@ -661,8 +659,8 @@ void phifun(double *xphi, double *yphi, double freq,
   *xphi = 2*xdata2[1] / (n-1);
   *yphi = 2*ydata2[1] / (n-1);
 
-  free_dvector(xdata2,1,n);
-  free_dvector(ydata2,1,n);
+  free(xdata2);
+  free(ydata2);
 }
 
 #define SORT_M 7 
@@ -677,8 +675,8 @@ void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[])
   double *wksp;
   
   n2 = n+1;
-  iwksp = lvector(1, n);
-  wksp = dvector(1, n);
+  iwksp = malloc(sizeof(unsigned long)*n);
+  wksp = malloc(sizeof(double)* n);
 
   dindex(n, ra, iwksp);
 
@@ -689,18 +687,18 @@ void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[])
   for (j=1;j<=n;j++) wksp[j] = rd[j];
   for(j=1;j<=n;j++) rd[j] = wksp[iwksp[n2-j]];
 
-  free_dvector(wksp, 1, n);
-  free_lvector(iwksp, 1, n);
+  free(wksp);
+  free(iwksp);
 }
 
 
 void dindex(unsigned long n, double arr[], unsigned long indx[])
 {
-  unsigned long i,indxt,ir=n,itemp,j,k,l=1;
+  unsigned long i,indxt,ir=n,j,k,l=1;
   int jstack=0,*istack;
   double a;
   
-  istack=ivector(1,SORT_NSTACK);
+  istack=malloc(sizeof(int)*SORT_NSTACK);
   for (j=1;j<=n;j++) indx[j]=j;
   for(;;){
     if(ir-l < SORT_M) {
@@ -753,7 +751,7 @@ void dindex(unsigned long n, double arr[], unsigned long indx[])
       }
     }
   }
-  free_ivector(istack, 1, SORT_NSTACK);
+  free(istack);
 }
 
 
