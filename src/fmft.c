@@ -15,11 +15,7 @@
 
 #define TWOPI (2.*M_PI)
 
-static int itemp;
 static unsigned long ultemp;
-static double dtemp;
-
-#define DSQR(a) ((dtemp=(a)) == 0.0 ? 0.0 : dtemp*dtemp)
 
 #define SHFT3(a,b,c) (a)=(b);(b)=(c)
 #define SHFT4(a,b,c,d) (a)=(b);(b)=(c);(c)=(d)
@@ -85,7 +81,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     double *xdata, *ydata, *x, *y;
     double centerf, leftf, rightf, fac, xsum, ysum;
     double *freq, *amp, *phase, *f, *A, *psi;
-    double **Q, **alpha, *B;
+    double *Q, *alpha, *B;
 
 
     /* ALLOCATION OF VARIABLES */
@@ -105,8 +101,8 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     psi = malloc(sizeof(double)* nfreq);
 
 
-    Q = dmatrix(1, nfreq, 1, nfreq); 
-    alpha = dmatrix(1, nfreq, 1, nfreq);
+    Q = malloc(sizeof(double)*nfreq*nfreq);
+    alpha = malloc(sizeof(double)*nfreq*nfreq);
     B = malloc(sizeof(double)* nfreq);
 
 
@@ -187,8 +183,8 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
         /* HERE STARTS THE MAIN LOOP  *************************************/ 
 
-        Q[0][0] = 1;
-        alpha[0][0] = 1;
+        Q[0] = 1;
+        alpha[0] = 1;
 
         for(m=1;m<nfreq;m++){
 
@@ -264,33 +260,33 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
 
             /* EQUATION (3) in Sidlichovsky and Nesvorny (1997) */
-            Q[m][m] = 1;
+            Q[m*nfreq+m] = 1;
             for(j=0;j<m-1;j++){
                 fac = (f[m] - f[j]) * (ndata - 1.) / 2.;
-                Q[m][j] = sin(fac)/fac * M_PI*M_PI / (M_PI*M_PI - fac*fac);
-                Q[j][m] = Q[m][j];
+                Q[m*nfreq+j] = sin(fac)/fac * M_PI*M_PI / (M_PI*M_PI - fac*fac);
+                Q[j*nfreq+m] = Q[m*nfreq+j];
             }
 
             /* EQUATION (17) */
             for(k=0;k<m-1;k++){
                 B[k] = 0;
                 for(j=0;j<k;j++)
-                    B[k] += -alpha[k][j]*Q[m][j];
+                    B[k] += -alpha[k*nfreq+j]*Q[m*nfreq+j];
             }
 
             /* EQUATION (18) */
-            alpha[m][m] = 1;
+            alpha[m*nfreq+m] = 1;
             for(j=0;j<m-1;j++)
-                alpha[m][m] -= B[j]*B[j];
-            alpha[m][m] = 1. / sqrt(alpha[m][m]);
+                alpha[m*nfreq+m] -= B[j]*B[j];
+            alpha[m*nfreq+m] = 1. / sqrt(alpha[m*nfreq+m]);
 
 
             /* EQUATION (19) */
             for(k=0;k<m-1;k++){
-                alpha[m][k] = 0;
+                alpha[m*nfreq+k] = 0;
                 for(j=k;j<m-1;j++)
-                    alpha[m][k] += B[j]*alpha[j][k];
-                alpha[m][k] = alpha[m][m]*alpha[m][k];
+                    alpha[m*nfreq+k] += B[j]*alpha[j*nfreq+k];
+                alpha[m*nfreq+k] = alpha[m*nfreq+m]*alpha[m*nfreq+k];
             }
 
             /* EQUATION (22) */
@@ -298,11 +294,11 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
                 xsum=0; ysum=0;
                 for(j=0;j<m;j++){
                     fac = f[j]*i + (f[m]-f[j])*(ndata-1.)/2. + psi[m];
-                    xsum += alpha[m][j]*cos(fac);
-                    ysum += alpha[m][j]*sin(fac);
+                    xsum += alpha[m*nfreq+j]*cos(fac);
+                    ysum += alpha[m*nfreq+j]*sin(fac);
                 }
-                xdata[i] -= alpha[m][m]*A[m]*xsum;
-                ydata[i] -= alpha[m][m]*A[m]*ysum;
+                xdata[i] -= alpha[m*nfreq+m]*A[m]*xsum;
+                ydata[i] -= alpha[m*nfreq+m]*A[m]*ysum;
             }
         }
 
@@ -311,8 +307,8 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
             xsum=0; ysum=0;
             for(j=k;j<nfreq;j++){
                 fac = (f[j]-f[k])*(ndata-1.)/2. + psi[j];
-                xsum += alpha[j][j]*alpha[j][k]*A[j]*cos(fac);
-                ysum += alpha[j][j]*alpha[j][k]*A[j]*sin(fac);
+                xsum += alpha[j*nfreq+j]*alpha[j*nfreq+k]*A[j]*cos(fac);
+                ysum += alpha[j*nfreq+j]*alpha[j*nfreq+k]*A[j]*sin(fac);
             }
             A[k] = sqrt(xsum*xsum + ysum*ysum);
             psi[k] = atan2(ysum,xsum);
@@ -351,21 +347,24 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         for(k=0;k<nfreq;k++){
 
             output[6][k] = freq[0*nfreq+k];
-            if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL)
-                output[6][k] += DSQR(freq[0*nfreq+k] - freq[1*nfreq+k]) / fac;
-            else 
+            if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
+                double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
+                output[6][k] += tmp*tmp / fac;
+            }else 
                 output[6][k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
 
             output[7][k] = amp[0*nfreq+k];
-            if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL)
-                output[7][k] += DSQR(amp[0*nfreq+k] - amp[1*nfreq+k]) / fac;
-            else
+            if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL){
+                double tmp = amp[0*nfreq+k] - amp[1*nfreq+k];
+                output[7][k] += tmp*tmp / fac;
+            }else
                 output[7][k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
 
             output[8][k] = phase[0*nfreq+k];
-            if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL)
-                output[8][k] += DSQR(phase[0*nfreq+k] - phase[1*nfreq+k]) / fac;
-            else
+            if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL){
+                double tmp = phase[0*nfreq+k] - phase[1*nfreq+k];
+                output[8][k] += tmp*tmp / fac;
+            }else
                 output[8][k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
 
             if(output[8][k] < -M_PI) output[8][k] += TWOPI;
@@ -402,8 +401,8 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     free(A);
     free(psi);
 
-    free_dmatrix(Q, 1, nfreq, 1, nfreq); 
-    free_dmatrix(alpha, 1, nfreq, 1, nfreq);
+    free(Q); 
+    free(alpha);
     free(B);
 
     return 1;
@@ -448,7 +447,7 @@ void power(double *powsd, double *x, double *y, long ndata)
     four1(z, ndata, 1);
 
     for(j=0;j<ndata;j++)
-        powsd[j] = DSQR(z[2*j]) + DSQR(z[2*j+1]);
+        powsd[j] = z[2*j]*z[2*j] + z[2*j+1]*z[2*j+1];
 
     free(z);
 }
