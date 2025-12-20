@@ -23,7 +23,7 @@ static void window(double *x, double *y, double *xdata, double *ydata, long ndat
 static void power(double *powsd, double *x, double *y, long ndata);
 static void four1(double data[], unsigned long n);
 static double bracket(double *powsd, long ndata);
-static double golden(double (*f)(double, double *, double *, long), double leftf, double centerf, double rightf, double *x, double *y, long ndata);
+static double golden(double leftf, double centerf, double rightf, double *x, double *y, long ndata);
 static void phifun(double *xphi, double *yphi, double freq,  double xdata[], double ydata[], long n);
 static double phisqr(double freq, double xdata[], double ydata[], long ndata);
 static void amph(double *amp, double *phase, double freq, double xdata[], double ydata[], long ndata);
@@ -122,9 +122,10 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
 
-                f[0] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+                f[0] = golden(leftf, centerf, rightf, x, y, ndata);
 
                 amph(&A[0], &psi[0], f[0], x, y, ndata);
+            printf("freq/amp: %f  %f\n", f[0], A[0]);
 
                 for(int j=0;j<ndata;j++){
                     xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
@@ -143,7 +144,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
         rightf = centerf + TWOPI / ndata;
 
         /* DETERMINE THE FIRST FREQUENCY */
-        f[0] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+        f[0] = golden(leftf, centerf, rightf, x, y, ndata);
 
         /* COMPUTE AMPLITUDE AND PHASE */
         amph(&A[0], &psi[0], f[0], x, y, ndata);
@@ -174,7 +175,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 leftf = centerf - TWOPI / ndata;
                 rightf = centerf + TWOPI / ndata;
 
-                f[m] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+                f[m] = golden(leftf, centerf, rightf, x, y, ndata);
 
                 /* CHECK WHETHER THE NEW FREQUENCY IS NOT TOO CLOSE TO ANY PREVIOUSLY
                    DETERMINED ONE */
@@ -192,7 +193,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                     leftf = centerf - TWOPI / ndata;
                     rightf = centerf + TWOPI / ndata;
 
-                    f[m] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+                    f[m] = golden(leftf, centerf, rightf, x, y, ndata);
 
                     amph(&A[m], &psi[m], f[m], x, y, ndata);
 
@@ -211,7 +212,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                     leftf = centerf - TWOPI / ndata;
                     rightf = centerf + TWOPI / ndata;
 
-                    f[m] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+                    f[m] = golden(leftf, centerf, rightf, x, y, ndata);
 
                     nearfreqflag = 0.;
                     for(int k=0;k<m-1;k++){
@@ -229,7 +230,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 rightf = centerf + TWOPI / ndata;
 
                 /* DETERMINE THE NEXT FREQUENCY */
-                f[m] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
+                f[m] = golden(leftf, centerf, rightf, x, y, ndata);
 
             }
 
@@ -507,7 +508,7 @@ double bracket(double *powsd, long ndata){
 #define GOLD_R 0.61803399
 #define GOLD_C (1.0 - GOLD_R)
 
-double golden(double (*f)(double, double *, double *, long), double ax, double bx, double cx, double xdata[], double ydata[], long n){
+double golden(double ax, double bx, double cx, double xdata[], double ydata[], long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
 
     double x0=ax;
@@ -522,16 +523,16 @@ double golden(double (*f)(double, double *, double *, long), double ax, double b
         x1 = bx - GOLD_C*(bx-ax);
     }
 
-    double f1 = (*f)(x1, xdata, ydata, n);
-    double f2 = (*f)(x2, xdata, ydata, n);
+    double f1 = phisqr(x1, xdata, ydata, n);
+    double f2 = phisqr(x2, xdata, ydata, n);
 
     while(fabs(x3-x0) > FMFT_TOL*(fabs(x1)+fabs(x2))){
         if(f2 > f1){
             SHFT4(x0,x1,x2,GOLD_R*x1+GOLD_C*x3);
-            SHFT3(f1,f2,(*f)(x2, xdata, ydata, n));
+            SHFT3(f1,f2,phisqr(x2, xdata, ydata, n));
         } else {
             SHFT4(x3,x2,x1,GOLD_R*x2+GOLD_C*x0);
-            SHFT3(f2,f1,(*f)(x1, xdata, ydata, n));
+            SHFT3(f2,f1,phisqr(x1, xdata, ydata, n));
         }
     }
 
