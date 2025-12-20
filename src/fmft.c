@@ -15,45 +15,24 @@
 #include <stdlib.h>
 
 #define TWOPI (2.*M_PI)
-
-static unsigned long ultemp;
-
 #define SHFT3(a,b,c) (a)=(b);(b)=(c)
 #define SHFT4(a,b,c,d) (a)=(b);(b)=(c);(c)=(d)
-
 #define ULSWAP(a,b) ultemp=(a);(a)=(b);(b)=ultemp
 
-void window(double *x, double *y, double *xdata, double *ydata, long ndata);
-
-void power(double *powsd, double *x, double *y, long ndata);
-
-void four1(double data[], unsigned long n, int isign);
-
-double bracket(double *powsd, long ndata);
-
-double golden(double (*f)(double, double *, double *, long), 
-        double leftf, double centerf, double rightf, 
-        double *x, double *y, long ndata);
-
-void phifun(double *xphi, double *yphi, double freq,  
-        double xdata[], double ydata[], long n);
-
-double phisqr(double freq, double xdata[], double ydata[], long ndata);
-
-void amph(double *amp, double *phase, double freq, 
-        double xdata[], double ydata[], long ndata);
-
-void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[]);
-
-void dindex(unsigned long n, double arr[], unsigned long indx[]);
-
+static void window(double *x, double *y, double *xdata, double *ydata, long ndata);
+static void power(double *powsd, double *x, double *y, long ndata);
+static void four1(double data[], unsigned long n, int isign);
+static double bracket(double *powsd, long ndata);
+static double golden(double (*f)(double, double *, double *, long), double leftf, double centerf, double rightf, double *x, double *y, long ndata);
+static void phifun(double *xphi, double *yphi, double freq,  double xdata[], double ydata[], long n);
+static double phisqr(double freq, double xdata[], double ydata[], long ndata);
+static void amph(double *amp, double *phase, double freq, double xdata[], double ydata[], long ndata);
+static void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[]);
+static void dindex(unsigned long n, double arr[], unsigned long indx[]);
 
 
 /* THE MAIN FUNCTION ****************************************************/
-
-
-int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, 
-        double **input, long ndata)
+int reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double **input, long ndata){
 
     /* 
        In the output array **output: output[3*flag-2][i], output[3*flag-1][i] 
@@ -75,7 +54,6 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
        be a power of 2), are the input data X(j-1) and Y(j-1).
      */   
 
-{
     double centerf, leftf, rightf;
 
 
@@ -663,6 +641,7 @@ void dindex(unsigned long n, double arr[], unsigned long indx[]) {
             l=istack[jstack--];
         } else {
             unsigned long k=(l+ir) >> 1;
+            unsigned long ultemp;
             ULSWAP(indx[k],indx[l+1]);
             if (arr[indx[l+1]] > arr[indx[ir]]) {
                 ULSWAP(indx[l+1],indx[ir]);
