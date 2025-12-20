@@ -11,13 +11,9 @@
 
 #include "rebound.h"
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
 
 #define TWOPI (2.*M_PI)
-#define SHFT3(a,b,c) (a)=(b);(b)=(c)
-#define SHFT4(a,b,c,d) (a)=(b);(b)=(c);(c)=(d)
-#define ULSWAP(a,b) ultemp=(a);(a)=(b);(b)=ultemp
 
 static void window(double *x, double *y, double *xdata, double *ydata, long ndata);
 static void power(double *powsd, double *x, double *y, long ndata);
@@ -32,7 +28,7 @@ static void dindex(unsigned long n, double arr[], unsigned long indx[]);
 
 
 /* THE MAIN FUNCTION ****************************************************/
-int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
+void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
 
     /* 
        In the output array **output: output[3*flag-2][i], output[3*flag-1][i] 
@@ -284,7 +280,6 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
     }
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
-
     for(int k=0;k<nfreq;k++){
         output[0*nfreq+k] = freq[0*nfreq+k];            
         output[1*nfreq+k] = amp[0*nfreq+k];
@@ -296,7 +291,6 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
 
     if(flag==1 || flag==2){
         for(int k=0;k<nfreq;k++){
-            printf("%d %f %f\n", k, freq[0*nfreq+k], freq[1*nfreq+k]);
             output[3*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
             output[4*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
             output[5*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
@@ -369,16 +363,12 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
     free(Q); 
     free(alpha);
     free(B);
-
-    return 1;
 }
-
 
 void window(double *x, double *y, double *xdata, double *ydata, long ndata) {  
     /* MULTIPLIES DATA BY A WINDOW FUNCTION */      
     for(int j=0;j<ndata;j++) {
-        double window = TWOPI*j / (ndata-1);
-        window = (1. - cos(window)) / 2.;
+        double window = (1. - cos(TWOPI*j / (ndata-1)))*0.5;
         x[j] = xdata[j]*window;
         y[j] = ydata[j]*window;
     }
@@ -452,48 +442,45 @@ void four1(double* data, unsigned long nn){
 
 double bracket(double *powsd, long ndata){
     /* FINDS THE MAXIMUM OF THE POWER SPECTRAL DENSITY  */ 
-
+    // Not sure why this is so complicated. Could just be one loop?
     int maxj = 0;
     double maxpow = 0;
 
-    for(int j=1;j<ndata/2-2;j++)
-        if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1])
-            if(powsd[j] > maxpow){ 
-                maxj = j;
-                maxpow = powsd[j];
-            }  
-
-    for(int j=ndata/2+1;j<ndata-1;j++)
-        if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1])
-            if(powsd[j] > maxpow){ 
-                maxj = j;
-                maxpow = powsd[j];
-            }  
-
-    if(powsd[1] > powsd[2] && powsd[1] > powsd[ndata])
-        if(powsd[1] > maxpow){ 
-            maxj = 1;
-            maxpow = powsd[1];
+    for(int j=1;j<ndata/2-1;j++){ // Changed end from -2 to -1.
+        if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1] && powsd[j] > maxpow){ 
+            maxj = j;
+            maxpow = powsd[j];
         }
+    }
+
+    for(int j=ndata/2+1;j<ndata-1;j++){
+        if(powsd[j] > powsd[j-1] && powsd[j] > powsd[j+1] && powsd[j] > maxpow){ 
+            maxj = j;
+            maxpow = powsd[j];
+        }
+    }
+
+    if(powsd[0] > powsd[1] && powsd[0] > powsd[ndata-1] && powsd[0] > maxpow){ 
+        maxj = 0;
+        maxpow = powsd[0];
+    }
 
     if(maxpow == 0) printf("DFT has no maximum ...");
 
-    double freq = -1.11111; // fix this
-    if(maxj < ndata/2-1) freq = -(maxj);  
-    if(maxj > ndata/2-1) freq = -(maxj-ndata);
-    if (freq==-1.11111) printf("Error occured -1.11111\n");
-
-    return (TWOPI*freq / ndata);
-
+    if(maxj < ndata/2-1){
+        return -TWOPI*maxj / ndata;
+    }else{ //  maxj > ndata/2-1
+        return -TWOPI*(maxj-ndata) / ndata;
+    }
     /* negative signs and TWOPI compensate for the Numerical Recipes 
        definition of the DFT */
 }
 
-#define GOLD_R 0.61803399
-#define GOLD_C (1.0 - GOLD_R)
 
 double golden(double ax, double bx, double cx, double xdata[], double ydata[], long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
+    const double gold_r =  0.61803399;
+    const double gold_c = (1.0 - gold_r);
 
     double x0=ax;
     double x3=cx;
@@ -501,10 +488,10 @@ double golden(double ax, double bx, double cx, double xdata[], double ydata[], l
     double x1,x2;
     if(fabs(cx-bx) > fabs(bx-ax)){
         x1 = bx;
-        x2 = bx + GOLD_C*(cx-bx);
+        x2 = bx + gold_c*(cx-bx);
     } else {
         x2 = bx;
-        x1 = bx - GOLD_C*(bx-ax);
+        x1 = bx - gold_c*(bx-ax);
     }
 
     double f1 = phisqr(x1, xdata, ydata, n);
@@ -512,16 +499,25 @@ double golden(double ax, double bx, double cx, double xdata[], double ydata[], l
 
     while(fabs(x3-x0) > FMFT_TOL*(fabs(x1)+fabs(x2))){
         if(f2 > f1){
-            SHFT4(x0,x1,x2,GOLD_R*x1+GOLD_C*x3);
-            SHFT3(f1,f2,phisqr(x2, xdata, ydata, n));
+            x0 = x1;
+            x1 = x2;
+            x2 = gold_r*x1+gold_c*x3;
+            f1 = f2;
+            f2 = phisqr(x2, xdata, ydata, n);
         } else {
-            SHFT4(x3,x2,x1,GOLD_R*x2+GOLD_C*x0);
-            SHFT3(f2,f1,phisqr(x1, xdata, ydata, n));
+            x3 = x2;
+            x2 = x1;
+            x1 = gold_r*x2+gold_c*x0;
+            f2 = f1;
+            f1 = phisqr(x1, xdata, ydata, n);
         }
     }
 
-    if(f1>f2) return x1;
-    else return x2;
+    if(f1>f2){
+        return x1;
+    }else{
+        return x2;
+    }
 }
 
 void amph(double *amp, double *phase, double freq, double xdata[], double ydata[], long ndata){
@@ -559,11 +555,8 @@ void phifun(double *xphi, double *yphi, double freq, double xdata[], double ydat
     }
 
     int nn = n;
-
     while(nn != 1){
-
         nn = nn / 2;
-
         double c = cos(-nn*freq);
         double s = sin(-nn*freq);
 
@@ -572,7 +565,6 @@ void phifun(double *xphi, double *yphi, double freq, double xdata[], double ydat
             xdata2[i] += c*xdata2[j] - s*ydata2[j];
             ydata2[i] += c*ydata2[j] + s*xdata2[j];
         }
-
     }
 
     *xphi = 2*xdata2[0] / (n-1);
@@ -581,9 +573,6 @@ void phifun(double *xphi, double *yphi, double freq, double xdata[], double ydat
     free(xdata2);
     free(ydata2);
 }
-
-#define SORT_M 7 
-#define SORT_NSTACK 50
 
 void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     /* SORTING PROCEDURE FROM NUMERICAL RECIPES */
@@ -603,7 +592,9 @@ void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     free(iwksp);
 }
 
-
+#define ULSWAP(a,b) ultemp=(a);(a)=(b);(b)=ultemp
+#define SORT_M 7 
+#define SORT_NSTACK 50
 void dindex(unsigned long n, double arr[], unsigned long indx[]) {
     unsigned long i,indxt,ir=n,j,l=0;
     int jstack=0;
@@ -664,9 +655,4 @@ void dindex(unsigned long n, double arr[], unsigned long indx[]) {
     }
     free(istack);
 }
-
-
-
-
-
 
