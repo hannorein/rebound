@@ -412,62 +412,41 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 }
 
 
-void window(double *x, double *y, double *xdata, double *ydata, long ndata)
-
+void window(double *x, double *y, double *xdata, double *ydata, long ndata) {  
     /* MULTIPLIES DATA BY A WINDOW FUNCTION */      
-{  
-    long j;
-    double window;
-
-    for(j=0;j<ndata;j++) {
-
-        window = TWOPI*j / (ndata-1);
+    for(int j=0;j<ndata;j++) {
+        double window = TWOPI*j / (ndata-1);
         window = (1. - cos(window)) / 2.;
-
         x[j] = xdata[j]*window;
         y[j] = ydata[j]*window;
-
     }
 }
 
 
-void power(double *powsd, double *x, double *y, long ndata)
-
+void power(double *powsd, double *x, double *y, long ndata){
     /* REARRANGES DATA FOR THE FAST FOURIER TRANSFORM, 
        CALLS FFT AND RETURNS POWER SPECTRAL DENSITY */
-
-{
-    long j;
-    double *z;
-
-    z = malloc(sizeof(double)*2*ndata);
-
-    for(j=0;j<ndata;j++){
+    double* z = malloc(sizeof(double)*2*ndata);
+    for(int j=0;j<ndata;j++){
         z[2*j] = x[j];
         z[2*j+1] = y[j];
     }
-
     four1(z, ndata, 1);
-
-    for(j=0;j<ndata;j++)
+    for(int j=0;j<ndata;j++){
         powsd[j] = z[2*j]*z[2*j] + z[2*j+1]*z[2*j+1];
-
+    }
     free(z);
 }
 
 
-void four1(double data[], unsigned long nn, int isign)
-
+void four1(double data[], unsigned long nn, int isign){
     /* data[1..2*nn] replaces by DFS, nn must be a power of 2 */
-
-{
-    unsigned long n,mmax,m,j,istep,i;
-    double wtemp,wr,wpr,wpi,wi,theta; /* double for recurrences */
+    unsigned long n;
     double tempr,tempi;
 
     n=nn<<1;
-    j=0;
-    for(i=0;i<n-1;i+=2){ /* bit-reversal section */
+    int j=0;
+    for(int i=0;i<n-1;i+=2){ /* bit-reversal section */
         if(j>i){
             double t = data[j];
             data[j] = data[i];
@@ -476,7 +455,7 @@ void four1(double data[], unsigned long nn, int isign)
             data[j+1] = data[i+1];
             data[i+1] = t;
         }
-        m=n>>1;
+        unsigned long m=n>>1;
         while(m>=2 && j>m){
             j-=m;
             m>>=1;
@@ -484,17 +463,17 @@ void four1(double data[], unsigned long nn, int isign)
         j+=m;
     }
     /* Danielson-Lanczos section */
-    mmax=2;
+    unsigned long mmax=2;
     while(n>mmax){ /* outer ln nn loop */
-        istep=mmax<<1;
-        theta=isign*(TWOPI/mmax); /* initialize */
-        wtemp=sin(0.5*theta);
-        wpr=-2.0*wtemp*wtemp;
-        wpi=sin(theta);
-        wr=1.0;
-        wi=0.0;
-        for(m=0;m<mmax-1;m+=2){ /* two inner loops */
-            for(i=m;i<n;i+=istep){
+        unsigned long istep=mmax<<1;
+        double theta=isign*(TWOPI/mmax); /* initialize */
+        double wtemp=sin(0.5*theta);
+        double wpr=-2.0*wtemp*wtemp;
+        double wpi=sin(theta);
+        double wr=1.0;
+        double wi=0.0;
+        for(int m=0;m<mmax-1;m+=2){ /* two inner loops */
+            for(int i=m;i<n;i+=istep){
                 j=i+mmax; /* D-L formula */
                 tempr=wr*data[j]-wi*data[j+1];
                 tempi=wr*data[j+1]+wi*data[j];
