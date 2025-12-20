@@ -9,6 +9,7 @@
 #define FMFT_TOL 1.0e-10 /* MFT NOMINAL PRECISION */
 #define FMFT_NEAR 0.     /* MFT OVERLAP EXCLUSION PARAMETER */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -75,45 +76,39 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
      */   
 
 {
-    int nearfreqflag;
-    long i,j,k,l,m;
-    double *powsd;
-    double *xdata, *ydata, *x, *y;
-    double centerf, leftf, rightf, fac, xsum, ysum;
-    double *freq, *amp, *phase, *f, *A, *psi;
-    double *Q, *alpha, *B;
+    double centerf, leftf, rightf;
 
 
     /* ALLOCATION OF VARIABLES */
 
-    xdata = malloc(sizeof(double)*ndata);
-    ydata = malloc(sizeof(double)*ndata);
-    x = malloc(sizeof(double)*ndata);
-    y = malloc(sizeof(double)*ndata);
-    powsd = malloc(sizeof(double)* ndata);
+    double* xdata = malloc(sizeof(double)*ndata);
+    double* ydata = malloc(sizeof(double)*ndata);
+    double* x = malloc(sizeof(double)*ndata);
+    double* y = malloc(sizeof(double)*ndata);
+    double* powsd = malloc(sizeof(double)* ndata);
 
-    freq = malloc(sizeof(double)*3*(flag+1)*nfreq); 
-    amp = malloc(sizeof(double)*3*(flag+1)*nfreq);
-    phase = malloc(sizeof(double)*3*(flag+1)*nfreq);
+    double* freq = malloc(sizeof(double)*3*(flag+1)*nfreq); 
+    double* amp = malloc(sizeof(double)*3*(flag+1)*nfreq);
+    double* phase = malloc(sizeof(double)*3*(flag+1)*nfreq);
 
-    f = malloc(sizeof(double)* nfreq);
-    A = malloc(sizeof(double)* nfreq);
-    psi = malloc(sizeof(double)* nfreq);
+    double* f = malloc(sizeof(double)* nfreq);
+    double* A = malloc(sizeof(double)* nfreq);
+    double* psi = malloc(sizeof(double)* nfreq);
 
 
-    Q = malloc(sizeof(double)*nfreq*nfreq);
-    alpha = malloc(sizeof(double)*nfreq*nfreq);
-    B = malloc(sizeof(double)* nfreq);
+    double* Q = malloc(sizeof(double)*nfreq*nfreq);
+    double* alpha = malloc(sizeof(double)*nfreq*nfreq);
+    double* B = malloc(sizeof(double)* nfreq);
 
 
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
 
-    for(l=0; l<flag; l++){
+    for(int l=0; l<flag; l++){
 
         if(l==0){
 
             /* SEPARATE REAL AND IMAGINERY PARTS */ 
-            for(j=0;j<ndata;j++){
+            for(int j=0;j<ndata;j++){
                 xdata[j] = input[0][j];
                 ydata[j] = input[1][j];
             }
@@ -121,10 +116,10 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         } else {
 
             /* GENERATE THE QUASIPERIODIC FUNCTION COMPUTED BY MFT */
-            for(i=0;i<ndata;i++){
+            for(int i=0;i<ndata;i++){
                 xdata[i] = 0; 
                 ydata[i] = 0; 
-                for(k=0;k<nfreq;k++){
+                for(int k=0;k<nfreq;k++){
                     xdata[i] += amp[l*nfreq+k]*cos(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
                     ydata[i] += amp[l*nfreq+k]*sin(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
                 }
@@ -153,7 +148,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
                 amph(&A[0], &psi[0], f[0], x, y, ndata);
 
-                for(j=0;j<ndata;j++){
+                for(int j=0;j<ndata;j++){
                     xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
                     ydata[j] -= A[0]*sin( f[0]*j + psi[0] );
                 }
@@ -176,7 +171,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         amph(&A[0], &psi[0], f[0], x, y, ndata);
 
         /* SUBSTRACT THE FIRST HARMONIC FROM THE SIGNAL */
-        for(j=0;j<ndata;j++){
+        for(int j=0;j<ndata;j++){
             xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
             ydata[j] -= A[0]*sin( f[0]*j + psi[0] );
         }    
@@ -186,7 +181,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         Q[0] = 1;
         alpha[0] = 1;
 
-        for(m=1;m<nfreq;m++){
+        for(int m=1;m<nfreq;m++){
 
             /* MULTIPLY SIGNAL BY WINDOW FUNCTION */
             window(x, y, xdata, ydata, ndata);
@@ -205,9 +200,12 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
                 /* CHECK WHETHER THE NEW FREQUENCY IS NOT TOO CLOSE TO ANY PREVIOUSLY
                    DETERMINED ONE */
-                nearfreqflag = 0.;
-                for(k=0;k<m-1;k++)
-                    if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata )   nearfreqflag = 1; 
+                int nearfreqflag = 0.;
+                for(int k=0;k<m-1;k++){
+                    if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata ){
+                        nearfreqflag = 1; 
+                    }
+                }
 
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
                 while(f[m] < minfreq || f[m] > maxfreq || nearfreqflag == 1){
@@ -220,7 +218,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
                     amph(&A[m], &psi[m], f[m], x, y, ndata);
 
-                    for(j=0;j<ndata;j++){
+                    for(int j=0;j<ndata;j++){
                         xdata[j] -= A[m]*cos( f[m]*j + psi[m] );
                         ydata[j] -= A[m]*sin( f[m]*j + psi[m] );
                     }
@@ -238,9 +236,11 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
                     f[m] = golden(phisqr, leftf, centerf, rightf, x, y, ndata);
 
                     nearfreqflag = 0.;
-                    for(k=0;k<m-1;k++)
-                        if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata )   nearfreqflag = 1; 
-
+                    for(int k=0;k<m-1;k++){
+                        if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata ){
+                            nearfreqflag = 1; 
+                        }
+                    }
                 }   
 
             } else {  
@@ -261,39 +261,40 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
             /* EQUATION (3) in Sidlichovsky and Nesvorny (1997) */
             Q[m*nfreq+m] = 1;
-            for(j=0;j<m-1;j++){
-                fac = (f[m] - f[j]) * (ndata - 1.) / 2.;
+            for(int j=0;j<m-1;j++){
+                double fac = (f[m] - f[j]) * (ndata - 1.) / 2.;
                 Q[m*nfreq+j] = sin(fac)/fac * M_PI*M_PI / (M_PI*M_PI - fac*fac);
                 Q[j*nfreq+m] = Q[m*nfreq+j];
             }
 
             /* EQUATION (17) */
-            for(k=0;k<m-1;k++){
+            for(int k=0;k<m-1;k++){
                 B[k] = 0;
-                for(j=0;j<k;j++)
+                for(int j=0;j<k;j++)
                     B[k] += -alpha[k*nfreq+j]*Q[m*nfreq+j];
             }
 
             /* EQUATION (18) */
             alpha[m*nfreq+m] = 1;
-            for(j=0;j<m-1;j++)
+            for(int j=0;j<m-1;j++)
                 alpha[m*nfreq+m] -= B[j]*B[j];
             alpha[m*nfreq+m] = 1. / sqrt(alpha[m*nfreq+m]);
 
 
             /* EQUATION (19) */
-            for(k=0;k<m-1;k++){
+            for(int k=0;k<m-1;k++){
                 alpha[m*nfreq+k] = 0;
-                for(j=k;j<m-1;j++)
+                for(int j=k;j<m-1;j++)
                     alpha[m*nfreq+k] += B[j]*alpha[j*nfreq+k];
                 alpha[m*nfreq+k] = alpha[m*nfreq+m]*alpha[m*nfreq+k];
             }
 
             /* EQUATION (22) */
-            for(i=0;i<ndata;i++){
-                xsum=0; ysum=0;
-                for(j=0;j<m;j++){
-                    fac = f[j]*i + (f[m]-f[j])*(ndata-1.)/2. + psi[m];
+            for(int i=0;i<ndata;i++){
+                double xsum=0; 
+                double ysum=0;
+                for(int j=0;j<m;j++){
+                    double fac = f[j]*i + (f[m]-f[j])*(ndata-1.)/2. + psi[m];
                     xsum += alpha[m*nfreq+j]*cos(fac);
                     ysum += alpha[m*nfreq+j]*sin(fac);
                 }
@@ -303,10 +304,11 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         }
 
         /* EQUATION (26) */
-        for(k=0;k<nfreq;k++){
-            xsum=0; ysum=0;
-            for(j=k;j<nfreq;j++){
-                fac = (f[j]-f[k])*(ndata-1.)/2. + psi[j];
+        for(int k=0;k<nfreq;k++){
+            double xsum=0; 
+            double ysum=0;
+            for(int j=k;j<nfreq;j++){
+                double fac = (f[j]-f[k])*(ndata-1.)/2. + psi[j];
                 xsum += alpha[j*nfreq+j]*alpha[j*nfreq+k]*A[j]*cos(fac);
                 ysum += alpha[j*nfreq+j]*alpha[j*nfreq+k]*A[j]*sin(fac);
             }
@@ -315,7 +317,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         }
 
         /* REMEMBER THE COMPUTED VALUES FOR THE FMFT */
-        for(k=0;k<nfreq;k++){
+        for(int k=0;k<nfreq;k++){
             freq[l*nfreq+k] = f[k];
             amp[l*nfreq+k] = A[k];
             phase[l*nfreq+k] = psi[k];
@@ -324,7 +326,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
 
-    for(k=0;k<nfreq;k++){
+    for(int k=0;k<nfreq;k++){
         output[0][k] = freq[k];            
         output[1][k] = amp[0*nfreq+k];
         output[2][k] = phase[0*nfreq+k];
@@ -334,7 +336,7 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
     }
 
     if(flag==1 || flag==2)
-        for(k=0;k<nfreq;k++){
+        for(int k=0;k<nfreq;k++){
             output[3][k] = freq[k] + (freq[k] - freq[1*nfreq+k]);            
             output[4][k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
             output[5][k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
@@ -344,9 +346,10 @@ int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag,
         }
 
     if(flag==2)
-        for(k=0;k<nfreq;k++){
+        for(int k=0;k<nfreq;k++){
 
             output[6][k] = freq[0*nfreq+k];
+            double fac;
             if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
                 double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
                 output[6][k] += tmp*tmp / fac;
