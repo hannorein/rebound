@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
         input[i*2+0] += 0.05*sin(omega3*2.0*M_PI*i*datasep);
         input[i*2+1] += 0.05*cos(omega3*2.0*M_PI*i*datasep);
     }
-    reb_fmft(output, nfreq,-40,40.,0,input,Nsamples);
+    reb_fmft(output, nfreq,-40,40.,1,input,Nsamples);
     for (int i=0; i<nfreq; i++){
         printf("%d %f %f %f %f %f %f\n", i, output[0*nfreq+i]/datasep/2./M_PI, output[1*nfreq+i], output[2*nfreq+i], output[3*nfreq+i]/datasep/2./M_PI, output[4*nfreq+i], output[5*nfreq+i]);
     }

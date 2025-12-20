@@ -94,8 +94,8 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 xdata[i] = 0; 
                 ydata[i] = 0; 
                 for(int k=0;k<nfreq;k++){
-                    xdata[i] += amp[l*nfreq+k]*cos(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
-                    ydata[i] += amp[l*nfreq+k]*sin(freq[l*nfreq+k]*i + phase[l*nfreq+k]);
+                    xdata[i] += amp[(l-1)*nfreq+k]*cos(freq[(l-1)*nfreq+k]*i + phase[(l-1)*nfreq+k]);
+                    ydata[i] += amp[(l-1)*nfreq+k]*sin(freq[(l-1)*nfreq+k]*i + phase[(l-1)*nfreq+k]);
                 }
             }
         }
@@ -213,7 +213,6 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 /* DETERMINE THE NEXT FREQUENCY */
                 f[m] = golden(leftf, centerf, rightf, x, y, ndata);
             }
-            printf("%d %f\n",m,f[m]);
 
             /* COMPUTE ITS AMPLITUDE AND PHASE */
             amph(&A[m], &psi[m], f[m], x, y, ndata);
@@ -287,7 +286,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
 
     for(int k=0;k<nfreq;k++){
-        output[0*nfreq+k] = freq[k];            
+        output[0*nfreq+k] = freq[0*nfreq+k];            
         output[1*nfreq+k] = amp[0*nfreq+k];
         output[2*nfreq+k] = phase[0*nfreq+k];
 
@@ -297,7 +296,8 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
 
     if(flag==1 || flag==2){
         for(int k=0;k<nfreq;k++){
-            output[3*nfreq+k] = freq[k] + (freq[k] - freq[1*nfreq+k]);            
+            printf("%d %f %f\n", k, freq[0*nfreq+k], freq[1*nfreq+k]);
+            output[3*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
             output[4*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
             output[5*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
 
@@ -336,8 +336,9 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
     }
 
    // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
-    if(flag==0) 
+    if(flag==0){ 
         dsort(nfreq, &output[1*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
+    }
 
     if(flag==1){
         dsort(nfreq, &output[4*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
