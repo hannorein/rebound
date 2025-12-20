@@ -112,8 +112,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
         power(powsd, x, y, ndata);
 
 
-        if(l==0) 
-
+        if(l==0){ 
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
 
@@ -125,7 +124,6 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
                 f[0] = golden(leftf, centerf, rightf, x, y, ndata);
 
                 amph(&A[0], &psi[0], f[0], x, y, ndata);
-            printf("freq/amp: %f  %f\n", f[0], A[0]);
 
                 for(int j=0;j<ndata;j++){
                     xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
@@ -136,10 +134,9 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
 
                 power(powsd, x, y, ndata); 
             }   
-
-        else 
+        }else{ 
             centerf = freq[0];
-
+        }
         leftf = centerf - TWOPI / ndata;
         rightf = centerf + TWOPI / ndata;
 
@@ -314,7 +311,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
         if(output[2*nfreq+k] >= M_PI) output[2*nfreq+k] -= TWOPI;
     }
 
-    if(flag==1 || flag==2)
+    if(flag==1 || flag==2){
         for(int k=0;k<nfreq;k++){
             output[3*nfreq+k] = freq[k] + (freq[k] - freq[1*nfreq+k]);            
             output[4*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
@@ -323,8 +320,8 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
             if(output[5*nfreq+k] < -M_PI) output[5*nfreq+k] += TWOPI;
             if(output[5*nfreq+k] >= M_PI) output[5*nfreq+k] -= TWOPI;
         }
-
-    if(flag==2)
+    }
+    if(flag==2){
         for(int k=0;k<nfreq;k++){
 
             output[6*nfreq+k] = freq[0*nfreq+k];
@@ -352,6 +349,7 @@ int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag
             if(output[8*nfreq+k] < -M_PI) output[8*nfreq+k] += TWOPI;
             if(output[8*nfreq+k] >= M_PI) output[8*nfreq+k] -= TWOPI;
         }
+    }
 
    // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
     if(flag==0) 
@@ -610,11 +608,11 @@ void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     dindex(n, ra, iwksp);
 
     for (int j=0;j<n;j++) wksp[j] = rb[j];
-    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n+1-j]];
+    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j]];
     for (int j=0;j<n;j++) wksp[j] = rc[j];
-    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n+1-j]];
+    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n-j]];
     for (int j=0;j<n;j++) wksp[j] = rd[j];
-    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n+1-j]];
+    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n-j]];
 
     free(wksp);
     free(iwksp);
