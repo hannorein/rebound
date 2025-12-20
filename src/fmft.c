@@ -600,7 +600,7 @@ void phifun(double *xphi, double *yphi, double freq, double xdata[], double ydat
 #define SORT_M 7 
 #define SORT_NSTACK 50
 
-void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[]){
+void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     /* SORTING PROCEDURE FROM NUMERICAL RECIPES */
     unsigned long* iwksp = malloc(sizeof(unsigned long)*n);
     double* wksp = malloc(sizeof(double)* n);
