@@ -21,7 +21,7 @@
 
 static void window(double *x, double *y, double *xdata, double *ydata, long ndata);
 static void power(double *powsd, double *x, double *y, long ndata);
-static void four1(double data[], unsigned long n, int isign);
+static void four1(double data[], unsigned long n);
 static double bracket(double *powsd, long ndata);
 static double golden(double (*f)(double, double *, double *, long), double leftf, double centerf, double rightf, double *x, double *y, long ndata);
 static void phifun(double *xphi, double *yphi, double freq,  double xdata[], double ydata[], long n);
@@ -410,7 +410,7 @@ void power(double *powsd, double *x, double *y, long ndata){
         z[2*j] = x[j];
         z[2*j+1] = y[j];
     }
-    four1(z, ndata, 1);
+    four1(z, ndata);
     for(int j=0;j<ndata;j++){
         powsd[j] = z[2*j]*z[2*j] + z[2*j+1]*z[2*j+1];
     }
@@ -418,14 +418,15 @@ void power(double *powsd, double *x, double *y, long ndata){
 }
 
 
-void four1(double data[], unsigned long nn, int isign){
+void four1(double* data, unsigned long nn){
     /* data[1..2*nn] replaces by DFS, nn must be a power of 2 */
     unsigned long n;
 
     n=nn<<1;
     int j=0;
-    for(int i=0;i<n-1;i+=2){ /* bit-reversal section */
+    for(int i=0;i<n-q;i+=2){ /* bit-reversal section */
         if(j>i){
+            printf("%d\n",n);
             double t = data[j];
             data[j] = data[i];
             data[i] = t;
@@ -444,7 +445,7 @@ void four1(double data[], unsigned long nn, int isign){
     unsigned long mmax=2;
     while(n>mmax){ /* outer ln nn loop */
         unsigned long istep=mmax<<1;
-        double theta=isign*(TWOPI/mmax); /* initialize */
+        double theta=TWOPI/mmax; /* initialize */
         double wtemp=sin(0.5*theta);
         double wpr=-2.0*wtemp*wtemp;
         double wpi=sin(theta);
