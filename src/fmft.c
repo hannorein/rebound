@@ -32,7 +32,7 @@ static void dindex(unsigned long n, double arr[], unsigned long indx[]);
 
 
 /* THE MAIN FUNCTION ****************************************************/
-int reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double **input, long ndata){
+int reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
 
     /* 
        In the output array **output: output[3*flag-2][i], output[3*flag-1][i] 
@@ -50,8 +50,8 @@ int reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fla
        The function returns the number of determined frequencies or 0 in the case
        of error.
 
-       The vectors input[1][j] and input[2][j], j = 1 ... ndata (ndata must
-       be a power of 2), are the input data X(j-1) and Y(j-1).
+       The vector input[j], j = 0 ... 2*ndata-1 (ndata must
+       be a power of 2), are the input data X(j) and Y(j).
      */   
 
     double centerf, leftf, rightf;
@@ -81,14 +81,14 @@ int reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fla
 
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
 
-    for(int l=0; l<flag; l++){
+    for(int l=0; l<=flag; l++){
 
         if(l==0){
 
             /* SEPARATE REAL AND IMAGINERY PARTS */ 
             for(int j=0;j<ndata;j++){
-                xdata[j] = input[0][j];
-                ydata[j] = input[1][j];
+                xdata[j] = input[j*2];
+                ydata[j] = input[j*2+1];
             }
 
         } else {
@@ -305,67 +305,68 @@ int reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fla
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
 
     for(int k=0;k<nfreq;k++){
-        output[0][k] = freq[k];            
-        output[1][k] = amp[0*nfreq+k];
-        output[2][k] = phase[0*nfreq+k];
+        output[0*nfreq+k] = freq[k];            
+        output[1*nfreq+k] = amp[0*nfreq+k];
+        output[2*nfreq+k] = phase[0*nfreq+k];
 
-        if(output[2][k] < -M_PI) output[2][k] += TWOPI;
-        if(output[2][k] >= M_PI) output[2][k] -= TWOPI;
+        if(output[2*nfreq+k] < -M_PI) output[2*nfreq+k] += TWOPI;
+        if(output[2*nfreq+k] >= M_PI) output[2*nfreq+k] -= TWOPI;
     }
 
     if(flag==1 || flag==2)
         for(int k=0;k<nfreq;k++){
-            output[3][k] = freq[k] + (freq[k] - freq[1*nfreq+k]);            
-            output[4][k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
-            output[5][k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
+            output[3*nfreq+k] = freq[k] + (freq[k] - freq[1*nfreq+k]);            
+            output[4*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
+            output[5*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
 
-            if(output[5][k] < -M_PI) output[5][k] += TWOPI;
-            if(output[5][k] >= M_PI) output[5][k] -= TWOPI;
+            if(output[5*nfreq+k] < -M_PI) output[5*nfreq+k] += TWOPI;
+            if(output[5*nfreq+k] >= M_PI) output[5*nfreq+k] -= TWOPI;
         }
 
     if(flag==2)
         for(int k=0;k<nfreq;k++){
 
-            output[6][k] = freq[0*nfreq+k];
+            output[6*nfreq+k] = freq[0*nfreq+k];
             double fac;
             if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
                 double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
-                output[6][k] += tmp*tmp / fac;
+                output[6*nfreq+k] += tmp*tmp / fac;
             }else 
-                output[6][k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
+                output[6*nfreq+k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
 
-            output[7][k] = amp[0*nfreq+k];
+            output[7*nfreq+k] = amp[0*nfreq+k];
             if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL){
                 double tmp = amp[0*nfreq+k] - amp[1*nfreq+k];
-                output[7][k] += tmp*tmp / fac;
+                output[7*nfreq+k] += tmp*tmp / fac;
             }else
-                output[7][k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
+                output[7*nfreq+k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
 
-            output[8][k] = phase[0*nfreq+k];
+            output[8*nfreq+k] = phase[0*nfreq+k];
             if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL){
                 double tmp = phase[0*nfreq+k] - phase[1*nfreq+k];
-                output[8][k] += tmp*tmp / fac;
+                output[8*nfreq+k] += tmp*tmp / fac;
             }else
-                output[8][k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
+                output[8*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
 
-            if(output[8][k] < -M_PI) output[8][k] += TWOPI;
-            if(output[8][k] >= M_PI) output[8][k] -= TWOPI;
+            if(output[8*nfreq+k] < -M_PI) output[8*nfreq+k] += TWOPI;
+            if(output[8*nfreq+k] >= M_PI) output[8*nfreq+k] -= TWOPI;
         }
 
-    /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
-    if(flag==0) 
-        dsort(nfreq, output[1], output[0], output[1], output[2]);
+   // Not sorted yet
+   // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
+   // if(flag==0) 
+   //     dsort(nfreq, output[1], output[0], output[1], output[2]);
 
-    if(flag==1){
-        dsort(nfreq, output[4], output[0], output[1], output[2]);
-        dsort(nfreq, output[4], output[3], output[4], output[5]);
-    }
+   // if(flag==1){
+   //     dsort(nfreq, output[4], output[0], output[1], output[2]);
+   //     dsort(nfreq, output[4], output[3], output[4], output[5]);
+   // }
 
-    if(flag==2){
-        dsort(nfreq, output[7], output[0], output[1], output[2]);
-        dsort(nfreq, output[7], output[3], output[4], output[5]);   
-        dsort(nfreq, output[7], output[6], output[7], output[8]);
-    }
+   // if(flag==2){
+   //     dsort(nfreq, output[7], output[0], output[1], output[2]);
+   //     dsort(nfreq, output[7], output[3], output[4], output[5]);   
+   //     dsort(nfreq, output[7], output[6], output[7], output[8]);
+   // }
 
     /* FREE THE ALLOCATED VARIABLES */
     free(xdata);
