@@ -4,7 +4,7 @@
 #include <math.h>
 
 int main(int argc, char* argv[]) {
-    int Nsamples = 1024;
+    int Nsamples = 64;
     int nfreq = 4;
     double* input = malloc(sizeof(double)*Nsamples*2);
     double* output = malloc(sizeof(double)*10*nfreq);

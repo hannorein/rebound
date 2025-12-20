@@ -423,10 +423,9 @@ void four1(double* data, unsigned long nn){
     unsigned long n;
 
     n=nn<<1;
-    int j=0;
-    for(int i=0;i<n-q;i+=2){ /* bit-reversal section */
+    unsigned long j=0;
+    for(unsigned long i=0;i<n-1;i+=2){ /* bit-reversal section */
         if(j>i){
-            printf("%d\n",n);
             double t = data[j];
             data[j] = data[i];
             data[i] = t;
@@ -435,7 +434,7 @@ void four1(double* data, unsigned long nn){
             data[i+1] = t;
         }
         unsigned long m=n>>1;
-        while(m>=2 && j>m){
+        while(m>=2 && j+1>m){
             j-=m;
             m>>=1;
         }
@@ -451,7 +450,7 @@ void four1(double* data, unsigned long nn){
         double wpi=sin(theta);
         double wr=1.0;
         double wi=0.0;
-        for(int m=0;m<mmax-1;m+=2){ /* two inner loops */
+        for(unsigned long m=0;m<mmax;m+=2){ /* two inner loops */
             for(int i=m;i<n;i+=istep){
                 j=i+mmax; /* D-L formula */
                 double tempr=wr*data[j]-wi*data[j+1];
