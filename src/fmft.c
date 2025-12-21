@@ -573,29 +573,35 @@ static void phifun(double *xphi, double *yphi, double freq, double* xdata, doubl
     free(ydata2);
 }
 
-static int compare_amp(const void* a, const void* b, void* amp){
-    double aa = ((double*)amp)[*(const unsigned long*)a];
-    double ab = ((double*)amp)[*(const unsigned long*)b];
-    if (aa>ab) return 1;
-    if (aa<ab) return -1;
+// Workaround because qsort_r is not portable
+struct cmp2 {
+    unsigned int i;
+    double a;
+};
+static int compare_amp(const void* a, const void* b){
+    double aa = ((struct cmp2*)a)->a;
+    double ba = ((struct cmp2*)b)->a;
+    if (aa>ba) return 1;
+    if (aa<ba) return -1;
     return 0;
 }
 
 // Sort rb, rc, rd depending on ra
 static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* rd){
-    unsigned long* iwksp = malloc(sizeof(unsigned long)*n);
+    struct cmp2* iwksp = malloc(sizeof(struct cmp2)*n);
     double* wksp = malloc(sizeof(double)* n);
     for (unsigned long j=0;j<n;j++){
-        iwksp[j]=j;
+        iwksp[j].i = j;
+        iwksp[j].a = ra[j];
     }
-    qsort_r(iwksp, n, sizeof(unsigned long), compare_amp, ra);
+    qsort(iwksp, n, sizeof(struct cmp2), compare_amp);
 
     for (int j=0;j<n;j++) wksp[j] = rb[j];
-    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j-1]];
+    for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j-1].i];
     for (int j=0;j<n;j++) wksp[j] = rc[j];
-    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n-j-1]];
+    for(int j=0;j<n;j++) rc[j] = wksp[iwksp[n-j-1].i];
     for (int j=0;j<n;j++) wksp[j] = rd[j];
-    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n-j-1]];
+    for(int j=0;j<n;j++) rd[j] = wksp[iwksp[n-j-1].i];
 
     free(wksp);
     free(iwksp);
