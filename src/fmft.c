@@ -478,7 +478,7 @@ static double bracket(double *powsd, long ndata){
 
 static double golden(double ax, double bx, double cx, double* xdata, double* ydata, long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
-    const double gold_r =  0.61803399;
+    const double gold_r =  0.6180339887498948482;
     const double gold_c = (1.0 - gold_r);
 
     double x0=ax;
