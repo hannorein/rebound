@@ -17,14 +17,14 @@
 
 static void window(double *x, double *y, double *xdata, double *ydata, long ndata);
 static void power(double *powsd, double *x, double *y, long ndata);
-static void four1(double data[], unsigned long n);
+static void four1(double* data, unsigned long n);
 static double bracket(double *powsd, long ndata);
 static double golden(double leftf, double centerf, double rightf, double *x, double *y, long ndata);
-static void phifun(double *xphi, double *yphi, double freq,  double xdata[], double ydata[], long n);
-static double phisqr(double freq, double xdata[], double ydata[], long ndata);
-static void amph(double *amp, double *phase, double freq, double xdata[], double ydata[], long ndata);
-static void dsort(unsigned long n, double ra[], double rb[], double rc[], double rd[]);
-static void dindex(unsigned long n, double arr[], unsigned long indx[]);
+static void phifun(double *xphi, double *yphi, double freq,  double* xdata, double* ydata, long n);
+static double phisqr(double freq, double* xdata, double* ydata, long ndata);
+static void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata);
+static void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd);
+static void dindex(unsigned long n, double* arr, unsigned long* indx);
 
 
 /* THE MAIN FUNCTION ****************************************************/
@@ -477,7 +477,7 @@ double bracket(double *powsd, long ndata){
 }
 
 
-double golden(double ax, double bx, double cx, double xdata[], double ydata[], long n){
+double golden(double ax, double bx, double cx, double* xdata, double* ydata, long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
     const double gold_r =  0.61803399;
     const double gold_c = (1.0 - gold_r);
@@ -520,7 +520,7 @@ double golden(double ax, double bx, double cx, double xdata[], double ydata[], l
     }
 }
 
-void amph(double *amp, double *phase, double freq, double xdata[], double ydata[], long ndata){
+void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata){
     /* CALCULATES THE AMPLITUDE AND PHASE */
     double xphi = 0;
     double yphi = 0;
@@ -531,7 +531,7 @@ void amph(double *amp, double *phase, double freq, double xdata[], double ydata[
     *phase = atan2(yphi, xphi);
 }
 
-double phisqr(double freq, double xdata[], double ydata[], long ndata){
+double phisqr(double freq, double* xdata, double* ydata, long ndata){
     /* COMPUTES A SQUARE POWER OF THE FUNCTION PHI */
     double xphi = 0;
     double yphi = 0;
@@ -541,7 +541,7 @@ double phisqr(double freq, double xdata[], double ydata[], long ndata){
     return xphi*xphi + yphi*yphi;
 }
 
-void phifun(double *xphi, double *yphi, double freq, double xdata[], double ydata[], long n){
+void phifun(double *xphi, double *yphi, double freq, double* xdata, double* ydata, long n){
     /* COMPUTES THE FUNCTION PHI */   
     double* xdata2 = malloc(sizeof(double)* n);
     double* ydata2 = malloc(sizeof(double)* n);
@@ -595,7 +595,7 @@ void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
 #define ULSWAP(a,b) ultemp=(a);(a)=(b);(b)=ultemp
 #define SORT_M 7 
 #define SORT_NSTACK 50
-void dindex(unsigned long n, double arr[], unsigned long indx[]) {
+void dindex(unsigned long n, double* arr, unsigned long* indx) {
     unsigned long i,indxt,ir=n,j,l=0;
     int jstack=0;
 
