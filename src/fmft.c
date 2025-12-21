@@ -23,7 +23,7 @@ static double golden(double leftf, double centerf, double rightf, double *x, dou
 static void phifun(double *xphi, double *yphi, double freq,  double* xdata, double* ydata, long n);
 static double phisqr(double freq, double* xdata, double* ydata, long ndata);
 static void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata);
-static void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd);
+static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* rd);
 
 
 /* THE MAIN FUNCTION ****************************************************/
@@ -330,18 +330,18 @@ void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int fla
 
     // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
     if(flag==0){ 
-        dsort(nfreq, &output[1*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
+        sort3(nfreq, &output[1*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
     }
 
     if(flag==1){
-        dsort(nfreq, &output[4*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
-        dsort(nfreq, &output[4*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);
+        sort3(nfreq, &output[4*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
+        sort3(nfreq, &output[4*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);
     }
 
     if(flag==2){
-        dsort(nfreq, &output[7*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
-        dsort(nfreq, &output[7*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);   
-        dsort(nfreq, &output[7*nfreq], &output[6*nfreq], &output[7*nfreq], &output[8*nfreq]);
+        sort3(nfreq, &output[7*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
+        sort3(nfreq, &output[7*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);
+        sort3(nfreq, &output[7*nfreq], &output[6*nfreq], &output[7*nfreq], &output[8*nfreq]);
     }
 
     /* FREE THE ALLOCATED VARIABLES */
@@ -364,7 +364,7 @@ void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int fla
     free(B);
 }
 
-void window(double *x, double *y, double *xdata, double *ydata, long ndata) {  
+static void window(double *x, double *y, double *xdata, double *ydata, long ndata) {  
     /* MULTIPLIES DATA BY A WINDOW FUNCTION */      
     for(int j=0;j<ndata;j++) {
         double window = (1. - cos(TWOPI*j / (ndata-1)))*0.5;
@@ -374,7 +374,7 @@ void window(double *x, double *y, double *xdata, double *ydata, long ndata) {
 }
 
 
-void power(double *powsd, double *x, double *y, long ndata){
+static void power(double *powsd, double *x, double *y, long ndata){
     /* REARRANGES DATA FOR THE FAST FOURIER TRANSFORM, 
        CALLS FFT AND RETURNS POWER SPECTRAL DENSITY */
     double* z = malloc(sizeof(double)*2*ndata);
@@ -390,7 +390,7 @@ void power(double *powsd, double *x, double *y, long ndata){
 }
 
 
-void four1(double* data, unsigned long nn){
+static void four1(double* data, unsigned long nn){
     /* data[1..2*nn] replaces by DFS, nn must be a power of 2 */
     unsigned long n;
 
@@ -439,7 +439,7 @@ void four1(double* data, unsigned long nn){
     }
 }
 
-double bracket(double *powsd, long ndata){
+static double bracket(double *powsd, long ndata){
     /* FINDS THE MAXIMUM OF THE POWER SPECTRAL DENSITY  */ 
     // Not sure why this is so complicated. Could just be one loop?
     int maxj = 0;
@@ -476,7 +476,7 @@ double bracket(double *powsd, long ndata){
 }
 
 
-double golden(double ax, double bx, double cx, double* xdata, double* ydata, long n){
+static double golden(double ax, double bx, double cx, double* xdata, double* ydata, long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
     const double gold_r =  0.61803399;
     const double gold_c = (1.0 - gold_r);
@@ -519,7 +519,7 @@ double golden(double ax, double bx, double cx, double* xdata, double* ydata, lon
     }
 }
 
-void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata){
+static void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata){
     /* CALCULATES THE AMPLITUDE AND PHASE */
     double xphi = 0;
     double yphi = 0;
@@ -530,7 +530,7 @@ void amph(double *amp, double *phase, double freq, double* xdata, double* ydata,
     *phase = atan2(yphi, xphi);
 }
 
-double phisqr(double freq, double* xdata, double* ydata, long ndata){
+static double phisqr(double freq, double* xdata, double* ydata, long ndata){
     /* COMPUTES A SQUARE POWER OF THE FUNCTION PHI */
     double xphi = 0;
     double yphi = 0;
@@ -540,7 +540,7 @@ double phisqr(double freq, double* xdata, double* ydata, long ndata){
     return xphi*xphi + yphi*yphi;
 }
 
-void phifun(double *xphi, double *yphi, double freq, double* xdata, double* ydata, long n){
+static void phifun(double *xphi, double *yphi, double freq, double* xdata, double* ydata, long n){
     /* COMPUTES THE FUNCTION PHI */   
     double* xdata2 = malloc(sizeof(double)* n);
     double* ydata2 = malloc(sizeof(double)* n);
@@ -581,14 +581,14 @@ static int compare_amp(const void* a, const void* b, void* amp){
     return 0;
 }
 
-void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
-    /* SORTING PROCEDURE FROM NUMERICAL RECIPES */
+// Sort rb, rc, rd depending on ra
+static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     unsigned long* iwksp = malloc(sizeof(unsigned long)*n);
+    double* wksp = malloc(sizeof(double)* n);
     for (unsigned long j=0;j<n;j++){
         iwksp[j]=j;
     }
     qsort_r(iwksp, n, sizeof(unsigned long), compare_amp, ra);
-    double* wksp = malloc(sizeof(double)* n);
 
     for (int j=0;j<n;j++) wksp[j] = rb[j];
     for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j-1]];
