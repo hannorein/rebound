@@ -306,23 +306,23 @@ void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int fla
             if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
                 double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
                 output[6*nfreq+k] += tmp*tmp / fac;
-            }else 
+            }else{ 
                 output[6*nfreq+k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
-
+            }
             output[7*nfreq+k] = amp[0*nfreq+k];
             if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL){
                 double tmp = amp[0*nfreq+k] - amp[1*nfreq+k];
                 output[7*nfreq+k] += tmp*tmp / fac;
-            }else
+            }else{
                 output[7*nfreq+k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
-
+            }
             output[8*nfreq+k] = phase[0*nfreq+k];
             if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL){
                 double tmp = phase[0*nfreq+k] - phase[1*nfreq+k];
                 output[8*nfreq+k] += tmp*tmp / fac;
-            }else
+            }else{
                 output[8*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
-
+            }
             if(output[8*nfreq+k] < -M_PI) output[8*nfreq+k] += TWOPI;
             if(output[8*nfreq+k] >= M_PI) output[8*nfreq+k] -= TWOPI;
         }
@@ -548,7 +548,7 @@ static void phifun(double *xphi, double *yphi, double freq, double* xdata, doubl
     xdata2[0] = xdata[0] / 2; ydata2[0] = ydata[0] / 2;
     xdata2[n-1] = xdata[n-1] / 2; ydata2[n-1] = ydata[n-1] / 2;
 
-    for(int i=0;i<n-2;i++){
+    for(int i=1;i<n-1;i++){
         xdata2[i] = xdata[i];
         ydata2[i] = ydata[i];
     }
