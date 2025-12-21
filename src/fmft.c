@@ -24,7 +24,6 @@ static void phifun(double *xphi, double *yphi, double freq,  double* xdata, doub
 static double phisqr(double freq, double* xdata, double* ydata, long ndata);
 static void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata);
 static void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd);
-static void dindex(unsigned long n, double* arr, unsigned long* indx);
 
 
 /* THE MAIN FUNCTION ****************************************************/
@@ -574,12 +573,22 @@ void phifun(double *xphi, double *yphi, double freq, double* xdata, double* ydat
     free(ydata2);
 }
 
+static int compare_amp(const void* a, const void* b, void* amp){
+    double aa = ((double*)amp)[*(const unsigned long*)a];
+    double ab = ((double*)amp)[*(const unsigned long*)b];
+    if (aa>ab) return 1;
+    if (aa<ab) return -1;
+    return 0;
+}
+
 void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
     /* SORTING PROCEDURE FROM NUMERICAL RECIPES */
     unsigned long* iwksp = malloc(sizeof(unsigned long)*n);
+    for (unsigned long j=0;j<n;j++){
+        iwksp[j]=j;
+    }
+    qsort_r(iwksp, n, sizeof(unsigned long), compare_amp, ra);
     double* wksp = malloc(sizeof(double)* n);
-
-    dindex(n, ra, iwksp);
 
     for (int j=0;j<n;j++) wksp[j] = rb[j];
     for(int j=0;j<n;j++) rb[j] = wksp[iwksp[n-j-1]];
@@ -590,69 +599,5 @@ void dsort(unsigned long n, double* ra, double* rb, double* rc, double* rd){
 
     free(wksp);
     free(iwksp);
-}
-
-#define ULSWAP(a,b) ultemp=(a);(a)=(b);(b)=ultemp
-#define SORT_M 7 
-#define SORT_NSTACK 50
-void dindex(unsigned long n, double* arr, unsigned long* indx) {
-    unsigned long i,indxt,ir=n,j,l=0;
-    int jstack=0;
-
-    int* istack=malloc(sizeof(int)*SORT_NSTACK);
-    for (j=0;j<n;j++) indx[j]=j;
-    for(;;){
-        if(ir-l < SORT_M) {
-            for(j=l+1;j<ir;j++) {
-                indxt=indx[j];
-                double a=arr[indxt];
-                for(i=j-1;i>=0;i--) {
-                    if(arr[indx[i]] <= a) break;
-                    indx[i+1]=indx[i];
-                }
-                indx[i+1]=indxt;
-            }
-            if (jstack == 0) break;
-            ir=istack[jstack--];
-            l=istack[jstack--];
-        } else {
-            unsigned long k=(l+ir) >> 1;
-            unsigned long ultemp;
-            ULSWAP(indx[k],indx[l+1]);
-            if (arr[indx[l+1]] > arr[indx[ir]]) {
-                ULSWAP(indx[l+1],indx[ir]);
-            }
-            if (arr[indx[l]] > arr[indx[ir]]) {
-                ULSWAP(indx[l],indx[ir]);
-            }
-            if (arr[indx[l+1]] > arr[indx[l]]) {
-                ULSWAP(indx[l+1],indx[l]);
-            }
-            i=l+1;
-            j=ir;
-            indxt=indx[l];
-            double a=arr[indxt];
-            for(;;) {
-                do i++; while (arr[indx[i]] < a);
-                do j--; while (arr[indx[j]] > a);
-                if(j < i) break;
-                ULSWAP(indx[i],indx[j]);
-            }
-            indx[l]=indx[j];
-            indx[j]=indxt;
-            jstack += 2;
-            if (jstack > SORT_NSTACK) printf("SORT_NSTACK too small.");
-            if(ir-i+1 >= j-l) {
-                istack[jstack]=ir;
-                istack[jstack-1]=i;
-                ir=j-1;
-            } else {
-                istack[jstack]=j-1;
-                istack[jstack-1]=l;
-                l=i;
-            }
-        }
-    }
-    free(istack);
 }
 
