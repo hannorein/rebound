@@ -509,15 +509,21 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
     struct reb_particle* const p_j = r->ri_whfast.p_jh;
     double eta = m0;
     switch (coordinates){
-        case REB_WHFAST_COORDINATES_JACOBI:
+        case REB_WHFAST_COORDINATES_JACOBI:{
+            double eta_jacobi[N_real];
+            eta_jacobi[0] = m0;
+            for (int i=1; i<(int)N_real;i++){
+                eta_jacobi[i] = eta_jacobi[i-1];
+                if (i < N_active){
+                    eta_jacobi[i] += p_j[i].m;
+                }
+            }
 #pragma omp parallel for 
             for (int i=1;i<(int)N_real;i++){
-                if (i<N_active){
-                    eta += p_j[i].m;
-                }
-                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+                reb_whfast_kepler_solver(r, p_j, eta_jacobi[i]*G, i, _dt);
             }
             break;
+        }
         case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
 #pragma omp parallel for 
             for (unsigned int i=1;i<N_real;i++){
@@ -527,6 +533,7 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
         case REB_WHFAST_COORDINATES_WHDS:
 #pragma omp parallel for 
             for (int i=1;i<(int)N_real;i++){
+                double eta;
                 if (i<N_active){
                     eta = m0+p_j[i].m;
                 }else{
