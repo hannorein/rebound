@@ -50,7 +50,6 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
        be a power of 2), are the input data X(j) and Y(j).
      */   
 
-    double centerf, leftf, rightf;
 
 
     /* ALLOCATION OF VARIABLES */
@@ -59,20 +58,20 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
     double* ydata = malloc(sizeof(double)*ndata);
     double* x = malloc(sizeof(double)*ndata);
     double* y = malloc(sizeof(double)*ndata);
-    double* powsd = malloc(sizeof(double)* ndata);
+    double* powsd = malloc(sizeof(double)*ndata);
 
     double* freq = malloc(sizeof(double)*3*(flag+1)*nfreq); 
     double* amp = malloc(sizeof(double)*3*(flag+1)*nfreq);
     double* phase = malloc(sizeof(double)*3*(flag+1)*nfreq);
 
-    double* f = malloc(sizeof(double)* nfreq);
-    double* A = malloc(sizeof(double)* nfreq);
-    double* psi = malloc(sizeof(double)* nfreq);
+    double* f = malloc(sizeof(double)*nfreq);
+    double* A = malloc(sizeof(double)*nfreq);
+    double* psi = malloc(sizeof(double)*nfreq);
 
 
     double* Q = malloc(sizeof(double)*nfreq*nfreq);
     double* alpha = malloc(sizeof(double)*nfreq*nfreq);
-    double* B = malloc(sizeof(double)* nfreq);
+    double* B = malloc(sizeof(double)*nfreq);
 
 
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
@@ -102,14 +101,13 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
         /* COMPUTE POWER SPECTRAL DENSITY USING FAST FOURIER TRANSFORM */
         power(powsd, x, y, ndata);
 
+        double centerf;
+
         if(l==0){ 
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
                 /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
-                leftf = centerf - TWOPI / ndata;
-                rightf = centerf + TWOPI / ndata;
-
-                f[0] = golden(leftf, centerf, rightf, x, y, ndata);
+                f[0] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
 
                 amph(&A[0], &psi[0], f[0], x, y, ndata);
 
@@ -125,11 +123,9 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
         }else{ 
             centerf = freq[0];
         }
-        leftf = centerf - TWOPI / ndata;
-        rightf = centerf + TWOPI / ndata;
 
         /* DETERMINE THE FIRST FREQUENCY */
-        f[0] = golden(leftf, centerf, rightf, x, y, ndata);
+        f[0] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
 
         /* COMPUTE AMPLITUDE AND PHASE */
         amph(&A[0], &psi[0], f[0], x, y, ndata);
@@ -152,11 +148,8 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
             power(powsd, x, y, ndata);
 
             if(l==0){
-                centerf = bracket(powsd, ndata);
-                leftf = centerf - TWOPI / ndata;
-                rightf = centerf + TWOPI / ndata;
-
-                f[m] = golden(leftf, centerf, rightf, x, y, ndata);
+                double centerf = bracket(powsd, ndata);
+                f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
 
                 /* CHECK WHETHER THE NEW FREQUENCY IS NOT TOO CLOSE TO ANY PREVIOUSLY
                    DETERMINED ONE */
@@ -170,10 +163,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
                 while(f[m] < minfreq || f[m] > maxfreq || nearfreqflag == 1){
                     /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
-                    leftf = centerf - TWOPI / ndata;
-                    rightf = centerf + TWOPI / ndata;
-
-                    f[m] = golden(leftf, centerf, rightf, x, y, ndata);
+                    f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
 
                     amph(&A[m], &psi[m], f[m], x, y, ndata);
 
@@ -188,11 +178,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                     power(powsd, x, y, ndata); 
 
                     centerf = bracket(powsd, ndata); 
-
-                    leftf = centerf - TWOPI / ndata;
-                    rightf = centerf + TWOPI / ndata;
-
-                    f[m] = golden(leftf, centerf, rightf, x, y, ndata);
+                    f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
 
                     nearfreqflag = 0.;
                     for(int k=0;k<m-1;k++){
@@ -203,11 +189,9 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 }   
 
             } else {  
-                centerf = freq[m];
-                leftf = centerf - TWOPI / ndata;
-                rightf = centerf + TWOPI / ndata;
+                double centerf = freq[m];
                 /* DETERMINE THE NEXT FREQUENCY */
-                f[m] = golden(leftf, centerf, rightf, x, y, ndata);
+                f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
             }
 
             /* COMPUTE ITS AMPLITUDE AND PHASE */
