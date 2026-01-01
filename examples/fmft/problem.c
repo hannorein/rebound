@@ -26,14 +26,26 @@ int main(int argc, char* argv[]) {
     reb_fmft(output, nfreq,-40e-2,40.e-2,0,input,Nsamples);
    
     // Check accuracy 
+    double max_nu_error = 0.0;
+    double max_A_error = 0.0;
+    double max_phi_error = 0.0;
     for (int i=0; i<nfreq; i++){
-        assert(fabs(output[0*nfreq+i]/M_PI*648000.0/datasep*2*M_PI-nu5[i]) < 1e-3); // Frequency accuracy better than 1e-3"/year
-        assert(fabs((output[1*nfreq+i]-A5[i])/A5[i]) < 1e-2); // Amplitude accuracy better than 1%
-        double phi = output[2*nfreq+i]/M_PI*180.0;
-        if (phi<0) phi+= 360.0;
-        assert(fabs(phi-phi5[i])<1.0); // Phase accuracy better than 1 deg
-    
+        double nu_error = fabs(output[0*nfreq+i]/M_PI*648000.0/datasep*2*M_PI-nu5[i]); // frequency error in "/year
+        if (nu_error > max_nu_error) max_nu_error = nu_error;
+        double A_error = fabs((output[1*nfreq+i]-A5[i])/A5[i]); // relative amplitude error
+        if (A_error > max_A_error) max_A_error = A_error;
+        double phi_error = output[2*nfreq+i]/M_PI*180.0 - phi5[i];
+        if (phi_error<-180.0) phi_error+= 360.0;
+        if (phi_error>180.0) phi_error-= 360.0;
+        phi_error = fabs(phi_error);
+        if (phi_error > max_phi_error) max_phi_error = phi_error;
     }
+    printf("Max frequency error:          %e \"/year\n", max_nu_error);
+    printf("Max relative amplitude error: %e\n", max_A_error);
+    printf("Max phase error:              %e deg\n", max_phi_error);
+    assert(max_nu_error<3e-4);
+    assert(max_A_error<2e-3);
+    assert(max_phi_error<5e-1);
     free(input);
     free(output);
 }
