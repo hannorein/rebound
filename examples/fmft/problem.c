@@ -25,14 +25,15 @@ int main(int argc, char* argv[]) {
             }
         }
         double* output;
-        reb_fmft(&output, nfreq,-40e-2,40.e-2,flag,input,Nsamples);
+        double minfreq = 60.0/1296000.0*datasep;
+        reb_frequency_analysis(&output, nfreq,-minfreq,minfreq,flag,input,Nsamples);
 
         // Check accuracy 
         double max_nu_error = 0.0;
         double max_A_error = 0.0;
         double max_phi_error = 0.0;
         for (int i=0; i<nfreq; i++){
-            double nu_error = fabs(output[0*nfreq+i]/M_PI*648000.0/datasep*2*M_PI-nu5[i]); // frequency error in "/year
+            double nu_error = fabs(output[0*nfreq+i]*1296000.0/datasep-nu5[i]); // frequency error in "/year
             if (nu_error > max_nu_error) max_nu_error = nu_error;
             double A_error = fabs((output[1*nfreq+i]-A5[i])/A5[i]); // relative amplitude error
             if (A_error > max_A_error) max_A_error = A_error;

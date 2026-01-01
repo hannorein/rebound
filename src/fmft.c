@@ -28,7 +28,7 @@ static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* r
 
 
 /* THE MAIN FUNCTION ****************************************************/
-void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
+void reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
 
     /* 
        In the output array **output: output[][i], output[3*flag-1][i] 
@@ -189,9 +189,8 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 }   
 
             } else {  
-                double centerf = freq[m];
                 /* DETERMINE THE NEXT FREQUENCY */
-                f[m] = golden(centerf, TWOPI/ndata, x, y, ndata);
+                f[m] = golden(freq[m], TWOPI/ndata, x, y, ndata);
             }
 
             /* COMPUTE ITS AMPLITUDE AND PHASE */
