@@ -22,8 +22,8 @@ int main(int argc, char* argv[]) {
             input[i*2+1] += A5[j]*sin(nu*i*datasep+phi5[j]/180.0*M_PI);
         }
     }
-    double* output = malloc(sizeof(double)*10*nfreq);
-    reb_fmft(output, nfreq,-40e-2,40.e-2,0,input,Nsamples);
+    double* output;
+    reb_fmft(&output, nfreq,-40e-2,40.e-2,0,input,Nsamples);
    
     // Check accuracy 
     double max_nu_error = 0.0;

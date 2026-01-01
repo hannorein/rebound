@@ -1101,7 +1101,7 @@ DLLEXPORT struct reb_particle reb_particle_derivative_m_omega(double G, struct r
 DLLEXPORT struct reb_particle reb_particle_derivative_m_f(double G, struct reb_particle primary, struct reb_particle po);
 
 // FMFT functions
-DLLEXPORT void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata);
+DLLEXPORT void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata);
 
 // Functions to convert between coordinate systems
 

@@ -28,7 +28,7 @@ static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* r
 
 
 /* THE MAIN FUNCTION ****************************************************/
-void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
+void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
 
     /* 
        In the output array **output: output[3*flag-2][i], output[3*flag-1][i] 
@@ -280,70 +280,63 @@ void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int fla
     }
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
-    for(int k=0;k<nfreq;k++){
-        output[0*nfreq+k] = freq[0*nfreq+k];            
-        output[1*nfreq+k] = amp[0*nfreq+k];
-        output[2*nfreq+k] = phase[0*nfreq+k];
+    *output = calloc(3*nfreq,sizeof(double));
+    switch (flag){
+        case 0:
+            for(int k=0;k<nfreq;k++){
+                (*output)[0*nfreq+k] = freq[0*nfreq+k];            
+                (*output)[1*nfreq+k] = amp[0*nfreq+k];
+                (*output)[2*nfreq+k] = phase[0*nfreq+k];
 
-        if(output[2*nfreq+k] < -M_PI) output[2*nfreq+k] += TWOPI;
-        if(output[2*nfreq+k] >= M_PI) output[2*nfreq+k] -= TWOPI;
-    }
-
-    if(flag==1 || flag==2){
-        for(int k=0;k<nfreq;k++){
-            output[3*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
-            output[4*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
-            output[5*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
-
-            if(output[5*nfreq+k] < -M_PI) output[5*nfreq+k] += TWOPI;
-            if(output[5*nfreq+k] >= M_PI) output[5*nfreq+k] -= TWOPI;
-        }
-    }
-    if(flag==2){
-        for(int k=0;k<nfreq;k++){
-
-            output[6*nfreq+k] = freq[0*nfreq+k];
-            double fac;
-            if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
-                double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
-                output[6*nfreq+k] += tmp*tmp / fac;
-            }else{ 
-                output[6*nfreq+k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
+                if((*output)[2*nfreq+k] < -M_PI) (*output)[2*nfreq+k] += TWOPI;
+                if((*output)[2*nfreq+k] >= M_PI) (*output)[2*nfreq+k] -= TWOPI;
             }
-            output[7*nfreq+k] = amp[0*nfreq+k];
-            if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL){
-                double tmp = amp[0*nfreq+k] - amp[1*nfreq+k];
-                output[7*nfreq+k] += tmp*tmp / fac;
-            }else{
-                output[7*nfreq+k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
+            break;
+        case 1:
+            for(int k=0;k<nfreq;k++){
+                (*output)[0*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
+                (*output)[1*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
+                (*output)[2*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
+
+                if((*output)[2*nfreq+k] < -M_PI) (*output)[2*nfreq+k] += TWOPI;
+                if((*output)[2*nfreq+k] >= M_PI) (*output)[2*nfreq+k] -= TWOPI;
             }
-            output[8*nfreq+k] = phase[0*nfreq+k];
-            if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL){
-                double tmp = phase[0*nfreq+k] - phase[1*nfreq+k];
-                output[8*nfreq+k] += tmp*tmp / fac;
-            }else{
-                output[8*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
+            break;
+        case 2:
+            for(int k=0;k<nfreq;k++){
+                (*output)[0*nfreq+k] = freq[0*nfreq+k];
+                double fac;
+                if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
+                    double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
+                    (*output)[0*nfreq+k] += tmp*tmp / fac;
+                }else{ 
+                    (*output)[0*nfreq+k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
+                }
+                (*output)[1*nfreq+k] = amp[0*nfreq+k];
+                if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL){
+                    double tmp = amp[0*nfreq+k] - amp[1*nfreq+k];
+                    (*output)[1*nfreq+k] += tmp*tmp / fac;
+                }else{
+                    (*output)[1*nfreq+k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
+                }
+                (*output)[2*nfreq+k] = phase[0*nfreq+k];
+                if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL){
+                    double tmp = phase[0*nfreq+k] - phase[1*nfreq+k];
+                    (*output)[2*nfreq+k] += tmp*tmp / fac;
+                }else{
+                    (*output)[2*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
+                }
+                if((*output)[2*nfreq+k] < -M_PI) (*output)[2*nfreq+k] += TWOPI;
+                if((*output)[2*nfreq+k] >= M_PI) (*output)[2*nfreq+k] -= TWOPI;
             }
-            if(output[8*nfreq+k] < -M_PI) output[8*nfreq+k] += TWOPI;
-            if(output[8*nfreq+k] >= M_PI) output[8*nfreq+k] -= TWOPI;
-        }
+            break;
+        default:
+            printf("flag not implemented\n");
+            exit(0);
     }
 
-    // /* SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE */
-    if(flag==0){ 
-        sort3(nfreq, &output[1*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
-    }
-
-    if(flag==1){
-        sort3(nfreq, &output[4*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
-        sort3(nfreq, &output[4*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);
-    }
-
-    if(flag==2){
-        sort3(nfreq, &output[7*nfreq], &output[0*nfreq], &output[1*nfreq], &output[2*nfreq]);
-        sort3(nfreq, &output[7*nfreq], &output[3*nfreq], &output[4*nfreq], &output[5*nfreq]);
-        sort3(nfreq, &output[7*nfreq], &output[6*nfreq], &output[7*nfreq], &output[8*nfreq]);
-    }
+    // SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE
+    sort3(nfreq, &((*output)[1*nfreq]), &((*output)[0*nfreq]), &((*output)[1*nfreq]), &((*output)[2*nfreq]));
 
     /* FREE THE ALLOCATED VARIABLES */
     free(xdata);

@@ -2,7 +2,7 @@ ifndef OS
 	OS=$(shell uname)
 endif
 ifneq ($(OS), Windows_NT)
-	OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -O3 -fPIC
+	OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -fPIC
 	OBJFILEEXT=o
 	LIBREBOUND=librebound.so
 	EXEREBOUND=rebound
