@@ -31,7 +31,7 @@ static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* r
 void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
 
     /* 
-       In the output array **output: output[3*flag-2][i], output[3*flag-1][i] 
+       In the output array **output: output[][i], output[3*flag-1][i] 
        and output[3*flag][i] are the i-th frequency, amplitude and phase; nfreq is the 
        number of frequencies to be computed (the units are rad/sep, where sep is the 
        `time' separation between i and i+1. The algorithm is  
@@ -287,9 +287,6 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 (*output)[0*nfreq+k] = freq[0*nfreq+k];            
                 (*output)[1*nfreq+k] = amp[0*nfreq+k];
                 (*output)[2*nfreq+k] = phase[0*nfreq+k];
-
-                if((*output)[2*nfreq+k] < -M_PI) (*output)[2*nfreq+k] += TWOPI;
-                if((*output)[2*nfreq+k] >= M_PI) (*output)[2*nfreq+k] -= TWOPI;
             }
             break;
         case 1:
@@ -297,9 +294,6 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 (*output)[0*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
                 (*output)[1*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
                 (*output)[2*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
-
-                if((*output)[2*nfreq+k] < -M_PI) (*output)[2*nfreq+k] += TWOPI;
-                if((*output)[2*nfreq+k] >= M_PI) (*output)[2*nfreq+k] -= TWOPI;
             }
             break;
         case 2:
@@ -326,13 +320,15 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 }else{
                     (*output)[2*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
                 }
-                if((*output)[2*nfreq+k] < -M_PI) (*output)[2*nfreq+k] += TWOPI;
-                if((*output)[2*nfreq+k] >= M_PI) (*output)[2*nfreq+k] -= TWOPI;
             }
             break;
         default:
             printf("flag not implemented\n");
             exit(0);
+    }
+    for(int k=0;k<nfreq;k++){
+        if((*output)[2*nfreq+k] < 0.0) (*output)[2*nfreq+k] += TWOPI;
+        if((*output)[2*nfreq+k] >= 2.0*M_PI) (*output)[2*nfreq+k] -= TWOPI;
     }
 
     // SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE
