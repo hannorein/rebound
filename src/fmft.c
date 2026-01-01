@@ -1,5 +1,6 @@
 /* This program implements the Frequency Modified Fourier Transform 
-   (Sidlichovsky and Nesvorny 1997, Cel. Mech. 65, 137). 
+   (Sidlichovsky and Nesvorny 1996, Cel. Mech. 65, 137). 
+   https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
    Given a quasi--periodic complex signal X + iY, the algorithm 
    estimates the frequencies (f_j), amplitudes (A_j) and phases 
    (psi_j) in its decomposition:
@@ -365,7 +366,7 @@ void reb_fmft(double *output, int nfreq, double minfreq, double maxfreq, int fla
 }
 
 static void window(double *x, double *y, double *xdata, double *ydata, long ndata) {  
-    /* MULTIPLIES DATA BY A WINDOW FUNCTION */      
+    // Hanning window
     for(int j=0;j<ndata;j++) {
         double window = (1. - cos(TWOPI*j / (ndata-1)))*0.5;
         x[j] = xdata[j]*window;
