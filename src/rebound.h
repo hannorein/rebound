@@ -1100,8 +1100,13 @@ DLLEXPORT struct reb_particle reb_particle_derivative_omega_f(double G, struct r
 DLLEXPORT struct reb_particle reb_particle_derivative_m_omega(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_m_f(double G, struct reb_particle primary, struct reb_particle po);
 
-// FMFT functions
-DLLEXPORT void reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata);
+// Functions for Frequency Analysis, MFT, FMFT
+enum REB_FREQUENCY_ANALYSIS_TYPE {
+    REB_FREQUENCY_ANALYSIS_MFT = 0,
+    REB_FREQUENCY_ANALYSIS_FMFT = 1,
+    REB_FREQUENCY_ANALYSIS_FMFT2 = 2,
+};
+DLLEXPORT void reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, long ndata);
 
 // Functions to convert between coordinate systems
 

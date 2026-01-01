@@ -28,17 +28,17 @@ static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* r
 
 
 /* THE MAIN FUNCTION ****************************************************/
-void reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, int flag, double *input, long ndata){
+void reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, long ndata){
 
     /* 
-       In the output array **output: output[][i], output[3*flag-1][i] 
-       and output[3*flag][i] are the i-th frequency, amplitude and phase; nfreq is the 
+       In the output array **output: output[i*3], output[i*3+1] 
+       and output[i*3+2] are the i-th frequency, amplitude and phase; nfreq is the 
        number of frequencies to be computed (the units are rad/sep, where sep is the 
        `time' separation between i and i+1. The algorithm is  
 
-       Modified Fourier Transform                  if   flag = 0;
-       Frequency Modified Fourier Transform        if   flag = 1;
-       FMFT with additional non-linear correction  if   flag = 2
+       Modified Fourier Transform                  if   type = 0;
+       Frequency Modified Fourier Transform        if   type = 1;
+       FMFT with additional non-linear correction  if   type = 2
 
        (while the first algorithm is app. 3 times faster than the third one, 
        the third algorithm should be in general much more precise).  
@@ -60,9 +60,9 @@ void reb_frequency_analysis(double **output, int nfreq, double minfreq, double m
     double* y = malloc(sizeof(double)*ndata);
     double* powsd = malloc(sizeof(double)*ndata);
 
-    double* freq = malloc(sizeof(double)*3*(flag+1)*nfreq); 
-    double* amp = malloc(sizeof(double)*3*(flag+1)*nfreq);
-    double* phase = malloc(sizeof(double)*3*(flag+1)*nfreq);
+    double* freq = malloc(sizeof(double)*3*(type+1)*nfreq); 
+    double* amp = malloc(sizeof(double)*3*(type+1)*nfreq);
+    double* phase = malloc(sizeof(double)*3*(type+1)*nfreq);
 
     double* f = malloc(sizeof(double)*nfreq);
     double* A = malloc(sizeof(double)*nfreq);
@@ -76,7 +76,7 @@ void reb_frequency_analysis(double **output, int nfreq, double minfreq, double m
 
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
 
-    for(int l=0; l<=flag; l++){
+    for(int l=0; l<=type; l++){
         if(l==0){
             /* SEPARATE REAL AND IMAGINERY PARTS */ 
             for(int j=0;j<ndata;j++){
@@ -264,22 +264,22 @@ void reb_frequency_analysis(double **output, int nfreq, double minfreq, double m
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
     *output = calloc(3*nfreq,sizeof(double));
-    switch (flag){
-        case 0:
+    switch (type){
+        case REB_FREQUENCY_ANALYSIS_MFT:
             for(int k=0;k<nfreq;k++){
                 (*output)[0*nfreq+k] = freq[0*nfreq+k];            
                 (*output)[1*nfreq+k] = amp[0*nfreq+k];
                 (*output)[2*nfreq+k] = phase[0*nfreq+k];
             }
             break;
-        case 1:
+        case REB_FREQUENCY_ANALYSIS_FMFT:
             for(int k=0;k<nfreq;k++){
                 (*output)[0*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
                 (*output)[1*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
                 (*output)[2*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
             }
             break;
-        case 2:
+        case REB_FREQUENCY_ANALYSIS_FMFT2:
             for(int k=0;k<nfreq;k++){
                 (*output)[0*nfreq+k] = freq[0*nfreq+k];
                 double fac;
@@ -306,8 +306,7 @@ void reb_frequency_analysis(double **output, int nfreq, double minfreq, double m
             }
             break;
         default:
-            printf("flag not implemented\n");
-            exit(0);
+            printf("REB_FREQUENCY_ANALYSIS_TYPE not implemented.\n");
     }
     for(int k=0;k<nfreq;k++){
         if((*output)[2*nfreq+k] < 0.0) (*output)[2*nfreq+k] += TWOPI;

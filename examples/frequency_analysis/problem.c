@@ -10,8 +10,8 @@ double A5[] = {44119.0e-6, 15750.0e-6, 1800.0e-6, 516.0e-6, 183.0e-6, 178.0e-6, 
 double phi5[] = {30.676, 308.112, 121.362, 45.551, 218.696, 217.460, 32.614, 43.733, 116.984, 74.116}; // phase, deg
 
 int main(int argc, char* argv[]) {
-
-    for (int flag=0;flag<3;flag++){
+    // Check all 3 types of frequency analysis implemented
+    for (enum REB_FREQUENCY_ANALYSIS_TYPE type=0;type<3;type++){
         // Create artificial test signal based on Laskar (1990) model.
         int Nsamples = 32768;
         int nfreq = 10;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
         }
         double* output;
         double minfreq = 60.0/1296000.0*datasep;
-        reb_frequency_analysis(&output, nfreq,-minfreq,minfreq,flag,input,Nsamples);
+        reb_frequency_analysis(&output, nfreq,-minfreq,minfreq,type,input,Nsamples);
 
         // Check accuracy 
         double max_nu_error = 0.0;
@@ -43,22 +43,22 @@ int main(int argc, char* argv[]) {
             phi_error = fabs(phi_error);
             if (phi_error > max_phi_error) max_phi_error = phi_error;
         }
-        printf("Flag %d\n", flag);
+        printf("Flag %d\n", type);
         printf("Max frequency error:          %e \"/year\n", max_nu_error);
         printf("Max relative amplitude error: %e\n", max_A_error);
         printf("Max phase error:              %e deg\n", max_phi_error);
-        switch (flag){
-            case 0:
+        switch (type){
+            case REB_FREQUENCY_ANALYSIS_MFT:
                 assert(max_nu_error<3e-4);
                 assert(max_A_error<2e-3);
                 assert(max_phi_error<5e-1);
                 break;
-            case 1:
+            case REB_FREQUENCY_ANALYSIS_FMFT:
                 assert(max_nu_error<4e-6);
                 assert(max_A_error<1e-5);
                 assert(max_phi_error<6e-3);
                 break;
-            case 2:
+            case REB_FREQUENCY_ANALYSIS_FMFT2:
                 assert(max_nu_error<2e-8);
                 assert(max_A_error<3e-7);
                 assert(max_phi_error<3e-5);
