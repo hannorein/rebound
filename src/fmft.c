@@ -1,11 +1,11 @@
 /* This program implements the Frequency Modified Fourier Transform 
    (Sidlichovsky and Nesvorny 1996, Cel. Mech. 65, 137). 
-   https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
-   Given a quasi--periodic complex signal X + iY, the algorithm 
-   estimates the frequencies (f_j), amplitudes (A_j) and phases 
-   (psi_j) in its decomposition:
+https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
+Given a quasi--periodic complex signal X + iY, the algorithm 
+estimates the frequencies (f_j), amplitudes (A_j) and phases 
+(psi_j) in its decomposition:
 
-   X(t) + iY(t) = Sum_j=1^N [ A_j * exp i (f_j * t + psi_j) ] */      
+X(t) + iY(t) = Sum_j=1^N [ A_j * exp i (f_j * t + psi_j) ] */      
 
 #define FMFT_TOL 1.0e-10 /* MFT NOMINAL PRECISION */
 #define FMFT_NEAR 0.     /* MFT OVERLAP EXCLUSION PARAMETER */
