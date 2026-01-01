@@ -20,7 +20,7 @@ static void window(double *x, double *y, double *xdata, double *ydata, long ndat
 static void power(double *powsd, double *x, double *y, long ndata);
 static void four1(double* data, unsigned long n);
 static double bracket(double *powsd, long ndata);
-static double golden(double leftf, double centerf, double rightf, double *x, double *y, long ndata);
+static double golden(double centerf, double width, double *x, double *y, long ndata);
 static void phifun(double *xphi, double *yphi, double freq,  double* xdata, double* ydata, long n);
 static double phisqr(double freq, double* xdata, double* ydata, long ndata);
 static void amph(double *amp, double *phase, double freq, double* xdata, double* ydata, long ndata);
@@ -107,7 +107,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
                 /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
-                f[0] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
+                f[0] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
                 amph(&A[0], &psi[0], f[0], x, y, ndata);
 
@@ -125,7 +125,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
         }
 
         /* DETERMINE THE FIRST FREQUENCY */
-        f[0] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
+        f[0] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
         /* COMPUTE AMPLITUDE AND PHASE */
         amph(&A[0], &psi[0], f[0], x, y, ndata);
@@ -149,7 +149,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
 
             if(l==0){
                 double centerf = bracket(powsd, ndata);
-                f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
+                f[m] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
                 /* CHECK WHETHER THE NEW FREQUENCY IS NOT TOO CLOSE TO ANY PREVIOUSLY
                    DETERMINED ONE */
@@ -163,7 +163,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
                 while(f[m] < minfreq || f[m] > maxfreq || nearfreqflag == 1){
                     /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
-                    f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
+                    f[m] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
                     amph(&A[m], &psi[m], f[m], x, y, ndata);
 
@@ -178,7 +178,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
                     power(powsd, x, y, ndata); 
 
                     centerf = bracket(powsd, ndata); 
-                    f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
+                    f[m] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
                     nearfreqflag = 0.;
                     for(int k=0;k<m-1;k++){
@@ -191,7 +191,7 @@ void reb_fmft(double **output, int nfreq, double minfreq, double maxfreq, int fl
             } else {  
                 double centerf = freq[m];
                 /* DETERMINE THE NEXT FREQUENCY */
-                f[m] = golden(centerf-TWOPI/ndata, centerf, centerf+TWOPI/ndata, x, y, ndata);
+                f[m] = golden(centerf, TWOPI/ndata, x, y, ndata);
             }
 
             /* COMPUTE ITS AMPLITUDE AND PHASE */
@@ -450,11 +450,13 @@ static double bracket(double *powsd, long ndata){
 }
 
 
-static double golden(double ax, double bx, double cx, double* xdata, double* ydata, long n){
+static double golden(double bx, double width, double* xdata, double* ydata, long n){
     /* calculates the maximum of a function bracketed by ax, bx and cx */
     const double gold_r =  0.6180339887498948482;
     const double gold_c = (1.0 - gold_r);
 
+    double ax = bx-width;
+    double cx = bx+width;
     double x0=ax;
     double x3=cx;
 
