@@ -74,6 +74,9 @@ nav:
         - ipython_examples/OrbitalElements.ipynb
         - c_examples/rotations.md
         - ipython_examples/Rotations.ipynb
+        - ipython_examples/FrequencyAnalysis.ipynb
+        - c_examples/secular_frequencies.md
+        - c_examples/frequency_analysis.ipynb
       - "Small bodies":
         - c_examples/planetesimal_disk_migration.md
         - c_examples/solar_system_with_testparticles.md
