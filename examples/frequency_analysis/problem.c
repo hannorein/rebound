@@ -1,3 +1,11 @@
+/**
+ * Frequency Analysis
+ * 
+ * This example demonstrates how to use REBOUND's built-in
+ * frequency analysis tools to perform a Modified Fourier
+ * Transform or a Frequency Modified Fourier Transform.
+ */
+
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,9 +32,15 @@ int main(int argc, char* argv[]) {
                 input[i*2+1] += A5[j]*sin(nu*i*datasep+phi5[j]/180.0*M_PI);
             }
         }
+
+        // Perform the frequency analysis
+        // Output format is: freq_0, amp_0, phase_0, freq_1, amp_1, phase_1, ...
+        // Units of frequency are radians/datasep.
+        // Units of phase are radians.
         double* output = malloc(sizeof(double)*3*nfreq);
         double minfreq = 60.0/1296000.0*datasep;
         reb_frequency_analysis(output, nfreq,-minfreq,minfreq,type,input,Nsamples);
+        
 
         // Check accuracy 
         double max_nu_error = 0.0;
@@ -49,6 +63,7 @@ int main(int argc, char* argv[]) {
         printf("Max phase error:              %e deg\n", max_phi_error);
         switch (type){
             case REB_FREQUENCY_ANALYSIS_MFT:
+                // Least accurate but fastest.
                 assert(max_nu_error<3e-4);
                 assert(max_A_error<2e-3);
                 assert(max_phi_error<5e-1);
@@ -59,6 +74,7 @@ int main(int argc, char* argv[]) {
                 assert(max_phi_error<6e-3);
                 break;
             case REB_FREQUENCY_ANALYSIS_FMFT2:
+                // Most accurate but slowest.
                 assert(max_nu_error<2e-8);
                 assert(max_A_error<3e-7);
                 assert(max_phi_error<4e-5);
