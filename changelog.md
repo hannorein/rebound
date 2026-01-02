@@ -4,6 +4,11 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.5.0
+* Added support for (Frequency) Modified Fourier Transforms. Heavily based on David Nesvorny's code. The new functions are `reb_frequency_analysis()` in C and `rebound.frequency_analysis()` in python. For usage, see C examples `secular_frequencies` and `frequency_analysis` as well as the iPython notebook `FrequencyAnalysis`. 
+* Support for Jacobi coordinates added when using WHFast with OpenMP.
+* Allow negative periods when initializing hyperbolic orbits.
+
 ### Version 4.4.11
 * The collision resolve function now returns a type `enum REB_COLLISION_RESOLVE_OUTCOME`. The actual integer values remain unchanged.
 * Bug in TRACE was fixed.
