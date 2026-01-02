@@ -80,11 +80,14 @@ int main(int argc, char* argv[]) {
     double datasep = 120000.0/365.25*2.0*M_PI;  // sampling interval in units of year/2pi
     double minfreq = 60.0/1296000.0*datasep;    // min/max frequenxy 60"/year 
     double* out = malloc(sizeof(double)*3*nfreq);
-    reb_frequency_analysis(out, nfreq, -minfreq, minfreq, REB_FREQUENCY_ANALYSIS_FMFT, inp, Nsamples);
-    // The above performs a Frequency Modified Fourier Transform (FMFT). 
+    // The next command performs the actual Frequency Modified Fourier Transform (FMFT). 
     // Other options are MFT (faster) and FMFT2 (more accurate). 
     // See Sidlichovsky and Nesvorny (1996) for more details: 
     //     https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
+    int error = reb_frequency_analysis(out, nfreq, -minfreq, minfreq, REB_FREQUENCY_ANALYSIS_FMFT, inp, Nsamples);
+    if (error){
+        printf("An error occured during the frequency analysis.\n");
+    }
     
     // Output the nfreq most dominate modes
     for (int i=0; i<nfreq; i++){

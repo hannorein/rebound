@@ -34,8 +34,9 @@
  */
 
 
-#define FMFT_TOL 1.0e-10 /* MFT NOMINAL PRECISION */
-#define FMFT_NEAR 0.     /* MFT OVERLAP EXCLUSION PARAMETER */
+#define FMFT_TOL 1.0e-10  /* MFT NOMINAL PRECISION */
+#define FMFT_NEAR 0.      /* MFT OVERLAP EXCLUSION PARAMETER */
+#define FMFT_MAX_REMOVE 64/* MFT MAXIMUM NUMBER OF FREQUENCY TO REMOVE FROM SIGNAL BEFORE GIVING UP */
 
 #include "rebound.h"
 #include <stdio.h>
@@ -152,6 +153,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
 
         if(l==0){ 
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
+            int frequencies_removed = 0;
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
                 /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
                 f[0] = golden(centerf, TWOPI/ndata, x, y, ndata);
@@ -166,6 +168,12 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
                 window(x, y, xdata, ydata, ndata);
 
                 power(powsd, x, y, ndata); 
+
+                frequencies_removed++;
+                if (frequencies_removed>FMFT_MAX_REMOVE){
+                    printf("Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq].\n");
+                    return -6;
+                }
             }   
         }else{ 
             centerf = freq[0];
@@ -207,6 +215,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
                     }
                 }
 
+                int frequencies_removed = 0;
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
                 while(f[m] < minfreq || f[m] > maxfreq || nearfreqflag == 1){
                     /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
@@ -232,6 +241,11 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
                         if( fabs(f[m] - f[k]) < FMFT_NEAR*TWOPI/ndata ){
                             nearfreqflag = 1; 
                         }
+                    }
+                    frequencies_removed++;
+                    if (frequencies_removed>FMFT_MAX_REMOVE){
+                        printf("Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq].\n");
+                        return -6;
                     }
                 }   
 

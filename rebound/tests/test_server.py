@@ -2,6 +2,7 @@ import rebound
 import unittest
 import os
 import warnings
+import time
 import urllib.request
 
 
@@ -23,6 +24,7 @@ class TestServer(unittest.TestCase):
             warnings.simplefilter("always")
             sim.start_server(port=1234)
             self.assertGreater(len(w),0)
+        time.sleep(1) 
         self.assertNotEqual(sim._server_data,None)
         self.assertEqual(sim._server_data.contents.ready,1)
         self.assertEqual(sim._server_data.contents.port,1234)

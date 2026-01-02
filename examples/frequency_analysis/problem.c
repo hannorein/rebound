@@ -38,8 +38,11 @@ int main(int argc, char* argv[]) {
         // Units of frequency are radians/datasep.
         // Units of phase are radians.
         double* output = malloc(sizeof(double)*3*nfreq);
-        double minfreq = 60.0/1296000.0*datasep;
-        reb_frequency_analysis(output, nfreq,-minfreq,minfreq,type,input,Nsamples);
+        double minfreq = 60.0/1296000.0*datasep; // look for frequencies in the range -60"/year to +60"/year
+        int ret = reb_frequency_analysis(output, nfreq,-minfreq,minfreq,type,input,Nsamples);
+        if (ret){
+            printf("An error occured during the frequency analysis.\n");
+        }
         
 
         // Check accuracy 
