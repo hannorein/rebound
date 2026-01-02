@@ -1,10 +1,10 @@
 /**
- * @file    fmft.c
+ * @file    frequency_analysis.c
  * @brief   Functions for the FMFT algorithm.
  * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section LICENSE
- * Copyright (c) 2025 Hanno Rein
+ * Copyright (c) 2026 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -23,6 +23,5 @@
  *
  */
 #ifndef _FMFT_H
-int fmft(double **output, int nfreq, double minfreq, double maxfreq, int flag, double **input, long ndata);
 #define _FMFT_H
 #endif // _FMFT_H

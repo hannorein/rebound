@@ -1,11 +1,38 @@
-/* This program implements the Frequency Modified Fourier Transform 
-   (Sidlichovsky and Nesvorny 1996, Cel. Mech. 65, 137). 
-https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
-Given a quasi--periodic complex signal X + iY, the algorithm 
-estimates the frequencies (f_j), amplitudes (A_j) and phases 
-(psi_j) in its decomposition:
+/**
+ * @file    freuquency_analysis.c
+ * @brief   Functions to perform a frequency analysis of time series data.
+ * @author  Hanno Rein <hanno@hanno-rein.de>
+ * @details This file implements the Modified Fourier Transform of Laskar (1988)
+ *          and the Frequency Modified Fourier Transform of Sidlichovsky and 
+ *          Nesvorny (1996). See:
+ *          https://ui.adsabs.harvard.edu/abs/1988A%26A...198..341L/abstract
+ *          https://ui.adsabs.harvard.edu/abs/1990Icar...88..266L/abstract
+ *          https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
+ *          Given a quasi-periodic complex signal X + iY, the algorithm
+ *          estimates the frequencies (f_j), amplitudes (A_j) and phases
+ *          (psi_j) in its decomposition:
+ *          X(t) + iY(t) = Sum_j=1^N [ A_j * exp i (f_j * t + psi_j) ]  
+ * 
+ * @section LICENSE
+ * Copyright (c) 2025 Hanno Rein
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-X(t) + iY(t) = Sum_j=1^N [ A_j * exp i (f_j * t + psi_j) ] */      
 
 #define FMFT_TOL 1.0e-10 /* MFT NOMINAL PRECISION */
 #define FMFT_NEAR 0.     /* MFT OVERLAP EXCLUSION PARAMETER */
