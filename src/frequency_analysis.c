@@ -12,6 +12,8 @@
  *          estimates the frequencies (f_j), amplitudes (A_j) and phases
  *          (psi_j) in its decomposition:
  *          X(t) + iY(t) = Sum_j=1^N [ A_j * exp i (f_j * t + psi_j) ]  
+ *          This code is based on David Nesvorny's code which can be found
+ *          at https://www2.boulder.swri.edu/~davidn/fmft/fmft.html
  * 
  * @section LICENSE
  * Copyright (c) 2025 Hanno Rein
@@ -55,28 +57,13 @@ static void amph(double *amp, double *phase, double freq, double* xdata, double*
 static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* rd);
 
 
-/* THE MAIN FUNCTION ****************************************************/
 int reb_frequency_analysis(double *output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata){
-
-    /* 
-       In the output array: output[i*3], output[i*3+1] 
-       and output[i*3+2] are the i-th frequency, amplitude and phase; nfreq is the 
-       number of frequencies to be computed (the units are rad/sep, where sep is the 
-       `time' separation between i and i+1. The algorithm is  
-
-       Modified Fourier Transform                  if   type = 0;
-       Frequency Modified Fourier Transform        if   type = 1;
-       FMFT with additional non-linear correction  if   type = 2
-
-       (while the first algorithm is app. 3 times faster than the third one, 
-       the third algorithm should be in general much more precise).  
-       The computed frequencies are in the range given by minfreq and maxfreq.
-       The function returns the number of determined frequencies or 0 in the case
-       of error.
-
-       The vector input[j], j = 0 ... 2*ndata-1 (ndata must
-       be a power of 2), are the input data X(j) and Y(j).
-     */   
+    // The output array needs to have space for 3*nfreq values. They are
+    // freq_0, amp_0, phase_0, freq_1, amp_1, phase_1, ... 
+    // The input array needs to be ndata*2 long with values
+    // x(0), y(0), x(1), y(1), ...
+    // where x(t) and y(t) are the complext time series to be analyzed.
+    // The function returns 0 on success and returns a negative value for various errors.
 
     if (minfreq>=maxfreq){
         printf("Frequency analysis error: minfreq must be smaller than maxfreq.\n");
