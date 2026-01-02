@@ -55,7 +55,7 @@ static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* r
 
 
 /* THE MAIN FUNCTION ****************************************************/
-void reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, long ndata){
+int reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata){
 
     /* 
        In the output array **output: output[i*3], output[i*3+1] 
@@ -77,6 +77,26 @@ void reb_frequency_analysis(double **output, int nfreq, double minfreq, double m
        be a power of 2), are the input data X(j) and Y(j).
      */   
 
+    if (minfreq>=maxfreq)
+        printf("Frequency analysis error: minfreq must be smaller than maxfreq.\n");
+        return -1;
+    }
+    if (nfreq<=0){
+        printf("Frequency analysis error: nfreq must be larger than 0.\n");
+        return -2;
+    }
+    if ((ndata & (ndata - 1)) != 0){
+        printf("Frequency analysis error: ndata must be power of 2.\n");
+        return -3;
+    }
+    if (!input){
+        printf("Frequency analysis error: input array is NULL.\n");
+        return -4;
+    }
+    if (!output){
+        printf("Frequency analysis error: pointer to output array is NULL.\n");
+        return -5;
+    }
 
 
     /* ALLOCATION OF VARIABLES */
@@ -361,6 +381,7 @@ void reb_frequency_analysis(double **output, int nfreq, double minfreq, double m
     free(Q); 
     free(alpha);
     free(B);
+    return 0;
 }
 
 static void window(double *x, double *y, double *xdata, double *ydata, long ndata) {  
