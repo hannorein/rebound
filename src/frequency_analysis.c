@@ -55,10 +55,10 @@ static void sort3(unsigned long n, double* ra, double* rb, double* rc, double* r
 
 
 /* THE MAIN FUNCTION ****************************************************/
-int reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata){
+int reb_frequency_analysis(double *output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata){
 
     /* 
-       In the output array **output: output[i*3], output[i*3+1] 
+       In the output array: output[i*3], output[i*3+1] 
        and output[i*3+2] are the i-th frequency, amplitude and phase; nfreq is the 
        number of frequencies to be computed (the units are rad/sep, where sep is the 
        `time' separation between i and i+1. The algorithm is  
@@ -310,45 +310,44 @@ int reb_frequency_analysis(double **output, int nfreq, double minfreq, double ma
     }
 
     /* RETURN THE FINAL FREQUENCIES, AMPLITUDES AND PHASES */ 
-    *output = calloc(3*nfreq,sizeof(double));
     switch (type){
         case REB_FREQUENCY_ANALYSIS_MFT:
             for(int k=0;k<nfreq;k++){
-                (*output)[0*nfreq+k] = freq[0*nfreq+k];            
-                (*output)[1*nfreq+k] = amp[0*nfreq+k];
-                (*output)[2*nfreq+k] = phase[0*nfreq+k];
+                output[0*nfreq+k] = freq[0*nfreq+k];            
+                output[1*nfreq+k] = amp[0*nfreq+k];
+                output[2*nfreq+k] = phase[0*nfreq+k];
             }
             break;
         case REB_FREQUENCY_ANALYSIS_FMFT:
             for(int k=0;k<nfreq;k++){
-                (*output)[0*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
-                (*output)[1*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
-                (*output)[2*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
+                output[0*nfreq+k] = freq[0*nfreq+k] + (freq[0*nfreq+k] - freq[1*nfreq+k]);            
+                output[1*nfreq+k] = amp[0*nfreq+k] + (amp[0*nfreq+k] - amp[1*nfreq+k]);
+                output[2*nfreq+k] = phase[0*nfreq+k] + (phase[0*nfreq+k] - phase[1*nfreq+k]);
             }
             break;
         case REB_FREQUENCY_ANALYSIS_FMFT2:
             for(int k=0;k<nfreq;k++){
-                (*output)[0*nfreq+k] = freq[0*nfreq+k];
+                output[0*nfreq+k] = freq[0*nfreq+k];
                 double fac;
                 if(fabs((fac = freq[1*nfreq+k] - freq[2*nfreq+k])/freq[1*nfreq+k]) > FMFT_TOL){
                     double tmp = freq[0*nfreq+k] - freq[1*nfreq+k];
-                    (*output)[0*nfreq+k] += tmp*tmp / fac;
+                    output[0*nfreq+k] += tmp*tmp / fac;
                 }else{ 
-                    (*output)[0*nfreq+k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
+                    output[0*nfreq+k] += freq[0*nfreq+k] - freq[1*nfreq+k]; 
                 }
-                (*output)[1*nfreq+k] = amp[0*nfreq+k];
+                output[1*nfreq+k] = amp[0*nfreq+k];
                 if(fabs((fac = amp[1*nfreq+k] - amp[2*nfreq+k])/amp[1*nfreq+k]) > FMFT_TOL){
                     double tmp = amp[0*nfreq+k] - amp[1*nfreq+k];
-                    (*output)[1*nfreq+k] += tmp*tmp / fac;
+                    output[1*nfreq+k] += tmp*tmp / fac;
                 }else{
-                    (*output)[1*nfreq+k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
+                    output[1*nfreq+k] += amp[0*nfreq+k] - amp[1*nfreq+k]; 
                 }
-                (*output)[2*nfreq+k] = phase[0*nfreq+k];
+                output[2*nfreq+k] = phase[0*nfreq+k];
                 if(fabs((fac = phase[1*nfreq+k] - phase[2*nfreq+k])/phase[1*nfreq+k]) > FMFT_TOL){
                     double tmp = phase[0*nfreq+k] - phase[1*nfreq+k];
-                    (*output)[2*nfreq+k] += tmp*tmp / fac;
+                    output[2*nfreq+k] += tmp*tmp / fac;
                 }else{
-                    (*output)[2*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
+                    output[2*nfreq+k] += phase[0*nfreq+k] - phase[1*nfreq+k]; 
                 }
             }
             break;
@@ -356,12 +355,12 @@ int reb_frequency_analysis(double **output, int nfreq, double minfreq, double ma
             printf("REB_FREQUENCY_ANALYSIS_TYPE not implemented.\n");
     }
     for(int k=0;k<nfreq;k++){
-        if((*output)[2*nfreq+k] < 0.0) (*output)[2*nfreq+k] += TWOPI;
-        if((*output)[2*nfreq+k] >= 2.0*M_PI) (*output)[2*nfreq+k] -= TWOPI;
+        if(output[2*nfreq+k] < 0.0) output[2*nfreq+k] += TWOPI;
+        if(output[2*nfreq+k] >= 2.0*M_PI) output[2*nfreq+k] -= TWOPI;
     }
 
     // SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE
-    sort3(nfreq, &((*output)[1*nfreq]), &((*output)[0*nfreq]), &((*output)[1*nfreq]), &((*output)[2*nfreq]));
+    sort3(nfreq, &(output[1*nfreq]), &(output[0*nfreq]), &(output[1*nfreq]), &(output[2*nfreq]));
 
     /* FREE THE ALLOCATED VARIABLES */
     free(xdata);

@@ -24,9 +24,9 @@ int main(int argc, char* argv[]) {
                 input[i*2+1] += A5[j]*sin(nu*i*datasep+phi5[j]/180.0*M_PI);
             }
         }
-        double* output;
+        double* output = malloc(sizeof(double)*3*nfreq);
         double minfreq = 60.0/1296000.0*datasep;
-        reb_frequency_analysis(&output, nfreq,-minfreq,minfreq,type,input,Nsamples);
+        reb_frequency_analysis(output, nfreq,-minfreq,minfreq,type,input,Nsamples);
 
         // Check accuracy 
         double max_nu_error = 0.0;

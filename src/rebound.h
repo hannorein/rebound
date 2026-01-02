@@ -1107,7 +1107,7 @@ enum REB_FREQUENCY_ANALYSIS_TYPE {
     REB_FREQUENCY_ANALYSIS_FMFT2 = 2,
 };
 // Returns 0 on success
-DLLEXPORT int reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata);
+DLLEXPORT int reb_frequency_analysis(double *output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata);
 
 // Functions to convert between coordinate systems
 
