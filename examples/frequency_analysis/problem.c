@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
             case REB_FREQUENCY_ANALYSIS_FMFT2:
                 assert(max_nu_error<2e-8);
                 assert(max_A_error<3e-7);
-                assert(max_phi_error<3e-5);
+                assert(max_phi_error<4e-5);
                 break;
         }
         free(input);

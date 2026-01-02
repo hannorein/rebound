@@ -77,7 +77,7 @@ int reb_frequency_analysis(double **output, int nfreq, double minfreq, double ma
        be a power of 2), are the input data X(j) and Y(j).
      */   
 
-    if (minfreq>=maxfreq)
+    if (minfreq>=maxfreq){
         printf("Frequency analysis error: minfreq must be smaller than maxfreq.\n");
         return -1;
     }
