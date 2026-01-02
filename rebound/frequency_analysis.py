@@ -9,9 +9,46 @@ FREQUENCY_ANALYSIS_ERRORS = [
     (-5, "Frequency analysis error: pointer to output array is NULL."),
 ]
 
-#DLLEXPORT int reb_frequency_analysis(double **output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata);
 def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
+    """Performs a frequency analysis on the timeseries data inp. Returns
+    dominant modes (frequency, amplitude, phase). 
+    
+    Arguments
+    ---------
+    inp: numpy.array
+        Input data in the order x[0], y[0], x[1], y[1], ... where
+        x and y are the real and imaginary components of the signal.
+    type: string
+        Determines the type of the frequency analysis:
+        "mft" = Modified Fourier Transform. See Laskar (1988).
+                https://ui.adsabs.harvard.edu/abs/1988A%26A...198..341L/abstract
+        "fmft" = Frequency Modified Transform. See Sidlichovsky and Nesvorny (1996).
+                https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
+        "fmft2" = Frequency Modified Transform with additional corrections. Most
+                accurate but also slowest. See Sidlichovsky and Nesvorny (1996).
+    nfreq: Int
+        The number of frequencies to find.
+    minfreq: Float
+        The minimum frequency to consider. Units are [radians/datasep] where
+        datasep is the timeinterval between sampling points.
+    maxfreq: Float
+        The maximim frequency to consider. Units are [radians/datasep] where
+        datasep is the timeinterval between sampling points.
+
+    Returns
+    -------
+    A list of lists, containing the frequencies, amplitudes, and phases of the 
+    nfreq most dominant modes.
+    The output units for the frequencies are [radians/datasep] where datasep is
+    the timeinterval between sampling points. The output units for the phases
+    are radians. 
+    """
     import numpy as np
+    if not isinstance(inp, np.ndarray):
+        raise ValueError("Input array must be a numpy array")
+    if inp.dtype != np.float64:
+        raise ValueError("Input array must be have datatype np.float64")
+
     ndata = len(inp)//2
     inp_cont = np.ascontiguousarray(inp)
     inp_ptr = inp_cont.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
@@ -23,6 +60,6 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
     for value, message in FREQUENCY_ANALYSIS_ERRORS:
         if ret & value:
             raise RuntimeError(message)
-    return out
+    return np.split(out,3)
 
 from . import clibrebound
