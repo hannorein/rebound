@@ -23,7 +23,7 @@ class TestFrequencyAnalysis(unittest.TestCase):
         return rebound.frequency_analysis(inp, type=type, minfreq=-minfreq, maxfreq=minfreq)
 
     def test_LA1990_type_0(self):
-        nu, A, phi = self.LA1990(0)
+        nu, A, phi = self.LA1990("mft")
         nfreq = len(nu)
         for i in range(nfreq):
             nu_error = np.abs(nu[i]*1296000.0/datasep-nu5[i])
@@ -33,7 +33,7 @@ class TestFrequencyAnalysis(unittest.TestCase):
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 5e-1)
     def test_LA1990_type_1(self):
-        nu, A, phi = self.LA1990(1)
+        nu, A, phi = self.LA1990("fmft")
         nfreq = len(nu)
         for i in range(nfreq):
             nu_error = np.abs(nu[i]*1296000.0/datasep-nu5[i])
@@ -43,7 +43,7 @@ class TestFrequencyAnalysis(unittest.TestCase):
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 6e-3)
     def test_LA1990_type_2(self):
-        nu, A, phi = self.LA1990(2)
+        nu, A, phi = self.LA1990("fmft2")
         nfreq = len(nu)
         for i in range(nfreq):
             nu_error = np.abs(nu[i]*1296000.0/datasep-nu5[i])
