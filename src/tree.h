@@ -35,7 +35,7 @@ struct reb_treecell {
     double x; /**< The x position of the center of a cell */
     double y; /**< The y position of the center of a cell */
     double z; /**< The z position of the center of a cell */
-    double w; /**< The width of a cell */
+    struct reb_vec3d size;
     double m; /**< The total mass of a cell */
     double mx; /**< The x position of the center of mass of a cell */
     double my; /**< The y position of the center of mass of a cell */
