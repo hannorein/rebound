@@ -769,27 +769,22 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
             x[(i-1)] += A[(i-1)+8*(j-1)] * r->particles[j].x;
         }
     }
-    
-    for (unsigned int i=0; i<r->N; i++){
-        mtot += r->particles[i].m;
-    }
 
     ms = r->particles[0].m;
     for (unsigned int i=1; i<r->N; i++){
-       B[(i-1)+8*(i-1)] = ms/(ms + r->particles[i].m);
-       for (unsigned int j=1; j<i; j++){
+        B[(i-1)+8*(i-1)] = ms/(ms + r->particles[i].m);
+        for (unsigned int j=1; j<i; j++){
             B[(i-1)+8*(j-1)] = 0.0;
-       }
-       for (unsigned int j=i+1; j<r->N; j++){
-            mtot = 0.0;
-            for (unsigned int k=0; k<=j; k++){
-                mtot += r->particles[k].m;
+        }
+        ms += r->particles[i].m;
+        if (i<8){ 
+            for (unsigned int ii=i; ii>0; ii--){
+                int jj = i+1;
+                B[(ii-1)+8*(jj-1)] = -r->particles[jj].m/(ms+r->particles[jj].m);
             }
-            B[(i-1)+8*(j-1)] = -r->particles[j].m/(mtot);
-       }
-       ms += r->particles[i].m;
+        }
     }
-    
+
     for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=1; j<r->N; j++){
             printf("%.14f ", B[(i-1)+8*(j-1)]);
