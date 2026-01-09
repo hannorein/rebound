@@ -747,35 +747,18 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     double vz0 = 0;
     double A[64];
     double B[64];
-    double xt[8] = {-5.060644238716381e-02 , -7.187938052311640e-01 , -5.701349904954730e-01 , -1.443205135760808e+00 , 4.501804193834367e+00 , 8.501947191507981e+00 , 1.296121045184048e+01 , 2.978952069405018e+01};
 
     double ms = r->particles[0].m;
     for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=1; j<i; j++){
             A[(i-1)+8*(j-1)] = 0.0;
+            B[(i-1)+8*(j-1)] = 0.0;
         }
         for (unsigned int j=i; j<r->N; j++){
             A[(i-1)+8*(j-1)] = r->particles[j].m/ms;
         }
         A[(i-1)+8*(i-1)] += 1.0;
-        ms += r->particles[i].m;
-    }
-    
-
-
-    for (unsigned int i=1; i<r->N; i++){
-        x[(i-1)] = 0;
-        for (unsigned int j=1; j<r->N; j++){
-            x[(i-1)] += A[(i-1)+8*(j-1)] * r->particles[j].x;
-        }
-    }
-
-    ms = r->particles[0].m;
-    for (unsigned int i=1; i<r->N; i++){
         B[(i-1)+8*(i-1)] = ms/(ms + r->particles[i].m);
-        for (unsigned int j=1; j<i; j++){
-            B[(i-1)+8*(j-1)] = 0.0;
-        }
         ms += r->particles[i].m;
         if (i<8){ 
             for (unsigned int ii=i; ii>0; ii--){
@@ -784,24 +767,18 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
             }
         }
     }
-
-    for (unsigned int i=1; i<r->N; i++){
-        for (unsigned int j=1; j<r->N; j++){
-            printf("%.14f ", B[(i-1)+8*(j-1)]);
-        }
-        printf("\n");
-    }
     
-    printf("f= %.12e \n",
-            (r->particles[0].m+r->particles[1].m+r->particles[2].m+r->particles[3].m+r->particles[4].m+r->particles[5].m+r->particles[6].m)
-            /
-            (r->particles[0].m+r->particles[1].m+r->particles[2].m+r->particles[3].m+r->particles[4].m+r->particles[5].m+r->particles[6].m+r->particles[7].m)
-          );
+    for (unsigned int i=1; i<r->N; i++){
+        x[(i-1)] = 0;
+        for (unsigned int j=1; j<r->N; j++){
+            x[(i-1)] += A[(i-1)+8*(j-1)] * r->particles[j].x;
+        }
+    }
+
     for (unsigned int i=1; i<r->N; i++){
         y[(i-1)] = 0;
         for (unsigned int j=1; j<r->N; j++){
             y[(i-1)] += B[(i-1)+8*(j-1)] * x[j-1];
-            if (i==7) printf("mul %e %e \n", B[(i-1)+8*(j-1)] , x[j-1]);
         }
     }
 
