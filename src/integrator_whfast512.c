@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include "rebound.h"
 #include "particle.h"
@@ -733,6 +734,15 @@ static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vect
     }
     return res;
 }
+    
+static __m512d load_inertial(struct reb_particle* particles, size_t offset, const double* transformation, int N){
+    double tmp[8] __attribute__((aligned(64)));; 
+    for (unsigned int i=1; i<N; i++){
+        tmp[i-1] = *(double*)((char*)(&particles[i])+offset);
+    }
+    __m512d tmp512 = _mm512_load_pd(tmp);
+    return matrix_mul_avx512(transformation, tmp512);
+}
 
 // Convert inertial coordinates to democratic heliocentric coordinates
 // Note: this is only called at the beginning. Speed is not a concern.
@@ -741,46 +751,45 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_particle* particles = r->particles;
 
     // Construct transformation matricies (TODO: release memory)
-    int status = 0;
-    status = posix_memalign((void**)&ri_whfast512->mat8_inertial_to_jacobi,64, sizeof(double)*64);
-    if (status!=0){ reb_simulation_error(r, "Cannot allocated alligned memory.");}
-    status = posix_memalign((void**)&ri_whfast512->mat8_jacobi_to_inertial,64, sizeof(double)*64);
-    if (status!=0){ reb_simulation_error(r, "Cannot allocated alligned memory.");}
+    ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
+    ri_whfast512->mat8_jacobi_to_inertial = aligned_alloc(64, sizeof(double)*64);
 
-    double ms = r->particles[0].m;
+    double ms = particles[0].m;
     for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=1; j<i; j++){
             ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
             ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
         }
         for (unsigned int j=i; j<r->N; j++){
-            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = r->particles[j].m/ms;
+            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = particles[j].m/ms;
         }
         ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(i-1)] += 1.0;
-        ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] = ms/(ms + r->particles[i].m);
-        ms += r->particles[i].m;
+        ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] = ms/(ms + particles[i].m);
+        ms += particles[i].m;
         if (i<8){ 
             for (unsigned int ii=i; ii>0; ii--){
                 int jj = i+1;
-                ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] = -r->particles[jj].m/(ms+r->particles[jj].m);
+                ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] = -particles[jj].m/(ms+particles[jj].m);
             }
         }
     }
 
+    ri_whfast512->p_jh->x = load_inertial(particles, offsetof(struct reb_particle,x),ri_whfast512->mat8_inertial_to_jacobi, r->N);
+    ri_whfast512->p_jh->y = load_inertial(particles, offsetof(struct reb_particle,y),ri_whfast512->mat8_inertial_to_jacobi, r->N);
+    ri_whfast512->p_jh->z = load_inertial(particles, offsetof(struct reb_particle,z),ri_whfast512->mat8_inertial_to_jacobi, r->N);
+    ri_whfast512->p_jh->vx = load_inertial(particles, offsetof(struct reb_particle,vx),ri_whfast512->mat8_inertial_to_jacobi, r->N);
+    ri_whfast512->p_jh->vy = load_inertial(particles, offsetof(struct reb_particle,vy),ri_whfast512->mat8_inertial_to_jacobi, r->N);
+    ri_whfast512->p_jh->vz = load_inertial(particles, offsetof(struct reb_particle,vz),ri_whfast512->mat8_inertial_to_jacobi, r->N);
+
+
+
+   // p_jh->m = _mm512_loadu_pd(m);
     double x[8] __attribute__((aligned(64)));; 
-    for (unsigned int i=1; i<r->N; i++){
-        x[i-1] = r->particles[i].x;
-    }
-    __m512d x5 = _mm512_load_pd(x);
-    x5 = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi,x5);
-    x5 = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_inertial,x5);
+    __m512d x5 = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_inertial,ri_whfast512->p_jh->x);
     _mm512_store_pd(x, x5);
 
-    struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
-   // p_jh->m = _mm512_loadu_pd(m);
-
     for (int i = 1; i < 9; i++) {
-        printf("%d  %.15e %.15e    %.15e\n", i, x[i-1], r->particles[i].x, x[i-1]- r->particles[i].x);
+        printf("%d  %.15e %.15e    %.15e\n", i, x[i-1], particles[i].x, x[i-1]- particles[i].x);
     }
     exit(1);
 }
