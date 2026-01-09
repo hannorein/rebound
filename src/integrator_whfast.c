@@ -953,9 +953,6 @@ void reb_integrator_whfast_part1(struct reb_simulation* const r){
             }
         }
         reb_integrator_whfast_from_inertial(r);
-        for (int i=0;i<r->N; i++){
-            printf("i=%d  x=%.15e\n",i, r->ri_whfast.p_jh[i].x);
-        }
         ri_whfast->recalculate_coordinates_this_timestep = 0;
     }
     if (ri_whfast->is_synchronized){

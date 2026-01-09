@@ -724,6 +724,15 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
 }
 
 
+static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vector) {
+    __m512d res = _mm512_setzero_pd();
+    for (int i = 0; i < 8; i++) {
+        __m512d v_i = _mm512_set1_pd(vector[i]);
+        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
+        res = _mm512_fmadd_pd(v_i, col_i, res);
+    }
+    return res;
+}
 
 // Convert inertial coordinates to democratic heliocentric coordinates
 // Note: this is only called at the beginning. Speed is not a concern.
@@ -731,72 +740,49 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
 
-    double m[8];
-    double x[8];
-    double y[8];
-    double z[8];
-    double vx[8];
-    double vy[8];
-    double vz[8];
-    double mtot = 0;
-    double x0 = 0; // center of mass
-    double y0 = 0;
-    double z0 = 0;
-    double vx0 = 0;
-    double vy0 = 0;
-    double vz0 = 0;
-    double A[64];
-    double B[64];
+    // Construct transformation matricies (TODO: release memory)
+    int status = 0;
+    status = posix_memalign((void**)&ri_whfast512->mat8_inertial_to_jacobi,64, sizeof(double)*64);
+    if (status!=0){ reb_simulation_error(r, "Cannot allocated alligned memory.");}
+    status = posix_memalign((void**)&ri_whfast512->mat8_jacobi_to_inertial,64, sizeof(double)*64);
+    if (status!=0){ reb_simulation_error(r, "Cannot allocated alligned memory.");}
 
     double ms = r->particles[0].m;
     for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=1; j<i; j++){
-            A[(i-1)+8*(j-1)] = 0.0;
-            B[(i-1)+8*(j-1)] = 0.0;
+            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
+            ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
         }
         for (unsigned int j=i; j<r->N; j++){
-            A[(i-1)+8*(j-1)] = r->particles[j].m/ms;
+            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = r->particles[j].m/ms;
         }
-        A[(i-1)+8*(i-1)] += 1.0;
-        B[(i-1)+8*(i-1)] = ms/(ms + r->particles[i].m);
+        ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(i-1)] += 1.0;
+        ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] = ms/(ms + r->particles[i].m);
         ms += r->particles[i].m;
         if (i<8){ 
             for (unsigned int ii=i; ii>0; ii--){
                 int jj = i+1;
-                B[(ii-1)+8*(jj-1)] = -r->particles[jj].m/(ms+r->particles[jj].m);
+                ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] = -r->particles[jj].m/(ms+r->particles[jj].m);
             }
         }
     }
-    
-    for (unsigned int i=1; i<r->N; i++){
-        x[(i-1)] = 0;
-        for (unsigned int j=1; j<r->N; j++){
-            x[(i-1)] += A[(i-1)+8*(j-1)] * r->particles[j].x;
-        }
-    }
 
+    double x[8] __attribute__((aligned(64)));; 
     for (unsigned int i=1; i<r->N; i++){
-        y[(i-1)] = 0;
-        for (unsigned int j=1; j<r->N; j++){
-            y[(i-1)] += B[(i-1)+8*(j-1)] * x[j-1];
-        }
+        x[i-1] = r->particles[i].x;
     }
+    __m512d x5 = _mm512_load_pd(x);
+    x5 = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi,x5);
+    x5 = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_inertial,x5);
+    _mm512_store_pd(x, x5);
 
     struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
-    p_jh->m = _mm512_loadu_pd(m);
-    p_jh->x = _mm512_loadu_pd(x);
-    p_jh->y = _mm512_loadu_pd(y);
-    p_jh->z = _mm512_loadu_pd(z);
-    p_jh->vx = _mm512_loadu_pd(vx);
-    p_jh->vy = _mm512_loadu_pd(vy);
-    p_jh->vz = _mm512_loadu_pd(vz);
-    double _nax[8];
-    _mm512_store_pd(&_nax[0], p_jh->x);
+   // p_jh->m = _mm512_loadu_pd(m);
 
     for (int i = 1; i < 9; i++) {
-        printf("%d  %.15e %.15e    %.15e\n", i, y[i-1], r->particles[i].x, y[i-1]- r->particles[i].x);
+        printf("%d  %.15e %.15e    %.15e\n", i, x[i-1], r->particles[i].x, x[i-1]- r->particles[i].x);
     }
-
+    exit(1);
 }
 
 

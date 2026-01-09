@@ -359,6 +359,7 @@ struct reb_integrator_whfast {
 // Special particle struct for WHFast512
 struct reb_particle_avx512{
 #ifdef AVX512
+    // Jacobi
     __m512d m __attribute__ ((aligned (64)));
     __m512d x __attribute__ ((aligned (64)));
     __m512d y __attribute__ ((aligned (64)));
@@ -366,6 +367,13 @@ struct reb_particle_avx512{
     __m512d vx __attribute__ ((aligned (64)));
     __m512d vy __attribute__ ((aligned (64)));
     __m512d vz __attribute__ ((aligned (64)));
+    // Inertial COM coordinates
+    __m512d xi __attribute__ ((aligned (64)));
+    __m512d yi __attribute__ ((aligned (64)));
+    __m512d zi __attribute__ ((aligned (64)));
+    __m512d axi __attribute__ ((aligned (64)));
+    __m512d ayi __attribute__ ((aligned (64)));
+    __m512d azi __attribute__ ((aligned (64)));
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];
@@ -389,6 +397,8 @@ struct reb_integrator_whfast512 {
     unsigned int recalculate_constants;
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
+    double* mat8_inertial_to_jacobi;
+    double* mat8_jacobi_to_inertial;
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)
