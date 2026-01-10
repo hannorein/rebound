@@ -753,23 +753,41 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     // Construct transformation matricies (TODO: release memory)
     ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
     ri_whfast512->mat8_jacobi_to_inertial = aligned_alloc(64, sizeof(double)*64);
-
-    double ms = particles[0].m;
+    ri_whfast512->mat8_jacobi_to_heliocentric = aligned_alloc(64, sizeof(double)*64);
+    double mat8_inertial_to_heliocentric[64];
     for (unsigned int i=1; i<r->N; i++){
-        for (unsigned int j=1; j<i; j++){
+        for (unsigned int j=1; j<r->N; j++){
             ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
             ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
+            mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
         }
+    }
+
+    // Fill matricies
+    double ms = particles[0].m;
+    for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=i; j<r->N; j++){
-            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = particles[j].m/ms;
+            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] += particles[j].m/ms;
         }
+        for (unsigned int j=1; j<r->N; j++){
+            mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] += particles[j].m/particles[0].m;
+        }
+        mat8_inertial_to_heliocentric[(i-1)+8*(i-1)] += 1.0;
         ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(i-1)] += 1.0;
-        ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] = ms/(ms + particles[i].m);
+        ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] += ms/(ms + particles[i].m);
         ms += particles[i].m;
         if (i<8){ 
             for (unsigned int ii=i; ii>0; ii--){
                 int jj = i+1;
-                ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] = -particles[jj].m/(ms+particles[jj].m);
+                ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] -= particles[jj].m/(ms+particles[jj].m);
+            }
+        }
+    }
+    // Might be numerically more stable to calculate this manually rather than do a matrix multiplication.
+    for (unsigned int i=1; i<r->N; i++){
+        for (unsigned int j=1; j<r->N; j++){
+            for (unsigned int k=1; k<r->N; k++){
+                ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] += mat8_inertial_to_heliocentric[(i-1)+8*(k-1)] * ri_whfast512->mat8_jacobi_to_inertial[(k-1)+8*(j-1)];
             }
         }
     }
@@ -785,7 +803,7 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
 
    // p_jh->m = _mm512_loadu_pd(m);
     double x[8] __attribute__((aligned(64)));; 
-    __m512d x5 = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_inertial,ri_whfast512->p_jh->x);
+    __m512d x5 = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,ri_whfast512->p_jh->x);
     _mm512_store_pd(x, x5);
 
     for (int i = 1; i < 9; i++) {

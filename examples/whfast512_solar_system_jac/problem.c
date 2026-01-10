@@ -105,6 +105,12 @@ double run(int use_whfast512){
         reb_simulation_add(r, p);
     }
 
+    reb_simulation_move_to_hel(r);
+    for (int i = 0; i < 9; i++) {
+        printf("%d: %.15e\n", i, r->particles[i].x);
+    }
+
+
     reb_simulation_move_to_com(r);
 
 
@@ -116,7 +122,7 @@ double run(int use_whfast512){
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
-    run(0);
+    //:wqrun(0);
     run(1);
     return EXIT_SUCCESS;
 }
