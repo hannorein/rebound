@@ -945,7 +945,7 @@ void static recalculate_constants(struct reb_simulation* r){
             break;
         case REB_WHFAST512_COORDINATES_JACOBI:
             for (int i=0;i<8;i++){
-                for (int j=0;j<i+1;j++){
+                for (int j=0;j<i+2;j++){
                     M[i] += r->particles[j].m;
                 }
             }
