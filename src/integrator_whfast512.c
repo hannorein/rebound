@@ -47,6 +47,11 @@ double walltime_jump=0;
 double walltime_com=0;
 #endif
 
+static inline __m512d negate_m512d(__m512d data) {
+    __m512d sign_mask = _mm512_set1_pd(-0.0); 
+    return _mm512_xor_pd(data, sign_mask);
+}
+
 static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vector) {
     __m512d res = _mm512_setzero_pd();
     for (int i = 0; i < 8; i++) {
@@ -592,6 +597,29 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vz = _mm512_add_pd(dvz, p_jh->vz); 
     }
     if (ri_whfast512->coordinates == REB_WHFAST512_COORDINATES_JACOBI){
+        // TODO: Should put a mask on particle 1 as +/- cancels.
+        // Need to add stellar term. Easy: already in heliocentric coordinates.
+        __m512d prefact = gravity_prefactor_avx512_one(p_jh->x, p_jh->y, p_jh->z);
+        __m512d prefact1 = _mm512_mul_pd(prefact, _M0); // Note: using _M0 which is m0, m0, m0, ...
+        prefact1 = _mm512_mul_pd(prefact1, dt512);
+        p_jh->vx = _mm512_fnmadd_pd(prefact1, p_jh->x, p_jh->vx); 
+        p_jh->vy = _mm512_fnmadd_pd(prefact1, p_jh->y, p_jh->vy); 
+        p_jh->vz = _mm512_fnmadd_pd(prefact1, p_jh->z, p_jh->vz); 
+        // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
+        __m512d dvx = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi, p_jh->vx);
+        __m512d dvy = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi, p_jh->vy);
+        __m512d dvz = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi, p_jh->vz);
+        ri_whfast512->p_jh->vx = _mm512_add_pd(dvx, ri_whfast512->p_jh->vx); 
+        ri_whfast512->p_jh->vy = _mm512_add_pd(dvy, ri_whfast512->p_jh->vy); 
+        ri_whfast512->p_jh->vz = _mm512_add_pd(dvz, ri_whfast512->p_jh->vz); 
+        // Add Jacobi term using Jacobi coordinates
+        prefact = gravity_prefactor_avx512_one(ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z);
+        prefact1 = _mm512_mul_pd(prefact, _M); // Note: now _M which is m0, m0+m1, m0+m1+m2, ...
+        prefact1 = _mm512_mul_pd(prefact1, dt512);
+        prefact1 = negate_m512d(prefact1); // Opposite sign, can be comined with fnmadd below.
+        ri_whfast512->p_jh->vx = _mm512_fnmadd_pd(dvx, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
+        ri_whfast512->p_jh->vy = _mm512_fnmadd_pd(dvy, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
+        ri_whfast512->p_jh->vz = _mm512_fnmadd_pd(dvz, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
     }
 
 #ifdef PROF
