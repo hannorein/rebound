@@ -621,8 +621,6 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         ri_whfast512->p_jh->vx = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
         ri_whfast512->p_jh->vy = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
         ri_whfast512->p_jh->vz = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
-    }
-    if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_JACOBI){
         free(p_jh);
     }
 
@@ -812,6 +810,85 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
 
 // Convert inertial coordinates to democratic heliocentric coordinates
 // Note: this is only called at the beginning. Speed is not a concern.
+static void inertial_to_democratic_heliocentric_posvel(struct reb_simulation* r){
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle* particles = r->particles;
+    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int p_per_system = 8/N_systems;
+    const unsigned int N_per_system = r->N/N_systems;
+
+    // Layout (2x 3 planet systems)
+    //                    0    1  2  3   4    5  6  7
+    // particles array    star p0 p1 p2  star p0 p1 p2
+    // avx512 register    p0   p1 p2 NA  p0   p1 p2 NA
+
+    // Layout (4x 2 planet systems)
+    //                    0    1  2  3    4  5  6    7  8  9    10 11
+    // particles array    star p0 p1 star p0 p1 star p0 p1 star p0 p1
+    // avx512 register    p0   p1 p0 p1   p0 p1 p0   p1  
+
+    double m[8];
+    double x[8];
+    double y[8];
+    double z[8];
+    double vx[8];
+    double vy[8];
+    double vz[8];
+    for (unsigned s=0;s<N_systems;s++){
+        double mtot = 0;
+        double x0 = 0; // center of mass
+        double y0 = 0;
+        double z0 = 0;
+        double vx0 = 0;
+        double vy0 = 0;
+        double vz0 = 0;
+        for (unsigned int i=0; i<N_per_system; i++){
+            mtot += particles[s*N_per_system+i].m;
+            x0 += particles[s*N_per_system+i].x * particles[s*N_per_system+i].m;
+            y0 += particles[s*N_per_system+i].y * particles[s*N_per_system+i].m;
+            z0 += particles[s*N_per_system+i].z * particles[s*N_per_system+i].m;
+            vx0 += particles[s*N_per_system+i].vx * particles[s*N_per_system+i].m;
+            vy0 += particles[s*N_per_system+i].vy * particles[s*N_per_system+i].m;
+            vz0 += particles[s*N_per_system+i].vz * particles[s*N_per_system+i].m;
+        }
+        for (unsigned int i=0; i<p_per_system; i++){
+            m[s*p_per_system+i] = 0; // dummy
+            x[s*p_per_system+i] = 100.0+i; // dummy
+            y[s*p_per_system+i] = 1.0+i;
+            z[s*p_per_system+i] = 1.0+i;
+            double vcirc = sqrt(r->G*mtot/100.); // aproximate circular velocity to keep particles away from origin.
+            vx[s*p_per_system+i] = 0.0;
+            vy[s*p_per_system+i] = vcirc;
+            vz[s*p_per_system+i] = 0.0;
+        }
+        ri_whfast512->p_jh0[s].m = mtot;
+        ri_whfast512->p_jh0[s].x = x0/mtot;
+        ri_whfast512->p_jh0[s].y = y0/mtot;
+        ri_whfast512->p_jh0[s].z = z0/mtot;
+        ri_whfast512->p_jh0[s].vx = vx0/mtot;
+        ri_whfast512->p_jh0[s].vy = vy0/mtot;
+        ri_whfast512->p_jh0[s].vz = vz0/mtot;
+        for (unsigned int i=1; i<N_per_system; i++){
+            m[s*p_per_system+(i-1)] = particles[s*N_per_system+i].m;
+            x[s*p_per_system+(i-1)] = particles[s*N_per_system+i].x - particles[s*N_per_system].x; // heliocentric
+            y[s*p_per_system+(i-1)] = particles[s*N_per_system+i].y - particles[s*N_per_system].y;
+            z[s*p_per_system+(i-1)] = particles[s*N_per_system+i].z - particles[s*N_per_system].z;
+            vx[s*p_per_system+(i-1)] = particles[s*N_per_system+i].vx - ri_whfast512->p_jh0[s].vx; // relative to com
+            vy[s*p_per_system+(i-1)] = particles[s*N_per_system+i].vy - ri_whfast512->p_jh0[s].vy;
+            vz[s*p_per_system+(i-1)] = particles[s*N_per_system+i].vz - ri_whfast512->p_jh0[s].vz;
+        }
+    }
+
+    struct reb_particle_avx512* p_jh = ri_whfast512->p_jh;
+    p_jh->m = _mm512_loadu_pd(m);
+    p_jh->x = _mm512_loadu_pd(x);
+    p_jh->y = _mm512_loadu_pd(y);
+    p_jh->z = _mm512_loadu_pd(z);
+    p_jh->vx = _mm512_loadu_pd(vx);
+    p_jh->vy = _mm512_loadu_pd(vy);
+    p_jh->vz = _mm512_loadu_pd(vz);
+}
+
 static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
@@ -1064,7 +1141,16 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     } 
 
     if (ri_whfast512->is_synchronized){
-        inertial_to_jacobi_posvel(r);
+        switch (ri_whfast512->coordinates){
+            case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
+                inertial_to_democratic_heliocentric_posvel(r);
+                break;
+            case REB_WHFAST512_COORDINATES_JACOBI:
+                inertial_to_jacobi_posvel(r);
+                break;
+            default:
+                reb_simulation_error(r,"Coordinate system not supported.");
+        }
     }
 
     if (ri_whfast512->is_synchronized){

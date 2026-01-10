@@ -102,6 +102,7 @@ int test_basic(){
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 0;
+    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->integrator = REB_INTEGRATOR_WHFAST;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->ri_whfast.safe_mode = 0;
@@ -132,6 +133,7 @@ int test_number_of_planets(){
              
             r512->integrator = REB_INTEGRATOR_WHFAST512;
             r512->ri_whfast512.gr_potential = gr;
+            r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
             if (gr) {
                 r->additional_forces = gr_force;
             }
@@ -164,8 +166,10 @@ int test_N_systems(int N_systems, int planets){
         struct reb_simulation* r_single = setup_sim(planets+1);
         r_single->integrator = REB_INTEGRATOR_WHFAST512;
         r_single->ri_whfast512.gr_potential = gr;
+        r_single->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
         struct reb_simulation* r_many = reb_simulation_copy(r_single);
         r_many->ri_whfast512.N_systems = N_systems;
+        r_many->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
         for (int i=1; i<N_systems; i++){
             for (int j=0; j<r_single->N; j++){
                 reb_simulation_add(r_many, r_single->particles[j]);
@@ -198,6 +202,7 @@ int test_com(){
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 0;
+    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
 
     double tmax = 1e5;
     if (reb_simulation_integrate(r512, tmax)>0) return 0;
@@ -215,6 +220,7 @@ int test_twobody(){
     r512->exact_finish_time = 0;
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 0;
+    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
     reb_simulation_add_fmt(r512, "m", 1.0);
     reb_simulation_add_fmt(r512, "a", 1.0);
 
@@ -235,6 +241,7 @@ int test_gr(){
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 1;
+    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->integrator = REB_INTEGRATOR_WHFAST;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->ri_whfast.safe_mode = 0;
@@ -263,6 +270,7 @@ int test_restart(){
     r512->exact_finish_time = 0;
     r512->ri_whfast512.gr_potential = 1;
     r512->ri_whfast512.keep_unsynchronized = 1;
+    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
     
     double tmax = 1e2;
     double tmaxfinal = 4.*tmax;
@@ -308,6 +316,7 @@ int test_synchronization_fallback(){
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 1;
+    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
     reb_simulation_save_to_file_interval(r512, "test.bin", 1.0);
     if (reb_simulation_integrate(r512, 2.5)>0) return 0;
     reb_simulation_free(r512);
