@@ -92,7 +92,7 @@ struct reb_simulation* run(int use_whfast512){
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
         r->gravity = REB_GRAVITY_JACOBI;
-        r->ri_whfast.safe_mode = 1;
+        r->ri_whfast.safe_mode = 0;
       //  r->additional_forces = gr_force;
     }
     
@@ -107,11 +107,21 @@ struct reb_simulation* run(int use_whfast512){
     }
 
 
+    reb_simulation_steps(r,1);
 
     reb_simulation_move_to_com(r);
 
+    struct timeval time_beginning;
+    struct timeval time_end;
+    gettimeofday(&time_beginning,NULL);
+    int Nsteps = 1000000;
+    reb_simulation_steps(r,Nsteps);
 
-    reb_simulation_step(r);
+    gettimeofday(&time_end,NULL);
+    double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+    double tmax = Nsteps * r->dt;
+    double gypday = 1e-9*(tmax/M_PI/2.)/walltime*86400;
+    printf("walltime= %.2fs  (time required to integrate to 5 Gyr= %.2fdays)\n", walltime, 5./gypday);
     reb_simulation_synchronize(r);
     return r;
 }

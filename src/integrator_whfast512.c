@@ -622,6 +622,9 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         ri_whfast512->p_jh->vy = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
         ri_whfast512->p_jh->vz = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
     }
+    if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_JACOBI){
+        free(p_jh);
+    }
 
 #ifdef PROF
     struct reb_timeval time_end;
