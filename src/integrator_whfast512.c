@@ -47,9 +47,11 @@ double walltime_jump=0;
 double walltime_com=0;
 #endif
 
-static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vector) {
-    __m512d res = _mm512_setzero_pd();
-    for (int i = 0; i < 8; i++) {
+static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
+    __m512d v_i = _mm512_set1_pd(vector[0]);
+    __m512d col_i = _mm512_load_pd(matrix);
+    __m512d res = _mm512_mul_pd(v_i, col_i);
+    for (int i = 1; i < 8; i++) {
         __m512d v_i = _mm512_set1_pd(vector[i]);
         __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
         res = _mm512_fmadd_pd(v_i, col_i, res);
@@ -57,7 +59,7 @@ static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vect
     return res;
 }
 
-static inline void matrix_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
+static inline void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
     __m512d col_i = _mm512_load_pd(matrix);
     __m512d vin1 = _mm512_set1_pd(in1[0]);
     *out1 = _mm512_mul_pd(vin1, col_i);
@@ -83,7 +85,7 @@ static __m512d load_into_m512d(struct reb_particle* particles, size_t offset, co
     }
     __m512d tmp512 = _mm512_load_pd(tmp);
     if (transformation != NULL){
-        return matrix_mul_avx512(transformation, tmp512);
+        return mat8_mul_avx512(transformation, tmp512);
     }else{
         return tmp512;
     }
@@ -92,7 +94,7 @@ static void load_from_m512d(struct reb_particle* particles, size_t offset, const
     double tmp[8] __attribute__((aligned(64)));; 
     __m512d tmp512;
     if (transformation != NULL){
-        tmp512 = matrix_mul_avx512(transformation, vector);
+        tmp512 = mat8_mul_avx512(transformation, vector);
     }else{
         tmp512 = vector;
     }
@@ -426,7 +428,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh = ri_whfast512->p_jh;
     }else{ // REB_WHFAST512_COORDINATES_JACOBI
         p_jh = &p_jacobi;
-        matrix_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
+        mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
                 ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z,
                 &p_jh->x, &p_jh->y, &p_jh->z);
         p_jh->m = ri_whfast512->p_jh->m;
@@ -624,7 +626,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vz = _mm512_fnmadd_pd(prefact1, p_jh->z, p_jh->vz); 
         // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
         __m512d dvx, dvy, dvz;
-        matrix_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
+        mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
                 p_jh->vx, p_jh->vy, p_jh->vz,
                 &dvx, &dvy, &dvz);
         ri_whfast512->p_jh->vx = _mm512_add_pd(dvx, ri_whfast512->p_jh->vx); 
