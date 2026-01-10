@@ -367,13 +367,6 @@ struct reb_particle_avx512{
     __m512d vx __attribute__ ((aligned (64)));
     __m512d vy __attribute__ ((aligned (64)));
     __m512d vz __attribute__ ((aligned (64)));
-    // Inertial COM coordinates
-    __m512d xi __attribute__ ((aligned (64)));
-    __m512d yi __attribute__ ((aligned (64)));
-    __m512d zi __attribute__ ((aligned (64)));
-    __m512d axi __attribute__ ((aligned (64)));
-    __m512d ayi __attribute__ ((aligned (64)));
-    __m512d azi __attribute__ ((aligned (64)));
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];
@@ -401,9 +394,9 @@ struct reb_integrator_whfast512 {
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
-    double* mat8_inertial_to_jacobi;
-    double* mat8_jacobi_to_inertial;
-    double* mat8_jacobi_to_heliocentric;
+    double* mat8_inertial_to_jacobi __attribute__ ((aligned (64)));
+    double* mat8_jacobi_to_inertial __attribute__ ((aligned (64)));
+    double* mat8_jacobi_to_heliocentric __attribute__ ((aligned (64)));
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)

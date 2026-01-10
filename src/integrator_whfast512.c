@@ -47,11 +47,6 @@ double walltime_jump=0;
 double walltime_com=0;
 #endif
 
-static inline __m512d negate_m512d(__m512d data) {
-    __m512d sign_mask = _mm512_set1_pd(-0.0); 
-    return _mm512_xor_pd(data, sign_mask);
-}
-
 static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vector) {
     __m512d res = _mm512_setzero_pd();
     for (int i = 0; i < 8; i++) {
@@ -60,6 +55,21 @@ static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vect
         res = _mm512_fmadd_pd(v_i, col_i, res);
     }
     return res;
+}
+
+static inline void matrix_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
+    *out1 = _mm512_setzero_pd();
+    *out2 = _mm512_setzero_pd();
+    *out3 = _mm512_setzero_pd();
+    for (int i = 0; i < 8; i++) {
+        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
+        __m512d vin1 = _mm512_set1_pd(in1[i]);
+        *out1 = _mm512_fmadd_pd(vin1, col_i, *out1);
+        __m512d vin2 = _mm512_set1_pd(in2[i]);
+        *out2 = _mm512_fmadd_pd(vin2, col_i, *out2);
+        __m512d vin3 = _mm512_set1_pd(in3[i]);
+        *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
+    }
 }
     
 static __m512d load_into_m512d(struct reb_particle* particles, size_t offset, const double* transformation, int N){
@@ -398,6 +408,9 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
     return _mm512_div_pd(m,r3);
 }
 
+
+struct reb_particle_avx512 p_jacobi __attribute__ ((aligned (64)));
+
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, double dt){
 #ifdef PROF
@@ -409,10 +422,15 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
         p_jh = ri_whfast512->p_jh;
     }else{ // REB_WHFAST512_COORDINATES_JACOBI
-        p_jh = aligned_alloc(64,sizeof(struct reb_particle_avx512));
-        p_jh->x = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,ri_whfast512->p_jh->x);
-        p_jh->y = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,ri_whfast512->p_jh->y);
-        p_jh->z = matrix_mul_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,ri_whfast512->p_jh->z);
+        p_jh = &p_jacobi;
+        matrix_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
+                ri_whfast512->p_jh->x,
+                ri_whfast512->p_jh->y,
+                ri_whfast512->p_jh->z,
+                &p_jh->x,
+                &p_jh->y,
+                &p_jh->z
+                );
         p_jh->m = ri_whfast512->p_jh->m;
         p_jh->vx = _mm512_set1_pd(0.0); 
         p_jh->vy = _mm512_set1_pd(0.0); 
@@ -617,11 +635,9 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         prefact = gravity_prefactor_avx512_one(ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z);
         prefact1 = _mm512_mul_pd(prefact, _M); // Note: now _M which is m0, m0+m1, m0+m1+m2, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
-        prefact1 = negate_m512d(prefact1); // Opposite sign, can be comined with fnmadd below.
-        ri_whfast512->p_jh->vx = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
-        ri_whfast512->p_jh->vy = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
-        ri_whfast512->p_jh->vz = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
-        free(p_jh);
+        ri_whfast512->p_jh->vx = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
+        ri_whfast512->p_jh->vy = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
+        ri_whfast512->p_jh->vz = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
     }
 
 #ifdef PROF

@@ -86,14 +86,14 @@ struct reb_simulation* run(int use_whfast512){
     r->force_is_velocity_dependent = 0; 
     if (use_whfast512){ 
         r->integrator = REB_INTEGRATOR_WHFAST512;
-        r->ri_whfast512.gr_potential = 0;
+        r->ri_whfast512.gr_potential = 1;
         r->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_JACOBI;
     }else{
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
         r->gravity = REB_GRAVITY_JACOBI;
         r->ri_whfast.safe_mode = 0;
-      //  r->additional_forces = gr_force;
+        r->additional_forces = gr_force;
     }
     
     // Initial conditions
@@ -107,14 +107,14 @@ struct reb_simulation* run(int use_whfast512){
     }
 
 
-    reb_simulation_steps(r,1);
 
     reb_simulation_move_to_com(r);
+    reb_simulation_steps(r,1);
 
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    int Nsteps = 1000000;
+    int Nsteps = 100000;
     reb_simulation_steps(r,Nsteps);
 
     gettimeofday(&time_end,NULL);
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
     struct reb_simulation* r0 = run(0);
     struct reb_simulation* r1 = run(1);
     for (int i = 0; i < 9; i++) {
-        printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, r0->particles[i].x - r1->particles[i].x);
+        printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
     }
         printf("------------------------\n");
     
