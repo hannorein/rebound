@@ -1142,6 +1142,22 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
                 load_from_m512d(r->particles, offsetof(struct reb_particle, vx), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p_jh->vx);
                 load_from_m512d(r->particles, offsetof(struct reb_particle, vy), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p_jh->vy);
                 load_from_m512d(r->particles, offsetof(struct reb_particle, vz), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p_jh->vz);
+                {
+                    r->particles[0].x  = 0.0;
+                    r->particles[0].y  = 0.0;
+                    r->particles[0].z  = 0.0;
+                    r->particles[0].vx = 0.0;
+                    r->particles[0].vy = 0.0;
+                    r->particles[0].vz = 0.0;
+                    for (int i=1;i<r->N;i++){
+                        r->particles[0].x  -= r->particles[i].m/r->particles[0].m*r->particles[i].x;
+                        r->particles[0].y  -= r->particles[i].m/r->particles[0].m*r->particles[i].y;
+                        r->particles[0].z  -= r->particles[i].m/r->particles[0].m*r->particles[i].z;
+                        r->particles[0].vx -= r->particles[i].m/r->particles[0].m*r->particles[i].vx;
+                        r->particles[0].vy -= r->particles[i].m/r->particles[0].m*r->particles[i].vy;
+                        r->particles[0].vz -= r->particles[i].m/r->particles[0].m*r->particles[i].vz;
+                    }
+                }
                 break;
             default:
                 reb_simulation_error(r,"Coordinate system not supported.");
