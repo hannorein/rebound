@@ -395,6 +395,10 @@ struct reb_integrator_whfast512 {
     unsigned int is_synchronized;
     unsigned int N_allocated;
     unsigned int recalculate_constants;
+    enum {
+        REB_WHFAST512_COORDINATES_JACOBI = 0,                      // Jacobi coordinates (default)
+        REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      // Democratic Heliocentric coordinates
+    } coordinates;                                              // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
     double* mat8_inertial_to_jacobi;

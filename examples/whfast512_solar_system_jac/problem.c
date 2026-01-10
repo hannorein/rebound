@@ -86,7 +86,8 @@ double run(int use_whfast512){
     r->force_is_velocity_dependent = 0; 
     if (use_whfast512){ 
         r->integrator = REB_INTEGRATOR_WHFAST512;
-        r->ri_whfast512.gr_potential = 1;
+        r->ri_whfast512.gr_potential = 0;
+        r->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_JACOBI;
     }else{
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
@@ -105,16 +106,17 @@ double run(int use_whfast512){
         reb_simulation_add(r, p);
     }
 
-    reb_simulation_move_to_hel(r);
-    for (int i = 0; i < 9; i++) {
-        printf("%d: %.15e\n", i, r->particles[i].x);
-    }
 
 
     reb_simulation_move_to_com(r);
 
 
     reb_simulation_step(r);
+    reb_simulation_synchronize(r);
+    for (int i = 0; i < 9; i++) {
+        printf("%d: %.15e\n", i, r->particles[i].x);
+    }
+        printf("------------------------\n");
     
     return 0;
 }
@@ -122,7 +124,7 @@ double run(int use_whfast512){
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
-    //:wqrun(0);
+    run(0);
     run(1);
     return EXIT_SUCCESS;
 }
