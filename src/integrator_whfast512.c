@@ -617,9 +617,9 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         prefact1 = _mm512_mul_pd(prefact, _M); // Note: now _M which is m0, m0+m1, m0+m1+m2, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
         prefact1 = negate_m512d(prefact1); // Opposite sign, can be comined with fnmadd below.
-        ri_whfast512->p_jh->vx = _mm512_fnmadd_pd(dvx, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
-        ri_whfast512->p_jh->vy = _mm512_fnmadd_pd(dvy, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
-        ri_whfast512->p_jh->vz = _mm512_fnmadd_pd(dvz, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
+        ri_whfast512->p_jh->vx = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
+        ri_whfast512->p_jh->vy = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
+        ri_whfast512->p_jh->vz = _mm512_fnmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
     }
 
 #ifdef PROF
