@@ -121,6 +121,7 @@ struct reb_simulation* run(int use_whfast512){
     double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
     double tmax = Nsteps * r->dt;
     double gypday = 1e-9*(tmax/M_PI/2.)/walltime*86400;
+    r->walltime = walltime;
     printf("walltime= %.2fs  (time required to integrate to 5 Gyr= %.2fdays)\n", walltime, 5./gypday);
     reb_simulation_synchronize(r);
     return r;
@@ -134,7 +135,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 9; i++) {
         printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
     }
-        printf("------------------------\n");
+    printf("------------------------\n");
+    printf("Speedup  %.4f\n", r0->walltime/r1->walltime);
+
     
     return EXIT_SUCCESS;
 }

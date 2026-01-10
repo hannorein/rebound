@@ -58,10 +58,14 @@ static inline __m512d matrix_mul_avx512(const double* matrix, const __m512d vect
 }
 
 static inline void matrix_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
-    *out1 = _mm512_setzero_pd();
-    *out2 = _mm512_setzero_pd();
-    *out3 = _mm512_setzero_pd();
-    for (int i = 0; i < 8; i++) {
+    __m512d col_i = _mm512_load_pd(matrix);
+    __m512d vin1 = _mm512_set1_pd(in1[0]);
+    *out1 = _mm512_mul_pd(vin1, col_i);
+    __m512d vin2 = _mm512_set1_pd(in2[0]);
+    *out2 = _mm512_mul_pd(vin2, col_i);
+    __m512d vin3 = _mm512_set1_pd(in3[0]);
+    *out3 = _mm512_mul_pd(vin3, col_i);
+    for (int i = 1; i < 8; i++) {
         __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
         __m512d vin1 = _mm512_set1_pd(in1[i]);
         *out1 = _mm512_fmadd_pd(vin1, col_i, *out1);
@@ -101,7 +105,6 @@ static void load_from_m512d(struct reb_particle* particles, size_t offset, const
 // Performs one full center of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
     // TODO implement p_jh0 for JACOBI
-    return;
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
@@ -424,13 +427,8 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
     }else{ // REB_WHFAST512_COORDINATES_JACOBI
         p_jh = &p_jacobi;
         matrix_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
-                ri_whfast512->p_jh->x,
-                ri_whfast512->p_jh->y,
-                ri_whfast512->p_jh->z,
-                &p_jh->x,
-                &p_jh->y,
-                &p_jh->z
-                );
+                ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z,
+                &p_jh->x, &p_jh->y, &p_jh->z);
         p_jh->m = ri_whfast512->p_jh->m;
         p_jh->vx = _mm512_set1_pd(0.0); 
         p_jh->vy = _mm512_set1_pd(0.0); 
@@ -625,9 +623,10 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vy = _mm512_fnmadd_pd(prefact1, p_jh->y, p_jh->vy); 
         p_jh->vz = _mm512_fnmadd_pd(prefact1, p_jh->z, p_jh->vz); 
         // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
-        __m512d dvx = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi, p_jh->vx);
-        __m512d dvy = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi, p_jh->vy);
-        __m512d dvz = matrix_mul_avx512(ri_whfast512->mat8_inertial_to_jacobi, p_jh->vz);
+        __m512d dvx, dvy, dvz;
+        matrix_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
+                p_jh->vx, p_jh->vy, p_jh->vz,
+                &dvx, &dvy, &dvz);
         ri_whfast512->p_jh->vx = _mm512_add_pd(dvx, ri_whfast512->p_jh->vx); 
         ri_whfast512->p_jh->vy = _mm512_add_pd(dvy, ri_whfast512->p_jh->vy); 
         ri_whfast512->p_jh->vz = _mm512_add_pd(dvz, ri_whfast512->p_jh->vz); 
@@ -1247,21 +1246,19 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
                 load_from_m512d(r->particles, offsetof(struct reb_particle, vx), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p_jh->vx);
                 load_from_m512d(r->particles, offsetof(struct reb_particle, vy), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p_jh->vy);
                 load_from_m512d(r->particles, offsetof(struct reb_particle, vz), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p_jh->vz);
-                {
-                    r->particles[0].x  = 0.0;
-                    r->particles[0].y  = 0.0;
-                    r->particles[0].z  = 0.0;
-                    r->particles[0].vx = 0.0;
-                    r->particles[0].vy = 0.0;
-                    r->particles[0].vz = 0.0;
-                    for (int i=1;i<r->N;i++){
-                        r->particles[0].x  -= r->particles[i].m/r->particles[0].m*r->particles[i].x;
-                        r->particles[0].y  -= r->particles[i].m/r->particles[0].m*r->particles[i].y;
-                        r->particles[0].z  -= r->particles[i].m/r->particles[0].m*r->particles[i].z;
-                        r->particles[0].vx -= r->particles[i].m/r->particles[0].m*r->particles[i].vx;
-                        r->particles[0].vy -= r->particles[i].m/r->particles[0].m*r->particles[i].vy;
-                        r->particles[0].vz -= r->particles[i].m/r->particles[0].m*r->particles[i].vz;
-                    }
+                r->particles[0].x  = 0.0;
+                r->particles[0].y  = 0.0;
+                r->particles[0].z  = 0.0;
+                r->particles[0].vx = 0.0;
+                r->particles[0].vy = 0.0;
+                r->particles[0].vz = 0.0;
+                for (int i=1;i<r->N;i++){
+                    r->particles[0].x  -= r->particles[i].m/r->particles[0].m*r->particles[i].x;
+                    r->particles[0].y  -= r->particles[i].m/r->particles[0].m*r->particles[i].y;
+                    r->particles[0].z  -= r->particles[i].m/r->particles[0].m*r->particles[i].z;
+                    r->particles[0].vx -= r->particles[i].m/r->particles[0].m*r->particles[i].vx;
+                    r->particles[0].vy -= r->particles[i].m/r->particles[0].m*r->particles[i].vy;
+                    r->particles[0].vz -= r->particles[i].m/r->particles[0].m*r->particles[i].vz;
                 }
                 break;
             default:
