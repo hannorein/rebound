@@ -91,6 +91,7 @@ static void load_from_m512d(struct reb_particle* particles, size_t offset, const
 // Performs one full center of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
     // TODO implement p_jh0 for JACOBI
+    return;
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);

@@ -76,7 +76,7 @@ void gr_force(struct reb_simulation* r){
 }
 
 
-double run(int use_whfast512){
+struct reb_simulation* run(int use_whfast512){
     
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
@@ -113,18 +113,18 @@ double run(int use_whfast512){
 
     reb_simulation_step(r);
     reb_simulation_synchronize(r);
-    for (int i = 0; i < 9; i++) {
-        printf("%d: %.15e\n", i, r->particles[i].x);
-    }
-        printf("------------------------\n");
-    
-    return 0;
+    return r;
 }
 
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
-    run(0);
-    run(1);
+    struct reb_simulation* r0 = run(0);
+    struct reb_simulation* r1 = run(1);
+    for (int i = 0; i < 9; i++) {
+        printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, r0->particles[i].x - r1->particles[i].x);
+    }
+        printf("------------------------\n");
+    
     return EXIT_SUCCESS;
 }
