@@ -114,7 +114,7 @@ struct reb_simulation* run(int use_whfast512){
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    int Nsteps = 100000;
+    int Nsteps = 1;
     reb_simulation_steps(r,Nsteps);
 
     gettimeofday(&time_end,NULL);
