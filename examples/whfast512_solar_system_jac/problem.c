@@ -76,7 +76,7 @@ void gr_force(struct reb_simulation* r){
 }
 
 
-struct reb_simulation* run(int use_whfast512){
+struct reb_simulation* run(int use_whfast512, int coordinates){
     
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
@@ -87,10 +87,10 @@ struct reb_simulation* run(int use_whfast512){
     if (use_whfast512){ 
         r->integrator = REB_INTEGRATOR_WHFAST512;
         r->ri_whfast512.gr_potential = 1;
-        r->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_JACOBI;
+        r->ri_whfast512.coordinates = coordinates;
     }else{
         r->integrator = REB_INTEGRATOR_WHFAST;
-        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
+        r->ri_whfast.coordinates = coordinates;
         r->gravity = REB_GRAVITY_JACOBI;
         r->ri_whfast.safe_mode = 0;
         r->additional_forces = gr_force;
@@ -114,7 +114,7 @@ struct reb_simulation* run(int use_whfast512){
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    int Nsteps = 1;
+    int Nsteps = 1000000;
     reb_simulation_steps(r,Nsteps);
 
     gettimeofday(&time_end,NULL);
@@ -130,8 +130,9 @@ struct reb_simulation* run(int use_whfast512){
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
-    struct reb_simulation* r0 = run(0);
-    struct reb_simulation* r1 = run(1);
+    struct reb_simulation* r0 = run(0,0);
+    struct reb_simulation* r1 = run(1,0);
+    struct reb_simulation* r2 = run(1,1); //DHC
     for (int i = 0; i < 9; i++) {
         printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
     }
