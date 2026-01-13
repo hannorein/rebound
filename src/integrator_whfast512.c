@@ -79,11 +79,11 @@ static inline void mat8_mul3_avx512(const double* matrix, const __m512d in1, con
 }
     
 static __m512d load_into_m512d(struct reb_particle* particles, size_t offset, const double* transformation, int N){
-    double tmp[8] __attribute__((aligned(64)));; 
+    double tmp[8] = {0}; 
     for (unsigned int i=1; i<N; i++){
         tmp[i-1] = *(double*)((char*)(&particles[i])+offset);
     }
-    __m512d tmp512 = _mm512_load_pd(tmp);
+    __m512d tmp512 = _mm512_loadu_pd(tmp);
     if (transformation != NULL){
         return mat8_mul_avx512(transformation, tmp512);
     }else{

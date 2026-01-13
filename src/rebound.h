@@ -398,9 +398,9 @@ struct reb_integrator_whfast512 {
     } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
-    double* mat8_inertial_to_jacobi __attribute__ ((aligned (64)));
-    double* mat8_jacobi_to_inertial __attribute__ ((aligned (64)));
-    double* mat8_jacobi_to_heliocentric __attribute__ ((aligned (64)));
+    double* mat8_inertial_to_jacobi;
+    double* mat8_jacobi_to_inertial;
+    double* mat8_jacobi_to_heliocentric;
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)
