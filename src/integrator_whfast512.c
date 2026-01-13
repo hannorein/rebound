@@ -420,6 +420,35 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
     __m512d y_j =  p512->hy;
     __m512d z_j =  p512->hz;
     __m512d dt512 = _mm512_set1_pd(r->dt); 
+    
+    // General relativistic corrections
+    if (ri_whfast512->gr_potential){
+        __m512d r2 = _mm512_mul_pd(x_j, x_j);
+        r2 = _mm512_fmadd_pd(y_j, y_j, r2);
+        r2 = _mm512_fmadd_pd(z_j, z_j, r2);
+        const __m512d r4 = _mm512_mul_pd(r2, r2);
+        __m512d prefac = _mm512_div_pd(ri_whfast512->p512->gr_prefac,r4);
+        __m512d dvx = _mm512_mul_pd(prefac, x_j); 
+        __m512d dvy = _mm512_mul_pd(prefac, y_j); 
+        __m512d dvz = _mm512_mul_pd(prefac, z_j); 
+        p512->hvx  = dvx;
+        p512->hvy  = dvy;
+        p512->hvz  = dvz;
+
+        // Calculate back reaction onto star and apply them to planets (heliocentric) 
+        dvx = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvx); 
+        dvy = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvy); 
+        dvz = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvz); 
+
+        double sum_x = _mm512_reduce_add_pd(dvx);
+        double sum_y = _mm512_reduce_add_pd(dvy);
+        double sum_z = _mm512_reduce_add_pd(dvz);
+        p512->hvx = _mm512_sub_pd(p512->hvx, _mm512_set1_pd(sum_x));
+        p512->hvy = _mm512_sub_pd(p512->hvy, _mm512_set1_pd(sum_y));
+        p512->hvz = _mm512_sub_pd(p512->hvz, _mm512_set1_pd(sum_z));
+
+
+    }
 
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
     __m512d m_j_01234567 = m_j;
@@ -558,34 +587,6 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         p512->hvz = _mm512_add_pd(dvz, p512->hvz); 
     }
     
-    // General relativistic corrections
-    if (ri_whfast512->gr_potential){
-        __m512d r2 = _mm512_mul_pd(x_j, x_j);
-        r2 = _mm512_fmadd_pd(y_j, y_j, r2);
-        r2 = _mm512_fmadd_pd(z_j, z_j, r2);
-        const __m512d r4 = _mm512_mul_pd(r2, r2);
-        __m512d prefac = _mm512_div_pd(ri_whfast512->p512->gr_prefac,r4);
-        __m512d dvx = _mm512_mul_pd(prefac, x_j); 
-        __m512d dvy = _mm512_mul_pd(prefac, y_j); 
-        __m512d dvz = _mm512_mul_pd(prefac, z_j); 
-        p512->hvx  = _mm512_sub_pd(p512->hvx, dvx);
-        p512->hvy  = _mm512_sub_pd(p512->hvy, dvy);
-        p512->hvz  = _mm512_sub_pd(p512->hvz, dvz);
-
-       // // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvz); 
-
-        double sum_x = _mm512_reduce_add_pd(dvx);
-        double sum_y = _mm512_reduce_add_pd(dvy);
-        double sum_z = _mm512_reduce_add_pd(dvz);
-        p512->hvx = _mm512_sub_pd(p512->hvx, _mm512_set1_pd(sum_x));
-        p512->hvy = _mm512_sub_pd(p512->hvy, _mm512_set1_pd(sum_y));
-        p512->hvz = _mm512_sub_pd(p512->hvz, _mm512_set1_pd(sum_z));
-
-
-    }
     // Jacobi additions:
     // TODO: Should put a mask on particle 1 as +/- cancels.
     // Need to add stellar term. Easy: already in heliocentric coordinates.
@@ -1216,8 +1217,17 @@ void static recalculate_constants(struct reb_simulation* r){
     for (int s=0; s<N_systems; s++){
         double m0 = r->particles[s*N_per_system].m;
         for (int p=1; p<N_per_system; p++){
-            _gr_prefac[s*p_per_system+(p-1)] = r->dt*6.*m0*m0/(c*c);
-            _gr_prefac2[s*p_per_system+(p-1)] = r->particles[s*N_per_system+p].m/m0;
+            switch (ri_whfast512->coordinates){
+                case REB_WHFAST512_COORDINATES_JACOBI:
+                    _gr_prefac[s*p_per_system+(p-1)] = -r->dt*6.*m0*m0/(c*c); // Minus sign!
+                    _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m/m0;
+                    break;
+                case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
+                    _gr_prefac[s*p_per_system+(p-1)] = r->dt*6.*m0*m0/(c*c);
+                    _gr_prefac2[s*p_per_system+(p-1)] = r->particles[s*N_per_system+p].m/m0;
+                    break;
+            }
+
         }
     }
     ri_whfast512->p512->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
