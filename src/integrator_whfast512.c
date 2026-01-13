@@ -201,11 +201,6 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
-// Vector constants
-static __m512d gr_prefac;
-static __m512d gr_prefac2;
-static __m512d _M;
-
 // Debug function to print vectors
 void static inline printavx512(__m512d a) {
     double _nax[8];
@@ -273,14 +268,14 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     v2 = _mm512_fmadd_pd(p512->vy, p512->vy, v2);
     v2 = _mm512_fmadd_pd(p512->vz, p512->vz, v2);
 
-    __m512d beta = _mm512_mul_pd(_mm512_set1_pd(2.0), _M);
+    __m512d beta = _mm512_mul_pd(_mm512_set1_pd(2.0), p512->M);
     beta = _mm512_fmsub_pd(beta, r0i, v2);
 
     __m512d eta0 = _mm512_mul_pd(p512->x, p512->vx);
     eta0 = _mm512_fmadd_pd(p512->y, p512->vy, eta0);
     eta0 = _mm512_fmadd_pd(p512->z, p512->vz, eta0);
 
-    __m512d zeta0 = _mm512_fnmadd_pd(beta, r0, _M);
+    __m512d zeta0 = _mm512_fnmadd_pd(beta, r0, p512->M);
 
     __m512d Gs1;
     __m512d Gs2;
@@ -348,16 +343,16 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
 
     // f and g function
 
-    __m512d nf = _mm512_mul_pd(_M,Gs2); //negative f
+    __m512d nf = _mm512_mul_pd(p512->M,Gs2); //negative f
     nf = _mm512_mul_pd(nf,r0i); 
 
-    __m512d g = _mm512_fnmadd_pd(_M, Gs3, _dt);
+    __m512d g = _mm512_fnmadd_pd(p512->M, Gs3, _dt);
 
-    __m512d nfd = _mm512_mul_pd(_M, Gs1); // negative fd
+    __m512d nfd = _mm512_mul_pd(p512->M, Gs1); // negative fd
     nfd = _mm512_mul_pd(nfd, r0i);
     nfd = _mm512_mul_pd(nfd, ri);
 
-    __m512d ngd = _mm512_mul_pd(_M, Gs2); // negative gd
+    __m512d ngd = _mm512_mul_pd(p512->M, Gs2); // negative gd
     ngd = _mm512_mul_pd(ngd, ri);
 
     __m512d nx = _mm512_fnmadd_pd(nf, p512->x, p512->x);
@@ -404,7 +399,7 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 }
 
 
-struct reb_particle_avx512 p_jacobi __attribute__ ((aligned (64)));
+struct reb_particle_avx512 p_jacobi __attribute__ ((aligned (64))) = {0};
 
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
@@ -422,6 +417,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
                 ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z,
                 &p_jh->x, &p_jh->y, &p_jh->z);
         p_jh->m = ri_whfast512->p_jh->m;
+
         p_jh->vx = _mm512_set1_pd(0.0); 
         p_jh->vy = _mm512_set1_pd(0.0); 
         p_jh->vz = _mm512_set1_pd(0.0); 
@@ -438,7 +434,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
         r2 = _mm512_fmadd_pd(y_j, y_j, r2);
         r2 = _mm512_fmadd_pd(z_j, z_j, r2);
         const __m512d r4 = _mm512_mul_pd(r2, r2);
-        __m512d prefac = _mm512_div_pd(gr_prefac,r4);
+        __m512d prefac = _mm512_div_pd(ri_whfast512->p_jh->gr_prefac,r4);
         __m512d dvx = _mm512_mul_pd(prefac, x_j); 
         __m512d dvy = _mm512_mul_pd(prefac, y_j); 
         __m512d dvz = _mm512_mul_pd(prefac, z_j); 
@@ -446,10 +442,10 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
 
-        // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(gr_prefac2, dvz); 
+       // // Calculate back reaction onto star and apply them to planets (heliocentric) 
+        dvx = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvx); 
+        dvy = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvy); 
+        dvz = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvz); 
 
         double sum_x = _mm512_reduce_add_pd(dvx);
         double sum_y = _mm512_reduce_add_pd(dvy);
@@ -616,7 +612,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
         ri_whfast512->p_jh->vz = _mm512_add_pd(dvz, ri_whfast512->p_jh->vz); 
         // Add Jacobi term using Jacobi coordinates
         prefact = gravity_prefactor_avx512_one(ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z);
-        prefact1 = _mm512_mul_pd(prefact, _M); // Note: now _M which is m0, m0+m1, m0+m1+m2, ...
+        prefact1 = _mm512_mul_pd(prefact, ri_whfast512->p_jh->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
         ri_whfast512->p_jh->vx = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
         ri_whfast512->p_jh->vy = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
@@ -650,7 +646,7 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         r2 = _mm512_fmadd_pd(y_j, y_j, r2);
         r2 = _mm512_fmadd_pd(z_j, z_j, r2);
         const __m512d r4 = _mm512_mul_pd(r2, r2);
-        __m512d prefac = _mm512_div_pd(gr_prefac,r4);
+        __m512d prefac = _mm512_div_pd(ri_whfast512->p_jh->gr_prefac,r4);
         __m512d dvx = _mm512_mul_pd(prefac, x_j); 
         __m512d dvy = _mm512_mul_pd(prefac, y_j); 
         __m512d dvz = _mm512_mul_pd(prefac, z_j); 
@@ -659,9 +655,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
 
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(gr_prefac2, dvz); 
+        dvx = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvx); 
+        dvy = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvy); 
+        dvz = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvz); 
 
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
@@ -755,7 +751,7 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r){
         r2 = _mm512_fmadd_pd(y_j, y_j, r2);
         r2 = _mm512_fmadd_pd(z_j, z_j, r2);
         const __m512d r4 = _mm512_mul_pd(r2, r2);
-        __m512d prefac = _mm512_div_pd(gr_prefac,r4);
+        __m512d prefac = _mm512_div_pd(ri_whfast512->p_jh->gr_prefac,r4);
         __m512d dvx = _mm512_mul_pd(prefac, x_j); 
         __m512d dvy = _mm512_mul_pd(prefac, y_j); 
         __m512d dvz = _mm512_mul_pd(prefac, z_j); 
@@ -764,9 +760,9 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r){
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
 
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(gr_prefac2, dvz); 
+        dvx = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvx); 
+        dvy = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvy); 
+        dvz = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvz); 
 
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
@@ -1031,7 +1027,7 @@ void static recalculate_constants(struct reb_simulation* r){
             reb_simulation_error(r,"Coordinate system not supported.");
     }
 
-    _M = _mm512_loadu_pd(&M);
+    ri_whfast512->p_jh->M = _mm512_loadu_pd(&M);
 
     // GR prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
@@ -1048,8 +1044,8 @@ void static recalculate_constants(struct reb_simulation* r){
             _gr_prefac2[s*p_per_system+(p-1)] = r->particles[s*N_per_system+p].m/m0;
         }
     }
-    gr_prefac = _mm512_loadu_pd(&_gr_prefac);
-    gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
+    ri_whfast512->p_jh->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
+    ri_whfast512->p_jh->gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
 
     ri_whfast512->dt_cached = r->dt;
     ri_whfast512->recalculate_constants = 0;

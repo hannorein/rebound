@@ -367,6 +367,9 @@ struct reb_particle_avx512{
     __m512d vx __attribute__ ((aligned (64)));
     __m512d vy __attribute__ ((aligned (64)));
     __m512d vz __attribute__ ((aligned (64)));
+    __m512d M __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
+    __m512d gr_prefac __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
+    __m512d gr_prefac2 __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];
@@ -395,9 +398,6 @@ struct reb_integrator_whfast512 {
     } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
-    __m512d M __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
-    __m512d gr_prefac __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
-    __m512d gr_prefac2 __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
     double* mat8_inertial_to_jacobi __attribute__ ((aligned (64)));
     double* mat8_jacobi_to_inertial __attribute__ ((aligned (64)));
     double* mat8_jacobi_to_heliocentric __attribute__ ((aligned (64)));
