@@ -2,7 +2,7 @@ export CC=clang
 export AVX512=1
 export OPENGL=0
 export SERVER=0
-export OPT=-march=native -fsanitize=memory -Og 
+export OPT=-march=native -fsanitize=address -Og 
 #-fsanitize=address
 include ../../src/Makefile.defs
 
