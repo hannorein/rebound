@@ -399,7 +399,6 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 }
 
 
-struct reb_particle_avx512 p_jacobi __attribute__ ((aligned (64))) = {0};
 
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
@@ -409,6 +408,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p_jh;
+    struct reb_particle_avx512 p_jacobi __attribute__ ((aligned (64))) = {0};
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
         p_jh = ri_whfast512->p_jh;
     }else{ // REB_WHFAST512_COORDINATES_JACOBI
