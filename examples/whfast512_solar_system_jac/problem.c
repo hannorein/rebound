@@ -137,7 +137,8 @@ int main(int argc, char* argv[]) {
         printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
     }
     printf("------------------------\n");
-    printf("Speedup  %.4f\n", r0->walltime/r1->walltime);
+    printf("Speedup (jac) %.4f\n", r0->walltime/r1->walltime);
+    printf("Speedup (dhc) %.4f\n", r0->walltime/r2->walltime);
 
     
     return EXIT_SUCCESS;
