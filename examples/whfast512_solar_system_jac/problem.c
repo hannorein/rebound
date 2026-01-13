@@ -15,7 +15,7 @@
 
 // Initial conditions for the Solar System
 // from NASA horizons
-double all_ss_pos[9][3] = {
+const double all_ss_pos[9][3] = {
     {-0.008816286905115728, -0.0010954664916791675, 0.0002143249385447027},
     {-0.05942272929227954, -0.46308699693348293, -0.032897989948949075},
     {-0.7276101005375593, 0.006575003332463933, 0.041795901908847084},
@@ -27,7 +27,7 @@ double all_ss_pos[9][3] = {
     {29.787987348666505, -2.51460654509393, -0.6347108842010732}
 };
 
-double all_ss_vel[9][3] = {
+const double all_ss_vel[9][3] = {
     {0.00014315746073017681, -0.0004912441820893999, 8.127678560998346e-07},
     {1.2978664284760637, -0.09524541469911743, -0.12677574364801253},
     {-0.019239782390457125, -1.1813975672919448, -0.01509392594251431},
@@ -39,7 +39,7 @@ double all_ss_vel[9][3] = {
     {0.014142947617173336, 0.18292110872737416, -0.004092845767710294}
 };
 
-double all_ss_mass[9] = {
+const double all_ss_mass[9] = {
     1.0,
     1.6601208254808336e-07,
     2.447838287784771e-06,
@@ -114,7 +114,7 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    int Nsteps = 1000000;
+    int Nsteps = 100000;
     reb_simulation_steps(r,Nsteps);
 
     gettimeofday(&time_end,NULL);
@@ -130,8 +130,8 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
-    struct reb_simulation* r0 = run(0,0);
     struct reb_simulation* r1 = run(1,0);
+    struct reb_simulation* r0 = run(0,0);
     struct reb_simulation* r2 = run(1,1); //DHC
     for (int i = 0; i < 9; i++) {
         printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
@@ -139,7 +139,9 @@ int main(int argc, char* argv[]) {
     printf("------------------------\n");
     printf("Speedup (jac) %.4f\n", r0->walltime/r1->walltime);
     printf("Speedup (dhc) %.4f\n", r0->walltime/r2->walltime);
-
+    reb_simulation_free(r0);
+    reb_simulation_free(r1);
+    reb_simulation_free(r2);
     
     return EXIT_SUCCESS;
 }

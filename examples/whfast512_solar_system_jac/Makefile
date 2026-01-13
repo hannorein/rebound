@@ -1,7 +1,9 @@
+export CC=clang
 export AVX512=1
 export OPENGL=0
 export SERVER=0
-export OPT=-march=native
+export OPT=-march=native -fsanitize=memory 
+#-fsanitize=address
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for

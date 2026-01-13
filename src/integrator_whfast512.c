@@ -891,9 +891,15 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_particle* particles = r->particles;
 
     // Construct transformation matricies (TODO: release memory)
-    ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
-    ri_whfast512->mat8_jacobi_to_inertial = aligned_alloc(64, sizeof(double)*64);
-    ri_whfast512->mat8_jacobi_to_heliocentric = aligned_alloc(64, sizeof(double)*64);
+    if (ri_whfast512->mat8_inertial_to_jacobi==NULL){
+        ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
+    }
+    if (ri_whfast512->mat8_jacobi_to_inertial==NULL){
+        ri_whfast512->mat8_jacobi_to_inertial = aligned_alloc(64, sizeof(double)*64);
+    }
+    if (ri_whfast512->mat8_jacobi_to_heliocentric==NULL){
+        ri_whfast512->mat8_jacobi_to_heliocentric = aligned_alloc(64, sizeof(double)*64);
+    }
     double mat8_inertial_to_heliocentric[64];
     for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=1; j<r->N; j++){
@@ -1299,6 +1305,12 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     if (ri_whfast512->N_allocated){
         free(ri_whfast512->p_jh);
     }
+    free(ri_whfast512->mat8_inertial_to_jacobi);
+    free(ri_whfast512->mat8_jacobi_to_inertial);
+    free(ri_whfast512->mat8_jacobi_to_heliocentric);
+    ri_whfast512->mat8_inertial_to_jacobi = NULL;
+    ri_whfast512->mat8_jacobi_to_inertial = NULL;
+    ri_whfast512->mat8_jacobi_to_heliocentric = NULL;
     ri_whfast512->p_jh = NULL;
     ri_whfast512->N_allocated = 0;
     ri_whfast512->gr_potential = 0;
