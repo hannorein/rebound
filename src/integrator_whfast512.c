@@ -408,13 +408,11 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+
+    // Convert position from Jacobi to heliocentric
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
             p512->x, p512->y, p512->z,
             &p512->hx, &p512->hy, &p512->hz);
-
-    p512->hvx = _mm512_set1_pd(0.0); 
-    p512->hvy = _mm512_set1_pd(0.0); 
-    p512->hvz = _mm512_set1_pd(0.0); 
 
     __m512d x_j =  p512->hx;
     __m512d y_j =  p512->hy;
@@ -446,9 +444,28 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         p512->hvx = _mm512_sub_pd(p512->hvx, _mm512_set1_pd(sum_x));
         p512->hvy = _mm512_sub_pd(p512->hvy, _mm512_set1_pd(sum_y));
         p512->hvz = _mm512_sub_pd(p512->hvz, _mm512_set1_pd(sum_z));
-
-
+    
+        // Jacobi additions:
+        // Need to add stellar term. Easy: already in heliocentric coordinates.
+        // TODO: Should put a mask on particle 1 as +/- cancels.
+        const __m512d r1 = _mm512_sqrt_pd(r2);
+        const __m512d r3 = _mm512_mul_pd(r1, r2);
+        __m512d prefact = _mm512_div_pd(_mm512_set1_pd(r->dt*r->particles[0].m),r3); // Note: using m0, m0, m0, ... for mass here
+        p512->hvx = _mm512_fnmadd_pd(prefact, x_j, p512->hvx); 
+        p512->hvy = _mm512_fnmadd_pd(prefact, y_j, p512->hvy); 
+        p512->hvz = _mm512_fnmadd_pd(prefact, z_j, p512->hvz); 
+    }else{
+        // Jacobi additions:
+        // TODO: Should put a mask on particle 1 as +/- cancels.
+        // Need to add stellar term. Easy: already in heliocentric coordinates.
+        __m512d prefact = gravity_prefactor_avx512_one(p512->hx, p512->hy, p512->hz);
+        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
+        prefact1 = _mm512_mul_pd(prefact1, dt512);
+        p512->hvx = _mm512_mul_pd(prefact1, p512->hx); 
+        p512->hvy = _mm512_mul_pd(prefact1, p512->hy); 
+        p512->hvz = _mm512_mul_pd(prefact1, p512->hz); 
     }
+
 
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
     __m512d m_j_01234567 = m_j;
@@ -587,15 +604,6 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         p512->hvz = _mm512_add_pd(dvz, p512->hvz); 
     }
     
-    // Jacobi additions:
-    // TODO: Should put a mask on particle 1 as +/- cancels.
-    // Need to add stellar term. Easy: already in heliocentric coordinates.
-    __m512d prefact = gravity_prefactor_avx512_one(p512->hx, p512->hy, p512->hz);
-    __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
-    prefact1 = _mm512_mul_pd(prefact1, dt512);
-    p512->hvx = _mm512_fnmadd_pd(prefact1, p512->hx, p512->hvx); 
-    p512->hvy = _mm512_fnmadd_pd(prefact1, p512->hy, p512->hvy); 
-    p512->hvz = _mm512_fnmadd_pd(prefact1, p512->hz, p512->hvz); 
     // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
     mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
             p512->hvx, p512->hvy, p512->hvz,
