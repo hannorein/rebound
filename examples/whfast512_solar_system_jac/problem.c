@@ -130,8 +130,8 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
-    struct reb_simulation* r0 = run(0,0);
     struct reb_simulation* r1 = run(1,0);
+    struct reb_simulation* r0 = run(0,0);
     struct reb_simulation* r2 = run(1,1); //DHC
     for (int i = 0; i < 9; i++) {
         printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
