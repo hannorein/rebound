@@ -388,12 +388,16 @@ struct reb_integrator_whfast512 {
     unsigned int is_synchronized;
     unsigned int N_allocated;
     unsigned int recalculate_constants;
+    double dt_cached;                   // dt used for precalculating constants.
     enum {
-        REB_WHFAST512_COORDINATES_JACOBI = 0,                      // Jacobi coordinates (default)
-        REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      // Democratic Heliocentric coordinates
-    } coordinates;                                              // Coordinate system used in Hamiltonian splitting
+        REB_WHFAST512_COORDINATES_JACOBI = 0,                       // Jacobi coordinates (default)
+        REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,       // Democratic Heliocentric coordinates
+    } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
+    __m512d M __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
+    __m512d gr_prefac __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
+    __m512d gr_prefac2 __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
     double* mat8_inertial_to_jacobi __attribute__ ((aligned (64)));
     double* mat8_jacobi_to_inertial __attribute__ ((aligned (64)));
     double* mat8_jacobi_to_heliocentric __attribute__ ((aligned (64)));
