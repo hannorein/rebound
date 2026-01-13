@@ -401,27 +401,229 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 
 
 // Performs one full interaction step
-static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation * r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p_jh;
-    struct reb_particle_avx512 p_jacobi __attribute__ ((aligned (64))) = {0};
-    if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        p_jh = ri_whfast512->p_jh;
-    }else{ // REB_WHFAST512_COORDINATES_JACOBI
-        p_jh = &p_jacobi;
-        mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
-                ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z,
-                &p_jh->x, &p_jh->y, &p_jh->z);
-        p_jh->m = ri_whfast512->p_jh->m;
+    struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
+    mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
+            p_jh->x, p_jh->y, p_jh->z,
+            &p_jh->hx, &p_jh->hy, &p_jh->hz);
 
-        p_jh->vx = _mm512_set1_pd(0.0); 
-        p_jh->vy = _mm512_set1_pd(0.0); 
-        p_jh->vz = _mm512_set1_pd(0.0); 
+    p_jh->hvx = _mm512_set1_pd(0.0); 
+    p_jh->hvy = _mm512_set1_pd(0.0); 
+    p_jh->hvz = _mm512_set1_pd(0.0); 
+
+    __m512d x_j =  p_jh->hx;
+    __m512d y_j =  p_jh->hy;
+    __m512d z_j =  p_jh->hz;
+    __m512d dt512 = _mm512_set1_pd(r->dt); 
+
+    // General relativistic corrections
+    if (ri_whfast512->gr_potential){
+        __m512d r2 = _mm512_mul_pd(x_j, x_j);
+        r2 = _mm512_fmadd_pd(y_j, y_j, r2);
+        r2 = _mm512_fmadd_pd(z_j, z_j, r2);
+        const __m512d r4 = _mm512_mul_pd(r2, r2);
+        __m512d prefac = _mm512_div_pd(ri_whfast512->p_jh->gr_prefac,r4);
+        __m512d dvx = _mm512_mul_pd(prefac, x_j); 
+        __m512d dvy = _mm512_mul_pd(prefac, y_j); 
+        __m512d dvz = _mm512_mul_pd(prefac, z_j); 
+        p_jh->hvx  = _mm512_sub_pd(p_jh->hvx, dvx);
+        p_jh->hvy  = _mm512_sub_pd(p_jh->hvy, dvy);
+        p_jh->hvz  = _mm512_sub_pd(p_jh->hvz, dvz);
+
+       // // Calculate back reaction onto star and apply them to planets (heliocentric) 
+        dvx = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvx); 
+        dvy = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvy); 
+        dvz = _mm512_mul_pd(ri_whfast512->p_jh->gr_prefac2, dvz); 
+
+        double sum_x = _mm512_reduce_add_pd(dvx);
+        double sum_y = _mm512_reduce_add_pd(dvy);
+        double sum_z = _mm512_reduce_add_pd(dvz);
+        p_jh->hvx = _mm512_sub_pd(p_jh->hvx, _mm512_set1_pd(sum_x));
+        p_jh->hvy = _mm512_sub_pd(p_jh->hvy, _mm512_set1_pd(sum_y));
+        p_jh->hvz = _mm512_sub_pd(p_jh->hvz, _mm512_set1_pd(sum_z));
     }
+
+
+
+    __m512d m_j = _mm512_mul_pd(p_jh->m, dt512);
+    __m512d m_j_01234567 = m_j;
+
+    {
+        x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
+        y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
+        z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
+        m_j = _mm512_permutex_pd(m_j, _MM_PERM_BACD);
+        __m512d dx_j = _mm512_sub_pd(p_jh->hx, x_j);
+        __m512d dy_j = _mm512_sub_pd(p_jh->hy, y_j);
+        __m512d dz_j = _mm512_sub_pd(p_jh->hz, z_j);
+        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+
+        // 0123 4567
+        // 3201 7645
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        p_jh->hvx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->hvx); 
+        p_jh->hvy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->hvy); 
+        p_jh->hvz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->hvz); 
+
+
+        dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC); // within 256
+        dy_j    = _mm512_permutex_pd(dy_j,    _MM_PERM_ABDC);
+        dz_j    = _mm512_permutex_pd(dz_j,    _MM_PERM_ABDC);
+        prefact = _mm512_permutex_pd(prefact, _MM_PERM_ABDC);
+        m_j     = _mm512_permute_pd(m_j,      0x55);    // within 128
+
+        // 0123 4567
+        // 2310 6754
+        __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
+        p_jh->hvx = _mm512_fmadd_pd(prefact2, dx_j, p_jh->hvx); 
+        p_jh->hvy = _mm512_fmadd_pd(prefact2, dy_j, p_jh->hvy); 
+        p_jh->hvz = _mm512_fmadd_pd(prefact2, dz_j, p_jh->hvz); 
+    }
+    {
+        x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
+        y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
+        z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
+        m_j = _mm512_permutex_pd(m_j, _MM_PERM_ABDC); 
+
+        const __m512d dx_j = _mm512_sub_pd(p_jh->hx, x_j);
+        const __m512d dy_j = _mm512_sub_pd(p_jh->hy, y_j);
+        const __m512d dz_j = _mm512_sub_pd(p_jh->hz, z_j);
+
+        // 0123 4567
+        // 1032 5476 
+        const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
+        p_jh->hvx = _mm512_fnmadd_pd(prefact, dx_j, p_jh->hvx); 
+        p_jh->hvy = _mm512_fnmadd_pd(prefact, dy_j, p_jh->hvy); 
+        p_jh->hvz = _mm512_fnmadd_pd(prefact, dz_j, p_jh->hvz); 
+    }
+
+    // //////////////////////////////////////
+    // 256 bit lane crossing
+    // //////////////////////////////////////
+
+    __m512d dvx; // delta vx for 4567 1230
+    __m512d dvy;
+    __m512d dvz;
+
+    {
+        x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // accros 512
+        y_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
+        z_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
+        m_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), m_j);
+
+        __m512d dx_j = _mm512_sub_pd(p_jh->hx, x_j);
+        __m512d dy_j = _mm512_sub_pd(p_jh->hy, y_j);
+        __m512d dz_j = _mm512_sub_pd(p_jh->hz, z_j);
+        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+
+        // 0123 4567
+        // 4567 1230 
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        p_jh->hvx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->hvx); 
+        p_jh->hvy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->hvy); 
+        p_jh->hvz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->hvz); 
+
+
+        // 4567 1230 
+        // 0123 4567
+        prefact = _mm512_mul_pd(prefact, m_j_01234567);
+        dvx = _mm512_mul_pd(prefact, dx_j); 
+        dvy = _mm512_mul_pd(prefact, dy_j); 
+        dvz = _mm512_mul_pd(prefact, dz_j); 
+
+    }
+
+    {
+        x_j = _mm512_permutex_pd(x_j, _MM_PERM_ADCB); // within 256
+        y_j = _mm512_permutex_pd(y_j, _MM_PERM_ADCB);
+        z_j = _mm512_permutex_pd(z_j, _MM_PERM_ADCB);
+        m_j = _mm512_permutex_pd(m_j, _MM_PERM_ADCB);
+
+        __m512d dx_j = _mm512_sub_pd(p_jh->hx, x_j);
+        __m512d dy_j = _mm512_sub_pd(p_jh->hy, y_j);
+        __m512d dz_j = _mm512_sub_pd(p_jh->hz, z_j);
+        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+
+        // 0123 4567
+        // 5674 2301 
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        p_jh->hvx = _mm512_fnmadd_pd(prefact1, dx_j, p_jh->hvx); 
+        p_jh->hvy = _mm512_fnmadd_pd(prefact1, dy_j, p_jh->hvy); 
+        p_jh->hvz = _mm512_fnmadd_pd(prefact1, dz_j, p_jh->hvz); 
+
+
+
+        dx_j         = _mm512_permutex_pd(dx_j,         _MM_PERM_CBAD); // within 256
+        dy_j         = _mm512_permutex_pd(dy_j,         _MM_PERM_CBAD);
+        dz_j         = _mm512_permutex_pd(dz_j,         _MM_PERM_CBAD);
+        prefact      = _mm512_permutex_pd(prefact,      _MM_PERM_CBAD);
+        m_j_01234567 = _mm512_permutex_pd(m_j_01234567, _MM_PERM_CBAD);
+
+        // 4567 1230 
+        // 3012 7456
+        prefact = _mm512_mul_pd(prefact, m_j_01234567);
+        dvx = _mm512_fmadd_pd(prefact, dx_j, dvx); 
+        dvy = _mm512_fmadd_pd(prefact, dy_j, dvy); 
+        dvz = _mm512_fmadd_pd(prefact, dz_j, dvz); 
+
+    }
+
+    // //////////////////////////////////////
+    // 256 bit lane crossing for final add
+    // //////////////////////////////////////
+
+    {
+        dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); //across 512
+        dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
+        dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
+
+        p_jh->hvx = _mm512_add_pd(dvx, p_jh->hvx); 
+        p_jh->hvy = _mm512_add_pd(dvy, p_jh->hvy); 
+        p_jh->hvz = _mm512_add_pd(dvz, p_jh->hvz); 
+    }
+    
+    // Jacobi additions:
+        // TODO: Should put a mask on particle 1 as +/- cancels.
+        // Need to add stellar term. Easy: already in heliocentric coordinates.
+        __m512d prefact = gravity_prefactor_avx512_one(p_jh->hx, p_jh->hy, p_jh->hz);
+        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
+        prefact1 = _mm512_mul_pd(prefact1, dt512);
+        p_jh->hvx = _mm512_fnmadd_pd(prefact1, p_jh->hx, p_jh->hvx); 
+        p_jh->hvy = _mm512_fnmadd_pd(prefact1, p_jh->hy, p_jh->hvy); 
+        p_jh->hvz = _mm512_fnmadd_pd(prefact1, p_jh->hz, p_jh->hvz); 
+        // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
+        mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
+                p_jh->hvx, p_jh->hvy, p_jh->hvz,
+                &dvx, &dvy, &dvz);
+        ri_whfast512->p_jh->vx = _mm512_add_pd(dvx, ri_whfast512->p_jh->vx); 
+        ri_whfast512->p_jh->vy = _mm512_add_pd(dvy, ri_whfast512->p_jh->vy); 
+        ri_whfast512->p_jh->vz = _mm512_add_pd(dvz, ri_whfast512->p_jh->vz); 
+        // Add Jacobi term using Jacobi coordinates
+        prefact = gravity_prefactor_avx512_one(ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z);
+        prefact1 = _mm512_mul_pd(prefact, ri_whfast512->p_jh->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
+        prefact1 = _mm512_mul_pd(prefact1, dt512);
+        ri_whfast512->p_jh->vx = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
+        ri_whfast512->p_jh->vy = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
+        ri_whfast512->p_jh->vz = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
+
+#ifdef PROF
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
+}
+static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struct reb_simulation * r){
+#ifdef PROF
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+#endif
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict p_jh = ri_whfast512->p_jh;
 
     __m512d x_j =  p_jh->x;
     __m512d y_j =  p_jh->y;
@@ -592,31 +794,6 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r){
         p_jh->vx = _mm512_add_pd(dvx, p_jh->vx); 
         p_jh->vy = _mm512_add_pd(dvy, p_jh->vy); 
         p_jh->vz = _mm512_add_pd(dvz, p_jh->vz); 
-    }
-    if (ri_whfast512->coordinates == REB_WHFAST512_COORDINATES_JACOBI){
-        // TODO: Should put a mask on particle 1 as +/- cancels.
-        // Need to add stellar term. Easy: already in heliocentric coordinates.
-        __m512d prefact = gravity_prefactor_avx512_one(p_jh->x, p_jh->y, p_jh->z);
-        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
-        prefact1 = _mm512_mul_pd(prefact1, dt512);
-        p_jh->vx = _mm512_fnmadd_pd(prefact1, p_jh->x, p_jh->vx); 
-        p_jh->vy = _mm512_fnmadd_pd(prefact1, p_jh->y, p_jh->vy); 
-        p_jh->vz = _mm512_fnmadd_pd(prefact1, p_jh->z, p_jh->vz); 
-        // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
-        __m512d dvx, dvy, dvz;
-        mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
-                p_jh->vx, p_jh->vy, p_jh->vz,
-                &dvx, &dvy, &dvz);
-        ri_whfast512->p_jh->vx = _mm512_add_pd(dvx, ri_whfast512->p_jh->vx); 
-        ri_whfast512->p_jh->vy = _mm512_add_pd(dvy, ri_whfast512->p_jh->vy); 
-        ri_whfast512->p_jh->vz = _mm512_add_pd(dvz, ri_whfast512->p_jh->vz); 
-        // Add Jacobi term using Jacobi coordinates
-        prefact = gravity_prefactor_avx512_one(ri_whfast512->p_jh->x, ri_whfast512->p_jh->y, ri_whfast512->p_jh->z);
-        prefact1 = _mm512_mul_pd(prefact, ri_whfast512->p_jh->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
-        prefact1 = _mm512_mul_pd(prefact1, dt512);
-        ri_whfast512->p_jh->vx = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->x, ri_whfast512->p_jh->vx); 
-        ri_whfast512->p_jh->vy = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->y, ri_whfast512->p_jh->vy); 
-        ri_whfast512->p_jh->vz = _mm512_fmadd_pd(prefact1, ri_whfast512->p_jh->z, ri_whfast512->p_jh->vz); 
     }
 
 #ifdef PROF
@@ -1163,7 +1340,11 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     }
 
     if (ri_whfast512->N_systems==1){
-        reb_whfast512_interaction_step_8planets(r);
+        if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
+            reb_whfast512_interaction_step_8planets_democraticheliocentric(r);
+        }else{
+            reb_whfast512_interaction_step_8planets_jacobi(r);
+        }
     }else if (ri_whfast512->N_systems==2){
         reb_whfast512_interaction_step_4planets(r);
     }else if (ri_whfast512->N_systems==4){

@@ -359,6 +359,10 @@ struct reb_integrator_whfast {
 // Special particle struct for WHFast512
 struct reb_particle_avx512{
 #ifdef AVX512
+    // Various constants
+    __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
+    __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
+    __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
     // Jacobi
     __m512d m __attribute__ ((aligned (64)));
     __m512d x __attribute__ ((aligned (64)));
@@ -367,9 +371,13 @@ struct reb_particle_avx512{
     __m512d vx __attribute__ ((aligned (64)));
     __m512d vy __attribute__ ((aligned (64)));
     __m512d vz __attribute__ ((aligned (64)));
-    __m512d M __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
-    __m512d gr_prefac __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
-    __m512d gr_prefac2 __attribute__ ((aligned (64)));                       //  Masses used in Kepler-Solver
+    // Heliocentric 
+    __m512d hx __attribute__ ((aligned (64)));
+    __m512d hy __attribute__ ((aligned (64)));
+    __m512d hz __attribute__ ((aligned (64)));
+    __m512d hvx __attribute__ ((aligned (64)));
+    __m512d hvy __attribute__ ((aligned (64)));
+    __m512d hvz __attribute__ ((aligned (64)));
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];

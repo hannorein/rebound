@@ -1,4 +1,4 @@
-export CC=clang
+#export CC=clang
 export AVX512=1
 export OPENGL=0
 export SERVER=0
