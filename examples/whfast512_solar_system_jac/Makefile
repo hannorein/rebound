@@ -2,7 +2,7 @@
 export AVX512=1
 export OPENGL=0
 export SERVER=0
-export OPT=-march=native -O3 -ffp-contract=off
+export OPT=-march=native -O3 -ffp-contract=off -DPROF=1
 # -fsanitize=address
 include ../../src/Makefile.defs
 

@@ -126,11 +126,21 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
     reb_simulation_synchronize(r);
     return r;
 }
+#ifdef PROF
+extern double walltime_interaction;
+extern double walltime_kepler;
+extern double walltime_jump;
+extern double walltime_com;
+#endif // PROF
 
 int main(int argc, char* argv[]) {
     //printf("Integrating for 1 Myr with WHFast512:\n");
     //double w1= run(1);
     struct reb_simulation* r1 = run(1,0);
+#ifdef PROF
+    printf("interaction: %.10f\nkepler:      %.10f\nratio: %.10f\n", walltime_interaction, walltime_kepler, walltime_interaction/walltime_kepler);
+#endif // PROF
+
     struct reb_simulation* r0 = run(0,0);
     struct reb_simulation* r2 = run(1,1); //DHC
     for (int i = 0; i < 9; i++) {
