@@ -273,6 +273,11 @@ struct reb_integrator_trace {
         REB_TRACE_PERI_FULL_IAS15 = 2,
     } peri_mode;
 
+    enum {
+        REB_TRACE_COORDINATES_DHC = 0,
+        REB_TRACE_COORDINATES_WB = 1,
+    } coordinates;
+
     double r_crit_hill;
     double peri_crit_eta;
 
@@ -658,6 +663,7 @@ struct reb_simulation {
         REB_GRAVITY_MERCURIUS = 4,      // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,         // Special gravity routine which includes the Jacobi terms for WH integrators 
         REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
+        REB_GRAVITY_WB = 7,        // Special gravity routine only for TRACE in WB coordinates
     } gravity;
 
 

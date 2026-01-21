@@ -779,6 +779,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 particles[j].az    += prefacti*dz;
                             }
                         }
+                        // Interaction between active-testparticle
                         const int startitestp = MAX(_N_active,2);
                         for (int i=startitestp; i<_N_real; i++){
                             if (reb_sigint > 1) return;
@@ -976,6 +977,217 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             }
                         }
 #endif // OPENMP
+                    }
+                    break;
+                case REB_TRACE_MODE_NONE: // In-between steps. Do not calculate anything. 
+                    break;
+                default:
+                    reb_simulation_error(r, "TRACE mode not supported in gravity.c");
+                    break;
+            }
+            break;
+        case REB_GRAVITY_WB:
+            switch (r->ri_trace.mode){
+                case REB_TRACE_MODE_INTERACTION: // Interaction step
+                {
+                        const int idxA = 0;
+                        const int idxB = N-1; // binary companion is always last particle
+                        const int first_planet_idx = 1;
+                        const int last_planet_idx = N-2;
+                        const double mA = particles[idxA].m;
+                        const double mB = particles[idxB].m;
+
+                        // little s, equation (13)
+                        struct reb_vec3d s = {0};
+                        double mtotA = mA;
+                        for (int i=0; i<N; i++){
+                            particles[i].ax = 0;
+                            particles[i].ay = 0;
+                            particles[i].az = 0;
+
+                            if (i != idxA && i != idxB){
+                                s.x += particles[i].m * particles[i].x;
+                                s.y += particles[i].m * particles[i].y;
+                                s.z += particles[i].m * particles[i].z;
+                                mtotA += particles[i].m;
+                            }
+                        }
+
+                        s.x /= mtotA;
+                        s.y /= mtotA;
+                        s.z /= mtotA;
+
+                        // XB + Sx
+                        const double dbx = particles[idxB].x + s.x;
+                        const double dby = particles[idxB].y + s.y;
+                        const double dbz = particles[idxB].z + s.z;
+                        const double _rb = sqrt(dbx*dbx + dby*dby + dbz*dbz); // |XB + Sx|
+                        const double _Rb = sqrt(particles[idxB].x*particles[idxB].x + particles[idxB].y*particles[idxB].y + particles[idxB].z*particles[idxB].z); // |XB| = Rb
+                        const double prefact1 = -G*mA*mB/mtotA / (_rb*_rb*_rb); // first term in equation (14), will be shared
+
+                        // Acceleration of the binary due to star A
+                        // First two terms of equation (15)
+                        const double prefactorb1 = G*mA / (_Rb*_Rb*_Rb);
+                        const double prefactorb2 = G*mA / (_rb*_rb*_rb);
+                        particles[idxB].ax += prefactorb1*particles[idxB].x - prefactorb2*dbx;
+                        particles[idxB].ay += prefactorb1*particles[idxB].y - prefactorb2*dby;
+                        particles[idxB].az += prefactorb1*particles[idxB].z - prefactorb2*dbz;
+
+                        // Second term in Equation 14 compute C = sum_i m_i * (Xb - Xi + s)/|...|^3
+                        struct reb_vec3d C = {0};
+
+                        for (int i=first_planet_idx; i<=last_planet_idx;i++){
+                            // Xb - Xi + Sx
+                            const double dbix = dbx - particles[i].x;
+                            const double dbiy = dby - particles[i].y;
+                            const double dbiz = dbz - particles[i].z;
+                            const double _rbi = sqrt(dbix*dbix + dbiy*dbiy + dbiz*dbiz); // no softening here
+
+                            double rx = (particles[idxB].x + s.x) - particles[i].x;
+                            double ry = (particles[idxB].y + s.y) - particles[i].y;
+                            double rz = (particles[idxB].z + s.z) - particles[i].z;
+                            double r  = sqrt(rx*rx + ry*ry + rz*rz);
+                            double invr3 = 1.0/(r*r*r);
+
+                            C.x += particles[i].m * rx * invr3;
+                            C.y += particles[i].m * ry * invr3;
+                            C.z += particles[i].m * rz * invr3;
+
+                            // accelerations on particle i due to binary
+                            // first and third terms of equation (14)
+                            const double prefact3 = G*mB / (_rbi*_rbi*_rbi);
+                            particles[i].ax += prefact1*dbx + prefact3*dbix;
+                            particles[i].ay += prefact1*dby + prefact3*dbiy;
+                            particles[i].az += prefact1*dbz + prefact3*dbiz;
+
+                            // acceleration on the binary due to i
+                            // Last two terms of equation (15)
+                            const double prefactorb1 = G*particles[i].m/(_Rb*_Rb*_Rb);
+                            const double prefactorb2 = G*particles[i].m/(_rbi*_rbi*_rbi);
+                            particles[idxB].ax += prefactorb1*particles[idxB].x - prefactorb2*dbix;
+                            particles[idxB].ay += prefactorb1*particles[idxB].y - prefactorb2*dbiy;
+                            particles[idxB].az += prefactorb1*particles[idxB].z - prefactorb2*dbiz;
+
+                            for (int j=i+1;j<=last_planet_idx;j++){
+                                // close encounters not implemented yet
+                                //if (r->ri_trace.current_Ks[j*N+i]) continue;
+                                const double dx = particles[i].x - particles[j].x;
+                                const double dy = particles[i].y - particles[j].y;
+                                const double dz = particles[i].z - particles[j].z;
+                                const double _r = sqrt(dx*dx + dy*dy + dz*dz);
+
+                                // Pairwise planet interactions
+                                // Last term of Equation (14)
+                                const double prefact = G / (_r*_r*_r);
+                                const double prefactj = -prefact*particles[j].m;
+                                const double prefacti = prefact*particles[i].m;
+                                particles[i].ax    += prefactj*dx;
+                                particles[i].ay    += prefactj*dy;
+                                particles[i].az    += prefactj*dz;
+                                particles[j].ax    += prefacti*dx;
+                                particles[j].ay    += prefacti*dy;
+                                particles[j].az    += prefacti*dz;
+
+                                // Acceleration on i due to binary + j????
+                                /*
+                                const double dbjx = dbx - particles[j].x;
+                                const double dbjy = dby - particles[j].y;
+                                const double dbjz = dbz - particles[j].z;
+                                const double _rbj = sqrt(dbjx*dbjx + dbjy*dbjy + dbjz*dbjz);
+                                const double prefact2 = -G*particles[idxB].m/mtotA / (_rbj*_rbj*_rbj);
+                                particles[i].ax += prefact2*particles[j].m*dbjx;
+                                particles[i].ay += prefact2*particles[j].m*dbjy;
+                                particles[i].az += prefact2*particles[j].m*dbjz;
+                                */
+                            }
+                        }
+
+                        double common = -G * mB / mtotA;
+
+                        // now apply to every planet k (same vector for all)
+                        for (int k=first_planet_idx; k<=last_planet_idx; k++){
+                            particles[k].ax += common * C.x;
+                            particles[k].ay += common * C.y;
+                            particles[k].az += common * C.z;
+                        }
+                    }
+                    break;
+                case REB_TRACE_MODE_KEPLER: // BS part
+                                            // Kepler Step
+                    {
+                        const double m0 = r->particles[0].m;
+                        const int encounter_N = r->ri_trace.encounter_N;
+                        const int encounter_N_active = r->ri_trace.encounter_N_active;
+                        int* map = r->ri_trace.encounter_map;
+                        particles[0].ax = 0; // map[0] is always 0
+                        particles[0].ay = 0;
+                        particles[0].az = 0;
+
+                        // Acceleration due to star
+                        for (int i=1; i<encounter_N; i++){
+                            int mi = map[i];
+                            const double x = particles[mi].x;
+                            const double y = particles[mi].y;
+                            const double z = particles[mi].z;
+                            const double _r = sqrt(x*x + y*y + z*z + softening2);
+                            double prefact = -G * m0 / (_r*_r*_r);
+                            particles[mi].ax    = prefact*x;
+                            particles[mi].ay    = prefact*y;
+                            particles[mi].az    = prefact*z;
+                        }
+
+                        // We're in a heliocentric coordinate system.
+                        // The star feels no acceleration
+                        // Interactions between active-active
+                        if (encounter_N_active > 2){ // if two or less, no active-active planets
+                            for (int i=2; i<encounter_N_active; i++){
+                                int mi = map[i];
+                                for (int j=1; j<i; j++){
+                                    int mj = map[j];
+                                    if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+                                    const double dx = particles[mi].x - particles[mj].x;
+                                    const double dy = particles[mi].y - particles[mj].y;
+                                    const double dz = particles[mi].z - particles[mj].z;
+                                    const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                    double prefact = G/(_r*_r*_r);
+                                    double prefactj = -prefact*particles[mj].m;
+                                    double prefacti = prefact*particles[mi].m;
+
+                                    particles[mi].ax    += prefactj*dx;
+                                    particles[mi].ay    += prefactj*dy;
+                                    particles[mi].az    += prefactj*dz;
+                                    particles[mj].ax    += prefacti*dx;
+                                    particles[mj].ay    += prefacti*dy;
+                                    particles[mj].az    += prefacti*dz;
+                                }
+                            }
+                        }
+
+                        // Interactions between active-testparticle
+                        const int startitestp = MAX(encounter_N_active,2);
+                        for (int i=startitestp; i<encounter_N; i++){
+                            int mi = map[i];
+                            for (int j=1; j<encounter_N_active; j++){
+                                int mj = map[j];
+                                if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+                                const double dx = particles[mi].x - particles[mj].x;
+                                const double dy = particles[mi].y - particles[mj].y;
+                                const double dz = particles[mi].z - particles[mj].z;
+                                const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                                double prefact = G/(_r*_r*_r);
+                                double prefactj = -prefact*particles[mj].m;
+                                particles[mi].ax    += prefactj*dx;
+                                particles[mi].ay    += prefactj*dy;
+                                particles[mi].az    += prefactj*dz;
+
+                                if (_testparticle_type){
+                                    double prefacti = prefact*particles[mi].m;
+                                    particles[mj].ax    += prefacti*dx;
+                                    particles[mj].ay    += prefacti*dy;
+                                    particles[mj].az    += prefacti*dz;
+                                }
+                            }
+                        }
                     }
                     break;
                 case REB_TRACE_MODE_NONE: // In-between steps. Do not calculate anything. 
