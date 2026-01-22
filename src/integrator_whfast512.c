@@ -319,6 +319,14 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     \
     X = _mm512_fmsub_pd(X, denom, _mm512_mul_pd(f, _mm512_set1_pd(5.0)));\
     X = _mm512_div_pd(X, denom);
+    
+    // Division approximation by newton's method. Not much faster
+    // __m512d t; 
+    //t = _mm512_rcp14_pd(denom);
+    //t = _mm512_mul_pd(t, _mm512_sub_pd(_mm512_set1_pd(2.0),_mm512_mul_pd(denom,t)));
+    //X = _mm512_mul_pd(X, t);
+    
+
 
     // Initial guess
     __m512d dtr0i = _mm512_mul_pd(_dt,r0i);
