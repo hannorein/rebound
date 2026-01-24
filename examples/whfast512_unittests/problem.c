@@ -96,15 +96,15 @@ void gr_force(struct reb_simulation* r){
     }
 }
 
-int test_basic(){
+int test_basic(int coordinates){
     struct reb_simulation* r = setup_sim(9);
     struct reb_simulation* r512 = reb_simulation_copy(r);
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 0;
-    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r512->ri_whfast512.coordinates = coordinates;
     r->integrator = REB_INTEGRATOR_WHFAST;
-    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r->ri_whfast.coordinates = coordinates;
     r->ri_whfast.safe_mode = 0;
 
     double tmax = 1e2;
@@ -346,7 +346,8 @@ int test_synchronization_fallback(){
 }
 
 int main(int argc, char* argv[]) {
-    assert(test_basic());
+    assert(test_basic(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    assert(test_basic(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_number_of_planets());
     assert(test_N_systems(2,1));
     assert(test_N_systems(2,2));

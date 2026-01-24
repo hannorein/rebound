@@ -47,6 +47,7 @@ double walltime_jump=0;
 double walltime_com=0;
 #endif
 
+// 8x8 matrix multiplication using avx512
 static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
     __m512d v_i = _mm512_set1_pd(vector[0]);
     __m512d col_i = _mm512_load_pd(matrix);
@@ -59,6 +60,8 @@ static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector
     return res;
 }
 
+// Three 8x8 matrix multiplications with the same matrix using avx512
+// Used for coordinate transformations in x, y, and z
 static inline void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
     __m512d col_i = _mm512_load_pd(matrix);
     __m512d vin1 = _mm512_set1_pd(in1[0]);
@@ -77,7 +80,8 @@ static inline void mat8_mul3_avx512(const double* matrix, const __m512d in1, con
         *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
     }
 }
-    
+   
+// Hepler function to load particle data into avx512 registers
 static __m512d load_into_m512d(struct reb_particle* particles, size_t offset, const double* transformation, int N){
     double tmp[8] = {0}; 
     for (unsigned int i=1; i<N; i++){
@@ -90,6 +94,8 @@ static __m512d load_into_m512d(struct reb_particle* particles, size_t offset, co
         return tmp512;
     }
 }
+
+// Hepler function to load particle data from avx512 registers
 static void load_from_m512d(struct reb_particle* particles, size_t offset, const double* transformation, int N, __m512d vector){
     double tmp[8] __attribute__((aligned(64)));; 
     __m512d tmp512;
@@ -106,7 +112,6 @@ static void load_from_m512d(struct reb_particle* particles, size_t offset, const
 
 // Performs one full center of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
-    // TODO implement p_jh0 for JACOBI
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
@@ -1079,6 +1084,8 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
 
+    // Same layout as or democratic heliocentric
+
     // Construct transformation matricies (TODO: release memory)
     if (ri_whfast512->mat8_inertial_to_jacobi==NULL){
         ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
@@ -1126,7 +1133,8 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
             }
         }
     }
-
+    struct reb_particle com = reb_simulation_com(r);
+    ri_whfast512->p_jh0[0] = com;
     ri_whfast512->p512->x = load_into_m512d(particles, offsetof(struct reb_particle,x),ri_whfast512->mat8_inertial_to_jacobi, r->N);
     ri_whfast512->p512->y = load_into_m512d(particles, offsetof(struct reb_particle,y),ri_whfast512->mat8_inertial_to_jacobi, r->N);
     ri_whfast512->p512->z = load_into_m512d(particles, offsetof(struct reb_particle,z),ri_whfast512->mat8_inertial_to_jacobi, r->N);
@@ -1441,6 +1449,14 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
                     r->particles[0].vx -= r->particles[i].m/r->particles[0].m*r->particles[i].vx;
                     r->particles[0].vy -= r->particles[i].m/r->particles[0].m*r->particles[i].vy;
                     r->particles[0].vz -= r->particles[i].m/r->particles[0].m*r->particles[i].vz;
+                }
+                for (int i=0;i<r->N;i++){
+                    r->particles[i].x  += ri_whfast512->p_jh0[0].x;
+                    r->particles[i].y  += ri_whfast512->p_jh0[0].y;
+                    r->particles[i].z  += ri_whfast512->p_jh0[0].z;
+                    r->particles[i].vx += ri_whfast512->p_jh0[0].vx;
+                    r->particles[i].vy += ri_whfast512->p_jh0[0].vy;
+                    r->particles[i].vz += ri_whfast512->p_jh0[0].vz;
                 }
                 break;
             default:
