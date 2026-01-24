@@ -393,6 +393,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
 }
 
 // Helper functions for the interaction step
+// Calculates 1/(dx**2+dy**2+dz**2)^(3/2)
 static __m512d inline gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz) {
     __m512d r2 = _mm512_mul_pd(dx, dx);
     r2 = _mm512_fmadd_pd(dy,dy, r2);
@@ -471,12 +472,12 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
         // Need to add stellar term. Easy: already in heliocentric coordinates.
-        __m512d prefact = gravity_prefactor_avx512_one(p512->hx, p512->hy, p512->hz);
-        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
+        __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
+        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
-        p512->hvx = _mm512_mul_pd(prefact1, p512->hx); 
-        p512->hvy = _mm512_mul_pd(prefact1, p512->hy); 
-        p512->hvz = _mm512_mul_pd(prefact1, p512->hz); 
+        p512->hvx = _mm512_mul_pd(prefact1, x_j); 
+        p512->hvy = _mm512_mul_pd(prefact1, y_j); 
+        p512->hvz = _mm512_mul_pd(prefact1, z_j); 
     }
 
 
@@ -1270,7 +1271,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         // Check if all assumptions are satisfied.
         // Note: These are not checked every timestep. 
         // So it is possible for the user to screw things up.
-        if (r->dt<=0.0){
+        if (r->dt<0.0){
             reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
             r->status = REB_STATUS_GENERIC_ERROR;
             return;
