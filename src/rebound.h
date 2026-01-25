@@ -414,8 +414,6 @@ struct reb_integrator_whfast512 {
     double* mat8_inertial_to_jacobi;
     double* mat8_jacobi_to_inertial;
     double* mat8_jacobi_to_heliocentric;
-    void (**dispatch_list)(const struct reb_simulation * const);
-    unsigned int dispatch_list_N;
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)
