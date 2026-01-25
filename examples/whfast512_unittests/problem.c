@@ -269,13 +269,13 @@ int test_gr(){
     return 1;
 }
 
-int test_restart(){
+int test_restart(int coordinates){
     struct reb_simulation* r512 = setup_sim(9);
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->exact_finish_time = 0;
     r512->ri_whfast512.gr_potential = 1;
     r512->ri_whfast512.keep_unsynchronized = 1;
-    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r512->ri_whfast512.coordinates = coordinates;
     
     double tmax = 1e2;
     double tmaxfinal = 4.*tmax;
@@ -361,7 +361,8 @@ int main(int argc, char* argv[]) {
     assert(test_N_systems(2,4));
     assert(test_N_systems(4,1));
     assert(test_N_systems(4,2));
-    assert(test_restart());
+    assert(test_restart(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    assert(test_restart(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_com());
     assert(test_twobody());
     assert(test_gr());

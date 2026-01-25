@@ -691,6 +691,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
 }
+
 static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struct reb_simulation * r){
 #ifdef PROF
     struct reb_timeval time_beginning;
@@ -1137,58 +1138,7 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
 
-    // Same layout as or democratic heliocentric
-
-    // Construct transformation matricies (TODO: release memory)
-    if (ri_whfast512->mat8_inertial_to_jacobi==NULL){
-        ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
-    }
-    if (ri_whfast512->mat8_jacobi_to_inertial==NULL){
-        ri_whfast512->mat8_jacobi_to_inertial = aligned_alloc(64, sizeof(double)*64);
-    }
-    if (ri_whfast512->mat8_jacobi_to_heliocentric==NULL){
-        ri_whfast512->mat8_jacobi_to_heliocentric = aligned_alloc(64, sizeof(double)*64);
-    }
-    double mat8_inertial_to_heliocentric[64];
-    for (unsigned int i=1; i<9; i++){
-        for (unsigned int j=1; j<9; j++){
-            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
-            ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
-            ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
-            mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
-        }
-    }
-
-    // Fill matricies
-    double ms = particles[0].m;
-    for (unsigned int i=1; i<r->N; i++){
-        for (unsigned int j=i; j<r->N; j++){
-            ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] += particles[j].m/ms;
-        }
-        for (unsigned int j=1; j<r->N; j++){
-            mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] += particles[j].m/particles[0].m;
-        }
-        mat8_inertial_to_heliocentric[(i-1)+8*(i-1)] += 1.0;
-        ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(i-1)] += 1.0;
-        ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] += ms/(ms + particles[i].m);
-        ms += particles[i].m;
-        if (i<r->N-1){ 
-            for (unsigned int ii=i; ii>0; ii--){
-                int jj = i+1;
-                ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] -= particles[jj].m/(ms+particles[jj].m);
-            }
-        }
-    }
-
-
-    // Might be numerically more stable to calculate this manually rather than do a matrix multiplication.
-    for (unsigned int i=1; i<r->N; i++){
-        for (unsigned int j=1; j<r->N; j++){
-            for (unsigned int k=1; k<r->N; k++){
-                ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] += mat8_inertial_to_heliocentric[(i-1)+8*(k-1)] * ri_whfast512->mat8_jacobi_to_inertial[(k-1)+8*(j-1)];
-            }
-        }
-    }
+    // Same layout as for democratic heliocentric
     struct reb_particle com = reb_simulation_com(r);
     ri_whfast512->p_jh0[0] = com;
     ri_whfast512->p512->x = load_into_m512d(particles, offsetof(struct reb_particle,x),ri_whfast512->mat8_inertial_to_jacobi, r->N);
@@ -1258,9 +1208,11 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
 // Precalculate various constants and put them in 512 bit vectors.
 void static recalculate_constants(struct reb_simulation* r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle* particles = r->particles;
     const unsigned int N_systems = ri_whfast512->N_systems;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
+    double mat8_inertial_to_heliocentric[64];
     double M[8];
     switch (ri_whfast512->coordinates){
         case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
@@ -1283,6 +1235,55 @@ void static recalculate_constants(struct reb_simulation* r){
                 M[i] = 0.0;
                 for (int j=0;j<i+2;j++){
                     M[i] += r->particles[j].m;
+                }
+            }
+            if (ri_whfast512->mat8_inertial_to_jacobi==NULL){
+                ri_whfast512->mat8_inertial_to_jacobi = aligned_alloc(64, sizeof(double)*64);
+            }
+            if (ri_whfast512->mat8_jacobi_to_inertial==NULL){
+                ri_whfast512->mat8_jacobi_to_inertial = aligned_alloc(64, sizeof(double)*64);
+            }
+            if (ri_whfast512->mat8_jacobi_to_heliocentric==NULL){
+                ri_whfast512->mat8_jacobi_to_heliocentric = aligned_alloc(64, sizeof(double)*64);
+            }
+            for (unsigned int i=1; i<9; i++){
+                for (unsigned int j=1; j<9; j++){
+                    ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
+                    ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
+                    ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
+                    mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
+                }
+            }
+
+            // Fill matricies
+            {
+                double ms = particles[0].m;
+                for (unsigned int i=1; i<r->N; i++){
+                    for (unsigned int j=i; j<r->N; j++){
+                        ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] += particles[j].m/ms;
+                    }
+                    for (unsigned int j=1; j<r->N; j++){
+                        mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] += particles[j].m/particles[0].m;
+                    }
+                    mat8_inertial_to_heliocentric[(i-1)+8*(i-1)] += 1.0;
+                    ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(i-1)] += 1.0;
+                    ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] += ms/(ms + particles[i].m);
+                    ms += particles[i].m;
+                    if (i<r->N-1){ 
+                        for (unsigned int ii=i; ii>0; ii--){
+                            int jj = i+1;
+                            ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] -= particles[jj].m/(ms+particles[jj].m);
+                        }
+                    }
+                }
+            }
+
+            // Might be numerically more stable to calculate this manually rather than do a matrix multiplication.
+            for (unsigned int i=1; i<r->N; i++){
+                for (unsigned int j=1; j<r->N; j++){
+                    for (unsigned int k=1; k<r->N; k++){
+                        ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] += mat8_inertial_to_heliocentric[(i-1)+8*(k-1)] * ri_whfast512->mat8_jacobi_to_inertial[(k-1)+8*(j-1)];
+                    }
                 }
             }
             break;
