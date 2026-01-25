@@ -39,7 +39,7 @@ double all_ss_vel[9][3] = {
 };
 
 double all_ss_mass[9] = {
-    0.9999999999950272,
+    1.0,
     1.6601208254808336e-07,
     2.447838287784771e-06,
     3.0404326489511185e-06,
@@ -53,7 +53,7 @@ double all_ss_mass[9] = {
 struct reb_simulation* setup_sim(int N){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 4.0/365.25*2*M_PI; //6 days
+    r->dt = 4.0/365.25*2*M_PI; //4 days
     r->G = 1.;
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
@@ -111,14 +111,13 @@ int test_basic(int coordinates){
     if (reb_simulation_integrate(r, tmax)>0) return 0;
     if (reb_simulation_integrate(r512, tmax)>0) return 0;
 
+        
     for (int i=0;i<r->N;i++){
         if (fabs(r->particles[i].x - r512->particles[i].x)>1e-11){
             printf("Accuracy not met in basic test.\n");
-            printf("%.16e\n",fabs(r->particles[i].x - r512->particles[i].x));
             return 0;
         }
     }
-
     reb_simulation_free(r);
     reb_simulation_free(r512);
     return 1;
