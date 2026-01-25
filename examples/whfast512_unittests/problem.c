@@ -202,17 +202,31 @@ int test_N_systems(int N_systems, int planets){
     return 1;
 }
 
-int test_com(){
+int test_com(int coordinates){
     struct reb_simulation* r512 = setup_sim(9);
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 0;
-    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r512->ri_whfast512.coordinates = coordinates;
 
     double tmax = 1e5;
     if (reb_simulation_integrate(r512, tmax)>0) return 0;
     struct reb_particle com = reb_simulation_com(r512);
     assert(fabs(com.x)<1e-14);
+    assert(fabs(com.y)<1e-14);
+    assert(fabs(com.z)<1e-14);
+
+    // moving com
+    double v = 0.01;
+    r512->particles[0].vx += v*com.m/r512->particles[0].m;
+    r512->t = 0.0;
+    if (reb_simulation_integrate(r512, tmax)>0) return 0;
+    com = reb_simulation_com(r512);
+    if (fabs((com.x-r512->t*v)/com.x)>1e-10){
+        printf("Moving COM not correct:\n");
+        printf("%.16e vs\n%.16e\n",com.x,r512->t*v);
+        return 0;
+    }
     assert(fabs(com.y)<1e-14);
     assert(fabs(com.z)<1e-14);
 
@@ -363,7 +377,8 @@ int main(int argc, char* argv[]) {
     assert(test_N_systems(4,2));
     assert(test_restart(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
     assert(test_restart(REB_WHFAST512_COORDINATES_JACOBI));
-    assert(test_com());
+    assert(test_com(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    assert(test_com(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_twobody());
     assert(test_gr());
     assert(test_synchronization_fallback());
