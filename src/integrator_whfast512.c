@@ -155,7 +155,6 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
 #endif
 
 // Performs one full center of mass step (H_0)
-// TODO: only perform com step in synchronize
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
 #ifdef PROF
     struct reb_timeval time_beginning;
@@ -1696,6 +1695,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     } 
 
     if (ri_whfast512->is_synchronized){
+        ri_whfast512->time_since_last_synchronize = r->t;
         switch (ri_whfast512->coordinates){
             case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
                 inertial_to_democratic_heliocentric_posvel(r);
@@ -1711,11 +1711,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     if (ri_whfast512->is_synchronized){
         // First half DRIFT step
         reb_whfast512_kepler_step(r, dt/2.);    
-        reb_whfast512_com_step(r, dt/2.);
     }else{
         // Combined DRIFT step
         reb_whfast512_kepler_step(r, dt);    // full timestep
-        reb_whfast512_com_step(r, dt);
     }
 
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
@@ -1786,7 +1784,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             }
         }
         reb_whfast512_kepler_step(r, r->dt/2.);    
-        reb_whfast512_com_step(r, r->dt/2.);
+        reb_whfast512_com_step(r, r->t-ri_whfast512->time_since_last_synchronize);
         switch (ri_whfast512->coordinates){
             case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
                 democraticheliocentric_to_inertial_posvel(r);
@@ -1806,6 +1804,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             free(sync_pj);
         }else{
             ri_whfast512->is_synchronized = 1;
+            ri_whfast512->time_since_last_synchronize = r->t;
         }
     }
 #else 
@@ -1845,7 +1844,7 @@ void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const 
                 ri_whfast512->p512->vz[s*p_per_system+i-1] = p.vz;
             }
         }
-        reb_whfast512_com_step(r, dt/2.0); // does not use AVX512
+        reb_whfast512_com_step(r, r->t-ri_whfast512->time_since_last_synchronize); // does not use AVX512
         democraticheliocentric_to_inertial_posvel(r);
         ri_whfast512->is_synchronized = 1;
     }
