@@ -427,7 +427,6 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
             p512->x, p512->y, p512->z,
             &p512->hx, &p512->hy, &p512->hz);
-
     __m512d x_j =  p512->hx;
     __m512d y_j =  p512->hy;
     __m512d z_j =  p512->hz;
@@ -473,7 +472,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         // TODO: Should put a mask on particle 1 as +/- cancels.
         // Need to add stellar term. Easy: already in heliocentric coordinates.
         __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
-        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using _M0 which is m0, m0, m0, ...
+        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
         p512->hvx = _mm512_mul_pd(prefact1, x_j); 
         p512->hvy = _mm512_mul_pd(prefact1, y_j); 
