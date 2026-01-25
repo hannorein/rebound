@@ -123,7 +123,7 @@ int test_basic(int coordinates){
     return 1;
 }
 
-int test_number_of_planets(){
+int test_number_of_planets(int coordinates){
     // Different numbers of planets
     for (int gr=0; gr<=1; gr++){
         for (int p=2; p<=9; p++){
@@ -132,12 +132,12 @@ int test_number_of_planets(){
              
             r512->integrator = REB_INTEGRATOR_WHFAST512;
             r512->ri_whfast512.gr_potential = gr;
-            r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+            r512->ri_whfast512.coordinates = coordinates;
             if (gr) {
                 r->additional_forces = gr_force;
             }
             r->integrator = REB_INTEGRATOR_WHFAST;
-            r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+            r->ri_whfast.coordinates = coordinates;
             r->ri_whfast.safe_mode = 0;
 
             double tmax = 1e2;
@@ -146,6 +146,10 @@ int test_number_of_planets(){
 
             for (int i=0;i<r->N;i++){
                 double prec = gr?1e-9:1e-11;
+                if (!isnormal(r512->particles[i].x)){
+                    printf("nan/inf encountered in number_of_planets test with %d particles (gr = %d).\n", p, gr);
+                    return 0;
+                }
                 if (fabs(r->particles[i].x - r512->particles[i].x)>prec){
                     printf("Accuracy not met in number_of_planets test with %d particles (gr = %d).\n", p, gr);
                     printf("%.16e\n",fabs(r->particles[i].x - r512->particles[i].x));
@@ -349,7 +353,8 @@ int test_synchronization_fallback(){
 int main(int argc, char* argv[]) {
     assert(test_basic(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
     assert(test_basic(REB_WHFAST512_COORDINATES_JACOBI));
-    assert(test_number_of_planets());
+    assert(test_number_of_planets(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    assert(test_number_of_planets(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_N_systems(2,1));
     assert(test_N_systems(2,2));
     assert(test_N_systems(2,3));

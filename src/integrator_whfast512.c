@@ -39,6 +39,31 @@
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 
+// Debug function to print vectors
+void static inline printavx512(__m512d a) {
+    double _nax[8];
+    _mm512_storeu_pd(&_nax[0], a);
+    printf("avx\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
+}
+
+// Debug function to print 8x8 matrix
+void static inline printmat8(double* a) {
+    for (int i=0; i<8;i++){
+        for (int j=0; j<8;j++){
+            printf("%.16f ", a[i*8+j]);
+        }
+        printf("\n");
+    }
+}
+
+void static inline printmask8(__mmask8 mask) {
+    for (int i = 7; i >= 0; i--) {
+        printf("%d", (mask >> i) & 1);
+        if (i == 4) printf(" "); 
+    }
+    printf("\n");
+}
+
 #ifdef PROF
 // Profiling counters
 double walltime_interaction=0;;
@@ -200,18 +225,46 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
         }
     }
 }
+                
+// Speed is not a concern here 
+static void jacobi_to_inertial_posvel(struct reb_simulation* r){
+    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle* particles = r->particles;
+    load_from_m512d(particles, offsetof(struct reb_particle, x), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->x);
+    load_from_m512d(particles, offsetof(struct reb_particle, y), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->y);
+    load_from_m512d(particles, offsetof(struct reb_particle, z), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->z);
+    load_from_m512d(particles, offsetof(struct reb_particle, vx), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->vx);
+    load_from_m512d(particles, offsetof(struct reb_particle, vy), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->vy);
+    load_from_m512d(particles, offsetof(struct reb_particle, vz), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->vz);
+    particles[0].x  = 0.0;
+    particles[0].y  = 0.0;
+    particles[0].z  = 0.0;
+    particles[0].vx = 0.0;
+    particles[0].vy = 0.0;
+    particles[0].vz = 0.0;
+    for (int i=1;i<r->N;i++){
+        particles[0].x  -= particles[i].m/particles[0].m*particles[i].x;
+        particles[0].y  -= particles[i].m/particles[0].m*particles[i].y;
+        particles[0].z  -= particles[i].m/particles[0].m*particles[i].z;
+        particles[0].vx -= particles[i].m/particles[0].m*particles[i].vx;
+        particles[0].vy -= particles[i].m/particles[0].m*particles[i].vy;
+        particles[0].vz -= particles[i].m/particles[0].m*particles[i].vz;
+    }
+    for (int i=0;i<r->N;i++){
+        particles[i].x  += ri_whfast512->p_jh0[0].x;
+        particles[i].y  += ri_whfast512->p_jh0[0].y;
+        particles[i].z  += ri_whfast512->p_jh0[0].z;
+        particles[i].vx += ri_whfast512->p_jh0[0].vx;
+        particles[i].vy += ri_whfast512->p_jh0[0].vy;
+        particles[i].vz += ri_whfast512->p_jh0[0].vz;
+    }
+}
 
 #ifdef AVX512
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
-// Debug function to print vectors
-void static inline printavx512(__m512d a) {
-    double _nax[8];
-    _mm512_store_pd(&_nax[0], a);
-    printf("avx\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
-}
 
 // Stiefel function for Newton's method, returning Gs1, Gs2, and Gs3
 static void inline mm_stiefel_Gs13_avx512(__m512d * Gs1, __m512d * Gs2, __m512d * Gs3, __m512d beta, __m512d X){
@@ -368,19 +421,20 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     __m512d ngd = _mm512_mul_pd(p512->M, Gs2); // negative gd
     ngd = _mm512_mul_pd(ngd, ri);
 
-    __m512d nx = _mm512_fnmadd_pd(nf, p512->x, p512->x);
-    nx = _mm512_fmadd_pd(g, p512->vx, nx);
-    __m512d ny = _mm512_fnmadd_pd(nf, p512->y, p512->y);
-    ny = _mm512_fmadd_pd(g, p512->vy, ny);
-    __m512d nz = _mm512_fnmadd_pd(nf, p512->z, p512->z);
-    nz = _mm512_fmadd_pd(g, p512->vz, nz);
+    __m512d nx = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->x, p512->x);
+    nx = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vx, nx);
+    __m512d ny = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->y, p512->y);
+    ny = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vy, ny);
+    __m512d nz = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->z, p512->z);
+    nz = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vz, nz);
 
-    p512->vx = _mm512_fnmadd_pd(ngd, p512->vx, p512->vx);
-    p512->vx = _mm512_fnmadd_pd(nfd, p512->x, p512->vx);
-    p512->vy = _mm512_fnmadd_pd(ngd, p512->vy, p512->vy);
-    p512->vy = _mm512_fnmadd_pd(nfd, p512->y, p512->vy);
-    p512->vz = _mm512_fnmadd_pd(ngd, p512->vz, p512->vz);
-    p512->vz = _mm512_fnmadd_pd(nfd, p512->z, p512->vz);
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vx, p512->vx);
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->x, p512->vx);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vy, p512->vy);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->y, p512->vy);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vz, p512->vz);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->z, p512->vz);
+    
 
     p512->x = nx;
     p512->y = ny;
@@ -447,16 +501,16 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         p512->hvz  = dvz;
 
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvz); 
+        dvx = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvx); 
+        dvy = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvy); 
+        dvz = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvz); 
 
         double sum_x = _mm512_reduce_add_pd(dvx);
         double sum_y = _mm512_reduce_add_pd(dvy);
         double sum_z = _mm512_reduce_add_pd(dvz);
-        p512->hvx = _mm512_sub_pd(p512->hvx, _mm512_set1_pd(sum_x));
-        p512->hvy = _mm512_sub_pd(p512->hvy, _mm512_set1_pd(sum_y));
-        p512->hvz = _mm512_sub_pd(p512->hvz, _mm512_set1_pd(sum_z));
+        p512->hvx = _mm512_maskz_sub_pd(p512->mask, p512->hvx, _mm512_set1_pd(sum_x));
+        p512->hvy = _mm512_maskz_sub_pd(p512->mask, p512->hvy, _mm512_set1_pd(sum_y));
+        p512->hvz = _mm512_maskz_sub_pd(p512->mask, p512->hvz, _mm512_set1_pd(sum_z));
     
         // Jacobi additions:
         // Need to add stellar term. Easy: already in heliocentric coordinates.
@@ -464,9 +518,9 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         const __m512d r1 = _mm512_sqrt_pd(r2);
         const __m512d r3 = _mm512_mul_pd(r1, r2);
         __m512d prefact = _mm512_div_pd(_mm512_set1_pd(r->dt*r->particles[0].m),r3); // Note: using m0, m0, m0, ... for mass here
-        p512->hvx = _mm512_fnmadd_pd(prefact, x_j, p512->hvx); 
-        p512->hvy = _mm512_fnmadd_pd(prefact, y_j, p512->hvy); 
-        p512->hvz = _mm512_fnmadd_pd(prefact, z_j, p512->hvz); 
+        p512->hvx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, x_j, p512->hvx); 
+        p512->hvy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, y_j, p512->hvy); 
+        p512->hvz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, z_j, p512->hvz); 
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
@@ -474,11 +528,10 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
         __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
-        p512->hvx = _mm512_mul_pd(prefact1, x_j); 
-        p512->hvy = _mm512_mul_pd(prefact1, y_j); 
-        p512->hvz = _mm512_mul_pd(prefact1, z_j); 
+        p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, x_j); 
+        p512->hvy = _mm512_maskz_mul_pd(p512->mask, prefact1, y_j); 
+        p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, z_j); 
     }
-
 
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
     __m512d m_j_01234567 = m_j;
@@ -612,9 +665,9 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
         dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
         dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
 
-        p512->hvx = _mm512_add_pd(dvx, p512->hvx); 
-        p512->hvy = _mm512_add_pd(dvy, p512->hvy); 
-        p512->hvz = _mm512_add_pd(dvz, p512->hvz); 
+        p512->hvx = _mm512_maskz_add_pd(p512->mask, dvx, p512->hvx); 
+        p512->hvy = _mm512_maskz_add_pd(p512->mask, dvy, p512->hvy); 
+        p512->hvz = _mm512_maskz_add_pd(p512->mask, dvz, p512->hvz); 
     }
     
     // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
@@ -628,9 +681,9 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
     __m512d prefact2 = gravity_prefactor_avx512_one(ri_whfast512->p512->x, ri_whfast512->p512->y, ri_whfast512->p512->z);
     __m512d prefact3 = _mm512_mul_pd(prefact2, ri_whfast512->p512->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
     prefact3 = _mm512_mul_pd(prefact3, dt512);
-    ri_whfast512->p512->vx = _mm512_fmadd_pd(prefact3, ri_whfast512->p512->x, ri_whfast512->p512->vx); 
-    ri_whfast512->p512->vy = _mm512_fmadd_pd(prefact3, ri_whfast512->p512->y, ri_whfast512->p512->vy); 
-    ri_whfast512->p512->vz = _mm512_fmadd_pd(prefact3, ri_whfast512->p512->z, ri_whfast512->p512->vz); 
+    ri_whfast512->p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact3, ri_whfast512->p512->x, ri_whfast512->p512->vx); 
+    ri_whfast512->p512->vy = _mm512_maskz_fmadd_pd(p512->mask, prefact3, ri_whfast512->p512->y, ri_whfast512->p512->vy); 
+    ri_whfast512->p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact3, ri_whfast512->p512->z, ri_whfast512->p512->vz); 
 
 #ifdef PROF
     struct reb_timeval time_end;
@@ -1097,8 +1150,8 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
         ri_whfast512->mat8_jacobi_to_heliocentric = aligned_alloc(64, sizeof(double)*64);
     }
     double mat8_inertial_to_heliocentric[64];
-    for (unsigned int i=1; i<r->N; i++){
-        for (unsigned int j=1; j<r->N; j++){
+    for (unsigned int i=1; i<9; i++){
+        for (unsigned int j=1; j<9; j++){
             ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
             ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
             ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
@@ -1119,13 +1172,15 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
         ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(i-1)] += 1.0;
         ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(i-1)] += ms/(ms + particles[i].m);
         ms += particles[i].m;
-        if (i<8){ 
+        if (i<r->N-1){ 
             for (unsigned int ii=i; ii>0; ii--){
                 int jj = i+1;
                 ri_whfast512->mat8_jacobi_to_inertial[(ii-1)+8*(jj-1)] -= particles[jj].m/(ms+particles[jj].m);
             }
         }
     }
+
+
     // Might be numerically more stable to calculate this manually rather than do a matrix multiplication.
     for (unsigned int i=1; i<r->N; i++){
         for (unsigned int j=1; j<r->N; j++){
@@ -1209,6 +1264,7 @@ void static recalculate_constants(struct reb_simulation* r){
     double M[8];
     switch (ri_whfast512->coordinates){
         case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            ri_whfast512->p512->mask = 0xFF;
             for (int i=0;i<8;i++){
                 M[i] = r->particles[0].m; // for when N<8
             }
@@ -1219,7 +1275,11 @@ void static recalculate_constants(struct reb_simulation* r){
             }
             break;
         case REB_WHFAST512_COORDINATES_JACOBI:
+            ri_whfast512->p512->mask = (1 << (r->N -1)) - 1;
             for (int i=0;i<8;i++){
+                M[i] = 0.0;
+            }
+            for (int i=0;i<r->N-1;i++){
                 M[i] = 0.0;
                 for (int j=0;j<i+2;j++){
                     M[i] += r->particles[j].m;
@@ -1432,34 +1492,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
                 democraticheliocentric_to_inertial_posvel(r);
                 break;
             case REB_WHFAST512_COORDINATES_JACOBI:
-                load_from_m512d(r->particles, offsetof(struct reb_particle, x), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->x);
-                load_from_m512d(r->particles, offsetof(struct reb_particle, y), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->y);
-                load_from_m512d(r->particles, offsetof(struct reb_particle, z), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->z);
-                load_from_m512d(r->particles, offsetof(struct reb_particle, vx), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->vx);
-                load_from_m512d(r->particles, offsetof(struct reb_particle, vy), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->vy);
-                load_from_m512d(r->particles, offsetof(struct reb_particle, vz), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->vz);
-                r->particles[0].x  = 0.0;
-                r->particles[0].y  = 0.0;
-                r->particles[0].z  = 0.0;
-                r->particles[0].vx = 0.0;
-                r->particles[0].vy = 0.0;
-                r->particles[0].vz = 0.0;
-                for (int i=1;i<r->N;i++){
-                    r->particles[0].x  -= r->particles[i].m/r->particles[0].m*r->particles[i].x;
-                    r->particles[0].y  -= r->particles[i].m/r->particles[0].m*r->particles[i].y;
-                    r->particles[0].z  -= r->particles[i].m/r->particles[0].m*r->particles[i].z;
-                    r->particles[0].vx -= r->particles[i].m/r->particles[0].m*r->particles[i].vx;
-                    r->particles[0].vy -= r->particles[i].m/r->particles[0].m*r->particles[i].vy;
-                    r->particles[0].vz -= r->particles[i].m/r->particles[0].m*r->particles[i].vz;
-                }
-                for (int i=0;i<r->N;i++){
-                    r->particles[i].x  += ri_whfast512->p_jh0[0].x;
-                    r->particles[i].y  += ri_whfast512->p_jh0[0].y;
-                    r->particles[i].z  += ri_whfast512->p_jh0[0].z;
-                    r->particles[i].vx += ri_whfast512->p_jh0[0].vx;
-                    r->particles[i].vy += ri_whfast512->p_jh0[0].vy;
-                    r->particles[i].vz += ri_whfast512->p_jh0[0].vz;
-                }
+                jacobi_to_inertial_posvel(r);
                 break;
             default:
                 reb_simulation_error(r,"Coordinate system not supported.");

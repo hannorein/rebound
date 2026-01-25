@@ -378,6 +378,8 @@ struct reb_particle_avx512{
     __m512d hvx __attribute__ ((aligned (64)));
     __m512d hvy __attribute__ ((aligned (64)));
     __m512d hvz __attribute__ ((aligned (64)));
+    // Mask for cases with less than 8 planets
+    __mmask8 mask __attribute__ ((aligned (64)));
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];
