@@ -234,12 +234,12 @@ int test_com(int coordinates){
     return 1;
 }
 
-int test_twobody(){
+int test_twobody(int coordinates){
     struct reb_simulation* r512 = reb_simulation_create();
     r512->exact_finish_time = 0;
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 0;
-    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r512->ri_whfast512.coordinates = coordinates;
     reb_simulation_add_fmt(r512, "m", 1.0);
     reb_simulation_add_fmt(r512, "a", 1.0);
 
@@ -254,15 +254,15 @@ int test_twobody(){
     return 1;
 }
 
-int test_gr(){
+int test_gr(int coordinates){
     struct reb_simulation* r = setup_sim(9);
     struct reb_simulation* r512 = reb_simulation_copy(r);
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 1;
-    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r512->ri_whfast512.coordinates = coordinates;
     r->integrator = REB_INTEGRATOR_WHFAST;
-    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r->ri_whfast.coordinates = coordinates;
     r->ri_whfast.safe_mode = 0;
     r->additional_forces = gr_force;
 
@@ -329,13 +329,13 @@ int test_restart(int coordinates){
 // Only needed for unit testing
 void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r);
 
-int test_synchronization_fallback(){
+int test_synchronization_fallback(int coordinates){
     remove("test.bin");
     struct reb_simulation* r512 = setup_sim(9);
      
     r512->integrator = REB_INTEGRATOR_WHFAST512;
     r512->ri_whfast512.gr_potential = 1;
-    r512->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    r512->ri_whfast512.coordinates = coordinates;
     reb_simulation_save_to_file_interval(r512, "test.bin", 1.0);
     if (reb_simulation_integrate(r512, 2.5)>0) return 0;
     reb_simulation_free(r512);
@@ -379,8 +379,11 @@ int main(int argc, char* argv[]) {
     assert(test_restart(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_com(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
     assert(test_com(REB_WHFAST512_COORDINATES_JACOBI));
-    assert(test_twobody());
-    assert(test_gr());
-    assert(test_synchronization_fallback());
+    assert(test_twobody(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    assert(test_twobody(REB_WHFAST512_COORDINATES_JACOBI));
+    assert(test_gr(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    assert(test_gr(REB_WHFAST512_COORDINATES_JACOBI));
+    assert(test_synchronization_fallback(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
+    // assert(test_synchronization_fallback(REB_WHFAST512_COORDINATES_JACOBI)); // Not working yet
     printf("All tests passed.\n");
 }
