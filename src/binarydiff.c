@@ -140,13 +140,15 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
 
     while(1){
         if (pos1+sizeof(struct reb_binary_field)>size1) break;
-        struct reb_binary_field field1 = *(struct reb_binary_field*)(buf1+pos1);
+        struct reb_binary_field field1;
+        memcpy(&field1, buf1+pos1, sizeof(struct reb_binary_field)); // need copy because of 8 byte alignment requirement
         pos1 += sizeof(struct reb_binary_field);
         if (field1.type==fd_end.type){
             break;
         }
         if (pos2+sizeof(struct reb_binary_field)>size2) pos2 = 64;
-        struct reb_binary_field field2 = *(struct reb_binary_field*)(buf2+pos2);
+        struct reb_binary_field field2;
+        memcpy(&field2, buf2+pos2, sizeof(struct reb_binary_field)); // need copy because of 8 byte alignment requirement
         pos2 += sizeof(struct reb_binary_field);
 
         // Fields might not be in the same order.
@@ -160,7 +162,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                     notfound = 1;
                     break;
                 }
-                field2 = *(struct reb_binary_field*)(buf2+pos2);
+                memcpy(&field2, buf2+pos2, sizeof(struct reb_binary_field)); // need copy because of 8 byte alignment requirement
                 pos2 += sizeof(struct reb_binary_field);
                 if(field2.type==fd_end.type){
                     notfound = 1;
@@ -221,7 +223,11 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
-                    fields_differ |= reb_particle_diff(pb1[i],pb2[i]);
+                    struct reb_particle p1;
+                    struct reb_particle p2;
+                    memcpy(&p1, pb1+i, sizeof(struct reb_particle)); // need copy because of 8 byte alignment requirement
+                    memcpy(&p2, pb2+i, sizeof(struct reb_particle)); // need copy because of 8 byte alignment requirement
+                    fields_differ |= reb_particle_diff(p1,p2);
                 }
             }else{
                 if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
@@ -291,13 +297,15 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
     pos2 = 64;
     while(1){
         if (pos2+sizeof(struct reb_binary_field)>size2) break;
-        struct reb_binary_field field2 = *(struct reb_binary_field*)(buf2+pos2);
+        struct reb_binary_field field2;
+        memcpy(&field2, buf2+pos2, sizeof(struct reb_binary_field)); // need copy because of 8 byte alignment requirement
         pos2 += sizeof(struct reb_binary_field);
         if (field2.type==fd_end.type){
             break;
         }
         if (pos1+sizeof(struct reb_binary_field)>size1) pos1 = 64;
-        struct reb_binary_field field1 = *(struct reb_binary_field*)(buf1+pos1);
+        struct reb_binary_field field1;
+        memcpy(&field1, buf1+pos1, sizeof(struct reb_binary_field)); // need copy because of 8 byte alignment requirement
         pos1 += sizeof(struct reb_binary_field);
 
         if (field1.type==field2.type){
@@ -315,7 +323,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                 notfound = 1;
                 break;
             }
-            field1 = *(struct reb_binary_field*)(buf1+pos1);
+            memcpy(&field1, buf1+pos1, sizeof(struct reb_binary_field)); // need copy because of 8 byte alignment requirement
             pos1 += sizeof(struct reb_binary_field);
             if(field1.type==fd_end.type){
                 notfound = 1;
