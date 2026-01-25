@@ -190,7 +190,7 @@ int test_N_systems(int coordinates, int N_systems, int planets){
             for (int j=0; j<r_single->N; j++){
                 int equal = r_single->particles[j].x == r_many->particles[r_single->N*i+j].x;
                 if (! equal){
-                    printf("Simulation with N_systems>1 not giving same results as simulation with N_systems=1 (gr=%d).\n", gr);
+                    printf("Simulation with N_systems=%d not giving same results as simulation with N_systems=1 (gr=%d, planets=%d).\n", N_systems, gr, planets);
                     printf("%.16e   vs\n%16e\n", r_single->particles[j].x, r_many->particles[r_single->N*i+j].x);
                     return 0;
                 }
@@ -376,10 +376,10 @@ int main(int argc, char* argv[]) {
     assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,2,4));
     assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,4,1));
     assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,4,2));
-    //assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,1));
-    //assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,2));
-    //assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,3));
-    //assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,4));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,1));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,2));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,3));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,2,4));
     assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,4,1));
     assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,4,2));
     assert(test_restart(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
