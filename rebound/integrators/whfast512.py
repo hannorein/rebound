@@ -9,5 +9,11 @@ class IntegratorWHFast512(ctypes.Structure):
                 ("is_synchronized", ctypes.c_uint),
                 ("_N_allocated", ctypes.c_uint),
                 ("recalculate_constants", ctypes.c_uint),
-                ("_p_jh", ctypes.POINTER(Particle)),
-                ("_p_jh0", Particle*4)]
+                ("_dt_cached", ctypes.c_double),
+                ("coordinates", ctypes.c_int),
+                ("_p512", ctypes.POINTER(Particle)),
+                ("_p_jh0", Particle*4),
+                ("mat8_0", ctypes.POINTER(ctypes.c_double)),
+                ("mat8_1", ctypes.POINTER(ctypes.c_double)),
+                ("mat8_2", ctypes.POINTER(ctypes.c_double)),
+                ]
