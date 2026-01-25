@@ -1429,17 +1429,15 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
 
 
 // Performs one complete jump step
-static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
+static void reb_whfast512_jump_step(struct reb_simulation* r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* p512 = ri_whfast512->p512;
-    double m0 = r->particles[0].m;
 
-    __m512d pf512 = _mm512_set1_pd(_dt/m0);
-
+    __m512d pf512 = p512->jump_prefac;
     __m512d sumx = _mm512_mul_pd(p512->m, p512->vx);
     __m512d sumy = _mm512_mul_pd(p512->m, p512->vy);
     __m512d sumz = _mm512_mul_pd(p512->m, p512->vz);
@@ -1584,13 +1582,15 @@ void static recalculate_constants(struct reb_simulation* r){
 
     ri_whfast512->p512->M = _mm512_loadu_pd(&M);
 
-    // GR prefactors. Note: assumes units of AU, year/2pi.
+    // GR and jump prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
     double _gr_prefac[8];
     double _gr_prefac2[8];
+    double _jump_prefac[8];
     for(unsigned int i=0;i<8;i++){
         _gr_prefac[i] = 0; // for when N<8
         _gr_prefac2[i] = 0;
+        _jump_prefac[i] = 0;
     }
     for (int s=0; s<N_systems; s++){
         double m0 = r->particles[s*N_per_system].m;
@@ -1603,13 +1603,20 @@ void static recalculate_constants(struct reb_simulation* r){
                 case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
                     _gr_prefac[s*p_per_system+(p-1)] = r->dt*6.*m0*m0/(c*c);
                     _gr_prefac2[s*p_per_system+(p-1)] = r->particles[s*N_per_system+p].m/m0;
+                    if (ri_whfast512->gr_potential){
+                        // Different prefactor as there are two jumps steps whn gr_potential == 1
+                        _jump_prefac[s*p_per_system+(p-1)] = 0.5*r->dt/r->particles[s*N_per_system+0].m;
+                    }else{
+                        _jump_prefac[s*p_per_system+(p-1)] = r->dt/r->particles[s*N_per_system+0].m;
+                    }
                     break;
             }
-
         }
     }
     ri_whfast512->p512->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
     ri_whfast512->p512->gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
+    ri_whfast512->p512->jump_prefac = _mm512_loadu_pd(&_jump_prefac);
+    
 
     ri_whfast512->dt_cached = r->dt;
     ri_whfast512->recalculate_constants = 0;
@@ -1711,22 +1718,14 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
             default:
                 reb_simulation_error(r,"Coordinate system not supported.");
         }
+        // First half DRIFT step. Note negative sign. We will do a full step below.
+        reb_whfast512_kepler_step(r, -dt/2.);    
     }
-
-    if (ri_whfast512->is_synchronized){
-        // First half DRIFT step
-        reb_whfast512_kepler_step(r, dt/2.);    
-    }else{
-        // Combined DRIFT step
-        reb_whfast512_kepler_step(r, dt);    // full timestep
-    }
+    // Combined DRIFT step
+    reb_whfast512_kepler_step(r, dt);    // full timestep
 
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        if (ri_whfast512->gr_potential){
-            reb_whfast512_jump_step(r, dt/2.);
-        }else{
-            reb_whfast512_jump_step(r, dt);
-        }
+        reb_whfast512_jump_step(r); // Either full or half depending on gr_potential
     }
     
     if (ri_whfast512->N_systems==1){
@@ -1751,7 +1750,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
         if (ri_whfast512->gr_potential){
-            reb_whfast512_jump_step(r, dt/2.);
+            reb_whfast512_jump_step(r);
         }
     }
 

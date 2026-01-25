@@ -247,7 +247,7 @@ int test_twobody(int coordinates){
     double tmax = 10.*M_PI*2.;
     r512->dt = tmax / 128; 
     if (reb_simulation_integrate(r512, tmax)>0) return 0;
-    assert(fabs(r512->particles[1].x-1.0)<2e-15);
+    assert(fabs(r512->particles[1].x-1.0)<4e-15);
     assert(fabs(r512->particles[1].y)<2e-13);
     assert(fabs(r512->particles[1].z)==0.0);
 

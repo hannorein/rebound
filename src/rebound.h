@@ -363,6 +363,7 @@ struct reb_particle_avx512{
     __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
     __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
     __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
+    __m512d jump_prefac __attribute__ ((aligned (64)));         //  Prefactor for DHC jump step
     // Jacobi
     __m512d m __attribute__ ((aligned (64)));
     __m512d x __attribute__ ((aligned (64)));
