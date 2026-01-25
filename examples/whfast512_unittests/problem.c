@@ -191,6 +191,8 @@ int test_N_systems(int N_systems, int planets){
                 }
             }
         }
+        reb_simulation_free(r_single);
+        reb_simulation_free(r_many);
     }
 
     return 1;
