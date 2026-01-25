@@ -1220,6 +1220,7 @@ void static recalculate_constants(struct reb_simulation* r){
             break;
         case REB_WHFAST512_COORDINATES_JACOBI:
             for (int i=0;i<8;i++){
+                M[i] = 0.0;
                 for (int j=0;j<i+2;j++){
                     M[i] += r->particles[j].m;
                 }
