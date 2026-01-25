@@ -361,6 +361,7 @@ struct reb_particle_avx512{
 #ifdef AVX512
     // Various constants
     __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
+    __m512d dt __attribute__ ((aligned (64)));                  //  Timestep
     __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
     __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
     __m512d jump_prefac __attribute__ ((aligned (64)));         //  Prefactor for DHC jump step
@@ -413,6 +414,8 @@ struct reb_integrator_whfast512 {
     double* mat8_inertial_to_jacobi;
     double* mat8_jacobi_to_inertial;
     double* mat8_jacobi_to_heliocentric;
+    void (**dispatch_list)(const struct reb_simulation * const);
+    unsigned int dispatch_list_N;
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)

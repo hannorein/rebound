@@ -335,13 +335,13 @@ static void inline mm_stiefel_Gs03_avx512(__m512d * Gs0, __m512d * Gs1, __m512d 
 };
 
 // Performs one full Kepler step
-static void inline reb_whfast512_kepler_step(const struct reb_simulation* const r, const double dt){
+static void inline reb_whfast512_kepler_step(const struct reb_simulation* const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
     struct reb_particle_avx512 * restrict p512  = r->ri_whfast512.p512;
-    __m512d _dt = _mm512_set1_pd(dt); 
+    __m512d _dt = p512->dt;
 
     __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
     r2 = _mm512_fmadd_pd(p512->y, p512->y, r2);
@@ -1616,7 +1616,7 @@ void static recalculate_constants(struct reb_simulation* r){
     ri_whfast512->p512->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
     ri_whfast512->p512->gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
     ri_whfast512->p512->jump_prefac = _mm512_loadu_pd(&_jump_prefac);
-    
+    ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); 
 
     ri_whfast512->dt_cached = r->dt;
     ri_whfast512->recalculate_constants = 0;
@@ -1706,6 +1706,13 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         recalculate_constants(r);
     }
 
+    if (ri_whfast512->dispatch_list==0){
+        ri_whfast512->dispatch_list = malloc(10*sizeof(void (*)(struct reb_simulation *)));
+        ri_whfast512->dispatch_list_N = 0;
+        ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_kepler_step;
+            
+    }
+
     if (ri_whfast512->is_synchronized){
         ri_whfast512->time_since_last_synchronize = r->t;
         switch (ri_whfast512->coordinates){
@@ -1719,10 +1726,12 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
                 reb_simulation_error(r,"Coordinate system not supported.");
         }
         // First half DRIFT step. Note negative sign. We will do a full step below.
-        reb_whfast512_kepler_step(r, -dt/2.);    
+        ri_whfast512->p512->dt = _mm512_set1_pd(-r->dt/2.0); 
+        reb_whfast512_kepler_step(r);    
+        ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); // Reset
     }
     // Combined DRIFT step
-    reb_whfast512_kepler_step(r, dt);    // full timestep
+    reb_whfast512_kepler_step(r);    // full timestep
 
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
         reb_whfast512_jump_step(r); // Either full or half depending on gr_potential
@@ -1788,7 +1797,9 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
                 sync_pj0[s] = ri_whfast512->p_jh0[s];
             }
         }
-        reb_whfast512_kepler_step(r, r->dt/2.);    
+        ri_whfast512->p512->dt = _mm512_set1_pd(r->dt/2.0); 
+        reb_whfast512_kepler_step(r);    
+        ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); // Reset
         reb_whfast512_com_step(r, r->t-ri_whfast512->time_since_last_synchronize);
         switch (ri_whfast512->coordinates){
             case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
@@ -1862,6 +1873,7 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     if (ri_whfast512->N_allocated){
         free(ri_whfast512->p512);
     }
+    free(ri_whfast512->dispatch_list);
     free(ri_whfast512->mat8_inertial_to_jacobi);
     free(ri_whfast512->mat8_jacobi_to_inertial);
     free(ri_whfast512->mat8_jacobi_to_heliocentric);
