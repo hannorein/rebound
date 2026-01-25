@@ -50,6 +50,7 @@ int main(int argc, char* argv[]){
         r->heartbeat = heartbeat;
         reb_simulation_integrate(r,2.);
         printf("Done.\n");
+        reb_simulation_free(r);
     }
 }
 
