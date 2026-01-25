@@ -729,16 +729,16 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
         p512->vz  = _mm512_sub_pd(p512->vz, dvz);
 
        // // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvz); 
+        dvx = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvx); 
+        dvy = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvy); 
+        dvz = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvz); 
 
         double sum_x = _mm512_reduce_add_pd(dvx);
         double sum_y = _mm512_reduce_add_pd(dvy);
         double sum_z = _mm512_reduce_add_pd(dvz);
-        p512->vx = _mm512_sub_pd(p512->vx, _mm512_set1_pd(sum_x));
-        p512->vy = _mm512_sub_pd(p512->vy, _mm512_set1_pd(sum_y));
-        p512->vz = _mm512_sub_pd(p512->vz, _mm512_set1_pd(sum_z));
+        p512->vx = _mm512_maskz_sub_pd(p512->mask, p512->vx, _mm512_set1_pd(sum_x));
+        p512->vy = _mm512_maskz_sub_pd(p512->mask, p512->vy, _mm512_set1_pd(sum_y));
+        p512->vz = _mm512_maskz_sub_pd(p512->mask, p512->vz, _mm512_set1_pd(sum_z));
     }
 
 
@@ -759,9 +759,9 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
         // 0123 4567
         // 3201 7645
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
-        p512->vx = _mm512_fnmadd_pd(prefact1, dx_j, p512->vx); 
-        p512->vy = _mm512_fnmadd_pd(prefact1, dy_j, p512->vy); 
-        p512->vz = _mm512_fnmadd_pd(prefact1, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dz_j, p512->vz); 
 
 
         dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC); // within 256
@@ -773,9 +773,9 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
         // 0123 4567
         // 2310 6754
         __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
-        p512->vx = _mm512_fmadd_pd(prefact2, dx_j, p512->vx); 
-        p512->vy = _mm512_fmadd_pd(prefact2, dy_j, p512->vy); 
-        p512->vz = _mm512_fmadd_pd(prefact2, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact2, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fmadd_pd(p512->mask, prefact2, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact2, dz_j, p512->vz); 
     }
     {
         x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
@@ -790,9 +790,9 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
         // 0123 4567
         // 1032 5476 
         const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
-        p512->vx = _mm512_fnmadd_pd(prefact, dx_j, p512->vx); 
-        p512->vy = _mm512_fnmadd_pd(prefact, dy_j, p512->vy); 
-        p512->vz = _mm512_fnmadd_pd(prefact, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dz_j, p512->vz); 
     }
 
     // //////////////////////////////////////
@@ -845,9 +845,9 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
         // 0123 4567
         // 5674 2301 
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
-        p512->vx = _mm512_fnmadd_pd(prefact1, dx_j, p512->vx); 
-        p512->vy = _mm512_fnmadd_pd(prefact1, dy_j, p512->vy); 
-        p512->vz = _mm512_fnmadd_pd(prefact1, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dz_j, p512->vz); 
 
 
 
@@ -875,9 +875,9 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
         dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
         dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
 
-        p512->vx = _mm512_add_pd(dvx, p512->vx); 
-        p512->vy = _mm512_add_pd(dvy, p512->vy); 
-        p512->vz = _mm512_add_pd(dvz, p512->vz); 
+        p512->vx = _mm512_maskz_add_pd(p512->mask, dvx, p512->vx); 
+        p512->vy = _mm512_maskz_add_pd(p512->mask, dvy, p512->vy); 
+        p512->vz = _mm512_maskz_add_pd(p512->mask, dvz, p512->vz); 
     }
 
 #ifdef PROF
@@ -911,14 +911,14 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         __m512d dvx = _mm512_mul_pd(prefac, x_j); 
         __m512d dvy = _mm512_mul_pd(prefac, y_j); 
         __m512d dvz = _mm512_mul_pd(prefac, z_j); 
-        p512->vx  = _mm512_sub_pd(p512->vx, dvx);
-        p512->vy  = _mm512_sub_pd(p512->vy, dvy);
-        p512->vz  = _mm512_sub_pd(p512->vz, dvz);
+        p512->vx  = _mm512_maskz_sub_pd(p512->mask, p512->vx, dvx);
+        p512->vy  = _mm512_maskz_sub_pd(p512->mask, p512->vy, dvy);
+        p512->vz  = _mm512_maskz_sub_pd(p512->mask, p512->vz, dvz);
 
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvz); 
+        dvx = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvx); 
+        dvy = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvy); 
+        dvz = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvz); 
 
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
@@ -927,9 +927,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
         dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
 
-        p512->vx  = _mm512_sub_pd(p512->vx, dvx);
-        p512->vy  = _mm512_sub_pd(p512->vy, dvy);
-        p512->vz  = _mm512_sub_pd(p512->vz, dvz);
+        p512->vx  = _mm512_maskz_sub_pd(p512->mask, p512->vx, dvx);
+        p512->vy  = _mm512_maskz_sub_pd(p512->mask, p512->vy, dvy);
+        p512->vz  = _mm512_maskz_sub_pd(p512->mask, p512->vz, dvz);
     }
 
 
@@ -949,9 +949,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         // 0123 4567
         // 3201 7645
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
-        p512->vx = _mm512_fnmadd_pd(prefact1, dx_j, p512->vx); 
-        p512->vy = _mm512_fnmadd_pd(prefact1, dy_j, p512->vy); 
-        p512->vz = _mm512_fnmadd_pd(prefact1, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dz_j, p512->vz); 
 
 
         dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC); // within 256
@@ -963,9 +963,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         // 0123 4567
         // 2310 6754
         __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
-        p512->vx = _mm512_fmadd_pd(prefact2, dx_j, p512->vx); 
-        p512->vy = _mm512_fmadd_pd(prefact2, dy_j, p512->vy); 
-        p512->vz = _mm512_fmadd_pd(prefact2, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact2, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fmadd_pd(p512->mask, prefact2, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact2, dz_j, p512->vz); 
     }
     {
         x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
@@ -980,9 +980,9 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r){
         // 0123 4567
         // 1032 5476 
         const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
-        p512->vx = _mm512_fnmadd_pd(prefact, dx_j, p512->vx); 
-        p512->vy = _mm512_fnmadd_pd(prefact, dy_j, p512->vy); 
-        p512->vz = _mm512_fnmadd_pd(prefact, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dz_j, p512->vz); 
     }
 
 
@@ -1016,22 +1016,22 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r){
         __m512d dvx = _mm512_mul_pd(prefac, x_j); 
         __m512d dvy = _mm512_mul_pd(prefac, y_j); 
         __m512d dvz = _mm512_mul_pd(prefac, z_j); 
-        p512->vx  = _mm512_sub_pd(p512->vx, dvx);
-        p512->vy  = _mm512_sub_pd(p512->vy, dvy);
-        p512->vz  = _mm512_sub_pd(p512->vz, dvz);
+        p512->vx  = _mm512_maskz_sub_pd(p512->mask, p512->vx, dvx);
+        p512->vy  = _mm512_maskz_sub_pd(p512->mask, p512->vy, dvy);
+        p512->vz  = _mm512_maskz_sub_pd(p512->mask, p512->vz, dvz);
 
         // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(ri_whfast512->p512->gr_prefac2, dvz); 
+        dvx = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvx); 
+        dvy = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvy); 
+        dvz = _mm512_maskz_mul_pd(p512->mask, ri_whfast512->p512->gr_prefac2, dvz); 
 
         dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
         dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
         dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
 
-        p512->vx  = _mm512_sub_pd(p512->vx, dvx);
-        p512->vy  = _mm512_sub_pd(p512->vy, dvy);
-        p512->vz  = _mm512_sub_pd(p512->vz, dvz);
+        p512->vx  = _mm512_maskz_sub_pd(p512->mask, p512->vx, dvx);
+        p512->vy  = _mm512_maskz_sub_pd(p512->mask, p512->vy, dvy);
+        p512->vz  = _mm512_maskz_sub_pd(p512->mask, p512->vz, dvz);
     }
 
 
@@ -1047,9 +1047,9 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r){
         __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
 
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
-        p512->vx = _mm512_fnmadd_pd(prefact1, dx_j, p512->vx); 
-        p512->vy = _mm512_fnmadd_pd(prefact1, dy_j, p512->vy); 
-        p512->vz = _mm512_fnmadd_pd(prefact1, dz_j, p512->vz); 
+        p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dx_j, p512->vx); 
+        p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dy_j, p512->vy); 
+        p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dz_j, p512->vz); 
     }
 
 
@@ -1106,13 +1106,12 @@ static void inertial_to_democratic_heliocentric_posvel(struct reb_simulation* r)
             vz0 += particles[s*N_per_system+i].vz * particles[s*N_per_system+i].m;
         }
         for (unsigned int i=0; i<p_per_system; i++){
-            m[s*p_per_system+i] = 0; // dummy
-            x[s*p_per_system+i] = 100.0+i; // dummy
-            y[s*p_per_system+i] = 1.0+i;
-            z[s*p_per_system+i] = 1.0+i;
-            double vcirc = sqrt(r->G*mtot/100.); // aproximate circular velocity to keep particles away from origin.
+            m[s*p_per_system+i] = 0;
+            x[s*p_per_system+i] = 0;
+            y[s*p_per_system+i] = 0;
+            z[s*p_per_system+i] = 0;
             vx[s*p_per_system+i] = 0.0;
-            vy[s*p_per_system+i] = vcirc;
+            vy[s*p_per_system+i] = 0.0;
             vz[s*p_per_system+i] = 0.0;
         }
         ri_whfast512->p_jh0[s].m = mtot;
@@ -1203,9 +1202,9 @@ static void reb_whfast512_jump_step(struct reb_simulation* r, const double _dt){
         sumz = _mm512_add_pd(_mm512_shuffle_pd(sumz, sumz, 0x55), sumz);
     }
 
-    p512->x = _mm512_fmadd_pd(sumx, pf512, p512->x); 
-    p512->y = _mm512_fmadd_pd(sumy, pf512, p512->y); 
-    p512->z = _mm512_fmadd_pd(sumz, pf512, p512->z); 
+    p512->x = _mm512_maskz_fmadd_pd(p512->mask, sumx, pf512, p512->x); 
+    p512->y = _mm512_maskz_fmadd_pd(p512->mask, sumy, pf512, p512->y); 
+    p512->z = _mm512_maskz_fmadd_pd(p512->mask, sumz, pf512, p512->z); 
 
 #ifdef PROF
     struct reb_timeval time_end;
@@ -1225,7 +1224,23 @@ void static recalculate_constants(struct reb_simulation* r){
     double M[8];
     switch (ri_whfast512->coordinates){
         case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            ri_whfast512->p512->mask = 0xFF;
+            switch (N_systems){
+                case 1:
+                    ri_whfast512->p512->mask = (1 << (r->N -1)) - 1;
+                    break;
+                case 2:
+                    if (N_per_system==5) ri_whfast512->p512->mask = 0xFF;
+                    if (N_per_system==4) ri_whfast512->p512->mask = 0x77;
+                    if (N_per_system==3) ri_whfast512->p512->mask = 0x33;
+                    if (N_per_system==2) ri_whfast512->p512->mask = 0x11;
+                    break;
+                case 4:
+                    if (N_per_system==3) ri_whfast512->p512->mask = 0xFF;
+                    if (N_per_system==2) ri_whfast512->p512->mask = 0x55;
+                    break;
+                default:
+                    reb_simulation_error(r,"Invalid N_systems");
+            }
             for (int i=0;i<8;i++){
                 M[i] = r->particles[0].m; // for when N<8
             }
@@ -1443,7 +1458,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
             reb_whfast512_jump_step(r, dt);
         }
     }
-
+    
     if (ri_whfast512->N_systems==1){
         if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
             reb_whfast512_interaction_step_8planets_democraticheliocentric(r);
