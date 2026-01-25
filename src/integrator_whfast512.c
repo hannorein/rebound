@@ -1102,6 +1102,7 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
         for (unsigned int j=1; j<r->N; j++){
             ri_whfast512->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
             ri_whfast512->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
+            ri_whfast512->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
             mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
         }
     }
