@@ -496,13 +496,13 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 
 
 // Performs one full interaction step
-static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
     // Convert position from Jacobi to heliocentric
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
@@ -718,13 +718,13 @@ static void reb_whfast512_interaction_step_8planets_jacobi(struct reb_simulation
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
 }
-static void reb_whfast512_interaction_step_4planets_jacobi(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_4planets_jacobi(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
     // Convert position from Jacobi to heliocentric
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
@@ -861,13 +861,13 @@ static void reb_whfast512_interaction_step_4planets_jacobi(struct reb_simulation
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
 }
-static void reb_whfast512_interaction_step_2planets_jacobi(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_2planets_jacobi(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
     // Convert position from Jacobi to heliocentric
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
@@ -967,13 +967,13 @@ static void reb_whfast512_interaction_step_2planets_jacobi(struct reb_simulation
 #endif
 }
 
-static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
     __m512d x_j =  p512->x;
     __m512d y_j =  p512->y;
@@ -1154,13 +1154,13 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(struc
 }
 
 // Performs one full interaction step
-static void reb_whfast512_interaction_step_4planets_democraticheliocentric(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_4planets_democraticheliocentric(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
     __m512d x_j =  p512->x;
     __m512d y_j =  p512->y;
@@ -1259,13 +1259,13 @@ static void reb_whfast512_interaction_step_4planets_democraticheliocentric(struc
 #endif
 }
 
-static void reb_whfast512_interaction_step_2planets_democraticheliocentric(struct reb_simulation * r){
+static void reb_whfast512_interaction_step_2planets_democraticheliocentric(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* restrict p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* const restrict p512 = ri_whfast512->p512;
 
     __m512d x_j =  p512->x;
     __m512d y_j =  p512->y;
@@ -1429,13 +1429,13 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
 
 
 // Performs one complete jump step
-static void reb_whfast512_jump_step(struct reb_simulation* r){
+static void reb_whfast512_jump_step(const struct reb_simulation* const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
-    struct reb_particle_avx512* p512 = ri_whfast512->p512;
+    const struct reb_integrator_whfast512* ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* const p512 = ri_whfast512->p512;
 
     __m512d pf512 = p512->jump_prefac;
     __m512d sumx = _mm512_mul_pd(p512->m, p512->vx);
@@ -1694,7 +1694,7 @@ void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
 
 // Main integration routine
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
-    struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_integrator_whfast512* restrict const ri_whfast512 = &(r->ri_whfast512);
     const double dt = r->dt;
 
     if (ri_whfast512->N_allocated==0){
@@ -1710,7 +1710,44 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         ri_whfast512->dispatch_list = malloc(10*sizeof(void (*)(struct reb_simulation *)));
         ri_whfast512->dispatch_list_N = 0;
         ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_kepler_step;
+        ri_whfast512->dispatch_list_N++;
             
+        if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
+            ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_jump_step;
+            ri_whfast512->dispatch_list_N++;
+        }
+
+        if (ri_whfast512->N_systems==1){
+            if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_interaction_step_8planets_democraticheliocentric;
+                ri_whfast512->dispatch_list_N++;
+            }else{
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_interaction_step_8planets_jacobi;
+                ri_whfast512->dispatch_list_N++;
+            }
+        }else if (ri_whfast512->N_systems==2){
+            if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_interaction_step_4planets_democraticheliocentric;
+                ri_whfast512->dispatch_list_N++;
+            }else{
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_interaction_step_4planets_jacobi;
+                ri_whfast512->dispatch_list_N++;
+            }
+        }else if (ri_whfast512->N_systems==4){
+            if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_interaction_step_2planets_democraticheliocentric;
+                ri_whfast512->dispatch_list_N++;
+            }else{
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_interaction_step_2planets_jacobi;
+                ri_whfast512->dispatch_list_N++;
+            }
+        }
+        if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
+            if (ri_whfast512->gr_potential){
+                ri_whfast512->dispatch_list[ri_whfast512->dispatch_list_N] = reb_whfast512_jump_step;
+                ri_whfast512->dispatch_list_N++;
+            }
+        }
     }
 
     if (ri_whfast512->is_synchronized){
@@ -1730,37 +1767,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         reb_whfast512_kepler_step(r);    
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); // Reset
     }
-    // Combined DRIFT step
-    reb_whfast512_kepler_step(r);    // full timestep
 
-    if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        reb_whfast512_jump_step(r); // Either full or half depending on gr_potential
-    }
-    
-    if (ri_whfast512->N_systems==1){
-        if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_whfast512_interaction_step_8planets_democraticheliocentric(r);
-        }else{
-            reb_whfast512_interaction_step_8planets_jacobi(r);
-        }
-    }else if (ri_whfast512->N_systems==2){
-        if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_whfast512_interaction_step_4planets_democraticheliocentric(r);
-        }else{
-            reb_whfast512_interaction_step_4planets_jacobi(r);
-        }
-    }else if (ri_whfast512->N_systems==4){
-        if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-            reb_whfast512_interaction_step_2planets_democraticheliocentric(r);
-        }else{
-            reb_whfast512_interaction_step_2planets_jacobi(r);
-        }
-    }
-
-    if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
-        if (ri_whfast512->gr_potential){
-            reb_whfast512_jump_step(r);
-        }
+    for (int i=0; i<ri_whfast512->dispatch_list_N;i++){
+        ri_whfast512->dispatch_list[i](r);
     }
 
     ri_whfast512->is_synchronized = 0;
