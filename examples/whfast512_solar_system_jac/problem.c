@@ -91,7 +91,7 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
     }else{
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.coordinates = coordinates;
-        r->gravity = REB_GRAVITY_JACOBI;
+        //r->gravity = REB_GRAVITY_JACOBI;
         r->ri_whfast.safe_mode = 0;
         r->additional_forces = gr_force;
     }
@@ -114,7 +114,7 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    int Nsteps = 100000;
+    int Nsteps = 1000000;
     reb_simulation_steps(r,Nsteps);
 
     gettimeofday(&time_end,NULL);
