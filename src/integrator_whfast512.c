@@ -39,12 +39,23 @@
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 
+#ifdef AVX512
 // Debug function to print vectors
 void static inline printavx512(__m512d a) {
     double _nax[8];
     _mm512_storeu_pd(&_nax[0], a);
     printf("avx\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
 }
+
+// Print mask in binary format for debuggin
+void static inline printmask8(__mmask8 mask) {
+    for (int i = 7; i >= 0; i--) {
+        printf("%d", (mask >> i) & 1);
+        if (i == 4) printf(" "); 
+    }
+    printf("\n");
+}
+#endif
 
 // Debug function to print 8x8 matrix
 void static inline printmat8(double* a) {
@@ -56,14 +67,6 @@ void static inline printmat8(double* a) {
     }
 }
 
-void static inline printmask8(__mmask8 mask) {
-    for (int i = 7; i >= 0; i--) {
-        printf("%d", (mask >> i) & 1);
-        if (i == 4) printf(" "); 
-    }
-    printf("\n");
-}
-
 #ifdef PROF
 // Profiling counters
 double walltime_interaction=0;;
@@ -72,6 +75,7 @@ double walltime_jump=0;
 double walltime_com=0;
 #endif
 
+#ifdef AVX512
 // 8x8 matrix multiplication using avx512
 static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
     __m512d v_i = _mm512_set1_pd(vector[0]);
@@ -134,6 +138,7 @@ static void load_from_m512d(struct reb_particle* particles, size_t offset, const
         *(double*)((char*)(&particles[i])+offset) = tmp[i-1]; 
     }
 }
+#endif
 
 // Performs one full center of mass step (H_0)
 static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
@@ -228,6 +233,7 @@ static void democraticheliocentric_to_inertial_posvel(struct reb_simulation* r){
                 
 // Speed is not a concern here 
 static void jacobi_to_inertial_posvel(struct reb_simulation* r){
+#ifdef AVX512
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle* particles = r->particles;
     load_from_m512d(particles, offsetof(struct reb_particle, x), ri_whfast512->mat8_jacobi_to_inertial, r->N, ri_whfast512->p512->x);
@@ -258,6 +264,9 @@ static void jacobi_to_inertial_posvel(struct reb_simulation* r){
         particles[i].vy += ri_whfast512->p_jh0[0].vy;
         particles[i].vz += ri_whfast512->p_jh0[0].vz;
     }
+#else  // AVX512
+    reb_simulation_error(r, "Fallback for Jacobi transformations in whfast512 not yet implemented.");
+#endif // AVX512
 }
 
 #ifdef AVX512
