@@ -164,15 +164,15 @@ int test_number_of_planets(int coordinates){
     return 1;
 }
 
-int test_N_systems(int N_systems, int planets){
+int test_N_systems(int coordinates, int N_systems, int planets){
     for (int gr=0; gr<=1; gr++){
         struct reb_simulation* r_single = setup_sim(planets+1);
         r_single->integrator = REB_INTEGRATOR_WHFAST512;
         r_single->ri_whfast512.gr_potential = gr;
-        r_single->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+        r_single->ri_whfast512.coordinates = coordinates;
         struct reb_simulation* r_many = reb_simulation_copy(r_single);
         r_many->ri_whfast512.N_systems = N_systems;
-        r_many->ri_whfast512.coordinates = REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC;
+        r_many->ri_whfast512.coordinates = coordinates;
         for (int i=1; i<N_systems; i++){
             for (int j=0; j<r_single->N; j++){
                 reb_simulation_add(r_many, r_single->particles[j]);
@@ -369,12 +369,14 @@ int main(int argc, char* argv[]) {
     assert(test_basic(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_number_of_planets(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
     assert(test_number_of_planets(REB_WHFAST512_COORDINATES_JACOBI));
-    assert(test_N_systems(2,1));
-    assert(test_N_systems(2,2));
-    assert(test_N_systems(2,3));
-    assert(test_N_systems(2,4));
-    assert(test_N_systems(4,1));
-    assert(test_N_systems(4,2));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,2,1));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,2,2));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,2,3));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,2,4));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,4,1));
+    assert(test_N_systems(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC,4,2));
+//    assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,4,1));
+//    assert(test_N_systems(REB_WHFAST512_COORDINATES_JACOBI,4,2));
     assert(test_restart(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
     assert(test_restart(REB_WHFAST512_COORDINATES_JACOBI));
     assert(test_com(REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC));
