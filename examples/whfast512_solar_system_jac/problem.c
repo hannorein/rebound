@@ -109,12 +109,16 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
 
 
     reb_simulation_move_to_com(r);
-    reb_simulation_steps(r,1);
+    if (use_whfast512){
+        reb_integrator_whfast512_steps(r,1);
+    }else{
+        reb_simulation_steps(r,1);
+    }
 
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    int Nsteps = 1000000;
+    int Nsteps = 10000000;
     if (use_whfast512){
         reb_integrator_whfast512_steps(r,Nsteps);
     }else{
@@ -145,16 +149,16 @@ int main(int argc, char* argv[]) {
     printf("interaction: %.10f\nkepler:      %.10f\nratio: %.10f\n", walltime_interaction, walltime_kepler, walltime_interaction/walltime_kepler);
 #endif // PROF
 
- // //  struct reb_simulation* r0 = run(0,0);
- //   struct reb_simulation* r2 = run(1,1); //DHC
- //   for (int i = 0; i < 9; i++) {
- //       printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
- //   }
- //   printf("------------------------\n");
- //   printf("Speedup (jac) %.4f\n", r0->walltime/r1->walltime);
- //   printf("Speedup (dhc) %.4f\n", r0->walltime/r2->walltime);
- //   reb_simulation_free(r0);
- //   reb_simulation_free(r2);
+    struct reb_simulation* r0 = run(0,0);
+    struct reb_simulation* r2 = run(1,1); //DHC
+    for (int i = 0; i < 9; i++) {
+        printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
+    }
+    printf("------------------------\n");
+    printf("Speedup (jac) %.4f\n", r0->walltime/r1->walltime);
+    printf("Speedup (dhc) %.4f\n", r0->walltime/r2->walltime);
+    reb_simulation_free(r0);
+    reb_simulation_free(r2);
     reb_simulation_free(r1);
     
     return EXIT_SUCCESS;
