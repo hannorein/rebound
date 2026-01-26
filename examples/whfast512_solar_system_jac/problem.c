@@ -80,7 +80,7 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
     
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 5.0/365.25*2*M_PI; // 5 days
+    r->dt = 6.0/365.25*2*M_PI; // 6 days
     r->G = 1.;
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
@@ -109,25 +109,21 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
 
 
     reb_simulation_move_to_com(r);
-    if (use_whfast512){
-        reb_integrator_whfast512_steps(r,1);
-    }else{
-        reb_simulation_steps(r,1);
-    }
+    reb_simulation_steps(r,1);
 
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
     int Nsteps = 10000000;
     if (use_whfast512){
-        reb_integrator_whfast512_steps(r,Nsteps);
-    }else{
-        reb_simulation_steps(r,Nsteps);
+        r->ri_whfast512.concatenate_steps = Nsteps;
+        Nsteps = 1;
     }
+    reb_simulation_steps(r,Nsteps);
 
     gettimeofday(&time_end,NULL);
     double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
-    double tmax = Nsteps * r->dt;
+    double tmax = r->t;
     double gypday = 1e-9*(tmax/M_PI/2.)/walltime*86400;
     r->walltime = walltime;
     printf("walltime= %.2fs  (time required to integrate to 5 Gyr= %.2fdays)\n", walltime, 5./gypday);

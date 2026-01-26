@@ -398,6 +398,7 @@ struct reb_integrator_whfast512 {
     unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
     unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
+    unsigned int concatenate_steps;     // Optimization. If set to a number > 1, one reb_simulation_steps() call will advance for this many steps.
 
     // Internal use
     unsigned int is_synchronized;
@@ -780,8 +781,6 @@ DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const c
 DLLEXPORT void reb_simulation_step(struct reb_simulation* const r);
 // Advance simulation by N_steps timesteps.
 DLLEXPORT void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps);
-// Optimized version for WHFast512
-DLLEXPORT void reb_integrator_whfast512_steps(struct reb_simulation* const r, unsigned int N_steps);
 // Integrate simulation to at least time tmax (see exact_finish_time).
 DLLEXPORT enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax);
 // Synchronize simulation if safe_mode is turned off by integrator to get physical coordinates.
