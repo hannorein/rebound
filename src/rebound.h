@@ -405,7 +405,7 @@ struct reb_integrator_whfast512 {
     unsigned int N_allocated;
     unsigned int recalculate_constants;
     double dt_cached;                   // dt used for precalculating constants.
-    double time_since_last_synchronize; // used for advancing com
+    double time_of_last_synchronize; // used for advancing com
     enum {
         REB_WHFAST512_COORDINATES_JACOBI = 0,                       // Jacobi coordinates (default)
         REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,       // Democratic Heliocentric coordinates
