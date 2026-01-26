@@ -32,5 +32,8 @@ void reb_integrator_whfast_part2(struct reb_simulation* r);		///< Internal funct
 void reb_integrator_whfast_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
 void reb_whfast_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term
 int reb_integrator_whfast_init(struct reb_simulation* r);       ///< Init routine (also used by WHFast512)
+void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int order);   ///< Used by WHFast512
+void reb_integrator_whfast_from_inertial(struct reb_simulation* const r);           ///< Used by WHFast512
+void reb_integrator_whfast_to_inertial(struct reb_simulation* const r);             ///< Used by WHFast512
 
 #endif

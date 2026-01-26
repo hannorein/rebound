@@ -572,6 +572,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_whfast512.keep_unsynchronized = 0;
     r->ri_whfast512.N_systems = 1;
     r->ri_whfast512.concatenate_steps = 1;
+    r->ri_whfast512.corrector = 0;
 
     // ********** SABA
     r->ri_saba.type = REB_SABA_10_6_4;

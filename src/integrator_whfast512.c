@@ -1605,6 +1605,11 @@ void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
         r->status = REB_STATUS_GENERIC_ERROR;
         return;
     }
+    if (ri_whfast512->corrector && ri_whfast512->coordinates != REB_WHFAST512_COORDINATES_JACOBI){
+        reb_simulation_error(r, "Symplectic correctors require Jacobi coordinates.");
+        r->status = REB_STATUS_GENERIC_ERROR;
+        return;
+    }
     if (r->exact_finish_time!=0){
         reb_simulation_error(r, "WHFast512 requires exact_finish_time=0.");
         r->status = REB_STATUS_GENERIC_ERROR;
@@ -1660,6 +1665,60 @@ void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
     r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
 }
 
+// Implementation of the GR force for WHFast correctors.
+// (WHFast512 comes with built-in support) 
+static void gr_force(struct reb_simulation* r){
+    double C2 = 10065.32 * 10065.32;
+    struct reb_particle* particles = r->particles;
+    const struct reb_particle source = particles[0];
+    const double prefac1 = 6.*(r->G*source.m)*(r->G*source.m)/C2;
+    for (int i=1; i<r->N; i++){
+        const struct reb_particle p = particles[i];
+        const double dx = p.x - source.x;
+        const double dy = p.y - source.y;
+        const double dz = p.z - source.z;
+        const double r2 = dx*dx + dy*dy + dz*dz;
+        const double prefac = prefac1/(r2*r2);
+
+        particles[i].ax -= prefac*dx;
+        particles[i].ay -= prefac*dy;
+        particles[i].az -= prefac*dz;
+        particles[0].ax += p.m/source.m*prefac*dx;
+        particles[0].ay += p.m/source.m*prefac*dy;
+        particles[0].az += p.m/source.m*prefac*dz;
+    }
+}
+
+// Creates a new simulation just for doing the correctors.
+// Slow, but convenient. Only called when a simulation is synchronized.
+static void apply_corrector(struct reb_simulation* r, double direction){
+    struct reb_integrator_whfast512* restrict const ri_whfast512 = &(r->ri_whfast512);
+    if (ri_whfast512->corrector){
+        const unsigned int N_systems = ri_whfast512->N_systems;
+        const unsigned int N_per_system = r->N/N_systems;
+        for (int s=0; s<N_systems; s++){
+            struct reb_simulation* rt = reb_simulation_create();
+            rt->dt = r->dt;
+            rt->G = r->G;
+            if (ri_whfast512->gr_potential){
+                rt->additional_forces = gr_force;
+            }
+            for (int i=0;i<N_per_system;i++){
+                reb_simulation_add(rt, r->particles[s*N_per_system+i]);
+            }
+            reb_integrator_whfast_init(rt);
+            reb_integrator_whfast_from_inertial(rt);
+            reb_whfast_apply_corrector(rt, direction, ri_whfast512->corrector);
+            reb_integrator_whfast_to_inertial(rt);
+            for (int i=0;i<N_per_system;i++){
+                r->particles[s*N_per_system+i] = rt->particles[i];
+                r->particles[s*N_per_system+i].sim = r;
+            }
+            reb_simulation_free(rt);
+        }
+    }
+}
+
 // Optimized main loops allowing for concatenate_steps
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     struct reb_integrator_whfast512* restrict const ri_whfast512 = &(r->ri_whfast512);
@@ -1677,6 +1736,8 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 
     if (ri_whfast512->is_synchronized){
         ri_whfast512->time_of_last_synchronize = r->t;
+        // Use WHFast to apply the correctors.
+        apply_corrector(r, 1.0);
         switch (ri_whfast512->coordinates){
             case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
                 inertial_to_democratic_heliocentric_posvel(r);
@@ -1801,7 +1862,8 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             default:
                 reb_simulation_error(r,"Coordinate system not supported.");
         }
-
+        // Use WHFast to applyt the correctors
+        apply_corrector(r, -1.0);
         if (ri_whfast512->keep_unsynchronized){
             memcpy(ri_whfast512->p512, sync_pj, sizeof(struct reb_particle_avx512));
             free(sync_pj);
@@ -1866,6 +1928,7 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     ri_whfast512->p512 = NULL;
     ri_whfast512->N_allocated = 0;
     ri_whfast512->gr_potential = 0;
+    ri_whfast512->corrector = 0;
     ri_whfast512->is_synchronized = 1;
     ri_whfast512->keep_unsynchronized = 0;
     ri_whfast512->concatenate_steps = 1;

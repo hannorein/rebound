@@ -399,6 +399,11 @@ struct reb_integrator_whfast512 {
     unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
     unsigned int concatenate_steps;     // Optimization. If set to a number > 1, one reb_simulation_steps() call will advance for this many steps.
+    unsigned int corrector;             // Turn on symplectic correctors. Same as for WHFast. Only available for Jacobi coordinates.
+    enum {
+        REB_WHFAST512_COORDINATES_JACOBI = 0,                       // Jacobi coordinates (default)
+        REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,       // Democratic Heliocentric coordinates
+    } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
 
     // Internal use
     unsigned int is_synchronized;
@@ -406,10 +411,6 @@ struct reb_integrator_whfast512 {
     unsigned int recalculate_constants;
     double dt_cached;                   // dt used for precalculating constants.
     double time_of_last_synchronize; // used for advancing com
-    enum {
-        REB_WHFAST512_COORDINATES_JACOBI = 0,                       // Jacobi coordinates (default)
-        REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,       // Democratic Heliocentric coordinates
-    } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p512;
     double* mat8_inertial_to_jacobi;
     double* mat8_jacobi_to_inertial;
