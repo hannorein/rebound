@@ -411,7 +411,6 @@ struct reb_integrator_whfast512 {
         REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,       // Democratic Heliocentric coordinates
     } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
     struct reb_particle_avx512* p512;
-    struct reb_particle p_jh0[4];
     double* mat8_inertial_to_jacobi;
     double* mat8_jacobi_to_inertial;
     double* mat8_jacobi_to_heliocentric;
@@ -1356,7 +1355,7 @@ struct reb_binary_field_descriptor {
         REB_OTHER = 12,              // Fields that need special treatment during input and/or output
         REB_FIELD_END = 13,          // Special type to indicate end of blob
         REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
-        REB_PARTICLE4 = 15,          // Used for WHFast512
+        // REB_PARTICLE4 = 15,       // Was used for WHFast512. No longer neeed.
         REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
     } dtype;
     char name[1024];
