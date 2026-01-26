@@ -340,7 +340,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);
 #endif
-    struct reb_particle_avx512 * restrict p512  = r->ri_whfast512.p512;
+    struct reb_particle_avx512 * const restrict p512  = r->ri_whfast512.p512;
     __m512d _dt = p512->dt;
 
     __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
@@ -1692,6 +1692,31 @@ void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
     r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
 }
 
+// Analogue of reb_simulation_steps() but optimized for WHFast512
+void reb_integrator_whfast512_steps(struct reb_simulation* const r, unsigned int N_steps){
+    // Update walltime
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+    
+    for (unsigned int i=0;i<N_steps;i++){
+        reb_integrator_whfast512_part1(r);
+    }
+
+    // Update walltime
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    r->walltime_last_step = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6/N_steps;
+    r->walltime_last_steps_sum += r->walltime_last_step;
+    r->walltime_last_steps_N +=1;
+    if (r->walltime_last_steps_sum > 0.1){
+        r->walltime_last_steps = r->walltime_last_steps_sum/r->walltime_last_steps_N;
+        r->walltime_last_steps_sum =0;
+        r->walltime_last_steps_N = 0;
+    }
+    r->walltime += r->walltime_last_step;
+    // Update step counter
+    r->steps_done += N_steps; // This also counts failed IAS15 steps
+}
 // Main integration routine
 void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
@@ -1855,9 +1880,7 @@ void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const 
 // This needs to be called when the timestep, the number of particles, masses, etc are changed, 
 void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
-    if (ri_whfast512->N_allocated){
-        free(ri_whfast512->p512);
-    }
+    free(ri_whfast512->p512);
     free(ri_whfast512->mat8_inertial_to_jacobi);
     free(ri_whfast512->mat8_jacobi_to_inertial);
     free(ri_whfast512->mat8_jacobi_to_heliocentric);

@@ -47,6 +47,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simulation* const r, struct reb_vec6d gb, struct reb_vec6d gbunmod, int ri, double p1_r, double p1_r_plus_dtv, struct reb_collision* collision_nearest, struct reb_treecell* c, double maxdrift);
 
 void reb_collision_search(struct reb_simulation* const r){
+    if (r->collision == REB_COLLISION_NONE) return; // Fast return
     r->collisions_N = 0;
     int N = r->N - r->N_var;
     int Ninner = N;

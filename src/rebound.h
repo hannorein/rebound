@@ -780,6 +780,8 @@ DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const c
 DLLEXPORT void reb_simulation_step(struct reb_simulation* const r);
 // Advance simulation by N_steps timesteps.
 DLLEXPORT void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps);
+// Optimized version for WHFast512
+DLLEXPORT void reb_integrator_whfast512_steps(struct reb_simulation* const r, unsigned int N_steps);
 // Integrate simulation to at least time tmax (see exact_finish_time).
 DLLEXPORT enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax);
 // Synchronize simulation if safe_mode is turned off by integrator to get physical coordinates.
