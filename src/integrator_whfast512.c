@@ -1778,7 +1778,6 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
 #ifdef AVX512
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     if (ri_whfast512->is_synchronized == 0){
-        const unsigned int N_systems = ri_whfast512->N_systems;
         struct reb_particle_avx512* sync_pj = NULL;
         // Needed if no step has ever been done before (like SA)
         if (ri_whfast512->N_allocated==0){
