@@ -73,6 +73,7 @@ const char* reb_version_str = "4.5.0";         // **VERSIONLINE** This line gets
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
+static void reb_run_heartbeat(struct reb_simulation* const r);
 
 void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
     reb_run_heartbeat(r);
@@ -739,7 +740,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 }
 
 
-void reb_run_heartbeat(struct reb_simulation* const r){
+static void reb_run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->exit_max_distance){
         // Check for escaping particles
