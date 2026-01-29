@@ -97,6 +97,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0},
     { 54, REB_DOUBLE,       "ri_sei.OMEGA",                 offsetof(struct reb_simulation, ri_sei.OMEGA), 0, 0},
     { 55, REB_DOUBLE,       "ri_sei.OMEGAZ",                offsetof(struct reb_simulation, ri_sei.OMEGAZ), 0, 0},
+    { 173, REB_DOUBLE,       "ri_sei.Q_NL",                offsetof(struct reb_simulation, ri_sei.Q_NL), 0, 0},
     { 56, REB_DOUBLE,       "ri_sei.lastdt",                offsetof(struct reb_simulation, ri_sei.lastdt), 0, 0},
     { 57, REB_DOUBLE,       "ri_sei.sindt",                 offsetof(struct reb_simulation, ri_sei.sindt), 0, 0},
     { 58, REB_DOUBLE,       "ri_sei.tandt",                 offsetof(struct reb_simulation, ri_sei.tandt), 0, 0},
@@ -178,6 +179,8 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     // TRACE Pericenter conditions used to have ids 166 - 168. Do not reuse.
     { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
     { 170, REB_INT, "ri_trace.peri_mode", offsetof(struct reb_simulation, ri_trace.peri_mode), 0, 0},
+    { 171, REB_DOUBLE,      "Lx_t", offsetof(struct reb_simulation, Lx_t), 0, 0},
+    { 172, REB_DOUBLE,      "Rx_t", offsetof(struct reb_simulation, Rx_t), 0, 0},
     //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 390, REB_UINT,        "ri_whfast512.keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.keep_unsynchronized), 0, 0},
