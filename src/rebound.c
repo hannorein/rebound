@@ -75,8 +75,10 @@ const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
 
 void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
+    reb_run_heartbeat(r);
     for (unsigned int i=0;i<N_steps;i++){
         reb_simulation_step(r);
+        reb_run_heartbeat(r);
     }
 }
 void reb_simulation_step(struct reb_simulation* const r){
