@@ -258,6 +258,11 @@ struct reb_integrator_sei {
     double tandtz;      // Cached tan(), z axis
 };
 
+// Leapfrog Integrator
+struct reb_integrator_leapfrog {
+    unsigned int order;
+};
+
 // TRACE (Lu Hernandez & Rein 2024)
 struct reb_integrator_trace {
     int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
@@ -648,6 +653,7 @@ struct reb_simulation {
 
     // Datastructures for integrators
     struct reb_integrator_sei ri_sei;               // The SEI struct 
+    struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_saba ri_saba;             // The SABA struct 

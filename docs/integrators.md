@@ -691,7 +691,23 @@ The following code shows how to enable EOS and set the embedded methods.
 ## Leapfrog
 `REB_INTEGRATOR_LEAPFROG`     
 
-This is the standard leap frog integrator. It is second order and symplectic. No configuration is available (the timestep is set in the simulation structure).
+This is the standard leap frog integrator. It is symplectic. By default it is second order with one force evaluation per step. Higher orders of 4, 6, and 8 can be selected as well. These correspond to the 4th order Yoshida integrator and the 8th order by Blanes & Casa (2016), p91. The higher order methods have more function evaluations and are therefore slower. Note that some substeps of the higher order methods move particles backwards. Therefore higher order methods might not give accurate results when a collision search is turned on.
+
+`unsigned int order`
+:   Set the order of the leapfrog integrator:
+    === "C"
+        ```c
+        struct reb_simulation* r = reb_simulation_create();
+        r->integrator = REB_INTEGRATOR_LEAPFROG;
+        r->ri_leapfrog.order = 8; // 2, 4, 6, or 8
+        ```
+
+    === "Python"
+        ```python
+        sim = rebound.Simulation()
+        sim.integrator = "leapfrog"
+        sim.ri_leapfrog.order = 8  # 2, 4, 6, or 8
+        ```
 
 ## Symplectic Epicycle Integrator (SEI)
 `REB_INTEGRATOR_SEI`          

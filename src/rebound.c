@@ -589,6 +589,9 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_sei.OMEGA     = 1;
     r->ri_sei.OMEGAZ    = -1;
     r->ri_sei.lastdt    = 0;
+    
+    // ********** LEAPFROG
+    r->ri_leapfrog.order = 2;
 
     // ********** MERCURIUS
     r->ri_mercurius.mode = 0;
