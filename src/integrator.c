@@ -225,6 +225,7 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
     reb_integrator_eos_reset(r);
     reb_integrator_bs_reset(r);
     reb_integrator_trace_reset(r);
+    reb_integrator_leapfrog_reset(r);
 }
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){

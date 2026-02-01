@@ -1466,6 +1466,7 @@ from .integrators.whfast import IntegratorWHFast
 from .integrators.whfast512 import IntegratorWHFast512
 from .integrators.janus import IntegratorJanus
 from .integrators.sei import IntegratorSEI
+from .integrators.leapfrog import IntegratorLeapfrog
 from .integrators.eos import IntegratorEOS
 from .integrators.ias15 import IntegratorIAS15
 from .integrators.saba import IntegratorSABA
@@ -1576,6 +1577,7 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("ri_sei", IntegratorSEI), 
+                ("ri_leapfrog", IntegratorLeapfrog), 
                 ("ri_whfast", IntegratorWHFast),
                 ("ri_whfast512", IntegratorWHFast512),
                 ("ri_saba", IntegratorSABA),
