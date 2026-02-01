@@ -98,7 +98,7 @@ static double energy(struct reb_simulation* const sim){
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 6.0/365.25*2*M_PI; // 6 days
+    r->dt = 1.0/365.25*2*M_PI; // 6 days
     r->G = 1.;
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
     gettimeofday(&time_beginning,NULL);
     r->ri_whfast512.concatenate_steps = 3e8;
 
-    for (int i=0; i<1000; i++){
+    for (int i=0; i<6*1000; i++){
         reb_simulation_steps(r,1);
 
         gettimeofday(&time_end,NULL);
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
 
         double E1 = energy(r);
         double E = fabs((E1-E0)/E0);
-        FILE* f = fopen("log.txt", "a");
+        FILE* f = fopen("log_1day.txt", "a");
         fprintf(f,"%.16e\t%.16e\t%.16e\t%.4f\n", r->t, E, walltime, 5./gypday);
         fclose(f);
     }
