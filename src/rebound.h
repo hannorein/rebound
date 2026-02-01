@@ -407,6 +407,8 @@ struct reb_integrator_whfast512 {
 
     // Internal use
     unsigned int is_synchronized;
+    unsigned int N_allocated_particles_keep_unsynchronized;  // Used to reset initial particle positions 
+    struct reb_particle* particles_keep_unsynchronized;  // Used to reset initial particle positions 
     unsigned int N_allocated;
     unsigned int recalculate_constants;
     double dt_cached;                   // dt used for precalculating constants.

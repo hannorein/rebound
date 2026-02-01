@@ -1734,6 +1734,14 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         recalculate_constants(r);
     }
 
+    // Reset previously synchronized particle data when keep_unsynchronized is turned on.
+    if (ri_whfast512->keep_unsynchronized && ri_whfast512->particles_keep_unsynchronized){
+        memcpy(r->particles, ri_whfast512->particles_keep_unsynchronized, sizeof(struct reb_particle)*r->N);
+        free(ri_whfast512->particles_keep_unsynchronized);
+        ri_whfast512->particles_keep_unsynchronized = NULL;
+        ri_whfast512->N_allocated_particles_keep_unsynchronized = 0;
+    }
+    // Normal initial synchronize step (not trigger when synchronize was kalled with keep_unsynchronized=1)
     if (ri_whfast512->is_synchronized){
         ri_whfast512->time_of_last_synchronize = r->t;
         // Use WHFast to apply the correctors.
@@ -1846,6 +1854,10 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             recalculate_constants(r);
         }
         if (ri_whfast512->keep_unsynchronized){
+            free(ri_whfast512->particles_keep_unsynchronized);
+            ri_whfast512->particles_keep_unsynchronized = malloc(sizeof(struct reb_particle)*r->N);
+            memcpy(ri_whfast512->particles_keep_unsynchronized, r->particles, sizeof(struct reb_particle)*r->N);
+            ri_whfast512->N_allocated_particles_keep_unsynchronized = r->N;
             sync_pj = aligned_alloc(64,sizeof(struct reb_particle_avx512));
             memcpy(sync_pj,ri_whfast512->p512, sizeof(struct reb_particle_avx512));
         }
@@ -1922,11 +1934,13 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     free(ri_whfast512->mat8_inertial_to_jacobi);
     free(ri_whfast512->mat8_jacobi_to_inertial);
     free(ri_whfast512->mat8_jacobi_to_heliocentric);
+    free(ri_whfast512->particles_keep_unsynchronized);
     ri_whfast512->mat8_inertial_to_jacobi = NULL;
     ri_whfast512->mat8_jacobi_to_inertial = NULL;
     ri_whfast512->mat8_jacobi_to_heliocentric = NULL;
     ri_whfast512->p512 = NULL;
     ri_whfast512->N_allocated = 0;
+    ri_whfast512->N_allocated_particles_keep_unsynchronized = 0;
     ri_whfast512->gr_potential = 0;
     ri_whfast512->corrector = 0;
     ri_whfast512->is_synchronized = 1;
