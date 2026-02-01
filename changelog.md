@@ -4,6 +4,12 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.5.1
+* Added leapfrog integrators of order 4, 6, and 8. Order can be set with `r->ri_leapfrog->order`.
+* Heartbeat function is now also called when using `reb_simulation_steps()`.
+* OrbitPlot supports more colours. 
+* Fixed an alignment issue when comparing binary snapshots which could have triggered a segfault.
+
 ### Version 4.5.0
 * Added support for (Frequency) Modified Fourier Transforms. Heavily based on David Nesvorny's code. The new functions are `reb_frequency_analysis()` in C and `rebound.frequency_analysis()` in python. For usage, see C examples `secular_frequencies` and `frequency_analysis` as well as the iPython notebook `FrequencyAnalysis`. 
 * Support for Jacobi coordinates added when using WHFast with OpenMP.
