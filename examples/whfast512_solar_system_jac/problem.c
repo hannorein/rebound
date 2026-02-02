@@ -11,6 +11,7 @@
 #include <math.h>
 #include <sched.h>
 #include <stdbool.h>
+#include <string.h>
 #include "rebound.h"
 
 // Initial conditions for the Solar System
@@ -75,23 +76,57 @@ void gr_force(struct reb_simulation* r){
     }
 }
 
+static void print_usage(const char* prog) {
+    fprintf(stderr, "Usage: %s [options]\n", prog);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  --whfast512 <0|1>         Use WHFast512 (default: 0)\n");
+    fprintf(stderr, "  --coords <val>            Coordinates (0=Jacobi, 1=DHC) (default: 0)\n");
+    fprintf(stderr, "  --opt-method <val>        Optimization method enum (default: 0)\n");
+    fprintf(stderr, "  --momentum-coeff <val>    Momentum coefficient (default: 2.0)\n");
+    fprintf(stderr, "  --fast-rsqrt <0|1>        Use fast rsqrt gravity (default: 0)\n");
+}
 
-struct reb_simulation* run(int use_whfast512, int coordinates){
-    
+int main(int argc, char* argv[]) {
+    int use_whfast512 = 0;
+    int coordinates = REB_WHFAST512_COORDINATES_JACOBI;
+    int opt_method = REB_WHFAST512_OPT_NONE;
+    double momentum_coeff = 2.0;
+    int use_fast_rsqrt = 0;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--whfast512") == 0 && i+1 < argc) {
+            use_whfast512 = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--coords") == 0 && i+1 < argc) {
+            coordinates = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--opt-method") == 0 && i+1 < argc) {
+            opt_method = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--momentum-coeff") == 0 && i+1 < argc) {
+            momentum_coeff = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fast-rsqrt") == 0 && i+1 < argc) {
+            use_fast_rsqrt = atoi(argv[++i]);
+        } else {
+            fprintf(stderr, "Unknown argument: %s\n", argv[i]);
+            print_usage(argv[0]);
+            return 1;
+        }
+    }
+
     struct reb_simulation* r = reb_simulation_create();
-    // Setup constants
     r->dt = 6.0/365.25*2*M_PI; // 6 days
     r->G = 1.;
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
+    
     if (use_whfast512){ 
         r->integrator = REB_INTEGRATOR_WHFAST512;
         r->ri_whfast512.gr_potential = 1;
         r->ri_whfast512.coordinates = coordinates;
-    }else{
+        r->ri_whfast512.optimization_method = opt_method;
+        r->ri_whfast512.momentum_coeff = momentum_coeff;
+        r->ri_whfast512.use_fast_rsqrt_gravity = use_fast_rsqrt;
+    } else {
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.coordinates = coordinates;
-        //r->gravity = REB_GRAVITY_JACOBI;
         r->ri_whfast.safe_mode = 0;
         r->additional_forces = gr_force;
     }
@@ -106,88 +141,65 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
         reb_simulation_add(r, p);
     }
 
-
-
     reb_simulation_move_to_com(r);
-    reb_simulation_steps(r,1);
+    reb_simulation_steps(r, 1);
 
-    struct timeval time_beginning;
-    struct timeval time_end;
-    gettimeofday(&time_beginning,NULL);
+    struct timeval time_beginning, time_end;
+    gettimeofday(&time_beginning, NULL);
+    
     int Nsteps = 10000000;
     if (use_whfast512){
         r->ri_whfast512.concatenate_steps = Nsteps;
         Nsteps = 1;
     }
-    reb_simulation_steps(r,Nsteps);
+    reb_simulation_steps(r, Nsteps);
 
-    gettimeofday(&time_end,NULL);
-    double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
-    double tmax = r->t;
-    double gypday = 1e-9*(tmax/M_PI/2.)/walltime*86400;
-    r->walltime = walltime;
-    printf("walltime= %.2fs  (time required to integrate to 5 Gyr= %.2fdays)\n", walltime, 5./gypday);
-    reb_simulation_synchronize(r);
-    return r;
-}
-#ifdef PROF
-extern double walltime_interaction;
-extern double walltime_kepler;
-extern double walltime_jump;
-extern double walltime_jac_to_helio;
-extern double walltime_forces;
-extern double walltime_helio_to_jac;
-extern double walltime_jac_correction;
-
-
-extern double walltime_kepler_stiefel;
-extern double walltime_kepler_fg;
-extern double walltime_forces_stellar;
-extern double walltime_forces_pairs;
-extern double walltime_forces_pair1;
-extern double walltime_forces_pair2;
-extern double walltime_forces_pair3;
-extern double walltime_forces_pair4;
-extern double walltime_forces_reduction;
-#endif // PROF
-
-int main(int argc, char* argv[]) {
-    //printf("Integrating for 1 Myr with WHFast512:\n");
-    //double w1= run(1);
-    struct reb_simulation* r1 = run(1,0);
-#ifdef PROF
-    printf("\n=== WHFast512 Jacobi ===\n");
-    printf("Kepler step:           %.4fs  (%.1f%%)\n", walltime_kepler, 100.0*walltime_kepler/r1->walltime);
-    printf("  Stiefel/Newton:      %.4fs  (%.1f%%)\n", walltime_kepler_stiefel, 100.0*walltime_kepler_stiefel/r1->walltime);
-    printf("  f/g functions:       %.4fs  (%.1f%%)\n", walltime_kepler_fg, 100.0*walltime_kepler_fg/r1->walltime);
-    printf("\nInteraction step:      %.4fs  (%.1f%%)\n", walltime_interaction, 100.0*walltime_interaction/r1->walltime);
-    printf("  Jac→Helio:           %.4fs  (%.1f%%)\n", walltime_jac_to_helio, 100.0*walltime_jac_to_helio/r1->walltime);
-    printf("  Stellar/GR term:     %.4fs  (%.1f%%)\n", walltime_forces_stellar, 100.0*walltime_forces_stellar/r1->walltime);
-    printf("  Pairwise forces:     %.4fs  (%.1f%%)\n", walltime_forces_pairs, 100.0*walltime_forces_pairs/r1->walltime);
-    printf("    Loop 1:            %.4fs  (%.1f%%)\n", walltime_forces_pair1, 100.0*walltime_forces_pair1/r1->walltime);
-    printf("    Loop 2:            %.4fs  (%.1f%%)\n", walltime_forces_pair2, 100.0*walltime_forces_pair2/r1->walltime);
-    printf("    Loop 3:            %.4fs  (%.1f%%)\n", walltime_forces_pair3, 100.0*walltime_forces_pair3/r1->walltime);
-    printf("    Loop 4:            %.4fs  (%.1f%%)\n", walltime_forces_pair4, 100.0*walltime_forces_pair4/r1->walltime);
-    printf("    Final reduction:   %.4fs  (%.1f%%)\n", walltime_forces_reduction, 100.0*walltime_forces_reduction/r1->walltime);
-    printf("  Helio→Jac:           %.4fs  (%.1f%%)\n", walltime_helio_to_jac, 100.0*walltime_helio_to_jac/r1->walltime);
-    printf("  Jac correction:      %.4fs  (%.1f%%)\n", walltime_jac_correction, 100.0*walltime_jac_correction/r1->walltime);
-    printf("\nTotal walltime:        %.4fs\n", r1->walltime);
-    double overhead = r1->walltime - walltime_kepler - walltime_interaction;
-    printf("Overhead:              %.4fs  (%.1f%%)\n", overhead, 100.0*overhead/r1->walltime);
-    printf("====================================\n\n");
-#endif // PROF
-
-    struct reb_simulation* r0 = run(0,0);
-    struct reb_simulation* r2 = run(1,1); //DHC
-    for (int i = 0; i < 9; i++) {
-        printf("%d: %22.15e %22.15e %22.15e\n", i, r0->particles[i].x, r1->particles[i].x, (r0->particles[i].x - r1->particles[i].x)/r1->particles[i].x);
-    }
-    printf("------------------------\n");
-    printf("Speedup (jac) %.4f\n", r0->walltime/r1->walltime);
-    printf("Speedup (dhc) %.4f\n", r0->walltime/r2->walltime);
-    reb_simulation_free(r0);
-    reb_simulation_free(r2);
-    reb_simulation_free(r1);
+    gettimeofday(&time_end, NULL);
+    double walltime = time_end.tv_sec - time_beginning.tv_sec + 
+                      (time_end.tv_usec - time_beginning.tv_usec) / 1e6;
     
-    return EXIT_SUCCESS;
+    reb_simulation_synchronize(r);
+
+#ifdef PROF
+    extern double walltime_interaction;
+    extern double walltime_kepler;
+    extern double walltime_jump;
+    extern double walltime_transform;
+    extern double walltime_sync;
+    
+    extern double walltime_kepler_stiefel;    // iterations
+    extern double walltime_kepler_fg;         // f/g function computation
+    extern double walltime_forces_gr;         // GR corrections
+    extern double walltime_forces_pairs;      // Pairwise force loop
+    extern double walltime_forces_stellar;    // Stellar term
+    
+    extern double walltime_forces_pair1;
+    extern double walltime_forces_pair2;
+    extern double walltime_forces_pair3;
+    extern double walltime_forces_pair4;
+    extern double walltime_forces_reduction;
+
+    printf("PROFILING_START\n");
+    printf("Total Walltime: %.6f\n", r->walltime);
+    printf("  Kepler:       %.6f\n", walltime_kepler);
+    printf("    Stiefel:    %.6f\n", walltime_kepler_stiefel);
+    printf("    f/g func:   %.6f\n", walltime_kepler_fg);
+    printf("  Interaction:  %.6f\n", walltime_interaction);
+    printf("    Forces:     %.6f\n", walltime_forces_pairs);
+    printf("      Loop 1:   %.6f\n", walltime_forces_pair1);
+    printf("      Loop 2:   %.6f\n", walltime_forces_pair2);
+    printf("      Loop 3:   %.6f\n", walltime_forces_pair3);
+    printf("      Loop 4:   %.6f\n", walltime_forces_pair4);
+    printf("      Reduce:   %.6f\n", walltime_forces_reduction);
+    printf("    Stellar:    %.6f\n", walltime_forces_stellar);
+    printf("    GR:         %.6f\n", walltime_forces_gr);
+    printf("  Transform:    %.6f\n", walltime_transform);
+    printf("  Jump:         %.6f\n", walltime_jump);
+    printf("  Sync:         %.6f\n", walltime_sync);
+    printf("PROFILING_END\n");
+#endif
+    printf("%.6f,%.16e\n", walltime, r->particles[1].x);
+    
+    reb_simulation_free(r);
+    return 0;
 }

@@ -507,6 +507,437 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 }
 
 
+static __m512d inline gravity_prefactor_avx512_fast( __m512d m, __m512d dx, __m512d dy, __m512d dz) {
+    __m512d r2 = _mm512_mul_pd(dx, dx);
+    r2 = _mm512_fmadd_pd(dy,dy, r2);
+    r2 = _mm512_fmadd_pd(dz,dz, r2);
+    
+    // compute 1/sqrt(r2) using rsqrt14 + newton
+    __m512d rsqrt = _mm512_rsqrt14_pd(r2);
+    
+    // newton for 1/sqrt: y = y * (3 - x*y^2) / 2
+    __m512d y2 = _mm512_mul_pd(rsqrt, rsqrt);
+    __m512d three = _mm512_set1_pd(3.0);
+    __m512d half = _mm512_set1_pd(0.5);
+    rsqrt = _mm512_mul_pd(rsqrt, _mm512_mul_pd(half, _mm512_fnmadd_pd(r2, y2, three)));
+    
+    // second newton iteration
+    y2 = _mm512_mul_pd(rsqrt, rsqrt);
+    rsqrt = _mm512_mul_pd(rsqrt, _mm512_mul_pd(half, _mm512_fnmadd_pd(r2, y2, three)));
+    
+    // compute m/r^3 = m * (1/sqrt(r2))^3 = m * rsqrt * rsqrt * rsqrt
+    __m512d rsqrt2 = _mm512_mul_pd(rsqrt, rsqrt);
+    __m512d rsqrt3 = _mm512_mul_pd(rsqrt2, rsqrt);
+    return _mm512_mul_pd(m, rsqrt3);
+}
+
+static __m512d inline gravity_prefactor_avx512_one_fast( __m512d dx, __m512d dy, __m512d dz) {
+    __m512d r2 = _mm512_mul_pd(dx, dx);
+    r2 = _mm512_fmadd_pd(dy,dy, r2);
+    r2 = _mm512_fmadd_pd(dz,dz, r2);
+    
+    // compute 1/sqrt(r2) using rsqrt14 + newton
+    __m512d rsqrt = _mm512_rsqrt14_pd(r2);
+    __m512d y2 = _mm512_mul_pd(rsqrt, rsqrt);
+    __m512d three = _mm512_set1_pd(3.0);
+    __m512d half = _mm512_set1_pd(0.5);
+    rsqrt = _mm512_mul_pd(rsqrt, _mm512_mul_pd(half, _mm512_fnmadd_pd(r2, y2, three)));
+    y2 = _mm512_mul_pd(rsqrt, rsqrt);
+    rsqrt = _mm512_mul_pd(rsqrt, _mm512_mul_pd(half, _mm512_fnmadd_pd(r2, y2, three)));
+    
+    // 1/r^3 = rsqrt^3
+    __m512d rsqrt2 = _mm512_mul_pd(rsqrt, rsqrt);
+    return _mm512_mul_pd(rsqrt2, rsqrt);
+}
+
+static int use_fast_rsqrt = 0;
+
+static __m512d inline gravity_prefactor_select( __m512d m, __m512d dx, __m512d dy, __m512d dz) {
+    if (use_fast_rsqrt) {
+        return gravity_prefactor_avx512_fast(m, dx, dy, dz);
+    }
+    return gravity_prefactor_avx512(m, dx, dy, dz);
+}
+
+static __m512d inline gravity_prefactor_one_select( __m512d dx, __m512d dy, __m512d dz) {
+    if (use_fast_rsqrt) {
+        return gravity_prefactor_avx512_one_fast(dx, dy, dz);
+    }
+    return gravity_prefactor_one_select(dx, dy, dz);
+}
+
+static void inline reb_whfast512_kepler_step_opt1(const struct reb_simulation* const r){
+#ifdef PROF
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+#endif
+    struct reb_particle_avx512 * const restrict p512  = r->ri_whfast512.p512;
+    __m512d _dt = p512->dt;
+
+    __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
+    r2 = _mm512_fmadd_pd(p512->y, p512->y, r2);
+    r2 = _mm512_fmadd_pd(p512->z, p512->z, r2);
+    __m512d r0 = _mm512_sqrt_pd(r2);
+    
+    // Use fast reciprocal for 1/r0
+    __m512d r0i = _mm512_rcp14_pd(r0);
+    r0i = _mm512_mul_pd(r0i, _mm512_fnmadd_pd(r0, r0i, _mm512_set1_pd(2.0)));
+    r0i = _mm512_mul_pd(r0i, _mm512_fnmadd_pd(r0, r0i, _mm512_set1_pd(2.0)));
+
+    __m512d v2 = _mm512_mul_pd(p512->vx, p512->vx);
+    v2 = _mm512_fmadd_pd(p512->vy, p512->vy, v2);
+    v2 = _mm512_fmadd_pd(p512->vz, p512->vz, v2);
+
+    __m512d beta = _mm512_mul_pd(_mm512_set1_pd(2.0), p512->M);
+    beta = _mm512_fmsub_pd(beta, r0i, v2);
+
+    __m512d eta0 = _mm512_mul_pd(p512->x, p512->vx);
+    eta0 = _mm512_fmadd_pd(p512->y, p512->vy, eta0);
+    eta0 = _mm512_fmadd_pd(p512->z, p512->vz, eta0);
+
+    __m512d zeta0 = _mm512_fnmadd_pd(beta, r0, p512->M);
+
+    __m512d Gs1, Gs2, Gs3;
+    __m512d eta0Gs1zeta0Gs2; 
+    __m512d ri; 
+
+// newton step with fast reciprocal
+#define NEWTON_STEP_FAST_RECIP() \
+    mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);\
+    eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); \
+    eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); \
+    ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); \
+    { \
+        __m512d t = _mm512_rcp14_pd(ri); \
+        t = _mm512_mul_pd(t, _mm512_fnmadd_pd(ri, t, _mm512_set1_pd(2.0))); \
+        ri = _mm512_mul_pd(t, _mm512_fnmadd_pd(ri, t, _mm512_set1_pd(2.0))); \
+    } \
+    X = _mm512_mul_pd(X, eta0Gs1zeta0Gs2);\
+    X = _mm512_fnmadd_pd(eta0, Gs2, X);\
+    X = _mm512_fnmadd_pd(zeta0, Gs3, X);\
+    X = _mm512_add_pd(_dt, X);\
+    X = _mm512_mul_pd(ri, X);
+
+// halley step with fast reciprocal for division
+#define HALLEY_STEP_FAST_RECIP() \
+    mm_stiefel_Gs03_avx512(&Gs0, &Gs1, &Gs2, &Gs3, beta, X);\
+    f = _mm512_fmsub_pd(r0,X,_dt);\
+    f = _mm512_fmadd_pd(eta0, Gs2, f);\
+    f = _mm512_fmadd_pd(zeta0, Gs3, f);\
+    fp = _mm512_fmadd_pd(eta0, Gs1, r0);\
+    fp = _mm512_fmadd_pd(zeta0, Gs2, fp);\
+    fpp = _mm512_mul_pd(eta0, Gs0);\
+    fpp = _mm512_fmadd_pd(zeta0, Gs1, fpp);\
+    denom = _mm512_mul_pd(fp,fp);\
+    denom = _mm512_mul_pd(denom,_mm512_set1_pd(16.0));\
+    denom = _mm512_fnmadd_pd(_mm512_mul_pd(f,fpp),_mm512_set1_pd(20.0), denom);\
+    denom = _mm512_sqrt_pd(denom);\
+    denom = _mm512_add_pd(fp, denom);\
+    { \
+        __m512d t = _mm512_rcp14_pd(denom); \
+        t = _mm512_mul_pd(t, _mm512_fnmadd_pd(denom, t, _mm512_set1_pd(2.0))); \
+        t = _mm512_mul_pd(t, _mm512_fnmadd_pd(denom, t, _mm512_set1_pd(2.0))); \
+        X = _mm512_mul_pd(_mm512_fmsub_pd(X, denom, _mm512_mul_pd(f, _mm512_set1_pd(5.0))), t); \
+    }
+    
+    // Initial guess
+    __m512d dtr0i = _mm512_mul_pd(_dt,r0i);
+    __m512d X = _mm512_mul_pd(dtr0i,eta0);
+    X = _mm512_mul_pd(X,_mm512_set1_pd(0.5));
+    X = _mm512_fnmadd_pd(X,r0i,_mm512_set1_pd(1.0));
+    X = _mm512_mul_pd(dtr0i,X);
+
+    // Iterations
+    __m512d f, fp, fpp, denom, Gs0;
+    HALLEY_STEP_FAST_RECIP();
+    HALLEY_STEP_FAST_RECIP();
+    NEWTON_STEP_FAST_RECIP();
+
+    // Final Newton step
+    mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);
+    eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); 
+    eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); 
+    ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); 
+    {
+        __m512d t = _mm512_rcp14_pd(ri);
+        t = _mm512_mul_pd(t, _mm512_fnmadd_pd(ri, t, _mm512_set1_pd(2.0)));
+        ri = _mm512_mul_pd(t, _mm512_fnmadd_pd(ri, t, _mm512_set1_pd(2.0)));
+    }
+
+    // f and g function
+    __m512d nf = _mm512_mul_pd(p512->M,Gs2);
+    nf = _mm512_mul_pd(nf,r0i); 
+
+    __m512d g = _mm512_fnmadd_pd(p512->M, Gs3, _dt);
+
+    __m512d nfd = _mm512_mul_pd(p512->M, Gs1);
+    nfd = _mm512_mul_pd(nfd, r0i);
+    nfd = _mm512_mul_pd(nfd, ri);
+
+    __m512d ngd = _mm512_mul_pd(p512->M, Gs2);
+    ngd = _mm512_mul_pd(ngd, ri);
+
+    __m512d nx = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->x, p512->x);
+    nx = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vx, nx);
+    __m512d ny = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->y, p512->y);
+    ny = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vy, ny);
+    __m512d nz = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->z, p512->z);
+    nz = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vz, nz);
+
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vx, p512->vx);
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->x, p512->vx);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vy, p512->vy);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->y, p512->vy);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vz, p512->vz);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->z, p512->vz);
+
+    p512->x = nx;
+    p512->y = ny;
+    p512->z = nz;
+
+#ifdef PROF
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
+
+#undef NEWTON_STEP_FAST_RECIP
+#undef HALLEY_STEP_FAST_RECIP
+}
+
+// reuse previous x as initial guess
+static void inline reb_whfast512_kepler_step_opt2(struct reb_simulation* const r){
+#ifdef PROF
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+#endif
+    struct reb_particle_avx512 * const restrict p512  = r->ri_whfast512.p512;
+    struct reb_integrator_whfast512* ri512 = &(r->ri_whfast512);
+    __m512d _dt = p512->dt;
+
+    __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
+    r2 = _mm512_fmadd_pd(p512->y, p512->y, r2);
+    r2 = _mm512_fmadd_pd(p512->z, p512->z, r2);
+    __m512d r0 = _mm512_sqrt_pd(r2);
+    __m512d r0i = _mm512_div_pd(_mm512_set1_pd(1.0),r0);
+
+    __m512d v2 = _mm512_mul_pd(p512->vx, p512->vx);
+    v2 = _mm512_fmadd_pd(p512->vy, p512->vy, v2);
+    v2 = _mm512_fmadd_pd(p512->vz, p512->vz, v2);
+
+    __m512d beta = _mm512_mul_pd(_mm512_set1_pd(2.0), p512->M);
+    beta = _mm512_fmsub_pd(beta, r0i, v2);
+
+    __m512d eta0 = _mm512_mul_pd(p512->x, p512->vx);
+    eta0 = _mm512_fmadd_pd(p512->y, p512->vy, eta0);
+    eta0 = _mm512_fmadd_pd(p512->z, p512->vz, eta0);
+
+    __m512d zeta0 = _mm512_fnmadd_pd(beta, r0, p512->M);
+
+    __m512d Gs1, Gs2, Gs3;
+    __m512d eta0Gs1zeta0Gs2; 
+    __m512d ri; 
+
+    // Reuse previous X as initial guess instead of computing fresh
+    __m512d X = _mm512_loadu_pd(ri512->X_prev);
+    
+    // If X is zero (first call), use standard initial guess
+    __mmask8 is_zero = _mm512_cmp_pd_mask(X, _mm512_setzero_pd(), _CMP_EQ_OQ);
+    if (is_zero == 0xFF) {
+        // First call - use standard initial guess
+        __m512d dtr0i = _mm512_mul_pd(_dt,r0i);
+        X = _mm512_mul_pd(dtr0i,eta0);
+        X = _mm512_mul_pd(X,_mm512_set1_pd(0.5));
+        X = _mm512_fnmadd_pd(X,r0i,_mm512_set1_pd(1.0));
+        X = _mm512_mul_pd(dtr0i,X);
+    }
+
+    // Iterations - one less Halley step since guess is better
+    __m512d f, fp, fpp, denom, Gs0;
+    HALLEY_STEP();
+    NEWTON_STEP();
+    NEWTON_STEP();
+
+    // Final Newton step
+    mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);
+    eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); 
+    eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); 
+    ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); 
+    ri = _mm512_div_pd(_mm512_set1_pd(1.0), ri);
+
+    // Save X for next step
+    _mm512_storeu_pd(ri512->X_prev, X);
+
+    // f and g function
+    __m512d nf = _mm512_mul_pd(p512->M,Gs2);
+    nf = _mm512_mul_pd(nf,r0i); 
+
+    __m512d g = _mm512_fnmadd_pd(p512->M, Gs3, _dt);
+
+    __m512d nfd = _mm512_mul_pd(p512->M, Gs1);
+    nfd = _mm512_mul_pd(nfd, r0i);
+    nfd = _mm512_mul_pd(nfd, ri);
+
+    __m512d ngd = _mm512_mul_pd(p512->M, Gs2);
+    ngd = _mm512_mul_pd(ngd, ri);
+
+    __m512d nx = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->x, p512->x);
+    nx = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vx, nx);
+    __m512d ny = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->y, p512->y);
+    ny = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vy, ny);
+    __m512d nz = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->z, p512->z);
+    nz = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vz, nz);
+
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vx, p512->vx);
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->x, p512->vx);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vy, p512->vy);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->y, p512->vy);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vz, p512->vz);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->z, p512->vz);
+
+    p512->x = nx;
+    p512->y = ny;
+    p512->z = nz;
+
+#ifdef PROF
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
+}
+
+// momentum based initial guess
+static void inline reb_whfast512_kepler_step_opt3(struct reb_simulation* const r){
+#ifdef PROF
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+#endif
+    struct reb_particle_avx512 * const restrict p512  = r->ri_whfast512.p512;
+    struct reb_integrator_whfast512* ri512 = &(r->ri_whfast512);
+    __m512d _dt = p512->dt;
+
+    __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
+    r2 = _mm512_fmadd_pd(p512->y, p512->y, r2);
+    r2 = _mm512_fmadd_pd(p512->z, p512->z, r2);
+    __m512d r0 = _mm512_sqrt_pd(r2);
+    __m512d r0i = _mm512_div_pd(_mm512_set1_pd(1.0),r0);
+
+    __m512d v2 = _mm512_mul_pd(p512->vx, p512->vx);
+    v2 = _mm512_fmadd_pd(p512->vy, p512->vy, v2);
+    v2 = _mm512_fmadd_pd(p512->vz, p512->vz, v2);
+
+    __m512d beta = _mm512_mul_pd(_mm512_set1_pd(2.0), p512->M);
+    beta = _mm512_fmsub_pd(beta, r0i, v2);
+
+    __m512d eta0 = _mm512_mul_pd(p512->x, p512->vx);
+    eta0 = _mm512_fmadd_pd(p512->y, p512->vy, eta0);
+    eta0 = _mm512_fmadd_pd(p512->z, p512->vz, eta0);
+
+    __m512d zeta0 = _mm512_fnmadd_pd(beta, r0, p512->M);
+
+    __m512d Gs1, Gs2, Gs3;
+    __m512d eta0Gs1zeta0Gs2; 
+    __m512d ri; 
+
+    // Momentum-based initial guess: X = X_prev + (X_prev - X_prev2)
+    __m512d X_prev = _mm512_loadu_pd(ri512->X_prev);
+    __m512d X_prev2 = _mm512_loadu_pd(ri512->X_prev2);
+    
+    // If X_prev is zero (first call), use standard initial guess
+    __mmask8 is_zero = _mm512_cmp_pd_mask(X_prev, _mm512_setzero_pd(), _CMP_EQ_OQ);
+    __m512d X;
+    if (is_zero == 0xFF) {
+        __m512d dtr0i = _mm512_mul_pd(_dt,r0i);
+        X = _mm512_mul_pd(dtr0i,eta0);
+        X = _mm512_mul_pd(X,_mm512_set1_pd(0.5));
+        X = _mm512_fnmadd_pd(X,r0i,_mm512_set1_pd(1.0));
+        X = _mm512_mul_pd(dtr0i,X);
+    } else {
+        // Momentum guess: X = β*X_prev - (β-1)*X_prev2 where β = momentum_coeff
+        // Default β=2 gives: X = 2*X_prev - X_prev2 (linear extrapolation)
+        double beta = ri512->momentum_coeff;
+        if (beta <= 0.0) beta = 2.0;  // Default if not set
+        __m512d beta_v = _mm512_set1_pd(beta);
+        __m512d beta_m1 = _mm512_set1_pd(beta - 1.0);
+        X = _mm512_fmsub_pd(beta_v, X_prev, _mm512_mul_pd(beta_m1, X_prev2));
+    }
+
+    // Iterations - one less iteration since guess is better
+    __m512d f, fp, fpp, denom, Gs0;
+    HALLEY_STEP();
+    NEWTON_STEP();
+    NEWTON_STEP();
+
+    // Final Newton step
+    mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);
+    eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); 
+    eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); 
+    ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); 
+    ri = _mm512_div_pd(_mm512_set1_pd(1.0), ri);
+
+    // Save X for next step (shift history)
+    _mm512_storeu_pd(ri512->X_prev2, X_prev);
+    _mm512_storeu_pd(ri512->X_prev, X);
+
+    // f and g function
+    __m512d nf = _mm512_mul_pd(p512->M,Gs2);
+    nf = _mm512_mul_pd(nf,r0i); 
+
+    __m512d g = _mm512_fnmadd_pd(p512->M, Gs3, _dt);
+
+    __m512d nfd = _mm512_mul_pd(p512->M, Gs1);
+    nfd = _mm512_mul_pd(nfd, r0i);
+    nfd = _mm512_mul_pd(nfd, ri);
+
+    __m512d ngd = _mm512_mul_pd(p512->M, Gs2);
+    ngd = _mm512_mul_pd(ngd, ri);
+
+    __m512d nx = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->x, p512->x);
+    nx = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vx, nx);
+    __m512d ny = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->y, p512->y);
+    ny = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vy, ny);
+    __m512d nz = _mm512_maskz_fnmadd_pd(p512->mask, nf, p512->z, p512->z);
+    nz = _mm512_maskz_fmadd_pd(p512->mask, g, p512->vz, nz);
+
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vx, p512->vx);
+    p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->x, p512->vx);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vy, p512->vy);
+    p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->y, p512->vy);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, ngd, p512->vz, p512->vz);
+    p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, nfd, p512->z, p512->vz);
+
+    p512->x = nx;
+    p512->y = ny;
+    p512->z = nz;
+
+#ifdef PROF
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
+}
+
+// kepler step selector - dispatches to appropriate method based on optimization_method
+static void inline reb_whfast512_kepler_step_select(struct reb_simulation* const r){
+    switch(r->ri_whfast512.optimization_method){
+        case REB_WHFAST512_OPT_RECIP_APPROX:
+            reb_whfast512_kepler_step_opt1(r);
+            break;
+        case REB_WHFAST512_OPT_REUSE_GUESS:
+            reb_whfast512_kepler_step_opt2(r);
+            break;
+        case REB_WHFAST512_OPT_MOMENTUM_GUESS:
+        case REB_WHFAST512_OPT_COMBINED:
+            reb_whfast512_kepler_step_opt3(r);
+            break;
+        case REB_WHFAST512_OPT_NONE:
+        case REB_WHFAST512_OPT_FAST_RSQRT:  // fast rsqrt only affects gravity, not kepler
+        default:
+            reb_whfast512_kepler_step(r);
+            break;
+    }
+}
+
 
 // Performs one full interaction step
 static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation * const r){
@@ -578,7 +1009,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
         // Need to add stellar term. Easy: already in heliocentric coordinates.
-        __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
+        __m512d prefact = gravity_prefactor_one_select(x_j, y_j, z_j);
         __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
         p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, x_j); 
@@ -607,7 +1038,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 3201 7645
@@ -651,7 +1082,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
 
         // 0123 4567
         // 1032 5476 
-        const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
+        const __m512d prefact = gravity_prefactor_select(m_j, dx_j, dy_j, dz_j);
         p512->hvx = _mm512_fnmadd_pd(prefact, dx_j, p512->hvx); 
         p512->hvy = _mm512_fnmadd_pd(prefact, dy_j, p512->hvy); 
         p512->hvz = _mm512_fnmadd_pd(prefact, dz_j, p512->hvz); 
@@ -683,7 +1114,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 4567 1230 
@@ -720,7 +1151,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 5674 2301 
@@ -793,7 +1224,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     p512->vy = _mm512_add_pd(dvy, p512->vy); 
     p512->vz = _mm512_add_pd(dvz, p512->vz); 
     // Add Jacobi term using Jacobi coordinates
-    __m512d prefact2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
+    __m512d prefact2 = gravity_prefactor_one_select(p512->x, p512->y, p512->z);
     __m512d prefact3 = _mm512_mul_pd(prefact2, p512->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
     prefact3 = _mm512_mul_pd(prefact3, dt512);
     p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->x, p512->vx); 
@@ -871,7 +1302,7 @@ static void reb_whfast512_interaction_step_4planets_jacobi(const struct reb_simu
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
         // Need to add stellar term. Easy: already in heliocentric coordinates.
-        __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
+        __m512d prefact = gravity_prefactor_one_select(x_j, y_j, z_j);
         __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
         p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, x_j); 
@@ -892,7 +1323,7 @@ static void reb_whfast512_interaction_step_4planets_jacobi(const struct reb_simu
         __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 3201 7645
@@ -927,7 +1358,7 @@ static void reb_whfast512_interaction_step_4planets_jacobi(const struct reb_simu
 
         // 0123 4567
         // 1032 5476 
-        const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
+        const __m512d prefact = gravity_prefactor_select(m_j, dx_j, dy_j, dz_j);
         p512->hvx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dx_j, p512->hvx); 
         p512->hvy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dy_j, p512->hvy); 
         p512->hvz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dz_j, p512->hvz); 
@@ -941,7 +1372,7 @@ static void reb_whfast512_interaction_step_4planets_jacobi(const struct reb_simu
     p512->vy = _mm512_add_pd(dvy, p512->vy); 
     p512->vz = _mm512_add_pd(dvz, p512->vz); 
     // Add Jacobi term using Jacobi coordinates
-    __m512d prefact2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
+    __m512d prefact2 = gravity_prefactor_one_select(p512->x, p512->y, p512->z);
     __m512d prefact3 = _mm512_mul_pd(prefact2, p512->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
     prefact3 = _mm512_mul_pd(prefact3, dt512);
     p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->x, p512->vx); 
@@ -1011,7 +1442,7 @@ static void reb_whfast512_interaction_step_2planets_jacobi(const struct reb_simu
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
         // Need to add stellar term. Easy: already in heliocentric coordinates.
-        __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
+        __m512d prefact = gravity_prefactor_one_select(x_j, y_j, z_j);
         __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
         p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, x_j); 
@@ -1027,7 +1458,7 @@ static void reb_whfast512_interaction_step_2planets_jacobi(const struct reb_simu
         __m512d dz_j = _mm512_sub_pd(p512->hz, _mm512_shuffle_pd(z_j, z_j, 0x55));
         m_j = _mm512_shuffle_pd(m_j, m_j, 0x55);
 
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
         p512->hvx = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dx_j, p512->hvx); 
@@ -1046,7 +1477,7 @@ static void reb_whfast512_interaction_step_2planets_jacobi(const struct reb_simu
     p512->vy = _mm512_add_pd(dvy, p512->vy); 
     p512->vz = _mm512_add_pd(dvz, p512->vz); 
     // Add Jacobi term using Jacobi coordinates
-    __m512d prefact2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
+    __m512d prefact2 = gravity_prefactor_one_select(p512->x, p512->y, p512->z);
     __m512d prefact3 = _mm512_mul_pd(prefact2, p512->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
     prefact3 = _mm512_mul_pd(prefact3, dt512);
     p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->x, p512->vx); 
@@ -1113,7 +1544,7 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const
         __m512d dx_j = _mm512_sub_pd(p512->x, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->y, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->z, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 3201 7645
@@ -1148,7 +1579,7 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const
 
         // 0123 4567
         // 1032 5476 
-        const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
+        const __m512d prefact = gravity_prefactor_select(m_j, dx_j, dy_j, dz_j);
         p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dx_j, p512->vx); 
         p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dy_j, p512->vy); 
         p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dz_j, p512->vz); 
@@ -1171,7 +1602,7 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const
         __m512d dx_j = _mm512_sub_pd(p512->x, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->y, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->z, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 4567 1230 
@@ -1199,7 +1630,7 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const
         __m512d dx_j = _mm512_sub_pd(p512->x, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->y, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->z, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 5674 2301 
@@ -1303,7 +1734,7 @@ static void reb_whfast512_interaction_step_4planets_democraticheliocentric(const
         __m512d dx_j = _mm512_sub_pd(p512->x, x_j);
         __m512d dy_j = _mm512_sub_pd(p512->y, y_j);
         __m512d dz_j = _mm512_sub_pd(p512->z, z_j);
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         // 0123 4567
         // 3201 7645
@@ -1338,7 +1769,7 @@ static void reb_whfast512_interaction_step_4planets_democraticheliocentric(const
 
         // 0123 4567
         // 1032 5476 
-        const __m512d prefact = gravity_prefactor_avx512(m_j, dx_j, dy_j, dz_j);
+        const __m512d prefact = gravity_prefactor_select(m_j, dx_j, dy_j, dz_j);
         p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dx_j, p512->vx); 
         p512->vy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dy_j, p512->vy); 
         p512->vz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, dz_j, p512->vz); 
@@ -1403,7 +1834,7 @@ static void reb_whfast512_interaction_step_2planets_democraticheliocentric(const
         __m512d dz_j = _mm512_sub_pd(p512->z, _mm512_shuffle_pd(z_j, z_j, 0x55));
         m_j = _mm512_shuffle_pd(m_j, m_j, 0x55);
 
-        __m512d prefact = gravity_prefactor_avx512_one(dx_j, dy_j, dz_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
 
         __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
         p512->vx = _mm512_maskz_fnmadd_pd(p512->mask, prefact1, dx_j, p512->vx); 
@@ -1863,23 +2294,27 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         }
         // First half DRIFT step. Note negative sign. We will do a full step below.
         ri_whfast512->p512->dt = _mm512_set1_pd(-dt/2.0); 
-        reb_whfast512_kepler_step(r);    
+        reb_whfast512_kepler_step_select(r);    
         ri_whfast512->p512->dt = _mm512_set1_pd(dt); // Reset
     }
 
     // Tight inner loops for speed
+    use_fast_rsqrt = (ri_whfast512->optimization_method == REB_WHFAST512_OPT_FAST_RSQRT || 
+                      ri_whfast512->optimization_method == REB_WHFAST512_OPT_COMBINED ||
+                      ri_whfast512->use_fast_rsqrt_gravity) ? 1 : 0;
+    
     if (ri_whfast512->coordinates==REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC){
         if (ri_whfast512->N_systems==1){
             if (ri_whfast512->gr_potential){
                 for (unsigned int i=0;i<N_steps;i++){
-                    reb_whfast512_kepler_step(r);       // full timestep
+                    reb_whfast512_kepler_step_select(r);       // full timestep
                     reb_whfast512_jump_step(r);         // half timestep
                     reb_whfast512_interaction_step_8planets_democraticheliocentric(r);
                     reb_whfast512_jump_step(r);         // half timestep
                 }
             }else{
                 for (unsigned int i=0;i<N_steps;i++){
-                    reb_whfast512_kepler_step(r);       // full timestep
+                    reb_whfast512_kepler_step_select(r);       // full timestep
                     reb_whfast512_jump_step(r);         // full timestep
                     reb_whfast512_interaction_step_8planets_democraticheliocentric(r);
                 }
@@ -1887,14 +2322,14 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         }else if (ri_whfast512->N_systems==2){
             if (ri_whfast512->gr_potential){
                 for (unsigned int i=0;i<N_steps;i++){
-                    reb_whfast512_kepler_step(r);       // full timestep
+                    reb_whfast512_kepler_step_select(r);       // full timestep
                     reb_whfast512_jump_step(r);         // half timstep
                     reb_whfast512_interaction_step_4planets_democraticheliocentric(r);
                     reb_whfast512_jump_step(r);         // half timestep
                 }
             }else{
                 for (unsigned int i=0;i<N_steps;i++){
-                    reb_whfast512_kepler_step(r);       // full timestep
+                    reb_whfast512_kepler_step_select(r);       // full timestep
                     reb_whfast512_jump_step(r);         // full timestep
                     reb_whfast512_interaction_step_4planets_democraticheliocentric(r);
                 }
@@ -1902,14 +2337,14 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
         }else if (ri_whfast512->N_systems==4){
             if (ri_whfast512->gr_potential){
                 for (unsigned int i=0;i<N_steps;i++){
-                    reb_whfast512_kepler_step(r);       // full timestep
+                    reb_whfast512_kepler_step_select(r);       // full timestep
                     reb_whfast512_jump_step(r);         // half timestep
                     reb_whfast512_interaction_step_2planets_democraticheliocentric(r);
                     reb_whfast512_jump_step(r);         // half timestep
                 }
             }else{
                 for (unsigned int i=0;i<N_steps;i++){
-                    reb_whfast512_kepler_step(r);       // full timestep
+                    reb_whfast512_kepler_step_select(r);       // full timestep
                     reb_whfast512_jump_step(r);         // full timestep
                     reb_whfast512_interaction_step_2planets_democraticheliocentric(r);
                 }
@@ -1918,17 +2353,17 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     }else{ //JACOBI
         if (ri_whfast512->N_systems==1){
             for (unsigned int i=0;i<N_steps;i++){
-                reb_whfast512_kepler_step(r);    // full timestep
+                reb_whfast512_kepler_step_select(r);    // full timestep
                 reb_whfast512_interaction_step_8planets_jacobi(r);
             }
         }else if (ri_whfast512->N_systems==2){
             for (unsigned int i=0;i<N_steps;i++){
-                reb_whfast512_kepler_step(r);    // full timestep
+                reb_whfast512_kepler_step_select(r);    // full timestep
                 reb_whfast512_interaction_step_4planets_jacobi(r);
             }
         }else if (ri_whfast512->N_systems==4){
             for (unsigned int i=0;i<N_steps;i++){
-                reb_whfast512_kepler_step(r);    // full timestep
+                reb_whfast512_kepler_step_select(r);    // full timestep
                 reb_whfast512_interaction_step_2planets_jacobi(r);
             }
         }
@@ -1967,7 +2402,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             memcpy(sync_pj,ri_whfast512->p512, sizeof(struct reb_particle_avx512));
         }
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt/2.0); 
-        reb_whfast512_kepler_step(r);    
+        reb_whfast512_kepler_step_select(r);    
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); // Reset
         switch (ri_whfast512->coordinates){
             case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
