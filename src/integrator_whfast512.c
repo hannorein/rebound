@@ -69,9 +69,15 @@ void static inline printmat8(double* a) {
 
 #ifdef PROF
 // Profiling counters
-double walltime_interaction=0;;
+double walltime_interaction=0;
 double walltime_kepler=0;
 double walltime_jump=0;
+double walltime_transform=0;
+double walltime_sync=0;
+double walltime_jac_to_helio=0;
+double walltime_forces=0;
+double walltime_helio_to_jac=0;
+double walltime_jac_correction=0;
 #endif
 
 #ifdef AVX512
@@ -493,13 +499,26 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
     // Convert position from Jacobi to heliocentric
+#ifdef PROF
+    struct reb_timeval time_jac_to_helio_start;
+    gettimeofday(&time_jac_to_helio_start,NULL);
+#endif
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
             p512->x, p512->y, p512->z,
             &p512->hx, &p512->hy, &p512->hz);
+#ifdef PROF
+    struct reb_timeval time_jac_to_helio_end;
+    gettimeofday(&time_jac_to_helio_end,NULL);
+    walltime_jac_to_helio += time_jac_to_helio_end.tv_sec-time_jac_to_helio_start.tv_sec+(time_jac_to_helio_end.tv_usec-time_jac_to_helio_start.tv_usec)/1e6;
+#endif
     __m512d x_j =  p512->hx;
     __m512d y_j =  p512->hy;
     __m512d z_j =  p512->hz;
     __m512d dt512 = _mm512_set1_pd(r->dt); 
+#ifdef PROF
+    struct reb_timeval time_forces_start;
+    gettimeofday(&time_forces_start,NULL);
+#endif
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
@@ -684,11 +703,25 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         p512->hvy = _mm512_maskz_add_pd(p512->mask, dvy, p512->hvy); 
         p512->hvz = _mm512_maskz_add_pd(p512->mask, dvz, p512->hvz); 
     }
+#ifdef PROF
+    struct reb_timeval time_forces_end;
+    gettimeofday(&time_forces_end,NULL);
+    walltime_forces += time_forces_end.tv_sec-time_forces_start.tv_sec+(time_forces_end.tv_usec-time_forces_start.tv_usec)/1e6;
+    struct reb_timeval time_transform2_start;
+    gettimeofday(&time_transform2_start,NULL);
+#endif
     
     // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
     mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
             p512->hvx, p512->hvy, p512->hvz,
             &dvx, &dvy, &dvz);
+#ifdef PROF
+    struct reb_timeval time_helio_to_jac_end;
+    gettimeofday(&time_helio_to_jac_end,NULL);
+    walltime_helio_to_jac += time_helio_to_jac_end.tv_sec-time_transform2_start.tv_sec+(time_helio_to_jac_end.tv_usec-time_transform2_start.tv_usec)/1e6;
+    struct reb_timeval time_jac_corr_start;
+    gettimeofday(&time_jac_corr_start,NULL);
+#endif
     p512->vx = _mm512_add_pd(dvx, p512->vx); 
     p512->vy = _mm512_add_pd(dvy, p512->vy); 
     p512->vz = _mm512_add_pd(dvz, p512->vz); 
@@ -698,7 +731,12 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     prefact3 = _mm512_mul_pd(prefact3, dt512);
     p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->x, p512->vx); 
     p512->vy = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->y, p512->vy); 
-    p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->z, p512->vz); 
+    p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact3, p512->z, p512->vz);
+#ifdef PROF
+    struct reb_timeval time_jac_corr_end;
+    gettimeofday(&time_jac_corr_end,NULL);
+    walltime_jac_correction += time_jac_corr_end.tv_sec-time_jac_corr_start.tv_sec+(time_jac_corr_end.tv_usec-time_jac_corr_start.tv_usec)/1e6;
+#endif 
 
 #ifdef PROF
     struct reb_timeval time_end;

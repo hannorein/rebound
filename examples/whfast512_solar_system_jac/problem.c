@@ -134,7 +134,10 @@ struct reb_simulation* run(int use_whfast512, int coordinates){
 extern double walltime_interaction;
 extern double walltime_kepler;
 extern double walltime_jump;
-extern double walltime_com;
+extern double walltime_jac_to_helio;
+extern double walltime_forces;
+extern double walltime_helio_to_jac;
+extern double walltime_jac_correction;
 #endif // PROF
 
 int main(int argc, char* argv[]) {
@@ -142,7 +145,17 @@ int main(int argc, char* argv[]) {
     //double w1= run(1);
     struct reb_simulation* r1 = run(1,0);
 #ifdef PROF
-    printf("interaction: %.10f\nkepler:      %.10f\nratio: %.10f\n", walltime_interaction, walltime_kepler, walltime_interaction/walltime_kepler);
+    printf("\n=== WHFast512 Jacobi ===\n");
+    printf("Kepler step:         %.4fs  (%.1f%%)\n", walltime_kepler, 100.0*walltime_kepler/r1->walltime);
+    printf("\nInteraction step:    %.4fs  (%.1f%%)\n", walltime_interaction, 100.0*walltime_interaction/r1->walltime);
+    printf("  Jac→Helio:         %.4fs  (%.1f%%)\n", walltime_jac_to_helio, 100.0*walltime_jac_to_helio/r1->walltime);
+    printf("  Force computation: %.4fs  (%.1f%%)\n", walltime_forces, 100.0*walltime_forces/r1->walltime);
+    printf("  Helio→Jac:         %.4fs  (%.1f%%)\n", walltime_helio_to_jac, 100.0*walltime_helio_to_jac/r1->walltime);
+    printf("  Jac correction:    %.4fs  (%.1f%%)\n", walltime_jac_correction, 100.0*walltime_jac_correction/r1->walltime);
+    printf("\nTotal walltime:      %.4fs\n", r1->walltime);
+    double overhead = r1->walltime - walltime_kepler - walltime_interaction;
+    printf("Overhead:            %.4fs  (%.1f%%)\n", overhead, 100.0*overhead/r1->walltime);
+    printf("====================================\n\n");
 #endif // PROF
 
     struct reb_simulation* r0 = run(0,0);
