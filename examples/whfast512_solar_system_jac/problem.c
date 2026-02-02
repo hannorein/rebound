@@ -138,6 +138,17 @@ extern double walltime_jac_to_helio;
 extern double walltime_forces;
 extern double walltime_helio_to_jac;
 extern double walltime_jac_correction;
+
+
+extern double walltime_kepler_stiefel;
+extern double walltime_kepler_fg;
+extern double walltime_forces_stellar;
+extern double walltime_forces_pairs;
+extern double walltime_forces_pair1;
+extern double walltime_forces_pair2;
+extern double walltime_forces_pair3;
+extern double walltime_forces_pair4;
+extern double walltime_forces_reduction;
 #endif // PROF
 
 int main(int argc, char* argv[]) {
@@ -146,15 +157,23 @@ int main(int argc, char* argv[]) {
     struct reb_simulation* r1 = run(1,0);
 #ifdef PROF
     printf("\n=== WHFast512 Jacobi ===\n");
-    printf("Kepler step:         %.4fs  (%.1f%%)\n", walltime_kepler, 100.0*walltime_kepler/r1->walltime);
-    printf("\nInteraction step:    %.4fs  (%.1f%%)\n", walltime_interaction, 100.0*walltime_interaction/r1->walltime);
-    printf("  Jac→Helio:         %.4fs  (%.1f%%)\n", walltime_jac_to_helio, 100.0*walltime_jac_to_helio/r1->walltime);
-    printf("  Force computation: %.4fs  (%.1f%%)\n", walltime_forces, 100.0*walltime_forces/r1->walltime);
-    printf("  Helio→Jac:         %.4fs  (%.1f%%)\n", walltime_helio_to_jac, 100.0*walltime_helio_to_jac/r1->walltime);
-    printf("  Jac correction:    %.4fs  (%.1f%%)\n", walltime_jac_correction, 100.0*walltime_jac_correction/r1->walltime);
-    printf("\nTotal walltime:      %.4fs\n", r1->walltime);
+    printf("Kepler step:           %.4fs  (%.1f%%)\n", walltime_kepler, 100.0*walltime_kepler/r1->walltime);
+    printf("  Stiefel/Newton:      %.4fs  (%.1f%%)\n", walltime_kepler_stiefel, 100.0*walltime_kepler_stiefel/r1->walltime);
+    printf("  f/g functions:       %.4fs  (%.1f%%)\n", walltime_kepler_fg, 100.0*walltime_kepler_fg/r1->walltime);
+    printf("\nInteraction step:      %.4fs  (%.1f%%)\n", walltime_interaction, 100.0*walltime_interaction/r1->walltime);
+    printf("  Jac→Helio:           %.4fs  (%.1f%%)\n", walltime_jac_to_helio, 100.0*walltime_jac_to_helio/r1->walltime);
+    printf("  Stellar/GR term:     %.4fs  (%.1f%%)\n", walltime_forces_stellar, 100.0*walltime_forces_stellar/r1->walltime);
+    printf("  Pairwise forces:     %.4fs  (%.1f%%)\n", walltime_forces_pairs, 100.0*walltime_forces_pairs/r1->walltime);
+    printf("    Loop 1:            %.4fs  (%.1f%%)\n", walltime_forces_pair1, 100.0*walltime_forces_pair1/r1->walltime);
+    printf("    Loop 2:            %.4fs  (%.1f%%)\n", walltime_forces_pair2, 100.0*walltime_forces_pair2/r1->walltime);
+    printf("    Loop 3:            %.4fs  (%.1f%%)\n", walltime_forces_pair3, 100.0*walltime_forces_pair3/r1->walltime);
+    printf("    Loop 4:            %.4fs  (%.1f%%)\n", walltime_forces_pair4, 100.0*walltime_forces_pair4/r1->walltime);
+    printf("    Final reduction:   %.4fs  (%.1f%%)\n", walltime_forces_reduction, 100.0*walltime_forces_reduction/r1->walltime);
+    printf("  Helio→Jac:           %.4fs  (%.1f%%)\n", walltime_helio_to_jac, 100.0*walltime_helio_to_jac/r1->walltime);
+    printf("  Jac correction:      %.4fs  (%.1f%%)\n", walltime_jac_correction, 100.0*walltime_jac_correction/r1->walltime);
+    printf("\nTotal walltime:        %.4fs\n", r1->walltime);
     double overhead = r1->walltime - walltime_kepler - walltime_interaction;
-    printf("Overhead:            %.4fs  (%.1f%%)\n", overhead, 100.0*overhead/r1->walltime);
+    printf("Overhead:              %.4fs  (%.1f%%)\n", overhead, 100.0*overhead/r1->walltime);
     printf("====================================\n\n");
 #endif // PROF
 

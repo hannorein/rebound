@@ -74,10 +74,23 @@ double walltime_kepler=0;
 double walltime_jump=0;
 double walltime_transform=0;
 double walltime_sync=0;
+
 double walltime_jac_to_helio=0;
 double walltime_forces=0;
 double walltime_helio_to_jac=0;
 double walltime_jac_correction=0;
+
+double walltime_kepler_stiefel=0;    // Stiefel/Halley/Newton iterations
+double walltime_kepler_fg=0;         // f/g function computation
+double walltime_forces_gr=0;         // GR corrections
+double walltime_forces_pairs=0;      // Pairwise force loop
+double walltime_forces_stellar=0;    // Stellar term
+
+double walltime_forces_pair1=0;      // First pairwise block
+double walltime_forces_pair2=0;      // Second pairwise block
+double walltime_forces_pair3=0;      // Third pairwise block
+double walltime_forces_pair4=0;      // Fourth pairwise block
+double walltime_forces_reduction=0;  // Final reduction/permutation
 #endif
 
 #ifdef AVX512
@@ -427,6 +440,11 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); 
     ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); 
     ri = _mm512_div_pd(_mm512_set1_pd(1.0), ri); 
+#ifdef PROF
+    struct reb_timeval time_stiefel_end;
+    gettimeofday(&time_stiefel_end,NULL);
+    walltime_kepler_stiefel += time_stiefel_end.tv_sec-time_beginning.tv_sec+(time_stiefel_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
 
     // f and g function
 
@@ -464,6 +482,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
     struct reb_timeval time_end;
     gettimeofday(&time_end,NULL);
     walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+    walltime_kepler_fg += time_end.tv_sec-time_stiefel_end.tv_sec+(time_end.tv_usec-time_stiefel_end.tv_usec)/1e6;
 #endif
 }
 
@@ -567,9 +586,19 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, z_j); 
     }
 
+#ifdef PROF
+    struct reb_timeval time_stellar_end;
+    gettimeofday(&time_stellar_end,NULL);
+    walltime_forces_stellar += time_stellar_end.tv_sec-time_forces_start.tv_sec+(time_stellar_end.tv_usec-time_forces_start.tv_usec)/1e6;
+#endif
+
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
     __m512d m_j_01234567 = m_j;
 
+#ifdef PROF
+    struct reb_timeval time_pair1_start;
+    gettimeofday(&time_pair1_start,NULL);
+#endif
     {
         x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
         y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
@@ -601,6 +630,15 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         p512->hvy = _mm512_fmadd_pd(prefact2, dy_j, p512->hvy); 
         p512->hvz = _mm512_fmadd_pd(prefact2, dz_j, p512->hvz); 
     }
+#ifdef PROF
+    struct reb_timeval time_pair1_end;
+    gettimeofday(&time_pair1_end,NULL);
+    walltime_forces_pair1 += time_pair1_end.tv_sec-time_pair1_start.tv_sec+(time_pair1_end.tv_usec-time_pair1_start.tv_usec)/1e6;
+#endif
+#ifdef PROF
+    struct reb_timeval time_pair2_start;
+    gettimeofday(&time_pair2_start,NULL);
+#endif
     {
         x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
         y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
@@ -618,6 +656,11 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         p512->hvy = _mm512_fnmadd_pd(prefact, dy_j, p512->hvy); 
         p512->hvz = _mm512_fnmadd_pd(prefact, dz_j, p512->hvz); 
     }
+#ifdef PROF
+    struct reb_timeval time_pair2_end;
+    gettimeofday(&time_pair2_end,NULL);
+    walltime_forces_pair2 += time_pair2_end.tv_sec-time_pair2_start.tv_sec+(time_pair2_end.tv_usec-time_pair2_start.tv_usec)/1e6;
+#endif
 
     // //////////////////////////////////////
     // 256 bit lane crossing
@@ -627,6 +670,10 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     __m512d dvy;
     __m512d dvz;
 
+#ifdef PROF
+    struct reb_timeval time_pair3_start;
+    gettimeofday(&time_pair3_start,NULL);
+#endif
     {
         x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // accros 512
         y_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
@@ -654,7 +701,16 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         dvz = _mm512_mul_pd(prefact, dz_j); 
 
     }
+#ifdef PROF
+    struct reb_timeval time_pair3_end;
+    gettimeofday(&time_pair3_end,NULL);
+    walltime_forces_pair3 += time_pair3_end.tv_sec-time_pair3_start.tv_sec+(time_pair3_end.tv_usec-time_pair3_start.tv_usec)/1e6;
+#endif
 
+#ifdef PROF
+    struct reb_timeval time_pair4_start;
+    gettimeofday(&time_pair4_start,NULL);
+#endif
     {
         x_j = _mm512_permutex_pd(x_j, _MM_PERM_ADCB); // within 256
         y_j = _mm512_permutex_pd(y_j, _MM_PERM_ADCB);
@@ -689,11 +745,20 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
         dvz = _mm512_fmadd_pd(prefact, dz_j, dvz); 
 
     }
+#ifdef PROF
+    struct reb_timeval time_pair4_end;
+    gettimeofday(&time_pair4_end,NULL);
+    walltime_forces_pair4 += time_pair4_end.tv_sec-time_pair4_start.tv_sec+(time_pair4_end.tv_usec-time_pair4_start.tv_usec)/1e6;
+#endif
 
     // //////////////////////////////////////
     // 256 bit lane crossing for final add
     // //////////////////////////////////////
 
+#ifdef PROF
+    struct reb_timeval time_final_add_start;
+    gettimeofday(&time_final_add_start,NULL);
+#endif
     {
         dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); //across 512
         dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
@@ -707,6 +772,8 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     struct reb_timeval time_forces_end;
     gettimeofday(&time_forces_end,NULL);
     walltime_forces += time_forces_end.tv_sec-time_forces_start.tv_sec+(time_forces_end.tv_usec-time_forces_start.tv_usec)/1e6;
+    walltime_forces_pairs += time_forces_end.tv_sec-time_stellar_end.tv_sec+(time_forces_end.tv_usec-time_stellar_end.tv_usec)/1e6;
+    walltime_forces_reduction += time_forces_end.tv_sec-time_final_add_start.tv_sec+(time_forces_end.tv_usec-time_final_add_start.tv_usec)/1e6;
     struct reb_timeval time_transform2_start;
     gettimeofday(&time_transform2_start,NULL);
 #endif
