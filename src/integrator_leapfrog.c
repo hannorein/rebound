@@ -33,7 +33,7 @@
 #include "integrator_leapfrog.h"
 
 const double reb_integrator_leapfrog_lf4_a = 0.675603595979828817023843904485;
-const double reb_integrator_leapfrog_lf6_a[5] = {0.1867, 0.5554970237124784, 0.1294669489134754, -0.843265623387734, 0.9432033015235604};
+const double reb_integrator_leapfrog_lf6_a[5] = {0.78451361047756, 0.23557321335936, -1.1776799841789, 1.3151863206846204};
 const double reb_integrator_leapfrog_lf8_a[9] = {0.128865979381443, 0.581514087105251, -0.410175371469850, 0.1851469357165877, -0.4095523434208514, 0.1444059410800120, 0.2783355003936797, 0.3149566839162949, -0.6269948254051343979}; 
 
 static void drift(struct reb_simulation* r, double dt){
@@ -109,12 +109,6 @@ void reb_integrator_leapfrog_part2(struct reb_simulation* r){
             reb_simulation_update_acceleration(r);
             kick(r, dt*reb_integrator_leapfrog_lf6_a[2]);
             drift(r, dt*(reb_integrator_leapfrog_lf6_a[2]+reb_integrator_leapfrog_lf6_a[3])*0.5);
-            reb_simulation_update_acceleration(r);
-            kick(r, dt*reb_integrator_leapfrog_lf6_a[3]);
-            drift(r, dt*(reb_integrator_leapfrog_lf6_a[3]+reb_integrator_leapfrog_lf6_a[4])*0.5);
-            reb_simulation_update_acceleration(r);
-            kick(r, dt*reb_integrator_leapfrog_lf6_a[4]);
-            drift(r, dt*(reb_integrator_leapfrog_lf6_a[3]+reb_integrator_leapfrog_lf6_a[4])*0.5);
             reb_simulation_update_acceleration(r);
             kick(r, dt*reb_integrator_leapfrog_lf6_a[3]);
             drift(r, dt*(reb_integrator_leapfrog_lf6_a[2]+reb_integrator_leapfrog_lf6_a[3])*0.5);

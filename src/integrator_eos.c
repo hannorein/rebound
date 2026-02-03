@@ -396,10 +396,6 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[2], 0.);
                 reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf6_a[2]+reb_integrator_leapfrog_lf6_a[3])*0.5);
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[3], 0.);
-                reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf6_a[3]+reb_integrator_leapfrog_lf6_a[4])*0.5);
-                reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[4], 0.);
-                reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf6_a[3]+reb_integrator_leapfrog_lf6_a[4])*0.5);
-                reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[3], 0.);
                 reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf6_a[2]+reb_integrator_leapfrog_lf6_a[3])*0.5);
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[2], 0.);
                 reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf6_a[1]+reb_integrator_leapfrog_lf6_a[2])*0.5);

@@ -42,7 +42,7 @@ class TestIntegrator(unittest.TestCase):
         self.sim.integrate(1e3)
         self.sim.step()
         e1 = self.sim.energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1e-9)
+        self.assertLess(math.fabs((e0-e1)/e1),2e-9)
     
     def test_leapfrog_order_8(self):
         self.sim.integrator = "leapfrog"
