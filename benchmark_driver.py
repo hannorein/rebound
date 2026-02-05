@@ -55,8 +55,11 @@ def run_benchmark(config, executable='./rebound'):
         if "PROFILING" in last_line: 
              pass
 
-        walltime, verification = map(float, last_line.split(','))
-        return walltime, verification
+        parts = last_line.split(',')
+        walltime = float(parts[0])
+        verification = float(parts[1])
+        energy_err = float(parts[2]) if len(parts) > 2 else None
+        return walltime, verification, energy_err
     except subprocess.CalledProcessError as e:
         print(f"Error running configuration {config['name']}: {e}")
         return None, None
@@ -68,27 +71,31 @@ def print_table(results):
     reference_time = results[0]['time'] if results else 0
     reference_x = results[0]['verify'] if results else 0
     
-    print("\n" + "="*85)
-    print(f"{'Method/Configuration':<30} | {'Time (s)':<10} | {'Speedup':<10} | {'Rel Error':<15}")
-    print("-" * 85)
+    print(f"\n" + "="*100)
+    print(f"{'Method/Configuration':<30} | {'Time (s)':<10} | {'Speedup':<10} | {'Pos Error':<12} | {'Energy Err':<12}")
+    print("-" * 100)
     
     for res in results:
         name = res['name']
         t = res['time']
         
         if t is None:
-            print(f"{name:<30} | {'FAILED':<10} | {'-':<10} | {'-':<15}")
+            print(f"{name:<30} | {'FAILED':<10} | {'-':<10} | {'-':<12} | {'-':<12}")
             continue
             
         speedup = reference_time / t if t > 0 else 0
         
-        # Relative error vs reference
-        rel_error = 0.0
+        # Position Error vs reference
+        pos_error = 0.0
         if reference_x != 0:
-            rel_error = abs(res['verify'] - reference_x) / abs(reference_x)
+            pos_error = abs(res['verify'] - reference_x) / abs(reference_x)
             
-        print(f"{name:<30} | {t:<10.4f} | {speedup:<10.2f}x | {rel_error:<15.2e}")
-    print("=" * 85 + "\n")
+        # Energy Error (from simulation)
+        energy_error = res.get('energy_err', 0.0)
+        if energy_error is None: energy_error = 0.0
+
+        print(f"{name:<30} | {t:<10.4f} | {speedup:<10.2f}x | {pos_error:<12.2e} | {energy_error:<12.2e}")
+    print("=" * 100 + "\n")
 
 def main():
     parser = argparse.ArgumentParser(description='Run REBOUND Ablation Benchmarks')
@@ -110,7 +117,7 @@ def main():
     
     for i, cfg in enumerate(configs):
         print(f"[{i+1}/{len(configs)}] Running: {cfg['name']}...", end='', flush=True)
-        t, v = run_benchmark(cfg)
+        t, v, e = run_benchmark(cfg)
         if t is not None:
              print(f" Done ({t:.4f}s)")
         else:
@@ -119,7 +126,8 @@ def main():
         results.append({
             'name': cfg['name'],
             'time': t,
-            'verify': v
+            'verify': v,
+            'energy_err': e
         })
         
     print_table(results)

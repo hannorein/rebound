@@ -142,6 +142,7 @@ int main(int argc, char* argv[]) {
     }
 
     reb_simulation_move_to_com(r);
+    double E0 = reb_simulation_energy(r);
     reb_simulation_steps(r, 1);
 
     struct timeval time_beginning, time_end;
@@ -155,10 +156,12 @@ int main(int argc, char* argv[]) {
     reb_simulation_steps(r, Nsteps);
 
     gettimeofday(&time_end, NULL);
-    double walltime = time_end.tv_sec - time_beginning.tv_sec + 
-                      (time_end.tv_usec - time_beginning.tv_usec) / 1e6;
     
     reb_simulation_synchronize(r);
+    double E1 = reb_simulation_energy(r);  
+    
+    double walltime = time_end.tv_sec - time_beginning.tv_sec + 
+                      (time_end.tv_usec - time_beginning.tv_usec) / 1e6;
 
 #ifdef PROF
     extern double walltime_interaction;
@@ -198,7 +201,7 @@ int main(int argc, char* argv[]) {
     printf("  Sync:         %.6f\n", walltime_sync);
     printf("PROFILING_END\n");
 #endif
-    printf("%.6f,%.16e\n", walltime, r->particles[1].x);
+    printf("%.6f,%.16e,%.16e\n", walltime, r->particles[1].x, fabs((E1-E0)/E0));
     
     reb_simulation_free(r);
     return 0;
