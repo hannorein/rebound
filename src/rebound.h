@@ -249,6 +249,7 @@ struct reb_integrator_mercurius {
 struct reb_integrator_sei {
     double OMEGA;       // Epicyclic frequency
     double OMEGAZ;      // Epicyclic frequency in z direction (if not set, use OMEGA)
+    double Q_NL;        // Nonlinearity parameter
 
     // Internal use
     double lastdt;      // Cached sin(), tan() for this value of dt.
@@ -553,6 +554,8 @@ struct reb_simulation {
 
     // Simulation domain and ghost boxes 
     struct  reb_vec3d boxsize;      // Size of the entire simulation box, root_x*boxsize. Set in box_init().
+    double  Lx_t;                   // Time dependent boxsize in the x direction
+    double  Rx_t;
     double  boxsize_max;            // Maximum size of the entire box in any direction. Set in box_init().
     double  root_size;              // Size of a root box. 
     int     N_root;                 // Total number of root boxes in all directions, N_root_x*N_root_y*N_root_z. Default: 1. Set in box_init().
@@ -640,7 +643,8 @@ struct reb_simulation {
         REB_BOUNDARY_OPEN = 1,          // Open boundary conditions. Removes particles if they leave the box 
         REB_BOUNDARY_PERIODIC = 2,      // Periodic boundary conditions
         REB_BOUNDARY_SHEAR = 3,         // Shear periodic boundary conditions, needs OMEGA variable
-    } boundary;
+        REB_BOUNDARY_SHEAR_E = 4,       // Shear periodic eccentric boundary conditions, needs OMEGA variable
+        } boundary;
     enum {
         REB_GRAVITY_NONE = 0,           // Do not calculate graviational forces
         REB_GRAVITY_BASIC = 1,          // Basic O(N^2) direct summation algorithm, choose this for shearing sheet and periodic boundary conditions

@@ -22,6 +22,7 @@ class IntegratorSEI(ctypes.Structure):
     """
     _fields_ = [("OMEGA", ctypes.c_double),
                 ("OMEGAZ", ctypes.c_double),
+                ("Q_NL", ctypes.c_double),
                 ("_lastdt", ctypes.c_double),
                 ("_sindt", ctypes.c_double),
                 ("_tandt", ctypes.c_double),
