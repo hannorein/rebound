@@ -1388,6 +1388,26 @@ static void inertial_to_democratic_heliocentric_posvel(struct reb_simulation* r)
 
 static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
+    const unsigned int N_systems = ri_whfast512->N_systems;
+    const unsigned int N_per_system = r->N/N_systems;
+    // Transformations assume system is in COM frame.
+    struct reb_particle com[4];
+    struct reb_particle* p_tmp = malloc(sizeof(struct reb_particle)*r->N);
+    memcpy(p_tmp, r->particles, sizeof(struct reb_particle)*r->N);
+    for (unsigned s=0;s<N_systems;s++){
+        com[s] = reb_simulation_com_range(r,s*N_per_system, (s+1)*N_per_system); // original com
+    }
+    for (unsigned s=0;s<N_systems;s++){
+        for (int i=0;i<N_per_system;i++){
+            r->particles[s*N_per_system+i].x -= com[s].x;
+            r->particles[s*N_per_system+i].y -= com[s].y;
+            r->particles[s*N_per_system+i].z -= com[s].z;
+            r->particles[s*N_per_system+i].vx -= com[s].vx;
+            r->particles[s*N_per_system+i].vy -= com[s].vy;
+            r->particles[s*N_per_system+i].vz -= com[s].vz;
+        }
+    }
+    reb_simulation_move_to_com(r);
     // Same layout as for democratic heliocentric
     ri_whfast512->p512->x = load_into_m512d(r, offsetof(struct reb_particle,x),ri_whfast512->mat8_inertial_to_jacobi, r->N);
     ri_whfast512->p512->y = load_into_m512d(r, offsetof(struct reb_particle,y),ri_whfast512->mat8_inertial_to_jacobi, r->N);
@@ -1396,6 +1416,9 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r){
     ri_whfast512->p512->vy = load_into_m512d(r, offsetof(struct reb_particle,vy),ri_whfast512->mat8_inertial_to_jacobi, r->N);
     ri_whfast512->p512->vz = load_into_m512d(r, offsetof(struct reb_particle,vz),ri_whfast512->mat8_inertial_to_jacobi, r->N);
     ri_whfast512->p512->m = load_into_m512d(r, offsetof(struct reb_particle,m),NULL, r->N);
+    // Undo COM transformation. COM will be applied in jacobi_to_inertial_posvel_and_com().
+    memcpy(r->particles, p_tmp, sizeof(struct reb_particle)*r->N);
+    free(p_tmp);
 }
 
 

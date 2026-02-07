@@ -18,8 +18,10 @@ class TestIntegratorWHFast512(unittest.TestCase):
                     rebound.data.add_solar_system(sim,n_bodies)
                     sim.dt = sim.particles[1].P/23.456789
                     sim.move_to_com()
+                    # Move to non-com frame.
                     for p in sim.particles:
                         p.vx += 0.1
+                        p.y  += 0.1
                     sim.integrator = "whfast512"
                     sim.ri_whfast512.coordinates = coordinates
                     com0 = sim.com()
@@ -33,20 +35,19 @@ class TestIntegratorWHFast512(unittest.TestCase):
                     self.assertLess(math.fabs(com0.vz-com1.vz),1.0e-16)
     def test_whfast512_energy(self):
         if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
-            
             for n_bodies in range(2,9):
                 sim = rebound.Simulation()
                 rebound.data.add_solar_system(sim,n_bodies)
                 sim.dt = sim.particles[1].P/23.456789
                 sim.move_to_com()
-                #for p in sim.particles:
-                #    p.vx += 0.1
+                for p in sim.particles:
+                    p.y  += 0.1
+                    p.vx += 0.1
                 sim.integrator = "whfast512"
                 sim.ri_whfast512.coordinates = "jacobi"
                 e0 = sim.energy()
                 sim.integrate(1000.*2.*3.1415, exact_finish_time=0)
                 e1 = sim.energy()
-                print(n_bodies,math.fabs((e0-e1)/e1))
                 self.assertLess(math.fabs((e0-e1)/e1),4.0e-9)
     
 if __name__ == "__main__":
