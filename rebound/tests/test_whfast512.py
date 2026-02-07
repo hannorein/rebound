@@ -5,11 +5,66 @@ import math
 import rebound.data
 import warnings
     
+def gr_force(simp):
+    C2 = 10065.32 * 10065.32;
+    # Inefficient implementation of the GR force for WHFast.
+    source = simp.contents.particles[0]
+    prefac1 = 6.*(simp.contents.G*source.m)*(simp.contents.G*source.m)/C2
+    for i in range(1,simp.contents.N):
+        dx = simp.contents.particles[i].x - source.x
+        dy = simp.contents.particles[i].y - source.y
+        dz = simp.contents.particles[i].z - source.z
+        r2 = dx*dx + dy*dy + dz*dz
+        prefac = prefac1/(r2*r2)
+
+        simp.contents.particles[i].ax -= prefac*dx
+        simp.contents.particles[i].ay -= prefac*dy
+        simp.contents.particles[i].az -= prefac*dz
+        simp.contents.particles[0].ax += simp.contents.particles[i].m/source.m*prefac*dx
+        simp.contents.particles[0].ay += simp.contents.particles[i].m/source.m*prefac*dy
+        simp.contents.particles[0].az += simp.contents.particles[i].m/source.m*prefac*dz
     
 class TestIntegratorWHFast512(unittest.TestCase):
     def test_whfast612_available(self):
         if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value == 0:
-            warnings.warn("WHFast512 not available. Cannot test WHFast512.", RuntimeWarning)
+            warnings.warn("WHFast512 not available. Cannot test WHFast512. Try `export AVX512=1`, then `pip install`.", RuntimeWarning)
+
+    def test_whfast512_gr(self):
+        if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
+            for n_bodies in range(2,10):
+                for coordinates in ["jacobi", "democraticheliocentric"]:
+                    sim = rebound.Simulation()
+                    rebound.data.add_solar_system(sim,n_bodies)
+                    sim.dt = sim.particles[1].P/23.456789
+                    sim.move_to_com()
+                    # Move to non-com frame to make the test a bit harder.
+                    for p in sim.particles:
+                        p.vx += 0.1
+                        p.y  += 0.1
+                    sim2 = sim.copy()
+
+                    sim.integrator = "whfast512"
+                    sim.ri_whfast512.coordinates = coordinates
+                    sim.ri_whfast512.gr_potential = 1
+                    sim.exact_finish_time = 0
+                    sim.steps(10)
+                    sim.synchronize()
+                    
+                    sim2.integrator = "whfast"
+                    sim2.ri_whfast.coordinates = coordinates
+                    sim2.ri_whfast.safe_mode = 0
+                    sim2.additional_forces = gr_force
+                    sim2.steps(10)
+                    sim2.synchronize()
+                    
+                    for p1, p2 in zip(sim.particles, sim2.particles):
+                        self.assertLess(math.fabs(p1.x-p2.x),8e-13)
+                        self.assertLess(math.fabs(p1.y-p2.y),8e-13)
+                        self.assertLess(math.fabs(p1.z-p2.z),8e-13)
+                        self.assertLess(math.fabs(p1.vx-p2.vx),8e-13)
+                        self.assertLess(math.fabs(p1.vy-p2.vy),8e-13)
+                        self.assertLess(math.fabs(p1.vz-p2.vz),8e-13)
+
     def test_whfast512_com(self):
         if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
             for n_bodies in range(2,10):
