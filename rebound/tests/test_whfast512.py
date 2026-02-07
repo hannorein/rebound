@@ -12,7 +12,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
             warnings.warn("WHFast512 not available. Cannot test WHFast512.", RuntimeWarning)
     def test_whfast512_com(self):
         if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
-            for n_bodies in range(2,9):
+            for n_bodies in range(2,10):
                 for coordinates in ["jacobi", "democraticheliocentric"]:
                     sim = rebound.Simulation()
                     rebound.data.add_solar_system(sim,n_bodies)
@@ -35,7 +35,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
                     self.assertLess(math.fabs(com0.vz-com1.vz),1.0e-16)
     def test_whfast512_energy(self):
         if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
-            for n_bodies in range(2,9):
+            for n_bodies in range(2,10):
                 for coordinates in ["jacobi", "democraticheliocentric"]:
                     sim = rebound.Simulation()
                     rebound.data.add_solar_system(sim,n_bodies)
@@ -54,7 +54,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
     def test_whfast512_whfast(self):
         # WHfast512 should give same results as WHFast
         if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
-            for n_bodies in range(2,9):
+            for n_bodies in range(2,10):
                 for coordinates in ["jacobi", "democraticheliocentric"]:
                     sim = rebound.Simulation()
                     rebound.data.add_solar_system(sim,n_bodies)
@@ -84,6 +84,74 @@ class TestIntegratorWHFast512(unittest.TestCase):
                         self.assertLess(math.fabs(p1.vx-p2.vx),8e-15)
                         self.assertLess(math.fabs(p1.vy-p2.vy),8e-15)
                         self.assertLess(math.fabs(p1.vz-p2.vz),8e-15)
-        
+    def test_whfast512_restart(self):
+        # Exact reproducibility
+        if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
+            for n_bodies in range(2,10):
+                for coordinates in ["jacobi", "democraticheliocentric"]:
+                    for keep_unsynchronized in [1, 0]:
+                        sim = rebound.Simulation()
+                        rebound.data.add_solar_system(sim,n_bodies)
+                        sim.dt = sim.particles[1].P/23.456789
+                        sim.move_to_com()
+                        # Move to non-com frame to make the test a bit harder.
+                        for p in sim.particles:
+                            p.y  += 0.1
+                            p.vx += 0.1
+
+                        sim.integrator = "whfast512"
+                        sim.ri_whfast512.coordinates = coordinates
+                        sim.ri_whfast512.keep_unsynchronized = keep_unsynchronized
+                        sim.exact_finish_time = 0
+                        sim.steps(10)
+                        sim.save_to_file("test1.bin",delete_file=True)
+                        sim.synchronize()
+                        sim.save_to_file("test2.bin",delete_file=True)
+                        sim.steps(10)
+                        sim.synchronize()
+
+                        sim1 = rebound.Simulation("test1.bin")
+                        sim1.synchronize()
+                        sim1.steps(10)
+                        sim1.synchronize()
+                        self.assertEqual(sim, sim1)
+                       
+                        sim2 = rebound.Simulation("test2.bin")
+                        sim2.steps(10)
+                        sim2.synchronize()
+                        self.assertEqual(sim, sim2)
+    def test_whfast512_keep_unsynchronized(self):
+        if c_int.in_dll(rebound.clibrebound, "reb_integrator_whfast512_available").value:
+            for n_bodies in range(2,10):
+                for coordinates in ["jacobi", "democraticheliocentric"]:
+                    for keep_unsynchronized in [1, 0]:
+                        sim = rebound.Simulation()
+                        rebound.data.add_solar_system(sim,n_bodies)
+                        sim.dt = sim.particles[1].P/23.456789
+                        sim.move_to_com()
+                        # Move to non-com frame to make the test a bit harder.
+                        for p in sim.particles:
+                            p.y  += 0.1
+                            p.vx += 0.1
+
+                        sim.integrator = "whfast512"
+                        sim.ri_whfast512.coordinates = coordinates
+                        sim.ri_whfast512.keep_unsynchronized = keep_unsynchronized
+                        sim.exact_finish_time = 0
+                        sim.steps(10)
+                        sim.save_to_file("test1.bin",delete_file=True)
+                        sim.synchronize() # extra synchronize not in sim1
+                        sim.steps(10)
+                        sim.synchronize()
+
+                        sim1 = rebound.Simulation("test1.bin")
+                        sim1.steps(10)
+                        sim1.synchronize()
+                        if keep_unsynchronized:
+                            self.assertEqual(sim, sim1)
+                        else:
+                            self.assertNotEqual(sim, sim1)
+                   
+    
 if __name__ == "__main__":
     unittest.main()

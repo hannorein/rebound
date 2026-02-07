@@ -1881,6 +1881,9 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             if (reb_integrator_whfast512_allocate(r)){
                 return; // error occured
             }
+            ri_whfast512->recalculate_constants = 1;
+        }
+        if (ri_whfast512->recalculate_constants){
             recalculate_constants(r);
         }
         if (ri_whfast512->keep_unsynchronized){

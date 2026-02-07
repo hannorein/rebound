@@ -219,7 +219,8 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
         if (pos2+field2.size>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size==field2.size){
-            if (strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "particles")==0){
+            if (    strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "particles")==0 ||
+                    strcmp(reb_binary_field_descriptor_for_type(field1.type).name, "ri_whfast512.particles_keep_unsynchronized")==0){
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
