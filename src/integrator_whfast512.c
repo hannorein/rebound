@@ -1460,7 +1460,6 @@ void static recalculate_constants(struct reb_simulation* r){
     const unsigned int N_per_system = r->N/N_systems;
     double mat8_inertial_to_heliocentric[64];
     double M[8] = {0.0};
-        printf("512 %p\n", ri_whfast512->p512);
     switch (N_systems){
         case 1:
             ri_whfast512->p512->mask = (1 << (r->N -1)) - 1;
@@ -1653,10 +1652,8 @@ static int reb_integrator_whfast512_allocate(struct reb_simulation* const r){
         r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
-    printf("not here\n");
     if (ri_whfast512->p512==NULL){
         ri_whfast512->p512 = aligned_alloc(64,sizeof(struct reb_particle_avx512));
-        printf("allocated just now %p\n", ri_whfast512->p512);
         if (!ri_whfast512->p512){
             reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
             r->status = REB_STATUS_GENERIC_ERROR;
