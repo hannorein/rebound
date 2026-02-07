@@ -1,4 +1,5 @@
 import rebound
+rebound.horizons.SSL_CONTEXT = 'unverified'
 import unittest
 import socket
 import warnings
@@ -21,7 +22,6 @@ class TestHorizons(unittest.TestCase):
         except socket.error: 
             print("Socket error. Most likely due to HORIZON being slow. Ignoring.")
             pass
-    
     def test_notfound(self):
         with self.assertRaises(Exception):
             try:

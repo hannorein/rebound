@@ -361,7 +361,7 @@ struct reb_integrator_whfast {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
-// Special particle struct for WHFast512
+// Struct which holds aligned data for WHFast512
 struct reb_particle_avx512{
 #ifdef AVX512
     // Various constants
@@ -370,7 +370,7 @@ struct reb_particle_avx512{
     __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
     __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
     __m512d jump_prefac __attribute__ ((aligned (64)));         //  Prefactor for DHC jump step
-    // Jacobi
+    // Working arrays (either DHC or Jacobi)
     __m512d m __attribute__ ((aligned (64)));
     __m512d x __attribute__ ((aligned (64)));
     __m512d y __attribute__ ((aligned (64)));
@@ -378,7 +378,7 @@ struct reb_particle_avx512{
     __m512d vx __attribute__ ((aligned (64)));
     __m512d vy __attribute__ ((aligned (64)));
     __m512d vz __attribute__ ((aligned (64)));
-    // Heliocentric 
+    // Heliocentric positions and velocities used with Jacobi only.
     __m512d hx __attribute__ ((aligned (64)));
     __m512d hy __attribute__ ((aligned (64)));
     __m512d hz __attribute__ ((aligned (64)));
@@ -402,7 +402,7 @@ struct reb_particle_avx512{
 struct reb_integrator_whfast512 {
     unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
     unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
-    unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
+    unsigned int keep_unsynchronized;   // 0: After synchronization, use synchronized coordinates for next timestep (default). 1: continue from unsynchronized state after synchronization to maintain reproducibility and lower roundoff errors
     unsigned int concatenate_steps;     // Optimization. If set to a number > 1, one reb_simulation_steps() call will advance for this many steps.
     unsigned int corrector;             // Turn on symplectic correctors. Same as for WHFast. Only available for Jacobi coordinates.
     enum {
@@ -411,15 +411,14 @@ struct reb_integrator_whfast512 {
     } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
 
     // Internal use
-    unsigned int is_synchronized;
-    unsigned int N_allocated_particles_keep_unsynchronized;  // Used to reset initial particle positions 
-    struct reb_particle* particles_keep_unsynchronized;  // Used to reset initial particle positions 
-    unsigned int N_allocated;
-    unsigned int recalculate_constants;
-    double dt_cached;                   // dt used for precalculating constants.
-    double time_of_last_synchronize; // used for advancing com
-    struct reb_particle_avx512* p512;
-    double* mat8_inertial_to_jacobi;
+    unsigned int is_synchronized;                           // Is current state synchronized?
+    unsigned int N_allocated_particles_keep_unsynchronized; // Used to reset initial particle positions
+    struct reb_particle* particles_keep_unsynchronized;     // Used to reset initial particle positions
+    unsigned int recalculate_constants;                     // Called initially and after reading simulation from Simulationarchive
+    double time_of_last_synchronize;                        // used to advance centre of mass
+    unsigned int N_allocated;                               // 0: p512 structure not allocated. 1: p512 structure allocated
+    struct reb_particle_avx512* p512;                       // Stores all avx512 variables. Needs to be alligned.
+    double* mat8_inertial_to_jacobi;                        // Coordinate transformation matricies. Can be recalculated from particle masses.
     double* mat8_jacobi_to_inertial;
     double* mat8_jacobi_to_heliocentric;
 };

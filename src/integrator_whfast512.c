@@ -1586,7 +1586,6 @@ void static recalculate_constants(struct reb_simulation* r){
     ri_whfast512->p512->jump_prefac = _mm512_loadu_pd(&_jump_prefac);
     ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); 
 
-    ri_whfast512->dt_cached = r->dt;
     ri_whfast512->recalculate_constants = 0;
 }
 
