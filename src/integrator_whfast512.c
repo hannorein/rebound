@@ -55,7 +55,10 @@ void static inline printmask8(__mmask8 mask) {
     }
     printf("\n");
 }
-#endif
+const int reb_integrator_whfast512_available = 1;   // Let python check if REBOUND was compiled with AVX512 enabled
+#else //AVX512
+const int reb_integrator_whfast512_available = 0;   // Let python check if REBOUND was compiled with AVX512 enabled
+#endif //ABX512
 
 // Debug function to print 8x8 matrix
 void static inline printmat8(double* a) {
@@ -1457,6 +1460,7 @@ void static recalculate_constants(struct reb_simulation* r){
     const unsigned int N_per_system = r->N/N_systems;
     double mat8_inertial_to_heliocentric[64];
     double M[8] = {0.0};
+        printf("512 %p\n", ri_whfast512->p512);
     switch (N_systems){
         case 1:
             ri_whfast512->p512->mask = (1 << (r->N -1)) - 1;
@@ -1589,7 +1593,7 @@ void static recalculate_constants(struct reb_simulation* r){
     ri_whfast512->recalculate_constants = 0;
 }
 
-void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
+static int reb_integrator_whfast512_allocate(struct reb_simulation* const r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     // Check if all assumptions are satisfied.
     // Note: These are not checked every timestep. 
@@ -1597,64 +1601,66 @@ void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
     if (r->dt<0.0){
         reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->N_var!=0){
         reb_simulation_error(r, "WHFast512 does not support variational particles.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (ri_whfast512->corrector && ri_whfast512->coordinates != REB_WHFAST512_COORDINATES_JACOBI){
         reb_simulation_error(r, "Symplectic correctors require Jacobi coordinates.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->exact_finish_time!=0){
         reb_simulation_error(r, "WHFast512 requires exact_finish_time=0.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->N>9 && ri_whfast512->N_systems == 1) {
         reb_simulation_error(r, "WHFast512 supports a maximum of 9 particles when N_systems is set to 1.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->N>10 && ri_whfast512->N_systems == 2) {
         reb_simulation_error(r, "WHFast512 supports a maximum of 10 particles when N_systems is set to 2.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->N>12 && ri_whfast512->N_systems == 4) {
         reb_simulation_error(r, "WHFast512 supports a maximum of 12 particles when N_systems is set to 4.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (ri_whfast512->N_systems != 1 && ri_whfast512->N_systems !=2 && ri_whfast512->N_systems != 4){
         reb_simulation_error(r, "WHFast512 supports 1, 2, or 4 systems only.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->N % ri_whfast512->N_systems != 0){
         reb_simulation_error(r, "Number of particles must be a multiple of ri_whfast512.N_systems.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->G!=1.0){
         reb_simulation_error(r, "WHFast512 requires units in which G=1. Please rescale your system.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
     if (r->N_active!=-1 && r->N_active!=r->N){
         reb_simulation_error(r, "WHFast512 does not support test particles.");
         r->status = REB_STATUS_GENERIC_ERROR;
-        return;
+        return 1;
     }
+    printf("not here\n");
     if (ri_whfast512->p512==NULL){
         ri_whfast512->p512 = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+        printf("allocated just now %p\n", ri_whfast512->p512);
         if (!ri_whfast512->p512){
             reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
             r->status = REB_STATUS_GENERIC_ERROR;
-            return;
+            return 1;
         }
     }
     if (r->exit_min_distance || r->exit_max_distance){
@@ -1662,6 +1668,7 @@ void static reb_integrator_whfast512_allocate(struct reb_simulation* const r){
     }
     ri_whfast512->N_allocated=1;
     r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
+    return 0; // success
 }
 
 // Implementation of the GR force for WHFast correctors.
@@ -1725,7 +1732,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     const unsigned int N_steps = ri_whfast512->concatenate_steps;
 
     if (ri_whfast512->N_allocated==0){
-        reb_integrator_whfast512_allocate(r);
+        if (reb_integrator_whfast512_allocate(r)){
+            return; // Error occured
+        }
         ri_whfast512->recalculate_constants = 1;
     }
 
@@ -1849,7 +1858,9 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
         struct reb_particle_avx512* sync_pj = NULL;
         // Needed if no step has ever been done before (like SA)
         if (ri_whfast512->N_allocated==0){
-            reb_integrator_whfast512_allocate(r);
+            if (reb_integrator_whfast512_allocate(r)){
+                return; // error occured
+            }
             recalculate_constants(r);
         }
         if (ri_whfast512->keep_unsynchronized){
@@ -1937,12 +1948,16 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     ri_whfast512->mat8_inertial_to_jacobi = NULL;
     ri_whfast512->mat8_jacobi_to_inertial = NULL;
     ri_whfast512->mat8_jacobi_to_heliocentric = NULL;
+    ri_whfast512->particles_keep_unsynchronized = NULL;
     ri_whfast512->p512 = NULL;
     ri_whfast512->N_allocated = 0;
     ri_whfast512->N_allocated_particles_keep_unsynchronized = 0;
+    ri_whfast512->N_systems = 1;
     ri_whfast512->gr_potential = 0;
     ri_whfast512->corrector = 0;
+    ri_whfast512->coordinates = REB_WHFAST512_COORDINATES_JACOBI;
     ri_whfast512->is_synchronized = 1;
+    ri_whfast512->time_of_last_synchronize = 0.0;
     ri_whfast512->keep_unsynchronized = 0;
     ri_whfast512->concatenate_steps = 1;
 }

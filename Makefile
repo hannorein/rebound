@@ -1,4 +1,5 @@
 # This Makefile compiles the shared dynamic library librebound.so
+export OPT=-march=native -O3 
 include src/Makefile.defs
 
 librebound: 

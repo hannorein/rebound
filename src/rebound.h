@@ -97,6 +97,7 @@ DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG for
 DLLEXPORT extern const unsigned int reb_favicon_len;
 DLLEXPORT extern const int reb_max_messages_length;
 DLLEXPORT extern const int reb_N_max_messages;
+DLLEXPORT extern const int reb_integrator_whfast512_available;
 extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations
