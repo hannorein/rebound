@@ -901,6 +901,7 @@ DLLEXPORT double reb_M_to_E(double e, double M);
 
 // Orbit Hierarchy
 // These structures and functions create a tree representing the hierarchical architecture of a system.
+// If primary == secondary == NULL, then this is a leaf and com is a particle in the simulation.
 struct reb_orbit_hierarchy {
     struct reb_orbit_hierarchy* primary;    // Primary (more massive) component of this orbit. 
     struct reb_orbit_hierarchy* secondary;  // Secondary (less massive) component.
