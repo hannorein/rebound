@@ -34,7 +34,7 @@ void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, 
  * Profiling categories
  */
 enum profiling_categories {
-    PROFILING_CAT_INTEGRATOR,
+    PROFILING_CAT_INTEGRATOR, // Counts integrator and gravity part. Gravity part gets subtracted at output. 
     PROFILING_CAT_BOUNDARY,
     PROFILING_CAT_GRAVITY,
     PROFILING_CAT_COLLISION,

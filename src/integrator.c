@@ -235,26 +235,16 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
     /***********************************************************
      * Prepare TREE for force calculations
      **********************************************************/
-    // This should probably go elsewhere
-    PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
-    PROFILING_START();
-
     // Update and simplify tree. 
     // Prepare particles for distribution to other nodes. 
     // This function also creates the tree if called for the first time.
     if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
         // Check for root crossings.
-        PROFILING_START();
         reb_boundary_check(r);     
-        PROFILING_STOP(PROFILING_CAT_BOUNDARY);
-
         // Update tree (this will remove particles which left the box)
-        PROFILING_START();
         reb_simulation_update_tree(r);          
-        PROFILING_STOP(PROFILING_CAT_GRAVITY);
     }
 
-    PROFILING_START();
 #ifdef MPI
     // Distribute particles and add newly received particles to tree.
     reb_communication_mpi_distribute_particles(r);
@@ -273,7 +263,9 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
     }
 
     /***********************************************************
-     * GRAVITY
+     * Main gravity calculation
+     * This first sets accelerations to zero even if
+     * REB_GRAVITY_NONE is used.
      **********************************************************/
     reb_simulation_update_acceleration_gravity(r);
     if (r->N_var){
@@ -332,7 +324,5 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
     }
-    PROFILING_STOP(PROFILING_CAT_GRAVITY);
-    PROFILING_START();
 }
 

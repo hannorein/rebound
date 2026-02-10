@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include "particle.h"
 #include "rebound.h"
+#include "output.h"
 #include "tree.h"
 #include "boundary.h"
 #include "integrator_mercurius.h"
@@ -56,6 +57,7 @@ static void reb_calculate_acceleration_for_particle(const struct reb_simulation*
  * Main Gravity Routine
  */
 void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
+    PROFILING_START();
 
     struct reb_particle* const particles = r->particles;
     const int N = r->N;
@@ -987,9 +989,11 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
             reb_exit("Gravity calculation not yet implemented.");
     }
 
+    PROFILING_STOP(PROFILING_CAT_GRAVITY);
 }
 
 void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
+    PROFILING_START();
     struct reb_particle* const particles = r->particles;
     const double G = r->G;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
@@ -1325,9 +1329,11 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
             reb_exit("Variational gravity calculation not yet implemented.");
     }
 
+    PROFILING_STOP(PROFILING_CAT_GRAVITY);
 }
 
 void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
+    PROFILING_START();
     struct reb_particle* const particles = r->particles;
     const int N = r->N;
     const int N_active = r->N_active;
@@ -1410,6 +1416,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
             reb_simulation_error(r,"Jerk calculation only supported for BASIC gravity routine.");
             break;
     }
+    PROFILING_STOP(PROFILING_CAT_GRAVITY);
 }
 
 // Helper routines for REB_GRAVITY_TREE

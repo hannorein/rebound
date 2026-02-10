@@ -404,8 +404,12 @@ void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
         }
         if (i==PROFILING_CAT_NUM){
             printf("%5.2f%%",(1.-_sum/(profiling_time_final - profiling_timing_initial))*100.);
+        }else if (i==PROFILING_CAT_INTEGRATOR){
+            printf("%5.2f%%\n",(profiling_time_sum[PROFILING_CAT_INTEGRATOR]-profiling_time_sum[PROFILING_CAT_GRAVITY])/(profiling_time_final - profiling_timing_initial)*100.);
         }else{
             printf("%5.2f%%\n",profiling_time_sum[i]/(profiling_time_final - profiling_timing_initial)*100.);
+        }
+        if (i!=PROFILING_CAT_NUM && i!=PROFILING_CAT_GRAVITY){ // already in INTEGRATOR
             _sum += profiling_time_sum[i];
         }
     }

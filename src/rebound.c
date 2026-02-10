@@ -88,22 +88,22 @@ void reb_simulation_step(struct reb_simulation* const r){
     gettimeofday(&time_beginning,NULL);
 
     // A 'DKD'-like integrator will do the first 'D' part.
-    PROFILING_START();
     if (r->pre_timestep_modifications){
         reb_simulation_synchronize(r);
         r->pre_timestep_modifications(r);
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
+
+    PROFILING_START();
     reb_integrator_part1(r);
-    PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
 
     // Calculate accelerations. 
     reb_simulation_update_acceleration(r);
 
     // A 'DKD'-like integrator will do the 'KD' part.
-    PROFILING_START();
     reb_integrator_part2(r);
+    PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
 
     if (r->post_timestep_modifications){
         reb_simulation_synchronize(r);
@@ -115,7 +115,6 @@ void reb_simulation_step(struct reb_simulation* const r){
     if (r->N_var){
         reb_simulation_rescale_var(r);
     }
-    PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
 
     // Do collisions here. We need both the positions and velocities at the same time.
     // Check for root crossings.
