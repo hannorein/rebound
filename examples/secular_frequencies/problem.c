@@ -1,19 +1,9 @@
 /**
- * Outer Solar System
+ * Secular Frequencies
  *
- * This example uses the IAS15 integrator
- * to integrate the outer planets of the solar system. The initial 
- * conditions are taken from Applegate et al 1986. Pluto is a test
- * particle. This example is a good starting point for any long term orbit
- * integrations.
- *
- * You probably want to turn off the visualization for any serious runs.
- * Go to the makefile and set `OPENGL=0`. 
- *
- * The example also works with the WHFAST symplectic integrator. We turn
- * off safe-mode to allow fast and accurate simulations with the symplectic
- * corrector. If an output is required, you need to call reb_simulation_synchronize()
- * before accessing the particle structure.
+ * This example integrates the outer Solar System and then performs a 
+ * frequency analysis using the Frequency Modified Fourier Transform
+ * to determine the secular frequencies (g-modes).
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,29 +39,12 @@ double ss_mass[6] =
      0.0  // Pluto
 };
 
-double tmax = 7.3e8;
-
-void heartbeat(struct reb_simulation* const r);
-
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
-    
-    // This allows you to connect to the simulation using
-    // a web browser by pointing it to http://localhost:1234
-    reb_simulation_start_server(r, 1234);
-
-    // Setup constants
     const double k = 0.01720209895; // Gaussian constant
-    r->dt = 40;                     // in days
+    r->dt = 120;                    // Timestep is 120 days.
     r->G = k * k;                   // These are the same units as used by the mercury6 code.
-    r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call reb_simulation_synchronize() before outputs.
-    r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
-
-    // Setup callbacks:
-    r->heartbeat = heartbeat;
-    r->force_is_velocity_dependent = 0; // Force only depends on positions.
     r->integrator = REB_INTEGRATOR_WHFAST;
-    //r->integrator    = REB_INTEGRATOR_IAS15;
 
     // Initial conditions
     for (int i = 0; i < 6; i++) {
@@ -87,24 +60,46 @@ int main(int argc, char* argv[]) {
     }
 
     reb_simulation_move_to_com(r);
-
-    r->N_active = r->N - 1; // Pluto is treated as a test-particle.
-
-    double e_initial = reb_simulation_energy(r);
-
+    
+    int Nsamples = 2048; // Number of samples. Must be a power of two.
+                         // Choose a larger number for better accuracy, e.g. 32768.
+    double* inp = malloc(sizeof(double)*2*Nsamples);
     // Start integration
-    reb_simulation_integrate(r, INFINITY);  // Runs forever
-    //reb_simulation_integrate(r, tmax);      // Integrates only to tmax
+    for (int i=0; i<Nsamples; i++){
+        // Integrate for 1000 steps (120000 days)
+        reb_simulation_steps(r, 1000); 
+        // Calculate orbital elements of Jupiter
+        struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[1], r->particles[0]);
+        // Store complex eccentricity in array
+        inp[i*2+0] = o.e*cos(o.pomega);
+        inp[i*2+1] = o.e*sin(o.pomega);
+    }
 
-    double e_final = reb_simulation_energy(r);
-    printf("\nDone. Final time: %.4f. Relative energy error: %e\n", r->t, fabs((e_final - e_initial) / e_initial));
+    // Perform frequency analysis
+    int nfreq = 5;
+    double datasep = 120000.0/365.25*2.0*M_PI;  // sampling interval in units of year/2pi
+    double minfreq = 60.0/1296000.0*datasep;    // min/max frequenxy 60"/year 
+    double* out = malloc(sizeof(double)*3*nfreq);
+    // The next command performs the actual Frequency Modified Fourier Transform (FMFT). 
+    // Other options are MFT (faster) and FMFT2 (more accurate). 
+    // See Sidlichovsky and Nesvorny (1996) for more details: 
+    //     https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
+    int error = reb_frequency_analysis(out, nfreq, -minfreq, minfreq, REB_FREQUENCY_ANALYSIS_FMFT, inp, Nsamples);
+    if (error){
+        printf("An error occured during the frequency analysis.\n");
+    }
+    
+    // Output the nfreq most dominate modes
+    for (int i=0; i<nfreq; i++){
+        double nu = out[0*nfreq+i]*1296000.0/datasep; // frequency in "/year
+        double A = out[1*nfreq+i];                    // amplitude error
+        double phi = out[2*nfreq+i]/M_PI*180.0;       // phase in deg
+        printf("nu = %5.2f\"/yr  A = %0.6f  phi = %5.1f°\n", nu, A, phi);
+    }
 
     // Cleanup
+    free(out);
+    free(inp);
     reb_simulation_free(r);
 }
 
-void heartbeat(struct reb_simulation* const r) {
-    if (reb_simulation_output_check(r, 40000000.)) {
-        reb_simulation_output_timing(r, tmax);
-    }
-}

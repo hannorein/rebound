@@ -258,6 +258,11 @@ struct reb_integrator_sei {
     double tandtz;      // Cached tan(), z axis
 };
 
+// Leapfrog Integrator
+struct reb_integrator_leapfrog {
+    unsigned int order;
+};
+
 // TRACE (Lu Hernandez & Rein 2024)
 struct reb_integrator_trace {
     int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
@@ -424,6 +429,14 @@ enum REB_EOS_TYPE {
     REB_EOS_PLF7_6_4= 0x06,
     REB_EOS_PMLF4 = 0x07,
     REB_EOS_PMLF6 = 0x08,
+};
+
+// Available return values for collision resolve functions
+enum REB_COLLISION_RESOLVE_OUTCOME {
+    REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE = 0,
+    REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1 = 1,
+    REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2 = 2,
+    REB_COLLISION_RESOLVE_OUTCOME_REMOVE_BOTH = 3,
 };
 
 // Embedded Operator Splitting Integrator (Rein 2020)
@@ -641,6 +654,7 @@ struct reb_simulation {
 
     // Datastructures for integrators
     struct reb_integrator_sei ri_sei;               // The SEI struct 
+    struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_saba ri_saba;             // The SABA struct 
@@ -664,7 +678,7 @@ struct reb_simulation {
     void (*heartbeat) (struct reb_simulation* r);                           // Executed at each timestep once. Use this to do extra output/work during a simulation.
     int (*key_callback) (struct reb_simulation* r, int key);                // Used when SERVER or OPENGL visualization is on. Gets called after completed timestep and if a key has been pressed. Return 1 if you want to skip default key commands.
     double (*coefficient_of_restitution) (const struct reb_simulation* const r, double v);  // Allows for a velocity dependent coefficient of restitution (used for ring simulations)
-    int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);        // Determines what happens when two particles collide.
+    enum REB_COLLISION_RESOLVE_OUTCOME (*collision_resolve) (struct reb_simulation* const r, struct reb_collision);        // Determines what happens when two particles collide.
     void (*free_particle_ap) (struct reb_particle* p);                      // Used by REBOUNDx.
     void (*extras_cleanup) (struct reb_simulation* r);                      // Used by REBOUNDx.
     void* extras;                                                           // Pointer to link to any additional (optional) libraries, e.g., REBOUNDx, ASSIST.
@@ -859,9 +873,9 @@ DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r
 
 // Built in collision resolve functions
 
-DLLEXPORT int reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c); // halts a simulation when a collision occurs
-DLLEXPORT int reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
-DLLEXPORT int reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
+DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c); // halts a simulation when a collision occurs
+DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
+DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 
 
 // Random sampling - These functions only use the simulation object for a seed. If r=NULL time and PID are used as a seed.
@@ -1106,6 +1120,14 @@ DLLEXPORT struct reb_particle reb_particle_derivative_omega_f(double G, struct r
 DLLEXPORT struct reb_particle reb_particle_derivative_m_omega(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_m_f(double G, struct reb_particle primary, struct reb_particle po);
 
+// Functions for Frequency Analysis, MFT, FMFT
+enum REB_FREQUENCY_ANALYSIS_TYPE {
+    REB_FREQUENCY_ANALYSIS_MFT = 0,
+    REB_FREQUENCY_ANALYSIS_FMFT = 1,
+    REB_FREQUENCY_ANALYSIS_FMFT2 = 2,
+};
+// Returns 0 on success
+DLLEXPORT int reb_frequency_analysis(double *output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata);
 
 // Functions to convert between coordinate systems
 
@@ -1369,7 +1391,7 @@ DLLEXPORT int reb_simulation_get_next_message(struct reb_simulation* const r, ch
 DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contraction are enabled. 0 otherwise.
 DLLEXPORT size_t reb_simulation_struct_size();
 DLLEXPORT char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2); // Return the difference between two simulations as a human readable difference. Returned pointer needs to be freed.
-DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, int (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python 
+DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python 
 DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // NULL pointers will not be set.
 DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
 DLLEXPORT void reb_simulation_output_free_stream(char* buf);
@@ -1406,6 +1428,9 @@ DLLEXPORT void reb_particles_transform_barycentric_to_inertial_pos(struct reb_pa
 DLLEXPORT void reb_particles_transform_barycentric_to_inertial_posvel(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
 DLLEXPORT void reb_particles_transform_inertial_to_barycentric_acc(const struct reb_particle* const particles, struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
 DLLEXPORT void reb_particles_transform_barycentric_to_inertial_acc(struct reb_particle* const particles, const struct reb_particle* const p_b, const unsigned int N, const unsigned int N_active);
+
+// Potentially useful API functions
+DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
 
 // Temporary. Function declarations needed by REBOUNDx 
 DLLEXPORT void reb_integrator_ias15_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator

@@ -188,6 +188,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     // 396, 397 used to be max_radius0 and max_radius1
     { 398, REB_UINT,        "ri_whfast512.N_systems",       offsetof(struct reb_simulation, ri_whfast512.N_systems), 0, 0},
     { 399, REB_PARTICLE4,   "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
+    { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0},
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}

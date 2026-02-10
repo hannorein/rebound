@@ -12,6 +12,7 @@ include src/integrator_janus.c
 include src/integrator.c
 include src/gravity.c
 include src/server.c
+include src/frequency_analysis.c
 include src/collision.c
 include src/boundary.c
 include src/binarydiff.c
@@ -42,6 +43,7 @@ include src/collision.h
 include src/boundary.h
 include src/gravity.h
 include src/server.h
+include src/frequency_analysis.h
 include src/tree.h
 include src/tree.c
 include src/tools.h

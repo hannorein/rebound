@@ -69,14 +69,17 @@ void usleep(__int64 usec);
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_N_max_messages = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "4.4.10";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "4.5.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r);
+static void reb_run_heartbeat(struct reb_simulation* const r);
 
 void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
+    reb_run_heartbeat(r);
     for (unsigned int i=0;i<N_steps;i++){
         reb_simulation_step(r);
+        reb_run_heartbeat(r);
     }
 }
 void reb_simulation_step(struct reb_simulation* const r){
@@ -588,6 +591,9 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_sei.OMEGAZ    = -1;
     r->ri_sei.lastdt    = 0;
 
+    // ********** LEAPFROG
+    r->ri_leapfrog.order = 2;
+
     // ********** MERCURIUS
     r->ri_mercurius.mode = 0;
     r->ri_mercurius.safe_mode = 1;
@@ -738,7 +744,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
 }
 
 
-void reb_run_heartbeat(struct reb_simulation* const r){
+static void reb_run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->exit_max_distance){
         // Check for escaping particles

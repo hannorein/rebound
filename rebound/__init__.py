@@ -97,5 +97,6 @@ from .orbit_hierarchy import OrbitHierarchy
 from .particle import Particle
 from .plotting import OrbitPlot, OrbitPlotSet
 from .simulationarchive import Simulationarchive
+from .frequency_analysis import frequency_analysis
 
 __all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Simulationarchive", "Simulation", "Orbit", "OrbitHierarchy" "OrbitPlot", "OrbitPlotSet", "Particle", "GenericError", "Encounter", "Collision", "CollisionS", "Escape", "NoParticles", "ParticleNotFound", "Variation", "clibrebound", "mod2pi", "M_to_f", "E_to_f", "M_to_E", "ODE", "Rotation", "Vec3d", "spherical_to_xyz", "xyz_to_spherical"]

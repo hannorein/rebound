@@ -27,4 +27,9 @@
 void reb_integrator_leapfrog_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_leapfrog_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_leapfrog_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
+void reb_integrator_leapfrog_reset(struct reb_simulation* r);
+// Constants also used by EOS.
+extern const double reb_integrator_leapfrog_lf4_a;
+extern const double reb_integrator_leapfrog_lf6_a[5];
+extern const double reb_integrator_leapfrog_lf8_a[9];
 #endif

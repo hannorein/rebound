@@ -1377,7 +1377,7 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
             if (vc->order == 1){
                 for (int w=0;w<r->N_var_config;w++){
                     struct reb_variational_configuration* wc = &(r->var_config[w]);
-                    if (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index){
+                    if (wc->order == 2 && (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index)){
                         if (!(r->var_rescale_warning & 4)){
                             r->var_rescale_warning |= 4;
                             reb_simulation_warning(r, "Rescaling a set of variational equations of order 1 which are being used by a set of variational equations of order 2. Order 2 equations will no longer be valid.");

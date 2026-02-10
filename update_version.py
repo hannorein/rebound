@@ -12,9 +12,9 @@ with open("README.md") as f:
 
 with open("README.md","w") as f:
     for i in range(0,len(readme)):
-        # [![Version](https://img.shields.io/badge/rebound-v3.17.0-green.svg?style=flat)](https://rebound.readthedocs.org)
+        # [![Version](https://img.shields.io/badge/rebound-v4.4.11-green.svg?style=flat)](https://rebound.hanno-rein.de)
         if "![Version]" in readme[i]:
-            readme[i] = "[![Version](https://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat)](https://rebound.readthedocs.org)\n"
+            readme[i] = "[![Version](https://img.shields.io/badge/rebound-v"+reboundversion+"-green.svg?style=flat)](https://rebound.hanno-rein.de)\n"
         f.write(readme[i])
 
 with open("src/rebound.c") as f:

@@ -16,7 +16,7 @@
 #include <math.h>
 #include "rebound.h"
 
-int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
+enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 void heartbeat(struct reb_simulation* const r);
@@ -107,7 +107,7 @@ void heartbeat(struct reb_simulation* const r){
 }
 
 // Function written by Akihiko Fujii
-int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c){
     struct reb_particle* particles = r->particles;
     struct reb_particle p1 = particles[c.p1];
     struct reb_particle p2 = particles[c.p2];
@@ -187,6 +187,6 @@ int collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_c
 
     particles[c.p1].last_collision = r->t;
 
-    return 0; // Do not remove any particle
+    return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // Do not remove any particle
 }
 

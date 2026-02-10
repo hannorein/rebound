@@ -227,9 +227,9 @@ To keep the documentation concise, variables which are only intended for interna
 ## Collisions
 
 
-`#!c int (*collision_resolve) (struct reb_simulation* const r, struct reb_collision)` 
+`#!c enum REB_COLLISION_RESOLVE_OUTCOME (*collision_resolve) (struct reb_simulation* const r, struct reb_collision)` 
 :   This is a function pointer which determines how a collision is resolved. By default, it is NULL, assuming hard sphere model.
-    A return value of 0 indicates that both particles remain in the simulation. A return value of 1 (2) indicates that particle 1 (2) should be removed from the simulation. A return value of 3 indicates that both particles should be removed from the simulation. 
+    A return value of type `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE` (=0) indicates that both particles remain in the simulation. A return value of `REB_COLLSION_RESOLVE_OUTCOME_REMOVE_P1`/`REB_COLLSION_RESOLVE_OUTCOME_REMOVE_P2` (=1/2) indicates that particle 1/2 should be removed from the simulation. A return value of `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_BOTH` (=3) indicates that both particles should be removed from the simulation. 
     See [the discussion on collisions](collisions.md#resolving-collisions) for more information on how to use this function pointer. 
 
 `#!c int track_energy_offset`   

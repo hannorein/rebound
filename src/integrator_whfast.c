@@ -176,7 +176,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
         const double sqrt_beta = sqrt(beta);
         invperiod = sqrt_beta*beta/(2.*M_PI*M);
         X_per_period = 2.*M_PI/sqrt_beta;
-        if (fabs(_dt)*invperiod>1. && r->ri_whfast.timestep_warning == 0){
+        if (fabs(_dt)*invperiod>1. && r && r->ri_whfast.timestep_warning == 0){
             // Ignoring const qualifiers. This warning should not have any effect on
             // other parts of the code, nor is it vital to show it.
             ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;
@@ -308,7 +308,7 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
     p_j[i].vz += fd*p1.z + gd*p1.vz;
 
     //Variations
-    for (int v=0;v<r->N_var_config;v++){
+    for (int v=0;r && v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
         const int index = vc.index;
         stiefel_Gs(Gs, beta, X);    // Recalculate (to get Gs[4] and Gs[5])
@@ -510,11 +510,18 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
     double eta = m0;
     switch (coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
-#pragma omp parallel for 
+#pragma omp parallel for private(eta)
             for (int i=1;i<(int)N_real;i++){
+#ifdef OPENMP
+                eta = m0;
+                for (int j=1;j<MIN(i,(int)N_active);j++){
+                    eta += p_j[j].m;
+                }
+#else // OPENMP
                 if (i<N_active){
                     eta += p_j[i].m;
                 }
+#endif // OPENMP
                 reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
             }
             break;
@@ -525,7 +532,7 @@ void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
-#pragma omp parallel for 
+#pragma omp parallel for private(eta)
             for (int i=1;i<(int)N_real;i++){
                 if (i<N_active){
                     eta = m0+p_j[i].m;
@@ -787,13 +794,6 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
         }
     }
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-#if defined(_OPENMP)
-    if (ri_whfast->coordinates!=REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC
-            && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_WHDS){
-        reb_simulation_error(r,"WHFast when used with OpenMP requires REB_WHFAST_COORDINATES_WHDS or REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC\n");
-        return 1; // Error
-    }
-#endif
     if (r->N_var_config>0 && ri_whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
         reb_simulation_error(r, "Variational particles are only compatible with Jacobi coordinates.");
         return 1; // Error

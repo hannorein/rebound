@@ -4,6 +4,23 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.5.1
+* Added leapfrog integrators of order 4, 6, and 8. Order can be set with `r->ri_leapfrog->order`.
+* Heartbeat function is now also called when using `reb_simulation_steps()`.
+* OrbitPlot supports more colours. 
+* Fixed an alignment issue when comparing binary snapshots which could have triggered a segfault.
+
+### Version 4.5.0
+* Added support for (Frequency) Modified Fourier Transforms. Heavily based on David Nesvorny's code. The new functions are `reb_frequency_analysis()` in C and `rebound.frequency_analysis()` in python. For usage, see C examples `secular_frequencies` and `frequency_analysis` as well as the iPython notebook `FrequencyAnalysis`. 
+* Support for Jacobi coordinates added when using WHFast with OpenMP.
+* Allow negative periods when initializing hyperbolic orbits.
+
+### Version 4.4.11
+* The collision resolve function now returns a type `enum REB_COLLISION_RESOLVE_OUTCOME`. The actual integer values remain unchanged.
+* Bug in TRACE was fixed.
+* Convergence check for M_to_E function.
+* New API example that shows how to use the Kepler solver without a REBOUND simulation. Updated other examples.
+
 ### Version 4.4.10
 * Version bump to rerun github workflows for pypi uploads
 

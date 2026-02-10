@@ -57,6 +57,7 @@ nav:
         - c_examples/kozai.md
         - c_examples/eccentric_orbit.md
         - c_examples/restricted_threebody.md
+        - c_examples/api.md
         - ipython_examples/Horizons.ipynb
         - ipython_examples/Starman.ipynb
         - ipython_examples/RadialVelocity.ipynb
@@ -73,6 +74,9 @@ nav:
         - ipython_examples/OrbitalElements.ipynb
         - c_examples/rotations.md
         - ipython_examples/Rotations.ipynb
+        - ipython_examples/FrequencyAnalysis.ipynb
+        - c_examples/secular_frequencies.md
+        - c_examples/frequency_analysis.md
       - "Small bodies":
         - c_examples/planetesimal_disk_migration.md
         - c_examples/solar_system_with_testparticles.md

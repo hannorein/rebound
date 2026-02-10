@@ -56,7 +56,7 @@ double eps_realistic(const struct reb_simulation* const r, double v, double x){
 
 // A custom collision resolve routine. Needed because coefficient of resitution 
 // depends on position and because of extra logging.
-int collision_resolve(struct reb_simulation* const r, struct reb_collision c){
+enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve(struct reb_simulation* const r, struct reb_collision c){
 	struct reb_particle* const particles = r->particles;
 	struct reb_particle p1 = particles[c.p1];
 	struct reb_particle p2 = particles[c.p2];
@@ -149,7 +149,7 @@ int collision_resolve(struct reb_simulation* const r, struct reb_collision c){
         log->plog[i] += -fabs(x21)*(oldvyouter-particles[c.p2].vy) * p2.m;
 	}
 	log->Nlog[i]++;
-    return 0;
+    return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE;
 }
 
 double midplane_fillingfactor(const struct reb_simulation* const r){

@@ -194,22 +194,22 @@ The following example shows how to set up a hard-sphere collision resolve functi
 ### Custom function
 You can write your own collision resolve function. 
 In your function, you can update the properties of the particles involved in the collision.
-The return value of your function determines if a particle gets removed.
+The return value of your function (of type `enum REB_COLLISION_RESOLVE_OUTCOME`) determines if a particle gets removed.
 
-- `0`: don't remove either particle from the simulation
-- `1`: remove the first particle (`p1`) from the simulation
-- `2`: remove the second particle (`p2`) from the simulation
-- `3`: remove both particles from the simulation
+- `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE` or `0`: don't remove either particle from the simulation
+- `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1` or `1`: remove the first particle (`p1`) from the simulation
+- `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2` or `2`: remove the second particle (`p2`) from the simulation
+- `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_BOTH` or `3`: remove both particles from the simulation
 
 Here is a short example on how to write a simple custom collision resolve function:
 
 === "C"
     ```c
-    int collision_print_only(struct reb_simulation* const r, struct reb_collision c){
+    enum REB_COLLISION_RESOLVE_OUTCOME collision_print_only(struct reb_simulation* const r, struct reb_collision c){
         printf("%f\t", r->p);
         printf("%f\t", r->particles[c.p1].x);    // x position of particle 1
         printf("%f\n", r->particles[c.p2].x);    // x position of particle 2
-        return 0; // Don't remove either particle
+        return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // Don't remove either particle
     }
 
     int main(int argc, char* argv[]){

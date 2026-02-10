@@ -418,13 +418,9 @@ def get_color(color):
     import matplotlib.colors as mplcolors
    
     try:
-        hexcolor = mplcolors.cnames[color]
+        return mplcolors.to_rgb(color)
     except KeyError:
         raise AttributeError("Color not recognized in matplotlib.")
-
-    hexcolor = hexcolor.lstrip('#')
-    lv = len(hexcolor)
-    return tuple(int(hexcolor[i:i + lv // 3], 16)/255. for i in range(0, lv, lv // 3)) # tuple of rgb values
 
 #def OrbitPlotAddFancyStars(ax,lw,slices=1.):
 #    import numpy as np
