@@ -55,12 +55,8 @@ static void reb_calculate_acceleration_for_particle(const struct reb_simulation*
 /**
  * Main Gravity Routine
  */
-void reb_calculate_acceleration(struct reb_simulation* r){
-    if (r->integrator != REB_INTEGRATOR_MERCURIUS && r->gravity == REB_GRAVITY_MERCURIUS){
-        reb_simulation_warning(r,"You are using the Mercurius gravity routine with a non-Mercurius integrator. This will probably lead to unexpected behaviour. REBOUND is now setting the gravity routine back to rEB_GRAVITY_BASIC. To avoid this warning message, consider manually setting the gravity routine after changing integrators.");
-        r->gravity = REB_GRAVITY_BASIC;
+void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 
-    }
     struct reb_particle* const particles = r->particles;
     const int N = r->N;
     const int N_active = r->N_active;
@@ -993,7 +989,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 
 }
 
-void reb_calculate_acceleration_var(struct reb_simulation* r){
+void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     const double G = r->G;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;

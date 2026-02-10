@@ -1203,7 +1203,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
             p_j[index].z += r->dt/2.*p_j[index].vz;
             reb_particles_transform_jacobi_to_inertial_posvel(particles_var1, p_j+index, particles, N_real, N_active);
             if (r->calculate_megno){
-                reb_calculate_acceleration_var(r);
+                reb_simulation_update_acceleration_gravity_var(r);
                 const double dx = particles[0].x - particles[1].x;
                 const double dy = particles[0].y - particles[1].y;
                 const double dz = particles[0].z - particles[1].z;

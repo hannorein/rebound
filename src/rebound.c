@@ -98,47 +98,8 @@ void reb_simulation_step(struct reb_simulation* const r){
     reb_integrator_part1(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
 
-    // Update and simplify tree. 
-    // Prepare particles for distribution to other nodes. 
-    // This function also creates the tree if called for the first time.
-    if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-        // Check for root crossings.
-        PROFILING_START();
-        reb_boundary_check(r);     
-        PROFILING_STOP(PROFILING_CAT_BOUNDARY);
-
-        // Update tree (this will remove particles which left the box)
-        PROFILING_START();
-        reb_simulation_update_tree(r);          
-        PROFILING_STOP(PROFILING_CAT_GRAVITY);
-    }
-
-    PROFILING_START();
-#ifdef MPI
-    // Distribute particles and add newly received particles to tree.
-    reb_communication_mpi_distribute_particles(r);
-#endif // MPI
-
-    if (r->tree_root!=NULL && r->gravity==REB_GRAVITY_TREE){
-        // Update center of mass and quadrupole moments in tree in preparation of force calculation.
-        reb_simulation_update_tree_gravity_data(r); 
-#ifdef MPI
-        // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-        reb_tree_prepare_essential_tree_for_gravity(r);
-
-        // Transfer essential tree and particles needed for collisions.
-        reb_communication_mpi_distribute_essential_tree_for_gravity(r);
-#endif // MPI
-    }
-
     // Calculate accelerations. 
-    reb_calculate_acceleration(r);
-    if (r->N_var){
-        reb_calculate_acceleration_var(r);
-    }
-    // Calculate non-gravity accelerations. 
-    if (r->additional_forces) r->additional_forces(r);
-    PROFILING_STOP(PROFILING_CAT_GRAVITY);
+    reb_simulation_update_acceleration(r);
 
     // A 'DKD'-like integrator will do the 'KD' part.
     PROFILING_START();
