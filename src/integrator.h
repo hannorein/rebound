@@ -43,13 +43,4 @@ void reb_integrator_part1(struct reb_simulation* r);
  */
 void reb_integrator_part2(struct reb_simulation* r);
 
-/** 
- * @brief This function is used to initialize constants in some integrators. 
- * @details The function doesn't need to be called. Integrators will call it
- * from within the normal reb_integrator_part1() function. It is sometimes
- * called before an integration step is performed to ensure variables are 
- * set before a binary file is outputted.
- */
-void reb_integrator_init(struct reb_simulation* r);
-
 #endif

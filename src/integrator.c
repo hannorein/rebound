@@ -203,16 +203,6 @@ void reb_simulation_synchronize(struct reb_simulation* r){
     }
 }
 
-void reb_integrator_init(struct reb_simulation* r){
-    switch(r->integrator){
-        case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_init(r);
-            break;
-        default:
-            break;
-    }
-}
-
 void reb_simulation_reset_integrator(struct reb_simulation* r){
     r->integrator = REB_INTEGRATOR_IAS15;
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
