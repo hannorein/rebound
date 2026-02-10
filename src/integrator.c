@@ -238,7 +238,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
     // This should probably go elsewhere
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
     PROFILING_START();
-    
+
     // Update and simplify tree. 
     // Prepare particles for distribution to other nodes. 
     // This function also creates the tree if called for the first time.
