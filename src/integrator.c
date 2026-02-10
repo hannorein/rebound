@@ -271,11 +271,6 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
         reb_communication_mpi_distribute_essential_tree_for_gravity(r);
 #endif // MPI
     }
-    // TODO: This warning needs to go into MERCURIUS file
-    if (r->integrator != REB_INTEGRATOR_MERCURIUS && r->gravity == REB_GRAVITY_MERCURIUS){
-        reb_simulation_warning(r,"You are using the Mercurius gravity routine with a non-Mercurius integrator. This will probably lead to unexpected behaviour. REBOUND is now setting the gravity routine back to rEB_GRAVITY_BASIC. To avoid this warning message, consider manually setting the gravity routine after changing integrators.");
-        r->gravity = REB_GRAVITY_BASIC;
-    }
 
     /***********************************************************
      * GRAVITY
