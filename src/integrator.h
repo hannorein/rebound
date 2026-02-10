@@ -27,20 +27,9 @@
 struct reb_simulation;
 
 /**
- * @brief The first half of the integrator step.
- * @details This function is called at the beginning of the timestep. It 
- * advances the positions by 1/2 timestep.
+ * Perform one full timestep with the selected integrator.
  */
-void reb_integrator_part1(struct reb_simulation* r);
+void reb_integrator_step(struct reb_simulation* r);
 
-/**
- * @brief The second half of the integrator step.
- * @details This function is called after gravitational (and non-gravitational) 
- * forces for each particle have been calculated. It advances the 
- * velocity by 1 timestep and the positions by 1/2 timestep.
- * At the end of this function, the positions and velocities are in
- * sync which is needed for collision detection.
- */
-void reb_integrator_part2(struct reb_simulation* r);
 
 #endif

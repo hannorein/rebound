@@ -530,17 +530,12 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
     reb_integrator_eos_postprocessor(r, dt, reos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
 }
 
-void reb_integrator_eos_part1(struct reb_simulation* r){
+void reb_integrator_eos_step(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC){
         reb_simulation_warning(r,"EOS only supports the BASIC gravity routine.");
     }
-    // No force calculation needed between part1 and part2 of the integrator. 
-    // eos_interaction() routine will set r->gravity to BASIC later. 
     r->gravity = REB_GRAVITY_NONE;
 
-}
-
-void reb_integrator_eos_part2(struct reb_simulation* const r){
     struct reb_integrator_eos* const reos = &(r->ri_eos);
     const double dt = r->dt;
 

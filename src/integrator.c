@@ -47,80 +47,40 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
-void reb_integrator_part1(struct reb_simulation* r){
+void reb_integrator_step(struct reb_simulation* r){
     switch(r->integrator){
         case REB_INTEGRATOR_IAS15:
-            reb_integrator_ias15_part1(r);
+            reb_integrator_ias15_step(r);
             break;
         case REB_INTEGRATOR_LEAPFROG:
-            reb_integrator_leapfrog_part1(r);
+            reb_integrator_leapfrog_step(r);
             break;
         case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_part1(r);
+            reb_integrator_sei_step(r);
             break;
         case REB_INTEGRATOR_WHFAST:
-            reb_integrator_whfast_part1(r);
+            reb_integrator_whfast_step(r);
             break;
         case REB_INTEGRATOR_WHFAST512:
-            reb_integrator_whfast512_part1(r);
+            reb_integrator_whfast512_step(r);
             break;
         case REB_INTEGRATOR_SABA:
-            reb_integrator_saba_part1(r);
+            reb_integrator_saba_step(r);
             break;
         case REB_INTEGRATOR_MERCURIUS:
-            reb_integrator_mercurius_part1(r);
+            reb_integrator_mercurius_step(r);
             break;
         case REB_INTEGRATOR_JANUS:
-            reb_integrator_janus_part1(r);
+            reb_integrator_janus_step(r);
             break;
         case REB_INTEGRATOR_EOS:
-            reb_integrator_eos_part1(r);
+            reb_integrator_eos_step(r);
             break;
         case REB_INTEGRATOR_BS:
-            reb_integrator_bs_part1(r);
+            reb_integrator_bs_step(r);
             break;
         case REB_INTEGRATOR_TRACE:
-            reb_integrator_trace_part1(r);
-            break;
-        default:
-            break;
-    }
-}
-
-void reb_integrator_part2(struct reb_simulation* r){
-    switch(r->integrator){
-        case REB_INTEGRATOR_IAS15:
-            reb_integrator_ias15_part2(r);
-            break;
-        case REB_INTEGRATOR_LEAPFROG:
-            reb_integrator_leapfrog_part2(r);
-            break;
-        case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_part2(r);
-            break;
-        case REB_INTEGRATOR_WHFAST:
-            reb_integrator_whfast_part2(r);
-            break;
-        case REB_INTEGRATOR_WHFAST512:
-            reb_integrator_whfast512_part2(r);
-            break;
-        case REB_INTEGRATOR_SABA:
-            reb_integrator_saba_part2(r);
-            break;
-        case REB_INTEGRATOR_MERCURIUS:
-            reb_integrator_mercurius_part2(r);
-            break;
-        case REB_INTEGRATOR_JANUS:
-            reb_integrator_janus_part2(r);
-            break;
-        case REB_INTEGRATOR_EOS:
-            reb_integrator_eos_part2(r);
-            break;
-        case REB_INTEGRATOR_BS:
-            reb_integrator_bs_part2(r);
-            break;
-        case REB_INTEGRATOR_TRACE:
-            reb_integrator_trace_part2(r);
+            reb_integrator_trace_step(r);
             break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
@@ -155,7 +115,7 @@ void reb_integrator_part2(struct reb_simulation* r){
                 }
                 dt *= forward;
             }
-            int success = reb_integrator_bs_step(r, dt);
+            int success = reb_integrator_bs_step_odes(r, dt);
             if (success){
                 t += dt;
             }

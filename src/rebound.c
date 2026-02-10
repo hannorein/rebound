@@ -96,13 +96,7 @@ void reb_simulation_step(struct reb_simulation* const r){
     }
 
     PROFILING_START();
-    reb_integrator_part1(r);
-
-    // Calculate accelerations. 
-    reb_simulation_update_acceleration(r);
-
-    // A 'DKD'-like integrator will do the 'KD' part.
-    reb_integrator_part2(r);
+    reb_integrator_step(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
 
     if (r->post_timestep_modifications){

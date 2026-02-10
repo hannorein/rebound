@@ -162,7 +162,7 @@ static void kick(struct reb_simulation* r, double dt, double scale_vel){
     }
 }
 
-void reb_integrator_janus_part1(struct reb_simulation* r){
+void reb_integrator_janus_step(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
     struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
@@ -204,36 +204,8 @@ void reb_integrator_janus_part1(struct reb_simulation* r){
 
     drift(r,gg(s,0)*dt/2.,scale_pos,scale_vel);
     to_double(r->particles, r->ri_janus.p_int, r->N, scale_pos, scale_vel); 
-}
-
-void reb_integrator_janus_part2(struct reb_simulation* r){
-    struct reb_integrator_janus* ri_janus = &(r->ri_janus);
-    const unsigned int N = r->N;
-    const double scale_vel  = ri_janus->scale_vel;
-    const double scale_pos  = ri_janus->scale_pos;
-    const double dt = r->dt;
-
-    struct reb_janus_scheme s;
-    switch (ri_janus->order){
-        case 2:
-            s = s1odr2;
-            break;
-        case 4:
-            s = s5odr4;
-            break;
-        case 6:
-            s = s9odr6a;
-            break;
-        case 8:
-            s = s15odr8;
-            break;
-        case 10:
-            s = s33odr10c;
-            break;
-        default:
-            s = s1odr2;
-            reb_simulation_error(r,"Order not supported in JANUS.");
-    }
+    
+    reb_simulation_update_acceleration(r);    
 
     kick(r,gg(s,0)*dt, scale_vel);
     for (unsigned int i=1; i<s.stages; i++){

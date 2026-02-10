@@ -61,7 +61,7 @@ static void kick(struct reb_simulation* r, double dt){
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void reb_integrator_leapfrog_part1(struct reb_simulation* r){
+void reb_integrator_leapfrog_step(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
     const double dt = r->dt;
     switch (r->ri_leapfrog.order){
@@ -81,10 +81,9 @@ void reb_integrator_leapfrog_part1(struct reb_simulation* r){
             reb_simulation_error(r, "Leapfrog order not supported.");
             return;
     }
-}
 
-void reb_integrator_leapfrog_part2(struct reb_simulation* r){
-    const double dt = r->dt;
+    reb_simulation_update_acceleration(r);
+
     switch (r->ri_leapfrog.order){
         case 2:
             kick(r, dt);

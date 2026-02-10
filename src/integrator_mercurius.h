@@ -24,8 +24,7 @@
  */
 #ifndef _INTEGRATOR_MERCURIUS_H
 #define _INTEGRATOR_MERCURIUS_H
-void reb_integrator_mercurius_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_mercurius_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+void reb_integrator_mercurius_step(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
 void reb_integrator_mercurius_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation

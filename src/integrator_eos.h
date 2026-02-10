@@ -24,8 +24,7 @@
  */
 #ifndef _INTEGRATOR_EOS_H
 #define _INTEGRATOR_EOS_H
-void reb_integrator_eos_part1(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_eos_part2(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
+void reb_integrator_eos_step(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_eos_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
 void reb_integrator_eos_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 #endif

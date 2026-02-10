@@ -35,6 +35,7 @@
 #include "integrator_trace.h"
 #include "integrator_whfast.h"
 #include "integrator_bs.h"
+#include "integrator_ias15.h"
 #include "collision.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
@@ -439,7 +440,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 y[i*6+5] = p.vz;
             }
 
-            int success = reb_integrator_bs_step(r, dt);
+            int success = reb_integrator_bs_step_odes(r, dt);
             if (success){
                 r->t += dt;
             }
@@ -514,40 +515,6 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
     reb_integrator_trace_bs_step(r, _dt);
 }
 
-
-void reb_integrator_trace_part1(struct reb_simulation* r){
-    // Do memory management and consistency checks in part1.
-    // Actual integration is happening in part2.
-    struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
-    const int N = r->N;
-
-    if (r->N_var_config){
-        reb_simulation_warning(r,"TRACE does not work with variational equations.");
-    }
-
-    if (ri_trace->N_allocated<N){
-        // These arrays are only used within one timestep.
-        // Can be recreated without loosing bit-wise reproducibility.
-        ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
-        ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
-        ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
-        ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
-        ri_trace->N_allocated = N;
-    }
-
-    // Calculate collisions only with DIRECT or LINE method
-    if (r->collision != REB_COLLISION_NONE && (r->collision != REB_COLLISION_DIRECT && r->collision != REB_COLLISION_LINE)){
-        reb_simulation_warning(r,"TRACE only works with a direct or line collision search.");
-    }
-
-    // Calculate gravity with special function
-    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
-        reb_simulation_warning(r,"TRACE has it's own gravity routine. Gravity routine set by the user will be ignored.");
-    }
-    r->gravity = REB_GRAVITY_TRACE;
-    ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
-
-}
 
 void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
@@ -713,7 +680,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     }
 }
 
-static void reb_integrator_trace_step(struct reb_simulation* const r){
+static void reb_integrator_trace_step_try(struct reb_simulation* const r){
     if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
         reb_integrator_trace_interaction_step(r, r->dt/2.);
         reb_integrator_trace_jump_step(r, r->dt/2.);
@@ -734,8 +701,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                 // Run default IAS15 integration
                 reb_integrator_ias15_reset(r);
                 while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
-                    reb_simulation_update_acceleration(r);
-                    reb_integrator_ias15_part2(r);
+                    reb_integrator_ias15_step(r);
                     if (r->t+r->dt >  t_needed){
                         r->dt = t_needed-r->t;
                     }
@@ -774,7 +740,7 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
                             y[i*6+5] = p.vz;
                         }
 
-                        int success = reb_integrator_bs_step(r, r->dt);
+                        int success = reb_integrator_bs_step_odes(r, r->dt);
                         if (success){
                             r->t += r->dt;
                         }
@@ -807,9 +773,38 @@ static void reb_integrator_trace_step(struct reb_simulation* const r){
     }
 }
 
-void reb_integrator_trace_part2(struct reb_simulation* const r){
+void reb_integrator_trace_step(struct reb_simulation* r){
+    // Do memory management and consistency checks
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
+
+    if (r->N_var_config){
+        reb_simulation_warning(r,"TRACE does not work with variational equations.");
+    }
+
+    if (ri_trace->N_allocated<N){
+        // These arrays are only used within one timestep.
+        // Can be recreated without loosing bit-wise reproducibility.
+        ri_trace->particles_backup       = realloc(ri_trace->particles_backup,sizeof(struct reb_particle)*N);
+        ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
+        ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
+        ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
+        ri_trace->N_allocated = N;
+    }
+
+    // Calculate collisions only with DIRECT or LINE method
+    if (r->collision != REB_COLLISION_NONE && (r->collision != REB_COLLISION_DIRECT && r->collision != REB_COLLISION_LINE)){
+        reb_simulation_warning(r,"TRACE only works with a direct or line collision search.");
+    }
+
+    // Calculate gravity with special function
+    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
+        reb_simulation_warning(r,"TRACE has it's own gravity routine. Gravity routine set by the user will be ignored.");
+    }
+    r->gravity = REB_GRAVITY_TRACE;
+    ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
+
+    reb_simulation_update_acceleration(r);
 
     reb_integrator_trace_inertial_to_dh(r);
 
@@ -823,7 +818,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
     reb_integrator_trace_pre_ts_check(r);
 
     // Attempt one step. 
-    reb_integrator_trace_step(r);
+    reb_integrator_trace_step_try(r);
 
     // We alaways accept the step if a collision occured as it is impossible to undo the collision.
     if (!ri_trace->force_accept){
@@ -834,7 +829,7 @@ void reb_integrator_trace_part2(struct reb_simulation* const r){
             memcpy(r->particles, ri_trace->particles_backup, N*sizeof(struct reb_particle));
 
             // Do step again
-            reb_integrator_trace_step(r);
+            reb_integrator_trace_step_try(r);
         }
     }
     reb_integrator_trace_dh_to_inertial(r);
