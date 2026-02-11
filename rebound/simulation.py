@@ -921,7 +921,7 @@ class Simulation(Structure):
         if particle is not None:
             if isinstance(particle, Particle):
                 if (self.gravity == "tree" or self.collision == "tree") and self.root_size <=0.:
-                    raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
+                    raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the simulation box has a finite size.")
                 if particle._sim:
                     if not self.equal_units(particle._sim.contents):
                         warnings.warn("Particle added is from a simulation that uses different units.", RuntimeWarning)

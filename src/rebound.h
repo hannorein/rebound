@@ -473,7 +473,7 @@ struct reb_integrator_janus {
     unsigned int N_allocated;
 };
 
-// Possible return values of of rebound_integrate
+// Possible return values of rebound_integrate
 enum REB_STATUS {
     // Any status less than SINGLE_STEP get incremented once every timestep until SINGLE_STEP is reached.
     REB_STATUS_SINGLE_STEP = -10, // Performing a single step, then switching to PAUSED.
@@ -1038,7 +1038,7 @@ DLLEXPORT void reb_simulation_rescale_var(struct reb_simulation* const r);
 //   Note that derivatives with respect to Cartesian coordinates are trivial and therefore not
 //   implemented as separate functions. 
 //   The following variables are supported: a, e, inc, f, omega, Omega, h, k, ix, iy and m (mass). 
-// The functions return the derivative as a particle structre. Each structure element is a derivative.
+// The functions return the derivative as a particle structure. Each structure element is a derivative.
 // The parameter po is the original particle for which the derivative is to be calculated.
 DLLEXPORT struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_h(double G, struct reb_particle primary, struct reb_particle po);

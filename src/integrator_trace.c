@@ -609,7 +609,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     ri_trace->encounter_N = 1;
 
     if (!ri_trace->current_C){
-        // Check for pericenter CE if not already triggered from pre-timstep.
+        // Check for pericenter CE if not already triggered from pre-timestep.
         for (int j = 1; j < Nactive; j++){
             if (_switch_peri(r, j)){
                 ri_trace->current_C = 1;
