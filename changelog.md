@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 4.x
 
+### Version 4.6.0
+* Merged the part1() and part2() functions of all integerators into a single step() function. Integrators are now responsible for updating accelerations when needed. Although a big change under the hood, this should not affect users.
+
 ### Version 4.5.1
 * Added leapfrog integrators of order 4, 6, and 8. Order can be set with `r->ri_leapfrog->order`.
 * Heartbeat function is now also called when using `reb_simulation_steps()`.
