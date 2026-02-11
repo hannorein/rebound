@@ -68,7 +68,7 @@ def api_request(particle, datestart, dateend, plane):
     try:
         f = urlopen(url,context=ssl_context)
     except Exception as e:
-        raise RuntimeError("An error occured while accessing NASA HORIZONS. If this is a SSL certificate issue, you can try disabling the certificate verification by setting rebound.horizons.SSL_CONTEXT = 'unverified'.") from e
+        raise RuntimeError("An error occurred while accessing NASA HORIZONS. If this is a SSL certificate issue, you can try disabling the certificate verification by setting rebound.horizons.SSL_CONTEXT = 'unverified'.") from e
 
     if "pyodide" in sys.modules:
         body = f.read()
@@ -97,7 +97,7 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
                     except:
                         continue
                 if found_match == False:
-                    raise AttributeError("An error occured while calculating the date. Use one "+" or ".join(formats) + " or JDxxxxxxx.xxxxxx")
+                    raise AttributeError("An error occurred while calculating the date. Use one "+" or ".join(formats) + " or JDxxxxxxx.xxxxxx")
     # set the cached initialization time if it's not set
     global INITDATE
     if INITDATE is None:

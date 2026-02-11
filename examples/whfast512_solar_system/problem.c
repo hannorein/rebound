@@ -113,7 +113,7 @@ double run(int use_whfast512){
     double tmax = 2.*M_PI*1e6; // 1 Myr
     int err = reb_simulation_integrate(r,  tmax);
     if (err>0){
-        printf("An error occured during the integration.\n");
+        printf("An error occurred during the integration.\n");
         exit(EXIT_FAILURE);
     }
     gettimeofday(&time_end,NULL);

@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
     r->N_ghost_y = 1;
     r->N_ghost_z = 0;
     
-    r->minimum_collision_velocity = OMEGA*0.001;  // small fraction of the shear accross a particle
+    r->minimum_collision_velocity = OMEGA*0.001;  // small fraction of the shear across a particle
 
     // Setup memory for logging.
     struct collisions_log* log= malloc(sizeof(struct collisions_log));
@@ -343,7 +343,7 @@ int main(int argc, char* argv[]) {
     
     
     
-    // Add all ring paricles
+    // Add all ring particles
     double area = 0.;
     while (log->tau> area/(r->boxsize.x*r->boxsize.y)){
         struct reb_particle pt = {0};

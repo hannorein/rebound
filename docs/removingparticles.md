@@ -17,7 +17,7 @@ You can remove all particles with the following code:
     del sim.particles
     ```
 ## Remove particle by index
-Each particle in a REBOUND simulation can be uniquely identified with its position in the `particles` array, it's **index**.
+Each particle in a REBOUND simulation can be uniquely identified with its position in the `particles` array, its **index**.
 You can remove a particle using this index as shown in the following code:
 === "C"
     ```c

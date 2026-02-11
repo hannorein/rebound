@@ -953,7 +953,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
             }else if (data->r_copy->status == REB_STATUS_USER){
                 sprintf(line, "Simulation canceled<br />");
             }else if (data->r_copy->status > 0){
-                sprintf(line, "Simulation error occured<br />");
+                sprintf(line, "Simulation error occurred<br />");
             }else if (data->r_copy->status <= REB_STATUS_SINGLE_STEP){
                 if (data->r_copy->status == REB_STATUS_SINGLE_STEP){
                     sprintf(line, "Integrating 1 step<br />");

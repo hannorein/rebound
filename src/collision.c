@@ -584,7 +584,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
         double dz = gb.z - c->z;
         double r2 = dx*dx + dy*dy + dz*dz;
         double rp  = p1_r + second_largest_radius + 0.86602540378443*c->w;
-        // Check if we need to decent into daughter cells
+        // Check if we need to descend into daughter cells
         if (r2 < rp*rp ){
             for (int o=0;o<8;o++){
                 struct reb_treecell* d = c->oct[o];
@@ -649,7 +649,7 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
         double dz = gb.z - c->z;
         double r2 = dx*dx + dy*dy + dz*dz;
         double rp  = p1_r_plus_dtv + maxdrift + 0.86602540378443*c->w;
-        // Check if we need to decent into daughter cells
+        // Check if we need to descend into daughter cells
         if (r2 < rp*rp ){
             for (int o=0;o<8;o++){
                 struct reb_treecell* d = c->oct[o];

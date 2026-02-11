@@ -153,7 +153,7 @@ class Simulation(Structure):
                         warnings.warn(message, RuntimeWarning)
             return sim
 
-        # Still here? Then an error occured.
+        # Still here? Then an error occurred.
         raise RuntimeError("Can not create Simulation.")
 
     def __init__(self,filename=None,snapshot=None):
@@ -834,7 +834,7 @@ class Simulation(Structure):
             Second order variational equations depend on their corresponding first order variational equations. 
             This parameter expects the Variation object corresponding to the first order variational equations. 
         first_order_2 : Variation, optional
-            Same as first_order. But allows to set two different indicies to calculated off-diagonal elements. 
+            Same as first_order. But allows to set two different indices to calculated off-diagonal elements. 
             If omitted, then first_order will be used for both first order equations.
         testparticle : int, optional
             If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
@@ -921,7 +921,7 @@ class Simulation(Structure):
         if particle is not None:
             if isinstance(particle, Particle):
                 if (self.gravity == "tree" or self.collision == "tree") and self.root_size <=0.:
-                    raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the the simulation box has a finite size.")
+                    raise ValueError("The tree code for gravity and/or collision detection has been selected. However, the simulation box has not been configured yet. You cannot add particles until the simulation box has a finite size.")
                 if particle._sim:
                     if not self.equal_units(particle._sim.contents):
                         warnings.warn("Particle added is from a simulation that uses different units.", RuntimeWarning)
@@ -1391,8 +1391,8 @@ class Simulation(Structure):
         
         Exceptions
         ----------
-        Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occured. 
-        If you specified exit_min_distance or exit_max_distance, then additional exceptions might thrown for escaping particles or particles that undergo a clos encounter.
+        Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occurred. 
+        If you specified exit_min_distance or exit_max_distance, then additional exceptions might be thrown for escaping particles or particles that undergo a close encounter.
         
         Examples
         -------- 
@@ -1409,7 +1409,7 @@ class Simulation(Structure):
         ret_value = clibrebound.reb_simulation_integrate(byref(self), c_double(tmax))
         if ret_value == 1:
             self.process_messages()
-            raise GenericError("An error occured during the integration.")
+            raise GenericError("An error occurred during the integration.")
         if ret_value == 2:
             if self._N_odes>0:
                 raise NoParticles("No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");

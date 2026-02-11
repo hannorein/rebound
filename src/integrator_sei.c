@@ -103,7 +103,7 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
     const double zx = p->z * ri_sei.OMEGAZ;
     const double zy = p->vz;
 
-    // Rotation implemeted as 3 shear operators
+    // Rotation implemented as 3 shear operators
     // to avoid round-off errors
     const double zt1 =  zx - ri_sei.tandtz*zy;			
     const double zyt =  ri_sei.sindtz*zt1 + zy;
@@ -118,7 +118,7 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
     const double ys = (p->y*ri_sei.OMEGA-bO)/2.; 		// Epicycle vector
     const double xs = (p->x*ri_sei.OMEGA-aO); 
 
-    // Rotation implemeted as 3 shear operators
+    // Rotation implemented as 3 shear operators
     // to avoid round-off errors
     const double xst1 =  xs - ri_sei.tandt*ys;			
     const double yst  =  ri_sei.sindt*xst1 + ys;

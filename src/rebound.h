@@ -196,7 +196,7 @@ struct reb_integrator_ias15 {
     double epsilon;                         // Precision control parameter
     double min_dt;                          // Minimal timestep
     enum {
-        REB_IAS15_INDIVIDUAL = 0,   // fractional error is calculated seperately for each particle
+        REB_IAS15_INDIVIDUAL = 0,   // fractional error is calculated separately for each particle
         REB_IAS15_GLOBAL = 1,       // fractional error is calculated globally (was default until 01/2024)
         REB_IAS15_PRS23 = 2,        // Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)
         REB_IAS15_AARSETH85 = 3,    // Aarseth (1985) timestep criterion
@@ -473,7 +473,7 @@ struct reb_integrator_janus {
     unsigned int N_allocated;
 };
 
-// Possible return values of of rebound_integrate
+// Possible return values of rebound_integrate
 enum REB_STATUS {
     // Any status less than SINGLE_STEP get incremented once every timestep until SINGLE_STEP is reached.
     REB_STATUS_SINGLE_STEP = -10, // Performing a single step, then switching to PAUSED.
@@ -608,7 +608,7 @@ struct reb_simulation {
     double simulationarchive_auto_interval;         // Current sampling cadence, in code units
     double simulationarchive_auto_walltime;         // Current sampling cadence, in wall time
     uint64_t simulationarchive_auto_step; // Current sampling cadence, in time steps
-    double simulationarchive_next;                  // Next output time (simulation tim or wall time, depending on wether auto_interval or auto_walltime is set)
+    double simulationarchive_next;                  // Next output time (simulation time or wall time, depending on whether auto_interval or auto_walltime is set)
     uint64_t simulationarchive_next_step; // Next output step (only used if auto_steps is set)
     char*  simulationarchive_filename;              // Name of output file
 
@@ -779,7 +779,7 @@ DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, 
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but substract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
-// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indicies of the largest particles.
+// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
 DLLEXPORT void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
 
 
@@ -1036,10 +1036,10 @@ DLLEXPORT void reb_simulation_rescale_var(struct reb_simulation* const r);
 //   supported. Pal coordinates have the advantage of being analytical (i.e. infinite differentiable).
 //   Classical orbital parameters may have singularities, for example when e is close to 0.
 //   Note that derivatives with respect to Cartesian coordinates are trivial and therefore not
-//   implemented as seperate functions. 
+//   implemented as separate functions. 
 //   The following variables are supported: a, e, inc, f, omega, Omega, h, k, ix, iy and m (mass). 
-// The functions return the derivative as a particle structre. Each structure element is a derivative.
-// The paramter po is the original particle for which the derivative is to be calculated.
+// The functions return the derivative as a particle structure. Each structure element is a derivative.
+// The parameter po is the original particle for which the derivative is to be calculated.
 DLLEXPORT struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_h(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_k(double G, struct reb_particle primary, struct reb_particle po);

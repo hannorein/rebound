@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "a e primary", 0.1, 0.3, r->particles[0]); 
 
     // The function supports any arbitrary combination of 
-    // orbital parameters as long as it's physically meaningful. 
+    // orbital parameters as long as its physically meaningful. 
     reb_simulation_add_fmt(r, "a e omega", 3., 0.1, M_PI);
     reb_simulation_add_fmt(r, "a e pomega", 4., 0.1, M_PI/2.);
     reb_simulation_add_fmt(r, "P h k", 365.25, 0.01, 0.02);

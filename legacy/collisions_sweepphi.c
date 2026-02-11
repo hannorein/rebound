@@ -51,7 +51,7 @@
 
 double 	collisions_max_r	= 0;
 double 	collisions_max2_r	= 0;
-int	sweeps_proc		= 1;	/**< Number of processors used for seeping algorithm. */
+int	sweeps_proc		= 1;	/**< Number of processors used for sweeping algorithm. */
 int 	sweeps_init_done 	= 0;	/**< Used for initialisation of data structures. */
 int	N_collisions		= 0;
 

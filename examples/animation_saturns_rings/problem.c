@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_configure_box(r, 100, 2, 2, 1); // 100m box
     r->N_ghost_x = 2; r->N_ghost_y = 2; r->N_ghost_z = 0;
     
-    // Add all ring paricles
+    // Add all ring particles
     double mass = 0;
     while(mass < 400*r->boxsize.x*r->boxsize.y){ // 400kg/m^2 surface density
         struct reb_particle pt = {0};
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_free(r);
 }
 
-// This example is using a custom velocity dependend coefficient of restitution
+// This example is using a custom velocity dependent coefficient of restitution
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){
     // assumes v in units of [m/s]
     double eps = 0.32*pow(fabs(v)*100.,-0.234);

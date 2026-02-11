@@ -4,7 +4,7 @@
  * REBOUND is a shared library. This means you can not only run full simulations
  * from your program, but also use internal functions from REBOUND in your
  * own programs. Here we demonstrate some common use cases: We use a Kepler
- * solver to move a planet along it's orbit. And we calculate orbital elements
+ * solver to move a planet along its orbit. And we calculate orbital elements
  * for a pair of particles. Note that we never initialize a simulation.
  *
  *
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     struct reb_particle p = {.x=1,.vy=1};
     printf("Initial position: %f %f %f\n", p.x, p.y, p.z);
 
-    // Now we move the particle forward along it's orbit.
+    // Now we move the particle forward along its orbit.
     // The central object is at the coordinate origin and has a mass of 1.0.
     double G = 1.0;     // Working in units where G=1, but you can choose other units if you prefer.
     double GM = G*1.0;  // The gravitational parameter (G*mass);
@@ -41,15 +41,15 @@ int main(int argc, char* argv[]) {
 
     // We define the primary with respect to which we will calculate the orbital
     // parameters. This could be an actual particle (e.g. the Sun in the Solar System)
-    // or a virtual partical, for example when calculating Jacobi coordinates.
+    // or a virtual particle, for example when calculating Jacobi coordinates.
     struct reb_particle primary = {.m=1}; // Particle with mass 1, at origin, at rest
     int err = 0; // Error code.
     struct reb_orbit o = reb_orbit_from_particle_err(G, p, primary, &err);
 
-    // Checking if an error occured.
+    // Checking if an error occurred.
     // This can happen if the primary has no mass or if the particles are on top of each other. 
     if (err){
-        printf("An error occured during orbit calculation.\n");    
+        printf("An error occurred during orbit calculation.\n");    
     }
 
     // Printing out some parameters (see rebound.h for all parameters)

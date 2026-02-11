@@ -648,7 +648,7 @@ static const char* reb_string_for_particle_error(int err){
         return "Cannot pass both (omega, pomega) together.";
     if (err==14)
         return "Can only pass one longitude/anomaly in the set (f, M, E, l, theta, T).";
-    return "An unknown error occured during reb_simulation_add_fmt().";
+    return "An unknown error occurred during reb_simulation_add_fmt().";
 
 }
 

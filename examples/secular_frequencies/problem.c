@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
     //     https://ui.adsabs.harvard.edu/abs/1996CeMDA..65..137S/abstract
     int error = reb_frequency_analysis(out, nfreq, -minfreq, minfreq, REB_FREQUENCY_ANALYSIS_FMFT, inp, Nsamples);
     if (error){
-        printf("An error occured during the frequency analysis.\n");
+        printf("An error occurred during the frequency analysis.\n");
     }
     
     // Output the nfreq most dominate modes

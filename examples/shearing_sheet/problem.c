@@ -58,10 +58,10 @@ int main(int argc, char* argv[]) {
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
     // When two particles collide and the relative velocity is zero, the might sink into each other in the next time step.
     // By adding a small repulsive velocity to each collision, we prevent this from happening.
-    r->minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear accross a particle
+    r->minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear across a particle
 
 
-    // Add all ring paricles
+    // Add all ring particles
     double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
     double mass = 0;
     while(mass<total_mass){
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_free(r);
 }
 
-// This example is using a custom velocity dependend coefficient of restitution
+// This example is using a custom velocity dependent coefficient of restitution
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){
     // assumes v in units of [m/s]
     double eps = 0.32*pow(fabs(v)*100.,-0.234);

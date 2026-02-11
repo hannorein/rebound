@@ -132,7 +132,7 @@ class Variation(ctypes.Structure):
         for i in range(sim.N_var_config):
             if sim.var_config[i].index == self.index:
                 return sim.var_config[i]._lrescale
-        raise GenericError("An error occured while trying to find variational struct in simulation.")
+        raise GenericError("An error occurred while trying to find variational struct in simulation.")
     
     @lrescale.setter
     def lrescale(self, value):
@@ -148,5 +148,5 @@ class Variation(ctypes.Structure):
                 sim.var_config[i]._lrescale = ctypes.c_double(value)
                 return
 
-        raise GenericError("An error occured while trying to find variational struct in simulation.")
+        raise GenericError("An error occurred while trying to find variational struct in simulation.")
 

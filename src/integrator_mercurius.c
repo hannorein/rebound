@@ -148,7 +148,7 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
     temp.vz /= particles[0].m;
     // Use com to calculate central object's position.
     // This ignores previous values stored in particles[0].
-    // Should not matter unless collisions occured.
+    // Should not matter unless collisions occurred.
     particles[0].x = r->ri_mercurius.com_pos.x - temp.x; 
     particles[0].y = r->ri_mercurius.com_pos.y - temp.y; 
     particles[0].z = r->ri_mercurius.com_pos.z - temp.z; 
@@ -366,11 +366,11 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         star.vy = r->particles[0].vy;
         star.vz = r->particles[0].vz;
         if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
-            // Collision with star occured
+            // Collision with star occurred
             // Shift all particles back to heliocentric coordinates
             // Ignore stars velocity:
             //   - will not be used after this
-            //   - com velocity is unchained. this velocity will be used
+            //   - com velocity is unchanged. this velocity will be used
             //     to reconstruct star's velocity later.
             for (int i=r->N-1; i>=0; i--){
                 r->particles[i].x -= r->particles[0].x;
@@ -479,7 +479,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
 
     // Calculate gravity with special function
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_MERCURIUS){
-        reb_simulation_warning(r,"Mercurius has it's own gravity routine. Gravity routine set by the user will be ignored.");
+        reb_simulation_warning(r,"Mercurius has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
     r->gravity = REB_GRAVITY_MERCURIUS;
     rim->mode = 0;

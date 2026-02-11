@@ -114,11 +114,11 @@ int main(int argc, char* argv[]){
 
 enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c){
     // This function passes the collision to the default merging routine. 
-    // If a merger occured, that routine will return a value other than 0.
+    // If a merger occurred, that routine will return a value other than 0.
     // This function then outputs some information about the merger.
     enum REB_COLLISION_RESOLVE_OUTCOME result = reb_collision_resolve_merge(r, c);
     if (result!=REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE){
-        printf("A merger occured! Particles involved: %d, %d.\n",c.p1,c.p2);
+        printf("A merger occurred! Particles involved: %d, %d.\n",c.p1,c.p2);
     }
     return result;
 }
