@@ -29,6 +29,8 @@
 #include <string.h>
 #include "rebound.h"
 #include "gravity.h"
+#include "tree.h"
+#include "boundary.h"
 #include "output.h"
 #include "integrator.h"
 #include "integrator_whfast.h"
@@ -45,80 +47,40 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
-void reb_integrator_part1(struct reb_simulation* r){
+void reb_integrator_step(struct reb_simulation* r){
     switch(r->integrator){
         case REB_INTEGRATOR_IAS15:
-            reb_integrator_ias15_part1(r);
+            reb_integrator_ias15_step(r);
             break;
         case REB_INTEGRATOR_LEAPFROG:
-            reb_integrator_leapfrog_part1(r);
+            reb_integrator_leapfrog_step(r);
             break;
         case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_part1(r);
+            reb_integrator_sei_step(r);
             break;
         case REB_INTEGRATOR_WHFAST:
-            reb_integrator_whfast_part1(r);
+            reb_integrator_whfast_step(r);
             break;
         case REB_INTEGRATOR_WHFAST512:
-            reb_integrator_whfast512_part1(r);
+            reb_integrator_whfast512_step(r);
             break;
         case REB_INTEGRATOR_SABA:
-            reb_integrator_saba_part1(r);
+            reb_integrator_saba_step(r);
             break;
         case REB_INTEGRATOR_MERCURIUS:
-            reb_integrator_mercurius_part1(r);
+            reb_integrator_mercurius_step(r);
             break;
         case REB_INTEGRATOR_JANUS:
-            reb_integrator_janus_part1(r);
+            reb_integrator_janus_step(r);
             break;
         case REB_INTEGRATOR_EOS:
-            reb_integrator_eos_part1(r);
+            reb_integrator_eos_step(r);
             break;
         case REB_INTEGRATOR_BS:
-            reb_integrator_bs_part1(r);
+            reb_integrator_bs_step(r);
             break;
         case REB_INTEGRATOR_TRACE:
-            reb_integrator_trace_part1(r);
-            break;
-        default:
-            break;
-    }
-}
-
-void reb_integrator_part2(struct reb_simulation* r){
-    switch(r->integrator){
-        case REB_INTEGRATOR_IAS15:
-            reb_integrator_ias15_part2(r);
-            break;
-        case REB_INTEGRATOR_LEAPFROG:
-            reb_integrator_leapfrog_part2(r);
-            break;
-        case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_part2(r);
-            break;
-        case REB_INTEGRATOR_WHFAST:
-            reb_integrator_whfast_part2(r);
-            break;
-        case REB_INTEGRATOR_WHFAST512:
-            reb_integrator_whfast512_part2(r);
-            break;
-        case REB_INTEGRATOR_SABA:
-            reb_integrator_saba_part2(r);
-            break;
-        case REB_INTEGRATOR_MERCURIUS:
-            reb_integrator_mercurius_part2(r);
-            break;
-        case REB_INTEGRATOR_JANUS:
-            reb_integrator_janus_part2(r);
-            break;
-        case REB_INTEGRATOR_EOS:
-            reb_integrator_eos_part2(r);
-            break;
-        case REB_INTEGRATOR_BS:
-            reb_integrator_bs_part2(r);
-            break;
-        case REB_INTEGRATOR_TRACE:
-            reb_integrator_trace_part2(r);
+            reb_integrator_trace_step(r);
             break;
         case REB_INTEGRATOR_NONE:
             r->t += r->dt;
@@ -153,7 +115,7 @@ void reb_integrator_part2(struct reb_simulation* r){
                 }
                 dt *= forward;
             }
-            int success = reb_integrator_bs_step(r, dt);
+            int success = reb_integrator_bs_step_odes(r, dt);
             if (success){
                 t += dt;
             }
@@ -201,16 +163,6 @@ void reb_simulation_synchronize(struct reb_simulation* r){
     }
 }
 
-void reb_integrator_init(struct reb_simulation* r){
-    switch(r->integrator){
-        case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_init(r);
-            break;
-        default:
-            break;
-    }
-}
-
 void reb_simulation_reset_integrator(struct reb_simulation* r){
     r->integrator = REB_INTEGRATOR_IAS15;
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
@@ -228,14 +180,51 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
     reb_integrator_leapfrog_reset(r);
 }
 
+
 void reb_simulation_update_acceleration(struct reb_simulation* r){
-    // This should probably go elsewhere
-    PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
-    PROFILING_START();
-    reb_calculate_acceleration(r);
-    if (r->N_var){
-        reb_calculate_acceleration_var(r);
+    /***********************************************************
+     * Prepare TREE for force calculations
+     **********************************************************/
+    // Update and simplify tree. 
+    // Prepare particles for distribution to other nodes. 
+    // This function also creates the tree if called for the first time.
+    if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
+        // Check for root crossings.
+        reb_boundary_check(r);     
+        // Update tree (this will remove particles which left the box)
+        reb_simulation_update_tree(r);          
     }
+
+#ifdef MPI
+    // Distribute particles and add newly received particles to tree.
+    reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+
+    if (r->tree_root!=NULL && r->gravity==REB_GRAVITY_TREE){
+        // Update center of mass and quadrupole moments in tree in preparation of force calculation.
+        reb_simulation_update_tree_gravity_data(r); 
+#ifdef MPI
+        // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
+        reb_tree_prepare_essential_tree_for_gravity(r);
+
+        // Transfer essential tree and particles needed for collisions.
+        reb_communication_mpi_distribute_essential_tree_for_gravity(r);
+#endif // MPI
+    }
+
+    /***********************************************************
+     * Main gravity calculation
+     * This first sets accelerations to zero even if
+     * REB_GRAVITY_NONE is used.
+     **********************************************************/
+    reb_simulation_update_acceleration_gravity(r);
+    if (r->N_var){
+        reb_simulation_update_acceleration_gravity_var(r);
+    }
+
+    /***********************************************************
+     * Additional forces
+     **********************************************************/
     if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==REB_TRACE_MODE_INTERACTION || r->ri_trace.mode==REB_TRACE_MODE_FULL)){
         // For Mercurius:
         // Additional forces are only calculated in the kick step, not during close encounter
@@ -285,7 +274,5 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
     }
-    PROFILING_STOP(PROFILING_CAT_GRAVITY);
-    PROFILING_START();
 }
 

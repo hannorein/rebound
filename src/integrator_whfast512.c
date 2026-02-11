@@ -913,7 +913,7 @@ void static recalculate_constants(struct reb_simulation* r){
 }
 
 // Main integration routine
-void reb_integrator_whfast512_part1(struct reb_simulation* const r){
+void reb_integrator_whfast512_step(struct reb_simulation* const r){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     const double dt = r->dt;
 
@@ -1030,7 +1030,7 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 
 #else // AVX512
       // Dummy function when AVX512 is not available
-void reb_integrator_whfast512_part1(struct reb_simulation* const r){
+void reb_integrator_whfast512_step(struct reb_simulation* const r){
     reb_simulation_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
@@ -1126,6 +1126,3 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     ri_whfast512->recalculate_constants = 1;
 }
 
-// Everything is in part 1 for this integrator
-void reb_integrator_whfast512_part2(struct reb_simulation* const r){
-}

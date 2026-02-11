@@ -319,6 +319,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
+    // TODO. Remove the m anual call to update_accelerations in _step(). Then remove if statement.
     if (r->t != t) { 
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
@@ -336,23 +337,6 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     }
 }
 
-
-void reb_integrator_bs_part1(struct reb_simulation* r){
-    if (r->calculate_megno){
-        reb_simulation_error(r, "The BS integrator does currently not support MEGNO.");
-    }
-
-    struct reb_ode** odes = r->odes;
-    int Ns = r->N_odes;
-    for (int s=0; s < Ns; s++){
-        const int length = odes[s]->length;
-        double* y0 = odes[s]->y;
-        double* y1 = odes[s]->y1;
-        for (int i = 0; i < length; ++i) {
-            y1[i] = y0[i];
-        }
-    }
-}
 
 static void allocate_sequence_arrays(struct reb_integrator_bs* ri_bs){
     ri_bs->sequence        = malloc(sizeof(int)*sequence_length);
@@ -394,8 +378,10 @@ static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, dou
     }
 }
 
-
-int reb_integrator_bs_step(struct reb_simulation* r, double dt){
+// Performs one step on all ODEs in r->odes. 
+// Gravity not included automatically. Is added
+// in reb_integrator_bs_step()
+int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
     // return 1 if step was successful
     //        0 if rejected 
     //
@@ -754,7 +740,24 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     return ode;
 }
 
-void reb_integrator_bs_part2(struct reb_simulation* r){
+void reb_integrator_bs_step(struct reb_simulation* r){
+    if (r->calculate_megno){
+        reb_simulation_error(r, "The BS integrator does currently not support MEGNO.");
+    }
+
+    struct reb_ode** odes = r->odes;
+    int Ns = r->N_odes;
+    for (int s=0; s < Ns; s++){
+        const int length = odes[s]->length;
+        double* y0 = odes[s]->y;
+        double* y1 = odes[s]->y1;
+        for (int i = 0; i < length; ++i) {
+            y1[i] = y0[i];
+        }
+    }
+
+    reb_simulation_update_acceleration(r);
+
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
 
     unsigned int nbody_length = r->N*3*2;
@@ -789,7 +792,7 @@ void reb_integrator_bs_part2(struct reb_simulation* r){
         y[i*6+5] = p.vz;
     }
 
-    int success = reb_integrator_bs_step(r, r->dt);
+    int success = reb_integrator_bs_step_odes(r, r->dt);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;

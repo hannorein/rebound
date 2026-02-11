@@ -205,8 +205,10 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
 
 }
 
-// Does the actual timestep.
-static int reb_integrator_ias15_step(struct reb_simulation* r) {
+// Tries to do one actual timestep.
+//   Returns 1 if successful.
+//   Returns 0 if step is rejected.
+static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
@@ -232,7 +234,7 @@ static int reb_integrator_ias15_step(struct reb_simulation* r) {
     }
     const int N3 = 3*N;
 
-    // reb_simulation_update_acceleration(); // Not needed. Forces are already calculated in main routine.
+    reb_simulation_update_acceleration(r);
 
     double* restrict const csx = r->ri_ias15.csx; 
     double* restrict const csv = r->ri_ias15.csv; 
@@ -762,16 +764,13 @@ static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 
 }
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void reb_integrator_ias15_part1(struct reb_simulation* r){
+void reb_integrator_ias15_step(struct reb_simulation* r){
     r->gravity_ignore_terms = 0;
-}
-
-void reb_integrator_ias15_part2(struct reb_simulation* r){
 #ifdef GENERATE_CONSTANTS
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
         // Try until a step was successful.
-    while(!reb_integrator_ias15_step(r));
+    while(!reb_integrator_ias15_step_try(r));
 }
 
 void reb_integrator_ias15_synchronize(struct reb_simulation* r){

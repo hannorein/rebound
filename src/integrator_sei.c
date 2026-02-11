@@ -43,7 +43,7 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
 static void operator_phi1(double dt, struct reb_particle* p);
 
 
-void reb_integrator_sei_init(struct reb_simulation* const r){
+static void reb_integrator_sei_init(struct reb_simulation* const r){
     /**
      * Pre-calculates sin() and tan() needed for SEI. 
      */
@@ -57,7 +57,7 @@ void reb_integrator_sei_init(struct reb_simulation* const r){
     r->ri_sei.lastdt = r->dt;
 }
 
-void reb_integrator_sei_part1(struct reb_simulation* const r){
+void reb_integrator_sei_step(struct reb_simulation* const r){
     r->gravity_ignore_terms = 0;
     const int N = r->N;
     struct reb_particle* const particles = r->particles;
@@ -70,12 +70,9 @@ void reb_integrator_sei_part1(struct reb_simulation* const r){
         operator_H012(r->dt, ri_sei, &(particles[i]));
     }
     r->t+=r->dt/2.;
-}
 
-void reb_integrator_sei_part2(struct reb_simulation* r){
-    const int N = r->N;
-    struct reb_particle* const particles = r->particles;
-    const struct reb_integrator_sei ri_sei = r->ri_sei;
+    reb_simulation_update_acceleration(r);
+
 #pragma omp parallel for schedule(guided)
     for (int i=0;i<N;i++){
         operator_phi1(r->dt, &(particles[i]));

@@ -27,8 +27,7 @@
 
 #include "rebound.h"
 
-void reb_integrator_whfast_part1(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast_part2(struct reb_simulation* r);		///< Internal function used to call a specific integrator
+void reb_integrator_whfast_step(struct reb_simulation* r);		///< Internal function used to call a specific integrator
 void reb_integrator_whfast_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
 void reb_whfast_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term
 int reb_integrator_whfast_init(struct reb_simulation* r);       ///< Init routine (also used by WHFast512)

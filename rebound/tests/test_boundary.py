@@ -7,6 +7,7 @@ class TestBoundary(unittest.TestCase):
         for gravity in ["basic", "tree"]:
             sim = rebound.Simulation()
             sim.boundary = "open"
+            sim.integrator = "leapfrog"
             sim.gravity  = gravity
             sim.configure_box(10.)
             sim.add(m=0.1,x=1., vx=5.0)

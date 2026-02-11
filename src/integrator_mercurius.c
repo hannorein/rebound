@@ -340,8 +340,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         r->particles[0].vx = 0; // star does not move in dh 
         r->particles[0].vy = 0;
         r->particles[0].vz = 0;
-        reb_simulation_update_acceleration(r);
-        reb_integrator_ias15_part2(r);
+        reb_integrator_ias15_step(r);
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
@@ -425,7 +424,7 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
 }
 
 
-void reb_integrator_mercurius_part1(struct reb_simulation* r){
+void reb_integrator_mercurius_step(struct reb_simulation* r){
     if (r->N_var_config){
         reb_simulation_warning(r,"Mercurius does not work with variational equations.");
     }
@@ -489,11 +488,8 @@ void reb_integrator_mercurius_part1(struct reb_simulation* r){
         // Setting default switching function
         rim->L = reb_integrator_mercurius_L_mercury;
     }
-}
 
-void reb_integrator_mercurius_part2(struct reb_simulation* const r){
-    struct reb_integrator_mercurius* const rim = &(r->ri_mercurius);
-    const int N = r->N;
+    reb_simulation_update_acceleration(r);
 
     if (rim->is_synchronized){
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);

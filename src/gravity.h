@@ -27,16 +27,14 @@
 struct reb_simulation;
 
 /**
- * The function loops over all ghostboxs and calls calculate_forces_for_particle() to sum up the forces on each particle.
- * Calculate all the gravitational acceleration for all particles.
- * Different methods implement this function in a different way.
+ * Calculate all the gravitational acceleration for all non-variational particles.
  */
-void reb_calculate_acceleration(struct reb_simulation* r);
+void reb_simulation_update_acceleration_gravity(struct reb_simulation* r);
 
 /**
  * The function calculates the acceleration for the variational equations.
  */
-void reb_calculate_acceleration_var(struct reb_simulation* r);
+void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r);
 
 
 /**

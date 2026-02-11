@@ -932,77 +932,6 @@ void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* con
     reb_integrator_whfast_to_inertial(r);
 }
 
-void reb_integrator_whfast_part1(struct reb_simulation* const r){
-    struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
-    struct reb_particle* restrict const particles = r->particles;
-    const int N = r->N;
-    const int N_real = N-r->N_var;
-    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
-    if (reb_integrator_whfast_init(r)){
-        // Non recoverable error occured.
-        return;
-    }
-
-    // Only recalculate Jacobi coordinates if needed
-    if (ri_whfast->safe_mode || ri_whfast->recalculate_coordinates_this_timestep){
-        if (ri_whfast->is_synchronized==0){
-            reb_integrator_whfast_synchronize(r);
-            if (ri_whfast->recalculate_coordinates_but_not_synchronized_warning==0){
-                reb_simulation_warning(r,"Recalculating coordinates but pos/vel were not synchronized before.");
-                ri_whfast->recalculate_coordinates_but_not_synchronized_warning++;
-            }
-        }
-        reb_integrator_whfast_from_inertial(r);
-        ri_whfast->recalculate_coordinates_this_timestep = 0;
-    }
-    if (ri_whfast->is_synchronized){
-        // First half DRIFT step
-        if (ri_whfast->corrector){
-            reb_whfast_apply_corrector(r, 1., ri_whfast->corrector);
-        }
-        if (ri_whfast->corrector2){
-            reb_whfast_apply_corrector2(r, 1.);
-        }
-        switch (ri_whfast->kernel){
-            case REB_WHFAST_KERNEL_DEFAULT: 
-            case REB_WHFAST_KERNEL_MODIFIEDKICK: 
-            case REB_WHFAST_KERNEL_LAZY: 
-                reb_whfast_kepler_step(r, r->dt/2.);    
-                reb_whfast_com_step(r, r->dt/2.);
-                break;
-            case REB_WHFAST_KERNEL_COMPOSITION:
-                reb_whfast_kepler_step(r, 5.*r->dt/8.);   
-                reb_whfast_com_step(r, 5.*r->dt/8.);
-                break;
-            default:
-                reb_simulation_error(r, "WHFast kernel not implemented.");
-                return;
-        };
-    }else{
-        // Combined DRIFT step
-        reb_whfast_kepler_step(r, r->dt);    // full timestep
-        reb_whfast_com_step(r, r->dt);
-    }
-    reb_whfast_jump_step(r,r->dt/2.);
-
-    reb_integrator_whfast_to_inertial(r);
-    // Variational equations only available for jacobi coordinates. 
-    // If other coordinates are used, the code will raise an exception in part1 of the integrator.
-    for (int v=0;v<r->N_var_config;v++){
-        struct reb_variational_configuration const vc = r->var_config[v];
-        ri_whfast->p_jh[vc.index].x += r->dt/2.*ri_whfast->p_jh[vc.index].vx;
-        ri_whfast->p_jh[vc.index].y += r->dt/2.*ri_whfast->p_jh[vc.index].vy;
-        ri_whfast->p_jh[vc.index].z += r->dt/2.*ri_whfast->p_jh[vc.index].vz;
-        if (r->force_is_velocity_dependent){
-            reb_particles_transform_jacobi_to_inertial_posvel(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
-        }else{
-            reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
-        }
-    }
-
-    r->t+=r->dt/2.;
-}
-
 void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     if (reb_integrator_whfast_init(r)){
@@ -1065,19 +994,79 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     }
 }
 
-void reb_integrator_whfast_part2(struct reb_simulation* const r){
+void reb_integrator_whfast_step(struct reb_simulation* const r){
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* restrict const particles = r->particles;
-    struct reb_particle* const p_j = ri_whfast->p_jh;
     const double dt = r->dt;
-    const unsigned int N = r->N;
-    const int N_real = r->N-r->N_var;
-    const int unsigned N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
-    if (p_j==NULL){
-        // Non recoverable error occured earlier. 
-        // Skipping rest of integration to avoid segmentation fault.
+    const int N = r->N;
+    const int N_real = N-r->N_var;
+    const int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    if (reb_integrator_whfast_init(r)){
+        // Non recoverable error occured.
         return;
     }
+    struct reb_particle* const p_j = ri_whfast->p_jh;
+
+    // Only recalculate Jacobi coordinates if needed
+    if (ri_whfast->safe_mode || ri_whfast->recalculate_coordinates_this_timestep){
+        if (ri_whfast->is_synchronized==0){
+            reb_integrator_whfast_synchronize(r);
+            if (ri_whfast->recalculate_coordinates_but_not_synchronized_warning==0){
+                reb_simulation_warning(r,"Recalculating coordinates but pos/vel were not synchronized before.");
+                ri_whfast->recalculate_coordinates_but_not_synchronized_warning++;
+            }
+        }
+        reb_integrator_whfast_from_inertial(r);
+        ri_whfast->recalculate_coordinates_this_timestep = 0;
+    }
+    if (ri_whfast->is_synchronized){
+        // First half DRIFT step
+        if (ri_whfast->corrector){
+            reb_whfast_apply_corrector(r, 1., ri_whfast->corrector);
+        }
+        if (ri_whfast->corrector2){
+            reb_whfast_apply_corrector2(r, 1.);
+        }
+        switch (ri_whfast->kernel){
+            case REB_WHFAST_KERNEL_DEFAULT: 
+            case REB_WHFAST_KERNEL_MODIFIEDKICK: 
+            case REB_WHFAST_KERNEL_LAZY: 
+                reb_whfast_kepler_step(r, r->dt/2.);    
+                reb_whfast_com_step(r, r->dt/2.);
+                break;
+            case REB_WHFAST_KERNEL_COMPOSITION:
+                reb_whfast_kepler_step(r, 5.*r->dt/8.);   
+                reb_whfast_com_step(r, 5.*r->dt/8.);
+                break;
+            default:
+                reb_simulation_error(r, "WHFast kernel not implemented.");
+                return;
+        };
+    }else{
+        // Combined DRIFT step
+        reb_whfast_kepler_step(r, r->dt);    // full timestep
+        reb_whfast_com_step(r, r->dt);
+    }
+    reb_whfast_jump_step(r,r->dt/2.);
+
+    reb_integrator_whfast_to_inertial(r);
+    // Variational equations only available for jacobi coordinates. 
+    // If other coordinates are used, the code will raise an exception earlier.
+    for (int v=0;v<r->N_var_config;v++){
+        struct reb_variational_configuration const vc = r->var_config[v];
+        p_j[vc.index].x += r->dt/2.*p_j[vc.index].vx;
+        p_j[vc.index].y += r->dt/2.*p_j[vc.index].vy;
+        p_j[vc.index].z += r->dt/2.*p_j[vc.index].vz;
+        if (r->force_is_velocity_dependent){
+            reb_particles_transform_jacobi_to_inertial_posvel(particles+vc.index, p_j+vc.index, particles, N_real, N_active);
+        }else{
+            reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, p_j+vc.index, particles, N_real, N_active);
+        }
+    }
+
+    r->t+=dt/2.;
+
+    reb_simulation_update_acceleration(r);
 
     switch (ri_whfast->kernel){
         case REB_WHFAST_KERNEL_DEFAULT: 
@@ -1086,7 +1075,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
             reb_whfast_jump_step(r,dt/2.);
             break;
         case REB_WHFAST_KERNEL_MODIFIEDKICK: 
-            // p_jh used as a temporary buffer for "jerk"
+            // p_j used as a temporary buffer for "jerk"
             reb_whfast_calculate_jerk(r);
             for (unsigned int i=0; i<N; i++){
                 const double prefact = dt*dt/12.;
@@ -1137,7 +1126,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
                 struct reb_particle* p_temp = ri_whfast->p_temp;
 
                 // Calculate normal kick
-                // Accelertions were already calculated before part2 gets called
+                // Accelerations already calculated
                 reb_particles_transform_inertial_to_jacobi_acc(r->particles, p_j, r->particles, N, N_active);
 
                 // make copy of original positions
@@ -1203,7 +1192,7 @@ void reb_integrator_whfast_part2(struct reb_simulation* const r){
             p_j[index].z += r->dt/2.*p_j[index].vz;
             reb_particles_transform_jacobi_to_inertial_posvel(particles_var1, p_j+index, particles, N_real, N_active);
             if (r->calculate_megno){
-                reb_calculate_acceleration_var(r);
+                reb_simulation_update_acceleration_gravity_var(r);
                 const double dx = particles[0].x - particles[1].x;
                 const double dy = particles[0].y - particles[1].y;
                 const double dz = particles[0].z - particles[1].z;
