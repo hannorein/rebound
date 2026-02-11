@@ -755,7 +755,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
             y1[i] = y0[i];
         }
     }
-    
+
     reb_simulation_update_acceleration(r);
 
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);

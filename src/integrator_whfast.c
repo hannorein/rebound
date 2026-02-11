@@ -1065,7 +1065,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
     }
 
     r->t+=dt/2.;
-    
+
     reb_simulation_update_acceleration(r);
 
     switch (ri_whfast->kernel){

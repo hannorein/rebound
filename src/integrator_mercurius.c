@@ -488,7 +488,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
         // Setting default switching function
         rim->L = reb_integrator_mercurius_L_mercury;
     }
-    
+
     reb_simulation_update_acceleration(r);
 
     if (rim->is_synchronized){

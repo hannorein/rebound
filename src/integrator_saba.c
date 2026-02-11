@@ -260,7 +260,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r){
     reb_integrator_whfast_to_inertial(r);
 
     reb_simulation_update_acceleration(r);
-    
+
     if (ri_whfast->p_jh==NULL){
         // Non recoverable error occured earlier. 
         // Skipping rest of integration to avoid segmentation fault.

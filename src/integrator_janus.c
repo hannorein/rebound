@@ -204,7 +204,7 @@ void reb_integrator_janus_step(struct reb_simulation* r){
 
     drift(r,gg(s,0)*dt/2.,scale_pos,scale_vel);
     to_double(r->particles, r->ri_janus.p_int, r->N, scale_pos, scale_vel); 
-    
+
     reb_simulation_update_acceleration(r);    
 
     kick(r,gg(s,0)*dt, scale_vel);
