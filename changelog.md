@@ -256,7 +256,7 @@ This changelog only includes the most important changes in recent updates. For a
 
 ### Version 3.19.4
 * InterruptiblePool is optional.
-* Fixed an issue that occured when switching integrators while using the Simulationarchive.
+* Fixed an issue that occurred when switching integrators while using the Simulationarchive.
 * Renamed `srand_seed` to make it user accessible. 
 
 ### Version 3.19.3

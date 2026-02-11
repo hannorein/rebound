@@ -911,7 +911,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
 
 void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,double dt){
     if (reb_integrator_whfast_init(r)){
-        // Non recoverable error occured.
+        // Non recoverable error occurred.
         return;
     }
     reb_integrator_whfast_from_inertial(r);
@@ -922,7 +922,7 @@ void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,
 
 void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* const r,double dt){
     if (reb_integrator_whfast_init(r)){
-        // Non recoverable error occured.
+        // Non recoverable error occurred.
         return;
     }
     reb_integrator_whfast_from_inertial(r);
@@ -935,7 +935,7 @@ void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* con
 void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     if (reb_integrator_whfast_init(r)){
-        // Non recoverable error occured.
+        // Non recoverable error occurred.
         return;
     }
     if (ri_whfast->is_synchronized == 0){
@@ -1002,7 +1002,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
     const int N_real = N-r->N_var;
     const int N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
     if (reb_integrator_whfast_init(r)){
-        // Non recoverable error occured.
+        // Non recoverable error occurred.
         return;
     }
     struct reb_particle* const p_j = ri_whfast->p_jh;

@@ -18,7 +18,7 @@ else:
     try:
         sim.add(solar_system_objects)
     except socket.error:
-        print("A socket error occured. Maybe Horizons is down?")
+        print("A socket error occurred. Maybe Horizons is down?")
         sys.exit(0) # we ignore the error and exit
 
     sim.move_to_com()

@@ -46,10 +46,10 @@ int main(int argc, char* argv[]) {
     int err = 0; // Error code.
     struct reb_orbit o = reb_orbit_from_particle_err(G, p, primary, &err);
 
-    // Checking if an error occured.
+    // Checking if an error occurred.
     // This can happen if the primary has no mass or if the particles are on top of each other. 
     if (err){
-        printf("An error occured during orbit calculation.\n");    
+        printf("An error occurred during orbit calculation.\n");    
     }
 
     // Printing out some parameters (see rebound.h for all parameters)

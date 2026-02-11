@@ -435,7 +435,7 @@ static void reb_server_cerror(SOCKET clientS, char cause[]){
                     }
                     data->screenshot = base64_decode((unsigned char*)base64+1, strlen(base64+1), &data->N_screenshot);
                     if (!data->screenshot){
-                        printf("An error occured while decoding the screenshot.\n");
+                        printf("An error occurred while decoding the screenshot.\n");
                     }
                     data->r->status = REB_STATUS_PAUSED;
                     free(dataURL);
@@ -662,7 +662,7 @@ screenshot_finish:
                     }
                     data->screenshot = base64_decode((unsigned char*)base64+1, strlen(base64+1), &data->N_screenshot);
                     if (!data->screenshot){
-                        printf("An error occured while decoding the screenshot.\n");
+                        printf("An error occurred while decoding the screenshot.\n");
                     }
                     data->r->status = REB_STATUS_PAUSED;
 screenshot_finish:
@@ -748,7 +748,7 @@ screenshot_finish:
                 void* retval = 0;
                 pthread_join(r->server_data->server_thread, &retval);
                 if (retval!=PTHREAD_CANCELED){
-                    printf("An error occured while cancelling server thread.\n");
+                    printf("An error occurred while cancelling server thread.\n");
                 }
 #endif // _WIN32
                 free(r->server_data);

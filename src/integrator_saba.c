@@ -227,7 +227,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r){
         r->gravity_ignore_terms = 1;
     }
     if (reb_integrator_whfast_init(r)){
-        // Non recoverable error occured.
+        // Non recoverable error occurred.
         return;
     }
 
@@ -262,7 +262,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r){
     reb_simulation_update_acceleration(r);
 
     if (ri_whfast->p_jh==NULL){
-        // Non recoverable error occured earlier. 
+        // Non recoverable error occurred earlier. 
         // Skipping rest of integration to avoid segmentation fault.
         reb_simulation_error(r, "Something went terribly wrong in the SABA integrator: p_jh==NULL.\n");
         return;

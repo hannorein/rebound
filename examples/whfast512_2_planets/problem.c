@@ -94,7 +94,7 @@ double run(int use_whfast512){
         r->integrator = REB_INTEGRATOR_WHFAST512;
         int err = reb_simulation_integrate(r,  tmax);
         if (err>0){
-            printf("An error occured during the integration.\n");
+            printf("An error occurred during the integration.\n");
             exit(EXIT_FAILURE);
         }
         reb_simulation_free(r);
@@ -113,7 +113,7 @@ double run(int use_whfast512){
             r->particles[1].x += 1e-14*s; 
             int err = reb_simulation_integrate(r,  tmax);
             if (err>0){
-                printf("An error occured during the integration.\n");
+                printf("An error occurred during the integration.\n");
                 exit(EXIT_FAILURE);
             }
             reb_simulation_free(r);

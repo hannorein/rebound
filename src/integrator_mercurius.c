@@ -148,7 +148,7 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
     temp.vz /= particles[0].m;
     // Use com to calculate central object's position.
     // This ignores previous values stored in particles[0].
-    // Should not matter unless collisions occured.
+    // Should not matter unless collisions occurred.
     particles[0].x = r->ri_mercurius.com_pos.x - temp.x; 
     particles[0].y = r->ri_mercurius.com_pos.y - temp.y; 
     particles[0].z = r->ri_mercurius.com_pos.z - temp.z; 
@@ -366,7 +366,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         star.vy = r->particles[0].vy;
         star.vz = r->particles[0].vz;
         if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
-            // Collision with star occured
+            // Collision with star occurred
             // Shift all particles back to heliocentric coordinates
             // Ignore stars velocity:
             //   - will not be used after this

@@ -95,7 +95,7 @@ struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_s
     struct reb_simulation* r = reb_simulation_create();
     reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
     r = reb_input_process_warnings(r, warnings);
-    return r; // might be null if error occured
+    return r; // might be null if error occurred
 }
 
 // Old 16 bit offsets. Used only to read old files.
@@ -348,7 +348,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
 }
 
 void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
-    // Somewhat complicated calls for backwards compatability.
+    // Somewhat complicated calls for backwards compatibility.
 #ifdef MPI
     int initialized;
     MPI_Initialized(&initialized);
@@ -371,7 +371,7 @@ void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationa
 }
 
 void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
-    // Somewhat complicated calls for backwards compatability.
+    // Somewhat complicated calls for backwards compatibility.
     sa->inf = reb_fmemopen(buf,size,"rb");
     sa->filename = NULL;
     reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);

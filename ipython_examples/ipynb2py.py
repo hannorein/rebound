@@ -20,5 +20,5 @@ import socket
 try:
     exec(code)
 except socket.error: 
-    print("A socket error occured. This is most likely due to a timeout in the NASA Horizons connections. We catch this exception here and ignore is.")
+    print("A socket error occurred. This is most likely due to a timeout in the NASA Horizons connections. We catch this exception here and ignore is.")
     pass

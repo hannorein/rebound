@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         double minfreq = 60.0/1296000.0*datasep; // look for frequencies in the range -60"/year to +60"/year
         int ret = reb_frequency_analysis(output, nfreq,-minfreq,minfreq,type,input,Nsamples);
         if (ret){
-            printf("An error occured during the frequency analysis.\n");
+            printf("An error occurred during the frequency analysis.\n");
         }
         
 

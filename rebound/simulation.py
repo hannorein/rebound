@@ -153,7 +153,7 @@ class Simulation(Structure):
                         warnings.warn(message, RuntimeWarning)
             return sim
 
-        # Still here? Then an error occured.
+        # Still here? Then an error occurred.
         raise RuntimeError("Can not create Simulation.")
 
     def __init__(self,filename=None,snapshot=None):
@@ -1391,7 +1391,7 @@ class Simulation(Structure):
         
         Exceptions
         ----------
-        Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occured. 
+        Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occurred. 
         If you specified exit_min_distance or exit_max_distance, then additional exceptions might thrown for escaping particles or particles that undergo a clos encounter.
         
         Examples
@@ -1409,7 +1409,7 @@ class Simulation(Structure):
         ret_value = clibrebound.reb_simulation_integrate(byref(self), c_double(tmax))
         if ret_value == 1:
             self.process_messages()
-            raise GenericError("An error occured during the integration.")
+            raise GenericError("An error occurred during the integration.")
         if ret_value == 2:
             if self._N_odes>0:
                 raise NoParticles("No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");

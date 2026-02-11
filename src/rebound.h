@@ -196,7 +196,7 @@ struct reb_integrator_ias15 {
     double epsilon;                         // Precision control parameter
     double min_dt;                          // Minimal timestep
     enum {
-        REB_IAS15_INDIVIDUAL = 0,   // fractional error is calculated seperately for each particle
+        REB_IAS15_INDIVIDUAL = 0,   // fractional error is calculated separately for each particle
         REB_IAS15_GLOBAL = 1,       // fractional error is calculated globally (was default until 01/2024)
         REB_IAS15_PRS23 = 2,        // Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)
         REB_IAS15_AARSETH85 = 3,    // Aarseth (1985) timestep criterion
@@ -1036,7 +1036,7 @@ DLLEXPORT void reb_simulation_rescale_var(struct reb_simulation* const r);
 //   supported. Pal coordinates have the advantage of being analytical (i.e. infinite differentiable).
 //   Classical orbital parameters may have singularities, for example when e is close to 0.
 //   Note that derivatives with respect to Cartesian coordinates are trivial and therefore not
-//   implemented as seperate functions. 
+//   implemented as separate functions. 
 //   The following variables are supported: a, e, inc, f, omega, Omega, h, k, ix, iy and m (mass). 
 // The functions return the derivative as a particle structre. Each structure element is a derivative.
 // The paramter po is the original particle for which the derivative is to be calculated.
