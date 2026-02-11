@@ -608,7 +608,7 @@ struct reb_simulation {
     double simulationarchive_auto_interval;         // Current sampling cadence, in code units
     double simulationarchive_auto_walltime;         // Current sampling cadence, in wall time
     uint64_t simulationarchive_auto_step; // Current sampling cadence, in time steps
-    double simulationarchive_next;                  // Next output time (simulation tim or wall time, depending on wether auto_interval or auto_walltime is set)
+    double simulationarchive_next;                  // Next output time (simulation time or wall time, depending on whether auto_interval or auto_walltime is set)
     uint64_t simulationarchive_next_step; // Next output step (only used if auto_steps is set)
     char*  simulationarchive_filename;              // Name of output file
 
