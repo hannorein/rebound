@@ -997,7 +997,6 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
 void reb_integrator_whfast_step(struct reb_simulation* const r){
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* restrict const particles = r->particles;
-    struct reb_particle* const p_j = ri_whfast->p_jh;
     const double dt = r->dt;
     const int N = r->N;
     const int N_real = N-r->N_var;
@@ -1006,6 +1005,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
         // Non recoverable error occured.
         return;
     }
+    struct reb_particle* const p_j = ri_whfast->p_jh;
 
     // Only recalculate Jacobi coordinates if needed
     if (ri_whfast->safe_mode || ri_whfast->recalculate_coordinates_this_timestep){
@@ -1054,25 +1054,19 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
     // If other coordinates are used, the code will raise an exception earlier.
     for (int v=0;v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        ri_whfast->p_jh[vc.index].x += r->dt/2.*ri_whfast->p_jh[vc.index].vx;
-        ri_whfast->p_jh[vc.index].y += r->dt/2.*ri_whfast->p_jh[vc.index].vy;
-        ri_whfast->p_jh[vc.index].z += r->dt/2.*ri_whfast->p_jh[vc.index].vz;
+        p_j[vc.index].x += r->dt/2.*p_j[vc.index].vx;
+        p_j[vc.index].y += r->dt/2.*p_j[vc.index].vy;
+        p_j[vc.index].z += r->dt/2.*p_j[vc.index].vz;
         if (r->force_is_velocity_dependent){
-            reb_particles_transform_jacobi_to_inertial_posvel(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
+            reb_particles_transform_jacobi_to_inertial_posvel(particles+vc.index, p_j+vc.index, particles, N_real, N_active);
         }else{
-            reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N_real, N_active);
+            reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, p_j+vc.index, particles, N_real, N_active);
         }
     }
 
     r->t+=dt/2.;
     
     reb_simulation_update_acceleration(r);
-
-    if (p_j==NULL){
-        // Non recoverable error occured earlier. 
-        // Skipping rest of integration to avoid segmentation fault.
-        return;
-    }
 
     switch (ri_whfast->kernel){
         case REB_WHFAST_KERNEL_DEFAULT: 
@@ -1081,7 +1075,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
             reb_whfast_jump_step(r,dt/2.);
             break;
         case REB_WHFAST_KERNEL_MODIFIEDKICK: 
-            // p_jh used as a temporary buffer for "jerk"
+            // p_j used as a temporary buffer for "jerk"
             reb_whfast_calculate_jerk(r);
             for (unsigned int i=0; i<N; i++){
                 const double prefact = dt*dt/12.;
