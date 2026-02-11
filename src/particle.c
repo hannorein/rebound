@@ -162,7 +162,7 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
         return;
     }
 #endif // MPI
-       // Add particle to local partical array.
+       // Add particle to local particle array.
     reb_simulation_add_local(r, pt);
 }
 
@@ -187,7 +187,7 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
     return 0;
 }
 
-// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indicies of the particles.
+// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the particles.
 void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2) {
     struct reb_particle* particles = r->particles;
     *p1 = -1;

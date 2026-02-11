@@ -15,7 +15,7 @@
 #include <math.h>
 #include "rebound.h"
 
-// This example is using a custom velocity dependend coefficient of restitution
+// This example is using a custom velocity dependent coefficient of restitution
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){
     // assumes v in units of [m/s]
     double eps = 0.32*pow(fabs(v)*100.,-0.234);

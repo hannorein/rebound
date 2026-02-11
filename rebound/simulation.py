@@ -834,7 +834,7 @@ class Simulation(Structure):
             Second order variational equations depend on their corresponding first order variational equations. 
             This parameter expects the Variation object corresponding to the first order variational equations. 
         first_order_2 : Variation, optional
-            Same as first_order. But allows to set two different indicies to calculated off-diagonal elements. 
+            Same as first_order. But allows to set two different indices to calculated off-diagonal elements. 
             If omitted, then first_order will be used for both first order equations.
         testparticle : int, optional
             If set to a value >= 0, then only one variational particle will be added and be treated as a test particle.
@@ -1392,7 +1392,7 @@ class Simulation(Structure):
         Exceptions
         ----------
         Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occurred. 
-        If you specified exit_min_distance or exit_max_distance, then additional exceptions might thrown for escaping particles or particles that undergo a clos encounter.
+        If you specified exit_min_distance or exit_max_distance, then additional exceptions might be thrown for escaping particles or particles that undergo a close encounter.
         
         Examples
         -------- 

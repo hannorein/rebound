@@ -475,7 +475,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 // Shift all particles back to heliocentric coordinates
                 // Ignore stars velocity:
                 //   - will not be used after this
-                //   - com velocity is unchained. this velocity will be used
+                //   - com velocity is unchanged. this velocity will be used
                 //     to reconstruct star's velocity later.
                 for (int i=r->N-1; i>=0; i--){
                     r->particles[i].x -= r->particles[0].x;
@@ -799,7 +799,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 
     // Calculate gravity with special function
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
-        reb_simulation_warning(r,"TRACE has it's own gravity routine. Gravity routine set by the user will be ignored.");
+        reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.

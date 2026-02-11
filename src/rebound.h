@@ -779,7 +779,7 @@ DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, 
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but substract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
-// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indicies of the largest particles.
+// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
 DLLEXPORT void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
 
 
@@ -1039,7 +1039,7 @@ DLLEXPORT void reb_simulation_rescale_var(struct reb_simulation* const r);
 //   implemented as separate functions. 
 //   The following variables are supported: a, e, inc, f, omega, Omega, h, k, ix, iy and m (mass). 
 // The functions return the derivative as a particle structre. Each structure element is a derivative.
-// The paramter po is the original particle for which the derivative is to be calculated.
+// The parameter po is the original particle for which the derivative is to be calculated.
 DLLEXPORT struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_h(double G, struct reb_particle primary, struct reb_particle po);
 DLLEXPORT struct reb_particle reb_particle_derivative_k(double G, struct reb_particle primary, struct reb_particle po);
