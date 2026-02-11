@@ -47,3 +47,4 @@ problems/
 *.pete
 examples/solar_system_tes
 rebound.html
+_codeql_detected_source_root
