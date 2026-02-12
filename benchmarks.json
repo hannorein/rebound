@@ -1,0 +1,143 @@
+[
+    {
+        "name": "WHFast (scalar)",
+        "args": {
+            "whfast512": 0,
+            "coords": 0,
+            "opt-method": 0,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "WHFast512 Jacobi (Baseline)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 0,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Cache Stumpff: threshold=1e-10",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 6,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0,
+            "cache-threshold": 1e-10
+        }
+    },
+    {
+        "name": "WHFast512 DHC",
+        "args": {
+            "whfast512": 1,
+            "coords": 1,
+            "opt-method": 0,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton for 1/gradient",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 1,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with prior guess",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 2,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=2.0)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 2.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=1.5)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 1.5,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=1.7)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 1.7,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=1.8)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 1.8,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=1.9)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 1.9,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=2.1)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 2.1,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Kepler Solver: Newton start with momentum (beta=2.2)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 2.2,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Gravity: Newton for 1/r^3",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 4,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 1
+        }
+    }
+]

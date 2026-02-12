@@ -410,6 +410,24 @@ struct reb_integrator_whfast512 {
         REB_WHFAST512_COORDINATES_JACOBI = 0,                       // Jacobi coordinates (default)
         REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,       // Democratic Heliocentric coordinates
     } coordinates;                                                  // Coordinate system used in Hamiltonian splitting
+    enum {
+        REB_WHFAST512_OPT_NONE = 0,                // Default
+        REB_WHFAST512_OPT_RECIP_APPROX = 1,        // Newton with reciprocal approximation
+        REB_WHFAST512_OPT_REUSE_GUESS = 2,         // Reuse previous X as initial guess
+        REB_WHFAST512_OPT_MOMENTUM_GUESS = 3,      // Momentum-based initial guess
+        REB_WHFAST512_OPT_FAST_RSQRT = 4,          // Fast rsqrt for gravity
+        REB_WHFAST512_OPT_COMBINED = 5,            // Momentum + Fast rsqrt combined
+        REB_WHFAST512_OPT_STUMPFF_CACHE = 6,       // Approximate Stumpff cache with threshold
+    } optimization_method;                         
+    
+    // Hyperparameters
+    double momentum_coeff;              // Coefficient for momentum guess
+    int kepler_halley_iters;            // Number of Halley iterations
+    int kepler_newton_iters;            // Number of Newton iterations
+    int recip_refinement_iters;         // Newton-Raphson iterations for rcp14
+    int rsqrt_refinement_iters;         // Newton-Raphson iterations for rsqrt14
+    int use_fast_rsqrt_gravity;         // 1 = use fast rsqrt in gravity, independent of optimization_method
+    double stumpff_cache_threshold;     // Threshold for approximate Stumpff cache matching (0.0 = exact, 0.01 = 1% tolerance)
 
     // Internal use
     unsigned int is_synchronized;                           // Is current state synchronized?
@@ -422,6 +440,8 @@ struct reb_integrator_whfast512 {
     double* mat8_inertial_to_jacobi;                        // Coordinate transformation matricies. Can be recalculated from particle masses.
     double* mat8_jacobi_to_inertial;
     double* mat8_jacobi_to_heliocentric;
+    double X_prev[8];                   // Previous X value for reuse/momentum guess
+    double X_prev2[8];                  // X from 2 steps ago for momentum guess
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)
