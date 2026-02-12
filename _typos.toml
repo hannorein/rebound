@@ -14,4 +14,8 @@ WHT = "WHT"
 ba = "ba"
 wheight = "wheight"
 [files]
-extend-exclude = ["src/glad.*","src/derivatives.c"]
+extend-exclude = [
+"src/glad.*",
+"src/derivatives.c",
+"docs/javascripts",
+]

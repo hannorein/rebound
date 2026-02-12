@@ -57,7 +57,7 @@ do
 done
 
 ## UPDATE DONE
-echo "Documentaiton updated. Releasing lock."
+echo "Documentation updated. Releasing lock."
 echo "$repository_head" > documentation_head.txt
 rm documentation_lock.txt
 

@@ -81,7 +81,7 @@ You can compare if simulations are equal to each other using the following synta
     struct reb_simulation* r1 = reb_simulation_create();
     struct reb_simulation* r2 = reb_simulation_create();
     // ... setup simulations ...
-    reb_simulation_diff(r1, r2, 1); // prints out diferences
+    reb_simulation_diff(r1, r2, 1); // prints out differences
     ```
 === "Python"
     ```python

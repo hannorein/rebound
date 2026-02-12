@@ -26,7 +26,7 @@ double reb_random_powerlaw(struct reb_simulation* r, double min, double max, dou
 ```
 
 # Normal
-This function returns a random number drawn from a normal distribution centerd on zero and with variance `variance`.
+This function returns a random number drawn from a normal distribution centered on zero and with variance `variance`.
 It uses the algorithm by D.E. Knut, 1997, The Art of Computer Programming, Addison-Wesley. 
 ```c
 double reb_random_normal(struct reb_simulation* r, double variance);

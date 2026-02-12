@@ -69,7 +69,7 @@ You can also use orbital parameters to initialize the particle object.
     See [the discussion on orbital elements](orbitalelements.md) for more details.
 
     !!! Note
-        In most cases you can simply use the convience function described below.
+        In most cases you can simply use the convenience function described below.
         This way you don't have to create a particle object just to add it to the simulation.
 
 ## Convenience functions
