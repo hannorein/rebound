@@ -116,7 +116,7 @@ def create_whfast_testparticletype1_withplanet(coordinates, N_active):
             self.assertLess(abs(sim.particles[i].vy-sim2.particles[i].vy),eps)
     return do_test
 
-## Testparticles with mass currently lead to unexpexted behaviour:
+## Testparticles with mass currently lead to unexpected behaviour:
 def create_whfast_massivetestparticle(coordinates, N):
     def do_test(self):
         eps = 2e-13

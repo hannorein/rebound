@@ -18,7 +18,7 @@ class IntegratorTRACE(ctypes.Structure):
         Switching radius in units of the modified hill radius.
     :ivar float peri_mode:
         Pericenter switching mode. Determines how close encounters with the central star are integrated.
-        The default is 1, which uses the FULL BS prescription. This converts our system from Democratic Heliocentric Coordinates to back to Intertial Cartesian coordinates. The whole system is integrated with Bulirsch-Stoer.
+        The default is 1, which uses the FULL BS prescription. This converts our system from Democratic Heliocentric Coordinates back to Inertial Cartesian coordinates. The whole system is integrated with Bulirsch-Stoer.
         If set to 0, we use the PARTIAL BS prescription. This moves all terms from the Jump step to the Kepler step as described in Hernandez and Dehnen (2023). The Kepler step is integrated with Bulirsch-Stoer.
         If set to 2, we use the FULL IAS15 prescription. This acts similarly to the PURE BS prescription, but uses IAS15 instead of BS to integrate the whole system.
     :ivar float peri_crit_eta:

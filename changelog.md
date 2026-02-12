@@ -235,7 +235,7 @@ This changelog only includes the most important changes in recent updates. For a
 * OrbitPlot is now a class. Checkout the OrbitPlot.ipynb tutorial. This change allows for interactive plots and much faster updates to existing plots. This is great for rendering animations! 
 
 ### Version 3.21.0
-* Automatic rescaling of first order variational particles has been added. This will allow you to integrate chaotic systems for longer and obtain a more accruate measure of MEGNO and the Lyapunoc exponent. 
+* Automatic rescaling of first order variational particles has been added. This will allow you to integrate chaotic systems for longer and obtain a more accurate measure of MEGNO and the Lyapunoc exponent. 
 * Added `sim.stop()` / `reb_simulation_stop()` to end an integration from within the heartbeat function.
 
 ### Version 3.20.1
@@ -248,7 +248,7 @@ This changelog only includes the most important changes in recent updates. For a
 * Fixes another bug int he BS integrator when additional forces are used.
 
 ### Version 3.19.9
-* Two bugs fixed in the BS integrator. One was related to unitialized memory and the other to issues when the particle number changed.
+* Two bugs fixed in the BS integrator. One was related to uninitialized memory and the other to issues when the particle number changed.
 
 ### Version 3.19.5
 * Workaround for urllib support in pyodide added
@@ -294,7 +294,7 @@ This changelog only includes the most important changes in recent updates. For a
 ### Version 3.17.1
 * Fixed an issue where the simulation struct in python did not match the one in C. This might have lead to unexpected behaviour in rare cases.
 * Fixed various typos in the documentation
-* MERCURIUS switching functions can now be set from Python. Also inluded more built-in switching functions from Hernandez (2019). 
+* MERCURIUS switching functions can now be set from Python. Also included more built-in switching functions from Hernandez (2019). 
 
 ### Version 3.17.0
 * Added new 'reb_simulation_add_fmt()' function. This makes adding particles in C as easy as in python.
@@ -305,7 +305,7 @@ This changelog only includes the most important changes in recent updates. For a
 
 ### Version 3.16.0
 * MERCURIUS: If encounters only involve test-particles (type 0), then the algorithm is now resetting the coordinates of all massive particles after the encounter step. This only changes the outcome at the machine precision, but it makes the trajectories of massive particles independent of the close encounter history. Thanks to Kat Deck for this feature!
-* MERCURIUS: The gravity routine is now $O(0.5 \cdot N^2)$ instead of $O(N^2)$ for non-OPENMP runs. This should lead to a noticable improvement in runtime.
+* MERCURIUS: The gravity routine is now $O(0.5 \cdot N^2)$ instead of $O(N^2)$ for non-OPENMP runs. This should lead to a noticeable improvement in runtime.
 
 ### Version 3.15.0
 * Orbital parameters of particles can now be changed in-place. For example: 'sim.particles[1].e += 0.1'.
@@ -425,7 +425,7 @@ This changelog only includes the most important changes in recent updates. For a
 * Minor bug fixes
 
 ### Version 3.6.0
-* Simulationarchive Version 2. With the new version of the Simulationarchive file format, you can now create snapshots of your simulations without any restrictions. You can change the number of particles, the timestep, even the integrator used during the integration. REBOUND automatically detects what has changed and only stores the differences in incremental snaphots. This reduces the filesize while keeping the format as flexible as possible. The old Simulationarchive Version 1 is still supported for now but might become deprecated in the future. All examples have been updated. As usual these are as usual good starting points for understanding the functionality and the syntax. 
+* Simulationarchive Version 2. With the new version of the Simulationarchive file format, you can now create snapshots of your simulations without any restrictions. You can change the number of particles, the timestep, even the integrator used during the integration. REBOUND automatically detects what has changed and only stores the differences in incremental snapshots. This reduces the filesize while keeping the format as flexible as possible. The old Simulationarchive Version 1 is still supported for now but might become deprecated in the future. All examples have been updated. As usual these are as usual good starting points for understanding the functionality and the syntax. 
 
 ### Version 3.5.12
 * Added REB_COLLISION_LINE. This is a collision detection routine which serves for collisions during the last timestep, assuming that all particles travel along straight lines. This can be useful in cases where not every collision needs to be detected exactly, but the overall collision rate should be reproduced. The algorithm is O(N**2).
@@ -458,7 +458,7 @@ This changelog only includes the most important changes in recent updates. For a
 
 ### Version 3.5.3
 * Allow for better parallelization of WHFast with OpenMP.
-* Addded example of the Solar System with Testparticles.
+* Added example of the Solar System with Testparticles.
 * Made simulationarchive_append a public function (might be useful for some hacking projects).
 
 ### Version 3.5.2
@@ -482,7 +482,7 @@ This changelog only includes the most important changes in recent updates. For a
 * JANUS integrator added. This is a bit-wise reversible high-order symplectic integrator. At this time, it remains experimental. Details about this integrator will be published in an upcoming paper.
 
 ### Version 3.2.4
-* Changes to the WHFastHelio integrator. This integrator now uses democratic heliocentric coordinates and a Hamiltonian splitted as proposed by Hernandez and Dehnen (2017), WHDS, which splits the Hamiltonian into three parts. It has the advantage that the integrator solves the two body problem exactly. It is not compatible with symplectic correctors, this functionality has been removed for WHFastHelio. For very high accuracy integrations of stable planetary systems, the WHFast integrator in Jacobi coordinated (and potentially symplectic correctors) should be better suited.  
+* Changes to the WHFastHelio integrator. This integrator now uses democratic heliocentric coordinates and a Hamiltonian split as proposed by Hernandez and Dehnen (2017), WHDS, which splits the Hamiltonian into three parts. It has the advantage that the integrator solves the two body problem exactly. It is not compatible with symplectic correctors, this functionality has been removed for WHFastHelio. For very high accuracy integrations of stable planetary systems, the WHFast integrator in Jacobi coordinated (and potentially symplectic correctors) should be better suited.  
 
 ### Version 3.2.3
 * Various minor bug fixes. Added pre-timestep modifications for REBOUNDx. 
@@ -514,7 +514,7 @@ This changelog only includes the most important changes in recent updates. For a
 * NASA Horizons changed a telnet command. This update implements those changes and restores access to NASA Horizons from within REBOUND.
 
 ### Version 2.20.4
-* Improvements to the Kepler solver. This is typically only relevant for extremly long simulation (1e11 timesteps or more) and extremely accurate simulation with symplectic correctors and a relative energy error of less than 1e-10.
+* Improvements to the Kepler solver. This is typically only relevant for extremely long simulation (1e11 timesteps or more) and extremely accurate simulation with symplectic correctors and a relative energy error of less than 1e-10.
 
 ### Version 2.20.3
 * Small changes to HERMES integrator. It now has a Solar Switch Factor SSF to allow for close encounters with the central object. 

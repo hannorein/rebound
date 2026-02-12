@@ -31,4 +31,5 @@ extend-exclude = [
 "live.html",
 "*.js",
 "*.pdf",
+"/legacy/*",
 ]
