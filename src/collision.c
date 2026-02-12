@@ -698,7 +698,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_s
     double vz21 = p1.vz + gb.vz - p2.vz; 
     if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
                                                      // Bring the to balls in the xy plane.
-                                                     // NOTE: this could probabely be an atan (which is faster than atan2)
+                                                     // NOTE: this could probably be an atan (which is faster than atan2)
     double theta = atan2(z21,y21);
     double stheta = sin(theta);
     double ctheta = cos(theta);
@@ -851,7 +851,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
     pi->last_collision = r->t;
 
 
-    // Keeping track of energy offst
+    // Keeping track of energy offset
     if(r->track_energy_offset){
         {
             double vx = pi->vx;

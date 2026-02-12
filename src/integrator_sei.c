@@ -92,7 +92,7 @@ void reb_integrator_sei_reset(struct reb_simulation* r){
 
 /**
  * @brief This function evolves a particle under the unperturbed
- * Hamiltonian H0 exactly up to machine precission.
+ * Hamiltonian H0 exactly up to machine precision.
  * @param p reb_particle to evolve.
  * @param dt Timestep
  * @param ri_sei Integrator struct
@@ -132,9 +132,9 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
 
 /**
  * @brief This function applies the acceleration due to the PHI1 term.
- * @details It is only exact if the forces are velocity independet (i.e. gravity).
+ * @details It is only exact if the forces are velocity independent (i.e. gravity).
  * If the forces are velocity dependent, it breaks the symmetry of the scheme,
- * making it firsr-order and non-symplectic. As long as these forces are small,
+ * making it first-order and non-symplectic. As long as these forces are small,
  * this should not be visible. However, it is worth keeping in mind. 
  * @param p reb_particle to evolve.
  * @param dt Timestep

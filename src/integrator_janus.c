@@ -37,7 +37,7 @@
 #include "integrator_janus.h"
 
 /**
- * Stucture derscribing one specific JANUS scheme
+ * Structure derscribing one specific JANUS scheme
  **/
 struct reb_janus_scheme {
     unsigned int order;     ///< Order of the scheme

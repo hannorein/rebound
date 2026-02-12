@@ -1544,7 +1544,7 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done)
     // Calculate running Y(t)
     r->megno_Ys += dY;
     double Y = r->megno_Ys/(r->t-r->megno_initial_t);
-    // Calculate averge <Y> 
+    // Calculate average <Y> 
     r->megno_Yss += Y * dt_done;
     // Update covariance of (Y,t) and variance of t
     r->megno_n++;

@@ -2,7 +2,7 @@
  * @file 	integrator.c
  * @brief 	BS integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the Gragg-Bulirsch-Stoer integration scheme.  
+ * @details	This file implements the Gragg-Bulirsch-Stoer integration scheme.
  *          It is a reimplementation of the fortran code by E. Hairer and G. Wanner.
  *          The starting point was the JAVA implementation in hipparchus:
  *          https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java
@@ -319,7 +319,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    // TODO. Remove the m anual call to update_accelerations in _step(). Then remove if statement.
+    // TODO. Remove the manual call to update_accelerations in _step(). Then remove if statement.
     if (r->t != t) { 
         // Not needed for first step. Accelerations already calculated. Just need to copy them
         reb_integrator_bs_update_particles(r, y);
@@ -702,7 +702,7 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
 struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     struct reb_ode* ode = malloc(sizeof(struct reb_ode));
 
-    memset(ode, 0, sizeof(struct reb_ode)); // not really necessaery
+    memset(ode, 0, sizeof(struct reb_ode)); // not really necessary
 
     if (r->N_allocated_odes <= r->N_odes){
         r->N_allocated_odes += 32;

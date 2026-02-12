@@ -763,7 +763,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                 }
                 break;
             default:
-                reb_simulation_error(r,"Unsupport peri_mode encountered\n");
+                reb_simulation_error(r,"Unsupported peri_mode encountered\n");
                 break;
         }
         r->gravity = REB_GRAVITY_TRACE;

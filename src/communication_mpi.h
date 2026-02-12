@@ -41,7 +41,7 @@
 #include "mpi.h"
 
 /**
- * \defgroup mpistructures Data structures for MPI comminication.
+ * \defgroup mpistructures Data structures for MPI communication.
  * These buffers are used for communicating with other nodes.
  * Each buffer is an array with the number of elements being equal
  * to the number of nodes. 

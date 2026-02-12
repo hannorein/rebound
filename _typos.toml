@@ -1,0 +1,17 @@
+[default.extend-words]
+ix = "ix"
+iy = "iy"
+iz = "iz"
+nd = "nd"
+pn = "pn"
+hel = "hel"
+Stoer = "Stoer"
+nax = "nax"
+yoh = "yoh"
+offsetp = "offsetp"
+Fo = "Fo"
+WHT = "WHT"
+ba = "ba"
+wheight = "wheight"
+[files]
+extend-exclude = ["src/glad.*","src/derivatives.c"]

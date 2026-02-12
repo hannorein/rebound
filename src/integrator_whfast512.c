@@ -465,7 +465,7 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
     __m512d dvz;
 
     {
-        x_j = _mm512_permutexvar_pd(so1, x_j); // accros 512
+        x_j = _mm512_permutexvar_pd(so1, x_j); // across 512
         y_j = _mm512_permutexvar_pd(so1, y_j);
         z_j = _mm512_permutexvar_pd(so1, z_j);
         m_j = _mm512_permutexvar_pd(so1, m_j);

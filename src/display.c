@@ -396,7 +396,7 @@ static void reb_display_clear_particle_data(struct reb_display_data* data){
     if (data->orbit_data){
         float n = NAN;
         for (int i=0; i<N_real; i++){
-            data->orbit_data[i].x = n; // enought to not render
+            data->orbit_data[i].x = n; // enough to not render
             data->orbit_data[i].y = n;
             data->orbit_data[i].z = n;
         }
@@ -517,7 +517,7 @@ void reb_render_frame(void* p){
     struct reb_display_data* data = (struct reb_display_data*)p;
     struct reb_simulation* r = data->r;
     if (!data){
-        printf("reb_display_data undefinded in reb_render_frame().\n");
+        printf("reb_display_data undefined in reb_render_frame().\n");
         return;
     }
     int width, height;
@@ -662,7 +662,7 @@ void reb_render_frame(void* p){
     glPointSize(15.*data->retina);
 #endif
 
-    // Precalculate matricies 
+    // Precalculate matrices 
     struct reb_mat4df projection = reb_mat4df_ortho( -1.6*ratio, 1.6*ratio, -1.6,1.6, -2.5,2.5);
     struct reb_mat4df view = data->s.view;
     if (data->s.reference>=0){

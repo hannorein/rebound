@@ -569,7 +569,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
             // Use error estimate to predict new timestep
             if  (isnormal(integrator_error)){
                 dt_new = sqrt7(r->ri_ias15.epsilon/integrator_error)*dt_done;
-            }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precission).
+            }else{  // In the rare case that the error estimate doesn't give a finite number (e.g. when all forces accidentally cancel up to machine precision).
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
             };
         }else{ // adaptive_mode >= 2 (New adaptive timestepping method, default since January 2024)
@@ -592,7 +592,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                     y5 += tmp*tmp;
                 }
                 if (!isnormal(a0i)){
-                    // Skipp particles which do not experience any acceleration or
+                    // Skip particles which do not experience any acceleration or
                     // have acceleration which is inf or Nan.
                     continue;
                 }
@@ -621,15 +621,15 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                                                     // Reset particles
             for(int k=0;k<N;++k) {
                 int mk = map[k];
-                particles[mk].x = x0[3*k+0]; // Set inital position
+                particles[mk].x = x0[3*k+0]; // Set initial position
                 particles[mk].y = x0[3*k+1];
                 particles[mk].z = x0[3*k+2];
 
-                particles[mk].vx = v0[3*k+0];    // Set inital velocity
+                particles[mk].vx = v0[3*k+0];    // Set initial velocity
                 particles[mk].vy = v0[3*k+1];
                 particles[mk].vz = v0[3*k+2];
 
-                particles[mk].ax = a0[3*k+0];    // Set inital acceleration
+                particles[mk].ax = a0[3*k+0];    // Set initial acceleration
                 particles[mk].ay = a0[3*k+1];
                 particles[mk].az = a0[3*k+2];
             }
@@ -845,7 +845,7 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
         struct reb_vec3d vec_y4 = {0};
 
         if (!isnormal(y2)){
-            // Skipp particles which do not experience any acceleration or
+            // Skip particles which do not experience any acceleration or
             // have acceleration which is inf or Nan.
             continue;
         }
@@ -922,7 +922,7 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
 
 #ifdef GENERATE_CONSTANTS
 void integrator_generate_constants(void){
-    printf("Generaring constants.\n\n");
+    printf("Generating constants.\n\n");
     mpf_set_default_prec(512);
     mpf_t* _h = malloc(sizeof(mpf_t)*8);
     for (int i=0;i<8;i++){

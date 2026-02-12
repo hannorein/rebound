@@ -162,7 +162,7 @@ struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i
             {
                 const double OMEGA = r->ri_sei.OMEGA;
                 struct reb_vec6d gb;
-                // Ghostboxes habe a finite velocity.
+                // Ghostboxes have a finite velocity.
                 gb.vx = 0.;
                 gb.vy = -1.5*(double)i*OMEGA*r->boxsize.x;
                 gb.vz = 0.;

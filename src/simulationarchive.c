@@ -279,9 +279,9 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                     blob.offset_next = blob16.offset_next;
                 }
                 int next_blob_is_corrupted = 0;
-                if (r3!=1){ // Next snapshot is definitly corrupted. 
-                            // Assume we have reached the end of the file. 
-                            // Won't be able to do checksum. 
+                if (r3!=1){ // Next snapshot is definitely corrupted.
+                            // Assume we have reached the end of the file.
+                            // Won't be able to do checksum.
                     if (debug) printf("SA Error. Error while reading next blob.\n");
                     next_blob_is_corrupted = 1;
                     *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
@@ -295,7 +295,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
                     }
                     // Checking the offsets. Acts like a checksum.
                     if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
-                        // Offsets don't work. Next snapshot is definitly corrupted. Assume current one as well.
+                        // Offsets don't work. Next snapshot is definitely corrupted. Assume current one as well.
                         if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
                         read_error = 1;
                         break;
@@ -333,7 +333,7 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
             }
 
         }else{ // reuse index from other SA
-               // This is an optimzation for loading many large SAs.
+               // This is an optimization for loading many large SAs.
                // It assumes the structure of this SA is *exactly* the same as in sa_index.
                // Unexpected behaviour if the shape is not the same.
             sa->nblobs = sa_index->nblobs;

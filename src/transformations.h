@@ -23,7 +23,7 @@
  *
  */
 
-#ifndef _TRANFORMATIONS_H
-#define _TRANFORMATIONS_H
+#ifndef _TRANSFORMATIONS_H
+#define _TRANSFORMATIONS_H
 
 #endif

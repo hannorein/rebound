@@ -525,7 +525,7 @@ struct reb_simulation {
     int     N_allocated_gravity_cs;
     struct reb_treecell** tree_root;
     int     tree_needs_update;      // Flag to force a tree update (after boundary check)
-    double opening_angle2;          // Opening angle for tree-based gravity calculation. Defaukt 0.25. 
+    double opening_angle2;          // Opening angle for tree-based gravity calculation. Default 0.25.
     enum REB_STATUS status;         // Current simulation status
     int     exact_finish_time;      // 1 (default): integrate exactly to the time requested and adjust timestep if needed, 0: may overshoot by one timestep
 
@@ -567,19 +567,19 @@ struct reb_simulation {
 #ifdef MPI
     int    mpi_id;                              // Unique id of this node (starting at 0). Used for MPI only.
     int    mpi_num;                             // Number of MPI nodes. Used for MPI only.
-    struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node. 
-    int*   N_particles_send;                    // Current length of particle send buffer. 
-    int*   N_particles_send_max;                // Maximal length of particle send beffer before realloc() is needed. 
-    struct reb_particle** particles_recv;       // Receive buffer for particles. There is one buffer per node. 
-    int*   N_particles_recv;                    // Current length of particle receive buffer. 
-    int*   N_particles_recv_max;                // Maximal length of particle receive beffer before realloc() is needed. */
+    struct reb_particle** particles_send;       // Send buffer for particles. There is one buffer per node.
+    int*   N_particles_send;                    // Current length of particle send buffer.
+    int*   N_particles_send_max;                // Maximal length of particle send buffer before realloc() is needed.
+    struct reb_particle** particles_recv;       // Receive buffer for particles. There is one buffer per node.
+    int*   N_particles_recv;                    // Current length of particle receive buffer.
+    int*   N_particles_recv_max;                // Maximal length of particle receive buffer before realloc() is needed. */
 
-    struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node. 
-    int*   N_tree_essential_send;               // Current length of cell send buffer. 
-    int*   N_tree_essential_send_max;           // Maximal length of cell send beffer before realloc() is needed. 
-    struct reb_treecell** tree_essential_recv;  // Receive buffer for cells. There is one buffer per node. 
-    int*   N_tree_essential_recv;               // Current length of cell receive buffer. 
-    int*   N_tree_essential_recv_max;           // Maximal length of cell receive beffer before realloc() is needed. 
+    struct reb_treecell** tree_essential_send;  // Send buffer for cells. There is one buffer per node.
+    int*   N_tree_essential_send;               // Current length of cell send buffer.
+    int*   N_tree_essential_send_max;           // Maximal length of cell send buffer before realloc() is needed.
+    struct reb_treecell** tree_essential_recv;  // Receive buffer for cells. There is one buffer per node.
+    int*   N_tree_essential_recv;               // Current length of cell receive buffer.
+    int*   N_tree_essential_recv_max;           // Maximal length of cell receive buffer before realloc() is needed.
 #endif // MPI
 
     int collision_resolve_keep_sorted;      // 0 (default): may reorder particles during collisions, 1: keep particles sorted.
@@ -777,7 +777,7 @@ DLLEXPORT void reb_simulation_move_to_com(struct reb_simulation* const r);
 DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel);
 // Add cartesian components of each particle of r2 to cartesian components in r. r2 and r must have same number of particles.
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
-// Same as above but substract r2 from r component wise.
+// Same as above but subtract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
 // Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
 DLLEXPORT void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
@@ -958,7 +958,7 @@ DLLEXPORT struct reb_orbit reb_orbit_from_particle(double G, struct reb_particle
 
 // Defines one Ordinary Differential Equation (ODE) so that it can be integrated with REBOUND
 struct reb_ode{
-    unsigned int length;        // number of components / dimenion
+    unsigned int length;        // number of components / dimension
     double* y;                  // Pointer to current state 
     unsigned int needs_nbody;   // 1: ODE needs N-body particles to calculate RHS
     void* ref;                  // Optional pointer to any additional data needed for derivative calculation
@@ -1157,7 +1157,7 @@ void reb_mpi_finalize(struct reb_simulation* const r);
 DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 #endif // OPENMP
 
-// The following stuctures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
+// The following structures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
 
 struct reb_orbit_opengl {
     float x,y,z;
@@ -1358,7 +1358,7 @@ enum reb_simulation_binary_error_codes {
     REB_SIMULATION_BINARY_ERROR_FILENOTOPEN = 16,
     REB_SIMULATION_BINARY_ERROR_OUTOFRANGE = 32,
     REB_SIMULATION_BINARY_ERROR_SEEK = 64,
-    REB_SIMULATION_BINARY_WARNING_FIELD_UNKOWN = 128,
+    REB_SIMULATION_BINARY_WARNING_FIELD_UNKNOWN = 128,
     REB_SIMULATION_BINARY_ERROR_INTEGRATOR = 256,
     REB_SIMULATION_BINARY_WARNING_CORRUPTFILE = 512,
     REB_SIMULATION_BINARY_ERROR_OLD = 1024,

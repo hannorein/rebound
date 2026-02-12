@@ -1,6 +1,6 @@
 /**
  * @file 	input.h
- * @brief 	Parse command line options and read retart files.
+ * @brief 	Parse command line options and read restart files.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE

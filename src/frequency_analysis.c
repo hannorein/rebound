@@ -62,7 +62,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
     // freq_0, amp_0, phase_0, freq_1, amp_1, phase_1, ... 
     // The input array needs to be ndata*2 long with values
     // x(0), y(0), x(1), y(1), ...
-    // where x(t) and y(t) are the complext time series to be analyzed.
+    // where x(t) and y(t) are the complex time series to be analyzed.
     // The function returns 0 on success and returns a negative value for various errors.
 
     if (minfreq>=maxfreq){
@@ -113,7 +113,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
 
     for(int l=0; l<=type; l++){
         if(l==0){
-            /* SEPARATE REAL AND IMAGINERY PARTS */ 
+            /* SEPARATE REAL AND IMAGINARY PARTS */ 
             for(int j=0;j<ndata;j++){
                 xdata[j] = input[j*2];
                 ydata[j] = input[j*2+1];
@@ -142,7 +142,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
             /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
             int frequencies_removed = 0;
             while((centerf = bracket(powsd, ndata)) < minfreq || centerf > maxfreq) {
-                /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
+                /* IF NO, SUBTRACT IT FROM THE SIGNAL */
                 f[0] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
                 amph(&A[0], &psi[0], f[0], x, y, ndata);
@@ -172,7 +172,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
         /* COMPUTE AMPLITUDE AND PHASE */
         amph(&A[0], &psi[0], f[0], x, y, ndata);
 
-        /* SUBSTRACT THE FIRST HARMONIC FROM THE SIGNAL */
+        /* SUBTRACT THE FIRST HARMONIC FROM THE SIGNAL */
         for(int j=0;j<ndata;j++){
             xdata[j] -= A[0]*cos( f[0]*j + psi[0] );
             ydata[j] -= A[0]*sin( f[0]*j + psi[0] );
@@ -205,7 +205,7 @@ int reb_frequency_analysis(double *output, int nfreq, double minfreq, double max
                 int frequencies_removed = 0;
                 /* CHECK IF THE FREQUENCY IS IN THE REQUIRED RANGE */
                 while(f[m] < minfreq || f[m] > maxfreq || nearfreqflag == 1){
-                    /* IF NO, SUBSTRACT IT FROM THE SIGNAL */
+                    /* IF NO, SUBTRACT IT FROM THE SIGNAL */
                     f[m] = golden(centerf, TWOPI/ndata, x, y, ndata);
 
                     amph(&A[m], &psi[m], f[m], x, y, ndata);

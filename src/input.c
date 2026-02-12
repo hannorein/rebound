@@ -1,6 +1,6 @@
 /**
  * @file    input.c
- * @brief   Parse command line options and read retart files.
+ * @brief   Parse command line options and read restart files.
  * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section     LICENSE
@@ -196,7 +196,7 @@ next_field:
         }
 
         // We should never get here. If so, it's an unknown field type.
-        *warnings |= REB_SIMULATION_BINARY_WARNING_FIELD_UNKOWN;
+        *warnings |= REB_SIMULATION_BINARY_WARNING_FIELD_UNKNOWN;
         int err = fseek(inf, field.size, SEEK_CUR);
         if (err){
             // Even worse, can't seek to end of field.
@@ -260,7 +260,7 @@ struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_WARNING_FIELD_UNKOWN){
+    if (warnings & REB_SIMULATION_BINARY_WARNING_FIELD_UNKNOWN){
         reb_simulation_warning(r,"Unknown field found in binary file.");
     }
     if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
