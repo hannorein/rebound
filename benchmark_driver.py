@@ -33,7 +33,7 @@ def run_benchmark(config, executable='./rebound'):
     for key, value in config['args'].items():
         cmd.append(f"--{key}")
         cmd.append(str(value))
-    
+
     try:
         result = subprocess.run(
             cmd, 
@@ -42,32 +42,87 @@ def run_benchmark(config, executable='./rebound'):
             text=True,
             check=True
         )
-        
+
+        profile_data = None
         if "PROFILING_START" in result.stdout:
+            # Extract and echo profiling block
             print("\n" + "-"*40)
             print(f"Profiling Output for {config['name']}:")
             start = result.stdout.find("PROFILING_START")
             end = result.stdout.find("PROFILING_END") + 13
-            print(result.stdout[start:end])
+            profiling_block = result.stdout[start:end]
+            print(profiling_block)
             print("-"*40 + "\n")
-            
+
+            # Parse profiling numbers for CSV when running in profiled mode
+            profile_data = {}
+            lines = profiling_block.strip().splitlines()
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith("PROFILING_"):
+                    continue
+                # Lines are of the form "Label:  value"
+                if ":" not in line:
+                    continue
+                label, val_str = line.split(":", 1)
+                label = label.strip()
+                val_str = val_str.strip()
+                try:
+                    val = float(val_str)
+                except ValueError:
+                    continue
+
+                # Map human-readable labels to stable CSV keys
+                if label.startswith("Total Walltime"):
+                    profile_data["prof_total_walltime"] = val
+                elif label.startswith("Kepler"):
+                    profile_data["prof_kepler"] = val
+                elif "Stiefel" in label:
+                    profile_data["prof_kepler_stiefel"] = val
+                elif "f/g func" in label:
+                    profile_data["prof_kepler_fg"] = val
+                elif label.startswith("Interaction"):
+                    profile_data["prof_interaction"] = val
+                elif label.startswith("Forces"):
+                    profile_data["prof_forces"] = val
+                elif "Loop 1" in label:
+                    profile_data["prof_loop1"] = val
+                elif "Loop 2" in label:
+                    profile_data["prof_loop2"] = val
+                elif "Loop 3" in label:
+                    profile_data["prof_loop3"] = val
+                elif "Loop 4" in label:
+                    profile_data["prof_loop4"] = val
+                elif "Reduce" in label:
+                    profile_data["prof_reduce"] = val
+                elif "Stellar" in label:
+                    profile_data["prof_stellar"] = val
+                elif label.startswith("GR"):
+                    profile_data["prof_gr"] = val
+                elif label.startswith("Transform"):
+                    profile_data["prof_transform"] = val
+                elif label.startswith("Jump"):
+                    profile_data["prof_jump"] = val
+                elif label.startswith("Sync"):
+                    profile_data["prof_sync"] = val
+
         lines = result.stdout.strip().split('\n')
         last_line = lines[-1]
-        
+
         if "PROFILING" in last_line: 
-             pass
+            pass
 
         parts = last_line.split(',')
         walltime = float(parts[0])
         verification = float(parts[1])
         energy_err = float(parts[2]) if len(parts) > 2 else None
-        return walltime, verification, energy_err
+        return walltime, verification, energy_err, profile_data
     except subprocess.CalledProcessError as e:
         print(f"Error running configuration {config['name']}: {e}")
-        return None, None
+        return None, None, None, None
     except ValueError:
         print(f"Error parsing output for {config['name']}: {result.stdout}")
-        return None, None
+        return None, None, None, None
 
 def write_csv(results, output_file, profile_mode):
     """Write results to CSV file"""
@@ -75,21 +130,45 @@ def write_csv(results, output_file, profile_mode):
     baseline = next((r for r in results if 'Jacobi (Baseline)' in r['name']), results[0])
     reference_time = baseline['time'] if baseline['time'] is not None else 0
     reference_x = results[0]['verify'] if results else 0
-    
+
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['configuration', 'time_s', 'speedup', 'position_error', 'energy_error', 'profile_mode', 'timestamp']
+        fieldnames = ['configuration', 'time_s', 'speedup', 'position_error', 'energy_error',
+                      'profile_mode', 'timestamp']
+
+        # For profiled runs, add per-component timing columns
+        if profile_mode == "profiled":
+            profile_fields = [
+                'prof_total_walltime',
+                'prof_kepler',
+                'prof_kepler_stiefel',
+                'prof_kepler_fg',
+                'prof_interaction',
+                'prof_forces',
+                'prof_loop1',
+                'prof_loop2',
+                'prof_loop3',
+                'prof_loop4',
+                'prof_reduce',
+                'prof_stellar',
+                'prof_gr',
+                'prof_transform',
+                'prof_jump',
+                'prof_sync',
+            ]
+            fieldnames.extend(profile_fields)
+
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        
+
         writer.writeheader()
-        
+
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
+
         for res in results:
             name = res['name']
             t = res['time']
-            
+
             if t is None:
-                writer.writerow({
+                row = {
                     'configuration': name,
                     'time_s': 'FAILED',
                     'speedup': 'N/A',
@@ -97,21 +176,25 @@ def write_csv(results, output_file, profile_mode):
                     'energy_error': 'N/A',
                     'profile_mode': profile_mode,
                     'timestamp': timestamp
-                })
+                }
+                if profile_mode == "profiled":
+                    for pf in profile_fields:
+                        row[pf] = ''
+                writer.writerow(row)
                 continue
-            
+
             speedup = reference_time / t if t > 0 else 0
-            
+
             # Position Error vs reference
             pos_error = 0.0
             if reference_x != 0:
                 pos_error = abs(res['verify'] - reference_x) / abs(reference_x)
-                
+
             # Energy Error (from simulation)
             energy_error = res.get('energy_err', 0.0)
             if energy_error is None: energy_error = 0.0
-            
-            writer.writerow({
+
+            row = {
                 'configuration': name,
                 'time_s': f"{t:.6f}",
                 'speedup': f"{speedup:.4f}",
@@ -119,7 +202,20 @@ def write_csv(results, output_file, profile_mode):
                 'energy_error': f"{energy_error:.6e}",
                 'profile_mode': profile_mode,
                 'timestamp': timestamp
-            })
+            }
+
+            # Attach profiling numbers if available
+            if profile_mode == "profiled":
+                profile_data = res.get('profile', {}) or {}
+                for pf in profile_fields:
+                    val = profile_data.get(pf, '')
+                    # Format floats nicely, leave missing as empty
+                    if isinstance(val, float):
+                        row[pf] = f"{val:.6f}"
+                    else:
+                        row[pf] = val
+
+            writer.writerow(row)
     
     print(f"Results written to: {output_file}")
 
@@ -176,17 +272,18 @@ def main():
     
     for i, cfg in enumerate(configs):
         print(f"[{i+1}/{len(configs)}] Running: {cfg['name']}...", end='', flush=True)
-        t, v, e = run_benchmark(cfg)
+        t, v, e, prof = run_benchmark(cfg)
         if t is not None:
-             print(f" Done ({t:.4f}s)")
+            print(f" Done ({t:.4f}s)")
         else:
-             print(f" FAILED")
-             
+            print(f" FAILED")
+
         results.append({
             'name': cfg['name'],
             'time': t,
             'verify': v,
-            'energy_err': e
+            'energy_err': e,
+            'profile': prof,
         })
         
     print_table(results)
