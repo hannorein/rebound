@@ -205,7 +205,7 @@ class Particle(Structure):
         if variation:
             if primary is None:
                 primary = simulation.particles[0]
-            # Find particle to differenciate
+            # Find particle to differentiate
             lc = locals().copy()
             del lc["self"]
             del lc["variation"]

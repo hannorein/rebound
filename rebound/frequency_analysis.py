@@ -32,7 +32,7 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
         The minimum frequency to consider. Units are [radians/datasep] where
         datasep is the timeinterval between sampling points.
     maxfreq: Float
-        The maximim frequency to consider. Units are [radians/datasep] where
+        The maximum frequency to consider. Units are [radians/datasep] where
         datasep is the timeinterval between sampling points.
 
     Returns

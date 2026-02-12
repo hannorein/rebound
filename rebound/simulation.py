@@ -16,7 +16,7 @@ class allocated_c_char_p(c_char_p):
 import types
       
 ### The following enum and class definitions need to
-### consitent with those in rebound.h
+### consistent with those in rebound.h
         
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21, "trace":25}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
@@ -139,7 +139,7 @@ class Simulation(Structure):
             snapshot = kw["snapshot"]
 
         if sa is not None:
-            # Recreate exisitng simulation 
+            # Recreate existing simulation 
             sim = super(Simulation,cls).__new__(cls)
             clibrebound.reb_simulation_init(byref(sim))
             w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
@@ -981,7 +981,7 @@ class Simulation(Structure):
         index : int, optional
             Specify particle to remove by index.
         hash : c_uint32 or string, optional
-            Specifiy particle to remove by hash (if a string is passed, the corresponding hash is calculated).
+            Specify particle to remove by hash (if a string is passed, the corresponding hash is calculated).
         keep_sorted : bool, optional
             By default, remove preserves the order of particles in the particles array. 
             Might set it to zero in cases with many particles and many removals to speed things up.
@@ -1109,7 +1109,7 @@ class Simulation(Structure):
         Note that this routine is only intended for special use cases
         where speed is an issue. For normal use, it is recommended to
         access particle data via the `sim.particles` array. Be aware of
-        potential issues that arise by directly accesing the memory of
+        potential issues that arise by directly accessing the memory of
         numpy arrays (see numpy documentation for more details).
 
         Examples

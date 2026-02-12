@@ -578,7 +578,7 @@ class Widget(DOMWidget):
             This string will be part of the output filename for each image.
             Follow by a five digit integer and the suffix .png. By default the
             prefix is './screenshot' which outputs images in the current
-            directory with the filnames screenshot00000.png, screenshot00001.png...
+            directory with the filenames screenshot00000.png, screenshot00001.png...
             Note that the prefix can include a directory.
         resetCounter : (bool), optional
             Resets the output counter to 0. 

@@ -22,6 +22,7 @@ precesses = "precesses"
 arange = "arange"
 rightt = "rightt"
 indx = "indx"
+setp = "setp"
 [files]
 extend-exclude = [
 "src/glad.*",
@@ -29,4 +30,5 @@ extend-exclude = [
 "docs/javascripts",
 "live.html",
 "*.js",
+"*.pdf",
 ]

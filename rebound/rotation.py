@@ -78,7 +78,7 @@ class Rotation(ctypes.Structure):
         >>> rot = rebound.Rotation.from_to(fromv=fromv, tov=[0,0,1])    # Get a rotation that maps fromv to the z axis
         >>> print(rot * fromv)                                          # When our rotation acts on fromv, we get back [0,0,1]
         """
-        # "from" is a keyword, need to use somethign else: "fromv"
+        # "from" is a keyword, need to use something else: "fromv"
         _from = Vec3d(fromv)
         _to = Vec3d(tov)
         clibrebound.reb_rotation_init_from_to.restype = cls
@@ -122,7 +122,7 @@ class Rotation(ctypes.Structure):
         """
         Returns a rotation object that rotates vectors into a new coordinate system with the z axis pointing along 
         the vector newz. If newx is passed, the new x axis will point along newx. If not, the new x axis defaults
-        to the intersection betweeen the new xy plane (normal to newz) and the original xy plane (specifically along
+        to the intersection between the new xy plane (normal to newz) and the original xy plane (specifically along
         the z cross newz direction). The new y axis completes a right-handed coordinate system. 
 
         If passed, newx should be perpendicular to newz. This function will only take the component of newx that is 
