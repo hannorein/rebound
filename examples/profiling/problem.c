@@ -6,7 +6,7 @@
  * slow. To turn on this option, simple set `PROFILING=1` in 
  * the Makefile. Make sure to run `make clean` before compiling
  * this example.
- * Note that enabeling this option makes REBOUND not thread-safe.
+ * Note that enabling this option makes REBOUND not thread-safe.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
 
     // Setup constants
-    r->opening_angle2    = .5; // This determines the precission of the tree code gravity calculation.
+    r->opening_angle2    = .5; // This determines the precision of the tree code gravity calculation.
     r->integrator        = REB_INTEGRATOR_SEI;
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;

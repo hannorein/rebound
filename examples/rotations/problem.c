@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
     // You can chain rotations by multiplying them together.
     // Note that the order of rotations matters, just like
-    // the order matters when multiplying together two matricies.
+    // the order matters when multiplying together two matrices.
     struct reb_vec3d axis_y = {.y = 1,};
     struct reb_rotation r2 = reb_rotation_init_angle_axis(M_PI/2.0, axis_y);
     struct reb_rotation r_combined = reb_rotation_mul(r2, r1); 

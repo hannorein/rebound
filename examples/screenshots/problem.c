@@ -9,7 +9,7 @@
  * You might also be interested in the examples:
  * 1) animation_saturns_rings and
  * 2) animation_solar_system.
- * They show how one can programatically change the
+ * They show how one can programmatically change the
  * visualization. You can combine this with taking
  * screenshots if you want to record animations of REBOUND
  * simulations.

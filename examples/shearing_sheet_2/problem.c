@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->opening_angle2    = .5;                    // This determines the precission of the tree code gravity calculation.
+    r->opening_angle2    = .5;                    // This determines the precision of the tree code gravity calculation.
     r->integrator        = REB_INTEGRATOR_SEI;
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
@@ -128,7 +128,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct 
     if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
 
     // Bring the to balls in the xy plane.
-    // NOTE: this could probabely be an atan (which is faster than atan2) 
+    // NOTE: this could probably be an atan (which is faster than atan2) 
     double theta = atan2(z21,y21);
     double stheta = sin(theta);
     double ctheta = cos(theta);

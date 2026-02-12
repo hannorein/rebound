@@ -37,7 +37,7 @@ void heartbeat(struct reb_simulation* const r){
     struct reb_rotation rot_x = reb_rotation_init_angle_axis(M_PI_2, a); // pi/2 = 90 degrees
         
     // We start from the original view matrix view0, but we could also 
-    // apply consequitive changes to the current view matrix stored in 
+    // apply consecutive changes to the current view matrix stored in 
     // r->display_settings->view
     struct reb_mat4df view = view0;
                                                                      
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     // Normally the visualization settings are determined by the 
     // user interface. If we add the display_settings struct to 
     // the simulation itself, it will overwrite any change the 
-    // user has made and allows us to programatically change any 
+    // user has made and allows us to programmatically change any 
     // settings such as the orientation, zoom, etc. 
     reb_simulation_add_display_settings(r);
 

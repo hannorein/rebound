@@ -106,7 +106,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struc
     double vz21 = p1.vz + gb.vz - p2.vz; 
     if (vx21*x21 + vy21*y21 + vz21*z21 >0) return 0; // not approaching
     // Bring the to balls in the xy plane.
-    // NOTE: this could probabely be an atan (which is faster than atan2)
+    // NOTE: this could probably be an atan (which is faster than atan2)
     double theta = atan2(z21,y21);
     double stheta = sin(theta);
     double ctheta = cos(theta);

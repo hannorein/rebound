@@ -4,7 +4,7 @@
  * This examples show how to use display_settings to
  * programmatically change the visualization of a 
  * REBOUND simulation. Here, we visualize a simulation of
- * Saturn's rings and rotate the viewwing angle programatically.
+ * Saturn's rings and rotate the viewwing angle programmatically.
  * To understand what a 4x4 view matrix is, you can read 
  * up on linear algebra for computer graphics, specifically
  * the Model-View-Projection (MVP) paradigm. 
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     // Normally the visualization settings are determined by the 
     // user interface. If we add the display_settings struct to 
     // the simulation itself, it will overwrite any change the 
-    // user has made and allows us to programatically change any 
+    // user has made and allows us to programmatically change any 
     // settings such as the orientation, zoom, etc. 
     reb_simulation_add_display_settings(r);
 

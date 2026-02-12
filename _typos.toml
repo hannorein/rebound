@@ -13,9 +13,11 @@ Fo = "Fo"
 WHT = "WHT"
 ba = "ba"
 wheight = "wheight"
+precesses = "precesses"
 [files]
 extend-exclude = [
 "src/glad.*",
 "src/derivatives.c",
 "docs/javascripts",
+"live.html",
 ]

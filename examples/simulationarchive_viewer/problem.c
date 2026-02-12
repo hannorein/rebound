@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     printf("You can step through the Simulationarchive using the following keys in the visualization window:\n");
     printf(" Right arrow: jump to next snapshot\n");
     printf(" Left arrow:  jump to previous snapshot\n");
-    printf(" Page down:   jump 10 snapshots foward\n");
+    printf(" Page down:   jump 10 snapshots forward\n");
     printf(" Page up:     jump 10 snapshots backward\n");
     printf(" Home key:    jump to first snapshot\n");
     printf(" End key:     jump to last snapshot\n\n");

@@ -16,7 +16,7 @@
 // us to avoid having any global variables.
 struct collisions_log {
     int Nslices;
-    int Nsamples;   // Samples to avergae over (since last output)
+    int Nsamples;   // Samples to average over (since last output)
     double lastsample; 
     double twarmup; 
     int isHot;      // Used during warmup

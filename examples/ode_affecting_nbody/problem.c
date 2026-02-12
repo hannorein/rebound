@@ -27,7 +27,7 @@ void additional_forces(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     const double coupling = 1e-4;
     // The harmonic oscillator is forcing the planet in the x direction.
-    // Note: We are using the variable y1 in the ODE sruct. 
+    // Note: We are using the variable y1 in the ODE struct. 
     //       This is the current state of the ODE during the timestep.
     //       The variable y is only updated at the end of a successful timestep.
     particles[1].ax += coupling*ho->y1[0]; 
