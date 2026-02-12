@@ -298,6 +298,105 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, double d
 
 // Fast inverse factorial lookup table
 static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
+struct stumpff_cache_entry {
+    double beta[8];  // Input: orbital parameter
+    double X[8];     // Input: Kepler solution
+    double Gs1[8];   // Output: Stumpff function values
+    double Gs2[8];
+    double Gs3[8];
+    struct stumpff_cache_entry* next;
+};
+
+#define STUMPFF_CACHE_SIZE 1024
+static struct stumpff_cache_entry* stumpff_cache[STUMPFF_CACHE_SIZE] = {NULL};
+unsigned long stumpff_cache_hits = 0;
+unsigned long stumpff_cache_misses = 0;
+
+// Simple hash function for (beta[0], X[0]) - use first lane as representative
+static inline unsigned int stumpff_hash(double beta0, double X0) {
+    unsigned long long b, x;
+    memcpy(&b, &beta0, sizeof(double));
+    memcpy(&x, &X0, sizeof(double));
+    return (unsigned int)((b ^ x) & (STUMPFF_CACHE_SIZE - 1));
+}
+
+// Check if two cache entries match within threshold
+static inline int stumpff_match(__m512d beta, __m512d X, struct stumpff_cache_entry* entry, double threshold) {
+    double beta_arr[8], X_arr[8];
+    _mm512_storeu_pd(beta_arr, beta);
+    _mm512_storeu_pd(X_arr, X);
+    
+    for (int i = 0; i < 8; i++) {
+        double beta_diff = fabs(beta_arr[i] - entry->beta[i]);
+        double X_diff = fabs(X_arr[i] - entry->X[i]);
+        // Relative threshold: |diff| / |value| < threshold
+        if (beta_diff > threshold * (fabs(entry->beta[i]) + 1e-10)) return 0;
+        if (X_diff > threshold * (fabs(entry->X[i]) + 1e-10)) return 0;
+    }
+    return 1;
+}
+
+// Lookup Stumpff values in cache
+static inline int stumpff_cache_lookup(__m512d beta, __m512d X, __m512d* Gs1, __m512d* Gs2, __m512d* Gs3, double threshold) {
+    double beta0, X0;
+    beta0 = ((double*)&beta)[0];
+    X0 = ((double*)&X)[0];
+    
+    unsigned int hash = stumpff_hash(beta0, X0);
+    struct stumpff_cache_entry* entry = stumpff_cache[hash];
+    
+    while (entry != NULL) {
+        if (stumpff_match(beta, X, entry, threshold)) {
+            // Cache hit! Load values
+            *Gs1 = _mm512_loadu_pd(entry->Gs1);
+            *Gs2 = _mm512_loadu_pd(entry->Gs2);
+            *Gs3 = _mm512_loadu_pd(entry->Gs3);
+            stumpff_cache_hits++;
+            return 1;
+        }
+        entry = entry->next;
+    }
+    
+    stumpff_cache_misses++;
+    return 0;  // Cache miss
+}
+
+// Insert into Stumpff cache
+static inline void stumpff_cache_insert(__m512d beta, __m512d X, __m512d Gs1, __m512d Gs2, __m512d Gs3) {
+    double beta0 = ((double*)&beta)[0];
+    double X0 = ((double*)&X)[0];
+    unsigned int hash = stumpff_hash(beta0, X0);
+    
+    // Allocate new entry
+    struct stumpff_cache_entry* entry = (struct stumpff_cache_entry*)malloc(sizeof(struct stumpff_cache_entry));
+    if (entry == NULL) return;  // Out of memory, skip caching
+    
+    // Store values
+    _mm512_storeu_pd(entry->beta, beta);
+    _mm512_storeu_pd(entry->X, X);
+    _mm512_storeu_pd(entry->Gs1, Gs1);
+    _mm512_storeu_pd(entry->Gs2, Gs2);
+    _mm512_storeu_pd(entry->Gs3, Gs3);
+    
+    // Insert at head of chain
+    entry->next = stumpff_cache[hash];
+    stumpff_cache[hash] = entry;
+}
+
+// Clear cache (call at end or when threshold changes)
+__attribute__((unused)) static void stumpff_cache_clear(void) {
+    for (int i = 0; i < STUMPFF_CACHE_SIZE; i++) {
+        struct stumpff_cache_entry* entry = stumpff_cache[i];
+        while (entry != NULL) {
+            struct stumpff_cache_entry* next = entry->next;
+            free(entry);
+            entry = next;
+        }
+        stumpff_cache[i] = NULL;
+    }
+    stumpff_cache_hits = 0;
+    stumpff_cache_misses = 0;
+}
 
 
 // Stiefel function for Newton's method, returning Gs1, Gs2, and Gs3
@@ -918,6 +1017,101 @@ static void inline reb_whfast512_kepler_step_opt3(struct reb_simulation* const r
 }
 
 // kepler step selector - dispatches to appropriate method based on optimization_method
+static void inline reb_whfast512_kepler_step_cached(const struct reb_simulation* const r){
+#ifdef PROF
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+#endif
+    struct reb_particle_avx512 * const restrict p512  = r->ri_whfast512.p512;
+    __m512d _dt = p512->dt;
+    double threshold = r->ri_whfast512.stumpff_cache_threshold;
+
+    __m512d r2 = _mm512_mul_pd(p512->x, p512->x);
+    r2 = _mm512_fmadd_pd(p512->y, p512->y, r2);
+    r2 = _mm512_fmadd_pd(p512->z, p512->z, r2);
+    __m512d r0 = _mm512_sqrt_pd(r2);
+    __m512d r0i = _mm512_div_pd(_mm512_set1_pd(1.0),r0);
+
+    __m512d v2 = _mm512_mul_pd(p512->vx, p512->vx);
+    v2 = _mm512_fmadd_pd(p512->vy, p512->vy, v2);
+    v2 = _mm512_fmadd_pd(p512->vz, p512->vz, v2);
+
+    __m512d beta = _mm512_mul_pd(_mm512_set1_pd(2.0), p512->M);
+    beta = _mm512_fmsub_pd(beta, r0i, v2);
+
+    __m512d eta0 = _mm512_mul_pd(p512->x, p512->vx);
+    eta0 = _mm512_fmadd_pd(p512->y, p512->vy, eta0);
+    eta0 = _mm512_fmadd_pd(p512->z, p512->vz, eta0);
+
+    __m512d zeta0 = _mm512_fnmadd_pd(beta, r0, p512->M);
+
+    __m512d Gs1, Gs2, Gs3;
+    __m512d eta0Gs1zeta0Gs2; 
+    __m512d ri; 
+
+#define NEWTON_STEP() \
+    mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);\
+    eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); \
+    eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); \
+    ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); \
+    ri = _mm512_div_pd(_mm512_set1_pd(1.0), ri); \
+    \
+    X = _mm512_mul_pd(X, eta0Gs1zeta0Gs2);\
+    X = _mm512_fnmadd_pd(eta0, Gs2, X);\
+    X = _mm512_fnmadd_pd(zeta0, Gs3, X);\
+    X = _mm512_add_pd(_dt, X);\
+    X = _mm512_mul_pd(ri, X);
+
+    // Initial guess
+    __m512d dtr0i = _mm512_mul_pd(_dt,r0i);
+    __m512d X = _mm512_mul_pd(dtr0i,eta0);
+    X = _mm512_mul_pd(X,_mm512_set1_pd(0.5));
+    X = _mm512_fnmadd_pd(X,r0i,_mm512_set1_pd(1.0));
+    X = _mm512_mul_pd(dtr0i,X);
+
+    // Solve for X using Newton iterations  
+    NEWTON_STEP();
+    NEWTON_STEP();
+    NEWTON_STEP();
+    
+    // Final Stumpff computation with converged X
+    // Try cache lookup first
+    if (!stumpff_cache_lookup(beta, X, &Gs1, &Gs2, &Gs3, threshold)) {
+        // Cache miss - compute Stumpff functions
+        mm_stiefel_Gs13_avx512(&Gs1, &Gs2, &Gs3, beta, X);
+        
+        // Insert into cache
+        stumpff_cache_insert(beta, X, Gs1, Gs2, Gs3);
+    }
+    // If cache hit, Gs1, Gs2, Gs3 are already loaded
+    
+    // Apply f and g functions
+    eta0Gs1zeta0Gs2 = _mm512_mul_pd(eta0, Gs1); 
+    eta0Gs1zeta0Gs2 = _mm512_fmadd_pd(zeta0,Gs2, eta0Gs1zeta0Gs2); 
+    ri = _mm512_add_pd(r0, eta0Gs1zeta0Gs2); 
+    ri = _mm512_div_pd(_mm512_set1_pd(1.0), ri);
+
+    __m512d f = _mm512_fnmadd_pd(p512->M, Gs2, X);
+    __m512d g = _mm512_fmsub_pd(r0, X, _mm512_mul_pd(eta0, Gs2));
+    __m512d fd = _mm512_fnmadd_pd(p512->M, Gs1, _mm512_mul_pd(ri, r0));
+    __m512d gd = _mm512_fnmadd_pd(eta0, Gs1, X);
+
+    p512->x = _mm512_fmadd_pd(g, p512->vx, _mm512_mul_pd(f, p512->x));
+    p512->y = _mm512_fmadd_pd(g, p512->vy, _mm512_mul_pd(f, p512->y));
+    p512->z = _mm512_fmadd_pd(g, p512->vz, _mm512_mul_pd(f, p512->z));
+
+    p512->vx = _mm512_fmadd_pd(gd, p512->vx, _mm512_mul_pd(fd, p512->x));
+    p512->vy = _mm512_fmadd_pd(gd, p512->vy, _mm512_mul_pd(fd, p512->y));
+    p512->vz = _mm512_fmadd_pd(gd, p512->vz, _mm512_mul_pd(fd, p512->z));
+
+#undef NEWTON_STEP
+#ifdef PROF
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    walltime_kepler += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
+}
+
 static void inline reb_whfast512_kepler_step_select(struct reb_simulation* const r){
     switch(r->ri_whfast512.optimization_method){
         case REB_WHFAST512_OPT_RECIP_APPROX:
@@ -929,6 +1123,9 @@ static void inline reb_whfast512_kepler_step_select(struct reb_simulation* const
         case REB_WHFAST512_OPT_MOMENTUM_GUESS:
         case REB_WHFAST512_OPT_COMBINED:
             reb_whfast512_kepler_step_opt3(r);
+            break;
+        case REB_WHFAST512_OPT_STUMPFF_CACHE:
+            reb_whfast512_kepler_step_cached(r);
             break;
         case REB_WHFAST512_OPT_NONE:
         case REB_WHFAST512_OPT_FAST_RSQRT:  // fast rsqrt only affects gravity, not kepler
@@ -1106,7 +1303,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     gettimeofday(&time_pair3_start,NULL);
 #endif
     {
-        x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // accros 512
+        x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // across 512
         y_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
         z_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
         m_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), m_j);
@@ -1191,7 +1388,7 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     gettimeofday(&time_final_add_start,NULL);
 #endif
     {
-        dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); //across 512
+        dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); // across 512
         dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
         dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
 
@@ -1594,7 +1791,7 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const
     __m512d dvz;
 
     {
-        x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // accros 512
+        x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // across 512
         y_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
         z_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
         m_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), m_j);
@@ -1661,7 +1858,7 @@ static void reb_whfast512_interaction_step_8planets_democraticheliocentric(const
     // //////////////////////////////////////
 
     {
-        dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); //across 512
+        dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); // across 512
         dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
         dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
 

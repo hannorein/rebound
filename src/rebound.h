@@ -416,6 +416,7 @@ struct reb_integrator_whfast512 {
         REB_WHFAST512_OPT_MOMENTUM_GUESS = 3,      // Momentum-based initial guess
         REB_WHFAST512_OPT_FAST_RSQRT = 4,          // Fast rsqrt for gravity
         REB_WHFAST512_OPT_COMBINED = 5,            // Momentum + Fast rsqrt combined
+        REB_WHFAST512_OPT_STUMPFF_CACHE = 6,       // Approximate Stumpff cache with threshold
     } optimization_method;                         
     
     // Hyperparameters
@@ -425,6 +426,7 @@ struct reb_integrator_whfast512 {
     int recip_refinement_iters;         // Newton-Raphson iterations for rcp14
     int rsqrt_refinement_iters;         // Newton-Raphson iterations for rsqrt14
     int use_fast_rsqrt_gravity;         // 1 = use fast rsqrt in gravity, independent of optimization_method
+    double stumpff_cache_threshold;     // Threshold for approximate Stumpff cache matching (0.0 = exact, 0.01 = 1% tolerance)
 
     // Internal use
     unsigned int is_synchronized;

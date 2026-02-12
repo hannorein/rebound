@@ -20,6 +20,17 @@
         }
     },
     {
+        "name": "Cache Stumpff: threshold=1e-10",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 6,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0,
+            "cache-threshold": 1e-10
+        }
+    },
+    {
         "name": "WHFast512 DHC",
         "args": {
             "whfast512": 1,

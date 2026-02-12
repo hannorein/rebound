@@ -93,6 +93,8 @@ int main(int argc, char* argv[]) {
     double momentum_coeff = 2.0;
     int use_fast_rsqrt = 0;
 
+    double cache_threshold = 0.01;  // Default 1% threshold
+    
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--whfast512") == 0 && i+1 < argc) {
             use_whfast512 = atoi(argv[++i]);
@@ -104,6 +106,8 @@ int main(int argc, char* argv[]) {
             momentum_coeff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fast-rsqrt") == 0 && i+1 < argc) {
             use_fast_rsqrt = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--cache-threshold") == 0 && i+1 < argc) {
+            cache_threshold = atof(argv[++i]);
         } else {
             fprintf(stderr, "Unknown argument: %s\n", argv[i]);
             print_usage(argv[0]);
@@ -124,6 +128,7 @@ int main(int argc, char* argv[]) {
         r->ri_whfast512.optimization_method = opt_method;
         r->ri_whfast512.momentum_coeff = momentum_coeff;
         r->ri_whfast512.use_fast_rsqrt_gravity = use_fast_rsqrt;
+        r->ri_whfast512.stumpff_cache_threshold = cache_threshold;
     } else {
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.coordinates = coordinates;
@@ -201,6 +206,17 @@ int main(int argc, char* argv[]) {
     printf("  Sync:         %.6f\n", walltime_sync);
     printf("PROFILING_END\n");
 #endif
+
+    // Print cache statistics if using cache
+    if (use_whfast512 && opt_method == 6) {  // REB_WHFAST512_OPT_STUMPFF_CACHE
+        extern unsigned long stumpff_cache_hits;
+        extern unsigned long stumpff_cache_misses;
+        unsigned long total = stumpff_cache_hits + stumpff_cache_misses;
+        double hit_rate = total > 0 ? (100.0 * stumpff_cache_hits / total) : 0.0;
+        printf("Cache: hits=%lu misses=%lu total=%lu hit_rate=%.2f%%\n", 
+               stumpff_cache_hits, stumpff_cache_misses, total, hit_rate);
+    }
+    
     printf("%.6f,%.16e,%.16e\n", walltime, r->particles[1].x, fabs((E1-E0)/E0));
     
     reb_simulation_free(r);
