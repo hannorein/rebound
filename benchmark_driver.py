@@ -71,7 +71,9 @@ def run_benchmark(config, executable='./rebound'):
 
 def write_csv(results, output_file, profile_mode):
     """Write results to CSV file"""
-    reference_time = results[0]['time'] if results else 0
+    # Use WHFast512 Jacobi (Baseline) as reference for speedup
+    baseline = next((r for r in results if 'Jacobi (Baseline)' in r['name']), results[0])
+    reference_time = baseline['time'] if baseline['time'] is not None else 0
     reference_x = results[0]['verify'] if results else 0
     
     with open(output_file, 'w', newline='') as csvfile:
@@ -122,7 +124,9 @@ def write_csv(results, output_file, profile_mode):
     print(f"Results written to: {output_file}")
 
 def print_table(results):
-    reference_time = results[0]['time'] if results else 0
+    # Use WHFast512 Jacobi (Baseline) as reference for speedup
+    baseline = next((r for r in results if 'Jacobi (Baseline)' in r['name']), results[0])
+    reference_time = baseline['time'] if baseline['time'] is not None else 0
     reference_x = results[0]['verify'] if results else 0
     
     print(f"\n" + "="*100)
