@@ -4,6 +4,8 @@ import argparse
 import sys
 import os
 import time
+import csv
+from datetime import datetime
 
 def load_config(config_path):
     with open(config_path, 'r') as f:
@@ -67,6 +69,58 @@ def run_benchmark(config, executable='./rebound'):
         print(f"Error parsing output for {config['name']}: {result.stdout}")
         return None, None
 
+def write_csv(results, output_file, profile_mode):
+    """Write results to CSV file"""
+    reference_time = results[0]['time'] if results else 0
+    reference_x = results[0]['verify'] if results else 0
+    
+    with open(output_file, 'w', newline='') as csvfile:
+        fieldnames = ['configuration', 'time_s', 'speedup', 'position_error', 'energy_error', 'profile_mode', 'timestamp']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        for res in results:
+            name = res['name']
+            t = res['time']
+            
+            if t is None:
+                writer.writerow({
+                    'configuration': name,
+                    'time_s': 'FAILED',
+                    'speedup': 'N/A',
+                    'position_error': 'N/A',
+                    'energy_error': 'N/A',
+                    'profile_mode': profile_mode,
+                    'timestamp': timestamp
+                })
+                continue
+            
+            speedup = reference_time / t if t > 0 else 0
+            
+            # Position Error vs reference
+            pos_error = 0.0
+            if reference_x != 0:
+                pos_error = abs(res['verify'] - reference_x) / abs(reference_x)
+                
+            # Energy Error (from simulation)
+            energy_error = res.get('energy_err', 0.0)
+            if energy_error is None: energy_error = 0.0
+            
+            writer.writerow({
+                'configuration': name,
+                'time_s': f"{t:.6f}",
+                'speedup': f"{speedup:.4f}",
+                'position_error': f"{pos_error:.6e}",
+                'energy_error': f"{energy_error:.6e}",
+                'profile_mode': profile_mode,
+                'timestamp': timestamp
+            })
+    
+    print(f"Results written to: {output_file}")
+
 def print_table(results):
     reference_time = results[0]['time'] if results else 0
     reference_x = results[0]['verify'] if results else 0
@@ -102,6 +156,7 @@ def main():
     parser.add_argument('--config', default='benchmarks.json', help='Path to configuration JSON')
     parser.add_argument('--profile', action='store_true', help='Enable profiling (-DPROF)')
     parser.add_argument('--filter', help='Run only configs containing this string')
+    parser.add_argument('--output', default=None, help='Custom output CSV filename')
     args = parser.parse_args()
     
     configs = load_config(args.config)
@@ -131,6 +186,18 @@ def main():
         })
         
     print_table(results)
+    
+    # Determine output filename
+    if args.output:
+        output_file = args.output
+    else:
+        profile_suffix = "_profiled" if args.profile else "_noprofile"
+        timestamp_suffix = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_file = f"benchmark_results{profile_suffix}_{timestamp_suffix}.csv"
+    
+    # Write CSV output
+    profile_mode = "profiled" if args.profile else "no_profile"
+    write_csv(results, output_file, profile_mode)
 
 if __name__ == "__main__":
     main()
