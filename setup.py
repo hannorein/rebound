@@ -1,7 +1,7 @@
 try:
     from setuptools import setup, Extension
 except ImportError:
-    # Legacy distutils import. No longer available on Pyton > 3.12
+    # Legacy distutils import. No longer available on Python > 3.12
     from distutils.core import setup, Extension
 from codecs import open
 import os

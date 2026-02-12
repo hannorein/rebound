@@ -1,3 +1,8 @@
+[default]
+extend-ignore-re = [
+ ".*image/png.*",
+ ".*\"id\".*",
+ ]
 [default.extend-words]
 ix = "ix"
 iy = "iy"
@@ -14,10 +19,14 @@ WHT = "WHT"
 ba = "ba"
 wheight = "wheight"
 precesses = "precesses"
+arange = "arange"
+rightt = "rightt"
+indx = "indx"
 [files]
 extend-exclude = [
 "src/glad.*",
 "src/derivatives.c",
 "docs/javascripts",
 "live.html",
+"*.js",
 ]
