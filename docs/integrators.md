@@ -850,3 +850,14 @@ The following settings are available:
 `unsigned int N_systems`
 :   This flag determines how many systems are integrated in parallel. Possible values are 1, 2, or 4.  By default this is set to 1 which means WHFast512 is integrating only one system at a time. If your system has fewer than 5 planets, then you can use WHFast512 to integrate 2 systems in parallel. If your system has fewer than 3 planets, then you can use WHFast512 to integrate 4 systems in parallel. If multiple systems are integrated at the same time, particles must be added in the following order: Star 1, Planet, Planet, Star 2, Planet, Planet, ... For more information see the [this example](../c_examples/whfast512_2_planets).
 
+
+## Custom Integrator
+Starting with version 4.6.1, REBOUND has an API which allows users to easily add their own integrator without changing REBOUND itself. 
+This is particularly helpful for developing new numerical methods: you have complete control over the integration step, but can fall back to many features of REBOUND such as setting up orbits, calculating orbital parameters, calculating energy errors, etc. 
+Furthermore, if your custom integrator needs to store any data, this is automatically saved in Simulationarchive snapshpts, allowing you to easily restart simulations. 
+
+To enable a custom integrator, you must select `REB_INTEGRATOR_CUSTOM` and then setup various function pointers in the `ri_custom` struct. 
+This feature is intended to be used from C and we do currently not provide a python interface.
+There is one [basic C example](../c_examples/custom_integrator) and one more [advanced C example](../c_examples/custom_integrator_with_data) which show the usage.
+
+

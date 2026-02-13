@@ -85,6 +85,8 @@ nav:
       - "Advanced topics":
         - ipython_examples/AdvWHFast.ipynb
         - c_examples/high_order_symplectic.md
+        - c_examples/custom_integrator.md
+        - c_examples/custom_integrator_with_data.md
         - c_examples/whfast512_solar_system.md
         - ipython_examples/Resonances_of_Jupiters_moons.ipynb
         - ipython_examples/TransitTimingVariations.ipynb

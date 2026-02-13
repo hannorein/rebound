@@ -86,6 +86,13 @@ void reb_integrator_step(struct reb_simulation* r){
             r->t += r->dt;
             r->dt_last_done = r->dt;
             break;
+        case REB_INTEGRATOR_CUSTOM:
+            if (r->ri_custom.step){
+                r->ri_custom.step(r);
+            }else{
+                reb_simulation_error(r, "REB_INTEGRATOR_CUSTOM selected, but r->ri_custom.step not set.");
+            }
+            break;
         default:
             break;
     }
@@ -158,6 +165,11 @@ void reb_simulation_synchronize(struct reb_simulation* r){
         case REB_INTEGRATOR_TRACE:
             reb_integrator_trace_synchronize(r);
             break;
+        case REB_INTEGRATOR_CUSTOM:
+            if (r->ri_custom.synchronize){
+                r->ri_custom.synchronize(r);
+            }
+            break;
         default:
             break;
     }
@@ -178,6 +190,9 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
     reb_integrator_bs_reset(r);
     reb_integrator_trace_reset(r);
     reb_integrator_leapfrog_reset(r);
+    if (r->ri_custom.reset){
+        r->ri_custom.reset(r);
+    }
 }
 
 

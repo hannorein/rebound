@@ -473,6 +473,15 @@ struct reb_integrator_janus {
     unsigned int N_allocated;
 };
 
+// Generic custom integrator
+struct reb_integrator {
+    void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
+    void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
+    void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
+    void* data;                                     // Pointer to any internal data/memory required by the integrator. Optional.
+    size_t data_size;                               // Size of data in bytes. Set to 0 if data storage is not used.
+};
+
 // Possible return values of rebound_integrate
 enum REB_STATUS {
     // Any status less than SINGLE_STEP get incremented once every timestep until SINGLE_STEP is reached.
@@ -634,6 +643,7 @@ struct reb_simulation {
                                         // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
         REB_INTEGRATOR_WHFAST512 = 21,  // WHFast integrator, optimized for AVX512
         REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu, Hernandez and Rein 2024)
+        REB_INTEGRATOR_CUSTOM = 26,     // Custom, user-provided integrator.
     } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
@@ -651,7 +661,9 @@ struct reb_simulation {
         REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
     } gravity;
 
+
     // Datastructures for integrators
+    struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
     struct reb_integrator_sei ri_sei;               // The SEI struct 
     struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 

@@ -316,6 +316,9 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     reb_integrator_mercurius_reset(r);
     reb_integrator_trace_reset(r);
     reb_integrator_bs_reset(r);
+    if (r->ri_custom.reset){
+        r->ri_custom.reset(r);
+    }
     if(r->free_particle_ap){
         for(unsigned int i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
@@ -356,6 +359,9 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
             r->pre_timestep_modifications ||
             r->post_timestep_modifications ||
             r->free_particle_ap ||
+            r->ri_custom.step ||
+            r->ri_custom.synchronize ||
+            r->ri_custom.reset ||
             r->extras_cleanup){
         wasnotnull = 1;
     }
@@ -366,6 +372,9 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
     r->pre_timestep_modifications  = NULL;
     r->post_timestep_modifications  = NULL;
     r->free_particle_ap = NULL;
+    r->ri_custom.step = NULL;
+    r->ri_custom.synchronize = NULL;
+    r->ri_custom.reset = NULL;
     r->extras_cleanup = NULL;
     return wasnotnull;
 }
@@ -543,6 +552,10 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_sei.OMEGA     = 1;
     r->ri_sei.OMEGAZ    = -1;
     r->ri_sei.lastdt    = 0;
+
+    // ********** CUSTOM
+    r->ri_custom.data = NULL;
+    r->ri_custom.data_size = 0;
 
     // ********** LEAPFROG
     r->ri_leapfrog.order = 2;

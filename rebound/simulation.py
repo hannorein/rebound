@@ -18,7 +18,7 @@ import types
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h
         
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512":21, "trace":25}
+INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512": 21, "trace": 25, "custom": 26}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "trace": 6}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
@@ -1465,6 +1465,7 @@ from .integrators.bs import ODE, IntegratorBS
 from .integrators.whfast import IntegratorWHFast
 from .integrators.whfast512 import IntegratorWHFast512
 from .integrators.janus import IntegratorJanus
+from .integrators.custom import IntegratorCustom
 from .integrators.sei import IntegratorSEI
 from .integrators.leapfrog import IntegratorLeapfrog
 from .integrators.eos import IntegratorEOS
@@ -1576,6 +1577,7 @@ Simulation._fields_ = [
                 ("_integrator", c_int),
                 ("_boundary", c_int),
                 ("_gravity", c_int),
+                ("ri_custom", IntegratorCustom), 
                 ("ri_sei", IntegratorSEI), 
                 ("ri_leapfrog", IntegratorLeapfrog), 
                 ("ri_whfast", IntegratorWHFast),
