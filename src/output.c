@@ -52,7 +52,6 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     // 6 Used to be varconfig
     { 7,  REB_INT,          "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0},
     { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0},
-    { 9,  REB_INT,          "hash_ctr",                     offsetof(struct reb_simulation, hash_ctr), 0, 0},
     { 10, REB_DOUBLE,       "opening_angle2",               offsetof(struct reb_simulation, opening_angle2), 0, 0},
     { 11, REB_INT,          "status",                       offsetof(struct reb_simulation, status), 0, 0},
     { 12, REB_INT,          "exact_finish_time",            offsetof(struct reb_simulation, exact_finish_time), 0, 0},

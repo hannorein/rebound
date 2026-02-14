@@ -472,7 +472,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_active     = -1;   
     r->var_rescale_warning   = 0;   
     r->particle_lookup_table = NULL;
-    r->hash_ctr = 0;
     r->N_lookup = 0;
     r->N_allocated_lookup = 0;
     r->testparticle_type = 0;   

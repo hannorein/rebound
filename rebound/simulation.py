@@ -1506,7 +1506,6 @@ Simulation._fields_ = [
                 ("testparticle_type", c_int),
                 ("testparticle_hidewarnings", c_int),
                 ("_particle_lookup_table", POINTER(HashPointerPair)),
-                ("hash_ctr", c_int),
                 ("N_lookup", c_int),
                 ("N_allocated_lookup", c_int),
                 ("N_allocated", c_uint),

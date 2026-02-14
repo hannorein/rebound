@@ -525,7 +525,6 @@ struct reb_simulation {
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
     struct  reb_hash_pointer_pair* particle_lookup_table;
-    int     hash_ctr;
     int     N_lookup;               // Number of entries in particle_lookup_table.
     int     N_allocated_lookup;     // Number of lookup table entries allocated.
     unsigned int   N_allocated;     // Current maximum space allocated in the particles array on this node. 
