@@ -78,6 +78,11 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
         reb_tree_add_particle_to_tree(r, r->N);
     }
     (r->N)++;
+    // Particle was added successfully. Do other work now.
+    if (pt.name){
+        struct reb_name* name = reb_simulation_register_name(r,pt.name);
+        r->particles[r->N-1].name = name->s;
+    }
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
         if (r->ri_mercurius.mode==0){ //WHFast part
@@ -292,6 +297,73 @@ int reb_simulation_particle_index(struct reb_particle* p){
         }	
     }
     return i;
+}
+
+
+struct reb_name* reb_simulation_get_name(struct reb_simulation* r, const char* const s){
+    if (s==NULL) return NULL; // NULL string not allowed.
+    for (int i=0; i<r->N_name_list; i++){
+        if (strcmp(s,r->name_list[i].s)==0){
+            return &(r->name_list[i]);
+        }
+    }
+    return NULL; // Not found
+}
+int reb_simulation_hash_exists(struct reb_simulation* r, const uint32_t hash){
+    for (int i=0; i<r->N_name_list; i++){
+        if (r->name_list[i].hash==hash){
+            return 1;
+        }
+    }
+    return 0; // Not found
+}
+struct reb_name* reb_simulation_register_name(struct reb_simulation* r, const char* const s){
+    struct reb_name* name = reb_simulation_get_name(r,s);
+    if (!name){ // Name does not exist yet.
+        uint32_t hash = reb_hash(s);
+        int collision = 1;
+        while(collision || hash==0){
+            // Check if hash exists with a different name.
+            collision = reb_simulation_hash_exists(r, hash);
+            if (collision){
+                hash++;
+            }
+        }
+        r->N_name_list++;
+        r->name_list = realloc(r->name_list,sizeof(struct reb_name)*r->N_name_list);
+        name = &(r->name_list[r->N_name_list-1]);
+        name->hash = hash;
+        name->s = malloc(sizeof(char)*(strlen(s)+1));
+        strcpy(name->s, s);
+    }
+    return name;
+}
+struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const s){
+    for (int i=0; i<r->N; i++){
+        char* name = r->particles[i].name;
+        if (name){
+            if (strcmp(s,name)==0){
+                return &(r->particles[i]);
+            }
+        }
+    }
+    return NULL; // Not found
+}
+
+void reb_particle_set_name(struct reb_particle* p, const char* const s){
+    if (s==NULL){
+        // Delete name.
+        p->name = NULL;
+        return;
+    }
+    struct reb_simulation* r = p->sim;
+    if (!r){
+        reb_simulation_error(NULL,"Cannot set particle name using_reb_particle_set_name() as the particle is not part of a simulation. You can set the name manually.");
+        return;
+    }
+    struct reb_name* name = reb_simulation_register_name(r,s);
+    p->name = name->s;
+
 }
 
 static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){

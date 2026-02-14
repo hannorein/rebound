@@ -138,6 +138,10 @@ struct reb_particle {
 #if !defined(_LP64)
     char pad4[4];   // sim is short by 4 bytes
 #endif
+    char* name;                 // Pointer to a NULL terminated string with the particle's name.
+#if !defined(_LP64)
+    char pad5[4];   // name is short by 4 bytes
+#endif
 };
 
 // Generic 3d vector
@@ -501,6 +505,14 @@ enum REB_STATUS {
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
+void reb_particle_set_name(struct reb_particle* p, const char* const s);
+struct reb_name* reb_simulation_register_name(struct reb_simulation* r, const char* const s);
+struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const s);
+struct reb_name{
+    char* s;    // String.
+    uint32_t hash; 
+};
+
 // Holds a particle's hash and the particle's index in the particles array. Used for particle_lookup_table.
 struct reb_hash_pointer_pair{
     uint32_t hash;
@@ -524,6 +536,8 @@ struct reb_simulation {
     int     N_active;               // Number of active (i.e. not test-particle) particles. Default: -1 (all particles are active). 
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
+    struct  reb_name* name_list;
+    int     N_name_list;            // Number of entries in reb_name_list.
     struct  reb_hash_pointer_pair* particle_lookup_table;
     int     N_lookup;               // Number of entries in particle_lookup_table.
     int     N_allocated_lookup;     // Number of lookup table entries allocated.

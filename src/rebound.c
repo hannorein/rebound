@@ -330,6 +330,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->particle_lookup_table){
         free(r->particle_lookup_table);
     }
+    free(r->name_list);
     if (r->messages){
         for (int i=0;i<reb_N_max_messages;i++){
             free(r->messages[i]);
@@ -474,6 +475,8 @@ void reb_simulation_init(struct reb_simulation* r){
     r->particle_lookup_table = NULL;
     r->N_lookup = 0;
     r->N_allocated_lookup = 0;
+    r->name_list = NULL;
+    r->N_name_list = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;
     r->N_var    = 0;    
