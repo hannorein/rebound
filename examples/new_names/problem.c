@@ -40,12 +40,10 @@ int main(int argc, char* argv[]){
 
     system("rm -rf out.bin");
     reb_simulation_save_to_file(r, "out.bin");
-    printf("pointer before %p\n", r->particles[0].sim);
     reb_simulation_free(r);
     
     // Works by accident so far (memory of name_list never freed)
     r = reb_simulation_create_from_file("out.bin",-1);
-    printf("pointer AFTER  %p\n", r->particles[0].sim);
     printf("registered names: %d\n", r->N_name_list);
     p3 = reb_simulation_get_particle_by_name(r, "Sun");
     printf("registered names: %d\n", r->N_name_list);

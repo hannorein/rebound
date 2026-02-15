@@ -65,8 +65,6 @@ void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_b
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
     struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
     struct reb_binary_field_descriptor fd_functionpointers = reb_binary_field_descriptor_for_name("functionpointers");
-    struct reb_binary_field_descriptor name_list = reb_binary_field_descriptor_for_name("name_list");
-    char*** original_name_list = NULL; // Original pointer to name_list. Required to restor name pointers in particles.
 
 next_field:
     // Loop over all fields
@@ -132,12 +130,7 @@ next_field:
                     goto next_field;
                 }
                 if (fd.dtype == REB_CHARP_LIST){
-                    char*** original_pointer;
-                    fread(&original_pointer, sizeof(char*),1,inf);
-                    if (field.type == fd_functionpointers.type){
-                        original_name_list = original_pointer;
-                    }
-                    size_t serialized_size = field.size-sizeof(char*);
+                    size_t serialized_size = field.size;
                     char* serialized_strings = malloc(serialized_size);
                     fread(serialized_strings, serialized_size,1,inf);
                     // Process strings back into a list
@@ -145,15 +138,15 @@ next_field:
                     unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
                     size_t current_pos = 0;
                     while (current_pos < serialized_size){
-                        printf("read\n");
                         char* current_string = serialized_strings + current_pos;
-                        size_t current_string_len = strlen(current_string);
-                        current_pos += current_string_len+1;
+                        // character count + NULL character + original pointer address
+                        size_t current_string_len = strlen(current_string)+1+sizeof(char*);
+                        current_pos += current_string_len;
                         // Add current_string to list
                         (*pointer_N)++;
                         *pointer = realloc(*pointer,sizeof(char*)*(*pointer_N));
-                        (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len+1));
-                        strcpy((*pointer)[(*pointer_N)-1], current_string);
+                        (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len));
+                        memcpy((*pointer)[(*pointer_N)-1], current_string, current_string_len);
                     }
                     free(serialized_strings);
                     goto next_field;
@@ -243,9 +236,20 @@ finish_fields:
         r->particles[l].c = NULL;
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
-        if (r->particles[l].name && original_name_list){
-            // Restore names
-            r->particles[l].name = (r->particles[l].name-original_name_list)+r->name_list;
+        // Restore names
+        if (r->particles[l].name){
+            int name_found = 0;
+            for (int n=0;n<r->N_name_list;n++){
+                char* original_pointer = *((char**)(r->name_list[n]+strlen(r->name_list[n])+1));
+                if (r->particles[l].name==original_pointer){
+                    name_found = 1;
+                    r->particles[l].name = r->name_list[n];
+                }
+            }
+            if (!name_found){
+                reb_simulation_warning(r,"A name for a particle was not stored in the Simulationarchive.");
+                r->particles[l].name = NULL;
+            }
         }
     }
     reb_tree_delete(r);
