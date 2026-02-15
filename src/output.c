@@ -576,17 +576,20 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             memset(&field,0,sizeof(struct reb_binary_field));
             field.type = reb_binary_field_descriptor_list[i].type;
             unsigned int N_list = *((unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N));
-            char** list = *(char***)((char*)r + reb_binary_field_descriptor_list[i].offset);
+            char*** list_p = (char***)((char*)r + reb_binary_field_descriptor_list[i].offset);
             size_t serialized_size = 0;
             for (unsigned int i=0; i<N_list; i++){
-                serialized_size += strlen(list[i])+1;
+                serialized_size += strlen((*list_p)[i])+1;
             }
             field.size = sizeof(char)*serialized_size;
 
             if (field.size){
+                // This pointer arithmetic will fail on 32 bit architectures.
+                field.size += sizeof(size_t); // Space to store original pointer address for offset calculation.
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                reb_output_stream_write(bufp, &allocatedsize, sizep, list_p, sizeof(char*));
                 for (unsigned int i=0; i<N_list; i++){
-                    reb_output_stream_write(bufp, &allocatedsize, sizep, list[i], strlen(list[i])+1);
+                    reb_output_stream_write(bufp, &allocatedsize, sizep, (*list_p)[i], strlen((*list_p)[i])+1);
                 }
             }
         }

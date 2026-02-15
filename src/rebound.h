@@ -1364,7 +1364,7 @@ struct reb_binary_field_descriptor {
     char name[1024];
     size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
     size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
-    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc)
+    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
 };
 DLLEXPORT extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]; // List of blobs. Implemented in output.c
 DLLEXPORT struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
