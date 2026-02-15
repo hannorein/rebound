@@ -533,7 +533,7 @@ struct reb_simulation {
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
     char**  name_list;
-    int     N_name_list;            // Number of entries in reb_name_list.
+    unsigned int N_name_list;            // Number of entries in reb_name_list.
     struct  reb_hash_pointer_pair* particle_lookup_table;
     int     N_lookup;               // Number of entries in particle_lookup_table.
     int     N_allocated_lookup;     // Number of lookup table entries allocated.
@@ -1359,6 +1359,7 @@ struct reb_binary_field_descriptor {
         REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
         REB_PARTICLE4 = 15,          // Used for WHFast512
         REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
+        REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
     } dtype;
     char name[1024];
     size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation

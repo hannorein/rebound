@@ -188,6 +188,7 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 399, REB_PARTICLE4,   "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
     { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
     { 401, REB_POINTER,     "ri_custom.data",               offsetof(struct reb_simulation, ri_custom.data), offsetof(struct reb_simulation, ri_custom.data_size), 1},
+    { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0},
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0},
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}
@@ -568,6 +569,25 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             if (pointer){
                 reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+            }
+        }
+        if (dtype == REB_CHARP_LIST ){
+            struct reb_binary_field field;
+            memset(&field,0,sizeof(struct reb_binary_field));
+            field.type = reb_binary_field_descriptor_list[i].type;
+            unsigned int N_list = *((unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N));
+            char** list = *(char***)((char*)r + reb_binary_field_descriptor_list[i].offset);
+            size_t serialized_size = 0;
+            for (unsigned int i=0; i<N_list; i++){
+                serialized_size += strlen(list[i])+1;
+            }
+            field.size = sizeof(char)*serialized_size;
+
+            if (field.size){
+                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                for (unsigned int i=0; i<N_list; i++){
+                    reb_output_stream_write(bufp, &allocatedsize, sizep, list[i], strlen(list[i])+1);
+                }
             }
         }
         // Special datatype for IAS15. Similar to POINTER

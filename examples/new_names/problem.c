@@ -46,6 +46,7 @@ int main(int argc, char* argv[]){
     r = reb_simulation_create_from_file("out.bin",-1);
     printf("registered names: %d\n", r->N_name_list);
     p3 = reb_simulation_get_particle_by_name(r, "Sun");
+    printf("registered names: %d\n", r->N_name_list);
     if (p3){
         printf("Found p3. m=%f\n", p3->m);
     }else{

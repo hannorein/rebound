@@ -129,6 +129,27 @@ next_field:
 
                     goto next_field;
                 }
+                if (fd.dtype == REB_CHARP_LIST){
+                    size_t serialized_size = field.size;
+                    char* serialized_strings = malloc(serialized_size);
+                    fread(serialized_strings, field.size,1,inf);
+                    // Process strings back into a list
+                    char*** pointer = (char***)((char*)r + reb_binary_field_descriptor_list[i].offset);
+                    unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binary_field_descriptor_list[i].offset_N);
+                    size_t current_pos = 0;
+                    while (current_pos < serialized_size){
+                        char* current_string = serialized_strings + current_pos;
+                        size_t current_string_len = strlen(current_string);
+                        current_pos += current_string_len+1;
+                        // Add current_string to list
+                        (*pointer_N)++;
+                        *pointer = realloc(*pointer,sizeof(char*)*(*pointer_N));
+                        (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len+1));
+                        strcpy((*pointer)[(*pointer_N)-1], current_string);
+                    }
+                    free(serialized_strings);
+                    goto next_field;
+                }
                 // Special datatype for ias15. Similar to REB_POINTER. 
                 if (fd.dtype == REB_DP7){
                     if (field.size % reb_binary_field_descriptor_list[i].element_size){
