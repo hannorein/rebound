@@ -505,9 +505,9 @@ enum REB_STATUS {
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
-void reb_particle_set_name(struct reb_particle* p, const char* const s);
-char* reb_simulation_register_name(struct reb_simulation* r, const char* const s);
-struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const s);
+DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const s);
+DLLEXPORT char* reb_simulation_register_name(struct reb_simulation* r, const char* const s);
+DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const s);
 
 // Holds a particle's hash and the particle's index in the particles array. Used for particle_lookup_table.
 struct reb_hash_pointer_pair{
