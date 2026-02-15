@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, string_at, POINTER, c_char, c_void_p
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, string_at, POINTER, c_char, c_void_p, c_char_p
 import math
 import sys
 
@@ -1023,6 +1023,8 @@ if sizeof(c_void_p)==4:
                     ("_pad3", c_char*4),
                     ("_sim", POINTER(Simulation)),
                     ("_pad4", c_char*4),
+                    ("_name", c_char_p),
+                    ("_pad5", c_char*4),
                          ]
 else:
     Particle._fields_ = [("x", c_double),
@@ -1041,4 +1043,5 @@ else:
                     ("_hash", c_uint32),
                     ("ap", c_void_p),
                     ("_sim", POINTER(Simulation)),
+                    ("_name", c_char_p),
                          ]
