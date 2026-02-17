@@ -367,12 +367,12 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
 #endif // MPI
 }
 
-void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
+void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, char** name, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
-        if (hash){
-            hash[i] = particles[i].hash;
+        if (name){
+            name[i] = particles[i].name;
         }
         if (m){
             m[i] = particles[i].m;
@@ -401,12 +401,12 @@ void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, uint3
     }
 }
 
-void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
+void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, char** name, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
-        if (hash){
-            particles[i].hash = hash[i];
+        if (name){
+            particles[i].name = name[i];
         }
         if (m){
             particles[i].m = m[i];
@@ -694,7 +694,7 @@ struct reb_particle reb_particle_from_fmt(struct reb_simulation* r, const char* 
 static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args){
     double m = 0;
     double radius = 0;
-    uint32_t hash = 0;
+    char* name = NULL;
     double x = nan("");
     double y = nan("");
     double z = nan("");
@@ -782,8 +782,8 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
             primary = va_arg(args, struct reb_particle);
             primary_given = 1;
         }
-        if (0==strcmp(token,"hash")){
-            hash = va_arg(args, uint32_t);
+        if (0==strcmp(token,"name")){
+            name = va_arg(args, char*);
         }
     }
     free(fmt_c);
@@ -850,7 +850,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
 
     if (Ncart || (!Norb)){ // Cartesian coordinates given, or not coordinates whatsoever
         struct reb_particle particle = {0};
-        particle.hash = hash;
+        particle.name = name;
         particle.m = m;
         particle.r = radius;
         if (!isnan(x)) particle.x = x; // Note: is x is nan, then particle.x is 0  
@@ -899,7 +899,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
         }
         struct reb_particle particle = reb_particle_from_pal(r->G, primary, m, a, l, k, h, ix, iy);
         particle.r = radius;
-        particle.hash = hash;
+        particle.name = name;
         return particle;
     }
 
@@ -955,7 +955,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
     }
     struct reb_particle particle = reb_particle_from_orbit_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
     particle.r = radius;
-    particle.hash = hash;
+    particle.name = name;
     return particle;
 }
 
@@ -1558,64 +1558,6 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done)
     r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
         *(r->t - r->megno_initial_t - r->megno_mean_t)
         *(r->t - r->megno_initial_t - r->megno_mean_t);
-}
-
-#define ROT32(x, y) ((x << y) | (x >> (32 - y))) // avoid effort
-static uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
-    // Source: Wikipedia
-    static const uint32_t c1 = 0xcc9e2d51;
-    static const uint32_t c2 = 0x1b873593;
-    static const uint32_t r1 = 15;
-    static const uint32_t r2 = 13;
-    static const uint32_t m = 5;
-    static const uint32_t n = 0xe6546b64;
-
-    uint32_t hash = seed;
-
-    const int nblocks = len / 4;
-    const uint32_t *blocks = (const uint32_t *) key;
-    int i;
-    uint32_t k;
-    for (i = 0; i < nblocks; i++) {
-        k = blocks[i];
-        k *= c1;
-        k = ROT32(k, r1);
-        k *= c2;
-
-        hash ^= k;
-        hash = ROT32(hash, r2) * m + n;
-    }
-
-    const uint8_t *tail = (const uint8_t *) (key + nblocks * 4);
-    uint32_t k1 = 0;
-
-    switch (len & 3) {
-        case 3:
-            k1 ^= tail[2] << 16;
-        case 2:
-            k1 ^= tail[1] << 8;
-        case 1:
-            k1 ^= tail[0];
-
-            k1 *= c1;
-            k1 = ROT32(k1, r1);
-            k1 *= c2;
-            hash ^= k1;
-    }
-
-    hash ^= len;
-    hash ^= (hash >> 16);
-    hash *= 0x85ebca6b;
-    hash ^= (hash >> 13);
-    hash *= 0xc2b2ae35;
-    hash ^= (hash >> 16);
-
-    return hash;
-}
-
-uint32_t reb_hash(const char* str){
-    const int reb_seed = 1983;
-    return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
 }
 
 void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel){

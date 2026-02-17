@@ -1017,14 +1017,12 @@ if sizeof(c_void_p)==4:
                     ("last_collision", c_double),
                     ("c", c_void_p),
                     ("_pad1", c_char*4),
-                    ("_hash", c_uint32),
+                    ("_name", c_char_p),
                     ("_pad2", c_char*4),
                     ("ap", c_void_p),
                     ("_pad3", c_char*4),
                     ("_sim", POINTER(Simulation)),
                     ("_pad4", c_char*4),
-                    ("_name", c_char_p),
-                    ("_pad5", c_char*4),
                          ]
 else:
     Particle._fields_ = [("x", c_double),
@@ -1040,8 +1038,7 @@ else:
                     ("r", c_double),
                     ("last_collision", c_double),
                     ("c", c_void_p),
-                    ("_hash", c_uint32),
+                    ("_name", c_char_p),
                     ("ap", c_void_p),
                     ("_sim", POINTER(Simulation)),
-                    ("_name", c_char_p),
                          ]

@@ -46,7 +46,7 @@ int reb_particle_diff(struct reb_particle p1, struct reb_particle p2){
     differ = differ || (p1.m != p2.m);
     differ = differ || (p1.r != p2.r);
     differ = differ || (p1.last_collision != p2.last_collision);
-    differ = differ || (p1.hash != p2.hash);
+    differ = differ || (p1.name != p2.name);
     return differ;
 }
 

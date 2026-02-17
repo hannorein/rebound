@@ -345,118 +345,6 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
     p->name = reb_simulation_register_name(r,name);
 }
 
-static struct reb_particle* reb_search_lookup_table(struct reb_simulation* const r, uint32_t hash){
-    const struct reb_hash_pointer_pair* const lookup = r->particle_lookup_table;
-    if (lookup == NULL){
-        return NULL;
-    }
-
-    int left = 0;
-    int right = r->N_lookup-1;
-    int middle;
-    while(left <= right){
-        middle = (left + right)/2;
-        uint32_t lookuphash = lookup[middle].hash;
-        if(lookuphash < hash){
-            left = middle+1;
-        }
-        else if(lookuphash > hash){
-            right = middle-1;
-        }
-        else if(lookuphash == hash){
-            if(lookup[middle].index < (int)r->N){
-                return &r->particles[lookup[middle].index];
-            }
-            else{ // found lookup table entry pointing beyond r->N in particles array. Needs update
-                return NULL;
-            }
-        }
-    }
-    return NULL;
-}
-
-static int compare_hash(const void* a, const void* b){
-    struct reb_hash_pointer_pair* ia = (struct reb_hash_pointer_pair*)a; 
-    struct reb_hash_pointer_pair* ib = (struct reb_hash_pointer_pair*)b;
-    return (ia->hash > ib->hash) - (ia->hash < ib->hash); // to avoid overflow possibilities
-}
-
-static void reb_update_particle_lookup_table(struct reb_simulation* const r){
-    const struct reb_particle* const particles = r->particles;
-    int N_hash = 0;
-    int zerohash = -1;
-    for(unsigned int i=0; i<r->N; i++){
-        if(N_hash >= r->N_allocated_lookup){
-            r->N_allocated_lookup = r->N_allocated_lookup ? r->N_allocated_lookup * 2 : 128;
-            r->particle_lookup_table = realloc(r->particle_lookup_table, sizeof(struct reb_hash_pointer_pair)*r->N_allocated_lookup);
-        }
-        if(particles[i].hash == 0){ // default hash (0) special case
-            if (zerohash == -1){    // first zero hash
-                zerohash = i;
-                r->particle_lookup_table[zerohash].hash = particles[i].hash;
-                r->particle_lookup_table[zerohash].index = i;
-                N_hash++;
-            }
-            else{                   // update zero hash entry in lookup without incrementing N_hash
-                r->particle_lookup_table[zerohash].index = i;
-            }
-        }
-        else{                   
-            r->particle_lookup_table[N_hash].hash = particles[i].hash;
-            r->particle_lookup_table[N_hash].index = i;
-            N_hash++;
-        }
-    }
-    r->N_lookup = N_hash;
-    qsort(r->particle_lookup_table, r->N_lookup, sizeof(*r->particle_lookup_table), compare_hash); // only sort the first N_lookup entries that are initialized.
-}
-
-struct reb_particle* reb_simulation_particle_by_hash(struct reb_simulation* const r, uint32_t hash){
-    struct reb_particle* p; 
-    p = reb_search_lookup_table(r, hash);
-    if (p == NULL){
-        reb_update_particle_lookup_table(r);
-        p = reb_search_lookup_table(r, hash);
-    }
-    else{
-        if (p->hash != hash){
-            reb_update_particle_lookup_table(r);
-            p = reb_search_lookup_table(r, hash);
-        }
-    }
-    return p;
-}
-
-struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* const r, uint32_t hash){
-#ifdef MPI
-    struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
-    int found = (p==NULL)?0:1;
-    MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    if (found == 0){
-        return reb_particle_nan();
-    }
-    if (found > 1){
-        reb_simulation_error(r, "Multiple particles with same hash found.");
-        return reb_particle_nan();
-    }
-    struct reb_particle ph = {0};
-    if (p!=NULL){
-        ph = *p;
-        ph.sim = NULL;
-    }
-    int root = (p==NULL) ? 0 : r->mpi_id;
-    MPI_Allreduce(MPI_IN_PLACE, &root, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
-    return ph;
-#else // MPI
-    struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
-    if (p==0){
-        return reb_particle_nan();
-    }else{
-        return *p;
-    }
-#endif // MPI
-}
 
 void reb_simulation_remove_all_particles(struct reb_simulation* const r){
     r->N 		= 0;
@@ -586,18 +474,6 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
     return 1;
 }
 
-int reb_simulation_remove_particle_by_hash(struct reb_simulation* const r, uint32_t hash, int keep_sorted){
-    struct reb_particle* p = reb_simulation_particle_by_hash(r, hash);
-    if(p == NULL){
-        reb_simulation_error(r,"Particle to be removed not found in simulation.  Did not remove particle.");
-        return 0;
-    }
-    else{
-        int index = reb_simulation_particle_index(p);
-        return reb_simulation_remove_particle(r, index, keep_sorted);
-    }
-}
-
 void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2){
     p1->x -= p2->x;
     p1->y -= p2->y;
@@ -636,7 +512,7 @@ double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2){
 }
 
 struct reb_particle reb_particle_nan(void){
-    struct reb_particle p;
+    struct reb_particle p = { 0 };
     p.x = nan("");
     p.y = nan("");
     p.z = nan("");
@@ -649,10 +525,5 @@ struct reb_particle reb_particle_nan(void){
     p.m = nan("");
     p.r = nan("");
     p.last_collision = nan("");
-    p.c = NULL;
-    p.hash = 0;
-    p.ap = NULL;
-    p.sim = NULL;
-
     return p;
 }

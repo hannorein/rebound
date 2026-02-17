@@ -126,7 +126,7 @@ struct reb_particle {
 #if !defined(_LP64)
     char pad1[4];               // c is short by 4 bytes
 #endif
-    uint32_t hash;              // Hash, can be used to identify particle.
+    char* name;                 // Pointer to a NULL terminated string with the particle's name.
 #if !defined(_LP64)
     char pad2[4];               // ap is not padded to 8 bytes
 #endif
@@ -137,10 +137,6 @@ struct reb_particle {
     struct reb_simulation* sim; // Pointer to the parent simulation.
 #if !defined(_LP64)
     char pad4[4];               // sim is short by 4 bytes
-#endif
-    char* name;                 // Pointer to a NULL terminated string with the particle's name.
-#if !defined(_LP64)
-    char pad5[4];               // name is short by 4 bytes
 #endif
 };
 
@@ -509,12 +505,6 @@ DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const s
 DLLEXPORT char* reb_simulation_register_name(struct reb_simulation* r, const char* const s);
 DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const s);
 
-// Holds a particle's hash and the particle's index in the particles array. Used for particle_lookup_table.
-struct reb_hash_pointer_pair{
-    uint32_t hash;
-    int index;
-};
-
 // Main REBOUND Simulation structure
 // Note: only variables that should be accessed by users are documented here.
 struct reb_simulation {
@@ -534,9 +524,6 @@ struct reb_simulation {
     int     testparticle_hidewarnings;
     char**  name_list;
     unsigned int N_name_list;            // Number of entries in reb_name_list.
-    struct  reb_hash_pointer_pair* particle_lookup_table;
-    int     N_lookup;               // Number of entries in particle_lookup_table.
-    int     N_allocated_lookup;     // Number of lookup table entries allocated.
     unsigned int   N_allocated;     // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
     struct reb_vec3d* gravity_cs; 
@@ -835,7 +822,7 @@ DLLEXPORT struct reb_particle reb_particle_from_orbit_err(double G, struct reb_p
 DLLEXPORT struct reb_particle reb_particle_from_orbit(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f);
 // Returns a particle given a set of Pal orbital parameters.
 DLLEXPORT struct reb_particle reb_particle_from_pal(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
-// Returns a reb_particle structure with fields/hash/ptrs initialized to nan/0/NULL. 
+// Returns a reb_particle structure with fields/name/ptrs initialized to nan/0/NULL. 
 DLLEXPORT struct reb_particle reb_particle_nan(void);
 
 
@@ -845,12 +832,6 @@ DLLEXPORT struct reb_particle reb_particle_nan(void);
 DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const r);
 // Remove one particle. keep_sorted flag can be set to 1 to maintain order of remaining particles.
 DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted);
-// Remove one particle. Use hash to find particle.
-DLLEXPORT int reb_simulation_remove_particle_by_hash(struct reb_simulation* const r, uint32_t hash, int keep_sorted);
-// Returns pointer to particle with given hash.
-DLLEXPORT struct reb_particle* reb_simulation_particle_by_hash(struct reb_simulation* const r, uint32_t hash);
-// Same as above but searches on all nodes if MPI is enabled. Returns copy instead of a pointer because particle might be on a different node.
-DLLEXPORT struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* const r, uint32_t hash);
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
 DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
 // Subtract particle p2 from p1
@@ -908,8 +889,6 @@ DLLEXPORT double reb_random_rayleigh(struct reb_simulation* r, double sigma);
 
 // Miscellaneous functions
 
-// Calculate a hash value for a string.
-DLLEXPORT uint32_t reb_hash(const char* str);   
 // Returns the angle f wrapped in the interval from 0 to 2*pi
 DLLEXPORT double reb_mod2pi(double f);
 // True anomaly for a given eccentricity and mean anomaly
@@ -1400,8 +1379,8 @@ DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contractio
 DLLEXPORT size_t reb_simulation_struct_size();
 DLLEXPORT char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2); // Return the difference between two simulations as a human readable difference. Returned pointer needs to be freed.
 DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python 
-DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // NULL pointers will not be set.
-DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
+DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, char** name, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // NULL pointers will not be set.
+DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, char** name, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
 DLLEXPORT void reb_simulation_output_free_stream(char* buf);
 DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p); // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 DLLEXPORT struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err);
