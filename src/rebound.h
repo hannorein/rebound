@@ -501,9 +501,10 @@ enum REB_STATUS {
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
-DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const s);
-DLLEXPORT char* reb_simulation_register_name(struct reb_simulation* r, const char* const s);
-DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const s);
+DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
+DLLEXPORT char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
+DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
+DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
 
 // Main REBOUND Simulation structure
 // Note: only variables that should be accessed by users are documented here.

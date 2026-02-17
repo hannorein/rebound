@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "rebound.h"
 
 enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]){
     struct reb_particle pt = {0};
     pt.r         = radius;
     pt.m         = mass;
-    pt.hash        = 1;
+    pt.name      = "border";
     for(double x = -r->boxsize.x/2.; x<r->boxsize.x/2.-border_spacing_x/2.;x+=border_spacing_x){
         for(double y = -r->boxsize.y/2.; y<r->boxsize.y/2.-border_spacing_y/2.;y+=border_spacing_y){
             pt.x         = x;
@@ -76,7 +77,6 @@ int main(int argc, char* argv[]){
         pt.vz         = reb_random_normal(r, 0.001);
         pt.r         = radius;                        // m
         pt.m         = 1;
-        pt.hash        = 2;
         reb_simulation_add(r, pt);
     }
 
@@ -131,13 +131,13 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struc
 
     // Applying the changes to the particles.
     // Do not change border particles.
-    if (p2.hash!=1){
+    if (!p2.name || strcmp(p2.name,"border")){
         particles[c.p2].vx -=    m21*dvx2n;
         particles[c.p2].vy -=    m21*dvy2nn;
         particles[c.p2].vz -=    m21*dvz2nn;
         particles[c.p2].last_collision = t;
     }
-    if (p1.hash!=1){
+    if (!p1.name || strcmp(p1.name,"border")){
         particles[c.p1].vx +=    dvx2n; 
         particles[c.p1].vy +=    dvy2nn; 
         particles[c.p1].vz +=    dvz2nn; 
