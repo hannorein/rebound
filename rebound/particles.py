@@ -1,6 +1,5 @@
 import sys
 from ctypes import c_uint32, c_uint, c_uint64, addressof, POINTER, pointer, byref
-from .hash import hash as rebhash
 from .particle import Particle
 from . import clibrebound, ParticleNotFound
 
@@ -13,7 +12,7 @@ except:
 
 class Particles(MutableMapping):
     """
-    This class allows the user to access particles like a dictionary using the particle's 1) index 2) hash 3) string (which will be converted to hash).
+    This class allows the user to access particles like a dictionary using the particle's index or name.
     Allows for negative indices and slicing.
     """
     def __init__(self, sim):
@@ -27,14 +26,8 @@ class Particles(MutableMapping):
         return pl
 
     def __getitem__(self, key):
-        hash_types = c_uint32, c_uint, c_uint64
-        PY3 = sys.version_info[0] == 3
-        if PY3:
-            string_types = str,
-            int_types = int,
-        else:
-            string_types = basestring,
-            int_types = int, long,
+        string_types = str,
+        int_types = int,
         try:
             import numpy as np
             int_types += np.int64,
@@ -51,20 +44,17 @@ class Particles(MutableMapping):
                 raise AttributeError("Index {0} used to access particles out of range.".format(key))
             return self._ps[key]
 
-        else:
-            clibrebound.reb_simulation_particle_by_hash.restype = POINTER(Particle)
-            if isinstance(key, string_types):
-                key = rebhash(key)
-            elif not isinstance(key, hash_types):
-                raise AttributeError("Expecting string, integer or ctypes.c_uint32 as argument to sim.particles.  See UniquelyIdentifyingParticlesWithHashes.ipynb ipython_example.")
-
-            ptr = clibrebound.reb_simulation_particle_by_hash(byref(self.sim), key) 
+        if isinstance(key, string_types):
+            clibrebound.reb_simulation_get_particle_by_name.restype = POINTER(Particle)
+            s = key.encode("utf-8")
+            ptr = clibrebound.reb_simulation_get_particle_by_name(byref(self.sim), s) 
             
             if ptr:
                 p = Particle
                 return p.from_address(addressof(ptr.contents))
             else:
                 raise ParticleNotFound("Particle was not found in the simulation.") 
+        raise AttributeError("Unable to get particles with key {0}.".format(key))
 
     def __setitem__(self, key, value):
         if isinstance(value, Particle):

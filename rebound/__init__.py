@@ -88,7 +88,6 @@ class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
 
-from .hash import hash
 from .tools import mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
 from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic, CollisionS # CollisionS is the collision struct, not the exception
 from .rotation import Rotation

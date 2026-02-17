@@ -2,7 +2,6 @@ from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int6
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
 from .citations import cite
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
-from .hash import hash as rebhash, HashPointerPair
 from .vectors import Vec3d, Vec3dBasic, Vec6d
 import os
 import sys
@@ -943,7 +942,7 @@ class Simulation(Structure):
                         if hasattr(self, 'default_plane'):
                             kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
                     mass_unit = hash_to_unit(self.python_unit_m) # For manually provided masses
-                    self.add(horizons.query_horizons_for_particle(mass_unit, particle, **kwargs), hash=particle)
+                    self.add(horizons.query_horizons_for_particle(mass_unit, particle, **kwargs))
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
@@ -955,7 +954,7 @@ class Simulation(Structure):
     @property
     def particles(self):
         """
-        Returns a Particles object that allows users to access particles like a dictionary using indices, hashes, or strings. 
+        Returns a Particles object that allows users to access particles like a dictionary using indices, or names. 
 
         The Particles object uses pointers and thus the contents update 
         as the simulation progresses. Note that the pointers could change,
@@ -972,37 +971,25 @@ class Simulation(Structure):
         clibrebound.reb_simulation_remove_all_particles(byref(self))
         self.process_messages()
 
-    def remove(self, index=None, hash=None, keep_sorted=True):
+    def remove(self, identifier, keep_sorted=True):
         """ 
         Removes a particle from the simulation.
 
         Parameters
         ----------
-        index : int, optional
-            Specify particle to remove by index.
-        hash : c_uint32 or string, optional
-            Specify particle to remove by hash (if a string is passed, the corresponding hash is calculated).
+        identifier : int or string
+            Specify particle to remove by index or by name.
         keep_sorted : bool, optional
             By default, remove preserves the order of particles in the particles array. 
             Might set it to zero in cases with many particles and many removals to speed things up.
         """
-        if index is not None:
-            clibrebound.reb_simulation_remove_particle(byref(self), index, keep_sorted)
-        if hash is not None:
-            hash_types = c_uint32, c_uint, c_uint64
-            PY3 = sys.version_info[0] == 3
-            if PY3:
-                string_types = str,
-                int_types = int,
-            else:
-                string_types = basestring,
-                int_types = int, long
-            if isinstance(hash, string_types):
-                clibrebound.reb_simulation_remove_particle_by_hash(byref(self), rebhash(hash), keep_sorted)
-            elif isinstance(hash, int_types):
-                clibrebound.reb_simulation_remove_particle_by_hash(byref(self), c_uint32(hash), keep_sorted)
-            elif isinstance(hash, hash_types):
-                clibrebound.reb_simulation_remove_particle_by_hash(byref(self), hash, keep_sorted)
+        if isinstance(identifier, int):
+            clibrebound.reb_simulation_remove_particle(byref(self), identifier, keep_sorted)
+        elif isinstance(identifier, str):
+            s = identifier.encode("utf-8")
+            clibrebound.reb_simulation_remove_particle_by_name(byref(self), s, keep_sorted)
+        else:
+            raise ValueError("Argument passed to remove() not supported.")
 
         self.process_messages()
 
@@ -1507,9 +1494,6 @@ Simulation._fields_ = [
                 ("testparticle_hidewarnings", c_int),
                 ("_name_list", POINTER(c_char_p)),
                 ("_N_name_list", c_uint),
-                ("_particle_lookup_table", POINTER(HashPointerPair)),
-                ("N_lookup", c_int),
-                ("N_allocated_lookup", c_int),
                 ("N_allocated", c_uint),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(Vec3dBasic)),

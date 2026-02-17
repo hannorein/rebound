@@ -333,7 +333,10 @@ struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* 
 
 int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted){
     struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
-    if (!p) return 1; // Not found.
+    if (!p){
+        reb_simulation_error(r, "Particle not found.");
+        return 1; // Not found.
+    }
     size_t index = p - r->particles;
     return !reb_simulation_remove_particle(r, index, keep_sorted); // TODO: return value is different between the two functions. 
 }

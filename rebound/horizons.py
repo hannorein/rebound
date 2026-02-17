@@ -79,7 +79,7 @@ def api_request(particle, datestart, dateend, plane):
 
 
 def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
-                anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic", hash=0):
+                anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):
     if plane not in ["ecliptic", "frame"]:
         raise AttributeError(
             "Reference plane needs to be either 'ecliptic' or 'frame'. See Horizons for a definition of these coordinate systems.")
@@ -183,7 +183,7 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
     else:
         warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
         p.m = 0
-    p.hash = hash
+    p.name = name
     return p
 
 

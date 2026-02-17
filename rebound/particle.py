@@ -30,8 +30,8 @@ class Particle(Structure):
         Last time the particle had a physical collision (if checking for collisions)
     c           : c_void_p (C void pointer) 
         Pointer to the cell the particle is currently in (if using tree code)
-    hash          : c_uint32         
-        Particle hash (permanent identifier for the particle)
+    name        : string         
+        Particle name (permanent identifier for the particle)
     ap          : c_void_p (C void pointer)
         Pointer to additional parameters one might want to add to particles
     _sim        : POINTER(rebound.Simulation)
@@ -43,10 +43,14 @@ class Particle(Structure):
         """ 
         Returns a string with the position and velocity of the particle.
         """
-        return '<{0}.{1} object at {2}, m={3} x={4} y={5} z={6} vx={7} vy={8} vz={9}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.m, self.x, self.y, self.z, self.vx, self.vy, self.vz)
+        if self._name:
+            name = "name=\""+self._name.decode()+"\", "
+        else:
+            name = ""
+        return '<{0}.{1} object at {2}, {10}m={3} x={4} y={5} z={6} vx={7} vy={8} vz={9}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.m, self.x, self.y, self.z, self.vx, self.vy, self.vz, name)
    
 
-    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, E=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, pal_h=None, pal_k=None, pal_ix=None, pal_iy=None, hash=0, jacobi_masses=False):
+    def __init__(self, simulation=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None, P=None, e=None, inc=None, Omega=None, omega=None, pomega=None, f=None, M=None, E=None, l=None, theta=None, T=None, r=None, date=None, variation=None, variation2=None, h=None, k=None, ix=None, iy=None, pal_h=None, pal_k=None, pal_ix=None, pal_iy=None, name=None, jacobi_masses=False):
         """
         Initializes a Particle structure. Rather than explicitly creating 
         a Particle structure, users may use the ``add()`` member function 
@@ -134,8 +138,8 @@ class Particle(Structure):
         variation2  : string            (Default: None)
             Set this string to the name of a second orbital parameter to initialize the particle as a second order variational particle. Only used for second order variational equations. 
             Can be one of the following: m, a, e, inc, omega, Omega, f, k, h, lambda, ix, iy.
-        hash        : c_uint32  
-            Unsigned integer identifier for particle.  Can pass an integer directly, or a string that will be converted to a hash. User is responsible for assigning unique hashes.
+        name        : string  
+            Permanent identifier for particle.
         jacobi_masses: bool
             Whether to use jacobi primary mass in orbit initialization. Particle mass will still be set to physical value (Default: False)
         Examples
@@ -196,7 +200,7 @@ class Particle(Structure):
         if inc == "uniform":
             inc = clibrebound.reb_random_uniform(simp, c_double(0.0), c_double(math.pi*2.0))
 
-        self.hash = hash # set via the property, which checks for type
+        self.name = name
             
         if isinstance(primary, (str,int)):
            primary = simulation.particles[primary]
@@ -963,29 +967,21 @@ class Particle(Structure):
         clibrebound.reb_particle_com_of_pair.restype = Particle
         return clibrebound.reb_particle_com_of_pair(p, self)
     @property
-    def hash(self):
+    def name(self):
         """
-        Get or set the particle's hash.  If set to a string, the corresponding integer hash is calculated.
+        Get or set the particle's name.
         """
-        return c_uint32(self._hash)
-    @hash.setter
-    def hash(self, value):
-        PY3 = sys.version_info[0] == 3
-        hash_types = c_uint32, c_uint, c_uint64
-        if PY3:
-            string_types = str,
-            int_types = int,
+        return self._name.value.decode()
+    @name.setter
+    def name(self, value):
+        string_types = str,
+        int_types = int,
+        if isinstance(value, str):
+            self._name = value.encode("utf-8")
+        elif value is None:
+            self._name = None
         else:
-            string_types = basestring,
-            int_types = int, long,
-        if isinstance(value, hash_types):
-            self._hash = value.value
-        elif isinstance(value, string_types):
-            self._hash = hash(value).value
-        elif isinstance(value, int_types):
-            self._hash = value
-        else:
-            raise AttributeError("Hash must be set to an integer, a ctypes.c_uint32 or a string. See UniquelyIdentifyingParticlesWithHashes.ipynb ipython_example.")
+            raise AttributeError("Name must be a string.")
 
     def _copy_coordinates(self, p):
         """
@@ -999,7 +995,6 @@ from . import clibrebound
 from .tools import E_to_f, M_to_f, mod2pi
 from .orbit import Orbit
 from .rotation import Rotation
-from .hash import hash
 
 if sizeof(c_void_p)==4:
     # Add padding for 32 bit
