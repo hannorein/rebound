@@ -505,6 +505,7 @@ DLLEXPORT uint32_t reb_hash(const char* c);
 DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
 DLLEXPORT char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
 DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
+DLLEXPORT struct reb_particle reb_simulation_particle_by_name_mpi(struct reb_simulation* const r, const char* const name);
 DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
 
 // Main REBOUND Simulation structure

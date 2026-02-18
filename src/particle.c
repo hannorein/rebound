@@ -331,6 +331,37 @@ struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* 
     return NULL; // Not found
 }
 
+struct reb_particle reb_simulation_particle_by_name_mpi(struct reb_simulation* const r, const char* const name){
+#ifdef MPI
+    struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
+    int found = (p==NULL)?0:1;
+    MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    if (found == 0){
+        return reb_particle_nan();
+    }
+    if (found > 1){
+        reb_simulation_error(r, "Multiple particles with same name found.");
+        return reb_particle_nan();
+    }
+    struct reb_particle ph = {0};
+    if (p!=NULL){
+        ph = *p;
+        ph.sim = NULL;
+    }
+    int root = (p==NULL) ? 0 : r->mpi_id;
+    MPI_Allreduce(MPI_IN_PLACE, &root, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
+    return ph;
+#else // MPI
+    struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
+    if (p==0){
+        return reb_particle_nan();
+    }else{
+        return *p;
+    }
+#endif // MPI
+}
+
 int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted){
     struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
     if (!p){

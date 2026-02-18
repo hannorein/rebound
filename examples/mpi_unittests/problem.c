@@ -105,8 +105,10 @@ void test_twobody(){
 
     // Order of particles will be different. Need to compare them by name
     for(int i=0; i<10; i++){
-        struct reb_particle p1 = reb_simulation_particle_by_name_mpi(r, i);
-        struct reb_particle p2 = reb_simulation_particle_by_name_mpi(r2, i);
+        char name[256];
+        sprintf(name, "%d", i);
+        struct reb_particle p1 = reb_simulation_particle_by_name_mpi(r, name);
+        struct reb_particle p2 = reb_simulation_particle_by_name_mpi(r2, name);
         assert(p1.x==p2.x);
         assert(p1.y==p2.y);
         assert(p1.z==p2.z);
