@@ -78,7 +78,7 @@ def api_request(name, datestart, dateend, plane):
     return body
 
 
-def query_horizons_for_particle(name, mass_unit=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
+def query_horizons_for_particle(name, mass_unit, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
                 anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):
     if plane not in ["ecliptic", "frame"]:
         raise AttributeError(
