@@ -187,11 +187,13 @@ const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]= {
     { 394, REB_POINTER_ALIGNED, "ri_whfast512.p512",        offsetof(struct reb_simulation, ri_whfast512.p512), offsetof(struct reb_simulation, ri_whfast512.N_allocated), sizeof(struct reb_particle_avx512)},
     // 396, 397 used to be max_radius0 and max_radius1
     { 398, REB_UINT,        "ri_whfast512.N_systems",       offsetof(struct reb_simulation, ri_whfast512.N_systems), 0, 0},
-    { 399, REB_POINTER,     "ri_whfast512.particles_keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.particles_keep_unsynchronized), offsetof(struct reb_simulation, ri_whfast512.N_allocated_particles_keep_unsynchronized), sizeof(struct reb_particle)},
-    { 401, REB_UINT,        "ri_whfast512.concatenate_steps",offsetof(struct reb_simulation, ri_whfast512.concatenate_steps), 0, 0},
+    // 399 used to be ri_whfast512.pjh0
+    { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
+    // 401 reserved for ri_leapfrog and ri_custom
     { 402, REB_UINT,        "ri_whfast512.corrector",       offsetof(struct reb_simulation, ri_whfast512.corrector), 0, 0},
     { 403, REB_DOUBLE,      "ri_whfast512.time_of_last_synchronize", offsetof(struct reb_simulation, ri_whfast512.time_of_last_synchronize), 0, 0},
-    { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
+    { 404, REB_POINTER,     "ri_whfast512.particles_keep_unsynchronized", offsetof(struct reb_simulation, ri_whfast512.particles_keep_unsynchronized), offsetof(struct reb_simulation, ri_whfast512.N_allocated_particles_keep_unsynchronized), sizeof(struct reb_particle)},
+    { 405, REB_UINT,        "ri_whfast512.concatenate_steps",offsetof(struct reb_simulation, ri_whfast512.concatenate_steps), 0, 0},
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0},
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}

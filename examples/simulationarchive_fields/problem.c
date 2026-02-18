@@ -117,7 +117,11 @@ int main(int argc, char* argv[]) {
                 }
             }else{
                 ifprintf("FIELD\n");
-                ifprintf("\tname:   %s\n", fd.name);
+                if (strlen(fd.name)){
+                    ifprintf("\tname:   %s\n", fd.name);
+                }else{
+                    ifprintf("\tname:   <unknown>\n");
+                }
                 ifprintf("\ttype:   %d\n", fd.type);
                 ifprintf("\tsize:   %llu bytes\n", field.size);
                 switch (fd.dtype){
