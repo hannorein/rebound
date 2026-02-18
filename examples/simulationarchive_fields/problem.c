@@ -117,7 +117,11 @@ int main(int argc, char* argv[]) {
                 }
             }else{
                 ifprintf("FIELD\n");
-                ifprintf("\tname:   %s\n", fd.name);
+                if (strlen(fd.name)){
+                    ifprintf("\tname:   %s\n", fd.name);
+                }else{
+                    ifprintf("\tname:   <unknown>\n");
+                }
                 ifprintf("\ttype:   %d\n", fd.type);
                 ifprintf("\tsize:   %llu bytes\n", field.size);
                 switch (fd.dtype){
@@ -133,7 +137,6 @@ int main(int argc, char* argv[]) {
                     CASE(REB_POINTER_ALIGNED);
                     CASE(REB_DP7);
                     CASE(REB_OTHER);
-                    CASE(REB_PARTICLE4);
                     CASE(REB_POINTER_FIXED_SIZE);
                 default:
                     ifprintf("\tdtype:  <other>\n");
