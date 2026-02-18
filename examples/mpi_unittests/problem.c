@@ -36,12 +36,12 @@ void test_twobody(){
     printf("MPI init...\n");
     reb_mpi_init(r);
     if (r->mpi_id==0){
-        reb_simulation_add_fmt(r, "m y name", 2., 4.0, "star1");
+        reb_simulation_add_fmt(r, "m y id", 2., 4.0, 1); //star 1
     }
     struct reb_particle com = reb_simulation_com(r); // Need to call this on all machines. 
     assert(com.y==4.0);
     if (r->mpi_id==0){
-        reb_simulation_add_fmt(r, "m a e primary name", 1., 1., 0.1, com, "star2");
+        reb_simulation_add_fmt(r, "m a e primary id", 1., 1., 0.1, com, 2); // star 2
     }
 
     printf("Moving to com...\n"); // Will also distribute particles
@@ -66,8 +66,8 @@ void test_twobody(){
     reb_simulation_integrate(r, 10.);
     
     printf("Checking conservation of orbital elements...\n");
-    struct reb_particle star1 = reb_simulation_particle_by_name_mpi(r, "star1");
-    struct reb_particle star2 = reb_simulation_particle_by_name_mpi(r, "star2");
+    struct reb_particle star1 = reb_simulation_particle_by_id_mpi(r, 1);
+    struct reb_particle star2 = reb_simulation_particle_by_id_mpi(r, 2);
     struct reb_orbit o = reb_orbit_from_particle(r->G, star2, star1);
     
     assert(fabs(o.a-1.)<1e-3);
@@ -78,9 +78,7 @@ void test_twobody(){
     com = reb_simulation_com(r); // Need to call this on all machines. 
     if (r->mpi_id==0){
         for (int i=0; i<10; i++){
-            char name[256];
-            sprintf(name, "%d", i);
-            reb_simulation_add_fmt(r, "m a primary name", 0.0001, 2.0+0.1*i, com, name);
+            reb_simulation_add_fmt(r, "m a primary id", 0.0001, 2.0+0.1*i, com, 10+i);
         }
     }
     reb_simulation_steps(r, 1);
@@ -103,12 +101,10 @@ void test_twobody(){
     assert(r->N == r2->N);
     assert(r->t == r2->t);
 
-    // Order of particles will be different. Need to compare them by name
+    // Order of particles will be different. Need to compare them by id
     for(int i=0; i<10; i++){
-        char name[256];
-        sprintf(name, "%d", i);
-        struct reb_particle p1 = reb_simulation_particle_by_name_mpi(r, name);
-        struct reb_particle p2 = reb_simulation_particle_by_name_mpi(r2, name);
+        struct reb_particle p1 = reb_simulation_particle_by_id_mpi(r, 10+i);
+        struct reb_particle p2 = reb_simulation_particle_by_id_mpi(r2, 10+i);
         assert(p1.x==p2.x);
         assert(p1.y==p2.y);
         assert(p1.z==p2.z);

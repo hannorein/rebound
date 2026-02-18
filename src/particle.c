@@ -299,7 +299,10 @@ int reb_simulation_particle_index(struct reb_particle* p){
 }
 
 
-char* reb_simulation_get_registered_name(struct reb_simulation* r, const char* const name){
+const char* reb_simulation_get_registered_name(struct reb_simulation* r, const char* const name){
+#ifdef MPI
+    return name; // Does not register.
+#else // MPI
     if (name==NULL) return NULL; // NULL string not allowed.
     for (int i=0; i<r->N_name_list; i++){
         if (strcmp(name,r->name_list[i])==0){
@@ -307,21 +310,20 @@ char* reb_simulation_get_registered_name(struct reb_simulation* r, const char* c
         }
     }
     return NULL; // Not found
+#endif // MPI
 }
-char* reb_simulation_register_name(struct reb_simulation* r, const char* const name){
-    char* registered_name = reb_simulation_get_registered_name(r,name);
-    if (!registered_name){ // Name not registered yet.
-        r->N_name_list++;
-        r->name_list = realloc(r->name_list,sizeof(char*)*r->N_name_list);
-        registered_name = malloc(sizeof(char)*(strlen(name)+1));
-        strcpy(registered_name, name);
-        r->name_list[r->N_name_list-1] = registered_name;
-    }
+const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name){
+    const char* registered_name = reb_simulation_get_registered_name(r,name);
+    if (registered_name) return registered_name;
+    registered_name = strdup(name);
+    r->N_name_list++;
+    r->name_list = realloc(r->name_list,sizeof(char*)*r->N_name_list);
+    r->name_list[r->N_name_list-1] = (char*)registered_name;
     return registered_name;
 }
 struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name){
     for (int i=0; i<r->N; i++){
-        char* p_name = r->particles[i].name;
+        const char* p_name = r->particles[i].name;
         if (p_name){
             if (strcmp(p_name,name)==0){
                 return &(r->particles[i]);
@@ -331,16 +333,29 @@ struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* 
     return NULL; // Not found
 }
 
-struct reb_particle reb_simulation_particle_by_name_mpi(struct reb_simulation* const r, const char* const name){
+
 #ifdef MPI
-    struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
+struct reb_particle* reb_simulation_get_particle_by_id(struct reb_simulation* r, int id){
+    for (int i=0; i<r->N; i++){
+        int p_id = (int)(uintptr_t)(r->particles[i].name);
+        if (p_id){
+            if (p_id == id){
+                return &(r->particles[i]);
+            }
+        }
+    }
+    return NULL; // Not found
+}
+
+struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simulation* const r, int id){
+    struct reb_particle* p = reb_simulation_get_particle_by_id(r, id);
     int found = (p==NULL)?0:1;
     MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (found == 0){
         return reb_particle_nan();
     }
     if (found > 1){
-        reb_simulation_error(r, "Multiple particles with same name found.");
+        reb_simulation_error(r, "Multiple particles with same id found.");
         return reb_particle_nan();
     }
     struct reb_particle ph = {0};
@@ -352,15 +367,8 @@ struct reb_particle reb_simulation_particle_by_name_mpi(struct reb_simulation* c
     MPI_Allreduce(MPI_IN_PLACE, &root, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     MPI_Bcast(&ph, sizeof(struct reb_particle), MPI_CHAR, root, MPI_COMM_WORLD);
     return ph;
-#else // MPI
-    struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
-    if (p==0){
-        return reb_particle_nan();
-    }else{
-        return *p;
-    }
-#endif // MPI
 }
+#endif // MPI
 
 int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted){
     struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);

@@ -791,9 +791,15 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
             primary = va_arg(args, struct reb_particle);
             primary_given = 1;
         }
+#ifdef MPI
+        if (0==strcmp(token,"id")){
+            name = (size_t)va_arg(args, int);
+        }
+#else // MPI
         if (0==strcmp(token,"name")){
             name = va_arg(args, char*);
         }
+#endif// MPI
     }
     free(fmt_c);
 

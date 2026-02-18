@@ -236,6 +236,7 @@ finish_fields:
         r->particles[l].c = NULL;
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
+#ifndef MPI
         // Restore names
         if (r->particles[l].name){
             int name_found = 0;
@@ -251,6 +252,7 @@ finish_fields:
                 r->particles[l].name = NULL;
             }
         }
+#endif // MPI
     }
     reb_tree_delete(r);
     if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
