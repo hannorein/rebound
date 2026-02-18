@@ -102,14 +102,14 @@ int main(int argc, char* argv[]) {
     struct timeval time_beginning;
     struct timeval time_end;
     gettimeofday(&time_beginning,NULL);
-    r->ri_whfast512.concatenate_steps = 1e5;
+    r->ri_whfast512.concatenate_steps = 6e5;
 
     double next_steps = 1;
     char filename_log[1024];
-    sprintf(filename_log, "/scratch/rein/whfast512_tests/log_%05d.txt", id);
+    sprintf(filename_log, "/scratch_local/rein/whfast512_tests/log_1day_%05d.txt", id);
     remove(filename_log);
     char filename_archive[1024];
-    sprintf(filename_archive, "/scratch/rein/whfast512_tests/archive_%05d.bin", id);
+    sprintf(filename_archive, "/scratch_local/rein/whfast512_tests/archive_1day_%05d.bin", id);
     remove(filename_archive);
         
     reb_simulation_save_to_file(r, filename_archive);

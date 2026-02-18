@@ -6,6 +6,7 @@
 #SBATCH --mem=10M    
 #SBATCH --output=slurm.log
 #
+mkdir -p /scratch_local/rein/whfast512_tests
 echo `date`": starting taskid="$SLURM_ARRAY_TASK_ID "on host" `hostname`
 ./rebound $SLURM_ARRAY_TASK_ID 
 echo `date`": finished taskid="$SLURM_ARRAY_TASK_ID
