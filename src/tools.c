@@ -45,6 +45,15 @@
 #endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+uint32_t reb_hash(const char *str) {
+    // djb2 algorithm
+    uint32_t hash = 5381;
+    int c;
+    while ((c = *str++)) {
+        hash = ((hash << 5) + hash) + (uint32_t)c;
+    }
+    return hash;
+}
 
 unsigned int reb_tools_get_rand_seed(){
     struct reb_timeval tim;

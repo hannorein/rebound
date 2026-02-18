@@ -971,13 +971,23 @@ class Particle(Structure):
         """
         Get or set the particle's name.
         """
-        return self._name.value.decode()
+        if self._name:
+            return self._name.decode()
+        else:
+            return None
     @name.setter
     def name(self, value):
         string_types = str,
         int_types = int,
         if isinstance(value, str):
-            self._name = value.encode("utf-8")
+            if self._sim:
+                # Memory owned by Simulation.
+                s = value.encode("utf-8")
+                clibrebound.reb_particle_set_name(byref(self), s)
+            else:
+                # Memory owned by Particle. 
+                self._name_buf = value.encode("utf-8")
+                self._name = self._name_buf
         elif value is None:
             self._name = None
         else:

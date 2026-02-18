@@ -37,10 +37,10 @@ def quote(text):
     return "'{}'".format(text)
 
 
-def api_request(particle, datestart, dateend, plane):
+def api_request(name, datestart, dateend, plane):
     get_params = {
         "format": "text",
-        "COMMAND": quote(particle),
+        "COMMAND": quote(name),
         "START_TIME": quote(str(datestart)),
         "STOP_TIME": quote(str(dateend)),
         "MAKE_EPHEM": quote("YES"),
@@ -78,7 +78,7 @@ def api_request(particle, datestart, dateend, plane):
     return body
 
 
-def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
+def query_horizons_for_particle(name, mass_unit=None, m=None, x=None, y=None, z=None, vx=None, vy=None, vz=None, primary=None, a=None,
                 anom=None, e=None, omega=None, inc=None, Omega=None, MEAN=None, date=None, plane="ecliptic"):
     if plane not in ["ecliptic", "frame"]:
         raise AttributeError(
@@ -116,9 +116,9 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
         date_f = float(re.sub("[^0-9\\.]","",date))
         dateend = "JD%.8f"%(date_f+0.1)
 
-    print("Searching NASA Horizons for '{}'... ".format(particle))
+    print("Searching NASA Horizons for '{}'... ".format(name))
     idn = None
-    body = api_request(particle, datestart, dateend, plane)
+    body = api_request(name, datestart, dateend, plane)
     made_choice = False
     if "Multiple major-bodies match string" in body:
         try:
@@ -155,13 +155,13 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
     if match:
         bodyname = match.group(1).strip()
         idn = match.group(2)
-        print("Found: {} ({})".format(bodyname, idn), "(chosen from query '{}')".format(particle) if made_choice else "")
+        print("Found: {} ({})".format(bodyname, idn), "(chosen from query '{}')".format(name) if made_choice else "")
     else:
         # fall back to more general regex
         match = re.search(r"Target body name: (.+) {", body)
         if match:
             bodyname = match.group(1).strip()
-            print("Found: {}".format(bodyname), "(chosen from query '{}')".format(particle) if made_choice else "")
+            print("Found: {}".format(bodyname), "(chosen from query '{}')".format(name) if made_choice else "")
         else:
             print("Found body (Name could not be detected)")
     if m is not None:
@@ -183,7 +183,10 @@ def query_horizons_for_particle(mass_unit=None, particle=None, m=None, x=None, y
     else:
         warnings.warn("Warning: Mass cannot be retrieved from NASA HORIZONS. Set to 0.", RuntimeWarning)
         p.m = 0
-    p.name = name
+    if bodyname:
+        p.name = bodyname
+    else:
+        p.name = name
     return p
 
 

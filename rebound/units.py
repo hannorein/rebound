@@ -5,16 +5,9 @@ from ctypes import c_char_p, c_uint32
 
 def hash_to_unit(hash):
     clibrebound.reb_hash.restype = c_uint32
-    for u in times_SI.keys():
-        uhash = clibrebound.reb_hash(c_char_p(u.encode("ascii")))
-        if uhash == hash:
-            return u
-    for u in masses_SI.keys():
-        uhash = clibrebound.reb_hash(c_char_p(u.encode("ascii")))
-        if uhash == hash:
-            return u
-    for u in lengths_SI.keys():
-        uhash = clibrebound.reb_hash(c_char_p(u.encode("ascii")))
+    for u in times_SI.keys()|masses_SI.keys()|lengths_SI.keys():
+        buf = c_char_p(u.encode("ascii"))
+        uhash = clibrebound.reb_hash(buf)
         if uhash == hash:
             return u
     return None

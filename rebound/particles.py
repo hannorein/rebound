@@ -53,7 +53,7 @@ class Particles(MutableMapping):
                 p = Particle
                 return p.from_address(addressof(ptr.contents))
             else:
-                raise ParticleNotFound("Particle was not found in the simulation.") 
+                raise ParticleNotFound("Particle with name \"{0}\" was not found in the simulation.".format(key)) 
         raise AttributeError("Unable to get particles with key {0}.".format(key))
 
     def __setitem__(self, key, value):

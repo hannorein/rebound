@@ -942,7 +942,7 @@ class Simulation(Structure):
                         if hasattr(self, 'default_plane'):
                             kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
                     mass_unit = hash_to_unit(self.python_unit_m) # For manually provided masses
-                    self.add(horizons.query_horizons_for_particle(mass_unit, particle, **kwargs))
+                    self.add(horizons.query_horizons_for_particle(particle, mass_unit, **kwargs))
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
