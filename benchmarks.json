@@ -20,6 +20,36 @@
         }
     },
     {
+        "name": "WHFast512 Jacobi (Fast RSQRT Only)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 0,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 1
+        }
+    },
+    {
+        "name": "WHFast512 Jacobi (RegBlock Only)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 7,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "WHFast512 Jacobi (Combined)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 7,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 1
+        }
+    },
+    {
         "name": "Cache Stumpff: threshold=1e-10",
         "args": {
             "whfast512": 1,

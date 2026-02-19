@@ -417,6 +417,7 @@ struct reb_integrator_whfast512 {
         REB_WHFAST512_OPT_FAST_RSQRT = 4,          // Fast rsqrt for gravity
         REB_WHFAST512_OPT_COMBINED = 5,            // Momentum + Fast rsqrt combined
         REB_WHFAST512_OPT_STUMPFF_CACHE = 6,       // Approximate Stumpff cache with threshold
+        REB_WHFAST512_OPT_JACOBI_REGBLOCK = 7,     // Jacobi with register blocking
     } optimization_method;                         
     
     // Hyperparameters
