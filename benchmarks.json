@@ -169,5 +169,25 @@
             "momentum-coeff": 0.0,
             "fast-rsqrt": 1
         }
+    },
+    {
+        "name": "Best Kepler (beta=2.1) + Fast RSQRT",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 2.1,
+            "fast-rsqrt": 1
+        }
+    },
+    {
+        "name": "Best Kepler (beta=1.9) + Fast RSQRT",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 3,
+            "momentum-coeff": 1.9,
+            "fast-rsqrt": 1
+        }
     }
 ]

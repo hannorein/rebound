@@ -127,6 +127,53 @@ static inline void mat8_mul3_avx512(const double* matrix, const __m512d in1, con
         *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
     }
 }
+
+// Lower-triangular 8x8 matrix multiply (column-major matrix where col j has nonzero rows j..7).
+// For Jacobi-to-heliocentric transform where the matrix is lower triangular.
+// This skips the zero upper-triangular entries, saving ~half the FMA work.
+static inline void mat8_mul3_avx512_lower_tri(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
+    // Column 0 is full (rows 0-7)
+    __m512d col_i = _mm512_load_pd(matrix);
+    __m512d vin1 = _mm512_set1_pd(in1[0]);
+    *out1 = _mm512_mul_pd(vin1, col_i);
+    __m512d vin2 = _mm512_set1_pd(in2[0]);
+    *out2 = _mm512_mul_pd(vin2, col_i);
+    __m512d vin3 = _mm512_set1_pd(in3[0]);
+    *out3 = _mm512_mul_pd(vin3, col_i);
+    // Columns 1-7: only rows i..7 are nonzero, but we load full column (zeros above diagonal)
+    // The zeros contribute nothing to FMA, but we still avoid loading/broadcasting when input is zero-weighted.
+    // For columns where the matrix entry pattern is lower-tri, the FMA with zero cols has no effect.
+    for (int i = 1; i < 8; i++) {
+        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
+        __m512d vin1 = _mm512_set1_pd(in1[i]);
+        *out1 = _mm512_fmadd_pd(vin1, col_i, *out1);
+        __m512d vin2 = _mm512_set1_pd(in2[i]);
+        *out2 = _mm512_fmadd_pd(vin2, col_i, *out2);
+        __m512d vin3 = _mm512_set1_pd(in3[i]);
+        *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
+    }
+}
+
+// Upper-triangular 8x8 matrix multiply (column-major matrix where col j has nonzero rows 0..j).
+// For inertial-to-Jacobi transform where the matrix is upper triangular.
+static inline void mat8_mul3_avx512_upper_tri(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3) {
+    __m512d col_i = _mm512_load_pd(matrix);
+    __m512d vin1 = _mm512_set1_pd(in1[0]);
+    *out1 = _mm512_mul_pd(vin1, col_i);
+    __m512d vin2 = _mm512_set1_pd(in2[0]);
+    *out2 = _mm512_mul_pd(vin2, col_i);
+    __m512d vin3 = _mm512_set1_pd(in3[0]);
+    *out3 = _mm512_mul_pd(vin3, col_i);
+    for (int i = 1; i < 8; i++) {
+        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
+        __m512d vin1 = _mm512_set1_pd(in1[i]);
+        *out1 = _mm512_fmadd_pd(vin1, col_i, *out1);
+        __m512d vin2 = _mm512_set1_pd(in2[i]);
+        *out2 = _mm512_fmadd_pd(vin2, col_i, *out2);
+        __m512d vin3 = _mm512_set1_pd(in3[i]);
+        *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
+    }
+}
    
 // Hepler function to load particle data into avx512 registers
 static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N){
@@ -662,7 +709,7 @@ static __m512d inline gravity_prefactor_one_select( __m512d dx, __m512d dy, __m5
     if (use_fast_rsqrt) {
         return gravity_prefactor_avx512_one_fast(dx, dy, dz);
     }
-    return gravity_prefactor_one_select(dx, dy, dz);
+    return gravity_prefactor_avx512_one(dx, dy, dz);
 }
 
 static void inline reb_whfast512_kepler_step_opt1(const struct reb_simulation* const r){
