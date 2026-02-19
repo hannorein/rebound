@@ -1,0 +1,23 @@
+configuration,time_s,speedup,position_error,energy_error,profile_mode,timestamp
+WHFast (scalar),11.648404,0.1619,0.000000e+00,6.573279e-10,no_profile,2026-02-19 15:10:28
+WHFast512 Jacobi (Baseline),1.885897,1.0000,2.900910e-05,6.607087e-10,no_profile,2026-02-19 15:10:28
+WHFast512 Jacobi (Fast RSQRT Only),1.919337,0.9826,2.662890e-05,6.609429e-10,no_profile,2026-02-19 15:10:28
+WHFast512 Jacobi (RegBlock Only),1.868693,1.0092,2.900910e-05,6.607087e-10,no_profile,2026-02-19 15:10:28
+WHFast512 Jacobi (Combined),1.923354,0.9805,2.662890e-05,6.609429e-10,no_profile,2026-02-19 15:10:28
+Cache Stumpff: threshold=1e-10,1.834447,1.0280,nan,nan,no_profile,2026-02-19 15:10:28
+WHFast512 DHC,1.824405,1.0337,2.539597e-01,2.560716e-08,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton for 1/gradient,1.966570,0.9590,2.880580e-05,6.600726e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with prior guess,1.812333,1.0406,2.779027e-05,6.609506e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=2.0),1.810298,1.0418,2.800145e-05,6.616861e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=1.5),1.811985,1.0408,2.505478e-05,6.609602e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=1.7),1.809716,1.0421,2.514072e-05,6.607139e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=1.8),1.812221,1.0407,2.206318e-05,6.602510e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=1.9),1.815206,1.0389,2.274855e-05,6.604281e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=2.1),1.811684,1.0410,2.668819e-05,6.603127e-10,no_profile,2026-02-19 15:10:28
+Kepler Solver: Newton start with momentum (beta=2.2),1.812851,1.0403,2.467140e-05,6.604704e-10,no_profile,2026-02-19 15:10:28
+Gravity: Newton for 1/r^3,1.931823,0.9762,2.662890e-05,6.609429e-10,no_profile,2026-02-19 15:10:28
+Best Kepler (beta=2.1) + Fast RSQRT,1.829108,1.0310,2.961162e-05,6.612183e-10,no_profile,2026-02-19 15:10:28
+Best Kepler (beta=1.9) + Fast RSQRT,1.828055,1.0316,2.407835e-05,6.611019e-10,no_profile,2026-02-19 15:10:28
+Fused Stellar-Jacobi (Baseline Kepler),1.864871,1.0113,2.900910e-05,6.607087e-10,no_profile,2026-02-19 15:10:28
+Fused + Momentum Kepler (beta=2.1),1.750748,1.0772,2.668819e-05,6.603127e-10,no_profile,2026-02-19 15:10:28
+Fused + Momentum + Fast RSQRT,1.742217,1.0825,2.961162e-05,6.612183e-10,no_profile,2026-02-19 15:10:28

@@ -189,5 +189,35 @@
             "momentum-coeff": 1.9,
             "fast-rsqrt": 1
         }
+    },
+    {
+        "name": "Fused Stellar-Jacobi (Baseline Kepler)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 8,
+            "momentum-coeff": 0.0,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Fused + Momentum Kepler (beta=2.1)",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 8,
+            "momentum-coeff": 2.1,
+            "fast-rsqrt": 0
+        }
+    },
+    {
+        "name": "Fused + Momentum + Fast RSQRT",
+        "args": {
+            "whfast512": 1,
+            "coords": 0,
+            "opt-method": 8,
+            "momentum-coeff": 2.1,
+            "fast-rsqrt": 1
+        }
     }
 ]
