@@ -1176,8 +1176,14 @@ static void inline reb_whfast512_kepler_step_select(struct reb_simulation* const
             break;
         case REB_WHFAST512_OPT_NONE:
         case REB_WHFAST512_OPT_FAST_RSQRT:  // fast rsqrt only affects gravity, not kepler
+        case REB_WHFAST512_OPT_JACOBI_REGBLOCK:
+        case REB_WHFAST512_OPT_JACOBI_FUSED:
         default:
-            reb_whfast512_kepler_step(r);
+            if (r->ri_whfast512.momentum_coeff > 0.0) {
+                reb_whfast512_kepler_step_opt3(r);
+            } else {
+                reb_whfast512_kepler_step(r);
+            }
             break;
     }
 }
@@ -1778,6 +1784,193 @@ static void reb_whfast512_interaction_step_8planets_jacobi_regblock(const struct
     gettimeofday(&time_jac_corr_end,NULL);
     walltime_jac_correction += time_jac_corr_end.tv_sec-time_jac_corr_start.tv_sec+(time_jac_corr_end.tv_usec-time_jac_corr_start.tv_usec)/1e6;
 #endif 
+
+#ifdef PROF
+    struct reb_timeval time_end;
+    gettimeofday(&time_end,NULL);
+    walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+#endif
+}
+
+static void reb_whfast512_interaction_step_8planets_jacobi_fused(const struct reb_simulation * const r){
+#ifdef PROF
+    struct reb_timeval time_beginning;
+    gettimeofday(&time_beginning,NULL);
+#endif
+    const struct reb_integrator_whfast512* restrict const ri_whfast512 = &(r->ri_whfast512);
+    struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
+    __m512d dt512 = _mm512_set1_pd(r->dt); 
+
+    __m512d jac_corr_prefact = gravity_prefactor_one_select(p512->x, p512->y, p512->z);
+    __m512d jac_corr_full = _mm512_mul_pd(jac_corr_prefact, p512->M); // M = m0, m0+m1, ...
+    jac_corr_full = _mm512_mul_pd(jac_corr_full, dt512);
+
+    mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
+            p512->x, p512->y, p512->z,
+            &p512->hx, &p512->hy, &p512->hz);
+
+    __m512d x_j =  p512->hx;
+    __m512d y_j =  p512->hy;
+    __m512d z_j =  p512->hz;
+
+    if (ri_whfast512->gr_potential){
+        __m512d r2 = _mm512_mul_pd(x_j, x_j);
+        r2 = _mm512_fmadd_pd(y_j, y_j, r2);
+        r2 = _mm512_fmadd_pd(z_j, z_j, r2);
+        const __m512d r4 = _mm512_mul_pd(r2, r2);
+        __m512d prefac = _mm512_div_pd(p512->gr_prefac,r4);
+        __m512d dvx = _mm512_mul_pd(prefac, x_j); 
+        __m512d dvy = _mm512_mul_pd(prefac, y_j); 
+        __m512d dvz = _mm512_mul_pd(prefac, z_j); 
+        p512->hvx  = dvx;
+        p512->hvy  = dvy;
+        p512->hvz  = dvz;
+
+        dvx = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvx); 
+        dvy = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvy); 
+        dvz = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvz); 
+
+        double sum_x = _mm512_reduce_add_pd(dvx);
+        double sum_y = _mm512_reduce_add_pd(dvy);
+        double sum_z = _mm512_reduce_add_pd(dvz);
+        p512->hvx = _mm512_maskz_sub_pd(p512->mask, p512->hvx, _mm512_set1_pd(sum_x));
+        p512->hvy = _mm512_maskz_sub_pd(p512->mask, p512->hvy, _mm512_set1_pd(sum_y));
+        p512->hvz = _mm512_maskz_sub_pd(p512->mask, p512->hvz, _mm512_set1_pd(sum_z));
+    
+        const __m512d r1 = _mm512_sqrt_pd(r2);
+        const __m512d r3 = _mm512_mul_pd(r1, r2);
+        __m512d prefact = _mm512_div_pd(_mm512_set1_pd(r->dt*r->particles[0].m),r3);
+        p512->hvx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, x_j, p512->hvx); 
+        p512->hvy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, y_j, p512->hvy); 
+        p512->hvz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, z_j, p512->hvz); 
+    }else{
+        __m512d prefact = gravity_prefactor_one_select(x_j, y_j, z_j);
+        __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m));
+        prefact1 = _mm512_mul_pd(prefact1, dt512);
+        p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, x_j); 
+        p512->hvy = _mm512_maskz_mul_pd(p512->mask, prefact1, y_j); 
+        p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, z_j); 
+    }
+
+    __m512d m_j = _mm512_mul_pd(p512->m, dt512);
+    __m512d m_j_01234567 = m_j;
+
+    {
+        x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
+        y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
+        z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
+        m_j = _mm512_permutex_pd(m_j, _MM_PERM_BACD);
+        __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
+        __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
+        __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
+
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j, p512->hvx); 
+        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j, p512->hvy); 
+        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j, p512->hvz); 
+
+        dx_j    = _mm512_permutex_pd(dx_j,    _MM_PERM_ABDC);
+        dy_j    = _mm512_permutex_pd(dy_j,    _MM_PERM_ABDC);
+        dz_j    = _mm512_permutex_pd(dz_j,    _MM_PERM_ABDC);
+        prefact = _mm512_permutex_pd(prefact, _MM_PERM_ABDC);
+        m_j     = _mm512_permute_pd(m_j,      0x55);
+
+        __m512d prefact2 = _mm512_mul_pd(prefact, m_j);
+        p512->hvx = _mm512_fmadd_pd(prefact2, dx_j, p512->hvx); 
+        p512->hvy = _mm512_fmadd_pd(prefact2, dy_j, p512->hvy); 
+        p512->hvz = _mm512_fmadd_pd(prefact2, dz_j, p512->hvz); 
+    }
+    {
+        x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD);
+        y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
+        z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
+        m_j = _mm512_permutex_pd(m_j, _MM_PERM_ABDC); 
+
+        const __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
+        const __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
+        const __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
+
+        const __m512d prefact = gravity_prefactor_select(m_j, dx_j, dy_j, dz_j);
+        p512->hvx = _mm512_fnmadd_pd(prefact, dx_j, p512->hvx); 
+        p512->hvy = _mm512_fnmadd_pd(prefact, dy_j, p512->hvy); 
+        p512->hvz = _mm512_fnmadd_pd(prefact, dz_j, p512->hvz); 
+    }
+
+    __m512d dvx;
+    __m512d dvy;
+    __m512d dvz;
+
+    {
+        x_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j);
+        y_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
+        z_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
+        m_j = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), m_j);
+
+        __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
+        __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
+        __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
+
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j, p512->hvx); 
+        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j, p512->hvy); 
+        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j, p512->hvz); 
+
+        prefact = _mm512_mul_pd(prefact, m_j_01234567);
+        dvx = _mm512_mul_pd(prefact, dx_j); 
+        dvy = _mm512_mul_pd(prefact, dy_j); 
+        dvz = _mm512_mul_pd(prefact, dz_j); 
+    }
+    {
+        x_j = _mm512_permutex_pd(x_j, _MM_PERM_ADCB);
+        y_j = _mm512_permutex_pd(y_j, _MM_PERM_ADCB);
+        z_j = _mm512_permutex_pd(z_j, _MM_PERM_ADCB);
+        m_j = _mm512_permutex_pd(m_j, _MM_PERM_ADCB);
+
+        __m512d dx_j = _mm512_sub_pd(p512->hx, x_j);
+        __m512d dy_j = _mm512_sub_pd(p512->hy, y_j);
+        __m512d dz_j = _mm512_sub_pd(p512->hz, z_j);
+        __m512d prefact = gravity_prefactor_one_select(dx_j, dy_j, dz_j);
+
+        __m512d prefact1 = _mm512_mul_pd(prefact, m_j);
+        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j, p512->hvx); 
+        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j, p512->hvy); 
+        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j, p512->hvz); 
+
+        dx_j = _mm512_permutex_pd(dx_j, _MM_PERM_CBAD);
+        dy_j = _mm512_permutex_pd(dy_j, _MM_PERM_CBAD);
+        dz_j = _mm512_permutex_pd(dz_j, _MM_PERM_CBAD);
+        prefact = _mm512_permutex_pd(prefact, _MM_PERM_CBAD);
+        m_j_01234567 = _mm512_permutex_pd(m_j_01234567, _MM_PERM_CBAD);
+
+        prefact = _mm512_mul_pd(prefact, m_j_01234567);
+        dvx = _mm512_fmadd_pd(prefact, dx_j, dvx); 
+        dvy = _mm512_fmadd_pd(prefact, dy_j, dvy); 
+        dvz = _mm512_fmadd_pd(prefact, dz_j, dvz); 
+    }
+
+    {
+        dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx);
+        dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
+        dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
+
+        p512->hvx = _mm512_maskz_add_pd(p512->mask, dvx, p512->hvx); 
+        p512->hvy = _mm512_maskz_add_pd(p512->mask, dvy, p512->hvy); 
+        p512->hvz = _mm512_maskz_add_pd(p512->mask, dvz, p512->hvz); 
+    }
+    
+    mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
+            p512->hvx, p512->hvy, p512->hvz,
+            &dvx, &dvy, &dvz);
+
+    p512->vx = _mm512_add_pd(dvx, p512->vx); 
+    p512->vy = _mm512_add_pd(dvy, p512->vy); 
+    p512->vz = _mm512_add_pd(dvz, p512->vz); 
+    
+    p512->vx = _mm512_maskz_fmadd_pd(p512->mask, jac_corr_full, p512->x, p512->vx); 
+    p512->vy = _mm512_maskz_fmadd_pd(p512->mask, jac_corr_full, p512->y, p512->vy); 
+    p512->vz = _mm512_maskz_fmadd_pd(p512->mask, jac_corr_full, p512->z, p512->vz); 
 
 #ifdef PROF
     struct reb_timeval time_end;
@@ -2897,6 +3090,11 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
                 for (unsigned int i=0;i<N_steps;i++){
                     reb_whfast512_kepler_step_select(r);    // full timestep
                     reb_whfast512_interaction_step_8planets_jacobi_regblock(r);
+                }
+            } else if (ri_whfast512->optimization_method == REB_WHFAST512_OPT_JACOBI_FUSED) {
+                for (unsigned int i=0;i<N_steps;i++){
+                    reb_whfast512_kepler_step_select(r);    // full timestep
+                    reb_whfast512_interaction_step_8planets_jacobi_fused(r);
                 }
             } else {
                 for (unsigned int i=0;i<N_steps;i++){
