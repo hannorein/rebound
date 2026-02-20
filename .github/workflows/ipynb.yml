@@ -40,7 +40,6 @@ jobs:
           python ipynb2py.py VariationalEquations.ipynb
           python ipynb2py.py VariationalEquationsWithChainRule.ipynb
           python ipynb2py.py UniquelyIdentifyingParticlesWithNames.ipynb
-          python ipynb2py.py RemovingParticlesFromSimulation.ipynb
           python ipynb2py.py PoincareMap.ipynb
           python ipynb2py.py OrbitalElements.ipynb
           python ipynb2py.py Testparticles.ipynb
