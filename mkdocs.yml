@@ -149,7 +149,6 @@ nav:
     - "Removing particles":
       - c_examples/removing_particles_from_simulation.md
       - ipython_examples/EscapingParticles.ipynb
-      - ipython_examples/RemovingParticlesFromSimulation.ipynb
     - "Other examples":
       - c_examples/selfgravity_plummer.md
       - c_examples/uniquely_identifying_particles_with_hashes.md
