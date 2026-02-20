@@ -376,13 +376,10 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
 #endif // MPI
 }
 
-void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, char** name, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
+void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
-        if (name){
-            name[i] = particles[i].name;
-        }
         if (m){
             m[i] = particles[i].m;
         }
@@ -410,13 +407,10 @@ void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, char*
     }
 }
 
-void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, char** name, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
+void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const int N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
     for (int i=0;i<N_real;i++){
-        if (name){
-            particles[i].name = name[i];
-        }
         if (m){
             particles[i].m = m[i];
         }

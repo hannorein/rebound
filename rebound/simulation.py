@@ -1085,10 +1085,9 @@ class Simulation(Structure):
         It expects correctly sized numpy arrays as arguments. The argument
         name indicates what kind of particle data is written to the array. 
         
-        Possible argument names are "hash", "m", "r", "xyz", "vxvyvz", and 
-        "xyzvxvyvz". The datatype for the "hash" array needs to be uint32. 
-        The other arrays expect a datatype of float64. The lengths of 
-        "hash", "m", "r" arrays need to be at least sim.N. The lengths of 
+        Possible argument names are "m", "r", "xyz", "vxvyvz", and 
+        "xyzvxvyvz". The datatype for arrays needs to be float64. The i
+        lengths of "m", "r" arrays need to be at least sim.N. The lengths of 
         xyz and vxvyvz need to be at least 3*sim.N. The length of
         "xyzvxvyvz" arrays need to be 6*sim.N. Exceptions are raised 
         otherwise.
@@ -1114,41 +1113,27 @@ class Simulation(Structure):
         >>> sim.serialize_particle_data(r=a)
         >>> print(a)
         
-        To get all current radii and hashes of particles:
-
-        >>> a = np.zeros(sim.N,dtype="float64")
-        >>> b = np.zeros(sim.N,dtype="uint32")
-        >>> sim.serialize_particle_data(r=a,hash=b)
-        >>> print(a,b)
-
         """
         N = self.N
-        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
+        possible_keys = ["m","r","xyz","vxvyvz","xyzvxvyvz"]
         d = {x:None for x in possible_keys}
         for k,v in kwargs.items():
             if k in d:
-                if k == "hash":
-                    if v.dtype!= "uint32":
-                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
-                    if v.size<N:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_uint32))
+                if v.dtype!= "float64":
+                    raise AttributeError("Expected 'float64' data type for %s array."%k)
+                if k in ["xyz", "vxvyvz"]:
+                    minsize = 3*N
+                elif k in ["xyzvxvyvz"]:
+                    minsize = 6*N
                 else:
-                    if v.dtype!= "float64":
-                        raise AttributeError("Expected 'float64' data type for %s array."%k)
-                    if k in ["xyz", "vxvyvz"]:
-                        minsize = 3*N
-                    elif k in ["xyzvxvyvz"]:
-                        minsize = 6*N
-                    else:
-                        minsize = N
-                    if v.size<minsize:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_double))
+                    minsize = N
+                if v.size<minsize:
+                    raise AttributeError("Array '%s' is not large enough."%k)
+                d[k] = v.ctypes.data_as(POINTER(c_double))
             else:
                 raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
 
-        clibrebound.reb_simulation_get_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+        clibrebound.reb_simulation_get_serialized_particle_data(byref(self), d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
     
     def set_serialized_particle_data(self,**kwargs):
         """
@@ -1158,32 +1143,25 @@ class Simulation(Structure):
         """
 
         N = self.N
-        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
+        possible_keys = ["m","r","xyz","vxvyvz","xyzvxvyvz"]
         d = {x:None for x in possible_keys}
         for k,v in kwargs.items():
             if k in d:
-                if k == "hash":
-                    if v.dtype!= "uint32":
-                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
-                    if v.size<N:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_uint32))
+                if v.dtype!= "float64":
+                    raise AttributeError("Expected 'float64' data type for %s array."%k)
+                if k in ["xyz", "vxvyvz"]:
+                    minsize = 3*N
+                elif k in ["xyzvxvyvz"]:
+                    minsize = 6*N
                 else:
-                    if v.dtype!= "float64":
-                        raise AttributeError("Expected 'float64' data type for %s array."%k)
-                    if k in ["xyz", "vxvyvz"]:
-                        minsize = 3*N
-                    elif k in ["xyzvxvyvz"]:
-                        minsize = 6*N
-                    else:
-                        minsize = N
-                    if v.size<minsize:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_double))
+                    minsize = N
+                if v.size<minsize:
+                    raise AttributeError("Array '%s' is not large enough."%k)
+                d[k] = v.ctypes.data_as(POINTER(c_double))
             else:
                 raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
 
-        clibrebound.reb_simulation_set_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+        clibrebound.reb_simulation_set_serialized_particle_data(byref(self), d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
 
     def move_to_hel(self):
         """
