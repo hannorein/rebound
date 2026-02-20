@@ -501,6 +501,7 @@ enum REB_STATUS {
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
+#define REB_NAME_HASH_TABLE_SIZE 1024
 DLLEXPORT uint32_t reb_hash(const char* c);
 DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
 DLLEXPORT const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
@@ -510,6 +511,12 @@ DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulatio
 DLLEXPORT struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simulation* const r, int id);
 #endif // MPI
 DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
+
+// Open Hashing
+struct reb_name_hash_item {
+    int index;
+    struct reb_name_hash_item* next;
+};
 
 // Main REBOUND Simulation structure
 // Note: only variables that should be accessed by users are documented here.
@@ -529,7 +536,8 @@ struct reb_simulation {
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
     char**  name_list;
-    unsigned int N_name_list;            // Number of entries in reb_name_list.
+    unsigned int N_name_list;       // Number of entries in reb_name_list.
+    struct reb_name_hash_item*    name_hash_table;        // Internal use only. Speeds up name search.
     unsigned int   N_allocated;     // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
     struct reb_vec3d* gravity_cs; 

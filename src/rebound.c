@@ -331,6 +331,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
         free(r->name_list[i]);
     }
     free(r->name_list);
+    free(r->name_hash_table);
     if (r->messages){
         for (int i=0;i<reb_N_max_messages;i++){
             free(r->messages[i]);
@@ -473,6 +474,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_active     = -1;   
     r->var_rescale_warning   = 0;   
     r->name_list = NULL;
+    r->name_hash_table = NULL;
     r->N_name_list = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;

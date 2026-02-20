@@ -80,7 +80,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
     (r->N)++;
     // Particle was added successfully. Do other work now.
     if (pt.name){
-        r->particles[r->N-1].name = reb_simulation_register_name(r,pt.name);
+        reb_particle_set_name(&r->particles[r->N-1], pt.name);
     }
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
@@ -312,6 +312,7 @@ const char* reb_simulation_get_registered_name(struct reb_simulation* r, const c
     return NULL; // Not found
 #endif // MPI
 }
+
 const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name){
     const char* registered_name = reb_simulation_get_registered_name(r,name);
     if (registered_name) return registered_name;
@@ -321,11 +322,61 @@ const char* reb_simulation_register_name(struct reb_simulation* r, const char* c
     r->name_list[r->N_name_list-1] = (char*)registered_name;
     return registered_name;
 }
+
+static void add_to_name_hash_table(struct reb_simulation* r, int index, const char* name){
+    uint32_t hash = reb_hash(name)%REB_NAME_HASH_TABLE_SIZE;
+    if (!r->name_hash_table){
+        r->name_hash_table = calloc(REB_NAME_HASH_TABLE_SIZE,sizeof(struct reb_name_hash_item));
+    }
+    // Check for collision
+    struct reb_name_hash_item* item = &r->name_hash_table[hash];
+    if (!item->index){ //empty bucket
+        item->index = index + 1;
+    }else{
+        // Find end of linked list
+        while (item->next){
+            item = item->next;
+        }
+        item->next = calloc(1, sizeof(struct reb_name_hash_item));
+        item->next->index = index +1;
+    }
+}
+
 struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name){
+    // Try hash table lookup first
+    if (r->name_hash_table){
+        int table_needs_repair = 0;
+        uint32_t hash = reb_hash(name)%REB_NAME_HASH_TABLE_SIZE;
+        struct reb_name_hash_item* item = &r->name_hash_table[hash];
+        if (item->index>0){ // Entry exists
+            do {            // Loop over linked list
+                if (item->index > r->N){
+                    table_needs_repair = 1; // Out of bounds. Particle got removed?
+                }else{
+                    struct reb_particle* p = &r->particles[item->index-1];
+                    const char* p_name = p->name;
+                    if (p_name){
+                        if (strcmp(p_name,name)==0){
+                            return p;
+                        }
+                    }else{
+                        table_needs_repair = 1; // Expected a name.
+                    }
+                }
+                item = item->next;
+            } while(item);
+        }
+        if (table_needs_repair){
+            reb_simulation_warning(r, "Name hash table needs repairs.");
+        }
+    }
+    // If not found loop over all particles
     for (int i=0; i<r->N; i++){
         const char* p_name = r->particles[i].name;
         if (p_name){
             if (strcmp(p_name,name)==0){
+                // Update hash table
+                add_to_name_hash_table(r, i, name);
                 return &(r->particles[i]);
             }
         }
@@ -380,6 +431,7 @@ int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char*
     return !reb_simulation_remove_particle(r, index, keep_sorted); // TODO: return value is different between the two functions. 
 }
 
+
 void reb_particle_set_name(struct reb_particle* p, const char* const name){
     if (name==NULL){
         // Delete name.
@@ -392,6 +444,9 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
         return;
     }
     p->name = reb_simulation_register_name(r,name);
+    
+    uint32_t index = p - r->particles;
+    add_to_name_hash_table(r, index, name);
 }
 
 

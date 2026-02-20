@@ -1472,6 +1472,7 @@ Simulation._fields_ = [
                 ("testparticle_hidewarnings", c_int),
                 ("_name_list", POINTER(c_char_p)),
                 ("_N_name_list", c_uint),
+                ("_name_hash_table", c_void_p),
                 ("N_allocated", c_uint),
                 ("_particles", POINTER(Particle)),
                 ("gravity_cs", POINTER(Vec3dBasic)),
