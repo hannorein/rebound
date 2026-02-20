@@ -151,7 +151,7 @@ nav:
       - ipython_examples/EscapingParticles.ipynb
     - "Other examples":
       - c_examples/selfgravity_plummer.md
-      - c_examples/uniquely_identifying_particles_with_hashes.md
+      - c_examples/uniquely_identifying_particles_with_names.md
       - c_examples/openmp.md
       - c_examples/profiling.md
       - c_examples/star_of_david.md
