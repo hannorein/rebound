@@ -98,6 +98,30 @@ struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_s
     return r; // might be null if error occurred
 }
 
+struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot){
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    struct reb_simulation* r = reb_simulation_create();
+
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+    reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
+    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+        // Don't output an error if file does not exist, just return NULL.
+        free(sa);
+        return NULL;
+    }else{
+        reb_binarydata_process_warnings(NULL, warnings);
+    }
+    reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
+    if (sa){
+        reb_simulationarchive_free(sa);
+    }
+    r = reb_binarydata_process_warnings(r, warnings);
+    return r;
+}
+
+
+
+
 // Old 16 bit offsets. Used only to read old files.
 struct reb_simulationarchive_blob16 {
     int32_t index;
@@ -105,7 +129,7 @@ struct reb_simulationarchive_blob16 {
     int16_t offset_next;
 };
 
-void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
+static void read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
     // Assumes sa->inf is set to an open stream
     const int debug = 0;
     if (sa->inf==NULL){
@@ -367,14 +391,14 @@ void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationa
 #endif // MPI
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
-    reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
+    read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
 }
 
 void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
     // Somewhat complicated calls for backwards compatibility.
     sa->inf = reb_fmemopen(buf,size,"rb");
     sa->filename = NULL;
-    reb_read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
+    read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename){
@@ -599,7 +623,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
     }
 }
 
-static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* const r, const char* filename){
+static int check_and_set_simulationarchive_filename(struct reb_simulation* const r, const char* filename){
     if (r==NULL) return -1;
     if (filename==NULL){
         reb_simulation_error(r, "Filename missing.");
@@ -623,7 +647,7 @@ static int _reb_simulationarchive_automate_set_filename(struct reb_simulation* c
 }
 
 void reb_simulation_save_to_file_interval(struct reb_simulation* const r, const char* filename, double interval){
-    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    if(check_and_set_simulationarchive_filename(r,filename)<0) return;
     if(r->simulationarchive_auto_interval != interval){
         // Only update simulationarchive_next if interval changed. 
         // This ensures that interrupted simulations will continue
@@ -634,14 +658,14 @@ void reb_simulation_save_to_file_interval(struct reb_simulation* const r, const 
 }
 
 void reb_simulation_save_to_file_walltime(struct reb_simulation* const r, const char* filename, double walltime){
-    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    if(check_and_set_simulationarchive_filename(r,filename)<0) return;
     // Note that this will create two snapshots if restarted.
     r->simulationarchive_auto_walltime = walltime;
     r->simulationarchive_next = r->walltime;
 }
 
 void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step){
-    if(_reb_simulationarchive_automate_set_filename(r,filename)<0) return;
+    if(check_and_set_simulationarchive_filename(r,filename)<0) return;
     if(r->simulationarchive_auto_step != step){
         // Only update simulationarchive_next if interval changed. 
         // This ensures that interrupted simulations will continue
