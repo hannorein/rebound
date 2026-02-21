@@ -249,7 +249,7 @@ struct reb_integrator_sei {
     double tandtz;      // Cached tan(), z axis
 };
 
-// Leapfrog Integrator
+// Leapfrog Integrator (TU splitting)
 struct reb_integrator_leapfrog {
     unsigned int order;
 };
@@ -1158,7 +1158,7 @@ struct reb_display_settings {
 // Display settings initialization. Overwrites user interactions.
 DLLEXPORT void reb_simulation_add_display_settings(struct reb_simulation* r);
 
-// Matrix/vector methods for single precission operations. Used for graphics only
+// Matrix/vector methods for single precision operations. Used for graphics only
 DLLEXPORT struct reb_mat4df reb_mat4df_identity();
 DLLEXPORT struct reb_mat4df reb_mat4df_scale(struct reb_mat4df m, float x, float y, float z);
 DLLEXPORT void reb_mat4df_print(struct reb_mat4df m);
