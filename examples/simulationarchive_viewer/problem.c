@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "rebound.h"
+#include "simulationarchive.h"
 
 struct reb_simulationarchive* sa;
 void heartbeat(struct reb_simulation* const r);
