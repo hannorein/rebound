@@ -419,7 +419,7 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     reb_simulation_init(r_copy);
 
     FILE* fin = reb_fmemopen(bufp, sizep, "r");
-    reb_input_fields(r_copy, fin, warnings);
+    reb_binarydata_input_fields(r_copy, fin, warnings);
     fclose(fin);
 
     free(bufp);

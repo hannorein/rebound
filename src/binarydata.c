@@ -770,7 +770,7 @@ break;
 break;        
 
 // Read field data into simulation from file or memory buffer.
-void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
+void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
     struct reb_binary_field field;
     // A few fields need special treatment. Find their descriptors first.
     struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");

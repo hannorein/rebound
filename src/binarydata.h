@@ -38,7 +38,7 @@
 int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 
 
-void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings); ///< Read all fields from inf stream into r. 
+void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings); ///< Read all fields from inf stream into r. 
 
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings); ///< Process warning messages and print them on screen.
 

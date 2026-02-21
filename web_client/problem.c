@@ -112,7 +112,7 @@ void request_frame_succeeded(emscripten_fetch_t *fetch) {
 
     FILE* fin = reb_fmemopen((void*)fetch->data, fetch->numBytes, "r");
     enum reb_simulation_binary_error_codes warnings;
-    reb_input_fields(r, fin, &warnings);
+    reb_binarydata_input_fields(r, fin, &warnings);
     fclose(fin);
 
     if (first){
