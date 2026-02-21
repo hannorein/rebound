@@ -40,6 +40,15 @@
 
 struct reb_simulation;
 
+struct reb_orbit_opengl {
+    float x,y,z;
+    float a, e, f;
+    float omega, Omega, inc;
+};
+struct reb_vec4df {
+    float x,y,z,r;
+};
+
 struct reb_display_data {
     struct reb_display_settings s;
     struct reb_simulation* r;

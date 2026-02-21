@@ -45,6 +45,13 @@ struct reb_simulationarchive{
     double* t;                      // Index of simulation times in file (length nblobs)
 };
 
+// Used in the binary file to identify data blobs
+struct reb_simulationarchive_blob {  
+    int32_t index;                   // Index of previous blob (binary file is 0, first blob is 1)
+    int32_t offset_prev;             // Offset to beginning of previous blob (size of previous blob).
+    int32_t offset_next;             // Offset to end of following blob (size of following blob).
+};
+
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.
 void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_simulation_binary_error_codes* warnings); ///< Internal function to read one snapshot from a simulationarchive.
 

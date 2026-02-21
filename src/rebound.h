@@ -108,9 +108,9 @@ struct reb_simulation;          // Implemented below.
 struct reb_simulationarchive;   // Opaque pointer. Implemented in simulationarchive.h
 struct reb_server_data;         // Opaque pointer. Implemented in server.h
 struct reb_treecell;            // Opaque pointer. Implemented in tree.h
-struct reb_variational_configuration;
 struct reb_display_data;        // Opaque pointer. Implemented in display.h
 struct reb_display_settings;    // Implemented below.
+struct reb_variational_configuration;  // Implemented below.
 
 // Particle structure
 struct reb_particle {
@@ -150,12 +150,6 @@ struct reb_vec3d {
     double y;
     double z;
 };
-
-// Generic 4d matrix (single precision)
-struct reb_mat4df {
-    float m[16];
-};
-
 
 // Generic 6d vector
 struct reb_vec6d{
@@ -1135,23 +1129,21 @@ void reb_mpi_finalize(struct reb_simulation* const r);
 DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 #endif // OPENMP
 
-// The following structures are related to OpenGL/WebGL visualization. Nothing to be changed by the user.
 
-struct reb_orbit_opengl {
-    float x,y,z;
-    float a, e, f;
-    float omega, Omega, inc;
-};
+// The following structures are related to OpenGL/WebGL visualization.
 
+// Generic 3d vector
 struct reb_vec3df {
     float x,y,z;
 };
 
-struct reb_vec4df {
-    float x,y,z,r;
+// Generic 4d matrix (single precision)
+struct reb_mat4df {
+    float m[16];
 };
 
 // Structures and functions used for programmatic animations.
+// Current display orientation, settings, etc
 struct reb_display_settings {
     struct reb_mat4df view;
     int spheres;                    // Switches between point sprite and real spheres.
@@ -1168,7 +1160,7 @@ struct reb_display_settings {
 // Display settings initialization. Overwrites user interactions.
 DLLEXPORT void reb_simulation_add_display_settings(struct reb_simulation* r);
 
-// Matrix methods
+// Matrix/vector methods for single precission operations. Used for graphics only
 DLLEXPORT struct reb_mat4df reb_mat4df_identity();
 DLLEXPORT struct reb_mat4df reb_mat4df_scale(struct reb_mat4df m, float x, float y, float z);
 DLLEXPORT void reb_mat4df_print(struct reb_mat4df m);
@@ -1183,12 +1175,6 @@ DLLEXPORT struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t,
 // Declarations and functions needed internally or by python interface only.
 void reb_sigint_handler(int signum);
 
-// Used in the binary file to identify data blobs
-struct reb_simulationarchive_blob {  
-    int32_t index;                   // Index of previous blob (binary file is 0, first blob is 1)
-    int32_t offset_prev;             // Offset to beginning of previous blob (size of previous blob).
-    int32_t offset_next;             // Offset to end of following blob (size of following blob).
-};
 // Binary field descriptors are used to identify data blobs in simulationarchives.
 struct reb_binary_field_descriptor {
     uint32_t type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
