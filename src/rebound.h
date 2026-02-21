@@ -79,7 +79,7 @@ int rand_r (unsigned int *seed);
 #endif
 
 #ifdef MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #ifndef GITHASH
