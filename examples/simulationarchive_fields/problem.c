@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "rebound.h"
+#include "simulationarchive.h"
 
 #define ifprintf(...) if (blob_index==blob_requested || blob_requested == -1) {printf(__VA_ARGS__);}
 #define CASE(DT) {\

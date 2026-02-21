@@ -30,6 +30,7 @@
 #include "tools.h"
 #include "output.h"
 #include "binarydiff.h"
+#include "simulationarchive.h"
 
 
 int reb_particle_diff(struct reb_particle p1, struct reb_particle p2){

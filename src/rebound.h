@@ -1175,38 +1175,6 @@ DLLEXPORT struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t,
 // Declarations and functions needed internally or by python interface only.
 void reb_sigint_handler(int signum);
 
-// Binary field descriptors are used to identify data blobs in simulationarchives.
-struct reb_binary_field_descriptor {
-    uint32_t type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
-    enum {
-        REB_DOUBLE = 0,
-        REB_INT = 1,
-        REB_UINT = 2,                // Same as UINT32
-        REB_UINT32 = 3,
-        REB_INT64 = 4,
-        REB_UINT64 = 5,
-        // REB_ULONGLONG = 6,        // No longer used. Using explicit lengths instead.
-        REB_VEC3D = 7,
-        REB_PARTICLE = 8,
-        REB_POINTER = 9,
-        REB_POINTER_ALIGNED = 10,    // memory aligned to 64 bit boundary for AVX512
-        REB_DP7 = 11,                // Special datatype for IAS15
-        REB_OTHER = 12,              // Fields that need special treatment during input and/or output
-        REB_FIELD_END = 13,          // Special type to indicate end of blob
-        REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
-        REB_PARTICLE4 = 15,          // Used for WHFast512
-        REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
-        REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
-    } dtype;
-    char name[1024];
-    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
-    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
-    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
-};
-DLLEXPORT extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]; // List of blobs. Implemented in output.c
-DLLEXPORT struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
-DLLEXPORT struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
-
 // Possible errors that might occur during binary file reading.
 enum reb_simulation_binary_error_codes {
     REB_SIMULATION_BINARY_WARNING_NONE = 0,
@@ -1223,11 +1191,6 @@ enum reb_simulation_binary_error_codes {
     REB_SIMULATION_BINARY_ERROR_OLD = 1024,
 };
 
-
-struct reb_binary_field { // This structure is used to save and load binary files.
-    uint32_t type;  // type as given by reb_binary_field_descriptor
-    uint64_t size;  // Size in bytes of field (only counting what follows, not the binary field, itself).
-};
 
 DLLEXPORT void reb_simulation_init(struct reb_simulation* r); // Used internally and by python. Should not be called by the user.
 DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r); // Used by REBOUNDx
