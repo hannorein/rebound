@@ -192,7 +192,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
 
 // This is a custom implementation of a dynamic memory buffer stream. 
 // This is used as a replacement for open_memstream which is not portable.
-static void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
+static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
     // Increase size
     int increased = 0;
     while (*allocatedsize==0 || (*sizep)+size>(*allocatedsize)){
@@ -360,7 +360,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 field1.size = 0;     // Output field with size 0
                 are_different = 1.;
                 if (output_option==0){
-                    reb_output_stream_write(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
+                    write_to_stream(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binary_field));
                 }else if (output_option==1 || output_option==3){
                     const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
                     char* buf;
@@ -424,8 +424,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 are_different = 1.;
             }
             if (output_option==0){
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
-                reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
+                write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
             }else if (output_option==1 || output_option==3){
                 const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
                 char* buf;
@@ -525,8 +525,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 
         are_different = 1.;
         if (output_option==0){
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
-            reb_output_stream_write(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+            write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binary_field));
+            write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
         }else if (output_option==1 || output_option==3){
             const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field2.type);
             char* buf;
@@ -570,8 +570,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
     memset(&field,0,sizeof(struct reb_binary_field));\
     field.type = typen;\
     field.size = (length);\
-    reb_output_stream_write(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));\
-    reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
+    write_to_stream(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binary_field));\
+    write_to_stream(bufp, &allocatedsize, sizep, value,field.size);\
 }
 
 // Serializes a simulation to a buffer
@@ -587,7 +587,7 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
     char header[64] = "\0";
     int cwritten = sprintf(header,"REBOUND Binary File. Version: %s",reb_version_str);
     snprintf(header+cwritten+1,64-cwritten-1,"%s",reb_githash_str);
-    reb_output_stream_write(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
+    write_to_stream(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
 
     // Compress data if possible
     // This does not affect future calculation, but might trigger a realloc.
@@ -634,9 +634,9 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
                     field.size = 4*sizeof(struct reb_particle);
                     break;
             }
-            reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+            write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
             char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-            reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+            write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
         }
         // Pointer data types
         if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED ){
@@ -647,10 +647,10 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             field.size = (*pointer_N) * reb_binarydata_field_descriptor_list[i].element_size;
 
             if (field.size){
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
                 pointer = *(char**)pointer;
-                reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+                write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
             }
         }
         // Pointer with a fixed size
@@ -663,8 +663,8 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
             pointer = *(char**)pointer;
             if (pointer){
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
-                reb_output_stream_write(bufp, &allocatedsize, sizep, pointer, field.size);
+                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
             }
         }
         if (dtype == REB_CHARP_LIST ){
@@ -682,10 +682,10 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
 
             if (field.size){
                 // This pointer arithmetic will fail on 32 bit architectures.
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 for (unsigned int i=0; i<N_list; i++){
-                    reb_output_stream_write(bufp, &allocatedsize, sizep, (*list_p)[i], strlen((*list_p)[i])+1);
-                    reb_output_stream_write(bufp, &allocatedsize, sizep, &((*list_p)[i]), sizeof(char*));
+                    write_to_stream(bufp, &allocatedsize, sizep, (*list_p)[i], strlen((*list_p)[i])+1);
+                    write_to_stream(bufp, &allocatedsize, sizep, &((*list_p)[i]), sizeof(char*));
                 }
             }
         }
@@ -698,16 +698,16 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
             field.size = (*pointer_N) * reb_binarydata_field_descriptor_list[i].element_size;
 
             if (field.size){
-                reb_output_stream_write(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
+                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binary_field));
                 char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
                 struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p2,field.size/7);
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p3,field.size/7);
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p4,field.size/7);
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p5,field.size/7);
-                reb_output_stream_write(bufp, &allocatedsize, sizep, dp7->p6,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p2,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p3,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p4,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p5,field.size/7);
+                write_to_stream(bufp, &allocatedsize, sizep, dp7->p6,field.size/7);
             }
         }
         i++;
@@ -730,15 +730,15 @@ void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t
     memset(&field_functionp,0,sizeof(struct reb_binary_field));
     field_functionp.type = 87; // TODO do not hardcode. 
     field_functionp.size = sizeof(int);
-    reb_output_stream_write(bufp, &allocatedsize, sizep, &field_functionp, sizeof(struct reb_binary_field));
-    reb_output_stream_write(bufp, &allocatedsize, sizep, &functionpointersused, field_functionp.size);
+    write_to_stream(bufp, &allocatedsize, sizep, &field_functionp, sizeof(struct reb_binary_field));
+    write_to_stream(bufp, &allocatedsize, sizep, &functionpointersused, field_functionp.size);
 
     int end_null = 0;
 
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
     WRITE_FIELD_TYPE(fd_end.type, &end_null, 0);
     struct reb_simulationarchive_blob blob = {0};
-    reb_output_stream_write(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
+    write_to_stream(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
 }
 
 
