@@ -104,11 +104,12 @@ DLLEXPORT extern const int reb_messages_max_N;
 extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations
-struct reb_simulation;          // Implemented below.
 struct reb_simulationarchive;   // Opaque pointer. Implemented in simulationarchive.h
 struct reb_server_data;         // Opaque pointer. Implemented in server.h
 struct reb_treecell;            // Opaque pointer. Implemented in tree.h
 struct reb_display_data;        // Opaque pointer. Implemented in display.h
+struct reb_particle_int;        // Opaque pointer. Implemented in integrator_janus.h
+struct reb_simulation;          // Implemented below.
 struct reb_display_settings;    // Implemented below.
 struct reb_variational_configuration;  // Implemented below.
 
@@ -428,10 +429,6 @@ struct reb_integrator_eos {
     // Internal use
     unsigned int is_synchronized;
 };
-
-
-// Integer-based positions and velocities for particles. Used in JANUS integrator. 
-struct reb_particle_int; // Opaque pointer. Implemented in integrator_janus.h
 
 // Janus integrator (Rein & Tamayo 2018)
 struct reb_integrator_janus {
