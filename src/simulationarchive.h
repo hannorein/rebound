@@ -28,7 +28,6 @@
 #include <stdint.h>
 
 struct reb_simulation;
-struct reb_particles;
 
 // Simulationarchive structure
 struct reb_simulationarchive{
