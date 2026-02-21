@@ -323,7 +323,7 @@ static void reb_server_cerror(SOCKET clientS, char cause[]){
                     size_t sizep;
                     data->need_copy = 1;
                     pthread_mutex_lock(&(data->mutex));
-                    reb_simulation_save_to_stream(r, &bufp,&sizep);
+                    reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
                     data->need_copy = 0;
                     pthread_mutex_unlock(&(data->mutex));
                     fwrite(reb_server_header, 1, strlen(reb_server_header), stream);
@@ -553,7 +553,7 @@ screenshot_finish:
                     size_t sizep;
                     data->need_copy = 1;
                     WaitForSingleObject(data->mutex, INFINITE);
-                    reb_simulation_save_to_stream(r, &bufp,&sizep);
+                    reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
                     data->need_copy = 0;
                     ReleaseMutex(data->mutex);
                     sendBytes(clientS, reb_server_header, strlen(reb_server_header)); 

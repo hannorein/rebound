@@ -463,7 +463,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         }
         char* bufp;
         size_t sizep;
-        reb_simulation_save_to_stream(r, &bufp,&sizep);
+        reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
         fwrite(bufp,sizep,1,of);
         free(bufp);
         fclose(of);
@@ -504,7 +504,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         // Create buffer containing current binary file
         char* buf_new;
         size_t size_new;
-        reb_simulation_save_to_stream(r, &buf_new, &size_new);
+        reb_binarydata_simulation_to_stream(r, &buf_new, &size_new);
 
         // Create buffer containing diff
         char* buf_diff;

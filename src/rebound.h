@@ -723,7 +723,7 @@ DLLEXPORT void reb_simulation_save_to_file_walltime(struct reb_simulation* const
 // Schedule regular outputs to a file based on number of steps taken.
 DLLEXPORT void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step);
 // Write the simulation to a memory buffer (simulationarchive format).
-DLLEXPORT void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
+DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 // Output timing data to file. Appends file if it exists.
 DLLEXPORT void reb_simulation_output_timing(struct reb_simulation* r, const double tmax);
 // Output orbits to file. Appends file if it exists.

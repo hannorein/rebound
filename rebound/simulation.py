@@ -263,7 +263,7 @@ class Simulation(Structure):
     def __reduce__(self):
         buf = c_char_p()
         size = c_size_t()
-        clibrebound.reb_simulation_save_to_stream(byref(self), byref(buf), byref(size))
+        clibrebound.reb_binarydata_simulation_to_stream(byref(self), byref(buf), byref(size))
         s = bytes(string_at(buf, size=size.value)) #make copy
         clibrebound.reb_free(buf) # free original
         return (Simulation, (s,))

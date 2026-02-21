@@ -412,7 +412,7 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
 void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings){
     char* bufp;
     size_t sizep;
-    reb_simulation_save_to_stream(r, &bufp,&sizep);
+    reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
 
     reb_simulation_free_pointers(r_copy);
     memset(r_copy, 0, sizeof(struct reb_simulation));
@@ -430,8 +430,8 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
     char* bufp2;
     char* bufp;
     size_t sizep1, sizep2, size;
-    reb_simulation_save_to_stream(r1, &bufp1,&sizep1);
-    reb_simulation_save_to_stream(r2, &bufp2,&sizep2);
+    reb_binarydata_simulation_to_stream(r1, &bufp1,&sizep1);
+    reb_binarydata_simulation_to_stream(r2, &bufp2,&sizep2);
 
     reb_binarydata_diff(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
 
@@ -448,8 +448,8 @@ int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, in
     char* bufp1;
     char* bufp2;
     size_t sizep1, sizep2;
-    reb_simulation_save_to_stream(r1, &bufp1,&sizep1);
-    reb_simulation_save_to_stream(r2, &bufp2,&sizep2);
+    reb_binarydata_simulation_to_stream(r1, &bufp1,&sizep1);
+    reb_binarydata_simulation_to_stream(r2, &bufp2,&sizep2);
 
     int ret = reb_binarydata_diff(bufp1, sizep1, bufp2, sizep2, NULL, NULL, output_option);
 
