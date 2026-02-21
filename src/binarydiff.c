@@ -77,7 +77,7 @@ struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const ch
     return bfd;
 }
 
-static void asprintf_reb_type(enum REB_BINARY_FIELD_DTYPE dtype, char* pointer, size_t dsize, char** buf){
+static void asprintf_reb_type(char** buf, enum REB_BINARY_FIELD_DTYPE dtype, char* pointer, size_t dsize){
     char* newbuf = NULL;
     switch (dtype){
         case REB_DOUBLE:
@@ -197,7 +197,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                         printf("%s",buf);
                     }
                     free(buf);
-                    asprintf_reb_type(fd.dtype, buf1+pos1, field1.size, bufp);
+                    asprintf_reb_type(bufp, fd.dtype, buf1+pos1, field1.size);
 #ifndef _WIN32
                     asprintf(&buf, "\033[0m\n");
 #else // _WIN32
@@ -262,7 +262,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                     printf("%s",buf);
                 }
                 free(buf);
-                asprintf_reb_type(fd.dtype, buf1+pos1, field1.size, bufp);
+                asprintf_reb_type(bufp, fd.dtype, buf1+pos1, field1.size);
 #ifndef _WIN32
                 asprintf(&buf, "\033[0m\n---\n\033[32m> ");
 #else // _WIN32
@@ -275,7 +275,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
                     printf("%s",buf);
                 }
                 free(buf);
-                asprintf_reb_type(fd.dtype, buf2+pos2, field2.size, bufp);
+                asprintf_reb_type(bufp, fd.dtype, buf2+pos2, field2.size);
 #ifndef _WIN32
                 asprintf(&buf, "\033[0m\n");
 #else // _WIN32
@@ -362,7 +362,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
             }else{
                 printf("%s",buf);
             }
-            asprintf_reb_type(fd.dtype, buf2+pos2, field2.size, bufp);
+            asprintf_reb_type(bufp, fd.dtype, buf2+pos2, field2.size);
 #ifndef _WIN32
             asprintf(&buf, "\033[0m\n");
 #else // _WIN32
