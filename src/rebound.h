@@ -688,8 +688,6 @@ DLLEXPORT struct reb_simulation* reb_simulation_create_from_simulationarchive(st
 DLLEXPORT void reb_simulation_free(struct reb_simulation* const r);
 // Only free memory in pointers of a simulation, but not the simulation itself.
 DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
-// Reset function pointers to default (NULL) values. Returns 1 if one ore more function pointers were not NULL before.
-DLLEXPORT int reb_simulation_reset_function_pointers(struct reb_simulation* const r); 
 // Reset all integrator variables.
 DLLEXPORT void reb_simulation_reset_integrator(struct reb_simulation* r);
 // Make a deep copy of simulation.

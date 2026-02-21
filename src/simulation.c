@@ -30,6 +30,7 @@
 #include "simulation.h"
 #include "simulationarchive.h"
 #include "output.h"
+#include "server.h"
 #include "boundary.h"
 #include "binarydata.h"
 #include "fmemopen.h" // own implementation of fmemopen
@@ -61,7 +62,7 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
-static void reb_run_heartbeat(struct reb_simulation* const r){
+static void run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->exit_max_distance){
         // Check for escaping particles
@@ -97,7 +98,7 @@ static void reb_run_heartbeat(struct reb_simulation* const r){
     }
 }
 
-static int reb_simulation_error_message_waiting(struct reb_simulation* const r){
+static int error_message_waiting(struct reb_simulation* const r){
     if (r->messages){
         for (int i=0;i<reb_messages_max_N;i++){
             if (r->messages[i]!=NULL){
@@ -132,7 +133,7 @@ int reb_check_exit(struct reb_simulation* const r, const double tmax, double* la
         }
     }
     const double dtsign = copysign(1.,r->dt);   // Used to determine integration direction
-    if (reb_simulation_error_message_waiting(r)){
+    if (error_message_waiting(r)){
         r->status = REB_STATUS_GENERIC_ERROR;
     }
     if (r->status>=0){
@@ -311,7 +312,7 @@ static void* reb_simulation_integrate_raw(void* args){
     if (r->status != REB_STATUS_PAUSED && r->status != REB_STATUS_SCREENSHOT){ // Allow simulation to be paused initially
         r->status = REB_STATUS_RUNNING;
     }
-    reb_run_heartbeat(r);
+    run_heartbeat(r);
 #ifdef __EMSCRIPTEN__
     double t0 = emscripten_performance_now();
 #endif
@@ -351,7 +352,7 @@ static void* reb_simulation_integrate_raw(void* args){
 #endif //SERVER
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_simulation_step(r); 
-        reb_run_heartbeat(r);
+        run_heartbeat(r);
         if (reb_sigint){
             r->status = REB_STATUS_SIGINT;
         }
@@ -423,21 +424,7 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     return r->status;
 }
 
-int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
-    int wasnotnull = 0;
-    if (r->coefficient_of_restitution ||
-            r->collision_resolve ||
-            r->additional_forces ||
-            r->heartbeat ||
-            r->pre_timestep_modifications ||
-            r->post_timestep_modifications ||
-            r->free_particle_ap ||
-            r->ri_custom.step ||
-            r->ri_custom.synchronize ||
-            r->ri_custom.reset ||
-            r->extras_cleanup){
-        wasnotnull = 1;
-    }
+static void reset_function_pointers(struct reb_simulation* const r){
     r->coefficient_of_restitution   = NULL;
     r->collision_resolve        = NULL;
     r->additional_forces        = NULL;
@@ -449,15 +436,13 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
     r->ri_custom.synchronize = NULL;
     r->ri_custom.reset = NULL;
     r->extras_cleanup = NULL;
-    return wasnotnull;
 }
 
-
 void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
-    reb_run_heartbeat(r);
+    run_heartbeat(r);
     for (unsigned int i=0;i<N_steps;i++){
         reb_simulation_step(r);
-        reb_run_heartbeat(r);
+        run_heartbeat(r);
     }
 }
 void reb_simulation_step(struct reb_simulation* const r){
@@ -579,7 +564,7 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
     r->rand_seed = reb_tools_get_rand_seed();
-    reb_simulation_reset_function_pointers(r);
+    reset_function_pointers(r);
     r->t        = 0; 
     r->G        = 1;
     r->softening    = 0;
