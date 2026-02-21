@@ -41,7 +41,6 @@
 #define FMFT_MAX_REMOVE 64/* MFT MAXIMUM NUMBER OF FREQUENCY TO REMOVE FROM SIGNAL BEFORE GIVING UP */
 
 #include "rebound.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 #define TWOPI (2.*M_PI)

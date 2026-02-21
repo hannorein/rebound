@@ -25,7 +25,6 @@
  *
  */
 #define DEG2RAD (M_PI/180.)
-#include <stdio.h>
 #include <stdlib.h>
 #ifndef _WIN32
 #include <pthread.h>

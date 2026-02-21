@@ -27,7 +27,6 @@
  *
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "rebound.h"
 #include "integrator_leapfrog.h"

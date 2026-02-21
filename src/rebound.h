@@ -46,6 +46,10 @@
 #define DLLEXPORT
 #endif // _WIN32
 
+#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
+#if defined(_WIN32) && defined(_MSC_VER)
+#pragma comment(lib, "legacy_stdio_definitions.lib")
+#endif
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
