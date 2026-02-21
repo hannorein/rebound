@@ -195,8 +195,8 @@ void reb_simulation_output_free_stream(char* buf){
     free(buf);
 }
 
- // This is a custom implementation of a dynamic memory buffer stream. 
- // This is used as a replacement for open_memstream which is not portable.
+// This is a custom implementation of a dynamic memory buffer stream. 
+// This is used as a replacement for open_memstream which is not portable.
 static void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
     // Increase size
     int increased = 0;
@@ -257,7 +257,7 @@ struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const ch
     return bfd;
 }
 
-// Hepler function to print out binary data in human readable form.
+// Helper function to print out binary data in human readable form.
 static void asprintf_reb_type(char** buf, enum REB_BINARY_FIELD_DTYPE dtype, char* pointer, size_t dsize){
     char* newbuf = NULL;
     switch (dtype){
@@ -769,7 +769,7 @@ break;
 }\
 break;        
 
-// Read field data into simulation from file or memmory buffer.
+// Read field data into simulation from file or memory buffer.
 void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
     struct reb_binary_field field;
     // A few fields need special treatment. Find their descriptors first.
