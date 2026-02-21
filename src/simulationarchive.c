@@ -123,13 +123,13 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
     sa->reb_version_patch = 0;
     int uses32bitoffsets = 1; 
     // Cache descriptors
-    struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
-    struct reb_binary_field_descriptor fd_t = reb_binary_field_descriptor_for_name("t");
-    struct reb_binary_field_descriptor fd_sa_version = reb_binary_field_descriptor_for_name("simulationarchive_version");
-    struct reb_binary_field_descriptor fd_sa_auto_walltime = reb_binary_field_descriptor_for_name("simulationarchive_auto_walltime");
-    struct reb_binary_field_descriptor fd_sa_auto_interval = reb_binary_field_descriptor_for_name("simulationarchive_auto_interval");
-    struct reb_binary_field_descriptor fd_sa_auto_step = reb_binary_field_descriptor_for_name("simulationarchive_auto_step");
-    struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+    struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
+    struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
+    struct reb_binarydata_field_descriptor fd_sa_version = reb_binarydata_field_descriptor_for_name("simulationarchive_version");
+    struct reb_binarydata_field_descriptor fd_sa_auto_walltime = reb_binarydata_field_descriptor_for_name("simulationarchive_auto_walltime");
+    struct reb_binarydata_field_descriptor fd_sa_auto_interval = reb_binarydata_field_descriptor_for_name("simulationarchive_auto_interval");
+    struct reb_binarydata_field_descriptor fd_sa_auto_step = reb_binarydata_field_descriptor_for_name("simulationarchive_auto_step");
+    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
 
 
     do{
@@ -224,9 +224,9 @@ void reb_read_simulationarchive_from_stream_with_messages(struct reb_simulationa
             fseek(sa->inf, 0, SEEK_SET);  
             sa->nblobs = 0;
             int read_error = 0;
-            struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
-            struct reb_binary_field_descriptor fd_t = reb_binary_field_descriptor_for_name("t");
-            struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+            struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
+            struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
+            struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
             for(int64_t i=0;i<nblobsmax;i++){
                 struct reb_binary_field field = {0};
                 sa->offset[i] = ftell(sa->inf);
@@ -469,7 +469,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         fclose(of);
     }else{
         // File exists, append snapshot.
-        struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+        struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
         // Create buffer containing original binary file
         FILE* of = fopen(filename_combined,"r+b");
         fseek(of, 64, SEEK_SET); // Header

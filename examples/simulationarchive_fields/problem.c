@@ -57,10 +57,10 @@ int main(int argc, char* argv[]) {
     int uses32bitoffsets = 1; 
     struct reb_binary_field field = {0};
     struct reb_simulationarchive_blob blob = {0};
-    struct reb_binary_field_descriptor fd_header = reb_binary_field_descriptor_for_name("header");
-    struct reb_binary_field_descriptor fd_particles = reb_binary_field_descriptor_for_name("particles");
-    struct reb_binary_field_descriptor fd_ri_whfast_p_jh = reb_binary_field_descriptor_for_name("ri_whfast.p_jh");
-    struct reb_binary_field_descriptor fd_end = reb_binary_field_descriptor_for_name("end");
+    struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
+    struct reb_binarydata_field_descriptor fd_particles = reb_binarydata_field_descriptor_for_name("particles");
+    struct reb_binarydata_field_descriptor fd_ri_whfast_p_jh = reb_binarydata_field_descriptor_for_name("ri_whfast.p_jh");
+    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
 
 
     printf("==== START OF FILE ====\n");
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
                 printf("ERROR. Unable to read from file.\n");
                 return 1;
             }
-            struct reb_binary_field_descriptor fd = reb_binary_field_descriptor_for_type(field.type);
+            struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field.type);
             if (field.type == fd_end.type){
                 ifprintf("FIELD\n");
                 ifprintf("\tname:   %s\n", fd.name);

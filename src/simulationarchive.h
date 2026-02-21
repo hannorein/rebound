@@ -72,7 +72,7 @@ enum REB_BINARY_FIELD_DTYPE {
 };
 
 // Binary field descriptors are used to identify data blobs in simulationarchives.
-struct reb_binary_field_descriptor {
+struct reb_binarydata_field_descriptor {
     uint32_t type;          // Unique id for each field. Should not change between versions. Ids should not be reused.
     enum REB_BINARY_FIELD_DTYPE dtype; // Datatype (note: not the same as type)
     char name[1024];
@@ -82,14 +82,14 @@ struct reb_binary_field_descriptor {
 };
 
 struct reb_binary_field { // This structure is used to save and load binary files.
-    uint32_t type;  // type as given by reb_binary_field_descriptor
+    uint32_t type;  // type as given by reb_binarydata_field_descriptor
     uint64_t size;  // Size in bytes of field (only counting what follows, not the binary field, itself).
 };
 
 // Used by python for testing.
-DLLEXPORT extern const struct reb_binary_field_descriptor reb_binary_field_descriptor_list[]; // List of blobs. Implemented in output.c
-DLLEXPORT struct reb_binary_field_descriptor reb_binary_field_descriptor_for_type(int type);
-DLLEXPORT struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const char* name);
+DLLEXPORT extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[]; // List of blobs. Implemented in output.c
+DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(int type);
+DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.
 void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_simulation_binary_error_codes* warnings); ///< Internal function to read one snapshot from a simulationarchive.

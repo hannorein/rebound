@@ -19,7 +19,7 @@ class BinaryFieldDescriptor(ctypes.Structure):
                 ]
 def binary_field_descriptor_list():
     fd_pointer_t = ctypes.POINTER(BinaryFieldDescriptor)
-    fd_pointer = (BinaryFieldDescriptor*3).in_dll(clibrebound, "reb_binary_field_descriptor_list")
+    fd_pointer = (BinaryFieldDescriptor*3).in_dll(clibrebound, "reb_binarydata_field_descriptor_list")
     fd_pointer = ctypes.cast(fd_pointer, fd_pointer_t) # not sure why I have to do it this way
     l = []
     i=0
