@@ -31,6 +31,7 @@
 #include "input.h"
 #include "tree.h"
 #include "simulationarchive.h"
+#include "integrator_whfast512.h"
 
 #ifdef MPI
 #include "communication_mpi.h"
