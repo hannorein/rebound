@@ -980,7 +980,7 @@ finish_fields:
     r->ri_whfast512.recalculate_constants = 1;
 }
 
-struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings){
+struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings){
     if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
         reb_simulation_error(r,"Cannot read binary file. Check filename and file contents.");
         if (r) free(r);

@@ -397,13 +397,13 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
         free(sa);
         return NULL;
     }else{
-        reb_input_process_warnings(NULL, warnings);
+        reb_binarydata_process_warnings(NULL, warnings);
     }
     reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
     if (sa){
         reb_simulationarchive_free(sa);
     }
-    r = reb_input_process_warnings(r, warnings);
+    r = reb_binarydata_process_warnings(r, warnings);
     return r;
 }
 
@@ -462,7 +462,7 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
     struct reb_simulation* r_copy = reb_simulation_create();
     enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
     reb_simulation_copy_with_messages(r_copy,r,&warnings);
-    r = reb_input_process_warnings(r, warnings);
+    r = reb_binarydata_process_warnings(r, warnings);
     return r_copy;
 }
 
