@@ -162,14 +162,6 @@ struct reb_vec6d{
     double vz;
 };
 
-// Rotation (implemented as a quaternion)
-struct reb_rotation {
-    double ix;
-    double iy;
-    double iz;
-    double r;
-};
-
 // Structure representing one particle-particle collision
 struct reb_collision{
     int p1;                 // Index of first particle involved in collision
@@ -1087,6 +1079,15 @@ DLLEXPORT int reb_frequency_analysis(double *output, int nfreq, double minfreq, 
 // Functions to convert between coordinate systems
 
 // Rotations
+
+// Rotation struct (implemented as a quaternion)
+struct reb_rotation {
+    double ix;
+    double iy;
+    double iz;
+    double r;
+};
+
 DLLEXPORT struct reb_rotation reb_rotation_inverse(const struct reb_rotation q);
 DLLEXPORT struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct reb_rotation q);
 
