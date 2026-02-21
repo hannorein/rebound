@@ -33,6 +33,7 @@
 #include "integrator.h"
 #include "integrator_sei.h"
 #include "integrator_whfast512.h"
+#include "integrator_janus.h"
 
 #include "input.h"
 #ifdef MPI
