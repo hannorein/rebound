@@ -31,6 +31,7 @@
 #include "simulationarchive.h"
 #include "output.h"
 #include "server.h"
+#include "display.h"
 #include "boundary.h"
 #include "binarydata.h"
 #include "fmemopen.h" // own implementation of fmemopen
