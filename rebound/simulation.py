@@ -251,7 +251,7 @@ class Simulation(Structure):
 # Message and memory management functions
     def process_messages(self):
         clibrebound.reb_simulation_get_next_message.restype = c_int
-        buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_max_messages_length").value)
+        buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_messages_max_length").value)
         while clibrebound.reb_simulation_get_next_message(byref(self), buf):
             msg = buf.value.decode("ascii")
             if msg[0]=='w':

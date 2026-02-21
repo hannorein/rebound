@@ -99,8 +99,8 @@ DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
 DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
 DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
 DLLEXPORT extern const unsigned int reb_favicon_len;
-DLLEXPORT extern const int reb_max_messages_length;
-DLLEXPORT extern const int reb_N_max_messages;
+DLLEXPORT extern const int reb_messages_max_length;
+DLLEXPORT extern const int reb_messages_max_N;
 extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations

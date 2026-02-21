@@ -66,8 +66,8 @@
 #ifdef _WIN32
 void usleep(__int64 usec);
 #endif // _WIN32
-const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
-const int reb_N_max_messages = 10;
+const int reb_messages_max_length = 1024;   // needs to be constant expression for array size
+const int reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "4.6.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
@@ -154,7 +154,7 @@ void reb_message(struct reb_simulation* const r, char type, const char* const ms
     if (r != NULL){
         save_messages = r->save_messages;
     }
-    if (!save_messages || strlen(msg)>=reb_max_messages_length){
+    if (!save_messages || strlen(msg)>=reb_messages_max_length){
         if (type=='w'){
             fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
         }else if (type=='e'){
@@ -163,23 +163,23 @@ void reb_message(struct reb_simulation* const r, char type, const char* const ms
     }else{
         // TODO: Should be protected by MUTEX
         if (r->messages==NULL){
-            r->messages = calloc(reb_N_max_messages,sizeof(char*));
+            r->messages = calloc(reb_messages_max_N,sizeof(char*));
         }
         int n = 0;
-        for (;n<reb_N_max_messages;n++){
+        for (;n<reb_messages_max_N;n++){
             if (r->messages[n]==NULL){
                 break;
             }
         }
-        if (n==reb_N_max_messages){
+        if (n==reb_messages_max_N){
             free(r->messages[0]);
-            for (int i=0;i<reb_N_max_messages-1;i++){
+            for (int i=0;i<reb_messages_max_N-1;i++){
                 r->messages[i] = r->messages[i+1];
             }
-            r->messages[reb_N_max_messages-1] = NULL;
-            n= reb_N_max_messages-1;
+            r->messages[reb_messages_max_N-1] = NULL;
+            n= reb_messages_max_N-1;
         }
-        r->messages[n] = malloc(sizeof(char*)*reb_max_messages_length);
+        r->messages[n] = malloc(sizeof(char*)*reb_messages_max_length);
         r->messages[n][0] = type;
         strcpy(r->messages[n]+1, msg);
     }
@@ -201,10 +201,10 @@ int reb_simulation_get_next_message(struct reb_simulation* const r, char* const 
     if (r->messages){
         char* w0 = r->messages[0];
         if (w0){
-            for(int i=0;i<reb_N_max_messages-1;i++){
+            for(int i=0;i<reb_messages_max_N-1;i++){
                 r->messages[i] = r->messages[i+1];
             }
-            r->messages[reb_N_max_messages-1] = NULL;
+            r->messages[reb_messages_max_N-1] = NULL;
             strcpy(buf,w0);
             free(w0);
             return 1;
@@ -215,7 +215,7 @@ int reb_simulation_get_next_message(struct reb_simulation* const r, char* const 
 
 static int reb_simulation_error_message_waiting(struct reb_simulation* const r){
     if (r->messages){
-        for (int i=0;i<reb_N_max_messages;i++){
+        for (int i=0;i<reb_messages_max_N;i++){
             if (r->messages[i]!=NULL){
                 if (r->messages[i][0]=='e'){
                     return 1;
@@ -333,7 +333,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     free(r->name_list);
     free(r->name_hash_table);
     if (r->messages){
-        for (int i=0;i<reb_N_max_messages;i++){
+        for (int i=0;i<reb_messages_max_N;i++){
             free(r->messages[i]);
         }
     }
