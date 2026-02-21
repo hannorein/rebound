@@ -49,7 +49,6 @@
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
-#include "input.h"
 #include "binarydiff.h"
 #include "simulationarchive.h"
 #include "server.h"
@@ -386,6 +385,28 @@ struct reb_simulation* reb_simulation_create(){
     reb_simulation_init(r);
     return r;
 }
+
+struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot){
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    struct reb_simulation* r = reb_simulation_create();
+
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
+    reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
+    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+        // Don't output an error if file does not exist, just return NULL.
+        free(sa);
+        return NULL;
+    }else{
+        reb_input_process_warnings(NULL, warnings);
+    }
+    reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
+    if (sa){
+        reb_simulationarchive_free(sa);
+    }
+    r = reb_input_process_warnings(r, warnings);
+    return r;
+}
+
 
 
 void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings){

@@ -6,7 +6,7 @@
 #include "rebound.h"
 #include "fmemopen.h"
 #include "display.h"
-#include "input.h"
+#include "binarydiff.h"
 
 int first = 1;
 double reconnect_delay = 1.;

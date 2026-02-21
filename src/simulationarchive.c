@@ -33,7 +33,6 @@
 #include "binarydiff.h"
 #include "output.h"
 #include "tools.h"
-#include "input.h"
 #include "output.h"
 #include "integrator_ias15.h"
 #include "simulationarchive.h"
