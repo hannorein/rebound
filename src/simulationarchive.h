@@ -49,7 +49,7 @@ struct reb_simulationarchive_blob {
     int32_t offset_prev;             // Offset to beginning of previous blob (size of previous blob).
     int32_t offset_next;             // Offset to end of following blob (size of following blob).
 };
-    
+
 enum REB_BINARY_FIELD_DTYPE {
     REB_DOUBLE = 0,
     REB_INT = 1,
