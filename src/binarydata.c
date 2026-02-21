@@ -295,7 +295,7 @@ static void asprintf_reb_type(char** buf, enum REB_BINARY_FIELD_DTYPE dtype, cha
 // Compares two simulations in buffers.
 // Returns 0 if the buffers contain the same simulation data. 
 // Supports different output options.
-int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
+int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
     if (!buf1 || !buf2 || size1<64 || size2<64){
         printf("Cannot read input buffers.\n");
         return 0;

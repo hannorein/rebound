@@ -433,7 +433,7 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
     reb_simulation_save_to_stream(r1, &bufp1,&sizep1);
     reb_simulation_save_to_stream(r2, &bufp2,&sizep2);
 
-    reb_binary_diff(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
+    reb_binarydata_diff(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
 
     free(bufp1);
     free(bufp2);
@@ -451,7 +451,7 @@ int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, in
     reb_simulation_save_to_stream(r1, &bufp1,&sizep1);
     reb_simulation_save_to_stream(r2, &bufp2,&sizep2);
 
-    int ret = reb_binary_diff(bufp1, sizep1, bufp2, sizep2, NULL, NULL, output_option);
+    int ret = reb_binarydata_diff(bufp1, sizep1, bufp2, sizep2, NULL, NULL, output_option);
 
     free(bufp1);
     free(bufp2);
