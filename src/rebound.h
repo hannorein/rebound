@@ -73,25 +73,12 @@ int rand_r (unsigned int *seed);
 #include <pthread.h>
 #endif // _WIN32
 
-#ifdef AVX512
-#include <immintrin.h>
-#endif
-
 #ifdef MPI
 #include <mpi.h>
 #endif
 
 #ifndef GITHASH
 #define GITHASH notavailable0000000000000000000000000001 
-#endif
-
-#if defined(__GNUC__) || defined(__clang__)
-#define REB_ALIGNED_64 __attribute__((aligned(64)))
-#elif defined(_MSC_VER)
-#define REB_ALIGNED_64 __declspec(align(64))
-#else
-#define REB_ALIGNED_64
-#warning "Alignment not supported on this compiler"
 #endif
 
 
