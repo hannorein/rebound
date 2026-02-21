@@ -40,7 +40,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 // Read all fields from inf stream into r. 
 void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings); 
 
-// Process any errors that might have occured while reading binary data.
+// Process any errors that might have occurred while reading binary data.
 struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings);
 
 #endif // _BINARYDATA_H
