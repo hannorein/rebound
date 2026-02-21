@@ -444,9 +444,11 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
         return;
     }
     p->name = reb_simulation_register_name(r,name);
-    
+
     uint32_t index = p - r->particles;
+#ifndef MPI
     add_to_name_hash_table(r, index, name);
+#endif //  MPI
 }
 
 
