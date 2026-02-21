@@ -1,10 +1,10 @@
 /**
  * @file    binarydata.c
- * @brief   Binary diff allows to compare binary snapshots.
+ * @brief 	Routines for output, input and comparison of simulations in binary format.
  * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section     LICENSE
- * Copyright (c) 2018 Hanno Rein
+ * Copyright (c) 2026 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -769,7 +769,7 @@ break;
 }\
 break;        
 
-
+// Read field data into simulation from file or memmory buffer.
 void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
     struct reb_binary_field field;
     // A few fields need special treatment. Find their descriptors first.

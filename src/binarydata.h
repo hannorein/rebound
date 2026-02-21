@@ -1,10 +1,10 @@
 /**
  * @file 	binarydata.h
- * @brief 	Binary diff allows to compare binary snapshots.
+ * @brief 	Routines for output, input and comparison of simulations in binary format.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
- * Copyright (c) 2018 Hanno Rein
+ * Copyright (c) 2026 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -22,8 +22,8 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _BINARYDIFF_H
-#define _BINARYDIFF_H
+#ifndef _BINARYDATA_H
+#define _BINARYDATA_H
 
 // Compares two simulations, stores difference in buffer.
 //
@@ -42,4 +42,4 @@ void reb_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_b
 
 struct reb_simulation* reb_input_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings); ///< Process warning messages and print them on screen.
 
-#endif // _BINARYDIFF_H
+#endif // _BINARYDATA_H
