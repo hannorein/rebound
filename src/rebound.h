@@ -28,7 +28,7 @@
 
 #ifdef _WIN64
 #define _LP64
-#endif
+#endif // _WIN64
 #ifdef _WIN32
 #include <WinSock2.h>
 #define _WINSOCKAPI_ //stops windows.h including winsock.h
@@ -82,9 +82,13 @@ int rand_r (unsigned int *seed);
 #define GITHASH notavailable0000000000000000000000000001 
 #endif
 
-
-#ifndef __GNUC__
-#  define  __attribute__(x)  /*Ignore attributes in non-GNU compilers*/
+#if defined(__GNUC__) || defined(__clang__)
+    #define REB_ALIGNED_64 __attribute__((aligned(64)))
+#elif defined(_MSC_VER)
+    #define REB_ALIGNED_64 __declspec(align(64))
+#else
+    #define REB_ALIGNED_64
+    #warning "Alignment not supported on this compiler"
 #endif
 
 
@@ -364,13 +368,13 @@ struct reb_integrator_whfast {
 // Special particle struct for WHFast512
 struct reb_particle_avx512{
 #ifdef AVX512
-    __m512d m __attribute__ ((aligned (64)));
-    __m512d x __attribute__ ((aligned (64)));
-    __m512d y __attribute__ ((aligned (64)));
-    __m512d z __attribute__ ((aligned (64)));
-    __m512d vx __attribute__ ((aligned (64)));
-    __m512d vy __attribute__ ((aligned (64)));
-    __m512d vz __attribute__ ((aligned (64)));
+    __m512d m REB_ALIGNED_64;
+    __m512d x REB_ALIGNED_64;
+    __m512d y REB_ALIGNED_64;
+    __m512d z REB_ALIGNED_64;
+    __m512d vx REB_ALIGNED_64;
+    __m512d vy REB_ALIGNED_64;
+    __m512d vz REB_ALIGNED_64;
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];
