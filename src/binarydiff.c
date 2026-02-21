@@ -77,7 +77,7 @@ struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const ch
     return bfd;
 }
 
-static void output_stream_reb_type(int dtype, char* pointer, size_t dsize, char** buf){
+static void output_stream_reb_type(enum REB_BINARY_FIELD_DTYPE dtype, char* pointer, size_t dsize, char** buf){
     char* newbuf = NULL;
     switch (dtype){
         case REB_DOUBLE:
