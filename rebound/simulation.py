@@ -265,7 +265,7 @@ class Simulation(Structure):
         size = c_size_t()
         clibrebound.reb_simulation_save_to_stream(byref(self), byref(buf), byref(size))
         s = bytes(string_at(buf, size=size.value)) #make copy
-        clibrebound.reb_simulation_output_free_stream(buf) # free original
+        clibrebound.reb_free(buf) # free original
         return (Simulation, (s,))
 
 # Other operators

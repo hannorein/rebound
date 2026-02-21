@@ -190,11 +190,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}
 };
 
-// required for python pickling
-void reb_simulation_output_free_stream(char* buf){
-    free(buf);
-}
-
 // This is a custom implementation of a dynamic memory buffer stream. 
 // This is used as a replacement for open_memstream which is not portable.
 static void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){

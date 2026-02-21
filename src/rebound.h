@@ -1200,7 +1200,6 @@ DLLEXPORT char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_s
 DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python 
 DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // NULL pointers will not be set.
 DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
-DLLEXPORT void reb_simulation_output_free_stream(char* buf);
 DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p); // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 DLLEXPORT struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err);
 DLLEXPORT void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum reb_simulation_binary_error_codes* warnings);
