@@ -1,6 +1,6 @@
 /**
  * @file 	output.h
- * @brief 	Output routines.
+ * @brief   ASCII output and profiling routines.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -24,10 +24,6 @@
  */
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
-struct reb_simulation;
-
-#include <stdio.h>
-void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size); ///< Replacement for memstream
 
 #ifdef PROFILING
 /**

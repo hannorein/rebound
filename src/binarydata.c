@@ -1,5 +1,5 @@
 /**
- * @file    binarydiff.c
+ * @file    binarydata.c
  * @brief   Binary diff allows to compare binary snapshots.
  * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
@@ -30,7 +30,7 @@
 #include "rebound.h"
 #include "tools.h"
 #include "output.h"
-#include "binarydiff.h"
+#include "binarydata.h"
 #include "simulationarchive.h"
 #include "integrator_whfast512.h"
 #include "integrator_janus.h"
@@ -194,10 +194,9 @@ void reb_simulation_output_free_stream(char* buf){
     free(buf);
 }
 
-/** 
- * @brief Replacement for open_memstream
- */
-void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
+ // This is a custom implementation of a dynamic memory buffer stream. 
+ // This is used as a replacement for open_memstream which is not portable.
+static void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, void* restrict data, size_t size){
     // Increase size
     int increased = 0;
     while (*allocatedsize==0 || (*sizep)+size>(*allocatedsize)){
@@ -212,6 +211,7 @@ void reb_output_stream_write(char** bufp, size_t* allocatedsize, size_t* sizep, 
     *sizep += size;
 }
 
+// Compares two particles. Return 0 if identical.
 int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2){
     int differ = 0;
     differ = differ || (p1.x != p2.x);
@@ -256,6 +256,7 @@ struct reb_binary_field_descriptor reb_binary_field_descriptor_for_name(const ch
     return bfd;
 }
 
+// Hepler function to print out binary data in human readable form.
 static void asprintf_reb_type(char** buf, enum REB_BINARY_FIELD_DTYPE dtype, char* pointer, size_t dsize){
     char* newbuf = NULL;
     switch (dtype){
@@ -290,6 +291,9 @@ static void asprintf_reb_type(char** buf, enum REB_BINARY_FIELD_DTYPE dtype, cha
     free(newbuf);
 }
 
+// Compares two simulations in buffers.
+// Returns 0 if the buffers contain the same simulation data. 
+// Supports different output options.
 int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
     if (!buf1 || !buf2 || size1<64 || size2<64){
         printf("Cannot read input buffers.\n");
@@ -574,7 +578,7 @@ int reb_binary_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** b
     reb_output_stream_write(bufp, &allocatedsize, sizep, value,field.size);\
 }
 
-
+// Serializes a simulation to a buffer
 void reb_simulation_save_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
     if (r->simulationarchive_version<3){
         reb_simulation_error(r, "Simulationarchives with version < 3 are no longer supported.\n");

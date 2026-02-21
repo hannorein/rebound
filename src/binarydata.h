@@ -1,5 +1,5 @@
 /**
- * @file 	binarydiff.h
+ * @file 	binarydata.h
  * @brief 	Binary diff allows to compare binary snapshots.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 

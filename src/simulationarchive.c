@@ -30,7 +30,7 @@
 #include "particle.h"
 #include "rebound.h"
 #include "fmemopen.h"
-#include "binarydiff.h"
+#include "binarydata.h"
 #include "output.h"
 #include "tools.h"
 #include "output.h"

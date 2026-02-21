@@ -49,7 +49,7 @@
 #include "output.h"
 #include "tools.h"
 #include "particle.h"
-#include "binarydiff.h"
+#include "binarydata.h"
 #include "simulationarchive.h"
 #include "server.h"
 #ifdef MPI
