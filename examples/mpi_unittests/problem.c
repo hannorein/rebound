@@ -13,6 +13,7 @@
 #include <assert.h>
 #include "rebound.h"
 #include "tools.h"
+#include "simulationarchive.h"
 
 void print_N(struct reb_simulation* r){
     int N_to_send;
