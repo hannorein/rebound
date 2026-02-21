@@ -621,8 +621,8 @@ class Particle(Structure):
         # This ignores the pointer values
         if not isinstance(other,Particle):
             return NotImplemented
-        clibrebound.reb_particle_diff.restype = c_int
-        ret = clibrebound.reb_particle_diff(self, other)
+        clibrebound.reb_particle_cmp.restype = c_int
+        ret = clibrebound.reb_particle_cmp(self, other)
         return not ret
     
     def __pow__(self, other):

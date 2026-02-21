@@ -819,7 +819,7 @@ DLLEXPORT void reb_particle_imul(struct reb_particle* p1, double value);
 // Return the distance between particle p1 and p2
 DLLEXPORT double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
 // Compares two particles, ignoring pointers. Returns 1 if particles differ, 0 if they are exactly equal.
-DLLEXPORT int reb_particle_diff(struct reb_particle p1, struct reb_particle p2); 
+DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
 
 
 // Chaos indicators
