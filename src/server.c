@@ -26,6 +26,7 @@
  */
 
 #include "rebound.h"
+#include "server.h"
 
 #ifdef SERVER
 #include <stdio.h>

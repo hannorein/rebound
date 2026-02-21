@@ -30,6 +30,7 @@
 #include "rebound.h"
 #include "tools.h"
 #include "output.h"
+#include "server.h"
 #include "integrator.h"
 #include "integrator_sei.h"
 #include "integrator_whfast512.h"

@@ -104,13 +104,13 @@ DLLEXPORT extern const int reb_messages_max_N;
 extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations
-struct reb_simulation;
-struct reb_simulationarchive; // Opaque pointer. Implemented in simulationarchive.h
-struct reb_display_data;
-struct reb_server_data;
-struct reb_treecell;
+struct reb_simulation;          // Implemented below.
+struct reb_simulationarchive;   // Opaque pointer. Implemented in simulationarchive.h
+struct reb_server_data;         // Opaque pointer. Implemented in server.h
+struct reb_treecell;            // Opaque pointer. Implemented in tree.h
 struct reb_variational_configuration;
-struct reb_display_settings;
+struct reb_display_data;        // Opaque pointer. Implemented in display.h
+struct reb_display_settings;    // Implemented below.
 
 // Particle structure
 struct reb_particle {
@@ -1151,27 +1151,7 @@ struct reb_vec4df {
     float x,y,z,r;
 };
 
-struct reb_server_data {
-    struct reb_simulation* r;
-    void* screenshot; // Screenshot data received by server (decoded)
-    size_t N_screenshot; // Size of decoded screenshot data
-    enum REB_STATUS status_before_screenshot;
-    int port;
-    int need_copy;
-    int ready;
-#ifdef SERVER
-    int mutex_locked_by_integrate;  // Let's heartbeat find out if it is being called while the mutex is locked.
-#ifdef _WIN32
-    SOCKET socket;
-    HANDLE mutex;          // Mutex to allow for copying
-#else // _WIN32
-    int socket;
-    pthread_mutex_t mutex;          // Mutex to allow for copying
-    pthread_t server_thread;
-#endif // _WIN32
-#endif // SERVER
-};
-
+// Structures and functions used for programmatic animations.
 struct reb_display_settings {
     struct reb_mat4df view;
     int spheres;                    // Switches between point sprite and real spheres.
@@ -1185,93 +1165,7 @@ struct reb_display_settings {
     int reference;                  // reb_particle used as a reference for centering.
 };
 
-struct reb_display_data {
-    struct reb_display_settings s;
-    struct reb_simulation* r;
-    struct reb_simulation* r_copy;
-    void* screenshot; // Screenshot data to be sent to server
-    struct reb_vec4df* particle_data;
-    struct reb_orbit_opengl* orbit_data;
-    uint64_t N_allocated;
-    double mouse_x;
-    double mouse_y;
-    double retina;
-    int take_one_screenshot;
-#ifndef _WIN32
-    int need_copy;
-    pthread_mutex_t mutex;          // Mutex to allow for copying
-    pthread_t compute_thread;
-#endif // _WIN32
-#ifdef __EMSCRIPTEN__
-    int connection_status;
-#endif
-    uint64_t breadcrumb_last_steps_done;
-    unsigned int breadcrumb_N_allocated;
-    unsigned int breadcrumb_current_index;
-    unsigned int mouse_action;      
-    unsigned int key_mods;      
-    unsigned int particle_buffer;
-    unsigned int particle_buffer_current;
-    unsigned int orbit_buffer;
-    unsigned int orbit_buffer_current;
-    void* window;
-    struct {
-        unsigned int texture;
-        unsigned int program;
-        unsigned int vao;
-        unsigned int pos_location;
-        unsigned int ypos_location;
-        unsigned int scale_location;
-        unsigned int aspect_location;
-        unsigned int screen_aspect_location;
-        unsigned int rotation_location;
-        unsigned int texture_location;
-        unsigned int charval_buffer;
-    } shader_simplefont;
-    struct {
-        unsigned int program;
-        unsigned int box_vao;
-        unsigned int cross_vao;
-        unsigned int ruler_vao;
-        unsigned int mvp_location;
-        unsigned int color_location;
-    } shader_box;
-    struct {
-        unsigned int mvp_location;
-        unsigned int color_location;
-        unsigned int current_index_location;
-        unsigned int breadcrumb_N_location;
-        unsigned int N_real_location;
-        unsigned int program;
-        unsigned int particle_vao;
-    } shader_point;
-    struct {
-        unsigned int mvp_location;
-        unsigned int program;
-        unsigned int particle_vao_current;
-        unsigned int particle_vao;
-    } shader_sphere;
-    struct {
-        unsigned int mvp_location;
-        unsigned int current_index_location;
-        unsigned int breadcrumb_N_location;
-        unsigned int N_real_location;
-        unsigned int vertex_count_location;
-        unsigned int program;
-        unsigned int particle_vao_current;
-        unsigned int particle_vao;
-        unsigned int vertex_count;
-    } shader_orbit;
-    struct {
-        unsigned int mvp_location;
-        unsigned int vertex_count_location;
-        unsigned int program;
-        unsigned int particle_vao_current;
-        unsigned int vertex_count;
-    } shader_plane;
-};
-
-// Display settings initialization
+// Display settings initialization. Overwrites user interactions.
 DLLEXPORT void reb_simulation_add_display_settings(struct reb_simulation* r);
 
 // Matrix methods
