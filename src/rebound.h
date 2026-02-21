@@ -83,12 +83,12 @@ int rand_r (unsigned int *seed);
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-    #define REB_ALIGNED_64 __attribute__((aligned(64)))
+#define REB_ALIGNED_64 __attribute__((aligned(64)))
 #elif defined(_MSC_VER)
-    #define REB_ALIGNED_64 __declspec(align(64))
+#define REB_ALIGNED_64 __declspec(align(64))
 #else
-    #define REB_ALIGNED_64
-    #warning "Alignment not supported on this compiler"
+#define REB_ALIGNED_64
+#warning "Alignment not supported on this compiler"
 #endif
 
 
@@ -105,7 +105,7 @@ extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler
 
 // Forward declarations
 struct reb_simulation;
-struct reb_simulationarchive;
+struct reb_simulationarchive; // Opaque pointer. Implemented in simulationarchive.h
 struct reb_display_data;
 struct reb_server_data;
 struct reb_treecell;
@@ -479,6 +479,7 @@ enum REB_STATUS {
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
+// New name stuff. Needs cleanup
 #define REB_NAME_HASH_TABLE_SIZE 1024
 DLLEXPORT uint32_t reb_hash(const char* c);
 DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
@@ -490,7 +491,7 @@ DLLEXPORT struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simul
 #endif // MPI
 DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
 
-// Open Hashing
+// Open Hashing (linked list)
 struct reb_name_hash_item {
     int index;
     struct reb_name_hash_item* next;
@@ -893,21 +894,6 @@ DLLEXPORT double reb_M_to_E(double e, double M);
 
 // Simulationarchive
 
-// Simulationarchive structure
-struct reb_simulationarchive{
-    FILE* inf;                      // File pointer (will be kept open)
-    char* filename;                 // Filename of open file. This is NULL if this is a memory-mapped file (using fmemopen)
-    int version;                    // Simulationarchive version
-    int reb_version_major;          // Major REBOUND Version used to save SA
-    int reb_version_minor;          // Minor REBOUND Version used to save SA
-    int reb_version_patch;          // Patch REBOUND Version used to save SA
-    double auto_interval;           // Interval setting used to create SA (if used)
-    double auto_walltime;           // Walltime setting used to create SA (if used)
-    uint64_t auto_step;             // Steps in-between SA snapshots (if used)
-    int64_t nblobs;                 // Total number of snapshots (including initial binary)
-    uint64_t* offset;               // Index of offsets in file (length nblobs)
-    double* t;                      // Index of simulation times in file (length nblobs)
-};
 // Allocate memory for a simulationarchive and initialize it with a file.
 DLLEXPORT struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename);
 // Free memory allocated by simulationarchive

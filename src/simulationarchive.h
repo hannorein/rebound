@@ -30,6 +30,22 @@
 struct reb_simulation;
 struct reb_particles;
 
+// Simulationarchive structure
+struct reb_simulationarchive{
+    FILE* inf;                      // File pointer (will be kept open)
+    char* filename;                 // Filename of open file. This is NULL if this is a memory-mapped file (using fmemopen)
+    int version;                    // Simulationarchive version
+    int reb_version_major;          // Major REBOUND Version used to save SA
+    int reb_version_minor;          // Minor REBOUND Version used to save SA
+    int reb_version_patch;          // Patch REBOUND Version used to save SA
+    double auto_interval;           // Interval setting used to create SA (if used)
+    double auto_walltime;           // Walltime setting used to create SA (if used)
+    uint64_t auto_step;             // Steps in-between SA snapshots (if used)
+    int64_t nblobs;                 // Total number of snapshots (including initial binary)
+    uint64_t* offset;               // Index of offsets in file (length nblobs)
+    double* t;                      // Index of simulation times in file (length nblobs)
+};
+
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.
 void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_simulation_binary_error_codes* warnings); ///< Internal function to read one snapshot from a simulationarchive.
 

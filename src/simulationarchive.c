@@ -36,6 +36,7 @@
 #include "input.h"
 #include "output.h"
 #include "integrator_ias15.h"
+#include "simulationarchive.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif
