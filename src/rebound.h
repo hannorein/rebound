@@ -62,7 +62,6 @@ int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
 int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
 #include <io.h>
-#define _TIMEVAL_DEFINED
 #else // Linux and MacOS
 #define reb_timeval timeval
 #include <sys/time.h>
