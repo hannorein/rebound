@@ -437,7 +437,6 @@ struct reb_integrator_eos {
 
 
 // Integer-based positions and velocities for particles. Used in JANUS integrator. 
-#define REB_PARTICLE_INT_TYPE int64_t
 struct reb_particle_int; // Opaque pointer. Implemented in integrator_janus.h
 
 // Janus integrator (Rein & Tamayo 2018)

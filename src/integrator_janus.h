@@ -25,6 +25,7 @@
 #ifndef _INTEGRATOR_JANUS_H
 #define _INTEGRATOR_JANUS_H
 
+#define REB_PARTICLE_INT_TYPE int64_t
 struct reb_particle_int {
     REB_PARTICLE_INT_TYPE x;
     REB_PARTICLE_INT_TYPE y;
