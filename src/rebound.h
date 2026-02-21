@@ -73,10 +73,6 @@ int rand_r (unsigned int *seed);
 #include <pthread.h>
 #endif // _WIN32
 
-#ifdef MPI
-#include <mpi.h>
-#endif
-
 #ifndef GITHASH
 #define GITHASH notavailable0000000000000000000000000001 
 #endif

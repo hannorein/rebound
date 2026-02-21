@@ -35,11 +35,13 @@
  */
 #ifdef MPI
 #include <stdlib.h>
+#include <mpi.h>
 #include "particle.h"
 #include "rebound.h"
 #include "tree.h"
 #include "boundary.h"
 #include "communication_mpi.h"
+
 
 void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
     int initialized;
