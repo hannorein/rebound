@@ -48,7 +48,7 @@ struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r,
 DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 
 
-enum REB_BINARY_FIELD_DTYPE {
+enum REB_BINARYDATA_DTYPE {
     REB_DOUBLE = 0,
     REB_INT = 1,
     REB_UINT = 2,                // Same as UINT32
@@ -72,7 +72,7 @@ enum REB_BINARY_FIELD_DTYPE {
 // Binary field descriptors are used to identify data blobs in simulationarchives.
 struct reb_binarydata_field_descriptor {
     uint32_t type;              // Unique id for each field. Should not change between versions. Ids should not be reused.
-    enum REB_BINARY_FIELD_DTYPE dtype; // Datatype (note: not the same as type)
+    enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
     char name[1024];            // Null terminated human readable name.
     size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
     size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation

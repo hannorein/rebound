@@ -254,7 +254,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
 }
 
 // Helper function to print out binary data in human readable form.
-static void asprintf_reb_type(char** buf, enum REB_BINARY_FIELD_DTYPE dtype, char* pointer, size_t dsize){
+static void asprintf_reb_type(char** buf, enum REB_BINARYDATA_DTYPE dtype, char* pointer, size_t dsize){
     char* newbuf = NULL;
     switch (dtype){
         case REB_DOUBLE:
