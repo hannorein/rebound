@@ -10,10 +10,10 @@
  * the Model-View-Projection (MVP) paradigm. 
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 
