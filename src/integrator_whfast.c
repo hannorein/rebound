@@ -308,7 +308,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
     p->vx += fd*p1.x + gd*p1.vx;
     p->vy += fd*p1.y + gd*p1.vy;
     p->vz += fd*p1.z + gd*p1.vz;
-    
+
     //Variations
     for (int v=0;r && v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
