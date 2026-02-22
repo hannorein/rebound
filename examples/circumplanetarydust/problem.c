@@ -9,10 +9,11 @@
  * The output is custom too, outputting the semi-major axis of 
  * every dust particle relative to the planet. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
+
 
 void force_radiation(struct reb_simulation* r);
 void heartbeat(struct reb_simulation* r);
