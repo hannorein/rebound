@@ -47,4 +47,7 @@ DLLEXPORT size_t reb_simulation_struct_size();
 // Python workaround for function pointer.
 DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c));
 
+// Return the difference between two simulations as a human readable string. Returned pointer needs to be freed by caller.
+DLLEXPORT char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2);
+
 #endif 	// SIMULATION_H
