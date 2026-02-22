@@ -26,16 +26,21 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+// Windows requires special treatment.
 #ifdef _WIN64
 #define _LP64
 #endif // _WIN64
 #ifdef _WIN32
+#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
 #include <WinSock2.h>
 #define _WINSOCKAPI_ //stops windows.h including winsock.h
 #include <windows.h>
 #define REB_RESTRICT
 #define DLLEXPORT __declspec(dllexport)
 #define __restrict__
+#ifdef _MSC_VER
+#pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
+#endif
 #elif __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>
@@ -46,10 +51,6 @@
 #define DLLEXPORT
 #endif // _WIN32
 
-#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
-#if defined(_WIN32) && defined(_MSC_VER)
-#pragma comment(lib, "legacy_stdio_definitions.lib")
-#endif
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>

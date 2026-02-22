@@ -12,6 +12,7 @@
 #include <sched.h>
 #include <stdbool.h>
 #include "rebound.h"
+#include "rebound_internal.h" // only needed for windows
 
 // Initial conditions for the Sun, Mercury, and Venus
 // from NASA horizons
