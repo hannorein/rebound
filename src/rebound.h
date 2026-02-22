@@ -768,7 +768,7 @@ DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2);
 
 // Turn on MEGNO/Lyapunov calculation. Uses random seen in simulation.
 DLLEXPORT void reb_simulation_init_megno(struct reb_simulation* const r);
-// Same as above but used given random seend. Useful to reproduce same results every time.
+// Same as above but used given random seed. Useful to reproduce same results every time.
 DLLEXPORT void reb_simulation_init_megno_seed(struct reb_simulation* const r, unsigned int seed);
 // Returns the current MEGNO value,
 DLLEXPORT double reb_simulation_megno(struct reb_simulation* r);
@@ -789,15 +789,13 @@ DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* co
 DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
 DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
 
-
 // Built in collision resolve functions
 
 DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c); // halts a simulation when a collision occurs
 DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
 DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 
-
-// Random sampling - These functions only use the simulation object for a seed. If r=NULL time and PID are used as a seed.
+// Random sampling - These functions only use the simulation object for a seed. If r=NULL, time and PID are used as a seed.
 
 DLLEXPORT double reb_random_uniform(struct reb_simulation* r, double min, double max);
 DLLEXPORT double reb_random_powerlaw(struct reb_simulation* r, double min, double max, double slope);
@@ -1112,9 +1110,6 @@ DLLEXPORT struct reb_mat4df reb_rotation_to_mat4df(struct reb_rotation A);
 DLLEXPORT struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t, float n, float f);
 
 
-// Declarations and functions needed internally or by python interface only.
-void reb_sigint_handler(int signum);
-
 // Possible errors that might occur during binary file reading.
 enum reb_simulation_binary_error_codes {
     REB_SIMULATION_BINARY_WARNING_NONE = 0,
@@ -1132,9 +1127,7 @@ enum reb_simulation_binary_error_codes {
 };
 
 
-DLLEXPORT void reb_simulation_init(struct reb_simulation* r); // Used internally and by python. Should not be called by the user.
 DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r); // Used by REBOUNDx
-DLLEXPORT void reb_simulation_update_tree(struct reb_simulation* const r);
 DLLEXPORT int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf); // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
 DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contraction are enabled. 0 otherwise.
 DLLEXPORT size_t reb_simulation_struct_size();

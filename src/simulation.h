@@ -31,5 +31,8 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int
 // Only free memory in pointers of a simulation, but not the simulation itself.
 DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
 
+// Used internally and by python. Should not be called by the user.
+DLLEXPORT void reb_simulation_init(struct reb_simulation* r); 
+
 
 #endif 	// SIMULATION_H

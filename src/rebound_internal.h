@@ -52,6 +52,8 @@ int rand_r (unsigned int *seed);
 // Graceful global interrupt handler 
 #include <signal.h>
 extern volatile sig_atomic_t reb_sigint;  
+void reb_sigint_handler(int signum);
+
 
 // Global constants and variables
 DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.

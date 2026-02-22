@@ -1403,12 +1403,6 @@ class Simulation(Structure):
         clibrebound.reb_simulation_synchronize(byref(self))
         self.process_messages()
     
-    def update_tree(self):
-        """
-        Call this function to update the tree structure manually after removing particles.
-        """
-        clibrebound.reb_simulation_update_tree(byref(self))
-    
 
 class timeval(Structure):
     _fields_ = [("tv_sec",c_int64),("tv_usec",c_int64)]
