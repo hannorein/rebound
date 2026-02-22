@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "display.h"
 #include "tools.h"
 #include "particle.h"

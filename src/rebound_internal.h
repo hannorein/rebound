@@ -24,5 +24,29 @@
  */
 
 #ifndef _REBOUND_INTERNAL_H
-#define // _REBOUND_INTERNAL_H
+#define _REBOUND_INTERNAL_H
+
+// Definitions for functions that we need to implement ourselves on Windows.
+#ifdef _WIN32
+typedef struct reb_timeval {
+    int64_t tv_sec;
+    int64_t tv_usec;
+} reb_timeval;
+int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
+int asprintf(char **strp, const char *fmt, ...);
+int rand_r (unsigned int *seed);
+#include <io.h>
+#else // Linux and MacOS
+#define reb_timeval timeval
+#include <sys/time.h>
+#include <unistd.h>
+#include <pthread.h>
+#endif // _WIN32
+
+// Githash should be provided as a command line argument to the compiler. 
+// If not, use this dummy.
+#ifndef GITHASH
+#define GITHASH notavailable0000000000000000000000000001 
+#endif
+
 #endif // _REBOUND_INTERNAL_H

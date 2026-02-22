@@ -57,26 +57,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#ifdef _WIN32
-typedef struct reb_timeval {
-    int64_t tv_sec;
-    int64_t tv_usec;
-} reb_timeval;
-int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
-int asprintf(char **strp, const char *fmt, ...);
-int rand_r (unsigned int *seed);
-#include <io.h>
-#else // Linux and MacOS
-#define reb_timeval timeval
-#include <sys/time.h>
-#include <unistd.h>
-#include <pthread.h>
-#endif // _WIN32
-
-#ifndef GITHASH
-#define GITHASH notavailable0000000000000000000000000001 
-#endif
-
 
 // Global constants and variables
 DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.

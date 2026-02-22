@@ -34,8 +34,8 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "particle.h"
-#include "rebound.h"
 #include "tools.h"
 #include "tree.h"
 #include "boundary.h"

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <emscripten/fetch.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "fmemopen.h"
 #include "display.h"
 #include "binarydata.h"

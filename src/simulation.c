@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "tree.h"
 #include "particle.h"
 #include "simulation.h"
