@@ -709,6 +709,8 @@ DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, 
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but subtract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
+// Updates the acceleration of all particles but does not perform a step. Used  by REBOUNDx.
+DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r);
 
 
 // Diangnostic functions
@@ -1128,11 +1130,7 @@ enum reb_simulation_binary_error_codes {
     REB_SIMULATION_BINARY_ERROR_OLD = 1024,
 };
 
-
-
-
 // Potentially useful API functions
-DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r); // Used by REBOUNDx
 DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
 
 #endif // _MAIN_H
