@@ -29,7 +29,7 @@
 // Operating system specific options.
 // Windows requires special treatment.
 #ifdef _WIN64
-#define _LP64
+#define _LP64   // automatically defined on 64bit Linux and MacOS
 #endif // _WIN64
 #ifdef _WIN32
 #define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
@@ -52,8 +52,8 @@
 #define DLLEXPORT
 #endif // _WIN32
 
-#include <stdlib.h>
-#include <stdint.h>
+#include <stdlib.h> // for size_t
+#include <stdint.h> // for integer types
 
 
 // Forward declarations
@@ -77,24 +77,24 @@ struct reb_particle {
     double ax;
     double ay;
     double az;
-    double m;                   // mass
-    double r;                   // physical radius
+    double m;                   // Mass in code units
+    double r;                   // Physical radius in code units.
     double last_collision;      // Last time the particle had a physical collision.
     struct reb_treecell* c;     // Pointer to the cell the particle is currently in.
 #if !defined(_LP64)
-    char pad1[4];               // c is short by 4 bytes
+    char pad1[4];               // Padding. c is short by 4 bytes
 #endif
     const char* name;           // Pointer to a NULL terminated string with the particle's name.
 #if !defined(_LP64)
-    char pad2[4];               // ap is not padded to 8 bytes
+    char pad2[4];               // Padding. ap is not padded to 8 bytes
 #endif
     void* ap;                   // This pointer allows REBOUNDx to add additional properties to the particle.
 #if !defined(_LP64)
-    char pad3[4];               // ap is short by 4 bytes
+    char pad3[4];               // Padding. ap is short by 4 bytes
 #endif
     struct reb_simulation* sim; // Pointer to the parent simulation.
 #if !defined(_LP64)
-    char pad4[4];               // sim is short by 4 bytes
+    char pad4[4];               // Padding. sim is short by 4 bytes
 #endif
 };
 

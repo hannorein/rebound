@@ -9,9 +9,10 @@
  * the Model-View-Projection (MVP) paradigm. 
  *
  */
-#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include "rebound.h"
 
 struct reb_mat4df view0; // Initial view matrix
 double dt0;              // Initial timestep
