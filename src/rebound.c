@@ -22,6 +22,7 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h> // for offsetof()
 #include <sys/types.h>

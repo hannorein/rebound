@@ -31,6 +31,7 @@
 #define REB_RAND_MAX RAND_MAX
 #endif // _WIN32
 #include <stdint.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
 #include "rebound.h"

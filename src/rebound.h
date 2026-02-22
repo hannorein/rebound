@@ -26,6 +26,7 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+// Operating system specific options.
 // Windows requires special treatment.
 #ifdef _WIN64
 #define _LP64
@@ -51,8 +52,6 @@
 #define DLLEXPORT
 #endif // _WIN32
 
-#include <stdio.h>
-#include <inttypes.h>
 #include <stdint.h>
 #include <signal.h>
 #define _USE_MATH_DEFINES
