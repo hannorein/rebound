@@ -12,6 +12,7 @@
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 int main(int argc, char* argv[]) {
     // Let's use the WHFAST's built-in Kepler solver to move a single particle

@@ -78,9 +78,9 @@ struct reb_particle {
     double ay;
     double az;
     double m;                   // Mass in code units
-    double r;                   // Physical radius in code units.
-    double last_collision;      // Last time the particle had a physical collision.
-    struct reb_treecell* c;     // Pointer to the cell the particle is currently in.
+    double r;                   // Physical radius in code units
+    double last_collision;      // Last time the particle had a physical collision
+    struct reb_treecell* c;     // Pointer to the cell the particle is currently in
 #if !defined(_LP64)
     char pad1[4];               // Padding. c is short by 4 bytes
 #endif

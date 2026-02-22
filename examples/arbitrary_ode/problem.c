@@ -10,6 +10,7 @@
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 const double k = 1.; // Constants for the Harmonic Oscillator
 const double m = 1.;
