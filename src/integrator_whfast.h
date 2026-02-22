@@ -27,9 +27,16 @@
 
 #include "rebound.h"
 
-void reb_integrator_whfast_step(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
-void reb_whfast_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term
-int reb_integrator_whfast_init(struct reb_simulation* r);       ///< Init routine (also used by WHFast512)
+DLLEXPORT void reb_integrator_whfast_from_inertial(struct reb_simulation* const r);   // Used by REBOUNDx
+DLLEXPORT void reb_integrator_whfast_to_inertial(struct reb_simulation* const r); // Used by REBOUNDx
+DLLEXPORT void reb_integrator_whfast_reset(struct reb_simulation* r);		// Used by REBOUNDx
+DLLEXPORT int reb_integrator_whfast_init(struct reb_simulation* const r);    // Used by REBOUNDx, SABA
+DLLEXPORT void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, const double _dt);
+DLLEXPORT void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const double _dt);
+DLLEXPORT void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, const double _dt);
+DLLEXPORT void reb_integrator_whfast_com_step(const struct reb_simulation* const r, const double _dt);
+void reb_integrator_whfast_step(struct reb_simulation* r);
+void reb_integrator_whfast_synchronize(struct reb_simulation* r);
+void reb_integrator_whfast_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term
 
 #endif

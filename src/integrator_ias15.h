@@ -24,7 +24,8 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-void reb_integrator_ias15_step(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
+DLLEXPORT void reb_integrator_ias15_reset(struct reb_simulation* r);
+DLLEXPORT void reb_integrator_ias15_step(struct reb_simulation* r);
 void reb_integrator_ias15_synchronize(struct reb_simulation* r);   ///< Internal function used to call a specific integrator
 void reb_integrator_ias15_alloc(struct reb_simulation* r);         ///< Internal function, alloctes memory for IAS15 
 #endif

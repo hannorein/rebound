@@ -77,4 +77,6 @@ DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation
 DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
 DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p); // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 
+// Temporary. Function declarations needed by REBOUNDx 
+
 #endif // _REBOUND_INTERNAL_H

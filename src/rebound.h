@@ -853,6 +853,8 @@ struct reb_orbit {
 };
 // Calculates all orbital elements of the particle p, assuming gravitational constant G and the given primary.
 DLLEXPORT struct reb_orbit reb_orbit_from_particle(double G, struct reb_particle p, struct reb_particle primary);
+// Same as above but returns sets an error code if not successful.
+DLLEXPORT struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err);
 
 
 // ODE functions
@@ -1127,22 +1129,10 @@ enum reb_simulation_binary_error_codes {
 };
 
 
-DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r); // Used by REBOUNDx
-DLLEXPORT struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err);
 
 
 // Potentially useful API functions
+DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r); // Used by REBOUNDx
 DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
 
-// Temporary. Function declarations needed by REBOUNDx 
-DLLEXPORT void reb_integrator_ias15_reset(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
-DLLEXPORT void reb_integrator_ias15_step(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
-DLLEXPORT void reb_integrator_whfast_from_inertial(struct reb_simulation* const r);   ///< Internal function to the appropriate WHFast coordinates from inertial
-DLLEXPORT void reb_integrator_whfast_to_inertial(struct reb_simulation* const r); ///< Internal function to move back from particular WHFast coordinates to inertial
-DLLEXPORT void reb_integrator_whfast_reset(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-DLLEXPORT int reb_integrator_whfast_init(struct reb_simulation* const r);    ///< Internal function to check errors and allocate memory if needed
-DLLEXPORT void reb_whfast_interaction_step(struct reb_simulation* const r, const double _dt);///< Internal function
-DLLEXPORT void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
-DLLEXPORT void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
-DLLEXPORT void reb_whfast_com_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
 #endif // _MAIN_H
