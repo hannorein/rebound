@@ -534,17 +534,17 @@ struct reb_simulation {
     double megno_mean_t;    // mean of t
     double megno_mean_Y;    // mean of MEGNO Y
     double megno_initial_t; // Time when MENGO was initialized
-    int64_t   megno_n;         // number of covariance updates
+    int64_t megno_n;        // number of covariance updates
 
     unsigned int rand_seed; // seed for random number generator, used by MEGNO and other random number generators in REBOUND.
 
     // Simulationarchive. These variables should not be accessed directly. Use functions provided instead. 
-    int    simulationarchive_version;               // Version of the SA binary format (1=original/, 2=incremental)
+    int    simulationarchive_version;               // Version of the SA binary format (1,2=legacy format, 3=modern format)
     double simulationarchive_auto_interval;         // Current sampling cadence, in code units
     double simulationarchive_auto_walltime;         // Current sampling cadence, in wall time
-    uint64_t simulationarchive_auto_step; // Current sampling cadence, in time steps
+    uint64_t simulationarchive_auto_step;           // Current sampling cadence, in time steps
     double simulationarchive_next;                  // Next output time (simulation time or wall time, depending on whether auto_interval or auto_walltime is set)
-    uint64_t simulationarchive_next_step; // Next output step (only used if auto_steps is set)
+    uint64_t simulationarchive_next_step;           // Next output step (only used if auto_steps is set)
     char*  simulationarchive_filename;              // Name of output file
 
     // Available modules in REBOUND
@@ -636,9 +636,7 @@ DLLEXPORT struct reb_simulation* reb_simulation_create_from_file(char* filename,
 DLLEXPORT struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_simulationarchive* sa, int64_t snapshot);
 // Free simulation and all associated memory.
 DLLEXPORT void reb_simulation_free(struct reb_simulation* const r);
-// Only free memory in pointers of a simulation, but not the simulation itself.
-DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
-// Reset all integrator variables.
+// Reset all integrator variables. Use this to clear any precalculated data, e.g. after chaning the timestep.
 DLLEXPORT void reb_simulation_reset_integrator(struct reb_simulation* r);
 // Make a deep copy of simulation.
 DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
@@ -651,6 +649,7 @@ DLLEXPORT void reb_simulation_configure_box(struct reb_simulation* const r, cons
 DLLEXPORT int reb_simulation_start_server(struct reb_simulation* r, int port);
 // Stop webserver.
 DLLEXPORT void reb_simulation_stop_server(struct reb_simulation* r);
+
 
 // Errors, warnings
 
@@ -674,8 +673,6 @@ DLLEXPORT void reb_simulation_save_to_file_interval(struct reb_simulation* const
 DLLEXPORT void reb_simulation_save_to_file_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 // Schedule regular outputs to a file based on number of steps taken.
 DLLEXPORT void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step);
-// Write the simulation to a memory buffer (simulationarchive format).
-DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 // Output timing data to file. Appends file if it exists.
 DLLEXPORT void reb_simulation_output_timing(struct reb_simulation* r, const double tmax);
 // Output orbits to file. Appends file if it exists.
@@ -686,8 +683,7 @@ DLLEXPORT void reb_simulation_output_ascii(struct reb_simulation* r, char* filen
 DLLEXPORT void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 // Function to allow for periodic outputs in heartbeat function. See examples on how to use it.
 DLLEXPORT int reb_simulation_output_check(struct reb_simulation* r, double interval);
-// Write a screenshot of the current simulation to a file. Requires that a server was started with reb_simulation_start_server() and one client web browser is connected. 
-// Returns 1 if successful, otherwise.
+// Write a screenshot of the current simulation to a file. Requires that a server was started with reb_simulation_start_server() and one client web browser is connected. Returns 0 if successful.
 DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filename);
 
 

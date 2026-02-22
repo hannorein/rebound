@@ -94,7 +94,7 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
 #ifdef SERVER
     if (!r->server_data){
         reb_simulation_error(r, "To take a screenshot, call reb_simulation_start_server() and connect a web browser.");
-        return 0;
+        return 1;
     }
 
     r->server_data->status_before_screenshot = r->status;
@@ -136,20 +136,20 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
             free(r->server_data->screenshot);
             r->server_data->screenshot = 0;
             r->server_data->N_screenshot = 0;
-            return 0;
+            return 1;
         }else{
             fwrite(r->server_data->screenshot, r->server_data->N_screenshot, 1, f);
             fclose(f);
             free(r->server_data->screenshot);
             r->server_data->screenshot = 0;
             r->server_data->N_screenshot = 0;
-            return 1;
+            return 0; // Success
         }
     }
 #else //SERVER
     reb_simulation_error(r, "To take a screenshot compile with SERVER=1, call reb_simulation_start_server(), and connect with a web browser.");
 #endif //SERVER
-    return 0;
+    return 1;
 }
 
 

@@ -24,6 +24,7 @@
  */
 #ifndef _BINARYDATA_H
 #define _BINARYDATA_H
+#include <stdio.h>
 
 // Compares two simulations, stores difference in buffer.
 //
@@ -42,5 +43,8 @@ void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_s
 
 // Process any errors that might have occurred while reading binary data.
 struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings);
+
+// Write the simulation to a memory buffer (simulationarchive format).
+DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 
 #endif // _BINARYDATA_H

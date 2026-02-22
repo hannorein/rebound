@@ -25,7 +25,7 @@ void heartbeat(struct reb_simulation* const r){
         int id = r->steps_done/400;
         char filename[1024];
         sprintf(filename, "screenshot_%05d.png", id);
-        if (reb_simulation_output_screenshot(r, filename)){
+        if (reb_simulation_output_screenshot(r, filename)==0){ // Success?
             printf("Screenshot saved: %s\n", filename);
         }
     }

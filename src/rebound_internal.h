@@ -63,4 +63,7 @@ DLLEXPORT extern const unsigned int reb_favicon_len;
 DLLEXPORT extern const int reb_messages_max_length;
 DLLEXPORT extern const int reb_messages_max_N;
 
+// Only free memory in pointers of a simulation, but not the simulation itself.
+DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
+
 #endif // _REBOUND_INTERNAL_H

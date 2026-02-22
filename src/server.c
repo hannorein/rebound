@@ -28,9 +28,9 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include "server.h"
+#include "binarydata.h"
 
 #ifdef SERVER
-#include <stdio.h>
 #ifdef _MSC_VER 
 //not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw
 #define strncasecmp _strnicmp
