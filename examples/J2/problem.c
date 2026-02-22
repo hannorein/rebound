@@ -10,10 +10,10 @@
  * For arbitrary orientations and adding J4 contributions, use the 
  * gravitational_harmonics implementation in REBOUNDx.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 const double J2planet           = 16298e-6;         // J2 of Saturn (Murray and Dermott p 531)
 const double Mplanet            = 0.00028588598;    // mass of Saturn in solar masses
