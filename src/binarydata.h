@@ -35,7 +35,6 @@
 // - If set to 3, differences are written to bufp in a human readable form.
 //
 // returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
-
 int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
 
 // Read all fields from inf stream into r. 
@@ -47,7 +46,7 @@ struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r,
 // Write the simulation to a memory buffer (simulationarchive format).
 DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 
-
+// Possible datatypes for reb_binarydata_field.
 enum REB_BINARYDATA_DTYPE {
     REB_DOUBLE = 0,
     REB_INT = 1,

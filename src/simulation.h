@@ -41,4 +41,10 @@ DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy, 
 DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
 DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
 
+// Used for unit testing only.
+DLLEXPORT size_t reb_simulation_struct_size();
+
+// Python workaround for function pointer.
+DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c));
+
 #endif 	// SIMULATION_H

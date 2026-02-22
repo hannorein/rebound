@@ -55,6 +55,16 @@ struct reb_thread_info {
     double tmax;
 };
 
+// For unit tests to check if python struct has same size as c struct.
+size_t reb_simulation_struct_size(){
+    return sizeof(struct reb_simulation);
+}
+
+// Workaround for setting a pythong callback function. 
+void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)){
+    r->collision_resolve = resolve;
+}
+
 // One bare timestep. Without heartbeat.
 static void reb_simulation_step(struct reb_simulation* const r);
 

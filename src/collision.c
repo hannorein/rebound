@@ -494,12 +494,6 @@ void reb_collision_search(struct reb_simulation* const r){
     }
 }
 
-/**
- * @brief Workaround for python setters.
- **/
-void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)){
-    r->collision_resolve = resolve;
-}
 
 /**
  * @brief Find the nearest neighbour in a cell or its daughters.
