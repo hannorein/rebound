@@ -25,5 +25,11 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
+void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
+
+// Only free memory in pointers of a simulation, but not the simulation itself.
+DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
+
 
 #endif 	// SIMULATION_H

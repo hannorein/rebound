@@ -42,6 +42,7 @@
 #include "display.h"
 #include "output.h"
 #include "integrator.h"
+#include "simulation.h"
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 
 static void reb_display_set_default_view(struct reb_simulation* const r, struct reb_display_settings* s){

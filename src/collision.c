@@ -33,6 +33,7 @@
 #include "rebound_internal.h"
 #include <math.h>
 #include "particle.h"
+#include "simulation.h"
 #include "collision.h"
 #include "boundary.h"
 #include "tree.h"

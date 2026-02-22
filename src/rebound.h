@@ -709,8 +709,6 @@ DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, 
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but subtract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
-// Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
-DLLEXPORT void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
 
 
 // Diangnostic functions
