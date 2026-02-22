@@ -25,8 +25,8 @@
  *
  */
 
-#include "transformations.h"
 #include "rebound.h"
+#include "transformations.h"
 
 /******************************
  * Jacobi */

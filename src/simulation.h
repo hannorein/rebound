@@ -34,5 +34,7 @@ DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
 // Used internally and by python. Should not be called by the user.
 DLLEXPORT void reb_simulation_init(struct reb_simulation* r); 
 
+// Used from python and for display.
+DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings);
 
 #endif 	// SIMULATION_H

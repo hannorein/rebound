@@ -86,10 +86,14 @@ struct reb_binary_field { // This structure is used to save and load binary file
     uint64_t size;  // Size in bytes of field (only counting what follows, not the binary field, itself).
 };
 
-// Used by python for testing.
+// Used by python.
 DLLEXPORT extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[]; // List of blobs. Implemented in output.c
 DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(int type);
 DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
+DLLEXPORT void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum reb_simulation_binary_error_codes* warnings);
+DLLEXPORT void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings);
+DLLEXPORT void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings);
+DLLEXPORT void reb_simulationarchive_free_pointers(struct reb_simulationarchive* sa);
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.
 void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_simulation_binary_error_codes* warnings); ///< Internal function to read one snapshot from a simulationarchive.
