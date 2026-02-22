@@ -486,7 +486,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
     reb_boundary_check(r);     
     if (r->tree_needs_update){
         // Update tree (this will remove particles which left the box)
-        reb_simulation_update_tree(r);          
+        reb_tree_update(r);          
     }
     PROFILING_STOP(PROFILING_CAT_BOUNDARY);
 

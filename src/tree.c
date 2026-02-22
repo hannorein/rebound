@@ -163,7 +163,7 @@ static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r
  * @param r REBOUND simulation to operate on
  * @param node is the pointer to a node cell
  */
-static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulation* const r, struct reb_treecell *node){
+static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r, struct reb_treecell *node){
     int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
     if (node == NULL) {
         return NULL;
@@ -171,7 +171,7 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
     // Non-leaf nodes	
     if (node->pt < 0) {
         for (int o=0; o<8; o++) {
-            node->oct[o] = reb_simulation_update_tree_cell(r, node->oct[o]);
+            node->oct[o] = reb_tree_update_cell(r, node->oct[o]);
         }
         node->pt = 0;
         for (int o=0; o<8; o++) {
@@ -222,7 +222,7 @@ static struct reb_treecell *reb_simulation_update_tree_cell(struct reb_simulatio
 /**
  * @brief The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
  */
-static void reb_simulation_update_tree_gravity_data_in_cell(const struct reb_simulation* const r, struct reb_treecell *node){
+static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* const r, struct reb_treecell *node){
 #ifdef QUADRUPOLE
     node->mxx = 0;
     node->mxy = 0;
@@ -240,7 +240,7 @@ static void reb_simulation_update_tree_gravity_data_in_cell(const struct reb_sim
         for (int o=0; o<8; o++) {
             struct reb_treecell* d = node->oct[o];
             if (d!=NULL){
-                reb_simulation_update_tree_gravity_data_in_cell(r, d);
+                reb_tree_update_gravity_data_in_cell(r, d);
                 // Calculate the total mass and the center of mass
                 double d_m = d->m;
                 node->mx += d->mx*d_m;
@@ -284,13 +284,13 @@ static void reb_simulation_update_tree_gravity_data_in_cell(const struct reb_sim
     }
 }
 
-void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r){
+void reb_tree_update_gravity_data(struct reb_simulation* const r){
     for(int i=0;i<r->N_root;i++){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
             if (r->tree_root[i]!=NULL){
-                reb_simulation_update_tree_gravity_data_in_cell(r, r->tree_root[i]);
+                reb_tree_update_gravity_data_in_cell(r, r->tree_root[i]);
             }
 #ifdef MPI
         }
@@ -298,7 +298,7 @@ void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r){
     }
 }
 
-void reb_simulation_update_tree(struct reb_simulation* const r){
+void reb_tree_update(struct reb_simulation* const r){
     if (r->tree_root==NULL){
         r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
     }
@@ -307,7 +307,7 @@ void reb_simulation_update_tree(struct reb_simulation* const r){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
-            r->tree_root[i] = reb_simulation_update_tree_cell(r, r->tree_root[i]);
+            r->tree_root[i] = reb_tree_update_cell(r, r->tree_root[i]);
 #ifdef MPI
         }
 #endif // MPI

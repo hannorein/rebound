@@ -207,7 +207,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
         // Check for root crossings.
         reb_boundary_check(r);     
         // Update tree (this will remove particles which left the box)
-        reb_simulation_update_tree(r);          
+        reb_tree_update(r);          
     }
 
 #ifdef MPI
@@ -217,7 +217,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 
     if (r->tree_root!=NULL && r->gravity==REB_GRAVITY_TREE){
         // Update center of mass and quadrupole moments in tree in preparation of force calculation.
-        reb_simulation_update_tree_gravity_data(r); 
+        reb_tree_update_gravity_data(r); 
 #ifdef MPI
         // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
         reb_tree_prepare_essential_tree_for_gravity(r);

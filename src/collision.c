@@ -240,7 +240,7 @@ void reb_collision_search(struct reb_simulation* const r){
             {
                 // Update and simplify tree. 
                 // Prepare particles for distribution to other nodes. 
-                reb_simulation_update_tree(r);          
+                reb_tree_update(r);          
 
 #ifdef MPI
                 // Distribute particles and add newly received particles to tree.
@@ -318,7 +318,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 double maxdrift = r->dt_last_done*sqrt(vmax2);
                 // Update and simplify tree. 
                 // Prepare particles for distribution to other nodes. 
-                reb_simulation_update_tree(r);          
+                reb_tree_update(r);          
 
                 // Loop over ghost boxes, but only the inner most ring.
                 int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);

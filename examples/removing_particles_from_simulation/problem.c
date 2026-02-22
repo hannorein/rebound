@@ -19,7 +19,7 @@ void print_names(struct reb_simulation* r){
 
 int main(int argc, char* argv[]){
     // Note that when using a tree (for gravity calculation or collision search), you need
-    // to call reb_simulation_update_tree(r) after removing particles. Only then is the particle
+    // to call reb_tree_update(r) after removing particles. Only then is the particle
     // removed. This helps avoiding to rebuild the tree multiple times if more than one
     // particle is removed at the same time.
     struct reb_simulation* r = reb_simulation_create();

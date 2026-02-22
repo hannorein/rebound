@@ -369,7 +369,7 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
     // Check boundaries and update tree if needed
     reb_boundary_check(r);     
     if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-        reb_simulation_update_tree(r);          
+        reb_tree_update(r);          
     }
 #ifdef MPI
     reb_communication_mpi_distribute_particles(r);
