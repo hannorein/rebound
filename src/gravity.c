@@ -29,9 +29,9 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
-#include "particle.h"
 #include "rebound.h"
+#include "rebound_internal.h"
+#include "particle.h"
 #include "output.h"
 #include "tree.h"
 #include "boundary.h"

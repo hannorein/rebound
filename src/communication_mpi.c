@@ -34,10 +34,9 @@
  *
  */
 #ifdef MPI
-#include <stdlib.h>
 #include <mpi.h>
-#include "particle.h"
 #include "rebound.h"
+#include "particle.h"
 #include "tree.h"
 #include "boundary.h"
 #include "communication_mpi.h"

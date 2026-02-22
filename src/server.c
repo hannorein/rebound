@@ -51,7 +51,6 @@
 #include <sys/mman.h>
 #include <netinet/in.h>
 #endif // _WIN32
-#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>

@@ -34,7 +34,6 @@
  *
  */
 
-#include <stdlib.h>
 #include <string.h>
 // Uncomment the following line to generate numerical constants with extended precision.
 //#define GENERATE_CONSTANTS

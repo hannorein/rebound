@@ -23,7 +23,6 @@
  *
  */
 
-#include <stdlib.h>
 #include <string.h>
 #include "rebound.h"
 #include "integrator.h"

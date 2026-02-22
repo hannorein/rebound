@@ -22,14 +22,14 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "particle.h"
 #include "rebound.h"
+#include "rebound_internal.h"
+#include "particle.h"
 #include "fmemopen.h"
 #include "binarydata.h"
 #include "output.h"

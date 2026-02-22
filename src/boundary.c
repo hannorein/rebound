@@ -26,10 +26,9 @@
  *
  */
 
-#include <stdlib.h>
+#include "rebound.h"
 #include "particle.h"
 #include "integrator.h"
-#include "rebound.h"
 #include "boundary.h"
 #include "tree.h"
 

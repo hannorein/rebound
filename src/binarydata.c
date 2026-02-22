@@ -23,12 +23,12 @@
  *
  */
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include "particle.h"
 #include "rebound.h"
+#include "rebound_internal.h"
+#include "particle.h"
 #include "tools.h"
 #include "tree.h"
 #include "output.h"

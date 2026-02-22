@@ -49,4 +49,18 @@ int rand_r (unsigned int *seed);
 #define GITHASH notavailable0000000000000000000000000001 
 #endif
 
+// Graceful global interrupt handler 
+#include <signal.h>
+extern volatile sig_atomic_t reb_sigint;  
+
+// Global constants and variables
+DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.
+DLLEXPORT extern const char* reb_version_str; ///< Version string.
+DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
+DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
+DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
+DLLEXPORT extern const unsigned int reb_favicon_len;
+DLLEXPORT extern const int reb_messages_max_length;
+DLLEXPORT extern const int reb_messages_max_N;
+
 #endif // _REBOUND_INTERNAL_H

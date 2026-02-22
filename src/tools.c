@@ -22,7 +22,6 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
 #define strtok_r strtok_s

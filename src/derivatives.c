@@ -22,7 +22,6 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
 #include "rebound.h"
 #include "tools.h"
 #include "derivatives.h"

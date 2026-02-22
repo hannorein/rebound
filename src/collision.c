@@ -29,10 +29,10 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
+#include "rebound.h"
+#include "rebound_internal.h"
 #include "particle.h"
 #include "collision.h"
-#include "rebound.h"
 #include "boundary.h"
 #include "tree.h"
 #include "integrator_trace.h"

@@ -52,22 +52,11 @@
 #define DLLEXPORT
 #endif // _WIN32
 
+#include <stdlib.h>
 #include <stdint.h>
-#include <signal.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-
-// Global constants and variables
-DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.
-DLLEXPORT extern const char* reb_version_str; ///< Version string.
-DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
-DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
-DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
-DLLEXPORT extern const unsigned int reb_favicon_len;
-DLLEXPORT extern const int reb_messages_max_length;
-DLLEXPORT extern const int reb_messages_max_N;
-extern volatile sig_atomic_t reb_sigint;  ///< Graceful global interrupt handler 
 
 // Forward declarations
 struct reb_simulationarchive;   // Opaque pointer. Implemented in simulationarchive.h

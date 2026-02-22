@@ -51,7 +51,6 @@
  *
  */
 
-#include <stdlib.h>
 #include <string.h> // memset
 #include <float.h> // for DBL_MAX
 #include "rebound.h"

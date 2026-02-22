@@ -23,9 +23,8 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdlib.h>
-#include "particle.h"
 #include "rebound.h"
+#include "particle.h"
 #include "boundary.h"
 #include "tree.h"
 #ifdef MPI

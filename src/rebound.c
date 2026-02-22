@@ -23,7 +23,6 @@
  *
  */
 #include <stdio.h>
-#include <stdlib.h>
 #include <stddef.h> // for offsetof()
 #include <sys/types.h>
 #include <errno.h>
