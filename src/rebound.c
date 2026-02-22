@@ -29,6 +29,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "integrator.h"
 #include "boundary.h"
 #include "gravity.h"
