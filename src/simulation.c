@@ -24,6 +24,9 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#ifdef MPI
+#include <mpi.h>
+#endif // MPI
 #include "rebound.h"
 #include "rebound_internal.h"
 #include "tree.h"
