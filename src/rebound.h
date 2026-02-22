@@ -764,6 +764,9 @@ DLLEXPORT void reb_particle_imul(struct reb_particle* p1, double value);
 DLLEXPORT double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
 // Compares two particles, ignoring pointers. Returns 1 if particles differ, 0 if they are exactly equal.
 DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
+// Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). Set r=NULL unless variational particles are used. Returns 0 on success, 1 if timestep is too large. 
+DLLEXPORT int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
+
 
 
 // Chaos indicators
@@ -1129,9 +1132,5 @@ enum reb_simulation_binary_error_codes {
     REB_SIMULATION_BINARY_WARNING_CORRUPTFILE = 512,
     REB_SIMULATION_BINARY_ERROR_OLD = 1024,
 };
-
-// Potentially useful API functions
-//DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
-DLLEXPORT int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double M, double _dt, const struct reb_simulation* const r);
 
 #endif // _MAIN_H

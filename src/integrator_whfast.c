@@ -160,16 +160,16 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
  * Keplerian motion for one planet                       *
  * Returns 0 on success. 1 if timestep is too large.     *
  * r only needed for variational particles. Can be NULL. */
-int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double M, double _dt, const struct reb_simulation* const r){
+int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
     int timestep_too_large = 0;
 
     const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
     const double r0i = 1./r0;
     const double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
-    const double beta = 2.*M*r0i - v2;
+    const double beta = 2.*mu*r0i - v2;
     const double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
-    const double zeta0 = M - beta*r0;
+    const double zeta0 = mu - beta*r0;
     double X;
     double Gs[6]; 
     double invperiod=0;  // only used for beta>0. Set to 0 only to suppress compiler warnings.
@@ -178,18 +178,18 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
     if (beta>0.){
         // Elliptic orbit
         const double sqrt_beta = sqrt(beta);
-        invperiod = sqrt_beta*beta/(2.*M_PI*M);
+        invperiod = sqrt_beta*beta/(2.*M_PI*mu);
         X_per_period = 2.*M_PI/sqrt_beta;
-        if (fabs(_dt)*invperiod>1.){
+        if (fabs(dt)*invperiod>1.){
             timestep_too_large = 1;
         }
 
-        //X = _dt*invperiod*X_per_period; // first order guess 
-        const double dtr0i = _dt*r0i;
+        //X = dt*invperiod*X_per_period; // first order guess 
+        const double dtr0i = dt*r0i;
         //X = dtr0i; // first order guess
         X = dtr0i * (1. - dtr0i*eta0*0.5*r0i); // second order guess
                                                //X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
-                                               //X = _dt*beta/M + eta0/M*(0.85*sqrt(1.+zeta0*zeta0/beta/eta0/eta0) - 1.);  // Dan's version 
+                                               //X = dt*beta/mu + eta0/mu*(0.85*sqrt(1.+zeta0*zeta0/beta/eta0/eta0) - 1.);  // Dan's version 
     }else{
         // Hyperbolic orbit
         X = 0.; // Initial guess 
@@ -202,18 +202,18 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
     stiefel_Gs3(Gs, beta, X);
     const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
     double ri = 1./(r0 + eta0Gs1zeta0Gs2);
-    X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+    X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
 
     // Choose solver depending on estimated step size
     // Note, for hyperbolic orbits this uses Newton's method.
     if(fastabs(X-oldX) > 0.01*X_per_period){
         // Quartic solver
         // Linear initial guess
-        X = beta*_dt/M;
+        X = beta*dt/mu;
         double prevX[WHFAST_NMAX_QUART+1];
         for(int n_lag=1; n_lag < WHFAST_NMAX_QUART; n_lag++){
             stiefel_Gs3(Gs, beta, X);
-            const double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - _dt;
+            const double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - dt;
             const double fp = r0 + eta0*Gs[1] + zeta0*Gs[2];
             const double fpp = eta0*Gs[0] + zeta0*Gs[1];
             const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
@@ -239,7 +239,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
             stiefel_Gs3(Gs, beta, X);
             const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
             ri = 1./(r0 + eta0Gs1zeta0Gs2);
-            X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+_dt);
+            X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
 
             if (X==oldX||X==oldX2){
                 // Converged. Exit.
@@ -254,20 +254,20 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
         double X_min, X_max;
         if (beta>0.){
             //Elliptic
-            X_min = X_per_period * floor(_dt*invperiod);
+            X_min = X_per_period * floor(dt*invperiod);
             X_max = X_min + X_per_period;
         }else{
             //Hyperbolic
             double h2 = r0*r0*v2-eta0*eta0;
-            double q = h2/M/(1.+sqrt(1.-h2*beta/(M*M)));
-            double vq = copysign( sqrt(h2)/q, _dt);
+            double q = h2/mu/(1.+sqrt(1.-h2*beta/(mu*mu)));
+            double vq = copysign( sqrt(h2)/q, dt);
             // X_max and X_min correspond to dt/r_min and dt/r_max
             // which are reachable in this timestep
-            // r_max = vq*_dt+r0
+            // r_max = vq*dt+r0
             // r_min = pericenter
-            X_min = _dt/(fastabs(vq*_dt)+r0); 
-            X_max = _dt/q;
-            if (_dt<0.){
+            X_min = dt/(fastabs(vq*dt)+r0); 
+            X_max = dt/q;
+            if (dt<0.){
                 double temp = X_min;
                 X_min = X_max;
                 X_max = temp;
@@ -276,7 +276,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
         X = (X_max + X_min)/2.;
         do{
             stiefel_Gs3(Gs, beta, X);
-            double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-_dt;
+            double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-dt;
             if (s>=0.){
                 X_max = X;
             }else{
@@ -296,10 +296,10 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
     }
 
     // Note: These are not the traditional f and g functions.
-    double f = -M*Gs[2]*r0i;
-    double g = _dt - M*Gs[3];
-    double fd = -M*Gs[1]*r0i*ri; 
-    double gd = -M*Gs[2]*ri; 
+    double f = -mu*Gs[2]*r0i;
+    double g = dt - mu*Gs[3];
+    double fd = -mu*Gs[1]*r0i*ri; 
+    double gd = -mu*Gs[2]*ri; 
 
     p->x += f*p1.x + g*p1.vx;
     p->y += f*p1.y + g*p1.vy;
@@ -316,7 +316,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
         stiefel_Gs(Gs, beta, X);    // Recalculate (to get Gs[4] and Gs[5])
         struct reb_particle dp1 = *(p + index);
         double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
-        double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
+        double dbeta = -2.*mu*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
         double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
             + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
         double dzeta0 = -beta*dr0 - r0*dbeta;
@@ -329,10 +329,10 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double
         double dG2 = Gs[1]*dX + G2beta*dbeta;
         double dG3 = Gs[2]*dX + G3beta*dbeta;
         double dr = dr0 + Gs[1]*deta0 + Gs[2]*dzeta0 + eta0*dG1 + zeta0*dG2;
-        double df = M*Gs[2]*dr0*r0i*r0i - M*dG2*r0i;
-        double dg = -M*dG3;
-        double dfd = -M*dG1*r0i*ri + M*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
-        double dgd = -M*dG2*ri + M*Gs[2]*dr*ri*ri;
+        double df = mu*Gs[2]*dr0*r0i*r0i - mu*dG2*r0i;
+        double dg = -mu*dG3;
+        double dfd = -mu*dG1*r0i*ri + mu*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
+        double dgd = -mu*dG2*ri + mu*Gs[2]*dr*ri*ri;
 
         (p+index)->x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
         (p+index)->y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
