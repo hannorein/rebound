@@ -55,7 +55,8 @@ struct reb_thread_info {
     double tmax;
 };
 
-
+// One bare timestep. Without heartbeat.
+static void reb_simulation_step(struct reb_simulation* const r);
 
 struct reb_simulation* reb_simulation_create(){
     struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
@@ -451,7 +452,7 @@ void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
         run_heartbeat(r);
     }
 }
-void reb_simulation_step(struct reb_simulation* const r){
+static void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);

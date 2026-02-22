@@ -636,7 +636,7 @@ DLLEXPORT struct reb_simulation* reb_simulation_create_from_file(char* filename,
 DLLEXPORT struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_simulationarchive* sa, int64_t snapshot);
 // Free simulation and all associated memory.
 DLLEXPORT void reb_simulation_free(struct reb_simulation* const r);
-// Reset all integrator variables. Use this to clear any precalculated data, e.g. after chaning the timestep.
+// Reset all integrator variables. Use this to clear any precalculated data, e.g. after changing the timestep.
 DLLEXPORT void reb_simulation_reset_integrator(struct reb_simulation* r);
 // Make a deep copy of simulation.
 DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
@@ -689,8 +689,6 @@ DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const c
 
 // Timestepping
 
-// Advance simulation by 1 timestep.
-DLLEXPORT void reb_simulation_step(struct reb_simulation* const r);
 // Advance simulation by N_steps timesteps.
 DLLEXPORT void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps);
 // Integrate simulation to at least time tmax (see exact_finish_time).

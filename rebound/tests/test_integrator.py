@@ -25,7 +25,7 @@ class TestIntegratorWHFastHyper(unittest.TestCase):
         sim.add(m=0.,x=1.,vy=100000.)
         sim.integrator = "whfast"
         sim.dt = 1.234567
-        sim.step()
+        sim.steps(1)
         y = sim.particles[1].y
         ys = 1.234567*100000.
         self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-10)

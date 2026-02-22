@@ -29,7 +29,7 @@ class TestIntegrator(unittest.TestCase):
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
         self.sim.integrate(1e3)
-        self.sim.step()
+        self.sim.steps(1)
         e1 = self.sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),3e-6)
 
@@ -40,7 +40,7 @@ class TestIntegrator(unittest.TestCase):
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
         self.sim.integrate(1e3)
-        self.sim.step()
+        self.sim.steps(1)
         e1 = self.sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e-9)
     
@@ -51,7 +51,7 @@ class TestIntegrator(unittest.TestCase):
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
         self.sim.integrate(1e3)
-        self.sim.step()
+        self.sim.steps(1)
         e1 = self.sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1),1e13)
     
@@ -59,7 +59,7 @@ class TestIntegrator(unittest.TestCase):
         self.sim.integrator = "leapfrog"
         self.sim.ri_leapfrog.order = 42
         with self.assertRaises(RuntimeError):
-            self.sim.step()
+            self.sim.steps(1)
 
 if __name__ == "__main__":
     unittest.main()

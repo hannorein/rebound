@@ -8,7 +8,7 @@ class TestPickle(unittest.TestCase):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1,a=1)
-        sim.step()
+        sim.steps(1)
         
         with open("test.pickle", "wb") as f:
             pickle.dump(sim, f)
@@ -17,15 +17,15 @@ class TestPickle(unittest.TestCase):
             sim2 = pickle.load(f)
 
         self.assertEqual(sim,sim2)
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
         self.assertEqual(sim,sim2)
     
     def test_pickle_warning(self):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.collision_resolve = "merge"
-        sim.step()
+        sim.steps(1)
         
         with open("test.pickle", "wb") as f:
             pickle.dump(sim, f)
@@ -38,15 +38,15 @@ class TestPickle(unittest.TestCase):
             self.assertEqual(1, len(w)) 
         self.assertNotEqual(sim,sim2)
         sim2.collision_resolve = "merge"
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
         self.assertEqual(sim,sim2)
 
     def test_pickle_particle(self):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1,a=1)
-        sim.step()
+        sim.steps(1)
         
         with open("test.pickle", "wb") as f:
             pickle.dump(sim.particles[1], f)

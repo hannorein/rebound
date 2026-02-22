@@ -34,7 +34,7 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.ri_janus.safe_mode = 0
             sim.ri_janus.scale_pos = 1e-16
             sim.ri_janus.scale_vel = 1e-16
-            sim.step()
+            sim.steps(1)
             t0 = sim.t
 
             x1, x2 = sim.particles[1].x, sim.particles[2].x

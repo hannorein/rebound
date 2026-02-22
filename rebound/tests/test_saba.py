@@ -97,10 +97,10 @@ class TestIntegratorSABA(unittest.TestCase):
         sim.dt = 0.0123235235*sim.particles[1].P  
         steps = 10
         for i in range(steps):
-            sim.step()
+            sim.steps(1)
         sim.dt *= -1
         for i in range(steps):
-            sim.step()
+            sim.steps(1)
         for i in range(sim.N):
             self.assertLess(math.fabs(sim0.particles[i].x-sim.particles[i].x),maxerror)
     
@@ -109,10 +109,10 @@ class TestIntegratorSABA(unittest.TestCase):
         sim = rebound.Simulation()
         rebound.data.add_outer_solar_system(sim)
         sim.integrator = integrator
-        sim.step()
+        sim.steps(1)
         sim2 = sim.copy()
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
         self.assertEqual(sim,sim2)
     
 def create_test_sabasettings1(s):

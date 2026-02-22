@@ -62,13 +62,13 @@ Rather than integrating up to a fixed time, you can also advance the simulation 
     ```c
     struct reb_simulation* r = reb_simulation_create();
     // ... setup simulation, set timestep ...
-    reb_simulation_step(r);
+    reb_simulation_steps(r,1);
     ```
 === "Python"
     ```python
     sim = rebound.Simulation()
     # ... setup simulation, set timestep ...
-    sim.step()
+    sim.steps(1)
     ```
 
 ## Multiple steps

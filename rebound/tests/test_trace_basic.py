@@ -15,7 +15,7 @@ class TestIntegratorTraceBasic(unittest.TestCase):
         sim.dt = 0.14 
 
         for k in range(3):
-            sim.step()
+            sim.steps(1)
             self.assertEqual(sim.ri_trace._current_C,0)
             self.assertEqual(sim.ri_trace._encounter_N,3)
             self.assertEqual(sim.ri_trace._encounter_N_active,3)
@@ -29,7 +29,7 @@ class TestIntegratorTraceBasic(unittest.TestCase):
         # Change condition. No more encounters.
         sim.ri_trace.r_crit_hill = 0.1
         for k in range(3):
-            sim.step()
+            sim.steps(1)
             self.assertEqual(sim.ri_trace._current_C,0)
             self.assertEqual(sim.ri_trace._encounter_N,1)
             for i in range(sim.N):
@@ -44,7 +44,7 @@ class TestIntegratorTraceBasic(unittest.TestCase):
         sim.integrator = "TRACE"
         sim.dt = 0.01
         sim.ri_trace.r_crit_hill = 1
-        sim.step()
+        sim.steps(1)
         
         self.assertEqual(sim.ri_trace._encounter_N,3)
 

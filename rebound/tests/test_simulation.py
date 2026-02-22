@@ -66,8 +66,8 @@ class TestSimulation(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.sim.remove("-99334")
     
-    def test_step(self):
-        self.sim.step()
+    def test_steps(self):
+        self.sim.steps(1)
         self.assertNotEqual(self.sim.t, 1.246)
 
     def test_configure_box(self):

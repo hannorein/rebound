@@ -105,11 +105,9 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
         sim.ri_whfast.kernel = kernel
         sim.dt = 0.0123235235*sim.particles[1].P  
         steps = 10
-        for i in range(steps):
-            sim.step()
+        sim.steps(steps)
         sim.dt *= -1
-        for i in range(steps):
-            sim.step()
+        sim.steps(steps)
         for i in range(sim.N):
             if corrector:
                 self.assertLess(math.fabs(sim0.particles[i].x-sim.particles[i].x),2e-11)
@@ -122,10 +120,10 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
         sim.ri_whfast.corrector = corrector 
         sim.ri_whfast.corrector2 = corrector2
         sim.ri_whfast.kernel = kernel
-        sim.step()
+        sim.steps(1)
         sim2 = sim.copy()
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
         self.assertEqual(sim,sim2)
 
 def create_test_whfastsettings1(s):

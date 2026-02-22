@@ -37,7 +37,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "jacobi"
         sim.dt = 1.234567
-        sim.step()
+        sim.steps(1)
         y = sim.particles[1].y
         ys = 1.234567*100000.
         self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-15)
@@ -228,7 +228,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.integrator = "whfast"
         sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 1.234567
-        sim.step()
+        sim.steps(1)
         y = sim.particles[1].y
         ys = 1.234567*100000.
         self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-15)
@@ -315,11 +315,9 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.0512*yr
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         sim.dt *= -1
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         x1 = sim.particles[1].x
         v1 = sim.particles[1].vx
         e1 = sim.energy()
@@ -337,11 +335,9 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         e0 = sim.energy()
         yr = sim.particles[1].P
         sim.dt = 0.0512*yr
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         sim.dt *= -1
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         x1 = sim.particles[1].x
         v1 = sim.particles[1].vx
         e1 = sim.energy()

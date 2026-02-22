@@ -100,8 +100,8 @@ class TestIntegratorTrace(unittest.TestCase):
         p.x += 0.01
         p.m = 0
         sim.add(p)
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
 
         self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
         self.assertEqual(sim.particles[1].vx,sim2.particles[1].vx)
