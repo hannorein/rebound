@@ -727,9 +727,10 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
         functionpointersused = 1;
     }
 
+    struct reb_binarydata_field_descriptor fd_fp = reb_binarydata_field_descriptor_for_name("functionpointers");
     struct reb_binary_field field_functionp;
     memset(&field_functionp,0,sizeof(struct reb_binary_field));
-    field_functionp.type = 87; // TODO do not hardcode. 
+    field_functionp.type = fd_fp.type; 
     field_functionp.size = sizeof(int);
     write_to_stream(bufp, &allocatedsize, sizep, &field_functionp, sizeof(struct reb_binary_field));
     write_to_stream(bufp, &allocatedsize, sizep, &functionpointersused, field_functionp.size);
