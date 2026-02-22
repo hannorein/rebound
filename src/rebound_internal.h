@@ -43,10 +43,6 @@ int rand_r (unsigned int *seed);
 #include <pthread.h>
 #endif // _WIN32
 
-// Windows (MVSC) does not include math constants by default.
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 // Githash should be provided as a command line argument to the compiler. 
 // If not, use this dummy.
 #ifndef GITHASH

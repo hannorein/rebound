@@ -24,16 +24,17 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "rebound.h"
+#include "rebound_internal.h"
 #define DEG2RAD (M_PI/180.)
 #include <stdio.h>
+#include <math.h>
 #ifndef _WIN32
 #include <pthread.h>
 #endif // _WIN32
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include "rebound.h"
-#include "rebound_internal.h"
 #include "display.h"
 #include "tools.h"
 #include "particle.h"

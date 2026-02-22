@@ -40,9 +40,10 @@
 #define FMFT_NEAR 0.      /* MFT OVERLAP EXCLUSION PARAMETER */
 #define FMFT_MAX_REMOVE 64/* MFT MAXIMUM NUMBER OF FREQUENCY TO REMOVE FROM SIGNAL BEFORE GIVING UP */
 
-#include <stdio.h>
 #include "rebound.h"
 #include "rebound_internal.h"
+#include <stdio.h>
+#include <math.h>
 
 #define TWOPI (2.*M_PI)
 

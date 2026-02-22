@@ -22,19 +22,20 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <string.h>
 #ifdef _WIN32
 #define strtok_r strtok_s
 #define REB_RAND_MAX 2147483647  // INT_MAX
 #else // Linux and MacOS
 #define REB_RAND_MAX RAND_MAX
 #endif // _WIN32
+#include "rebound.h"
+#include "rebound_internal.h"
 #include <stdint.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
-#include "rebound.h"
-#include "rebound_internal.h"
+#include <string.h>
 #include "particle.h"
 #include "tools.h"
 #include "tree.h"

@@ -24,9 +24,10 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdio.h>
 #include "rebound.h"
 #include "rebound_internal.h"
+#include <stdio.h>
+#include <math.h>
 #include "tools.h"
 
 // reb_vec3d manipulation functions

@@ -34,15 +34,16 @@
  *
  */
 
+#include "rebound.h"
+#include "rebound_internal.h"
 #include <string.h>
+#include <math.h>
 // Uncomment the following line to generate numerical constants with extended precision.
 //#define GENERATE_CONSTANTS
 #ifdef GENERATE_CONSTANTS
 #include <gmp.h>
 void integrator_generate_constants(void);
 #endif // GENERATE_CONSTANTS
-#include "rebound.h"
-#include "rebound_internal.h"
 #include "particle.h"
 #include "gravity.h"
 #include "tools.h"

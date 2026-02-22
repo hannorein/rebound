@@ -22,11 +22,12 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "rebound.h"
+#include "rebound_internal.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "rebound.h"
-#include "rebound_internal.h"
+#include <math.h>
 #include "tree.h"
 #include "boundary.h"
 #include "particle.h"

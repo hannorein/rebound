@@ -28,6 +28,7 @@
 
 #include "rebound.h"
 #include "rebound_internal.h"
+#include <math.h>
 #include "particle.h"
 #include "integrator.h"
 #include "boundary.h"

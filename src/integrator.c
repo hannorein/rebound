@@ -24,9 +24,10 @@
  *
  */
 
-#include <string.h>
 #include "rebound.h"
 #include "rebound_internal.h"
+#include <string.h>
+#include <math.h>
 #include "gravity.h"
 #include "tree.h"
 #include "boundary.h"

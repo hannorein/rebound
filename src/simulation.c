@@ -22,13 +22,14 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "rebound.h"
+#include "rebound_internal.h"
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #ifdef MPI
 #include <mpi.h>
 #endif // MPI
-#include "rebound.h"
-#include "rebound_internal.h"
 #include "tree.h"
 #include "particle.h"
 #include "simulation.h"

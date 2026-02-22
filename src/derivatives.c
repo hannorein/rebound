@@ -24,6 +24,7 @@
  */
 #include "rebound.h"
 #include "rebound_internal.h"
+#include <math.h>
 #include "tools.h"
 #include "derivatives.h"
 
