@@ -732,8 +732,6 @@ DLLEXPORT double reb_integrator_ias15_timescale(struct reb_simulation* r);
 DLLEXPORT void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt);
 // Use this function to add a particle to a simulation using orbital parameters or cartesian coordinates. See examples on usage.
 DLLEXPORT void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...);
-// Same as reb_simulation_add_fmt() but returns the particle instead of adding it to the simulation. Still need simulation for G, center of mass, etc.
-DLLEXPORT struct reb_particle reb_particle_from_fmt(struct reb_simulation* r, const char* fmt, ...);    
 // This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius. Particles get added to simulation.
 DLLEXPORT void reb_simulation_add_plummer(struct reb_simulation* r, int _N, double M, double R); 
 // Returns a particle given a set of orbital parameters. Also sets err to error code if initialization failed.

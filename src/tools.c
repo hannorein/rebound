@@ -677,23 +677,6 @@ void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
     }
 }
 
-struct reb_particle reb_particle_from_fmt(struct reb_simulation* r, const char* fmt, ...){
-    int err = 0;
-
-    va_list args;
-    va_start(args, fmt);
-    struct reb_particle particle = reb_particle_from_fmt_errV(r, &err, fmt, args);
-    va_end(args);
-
-    if (err==0){ // Success
-        return particle;
-    }else{
-        const char* error_string = reb_string_for_particle_error(err);
-        fprintf(stderr, "\n\033[1mError!\033[0m %s\n", error_string);
-        return reb_particle_nan();
-    }
-}
-
 static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args){
     double m = 0;
     double radius = 0;
