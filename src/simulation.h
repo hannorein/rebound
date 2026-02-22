@@ -37,4 +37,8 @@ DLLEXPORT void reb_simulation_init(struct reb_simulation* r);
 // Used from python and for display.
 DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings);
 
+// Serialization functions. Caller is responsible for allocating memory. Null pointers will not be set/read. 
+DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
+DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
+
 #endif 	// SIMULATION_H

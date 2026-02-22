@@ -73,10 +73,7 @@ DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contractio
 DLLEXPORT size_t reb_simulation_struct_size();
 DLLEXPORT char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2); // Return the difference between two simulations as a human readable difference. Returned pointer needs to be freed.
 DLLEXPORT void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)); // Used from python 
-DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // NULL pointers will not be set.
-DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]); // Null pointers will be ignored.
 DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p); // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 
-// Temporary. Function declarations needed by REBOUNDx 
 
 #endif // _REBOUND_INTERNAL_H
