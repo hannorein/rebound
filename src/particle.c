@@ -204,15 +204,10 @@ int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct re
 
 int reb_simulation_particle_index(struct reb_particle* p){
     struct reb_simulation* r = p->sim;
-    int i = 0;
-    const int N = r->N;
-    while(&r->particles[i] != p){
-        i++;
-        if(i>=N){
-            return -1;	// p not in simulation.  Shouldn't happen unless you mess with p.sim after creating the particle
-        }	
-    }
-    return i;
+    if (!p) return -1;
+    size_t index = p-r->particles;
+    if (index<r->N) return index;
+    return -1; // Not found.
 }
 
 
