@@ -11,7 +11,7 @@ You do not need to know those details if you're only working with binary files t
 REBOUND uses two structures for the binary files:
 
 ```c
-struct reb_binary_field {
+struct reb_binarydata_field {
     uint32_t type; 
     uint64_t size;
 };
@@ -48,13 +48,13 @@ You create a binary file if you save a simulation
 Such a binary file with one snapshot is simply a set of `reb_binaryfield`s followed by one `reb_simulationarchive_blob` at the end, for example:
 
 ```
-reb_binary_field:
+reb_binarydata_field:
     type: DT
     size: 8 bytes
 
 8 bytes of data representing the value of DT
 
-reb_binary_field:
+reb_binarydata_field:
     type: PARTICLES
     size: 128 bytes
 
@@ -62,7 +62,7 @@ reb_binary_field:
 
 ...
 
-reb_binary_field:
+reb_binarydata_field:
     type: END
     size: 0
 
@@ -89,19 +89,19 @@ This allows for a very compact file size, while still maintaining bit-wise repro
 Each snapshot is separated by a `reb_simulationarchive_blob`. 
 The blob contains the offset to the previous and next blobs. 
 This allows REBOUND to quickly jump from one blob in the archive to the next.
-Between the blobs are the same `reb_binary_field`s we already encountered for a binary file with one snapshot.
+Between the blobs are the same `reb_binarydata_field`s we already encountered for a binary file with one snapshot.
 Thus, a Simulationarchive file with multiple snapshots looks something like this:
 
 ```
-reb_binary_field:
+reb_binarydata_field:
     type: DT
     size: 8 bytes
 
 8 bytes of data representing the value of DT
 
-... more reb_binary_fields ...
+... more reb_binarydata_fields ...
 
-reb_binary_field:
+reb_binarydata_field:
     type: END
     size: 0
 
@@ -110,15 +110,15 @@ reb_simulationarchive_blob:
     offset_prev: 0
     offset_next: 256 (offset to the next blob)
 
-reb_binary_field:
+reb_binarydata_field:
     type: DT
     size: 8 bytes
 
 8 bytes of data representing the value of DT
 
-... more reb_binary_fields ...
+... more reb_binarydata_fields ...
 
-reb_binary_field:
+reb_binarydata_field:
     type: END
     size: 0
 
@@ -127,15 +127,15 @@ reb_simulationarchive_blob:
     offset_prev: 256 (offset to the previous blob)
     offset_next: 256 (offset to the next blob)
 
-reb_binary_field:
+reb_binarydata_field:
     type: DT
     size: 8 bytes
 
 8 bytes of data representing the value of DT
 
-... more reb_binary_fields ...
+... more reb_binarydata_fields ...
 
-reb_binary_field:
+reb_binarydata_field:
     type: END
     size: 0
 

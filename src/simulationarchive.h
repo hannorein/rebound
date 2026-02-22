@@ -1,6 +1,6 @@
 /**
  * @file 	simulationarchive.h
- * @brief 	Tools for creating and readin a Simulationarchive binary file.
+ * @brief 	Tools for creating and reading a Simulationarchive binary file.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section 	LICENSE
@@ -43,18 +43,13 @@ struct reb_simulationarchive{
     double* t;                      // Index of simulation times in file (length nblobs)
 };
 
-// Used in the binary file to identify data blobs
+// Used in the binary file to identify data blobs (snapshots)
 struct reb_simulationarchive_blob {  
     int32_t index;                   // Index of previous blob (binary file is 0, first blob is 1)
     int32_t offset_prev;             // Offset to beginning of previous blob (size of previous blob).
     int32_t offset_next;             // Offset to end of following blob (size of following blob).
 };
 
-
-struct reb_binary_field { // This structure is used to save and load binary files.
-    uint32_t type;  // type as given by reb_binarydata_field_descriptor
-    uint64_t size;  // Size in bytes of field (only counting what follows, not the binary field, itself).
-};
 
 // Used by python.
 DLLEXPORT void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum reb_simulation_binary_error_codes* warnings);

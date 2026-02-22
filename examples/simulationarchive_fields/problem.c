@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
 
     int uses32bitoffsets = 1; 
-    struct reb_binary_field field = {0};
+    struct reb_binarydata_field field = {0};
     struct reb_simulationarchive_blob blob = {0};
     struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
     struct reb_binarydata_field_descriptor fd_particles = reb_binarydata_field_descriptor_for_name("particles");
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     do{
         ifprintf("==== START OF BLOB[%d] ====\n", blob_index);
         do{
-            int didReadField = (int)fread(&field,sizeof(struct reb_binary_field),1,sa);
+            int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa);
             if (!didReadField){
                 printf("ERROR. Unable to read from file.\n");
                 return 1;
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
                 ifprintf("\tsize:   %llu bytes\n", field.size);
             }else if (field.type == fd_header.type){
                 // Input header.
-                const int64_t bufsize = 64 - sizeof(struct reb_binary_field);
+                const int64_t bufsize = 64 - sizeof(struct reb_binarydata_field);
                 char readbuf[64];
                 fread(readbuf,sizeof(char),bufsize,sa);
                 printf("HEADER\n");

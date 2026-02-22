@@ -29,7 +29,7 @@
 // Compares two simulations, stores difference in buffer.
 //
 // output_option:
-// - If set to 0, differences are written to bufp in the form of reb_binary_field structs. 
+// - If set to 0, differences are written to bufp in the form of reb_binarydata_field structs. 
 // - If set to 1, differences are printed on the screen. 
 // - If set to 2, only the return value indicates any differences.
 // - If set to 3, differences are written to bufp in a human readable form.
@@ -77,6 +77,12 @@ struct reb_binarydata_field_descriptor {
     size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
     size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
     size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
+};
+
+// This structure is written/read to files. Precedes the actual data. 
+struct reb_binarydata_field { 
+    uint32_t type;  // type as given by reb_binarydata_field_descriptor
+    uint64_t size;  // Size in bytes of field (only counting what follows, not including reb_binarydata_field itself).
 };
 
 // List of all possible input/ouput fields
