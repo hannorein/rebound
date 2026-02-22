@@ -15,13 +15,13 @@
  * the parameters to compile REBOUND on both OSX
  * and Linux.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
 #include <omp.h>
-#include "rebound.h"
 #include "tools.h"
 #include "output.h"
 

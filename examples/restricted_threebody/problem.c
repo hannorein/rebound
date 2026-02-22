@@ -5,10 +5,10 @@
  * a central object, being perturbed by a planet. 
  * It uses the heliocentric version of WHFast. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

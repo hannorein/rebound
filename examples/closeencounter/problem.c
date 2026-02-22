@@ -8,10 +8,10 @@
  * encounter happens. IAS15 is very high order and ideally suited for the 
  * detection of these kind of encounters.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

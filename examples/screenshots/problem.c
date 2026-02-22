@@ -15,10 +15,10 @@
  * simulations.
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* const r){
     if (r->steps_done%400==0){ // Every 400 timesteps

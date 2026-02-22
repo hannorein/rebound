@@ -6,13 +6,13 @@
  * because GitHub's CI does not support AVX5212.
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
 #include <sched.h>
 #include <stdbool.h>
-#include "rebound.h"
 
 double all_ss_pos[9][3] = {
     {-0.008816286905115728, -0.0010954664916791675, 0.0002143249385447027},

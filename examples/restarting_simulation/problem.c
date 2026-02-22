@@ -5,10 +5,10 @@
  * using a binary file. A shearing sheet ring simulation is used, but
  * the same method can be applied to any other type of simulation.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* const r);
 

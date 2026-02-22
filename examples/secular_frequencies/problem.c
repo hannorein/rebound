@@ -5,10 +5,10 @@
  * frequency analysis using the Frequency Modified Fourier Transform
  * to determine the secular frequencies (g-modes).
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double ss_pos[6][3] =
     {

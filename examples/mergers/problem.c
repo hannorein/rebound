@@ -7,10 +7,10 @@
  * size and merge if they collide. Note that the size is unphysically large
  * in this example. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

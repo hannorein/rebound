@@ -11,10 +11,10 @@
  * routine. This is where one could add fragmentation, or merging of
  * particles.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
 

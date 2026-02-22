@@ -7,10 +7,10 @@
  * the ghost boxes which are used to calculate gravity and collisions.
  * Particle properties resemble those found in Saturn's rings. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 void heartbeat(struct reb_simulation* const r);

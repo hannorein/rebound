@@ -10,10 +10,10 @@
  * translational viscosity and the collisional viscosity.
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 // This example is using a custom velocity dependent coefficient of restitution
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){

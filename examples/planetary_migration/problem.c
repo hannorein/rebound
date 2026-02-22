@@ -12,10 +12,10 @@
  * Special thanks goes to Willy Kley for helping me to implement
  * the damping terms as actual forces. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double* tau_a;     /**< Migration timescale in years for all particles */
 double* tau_e;     /**< Eccentricity damping timescale in years for all particles */

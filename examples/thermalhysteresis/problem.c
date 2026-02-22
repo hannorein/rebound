@@ -5,10 +5,10 @@
  * the results of Larue, Latter, and Rein (2022).
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 
 // Structure to store simulation parameters and output data

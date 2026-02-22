@@ -15,10 +15,10 @@
  * corrector. If an output is required, you need to call reb_simulation_synchronize()
  * before accessing the particle structure.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double ss_pos[6][3] =
     {

@@ -5,10 +5,10 @@
  * Poynting-Robertson effect. The code is using the IAS15 integrator
  * which is ideally suited for this velocity dependent force.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void radiation_forces(struct reb_simulation* r);
 void heartbeat(struct reb_simulation* r);

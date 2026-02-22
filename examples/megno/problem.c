@@ -4,10 +4,10 @@
  * This example uses the IAS15 or WHFAST integrator
  * to calculate the MEGNO of a two planet system.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 const double ss_pos[3][3] = 
 {

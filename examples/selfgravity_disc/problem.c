@@ -4,11 +4,11 @@
  * A self-gravitating disc is integrated using
  * the leap frog integrator. Collisions are not resolved.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "rebound.h"
 
 
 void heartbeat(struct reb_simulation* const r);

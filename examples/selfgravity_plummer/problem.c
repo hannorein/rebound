@@ -7,10 +7,10 @@
  * encounters. An alternative integrator is IAS15 which
  * comes with adaptive timestepping.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

@@ -4,10 +4,10 @@
  * This example shows how to assign names to particles
  * and how to access particles using names.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 int main(int argc, char* argv[]){
     /* Several events can make particles move around in memory. This means the user should not assume they can always refer to 

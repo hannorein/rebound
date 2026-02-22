@@ -10,10 +10,10 @@
  * The collision search is by default a direct search, i.e. O(N^2) but can be
  * changed to a tree by using the `collisions_tree.c` module.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 // Define our own collision resolve function, which will only record collisions but not change any of the particles.        
 enum REB_COLLISION_RESOLVE_OUTCOME collision_record_only(struct reb_simulation* const r, struct reb_collision c){

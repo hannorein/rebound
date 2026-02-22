@@ -9,10 +9,10 @@
  * not resolved. The OpenMP speedup you get depends on the 
  * compiler and CPU that you are using. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

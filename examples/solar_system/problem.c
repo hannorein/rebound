@@ -4,10 +4,10 @@
  * This example integrates all planets of the Solar
  * System. The data comes from the NASA HORIZONS system. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double ss_pos[10][3] = 
 {

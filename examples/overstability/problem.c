@@ -11,10 +11,10 @@
  * You can change the viewing angle of the camera with your mouse or by pressing
  * the `r` key. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 extern double OMEGA;
 extern double OMEGAZ;

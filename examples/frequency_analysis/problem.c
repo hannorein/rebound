@@ -6,11 +6,11 @@
  * Transform or a Frequency Modified Fourier Transform.
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
-#include "rebound.h"
 
 // Secular modes for Jupiter. Taken from Laskar (1990).
 double nu5[] = {4.2488163, 28.2206942, 3.0895148, 52.1925732, 27.0613982, 29.3799573, 28.8679427, 27.5734578, 5.4070444, 0.6671228}; // frequency, "/yr

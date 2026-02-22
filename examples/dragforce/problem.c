@@ -6,10 +6,10 @@
  * is ideally suited to handle non-conservative forces.
  * No gravitational forces or collisions are present.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void additional_forces(struct reb_simulation* const r);
 void heartbeat(struct reb_simulation* const r);

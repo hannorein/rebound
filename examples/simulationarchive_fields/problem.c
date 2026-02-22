@@ -7,10 +7,10 @@
  * illustrate the nature of the binary file system.
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rebound.h"
 #include "simulationarchive.h"
 
 #define ifprintf(...) if (blob_index==blob_requested || blob_requested == -1) {printf(__VA_ARGS__);}

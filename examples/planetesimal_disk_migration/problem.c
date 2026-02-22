@@ -10,11 +10,11 @@
  * number of close encounters.  
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 double E0;

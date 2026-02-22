@@ -4,10 +4,10 @@
  * This example is a simple test of collision detection 
  * methods.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();

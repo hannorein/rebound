@@ -5,10 +5,10 @@
  * which becomes unstable on a timescale of only a few orbits. 
  * This is a test case for the MERCURIUS integrator.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

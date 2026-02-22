@@ -10,12 +10,12 @@
  * large clusters goes beyond this simple example and
  * almost certainly requires experimentation.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#include "rebound.h"
 #include "tools.h"
 #include "output.h"
 

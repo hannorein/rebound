@@ -4,10 +4,10 @@
  * This example uses a high order symplectic integrators
  * WHCKL and SABA(10,6,4) to integrate all planets of the Solar System. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double ss_pos[10][3] = 
 {

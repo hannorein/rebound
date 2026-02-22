@@ -7,10 +7,10 @@
  * C function calls are more explicit (see below), but the numerical
  * issues and conventions are the same in Python and C.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();

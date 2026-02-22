@@ -7,10 +7,10 @@
  * which illustrates that IAS15 can handle both forward and backward in time
  * integrations. The initial conditions are by Robert Vanderbei.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 
 int main(int argc, char* argv[]){

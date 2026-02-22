@@ -8,10 +8,10 @@
  * during the collision resolve phase. Thus you can ignore 
  * the warning in this case.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 

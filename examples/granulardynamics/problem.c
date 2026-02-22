@@ -6,11 +6,11 @@
  * particles simulate shearing walls. These walls are heating
  * up the particles, create a dense and cool layer in the middle.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "rebound.h"
 
 enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c);
 void heartbeat(struct reb_simulation* r);

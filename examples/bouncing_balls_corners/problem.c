@@ -5,10 +5,10 @@
  * There are four particles, one in each corner. To see the ghost boxes in OpenGL
  * press `g` while the simulation is running.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 extern double coefficient_of_restitution; 
 int main(int argc, char* argv[]){

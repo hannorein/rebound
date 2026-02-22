@@ -8,11 +8,11 @@
  * the latest data from the Simulationarchive. 
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "rebound.h"
 
 
 int main(int argc, char* argv[]) {

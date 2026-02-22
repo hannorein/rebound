@@ -6,13 +6,13 @@
  * CPU which support AVX512 instructions to run 
  * this example.
  */
+#include "rebound.h"
+#include "rebound_internal.h" // only needed for windows
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <sched.h>
 #include <stdbool.h>
-#include "rebound.h"
-#include "rebound_internal.h" // only needed for windows
 
 // Initial conditions for the Solar System
 // from NASA horizons

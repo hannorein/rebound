@@ -11,11 +11,11 @@
  * depending on your cluster architecture. To test MPI on your
  * local computer, simply type make && mpirun -np 4 rebound.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include "rebound.h"
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 void heartbeat(struct reb_simulation* const r);

@@ -5,13 +5,13 @@
  * using MPI.
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
 #include <assert.h>
-#include "rebound.h"
 #include "tools.h"
 #include "simulationarchive.h"
 

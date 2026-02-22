@@ -5,10 +5,10 @@
  * The example uses a non-square, rectangular box. 10 particles are placed
  * along a line. All except one of the particles are at rest initially.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 int main(int argc, char* argv[]){
     struct reb_simulation* const r = reb_simulation_create();

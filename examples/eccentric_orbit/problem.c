@@ -6,10 +6,10 @@
  * automatically adjusts the timestep so that the pericenter passages
  * are resolved with high accuracy.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double timescale; // orbital timescale
 void heartbeat(struct reb_simulation* r);

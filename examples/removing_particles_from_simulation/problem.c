@@ -4,10 +4,10 @@
  * This example demonstrates different 
  * options for removing particles from the simulation.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void print_names(struct reb_simulation* r){
     for (int i=0;i<r->N;i++){
