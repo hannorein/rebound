@@ -30,6 +30,7 @@
  *
  */
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "particle.h"
 #include "gravity.h"
 #include "boundary.h"

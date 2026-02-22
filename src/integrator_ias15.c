@@ -42,6 +42,7 @@
 void integrator_generate_constants(void);
 #endif // GENERATE_CONSTANTS
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "particle.h"
 #include "gravity.h"
 #include "tools.h"

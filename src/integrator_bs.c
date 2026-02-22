@@ -54,6 +54,7 @@
 #include <string.h> // memset
 #include <float.h> // for DBL_MAX
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "gravity.h"
 #include "integrator.h"
 #include "integrator_bs.h"

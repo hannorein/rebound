@@ -23,11 +23,10 @@
  *
  */
 
-#include <math.h>
 #include <time.h>
 #include <string.h>
-#include <assert.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "integrator.h"
 #include "gravity.h"
 #include "integrator_trace.h"

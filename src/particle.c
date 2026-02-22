@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "tree.h"
 #include "boundary.h"
 #include "particle.h"

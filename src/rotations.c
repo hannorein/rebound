@@ -26,6 +26,7 @@
  */
 #include <stdio.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "tools.h"
 
 // reb_vec3d manipulation functions

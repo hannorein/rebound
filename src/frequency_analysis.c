@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 
 #define TWOPI (2.*M_PI)
 

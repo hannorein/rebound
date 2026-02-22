@@ -23,6 +23,7 @@
  *
  */
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "tools.h"
 #include "derivatives.h"
 
