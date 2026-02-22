@@ -156,10 +156,13 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 
 #define WHFAST_NMAX_QUART 64    ///< Maximum number of iterations for quartic solver
 #define WHFAST_NMAX_NEWT  32    ///< Maximum number of iterations for Newton's method
-/************************************
- * Keplerian motion for one planet  */
-void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt){
-    const struct reb_particle p1 = p_j[i];
+/********************************************************
+ * Keplerian motion for one planet                       *
+ * Returns 0 on success. 1 if timestep is too large.     *
+ * r only needed for variational particles. Can be NULL. */
+int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double M, double _dt, const struct reb_simulation* const r){
+    const struct reb_particle p1 = *p; // Copy of particle
+    int timestep_too_large = 0;
 
     const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
     const double r0i = 1./r0;
@@ -177,12 +180,10 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
         const double sqrt_beta = sqrt(beta);
         invperiod = sqrt_beta*beta/(2.*M_PI*M);
         X_per_period = 2.*M_PI/sqrt_beta;
-        if (fabs(_dt)*invperiod>1. && r && r->ri_whfast.timestep_warning == 0){
-            // Ignoring const qualifiers. This warning should not have any effect on
-            // other parts of the code, nor is it vital to show it.
-            ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;
-            reb_simulation_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
+        if (fabs(_dt)*invperiod>1.){
+            timestep_too_large = 1;
         }
+
         //X = _dt*invperiod*X_per_period; // first order guess 
         const double dtr0i = _dt*r0i;
         //X = dtr0i; // first order guess
@@ -300,20 +301,20 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
     double fd = -M*Gs[1]*r0i*ri; 
     double gd = -M*Gs[2]*ri; 
 
-    p_j[i].x += f*p1.x + g*p1.vx;
-    p_j[i].y += f*p1.y + g*p1.vy;
-    p_j[i].z += f*p1.z + g*p1.vz;
+    p->x += f*p1.x + g*p1.vx;
+    p->y += f*p1.y + g*p1.vy;
+    p->z += f*p1.z + g*p1.vz;
 
-    p_j[i].vx += fd*p1.x + gd*p1.vx;
-    p_j[i].vy += fd*p1.y + gd*p1.vy;
-    p_j[i].vz += fd*p1.z + gd*p1.vz;
-
+    p->vx += fd*p1.x + gd*p1.vx;
+    p->vy += fd*p1.y + gd*p1.vy;
+    p->vz += fd*p1.z + gd*p1.vz;
+    
     //Variations
     for (int v=0;r && v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
         const int index = vc.index;
         stiefel_Gs(Gs, beta, X);    // Recalculate (to get Gs[4] and Gs[5])
-        struct reb_particle dp1 = p_j[i+index];
+        struct reb_particle dp1 = *(p + index);
         double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
         double dbeta = -2.*M*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
         double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
@@ -333,15 +334,15 @@ void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_p
         double dfd = -M*dG1*r0i*ri + M*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
         double dgd = -M*dG2*ri + M*Gs[2]*dr*ri*ri;
 
-        p_j[i+index].x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
-        p_j[i+index].y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
-        p_j[i+index].z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
+        (p+index)->x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
+        (p+index)->y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
+        (p+index)->z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
 
-        p_j[i+index].vx += fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
-        p_j[i+index].vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
-        p_j[i+index].vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
+        (p+index)->vx += fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
+        (p+index)->vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
+        (p+index)->vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
     }
-
+    return timestep_too_large;
 }
 
 /***************************** 
@@ -509,6 +510,7 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
     const int coordinates = r->ri_whfast.coordinates;
     struct reb_particle* const p_j = r->ri_whfast.p_jh;
     double eta = m0;
+    int timestep_too_large = 0;
     switch (coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
 #pragma omp parallel for private(eta)
@@ -523,13 +525,13 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
                     eta += p_j[i].m;
                 }
 #endif // OPENMP
-                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+                timestep_too_large |= reb_whfast_kepler_solver(&p_j[i], eta*G, _dt, r);
             }
             break;
         case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
 #pragma omp parallel for 
             for (unsigned int i=1;i<N_real;i++){
-                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt); //  eta = m0
+                timestep_too_large |= reb_whfast_kepler_solver(&p_j[i], eta*G, _dt, r); // eta = m0
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
@@ -540,16 +542,22 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
                 }else{
                     eta = m0;
                 }
-                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+                timestep_too_large |= reb_whfast_kepler_solver(&p_j[i], eta*G, _dt, r);
             }
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
             eta = p_j[0].m;
             for (unsigned int i=1;i<(int)N_real;i++){
-                reb_whfast_kepler_solver(r, p_j, eta*G, i, _dt);
+                timestep_too_large |= reb_whfast_kepler_solver(&p_j[i], eta*G, _dt, r);
             }
             break;
     };
+    if (timestep_too_large && r->ri_whfast.timestep_warning == 0){
+        // Ignoring const qualifiers. This warning should not have any effect on
+        // other parts of the code, nor is it vital to show the warning.
+        ((struct reb_simulation* const)r)->ri_whfast.timestep_warning++;
+        reb_simulation_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
+    }
 }
 
 void reb_integrator_whfast_com_step(const struct reb_simulation* const r, const double _dt){

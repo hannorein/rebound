@@ -293,10 +293,15 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 }
 
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
-    //struct reb_particle* restrict const particles = r->particles;
+    struct reb_particle* restrict const particles = r->particles;
     const int N = r->N;
+    int timestep_too_large = 0;
     for (int i=1;i<N;i++){
-        reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt);
+        timestep_too_large |= reb_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL);
+    }
+    if (timestep_too_large && r->ri_whfast.timestep_warning == 0){
+        r->ri_whfast.timestep_warning++;
+        reb_simulation_warning(r,"Kepler solver convergence issue. Timestep is larger than at least one orbital period.");
     }
 }
 

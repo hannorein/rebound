@@ -1131,6 +1131,7 @@ enum reb_simulation_binary_error_codes {
 };
 
 // Potentially useful API functions
-DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
+//DLLEXPORT void reb_whfast_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   // The WHFast Kepler solver
+DLLEXPORT int reb_whfast_kepler_solver(struct reb_particle* const restrict p, const double M, double _dt, const struct reb_simulation* const r);
 
 #endif // _MAIN_H
