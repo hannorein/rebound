@@ -743,29 +743,6 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     write_to_stream(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
 }
 
-
-// Macro to read a single field from a binary file.
-#define CASE(typename, value) case REB_BINARY_FIELD_TYPE_##typename: \
-{\
-    fread(value, field.size,1,inf);\
-    goto next_field;\
-}\
-break;
-
-#define CASE_CONTROL_VARS(typename, valueref) case REB_BINARY_FIELD_TYPE_##typename: \
-{\
-    fread(&valueref->size, sizeof(uint32_t),1,inf);\
-    fread(valueref->p0, valueref->size,1,inf);\
-    fread(valueref->p1, valueref->size,1,inf);\
-    fread(valueref->p2, valueref->size,1,inf);\
-    fread(valueref->p3, valueref->size,1,inf);\
-    fread(valueref->p4, valueref->size,1,inf);\
-    fread(valueref->p5, valueref->size,1,inf);\
-    fread(valueref->p6, valueref->size,1,inf);\
-    goto next_field;\
-}\
-break;        
-
 // Read field data into simulation from file or memory buffer.
 void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
     struct reb_binary_field field;
