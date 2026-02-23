@@ -657,6 +657,8 @@ DLLEXPORT void reb_simulation_stop_server(struct reb_simulation* r);
 DLLEXPORT void reb_exit(const char* const msg);
 // Stop current integration in a nice way. Can be called from within heartbeat function.
 DLLEXPORT void reb_simulation_stop(struct reb_simulation* const r);
+// Print or store an info message, then continue.
+DLLEXPORT void reb_simulation_info(struct reb_simulation* const r, const char* const msg);
 // Print or store a warning message, then continue.
 DLLEXPORT void reb_simulation_warning(struct reb_simulation* const r, const char* const msg);
 // Print or store an error message, then continue.

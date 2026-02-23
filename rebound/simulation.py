@@ -256,7 +256,9 @@ class Simulation(Structure):
         if self.messages:
             while clibrebound.reb_pop_message(self.messages, buf):
                 msg = buf.value.decode("ascii")
-                if msg[0]=='w':
+                if msg[0]=='i':
+                    print(msg[1:])
+                elif msg[0]=='w':
                     warnings.warn(msg[1:], RuntimeWarning)
                 elif msg[0]=='e':
                     raise RuntimeError(msg[1:])

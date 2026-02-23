@@ -65,7 +65,28 @@ void reb_simulation_stop(struct reb_simulation* const r){
     r->status = REB_STATUS_USER;
 }
 
-// Workaround for setting a pythong callback function. 
+// Print or save warning message. r can be NULL.
+void reb_simulation_warning(struct reb_simulation* const r, const char* const msg){
+    int save_messages = 0;
+    if (r != NULL && r->save_messages) save_messages = 1;
+    reb_message(&r->messages, save_messages, REB_MESSAGE_TYPE_WARNING, msg);
+}
+
+// Print or save error message. r can be NULL.
+void reb_simulation_error(struct reb_simulation* const r, const char* const msg){
+    int save_messages = 0;
+    if (r != NULL && r->save_messages) save_messages = 1;
+    reb_message(&r->messages, save_messages, REB_MESSAGE_TYPE_ERROR, msg);
+}
+
+// Print or save info message. r can be NULL.
+void reb_simulation_info(struct reb_simulation* const r, const char* const msg){
+    int save_messages = 0;
+    if (r != NULL && r->save_messages) save_messages = 1;
+    reb_message(&r->messages, save_messages, REB_MESSAGE_TYPE_INFO, msg);
+}
+
+// Workaround for setting a python callback function. 
 void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)){
     r->collision_resolve = resolve;
 }
@@ -237,7 +258,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
             usleep(100);
         }
         if (r->display_data->window){ // still running?
-            printf("Waiting for OpenGL visualization to shut down...\n");
+            reb_simulation_info(NULL, "Waiting for OpenGL visualization to shut down...");
             while(r->display_data->window){
                 usleep(100);
             }
@@ -750,7 +771,9 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_tree_essential_recv_max = 0;          
 #endif // MPI
 #ifdef OPENMP
-    printf("Using OpenMP with %d threads per node.\n",omp_get_max_threads());
+    char msg[1024];
+    sprintf(msg, "Using OpenMP with %d threads per node.\n", omp_get_max_threads());
+    reb_simulation_info(r, msg);
 #endif // OPENMP
 }
 

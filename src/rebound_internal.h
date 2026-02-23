@@ -69,6 +69,13 @@ DLLEXPORT extern const int reb_messages_max_N;
 DLLEXPORT void reb_free(void* p);
 // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
 DLLEXPORT int reb_pop_message(char** messages, char* const buf); 
+// Print or save a message. 
+enum REB_MESSAGE_TYPE {
+    REB_MESSAGE_TYPE_INFO = 'i',
+    REB_MESSAGE_TYPE_ERROR = 'e',
+    REB_MESSAGE_TYPE_WARNING = 'w',
+};
+void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg);
 // Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
 DLLEXPORT int reb_check_fp_contract(); 
 

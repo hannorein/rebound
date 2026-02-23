@@ -64,52 +64,48 @@ void reb_exit(const char* const msg){
     // This function should also kill all children. 
     // Not implemented as pid is not easy to get to.
     // kill(pid, SIGKILL);
-    fprintf(stderr,"\n\033[1mFatal error! Exiting now.\033[0m %s\n",msg);
+    reb_message(NULL, 0, REB_MESSAGE_TYPE_ERROR, msg);
     exit(EXIT_FAILURE);
 }
 
-void reb_message(struct reb_simulation* const r, char type, const char* const msg){
-    int save_messages = 0;
-    if (r != NULL){
-        save_messages = r->save_messages;
-    }
-    if (!save_messages || strlen(msg)>=reb_messages_max_length){
-        if (type=='w'){
-            fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
-        }else if (type=='e'){
-            fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
+void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg){
+    if (!save_messages || messages==NULL){
+        switch (type){
+            case REB_MESSAGE_TYPE_INFO:
+                fprintf(stderr,"\nREBOUND Message! %s\n",msg);
+                break;
+            case REB_MESSAGE_TYPE_WARNING:
+                fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
+                break;
+            case REB_MESSAGE_TYPE_ERROR:
+                fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
+                break;
         }
     }else{
-        // TODO: Should be protected by MUTEX
-        if (r->messages==NULL){
-            r->messages = calloc(reb_messages_max_N,sizeof(char*));
+        // Note: not thread safe.
+        if (*messages==NULL){
+            *messages = calloc(reb_messages_max_N,sizeof(char*));
         }
         int n = 0;
         for (;n<reb_messages_max_N;n++){
-            if (r->messages[n]==NULL){
+            if ((*messages)[n]==NULL){
                 break;
             }
         }
         if (n==reb_messages_max_N){
-            free(r->messages[0]);
+            free((*messages)[0]);
             for (int i=0;i<reb_messages_max_N-1;i++){
-                r->messages[i] = r->messages[i+1];
+                (*messages)[i] = (*messages)[i+1];
             }
-            r->messages[reb_messages_max_N-1] = NULL;
+            (*messages)[reb_messages_max_N-1] = NULL;
             n= reb_messages_max_N-1;
         }
-        r->messages[n] = malloc(sizeof(char*)*reb_messages_max_length);
-        r->messages[n][0] = type;
-        strcpy(r->messages[n]+1, msg);
+        (*messages)[n] = malloc(sizeof(char*)*reb_messages_max_length);
+        // First character indicates type for python.
+        (*messages)[n][0] = (char)type;
+        strncpy((*messages)[n]+1, msg, reb_messages_max_length-2);
+        (*messages)[n][reb_messages_max_length-1] = '\0';
     }
-}
-
-void reb_simulation_warning(struct reb_simulation* const r, const char* const msg){
-    reb_message(r, 'w', msg);
-}
-
-void reb_simulation_error(struct reb_simulation* const r, const char* const msg){
-    reb_message(r, 'e', msg);
 }
 
 int reb_pop_message(char** messages, char* const buf){
@@ -149,10 +145,16 @@ void reb_mpi_init(struct reb_simulation* const r){
     reb_communication_mpi_init(r,0,NULL);
     // Make sure domain can be decomposed into equal number of root boxes per node.
     if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
-        if (r->mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
+        if (r->mpi_id==0){
+            char msg[1024];
+            sprintf(msg, "Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
+            reb_simulation_error(r,msg);
+        }
         exit(-1);
     }
-    printf("MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+    char msg[1024];
+    sprintf(msg,"MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+    reb_simulation_info(r,msg);
 }
 
 void reb_mpi_finalize(struct reb_simulation* const r){
