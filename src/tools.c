@@ -598,7 +598,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
 
 void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
     if (!r){
-        fprintf(stderr, "\n\033[1mError!\033[0m Simulation can't be NULL1.\n");
+        reb_simulation_error(NULL, "Simulation can't be NULL in reb_simulation_add_fmt.");
         return;
     }
 
