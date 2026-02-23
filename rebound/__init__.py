@@ -5,7 +5,7 @@ import sys
 import os
 import warnings
 import platform
-from ctypes import cdll, c_char_p
+from ctypes import cdll, c_char_p, c_int
 
 # Find suffix
 if platform.system()=="Windows" and sys.version_info.major<=3 and sys.version_info.minor<8:
@@ -87,6 +87,10 @@ class NoParticles(Exception):
 class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
+
+# OpenMP
+def omp_set_num_threads(num_threads):
+    clibrebound.reb_omp_set_num_threads(c_int(num_threads))
 
 from .tools import mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
 from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic, CollisionS # CollisionS is the collision struct, not the exception

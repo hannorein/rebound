@@ -23,11 +23,7 @@
  *
  */
 #include <stdio.h>
-#include <stddef.h> // for offsetof()
-#include <sys/types.h>
-#include <errno.h>
 #include <string.h>
-#include <fcntl.h>
 #include "rebound.h"
 #include "rebound_internal.h"
 #ifdef OPENMP
@@ -230,11 +226,13 @@ void usleep(__int64 usec){
 }
 #endif // _WIN32
 
-#ifdef OPENMP
 void reb_omp_set_num_threads(int num_threads){
+#ifdef OPENMP
     omp_set_num_threads(num_threads);
-}
+#else // OPENMP
+    reb_message(NULL, 0, REB_MESSAGE_TYPE_ERROR, "Cannot set number of OpenMP threads. Recompile with OpenMP.");
 #endif // OPENMP
+}
 
 const char* reb_logo[26] = {
     "          _                           _  ",

@@ -79,6 +79,7 @@ enum REB_MESSAGE_TYPE {
 void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg);
 // Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
 DLLEXPORT int reb_check_fp_contract(); 
-
+// Wrapper method to set number of OpenMP threads from python.
+DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 
 #endif // _REBOUND_INTERNAL_H

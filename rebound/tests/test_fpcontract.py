@@ -12,5 +12,11 @@ class TestFPContract(unittest.TestCase):
         # make sure floating point contraction are off
         self.assertEqual(fp_contract, 0)
 
+class TestOpenMP(unittest.TestCase):
+    
+    def test_open_mp(self):
+        # Will fail if not compiled with OpenMP enabled. Prints an error. Does not exit.
+        rebound.omp_set_num_threads(10)
+
 if __name__ == "__main__":
     unittest.main()
