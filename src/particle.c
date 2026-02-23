@@ -240,7 +240,6 @@ const char* reb_simulation_register_name(struct reb_simulation* r, const char* c
     registered_name = strdup(name);
     r->N_name_list++;
     r->name_list = realloc(r->name_list,sizeof(char*)*r->N_name_list);
-#warning need to change all previously allocated names
     r->name_list[r->N_name_list-1] = (char*)registered_name;
     return registered_name;
 }
