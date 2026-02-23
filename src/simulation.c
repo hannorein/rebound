@@ -107,6 +107,13 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
+// Temporary fix for REBOUNDx. 
+void reb_clear_pre_post_pointers(struct reb_simulation* const r){
+    r->pre_timestep_modifications  = NULL;
+    r->post_timestep_modifications  = NULL;
+}
+
+// Heartbeat wrapper. Runs actual heartbeat and does exit checks.
 static void run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
     if (r->exit_max_distance){

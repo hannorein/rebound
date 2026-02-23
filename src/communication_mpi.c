@@ -42,6 +42,28 @@
 #include "communication_mpi.h"
 
 
+void reb_mpi_init(struct reb_simulation* const r){
+    reb_communication_mpi_init(r,0,NULL);
+    // Make sure domain can be decomposed into equal number of root boxes per node.
+    if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
+        if (r->mpi_id==0){
+            char msg[1024];
+            sprintf(msg, "Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
+            reb_simulation_error(r,msg);
+        }
+        exit(-1);
+    }
+    char msg[1024];
+    sprintf(msg,"MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+    reb_simulation_info(r,msg);
+}
+
+void reb_mpi_finalize(struct reb_simulation* const r){
+    r->mpi_id = 0;
+    r->mpi_num = 0;
+    MPI_Finalize();
+}
+
 void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
     int initialized;
     MPI_Initialized(&initialized);

@@ -120,56 +120,17 @@ int reb_pop_message(char** messages, char* const buf){
     return 0;
 }
 
-#ifdef MPI
-void reb_mpi_init(struct reb_simulation* const r){
-    reb_communication_mpi_init(r,0,NULL);
-    // Make sure domain can be decomposed into equal number of root boxes per node.
-    if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
-        if (r->mpi_id==0){
-            char msg[1024];
-            sprintf(msg, "Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
-            reb_simulation_error(r,msg);
-        }
-        exit(-1);
-    }
-    char msg[1024];
-    sprintf(msg,"MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
-    reb_simulation_info(r,msg);
-}
-
-void reb_mpi_finalize(struct reb_simulation* const r){
-    r->mpi_id = 0;
-    r->mpi_num = 0;
-    MPI_Finalize();
-}
-#endif // MPI
-
-
-void reb_clear_pre_post_pointers(struct reb_simulation* const r){
-    // Temporary fix for REBOUNDx. 
-    r->pre_timestep_modifications  = NULL;
-    r->post_timestep_modifications  = NULL;
-}
-
-
-
-
-////////////////////////////////////////////////////
-///  Integrate functions and visualization stuff
-
+// Handles graceful shutdown. For example triggered by keyboard interrupts.
 volatile sig_atomic_t reb_sigint;
-
 void reb_sigint_handler(int signum) {
-    // Handles graceful shutdown for interrupts
     if (signum == SIGINT){
         reb_sigint += 1;
     }
 }
 
+// Checks if floating point contractions are on. 
+// If so, this will prevent unit tests from passing and bit-wise reproducibility will fail.
 int reb_check_fp_contract(){
-    // Checks if floating point contractions are on. 
-    // If so, this will prevent unit tests from passing
-    // and bit-wise reproducibility will fail.
     double a = 1.2382309285234567;
     double b = 2.123478623874623234567;
     double c = 6.0284234234234567;
