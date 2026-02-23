@@ -201,11 +201,30 @@ int reb_simulation_particle_index(struct reb_particle* p){
 }
 
 
-const char* reb_simulation_get_registered_name(struct reb_simulation* r, const char* const name){
+static const char* get_registered_name(struct reb_simulation* r, const char* const name){
 #ifdef MPI
     return name; // Does not register.
 #else // MPI
     if (name==NULL) return NULL; // NULL string not allowed.
+    if (r->name_hash_table){
+        uint32_t hash = reb_hash(name)%REB_NAME_HASH_TABLE_SIZE;
+        struct reb_name_hash_item* item = &r->name_hash_table[hash];
+        if (item->index>0){ // Entry exists
+            do {            // Loop over linked list
+                if (item->index < r->N+1){
+                    struct reb_particle* p = &r->particles[item->index-1];
+                    const char* p_name = p->name;
+                    if (p_name){
+                        if (strcmp(p_name,name)==0){
+                            return p_name;
+                        }
+                    }
+                }
+                item = item->next;
+            } while(item);
+        }
+    }
+    // If not found yet. Go through entire name list.
     for (int i=0; i<r->N_name_list; i++){
         if (strcmp(name,r->name_list[i])==0){
             return r->name_list[i];
@@ -216,7 +235,7 @@ const char* reb_simulation_get_registered_name(struct reb_simulation* r, const c
 }
 
 const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name){
-    const char* registered_name = reb_simulation_get_registered_name(r,name);
+    const char* registered_name = get_registered_name(r,name);
     if (registered_name) return registered_name;
     registered_name = strdup(name);
     r->N_name_list++;
