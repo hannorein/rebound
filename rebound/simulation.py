@@ -250,14 +250,16 @@ class Simulation(Structure):
 
 # Message and memory management functions
     def process_messages(self):
-        clibrebound.reb_simulation_get_next_message.restype = c_int
+        clibrebound.reb_pop_message.restype = c_int
+        clibrebound.reb_pop_message.argtypes = [c_void_p, c_char*1024]
         buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_messages_max_length").value)
-        while clibrebound.reb_simulation_get_next_message(byref(self), buf):
-            msg = buf.value.decode("ascii")
-            if msg[0]=='w':
-                warnings.warn(msg[1:], RuntimeWarning)
-            elif msg[0]=='e':
-                raise RuntimeError(msg[1:])
+        if self.messages:
+            while clibrebound.reb_pop_message(self.messages, buf):
+                msg = buf.value.decode("ascii")
+                if msg[0]=='w':
+                    warnings.warn(msg[1:], RuntimeWarning)
+                elif msg[0]=='e':
+                    raise RuntimeError(msg[1:])
 
 # Pickling methods: return Simulationarchive binary
     def __reduce__(self):

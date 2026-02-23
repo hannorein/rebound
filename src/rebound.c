@@ -112,18 +112,14 @@ void reb_simulation_error(struct reb_simulation* const r, const char* const msg)
     reb_message(r, 'e', msg);
 }
 
-void reb_simulation_stop(struct reb_simulation* const r){
-    r->status = REB_STATUS_USER;
-}
-
-int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf){
-    if (r->messages){
-        char* w0 = r->messages[0];
+int reb_pop_message(char** messages, char* const buf){
+    if (messages){
+        char* w0 = messages[0];
         if (w0){
             for(int i=0;i<reb_messages_max_N-1;i++){
-                r->messages[i] = r->messages[i+1];
+                messages[i] = messages[i+1];
             }
-            r->messages[reb_messages_max_N-1] = NULL;
+            messages[reb_messages_max_N-1] = NULL;
             strcpy(buf,w0);
             free(w0);
             return 1;

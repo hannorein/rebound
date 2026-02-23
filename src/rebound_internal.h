@@ -65,11 +65,12 @@ DLLEXPORT extern const unsigned int reb_favicon_len;
 DLLEXPORT extern const int reb_messages_max_length;
 DLLEXPORT extern const int reb_messages_max_N;
 
-// Other functions. Mainly used by python. 
-// TODO: Put in other header files depending on implementation location.
+// Free any pointer. Alias for free(). Used by python.
 DLLEXPORT void reb_free(void* p);
-DLLEXPORT int reb_simulation_get_next_message(struct reb_simulation* const r, char* const buf); // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
-DLLEXPORT int reb_check_fp_contract(); // Returns 1 if floating point contraction are enabled. 0 otherwise.
+// Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
+DLLEXPORT int reb_pop_message(char** messages, char* const buf); 
+// Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
+DLLEXPORT int reb_check_fp_contract(); 
 
 
 #endif // _REBOUND_INTERNAL_H
