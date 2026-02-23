@@ -1,6 +1,6 @@
 /**
  * @file    rebound.c
- * @brief   Main REBOUND control structures and routine, iteration loop.
+ * @brief   Various REBOUND control structures and routine.
  * @author  Hanno Rein <hanno@hanno-rein.de>
  * 
  * @section LICENSE
@@ -30,21 +30,6 @@
 #include <fcntl.h>
 #include "rebound.h"
 #include "rebound_internal.h"
-#include "integrator.h"
-#include "boundary.h"
-#include "gravity.h"
-#include "collision.h"
-#include "tree.h"
-#include "output.h"
-#include "tools.h"
-#include "particle.h"
-#include "binarydata.h"
-#include "simulationarchive.h"
-#include "server.h"
-#ifdef MPI
-#include "communication_mpi.h"
-#endif
-#include "display.h"
 #ifdef OPENMP
 #include <omp.h>
 #endif
