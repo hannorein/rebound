@@ -18,3 +18,4 @@ There is some tension between the C and python side but this document provides a
 - Functions that are related to memory management use the following verbs: `create` allocates and initializes an object. `free` frees the memory of an object (and all the objects it owns). `init` does not allocated an object itself, but merely initializes it with default values. 
 - As with all functions those related to memory allocation also start with the object they operate on, then followed by the verb. For example: `reb_simulation_create()`.
 - Simulationarchive is one word. All functions related to a Simulationarchive in C use `_simulationarchive_` and `Simulationarchive` in python (not `SimulationArchive`). 
+- Return values are 0 if the function call was successful. A non-zero value indicates an error.
