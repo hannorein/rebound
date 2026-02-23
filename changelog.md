@@ -2,6 +2,11 @@
 
 This changelog only includes the most important changes in recent updates. For a full log of all changes, please refer to git.
 
+## Version 5.x
+
+### Version 5.0.0
+* A lot of changes!
+
 ## Version 4.x
 
 ### Version 4.6.0
