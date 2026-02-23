@@ -48,12 +48,8 @@
 #ifdef OPENMP
 #include <omp.h>
 #endif
-#define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 #define STRINGIFY(s) str(s)
 #define str(s) #s
-#ifdef _WIN32
-void usleep(__int64 usec);
-#endif // _WIN32
 const int reb_messages_max_length = 1024;   // needs to be constant expression for array size
 const int reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
@@ -124,22 +120,6 @@ int reb_pop_message(char** messages, char* const buf){
     return 0;
 }
 
-
-void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const int N_root_x, const int N_root_y, const int N_root_z){
-    r->root_size = root_size;
-    r->N_root_x = N_root_x;
-    r->N_root_y = N_root_y;
-    r->N_root_z = N_root_z;
-    // Setup box sizes
-    r->boxsize.x = r->root_size *(double)r->N_root_x;
-    r->boxsize.y = r->root_size *(double)r->N_root_y;
-    r->boxsize.z = r->root_size *(double)r->N_root_z;
-    r->N_root = r->N_root_x*r->N_root_y*r->N_root_z;
-    r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
-    if (r->N_root_x <=0 || r->N_root_y <=0 || r->N_root_z <= 0){
-        reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
-    }
-}
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r){
     reb_communication_mpi_init(r,0,NULL);
@@ -291,8 +271,7 @@ int gettimeofday(struct reb_timeval * tp, struct timezone * tzp)
 }
 
 // Source: https://stackoverflow.com/a/17283549/115102
-void usleep(__int64 usec)
-{
+void usleep(__int64 usec){
     HANDLE timer;
     LARGE_INTEGER ft;
 

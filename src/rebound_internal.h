@@ -35,6 +35,7 @@ typedef struct reb_timeval {
 int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
 int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
+void usleep(__int64 usec);
 #include <io.h>
 #else // Linux and MacOS
 #define reb_timeval timeval
