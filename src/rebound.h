@@ -752,7 +752,7 @@ DLLEXPORT struct reb_particle reb_particle_nan(void);
 
 // Remove all particles
 DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const r);
-// Remove one particle. keep_sorted flag can be set to 1 to maintain order of remaining particles.
+// Remove one particle. keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
 DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted);
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
 DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 

@@ -349,7 +349,7 @@ int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char*
         return 1; // Not found.
     }
     size_t index = p - r->particles;
-    return !reb_simulation_remove_particle(r, index, keep_sorted); // TODO: return value is different between the two functions. 
+    return reb_simulation_remove_particle(r, index, keep_sorted);
 }
 
 
@@ -455,17 +455,17 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             r->free_particle_ap(&r->particles[index]);
         }
         reb_simulation_warning(r, "Last particle removed.");
-        return 1;
+        return 0;
     }
     if (index >= (int)r->N || index < 0){
         char warning[1024];
         sprintf(warning, "Index %d passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
         reb_simulation_error(r, warning);
-        return 0;
+        return 1;
     }
     if (r->N_var){
         reb_simulation_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
-        return 0;
+        return 1;
     }
     if(keep_sorted){
         r->N--;
@@ -479,8 +479,8 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
             r->particles[j] = r->particles[j+1];
         }
         if (r->tree_root){
-            reb_simulation_error(r, "REBOUND cannot remove a particle a tree and keep the particles sorted. Did not remove particle.");
-            return 0;
+            reb_simulation_error(r, "REBOUND cannot remove a particle in a tree and keep the particles sorted. Did not remove particle.");
+            return 1;
         }
     }else{
         if (r->tree_root){
@@ -498,7 +498,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, int index, in
         }
     }
 
-    return 1;
+    return 0; // Success
 }
 
 void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2){

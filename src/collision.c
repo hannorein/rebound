@@ -400,7 +400,7 @@ void reb_collision_search(struct reb_simulation* const r){
             // Remove particles
             if (outcome & REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1){
                 // Remove p1
-                int removedp1 = reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
+                int removedp1 = !reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
                 if (removedp1){
                     if (r->tree_root){ // In a tree, particles get removed later. 
                         for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
@@ -451,7 +451,7 @@ void reb_collision_search(struct reb_simulation* const r){
             }
             if (outcome & REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2){
                 // Remove p1
-                int removedp2 = reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
+                int removedp2 = !reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
                 if (removedp2){ // Update other collisions
                     if (r->tree_root){ // In a tree, particles get removed later. 
                         for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions

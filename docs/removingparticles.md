@@ -33,7 +33,7 @@ You can remove a particle using this index as shown in the following code:
     In most cases you want to (set the argument to 1). 
     For simulation with many particles (millions), this might be slow. In that case set this argument to 0.
 
-    The function returns 1 if the particle was successfully removed, and 0 if the index was out of range.
+    The function returns 0 if the particle was successfully removed, and 1 otherwise.
 
 === "Python"
     ```python
@@ -49,6 +49,7 @@ You can remove a particle using this index as shown in the following code:
     For simulation with many particles (millions), this might be slow. In that case set this argument to `False`.
 
 ## Remove particle by hash
+TODO: Update this with new names syntax. 
 In addition to the index, you can also identify particles by hash.
 This is useful when you want to make sure you can uniquely identify particles in simulations where you constantly add or remove particles. 
 If a particle has a hash, you can remove it as shown here:
