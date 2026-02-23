@@ -43,11 +43,6 @@
 #include "communication_mpi.h"
 #endif // MPI
 
-#ifdef GRAVITY_GRAPE
-#warning Fix this. 
-extern double gravity_minimum_mass;
-#endif // GRAVITY_GRAPE
-
 static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
     if (reb_boundary_particle_is_in_box(r, pt)==0){
         if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
@@ -151,11 +146,6 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
 }
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
-#ifdef GRAVITY_GRAPE
-    if (pt.m<gravity_minimum_mass){
-        gravity_minimum_mass = pt.m;
-    }
-#endif // GRAVITY_GRAPE
 #ifdef MPI
     int rootbox = reb_get_rootbox_for_particle(r, pt);
     int N_root_per_node = r->N_root/r->mpi_num;
