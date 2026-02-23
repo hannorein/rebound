@@ -65,3 +65,4 @@ include version.txt
 include pyproject.toml
 recursive-include rebound/tests *.py
 include rebound/rebound.h
+include rebound/simulationarchive.h
