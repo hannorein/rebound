@@ -68,6 +68,7 @@ struct reb_display_settings;    // Implemented below.
 struct reb_variational_configuration;  // Implemented below.
 
 // Particle structure
+// Note: Size is 128 bytes, which corresponds to two L1 cache lines (one on Apple silicon).
 struct reb_particle {
     double x;                   // Cartesian coordinates
     double y;
