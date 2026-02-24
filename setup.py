@@ -82,7 +82,6 @@ libreboundmodule = Extension('librebound',
                                 'src/transformations.c',
                                 ],
                     include_dirs = ['src'],
-                    define_macros=[ ('LIBREBOUND', None) ],
                     extra_link_args=extra_link_args,
                     extra_compile_args=extra_compile_args,
                     )
