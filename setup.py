@@ -99,7 +99,7 @@ setup(name='rebound',
     url='https://github.com/hannorein/rebound/',
     author='Hanno Rein',
     author_email='hanno@hanno-rein.de',
-    license='GPL',
+    license_expression="GPL-3.0-only",
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -113,9 +113,6 @@ setup(name='rebound',
         'Topic :: Software Development :: Build Tools',
         'Topic :: Scientific/Engineering :: Astronomy',
 
-        # Pick your license as you wish (should match "license" above)
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
@@ -123,7 +120,7 @@ setup(name='rebound',
     ],
     keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
     packages=['rebound', 'rebound.integrators'],
-    package_data = {'rebound':['rebound.h','simulationarchive.h']},
+    package_data = {'rebound':['include/*.h']},
     install_requires=[],
     tests_require=["numpy","matplotlib"],
     test_suite="rebound.tests",
