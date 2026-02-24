@@ -1,127 +1,53 @@
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    # Legacy distutils import. No longer available on Python > 3.12
-    from distutils.core import setup, Extension
-from codecs import open
+# This file exists solely to configure the dynamic C extension.
+# All project metadata lives in pyproject.toml.
+
+from setuptools import setup, Extension
+from glob import glob
 import os
 import sys
-
 import sysconfig
-suffix = sysconfig.get_config_var('EXT_SUFFIX')
-if suffix is None:
-    suffix = ".so"
 
-# Try to get git hash
+##### Git hash
 try:
     import subprocess
-    ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
-    ghash_arg = "-DGITHASH="+ghash.strip()
-except:
-    ghash_arg = "-DGITHASH=16889b7f9d2381f2aa3ac1571e4a548343ef15ce" #GITHASHAUTOUPDATE
+    ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+    ghash_arg = f"-DGITHASH={ghash}"
+except Exception:
+    ghash_arg = "-DGITHASH=16889b7f9d2381f2aa3ac1571e4a548343ef15ce"  # GITHASHAUTOUPDATE
 
-extra_link_args=[]
-if sys.platform == 'darwin':
-    config_vars = sysconfig.get_config_vars()
-    config_vars['LDSHARED'] = config_vars['LDSHARED'].replace('-bundle', '-shared')
-    extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
-if sys.platform == 'win32':
-    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
+##### Link args
+extra_link_args = []
+if sys.platform == "darwin":
+    cfg = sysconfig.get_config_vars()
+    cfg["LDSHARED"] = cfg["LDSHARED"].replace("-bundle", "-shared")
+    suffix = sysconfig.get_config_var("EXT_SUFFIX") or ".so"
+    extra_link_args = [f"-Wl,-install_name,@rpath/librebound{suffix}"]
+
+##### Compile args
+if sys.platform == "win32":
+    extra_compile_args = [ghash_arg, "-DLIBREBOUND", "-D_GNU_SOURCE", "-DSERVER"]
 else:
-    # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
-    # For coverage runs, turn off optimizations and turn on coverage generation
-    COVERAGE = os.environ.get("COVERAGE", None)
-    if COVERAGE:
-        extra_compile_args += ['-O1', '-fprofile-arcs', '-ftest-coverage' ,'-coverage']
-        extra_link_args += ['-fprofile-arcs', '-ftest-coverage' ,'-coverage']
+    extra_compile_args = [ "-fstrict-aliasing", "-std=c99", "-Wno-unknown-pragmas", ghash_arg, "-D_GNU_SOURCE", "-DSERVER", "-fPIC"]
+    if os.environ.get("COVERAGE"):
+        extra_compile_args += ["-O1", "-fprofile-arcs", "-ftest-coverage", "-coverage"]
+        extra_link_args   += ["-fprofile-arcs", "-ftest-coverage", "-coverage"]
     else:
-        extra_compile_args += ['-O3']
+        extra_compile_args.append("-O3")
 
-# Option to disable FMA in CLANG. 
-FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
-if FFP_CONTRACT_OFF:
-    extra_compile_args.append('-ffp-contract=off')
+##### Turn off floating point contractions for bitwise reproducibility
+if os.environ.get("FFP_CONTRACT_OFF"):
+    extra_compile_args.append("-ffp-contract=off")
 
-# Option to enable AVX512 enabled integrators (WHFast512). 
-AVX512 = os.environ.get("AVX512", None)
-if AVX512:
-    extra_compile_args.append('-march=native')
-    extra_compile_args.append('-DAVX512')
-    
-libreboundmodule = Extension('librebound',
-                    sources = [ 'src/rebound.c',
-                                'src/integrator_ias15.c',
-                                'src/integrator_whfast.c',
-                                'src/integrator_whfast512.c',
-                                'src/integrator_saba.c',
-                                'src/integrator_mercurius.c',
-                                'src/integrator_trace.c',
-                                'src/integrator_eos.c',
-                                'src/integrator_leapfrog.c',
-                                'src/integrator_bs.c',
-                                'src/integrator_janus.c',
-                                'src/integrator_sei.c',
-                                'src/integrator.c',
-                                'src/gravity.c',
-                                'src/server.c',
-                                'src/frequency_analysis.c',
-                                'src/boundary.c',
-                                'src/display.c',
-                                'src/collision.c',
-                                'src/tools.c',
-                                'src/fmemopen.c',
-                                'src/rotations.c',
-                                'src/simulation.c',
-                                'src/derivatives.c',
-                                'src/tree.c',
-                                'src/particle.c',
-                                'src/binarydata.c',
-                                'src/output.c',
-                                'src/simulationarchive.c',
-                                'src/transformations.c',
-                                ],
-                    include_dirs = ['src'],
-                    extra_link_args=extra_link_args,
-                    extra_compile_args=extra_compile_args,
-                    )
+if os.environ.get("AVX512"):
+    extra_compile_args += ["-march=native", "-DAVX512"]
 
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+##### C Extension
+libreboundmodule = Extension(
+    "librebound",
+    sources=sorted(glob("src/*.c")),
+    include_dirs=["src"],
+    extra_link_args=extra_link_args,
+    extra_compile_args=extra_compile_args,
+)
 
-setup(name='rebound',
-    version='5.0.0',
-    description='An open-source multi-purpose N-body code',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url='https://github.com/hannorein/rebound/',
-    author='Hanno Rein',
-    author_email='hanno@hanno-rein.de',
-    license_expression="GPL-3.0-only",
-    classifiers=[
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
-        'Development Status :: 5 - Production/Stable',
-
-        # Indicate who your project is intended for
-        'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-        'Topic :: Scientific/Engineering :: Astronomy',
-
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-    ],
-    keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
-    packages=['rebound', 'rebound.integrators'],
-    package_data = {'rebound':['include/*.h']},
-    install_requires=[],
-    tests_require=["numpy","matplotlib"],
-    test_suite="rebound.tests",
-    ext_modules = [libreboundmodule],
-    zip_safe=False)
+setup(ext_modules=[libreboundmodule])
