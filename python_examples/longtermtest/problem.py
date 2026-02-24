@@ -63,12 +63,12 @@ def simulation(par):
             com_vz /= mtot
         E_kin = 0.
         E_pot = 0.
-        for i in xrange(N):
+        for i in range(N):
             dvx = particles[i].vx - com_vx
             dvy = particles[i].vy - com_vy
             dvz = particles[i].vz - com_vz
             E_kin += 0.5*particles[i].m*(dvx*dvx + dvy*dvy + dvz*dvz)
-            for j in xrange(i+1,N):
+            for j in range(i+1,N):
                 dx = particles[i].x-particles[j].x
                 dy = particles[i].y-particles[j].y
                 dz = particles[i].z-particles[j].z
@@ -120,7 +120,7 @@ colors = {
 }
 trials = 4
     
-parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in xrange(trials)]
+parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in range(trials)]
 if len(sys.argv)!=2:
     try:
         from multiprocess import Pool
@@ -150,8 +150,8 @@ plt.grid(True)
 
 
 res_mean = np.mean(res,axis=1)
-for i in xrange(len(res)):
-    for j in xrange(trials):
+for i in range(len(res)):
+    for j in range(trials):
         res_trial = res[i,j,:,:]
         im1 = axarr.plot(res_trial[0]/orbit,res_trial[1], color=colors[integrators[i]],alpha=0.2)
     im1 = axarr.plot(res_mean[i][0]/orbit,res_mean[i][1], label=integrators[i].upper(),color=colors[integrators[i]], linewidth=2.0)

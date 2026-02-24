@@ -57,7 +57,7 @@ class IntegratorEOS(ctypes.Structure):
     def phi0(self, value):
         if isinstance(value, int):
             self._phi0 = value
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
             if value in EOS_TYPES: 
                 self._phi0 = EOS_TYPES[value]
@@ -77,7 +77,7 @@ class IntegratorEOS(ctypes.Structure):
     def phi1(self, value):
         if isinstance(value, int):
             self._phi1 = value
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
             if value in EOS_TYPES: 
                 self._phi1 = EOS_TYPES[value]

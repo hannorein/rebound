@@ -90,7 +90,7 @@ class IntegratorWHFast(ctypes.Structure):
     def coordinates(self, value):
         if isinstance(value, int):
             self._coordinates = ctypes.c_uint(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in WHFAST_COORDINATES: 
                 self._coordinates = WHFAST_COORDINATES[value]
@@ -117,7 +117,7 @@ class IntegratorWHFast(ctypes.Structure):
     def kernel(self, value):
         if isinstance(value, int):
             self._kernel = ctypes.c_uint(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower().replace(" ", "")
             if value in WHFAST_KERNELS: 
                 self._kernel = WHFAST_KERNELS[value]

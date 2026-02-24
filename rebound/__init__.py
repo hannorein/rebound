@@ -28,16 +28,6 @@ try: # Only needed for pyodide
 except:
     pass
 
-
-# Make changes for python 2 and 3 compatibility
-try:
-    import builtins      # if this succeeds it's python 3.x
-    builtins.xrange = range
-    builtins.basestring = (str,bytes)
-except ImportError:
-    pass                 # python 2.x
-
-
 # Import shared library
 pymodulepath = os.path.dirname(os.path.abspath(__file__))
 pymodulepath = os.path.abspath(os.path.join(pymodulepath, os.pardir))

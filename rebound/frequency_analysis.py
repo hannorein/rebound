@@ -51,7 +51,7 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
 
     if isinstance(type, int):
         type = ctypes.c_int(type)
-    elif isinstance(type, basestring):
+    elif isinstance(type, str):
         type = type.lower()
         if type in FREQUENCY_ANALYSIS_TYPES:
             type = FREQUENCY_ANALYSIS_TYPES[type]

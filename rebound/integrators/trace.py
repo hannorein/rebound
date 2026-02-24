@@ -100,7 +100,7 @@ class IntegratorTRACE(ctypes.Structure):
     def peri_mode(self, value):
         if isinstance(value, int):
             self._peri_mode = ctypes.c_uint(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             if value in TRACE_PERI_MODES: 
                 self._peri_mode = TRACE_PERI_MODES[value]
             else:

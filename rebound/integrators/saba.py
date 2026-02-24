@@ -59,7 +59,7 @@ class IntegratorSABA(ctypes.Structure):
     def type(self, value):
         if isinstance(value, int):
             self._type = value
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower().replace(" ", "").replace("(", "").replace(")", "")
             if value in SABA_TYPES: 
                 self._type = SABA_TYPES[value]

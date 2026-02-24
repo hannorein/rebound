@@ -604,7 +604,7 @@ class Simulation(Structure):
     def integrator(self, value):
         if isinstance(value, int):
             self._integrator = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in INTEGRATORS: 
                 self._integrator = INTEGRATORS[value]
@@ -658,7 +658,7 @@ class Simulation(Structure):
     def boundary(self, value):
         if isinstance(value, int):
             self._boundary = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in BOUNDARIES: 
                 self._boundary = BOUNDARIES[value]
@@ -688,7 +688,7 @@ class Simulation(Structure):
     def gravity(self, value):
         if isinstance(value, int):
             self._gravity = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in GRAVITIES: 
                 self._gravity = GRAVITIES[value]
@@ -719,7 +719,7 @@ class Simulation(Structure):
     def collision(self, value):
         if isinstance(value, int):
             self._collision = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in COLLISIONS: 
                 self.collision = COLLISIONS[value]

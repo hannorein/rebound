@@ -62,7 +62,7 @@ class IntegratorIAS15(ctypes.Structure):
     def adaptive_mode(self, value):
         if isinstance(value, int):
             self._adaptive_mode = ctypes.c_uint(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower().replace(" ", "")
             if value in IAS15_ADAPTIVE_MODES: 
                 self._adaptive_mode = IAS15_ADAPTIVE_MODES[value]
