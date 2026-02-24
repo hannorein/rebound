@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "display.h"
+#include "binarydata.h"
 #include "tools.h"
 #include "particle.h"
 #include "boundary.h"
