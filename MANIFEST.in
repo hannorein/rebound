@@ -1,8 +1,0 @@
-include README.md
-include LICENSE
-include version.txt
-include pyproject.toml
-recursive-include rebound/tests *.py
-recursive-include rebound/include *.h
-recursive-include src *.h
-recursive-include src *.c
