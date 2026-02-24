@@ -26,6 +26,7 @@
 #define SIMULATIONARCHIVE_H
 
 #include <stdint.h>
+enum REB_BINARYDATA_ERROR_CODE; // Forward declaration.
 
 // Simulationarchive structure
 struct reb_simulationarchive{
@@ -52,13 +53,13 @@ struct reb_simulationarchive_blob {
 
 
 // Used by python.
-DLLEXPORT void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum reb_simulation_binary_error_codes* warnings);
-DLLEXPORT void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings);
-DLLEXPORT void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings);
+DLLEXPORT void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum REB_BINARYDATA_ERROR_CODE* warnings);
+DLLEXPORT void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings);
+DLLEXPORT void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings);
 DLLEXPORT void reb_simulationarchive_free_pointers(struct reb_simulationarchive* sa);
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.
-void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum reb_simulation_binary_error_codes* warnings); ///< Internal function to read one snapshot from a simulationarchive.
+void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename, struct reb_simulationarchive* sa_shape, enum REB_BINARYDATA_ERROR_CODE* warnings); ///< Internal function to read one snapshot from a simulationarchive.
 
 
 #endif 	// SIMULATIONARCHIVE_H

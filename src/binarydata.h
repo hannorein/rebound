@@ -26,26 +26,6 @@
 #define _BINARYDATA_H
 #include <stdio.h>
 
-// Compares two simulations, stores difference in buffer.
-//
-// output_option:
-// - If set to 0, differences are written to bufp in the form of reb_binarydata_field structs. 
-// - If set to 1, differences are printed on the screen. 
-// - If set to 2, only the return value indicates any differences.
-// - If set to 3, differences are written to bufp in a human readable form.
-//
-// returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
-int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
-
-// Read all fields from inf stream into r. 
-void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings); 
-
-// Process any errors that might have occurred while reading binary data.
-struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings);
-
-// Write the simulation to a memory buffer (simulationarchive format).
-DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
-
 // Possible datatypes for reb_binarydata_field.
 enum REB_BINARYDATA_DTYPE {
     REB_DOUBLE = 0,
@@ -67,6 +47,42 @@ enum REB_BINARYDATA_DTYPE {
     REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
     REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
 };
+
+// Possible errors that might occur during binary file reading.
+enum REB_BINARYDATA_ERROR_CODE {
+    REB_BINARYDATA_WARNING_NONE = 0,
+    REB_BINARYDATA_ERROR_NOFILE = 1,
+    REB_BINARYDATA_WARNING_VERSION = 2,
+    REB_BINARYDATA_WARNING_POINTERS = 4,
+    REB_BINARYDATA_WARNING_PARTICLES = 8,
+    REB_BINARYDATA_ERROR_FILENOTOPEN = 16,
+    REB_BINARYDATA_ERROR_OUTOFRANGE = 32,
+    REB_BINARYDATA_ERROR_SEEK = 64,
+    REB_BINARYDATA_WARNING_FIELD_UNKNOWN = 128,
+    REB_BINARYDATA_ERROR_INTEGRATOR = 256,
+    REB_BINARYDATA_WARNING_CORRUPTFILE = 512,
+    REB_BINARYDATA_ERROR_OLD = 1024,
+};
+
+// Compares two simulations, stores difference in buffer.
+//
+// output_option:
+// - If set to 0, differences are written to bufp in the form of reb_binarydata_field structs. 
+// - If set to 1, differences are printed on the screen. 
+// - If set to 2, only the return value indicates any differences.
+// - If set to 3, differences are written to bufp in a human readable form.
+//
+// returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
+int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
+
+// Read all fields from inf stream into r. 
+void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_BINARYDATA_ERROR_CODE* warnings); 
+
+// Process any errors that might have occurred while reading binary data.
+struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE warnings);
+
+// Write the simulation to a memory buffer (simulationarchive format).
+DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 
 // Binary field descriptors are used to identify data blobs in simulationarchives.
 struct reb_binarydata_field_descriptor {

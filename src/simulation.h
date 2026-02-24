@@ -24,6 +24,7 @@
  */
 #ifndef SIMULATION_H
 #define SIMULATION_H
+enum REB_BINARYDATA_ERROR_CODE; // Forward declaration.
 
 // Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
 void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2);
@@ -35,7 +36,7 @@ DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
 DLLEXPORT void reb_simulation_init(struct reb_simulation* r); 
 
 // Used from python and for display.
-DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings);
+DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE* warnings);
 
 // Serialization functions. Caller is responsible for allocating memory. Null pointers will not be set/read. 
 DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);

@@ -34,6 +34,7 @@
 #include "particle.h"
 #include "simulation.h"
 #include "simulationarchive.h"
+#include "binarydata.h"
 #include "output.h"
 #include "server.h"
 #include "display.h"
@@ -556,7 +557,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
     r->steps_done++; // This also counts failed IAS15 steps
 }
 
-void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings){
+void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE* warnings){
     char* bufp;
     size_t sizep;
     reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
@@ -607,7 +608,7 @@ int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, in
 
 struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
     struct reb_simulation* r_copy = reb_simulation_create();
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
     reb_simulation_copy_with_messages(r_copy,r,&warnings);
     r = reb_binarydata_process_warnings(r, warnings);
     return r_copy;

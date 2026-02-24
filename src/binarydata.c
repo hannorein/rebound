@@ -744,7 +744,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
 }
 
 // Read field data into simulation from file or memory buffer.
-void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum reb_simulation_binary_error_codes* warnings){
+void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_BINARYDATA_ERROR_CODE* warnings){
     struct reb_binarydata_field field;
     // A few fields need special treatment. Find their descriptors first.
     struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
@@ -878,7 +878,7 @@ next_field:
             int fpwarn;
             fread(&fpwarn, field.size,1,inf);
             if (fpwarn && warnings){
-                *warnings |= REB_SIMULATION_BINARY_WARNING_POINTERS;
+                *warnings |= REB_BINARYDATA_WARNING_POINTERS;
             }
             goto next_field;
         }
@@ -892,22 +892,22 @@ next_field:
 
             objects += fread(readbuf,sizeof(char),bufsize,inf);
             if (objects < 1){
-                *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 // Note: following compares version, but ignores githash.
                 if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                    *warnings |= REB_SIMULATION_BINARY_WARNING_VERSION;
+                    *warnings |= REB_BINARYDATA_WARNING_VERSION;
                 }
             }
             goto next_field;
         }
 
         // We should never get here. If so, it's an unknown field type.
-        *warnings |= REB_SIMULATION_BINARY_WARNING_FIELD_UNKNOWN;
+        *warnings |= REB_BINARYDATA_WARNING_FIELD_UNKNOWN;
         int err = fseek(inf, field.size, SEEK_CUR);
         if (err){
             // Even worse, can't seek to end of field.
-            *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+            *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
         }
     } 
 
@@ -954,50 +954,50 @@ finish_fields:
     r->ri_whfast512.recalculate_constants = 1;
 }
 
-struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum reb_simulation_binary_error_codes warnings){
-    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE warnings){
+    if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         reb_simulation_error(r,"Cannot read binary file. Check filename and file contents.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_WARNING_VERSION){
+    if (warnings & REB_BINARYDATA_WARNING_VERSION){
         reb_simulation_warning(r,"Binary file was saved with a different version of REBOUND. Binary format might have changed.");
     }
-    if (warnings & REB_SIMULATION_BINARY_WARNING_POINTERS){
+    if (warnings & REB_BINARYDATA_WARNING_POINTERS){
         reb_simulation_warning(r,"You have to reset function pointers after creating a reb_simulation struct with a binary file.");
     }
-    if (warnings & REB_SIMULATION_BINARY_WARNING_PARTICLES){
+    if (warnings & REB_BINARYDATA_WARNING_PARTICLES){
         reb_simulation_warning(r,"Binary file might be corrupted. Number of particles found does not match expected number.");
     }
-    if (warnings & REB_SIMULATION_BINARY_ERROR_FILENOTOPEN){
+    if (warnings & REB_BINARYDATA_ERROR_FILENOTOPEN){
         reb_simulation_error(r,"Error while reading binary file (file was not open).");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_ERROR_OUTOFRANGE){
+    if (warnings & REB_BINARYDATA_ERROR_OUTOFRANGE){
         reb_simulation_error(r,"Index out of range.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_ERROR_SEEK){
+    if (warnings & REB_BINARYDATA_ERROR_SEEK){
         reb_simulation_error(r,"Error while trying to seek file.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_WARNING_FIELD_UNKNOWN){
+    if (warnings & REB_BINARYDATA_WARNING_FIELD_UNKNOWN){
         reb_simulation_warning(r,"Unknown field found in binary file.");
     }
-    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+    if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         reb_simulation_error(r,"Cannot read binary file. Check filename and file contents.");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_ERROR_OLD){
+    if (warnings & REB_BINARYDATA_ERROR_OLD){
         reb_simulation_error(r,"Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3");
         if (r) free(r);
         return NULL;
     }
-    if (warnings & REB_SIMULATION_BINARY_WARNING_CORRUPTFILE){
+    if (warnings & REB_BINARYDATA_WARNING_CORRUPTFILE){
         reb_simulation_warning(r,"The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it.");
     }
     return r;

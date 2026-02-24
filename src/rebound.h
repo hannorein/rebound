@@ -1115,20 +1115,4 @@ DLLEXPORT struct reb_mat4df reb_rotation_to_mat4df(struct reb_rotation A);
 DLLEXPORT struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t, float n, float f);
 
 
-// Possible errors that might occur during binary file reading.
-enum reb_simulation_binary_error_codes {
-    REB_SIMULATION_BINARY_WARNING_NONE = 0,
-    REB_SIMULATION_BINARY_ERROR_NOFILE = 1,
-    REB_SIMULATION_BINARY_WARNING_VERSION = 2,
-    REB_SIMULATION_BINARY_WARNING_POINTERS = 4,
-    REB_SIMULATION_BINARY_WARNING_PARTICLES = 8,
-    REB_SIMULATION_BINARY_ERROR_FILENOTOPEN = 16,
-    REB_SIMULATION_BINARY_ERROR_OUTOFRANGE = 32,
-    REB_SIMULATION_BINARY_ERROR_SEEK = 64,
-    REB_SIMULATION_BINARY_WARNING_FIELD_UNKNOWN = 128,
-    REB_SIMULATION_BINARY_ERROR_INTEGRATOR = 256,
-    REB_SIMULATION_BINARY_WARNING_CORRUPTFILE = 512,
-    REB_SIMULATION_BINARY_ERROR_OLD = 1024,
-};
-
 #endif // _MAIN_H

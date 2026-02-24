@@ -43,15 +43,15 @@
 #endif
 
 
-void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum reb_simulation_binary_error_codes* warnings){
+void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum REB_BINARYDATA_ERROR_CODE* warnings){
     FILE* inf = sa->inf;
     if (inf == NULL){
-        *warnings |= REB_SIMULATION_BINARY_ERROR_FILENOTOPEN;
+        *warnings |= REB_BINARYDATA_ERROR_FILENOTOPEN;
         return;
     }
     if (snapshot<0) snapshot += sa->nblobs;
     if (snapshot>=sa->nblobs || snapshot<0){
-        *warnings |= REB_SIMULATION_BINARY_ERROR_OUTOFRANGE;
+        *warnings |= REB_BINARYDATA_ERROR_OUTOFRANGE;
         return;
     }
 
@@ -76,12 +76,12 @@ void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simul
 
     // Read SA snapshot
     if(fseek(inf, sa->offset[snapshot], SEEK_SET)){
-        *warnings |= REB_SIMULATION_BINARY_ERROR_SEEK;
+        *warnings |= REB_BINARYDATA_ERROR_SEEK;
         //reb_simulation_free(r);
         return;
     }
     if (r->simulationarchive_version<2){ 
-        *warnings |= REB_SIMULATION_BINARY_ERROR_OLD;
+        *warnings |= REB_BINARYDATA_ERROR_OLD;
         //reb_simulation_free(r);
         return;
     }else{
@@ -93,7 +93,7 @@ void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simul
 
 struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_simulationarchive* sa, int64_t snapshot){
     if (sa==NULL) return NULL;
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
     struct reb_simulation* r = reb_simulation_create();
     reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
     r = reb_binarydata_process_warnings(r, warnings);
@@ -101,12 +101,12 @@ struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_s
 }
 
 struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot){
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
     struct reb_simulation* r = reb_simulation_create();
 
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
     reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
-    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+    if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
         return NULL;
@@ -131,11 +131,11 @@ struct reb_simulationarchive_blob16 {
     int16_t offset_next;
 };
 
-static void read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
+static void read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Assumes sa->inf is set to an open stream
     const int debug = 0;
     if (sa->inf==NULL){
-        *warnings |= REB_SIMULATION_BINARY_ERROR_NOFILE;
+        *warnings |= REB_BINARYDATA_ERROR_NOFILE;
         return;
     }
 
@@ -161,7 +161,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
     do{
         int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
         if (!didReadField){
-            *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+            *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             break;
         }
         if (field.type == fd_header.type){
@@ -188,7 +188,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
             }
             if (c1==0 || c2==0 || c3==0){
                 if (debug) printf("SA Error. Cannot determine version.\n");
-                *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 char cpatch[64];
                 char cminor[64];
@@ -207,11 +207,11 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
                 }
             }
             if (objects < 1){
-                *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 // Note: following compares version, but ignores githash.
                 if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                    *warnings |= REB_SIMULATION_BINARY_WARNING_VERSION;
+                    *warnings |= REB_BINARYDATA_WARNING_VERSION;
                 }
             }
 
@@ -237,7 +237,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
         sa->filename = NULL;
         fclose(sa->inf);
         sa->inf = NULL;
-        *warnings |= REB_SIMULATION_BINARY_ERROR_OLD;
+        *warnings |= REB_BINARYDATA_ERROR_OLD;
         return;
     }else{
         // New version
@@ -310,7 +310,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
                             // Won't be able to do checksum.
                     if (debug) printf("SA Error. Error while reading next blob.\n");
                     next_blob_is_corrupted = 1;
-                    *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+                    *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
                 }
                 if (i>0){
                     size_t blobsize;
@@ -342,7 +342,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
             }
             if (read_error){
                 if (sa->nblobs>0){
-                    *warnings |= REB_SIMULATION_BINARY_WARNING_CORRUPTFILE;
+                    *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
                 }else{
                     fclose(sa->inf);
                     sa->inf = NULL;
@@ -353,7 +353,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
                     free(sa->offset);
                     sa->offset = NULL;
                     free(sa);
-                    *warnings |= REB_SIMULATION_BINARY_ERROR_SEEK;
+                    *warnings |= REB_BINARYDATA_ERROR_SEEK;
                     return;
                 }
             }
@@ -373,7 +373,7 @@ static void read_simulationarchive_from_stream_with_messages(struct reb_simulati
     }
 }
 
-void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
+void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Somewhat complicated calls for backwards compatibility.
 #ifdef MPI
     int initialized;
@@ -396,7 +396,7 @@ void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationa
     read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
 }
 
-void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum reb_simulation_binary_error_codes* warnings){
+void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Somewhat complicated calls for backwards compatibility.
     sa->inf = reb_fmemopen(buf,size,"rb");
     sa->filename = NULL;
@@ -405,9 +405,9 @@ void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationa
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename){
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
-    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
     reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
-    if (warnings & REB_SIMULATION_BINARY_ERROR_NOFILE){
+    if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
         sa = NULL;

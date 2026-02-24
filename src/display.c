@@ -565,7 +565,7 @@ void reb_render_frame(void* p){
 
     if (!ret_try){
         // Copy if lock obtained. Otherwise use old data.
-        enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+        enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
         reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
         data->need_copy = 0;
         pthread_mutex_unlock(&(data->mutex));  
