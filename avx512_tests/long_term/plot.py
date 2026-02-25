@@ -42,11 +42,11 @@ ax[1].set_xscale("log")
 ax[1].set_ylim([0,1])
 ax[0].set_xlim([1e-6,5])
 time = logs[0,:,0]/2/np.pi/1e9
-percentiles = np.percentile(logs[:,:,1], [10,50,90], axis=0)
-median = np.median(logs[:,:,1], axis=0)
+percentiles = np.nanpercentile(logs[:,:,1], [10,50,90], axis=0)
+median = np.nanmedian(logs[:,:,1], axis=0)
 time1 = logs1[0,:,0]/2/np.pi/1e9
-percentiles1 = np.percentile(logs1[:,:,1], [10,50,90], axis=0)
-median1 = np.median(logs1[:,:,1], axis=0)
+percentiles1 = np.nanpercentile(logs1[:,:,1], [10,50,90], axis=0)
+median1 = np.nanmedian(logs1[:,:,1], axis=0)
 
 ax[0].plot(time1, median1, label="1 day", color="blue");
 ax[0].fill_between(time1, percentiles1[0],percentiles1[2], color="blue", alpha = 0.2);
