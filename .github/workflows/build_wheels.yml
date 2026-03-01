@@ -8,6 +8,7 @@ on:
   release:
     types:
       - published
+      - created   # testing
 
 jobs:
   build_wheels:
@@ -30,6 +31,29 @@ jobs:
         with:
           name: dist-${{ matrix.os }}
           path: ./wheelhouse/*.whl
+  
+  build_rebound_html:
+    name: Compiling rebound.html
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Download and install emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          emsdk/emsdk install latest
+          emsdk/emsdk activate latest
+      - name: Compile web client
+        run: |
+          bash web_client/compile.bash
+      - name: Upload rebound.html
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            web_client/rebound.html
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   make_sdist:
     name: Make SDist
