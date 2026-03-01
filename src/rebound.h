@@ -435,7 +435,7 @@ struct reb_simulation {
     int     N_active;               // Number of active (i.e. not test-particle) particles. Default: -1 (all particles are active). 
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
-    char**  name_list;
+    char**  name_list;              // List of names used to identify particles. Managed by REBOUND. Do not directly edit/access.
     unsigned int N_name_list;       // Number of entries in reb_name_list.
     struct reb_name_hash_item*    name_hash_table;        // Internal use only. Speeds up name search.
     unsigned int   N_allocated;     // Current maximum space allocated in the particles array on this node. 
@@ -740,7 +740,7 @@ DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const 
 DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted);
 // Remove one particle by name. If multiple particles share the name, one particle will be remove. Which one is undetermined.
 // keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
-DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
+DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); 
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
 DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
 // Subtract particle p2 from p1
