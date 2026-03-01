@@ -756,7 +756,7 @@ DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2);
 // Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). Set r=NULL unless variational particles are used. Returns 0 on success, 1 if timestep is too large. 
 DLLEXPORT int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
 // Sets a particle's name. This function should be used instead of directly setting the name in the particle's structure as it
-// registeres the name, allowing for faster lookup and storing of name in binary files.
+// registers the name, allowing for faster lookup and storing of name in binary files.
 DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
 // Returns a pointer to a particle given its name. Returns NULL if not found.
 DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
