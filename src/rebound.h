@@ -63,6 +63,7 @@ struct reb_server_data;         // Opaque pointer. Implemented in server.h
 struct reb_treecell;            // Opaque pointer. Implemented in tree.h
 struct reb_display_data;        // Opaque pointer. Implemented in display.h
 struct reb_particle_int;        // Opaque pointer. Implemented in integrator_janus.h
+struct reb_name_hash_item;      // Opaque pointer. Implemented in particle.h
 struct reb_simulation;          // Implemented below.
 struct reb_display_settings;    // Implemented below.
 struct reb_variational_configuration;  // Implemented below.
@@ -417,24 +418,6 @@ enum REB_STATUS {
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
 
-// New name stuff. Needs cleanup
-#define REB_NAME_HASH_TABLE_SIZE 1024
-DLLEXPORT uint32_t reb_hash(const char* c);
-DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
-DLLEXPORT const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
-DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
-#ifdef MPI
-DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, int id);
-DLLEXPORT struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simulation* const r, int id);
-#endif // MPI
-DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
-
-// Open Hashing (linked list)
-struct reb_name_hash_item {
-    int index;
-    struct reb_name_hash_item* next;
-};
-
 // Main REBOUND Simulation structure
 // Note: only variables that should be accessed by users are documented here.
 struct reb_simulation {
@@ -755,6 +738,9 @@ DLLEXPORT struct reb_particle reb_particle_nan(void);
 DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const r);
 // Remove one particle. keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
 DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted);
+// Remove one particle by name. If multiple particles share the name, one particle will be remove. Which one is undetermined.
+// keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
+DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); // Returns 0 on success. 1 if particle not found.
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
 DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
 // Subtract particle p2 from p1
@@ -769,6 +755,16 @@ DLLEXPORT double reb_particle_distance(struct reb_particle* p1, struct reb_parti
 DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
 // Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). Set r=NULL unless variational particles are used. Returns 0 on success, 1 if timestep is too large. 
 DLLEXPORT int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
+// Sets a particle's name. This function should be used instead of directly setting the name in the particle's structure as it
+// registeres the name, allowing for faster lookup and storing of name in binary files.
+DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
+// Returns a pointer to a particle given its name. Returns NULL if not found.
+DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
+// When MPI is used, particles cannot be accessed by name. Need to use id instead.
+#ifdef MPI
+DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, int id);
+DLLEXPORT struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simulation* const r, int id);
+#endif // MPI
 
 
 
@@ -821,6 +817,8 @@ DLLEXPORT double reb_M_to_f(double e, double M);
 DLLEXPORT double reb_E_to_f(double e, double M);
 // Eccentric anomaly for a given eccentricity and mean anomaly
 DLLEXPORT double reb_M_to_E(double e, double M);
+// Returns the hash for a given string. 
+DLLEXPORT uint32_t reb_hash(const char* c);
 
 
 // Simulationarchive

@@ -26,18 +26,17 @@
 #define _PARTICLE_H
 struct reb_simulation;
 struct reb_particle;
-struct reb_treecell;
 
-/**
- * @brief Returns the index of the rootbox for the current particles based on its position.
- * @param r REBOUND simulation to be considered.
- * @param pt reb_particle to be checked.
- * @return Index of the rootbox.
- */
+// Hash table for names.
+// Open Hashing, linked list.
+struct reb_name_hash_item {
+    int index;
+    struct reb_name_hash_item* next;
+};
+
+// Returns the index of the rootbox for the particle based on its position.
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt);
 
-/**
- * @brief Returns 1 if a testparticle of type 0 has a finite mass.
- */
+// Returns 1 if a testparticle of type 0 has a finite mass (it should have mass=0).
 int reb_particle_check_testparticles(struct reb_simulation* const r);
 #endif // _PARTICLE_H

@@ -43,6 +43,10 @@
 #include "communication_mpi.h"
 #endif // MPI
 
+// Default size for hash table. Can be increased for very large simulations.
+#define REB_NAME_HASH_TABLE_SIZE 1024
+
+
 static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_particle pt){
     if (reb_boundary_particle_is_in_box(r, pt)==0){
         if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
