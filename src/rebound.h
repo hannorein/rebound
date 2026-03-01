@@ -29,10 +29,10 @@
 // Operating system specific options.
 // Windows requires special treatment.
 #ifdef _WIN64
-#define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
 #define _LP64   // automatically defined on 64bit Linux and MacOS
 #endif // _WIN64
 #ifdef _WIN32
+#define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
 #define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
 #include <WinSock2.h>
 #define _WINSOCKAPI_ //stops windows.h including winsock.h
