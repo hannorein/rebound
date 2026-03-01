@@ -50,6 +50,8 @@ jobs:
       - name: Upload rebound.html
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "test-tag" # Hardcoded for testing
+          draft: true # Keep it hidden from the public
           files: |
             web_client/rebound.html
         env:
