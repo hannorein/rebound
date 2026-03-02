@@ -501,6 +501,25 @@ static __m512d inline gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m5
     const __m512d r = _mm512_sqrt_pd(r2);
     const __m512d r3 = _mm512_mul_pd(r, r2);
     return _mm512_div_pd(_mm512_set1_pd(1.0),r3); 
+//    __m512d out;
+//    __m512d ones = _mm512_set1_pd(1.0);
+//
+//    __asm__ (
+//        "vmulpd      %[dx], %[dx], %%zmm0\n\t"      // zmm0 = dx * dx
+//        "vfmadd231pd %[dy], %[dy], %%zmm0\n\t"      // zmm0 = dy * dy + zmm0
+//        "vfmadd231pd %[dz], %[dz], %%zmm0\n\t"      // zmm0 = dz * dz + zmm0 (r2)
+//        "vsqrtpd     %%zmm0, %%zmm1\n\t"            // zmm1 = sqrt(r2) (r)
+//        "vmulpd      %%zmm0, %%zmm1, %%zmm1\n\t"    // zmm1 = r * r2 (r3)
+//        "vdivpd      %%zmm1, %[ones], %[out]\n\t"   // out  = 1.0 / r3
+//        : [out]  "=v" (out)                         // Output
+//        : [dx]   "v"  (dx),                         // Inputs
+//          [dy]   "v"  (dy),
+//          [dz]   "v"  (dz),
+//          [ones] "v"  (ones)
+//        : "zmm0", "zmm1"                            // Clobbers
+//    );
+//
+//    return out;
 }
 
 static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz) {
@@ -512,6 +531,11 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
     return _mm512_div_pd(m,r3);
 }
 
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
 
 
 // Performs one full interaction step
@@ -739,6 +763,13 @@ static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simu
     walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 #endif
 }
+
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
+// ##################################################################################################
 static void reb_whfast512_interaction_step_4planets_jacobi(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
@@ -1917,9 +1948,9 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
 
     printf("Instructions:    %lld\n", insn);
     printf("Cycles:          %lld\n", cycles);
-    printf("IPC:             %.2f\n", (double)insn / cycles);
+    printf("IPC:             %.3f\n", (double)insn / cycles);
     printf("L1D accesses:    %lld\n", l1d);
-    printf("Mem ops/insn:    %.2f\n", (double)l1d / insn);
+    printf("Mem ops/insn:    %.3f\n", (double)l1d / insn);
 
     close(fd_insn);
     close(fd_cycles);
