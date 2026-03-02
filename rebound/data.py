@@ -6,22 +6,29 @@ Initial conditions for standard tests
 """
 
 import math
+from .units import hash_to_unit, units_convert_particle
 
 def add_outer_solar_system(sim):
     """
     Add the planet of the outer Solar System as a test problem.
     Data taken from NASA Horizons.
     """
-    Gfac = 1./0.01720209895       # Gaussian constant 
-    if sim.G is not None:
-        Gfac *= math.sqrt(sim.G)
+    Gfac = 1./0.01720209895       # Gaussian constant
 
-    sim.add( m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6, vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac )  # Sun
-    sim.add( m=1./1047.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3*Gfac, vy=+5.51815399480116e-3*Gfac, vz=-2.66711392865591e-6*Gfac )  # Jupiter
-    sim.add( m=1./3501.6,     x=+6.60801554403466e+0, y=+6.38084674585064e+0, z=-1.36145963724542e-1, vx=-4.17354020307064e-3*Gfac, vy=+3.99723751748116e-3*Gfac, vz=+1.67206320571441e-5*Gfac )  # Saturn
-    sim.add( m=1./22869.,     x=+1.11636331405597e+1, y=+1.60373479057256e+1, z=+3.61783279369958e-1, vx=-3.25884806151064e-3*Gfac, vy=+2.06438412905916e-3*Gfac, vz=-2.17699042180559e-5*Gfac )  # Uranus
-    sim.add( m=1./19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4*Gfac, vy=-3.11361111025884e-3*Gfac, vz=+3.58344705491441e-5*Gfac )  # Neptune
-    sim.add( m=7.4074074e-09, x=-2.13858977531573e+1, y=+3.20719104739886e+1, z=+2.49245689556096e+0, vx=-1.76936577252484e-3*Gfac, vy=-2.06720938381724e-3*Gfac, vz=+6.58091931493844e-4*Gfac )  # Pluto
+    sim.add( m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6, vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac)  # Sun
+    sim.add( m=1./1047.355,   x=+3.40546614227466e+0, y=+3.62978190075864e+0, z=+3.42386261766577e-2, vx=-5.59797969310664e-3*Gfac, vy=+5.51815399480116e-3*Gfac, vz=-2.66711392865591e-6*Gfac)  # Jupiter
+    sim.add( m=1./3501.6,     x=+6.60801554403466e+0, y=+6.38084674585064e+0, z=-1.36145963724542e-1, vx=-4.17354020307064e-3*Gfac, vy=+3.99723751748116e-3*Gfac, vz=+1.67206320571441e-5*Gfac)  # Saturn
+    sim.add( m=1./22869.,     x=+1.11636331405597e+1, y=+1.60373479057256e+1, z=+3.61783279369958e-1, vx=-3.25884806151064e-3*Gfac, vy=+2.06438412905916e-3*Gfac, vz=-2.17699042180559e-5*Gfac)  # Uranus
+    sim.add( m=1./19314.,     x=-3.01777243405203e+1, y=+1.91155314998064e+0, z=-1.53887595621042e-1, vx=-2.17471785045538e-4*Gfac, vy=-3.11361111025884e-3*Gfac, vz=+3.58344705491441e-5*Gfac)  # Neptune
+    sim.add( m=7.4074074e-09, x=-2.13858977531573e+1, y=+3.20719104739886e+1, z=+2.49245689556096e+0, vx=-1.76936577252484e-3*Gfac, vy=-2.06720938381724e-3*Gfac, vz=+6.58091931493844e-4*Gfac)  # Pluto
+
+    if sim.python_unit_l != 0 or sim.python_unit_m != 0 or sim.python_unit_t != 0:
+        for p in sim.particles:
+            units_convert_particle(p,
+                                   "au", "yr2pi", "msun",
+                                   hash_to_unit(sim.python_unit_l), hash_to_unit(sim.python_unit_t), hash_to_unit(sim.python_unit_m)
+                                   )
+
 
 def add_solar_system(sim):
     """
@@ -37,3 +44,10 @@ def add_solar_system(sim):
     sim.add(m=0.00028588567272224167, x=4.97984063350991323915, y=-8.66630842281542435046, z=-0.04756566088166765821, vx=0.26314427785251254255, vy=0.16073015466677914587, vz=-0.01327326395768535505)
     sim.add(m=0.00004366243735831270, x=15.62435177921100226683, y=12.13892823277256738379, z=-0.15733112984491792741, vx=-0.14195568334904265506, vy=0.16989920313154410758, vz=0.00247006450290807337)
     sim.add(m=0.00005151383772628674, x=29.39189844361883885426, y=-5.57834279640134234057, z=-0.56249012217889071685, vx=0.03281663353639149155, vy=0.18036894277947276843, vz=-0.00447061619870956460)
+
+    if sim.python_unit_l != 0 or sim.python_unit_m != 0 or sim.python_unit_t != 0:
+        for p in sim.particles:
+            units_convert_particle(p,
+                                   "au", "yr2pi", "msun",
+                                   hash_to_unit(sim.python_unit_l), hash_to_unit(sim.python_unit_t), hash_to_unit(sim.python_unit_m)
+                                   )
