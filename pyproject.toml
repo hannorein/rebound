@@ -34,7 +34,7 @@ dependencies = []
 Homepage = "https://github.com/hannorein/rebound/"
 
 [tool.setuptools.packages.find]
-include = ["rebound", "rebound.*"]
+include = ["rebound*"]
 
 [tool.setuptools.package-data]
-rebound = ["include/*.h"]
+rebound = ["../src/*.h"]
