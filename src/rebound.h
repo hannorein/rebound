@@ -758,6 +758,8 @@ DLLEXPORT int reb_whfast_kepler_solver(struct reb_particle* const restrict p, do
 // Sets a particle's name. This function should be used instead of directly setting the name in the particle's structure as it
 // registers the name, allowing for faster lookup and storing of name in binary files.
 DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
+/// Register a string. This copies the string, returns the new pointer. REBOUND will manage the memory of the copy. Used by REBOUNDx.
+DLLEXPORT const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
 // Returns a pointer to a particle given its name. Returns NULL if not found.
 DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
 // When MPI is used, particles cannot be accessed by name. Need to use id instead.
