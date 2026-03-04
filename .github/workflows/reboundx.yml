@@ -27,17 +27,18 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest wheel setuptools
-          pip install -r rebound/requirements.txt
-          pip install -r reboundx/requirements.txt
+      - name: Install pip 
+        run: python -m pip install --upgrade pip
+      - name: Install pytest wheel and setuptools 
+        run: pip install pytest wheel setuptools
+      - name: Install REBOUND requirements
+        run: pip install -r rebound/requirements.txt
+      - name: Install REBOUNDx requirements
+        run: pip install -r reboundx/requirements.txt
       - name: Build REBOUND package
         run: pip install ./rebound
       - name: Build REBOUNDx package
         run: pip install --no-build-isolation -e ./reboundx -v
       - name: Run REBOUNDx unit tests
-        run: |
-          cd reboundx
-          python -m unittest discover -s reboundx/test/ -v
+        working-directory: reboundx
+        run: python -m unittest discover -s reboundx/test/ -v
