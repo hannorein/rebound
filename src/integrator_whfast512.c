@@ -495,15 +495,6 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
 // Helper functions for the interaction step
 // Calculates 1/(dx**2+dy**2+dz**2)^(3/2)
 extern __m512d gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz);
-//__m512d gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz) {
-//    __m512d r2 = _mm512_mul_pd(dx, dx);
-//    r2 = _mm512_fmadd_pd(dy,dy, r2);
-//    r2 = _mm512_fmadd_pd(dz,dz, r2);
-//    const __m512d r = _mm512_sqrt_pd(r2);
-//    const __m512d r3 = _mm512_mul_pd(r, r2);
-//    return _mm512_div_pd(_mm512_set1_pd(1.0),r3);
-//}
-
 extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz);
 
 // ##################################################################################################
@@ -512,13 +503,48 @@ extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m5
 // ##################################################################################################
 // ##################################################################################################
 
+void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
+        __m512d gr_prefac, __m512d gr_prefac2, __mmask8 mask, 
+        __m512d* hvx, __m512d* hvy, __m512d* hvz,__m512d mdt){
+    __m512d r2 = _mm512_mul_pd(x_j, x_j);
+    r2 = _mm512_fmadd_pd(y_j, y_j, r2);
+    r2 = _mm512_fmadd_pd(z_j, z_j, r2);
+    const __m512d r4 = _mm512_mul_pd(r2, r2);
+    __m512d prefac = _mm512_div_pd(gr_prefac,r4);
+    __m512d dvx = _mm512_mul_pd(prefac, x_j); 
+    __m512d dvy = _mm512_mul_pd(prefac, y_j); 
+    __m512d dvz = _mm512_mul_pd(prefac, z_j); 
+    *hvx  = dvx;
+    *hvy  = dvy;
+    *hvz  = dvz;
+
+    // Calculate back reaction onto star and apply them to planets (heliocentric) 
+    dvx = _mm512_maskz_mul_pd(mask, gr_prefac2, dvx); 
+    dvy = _mm512_maskz_mul_pd(mask, gr_prefac2, dvy); 
+    dvz = _mm512_maskz_mul_pd(mask, gr_prefac2, dvz); 
+
+    double sum_x = _mm512_reduce_add_pd(dvx);
+    double sum_y = _mm512_reduce_add_pd(dvy);
+    double sum_z = _mm512_reduce_add_pd(dvz);
+    *hvx = _mm512_maskz_sub_pd(mask, *hvx, _mm512_set1_pd(sum_x));
+    *hvy = _mm512_maskz_sub_pd(mask, *hvy, _mm512_set1_pd(sum_y));
+    *hvz = _mm512_maskz_sub_pd(mask, *hvz, _mm512_set1_pd(sum_z));
+
+    // Jacobi additions:
+    // Need to add stellar term. Easy: already in heliocentric coordinates.
+    // TODO: Should put a mask on particle 1 as +/- cancels.
+    const __m512d r1 = _mm512_sqrt_pd(r2);
+    const __m512d r3 = _mm512_mul_pd(r1, r2);
+    __m512d prefact = _mm512_div_pd(mdt,r3); // Note: using m0, m0, m0, ... for mass here
+    *hvx = _mm512_maskz_fnmadd_pd(mask, prefact, x_j, *hvx); 
+    *hvy = _mm512_maskz_fnmadd_pd(mask, prefact, y_j, *hvy); 
+    *hvz = _mm512_maskz_fnmadd_pd(mask, prefact, z_j, *hvz); 
+}
+
+
 
 // Performs one full interaction step
 void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation * const r){
-#ifdef PROF
-    struct reb_timeval time_beginning;
-    gettimeofday(&time_beginning,NULL);
-#endif
     const struct reb_integrator_whfast512* restrict const ri_whfast512 = &(r->ri_whfast512);
     struct reb_particle_avx512* restrict const p512 = ri_whfast512->p512;
 
@@ -530,42 +556,11 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     __m512d y_j =  p512->hy;
     __m512d z_j =  p512->hz;
     __m512d dt512 = _mm512_set1_pd(r->dt); 
+    __m512d mdt = _mm512_set1_pd(r->dt*r->particles[0].m);
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
-        __m512d r2 = _mm512_mul_pd(x_j, x_j);
-        r2 = _mm512_fmadd_pd(y_j, y_j, r2);
-        r2 = _mm512_fmadd_pd(z_j, z_j, r2);
-        const __m512d r4 = _mm512_mul_pd(r2, r2);
-        __m512d prefac = _mm512_div_pd(p512->gr_prefac,r4);
-        __m512d dvx = _mm512_mul_pd(prefac, x_j); 
-        __m512d dvy = _mm512_mul_pd(prefac, y_j); 
-        __m512d dvz = _mm512_mul_pd(prefac, z_j); 
-        p512->hvx  = dvx;
-        p512->hvy  = dvy;
-        p512->hvz  = dvz;
-
-        // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvx); 
-        dvy = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvy); 
-        dvz = _mm512_maskz_mul_pd(p512->mask, p512->gr_prefac2, dvz); 
-
-        double sum_x = _mm512_reduce_add_pd(dvx);
-        double sum_y = _mm512_reduce_add_pd(dvy);
-        double sum_z = _mm512_reduce_add_pd(dvz);
-        p512->hvx = _mm512_maskz_sub_pd(p512->mask, p512->hvx, _mm512_set1_pd(sum_x));
-        p512->hvy = _mm512_maskz_sub_pd(p512->mask, p512->hvy, _mm512_set1_pd(sum_y));
-        p512->hvz = _mm512_maskz_sub_pd(p512->mask, p512->hvz, _mm512_set1_pd(sum_z));
-    
-        // Jacobi additions:
-        // Need to add stellar term. Easy: already in heliocentric coordinates.
-        // TODO: Should put a mask on particle 1 as +/- cancels.
-        const __m512d r1 = _mm512_sqrt_pd(r2);
-        const __m512d r3 = _mm512_mul_pd(r1, r2);
-        __m512d prefact = _mm512_div_pd(_mm512_set1_pd(r->dt*r->particles[0].m),r3); // Note: using m0, m0, m0, ... for mass here
-        p512->hvx = _mm512_maskz_fnmadd_pd(p512->mask, prefact, x_j, p512->hvx); 
-        p512->hvy = _mm512_maskz_fnmadd_pd(p512->mask, prefact, y_j, p512->hvy); 
-        p512->hvz = _mm512_maskz_fnmadd_pd(p512->mask, prefact, z_j, p512->hvz); 
+        gr_potential(x_j, y_j, z_j, p512->gr_prefac, p512->gr_prefac2, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz, mdt);
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
@@ -732,11 +727,6 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     p512->vy = _mm512_maskz_fmadd_pd(p512->mask, prefact_f3, p512->y, p512->vy); 
     p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact_f3, p512->z, p512->vz); 
 
-#ifdef PROF
-    struct reb_timeval time_end;
-    gettimeofday(&time_end,NULL);
-    walltime_interaction += time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
-#endif
 }
 
 // ##################################################################################################
