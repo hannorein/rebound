@@ -113,7 +113,7 @@ gr_potential:
     REDUCE_ADD_AND_BROADCAST %zmm11, %zmm18
     REDUCE_ADD_AND_BROADCAST %zmm12, %zmm18
 
-	vaddpd	%zmm10, %zmm15, %zmm10      # delta v_x due to gr
+	vaddpd	%zmm10, %zmm15, %zmm10      # delta v_x due to gr TODO: Combine this with previous vmulpd
     vaddpd	%zmm11, %zmm16, %zmm11
 	vaddpd	%zmm12, %zmm17, %zmm12
 	
@@ -121,7 +121,7 @@ gr_potential:
     vaddpd	%zmm11, %zmm21, %zmm11
 	vaddpd	%zmm12, %zmm22, %zmm12
 
-	vmovapd	%zmm10, (%rsi)
+	vmovapd	%zmm10, (%rsi)              # TODO get rid of mov instruction
 	vmovapd	%zmm11, (%rdx)
 	vmovapd	%zmm12, (%rcx)
 	
