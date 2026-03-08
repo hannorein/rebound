@@ -14,7 +14,7 @@ ifneq ($(OS),Windows_NT)
 
 integrator_whfast512.asm_o: integrator_whfast512.s
 	@echo "Assembling source file integrator_whfast512.s ..."
-	as -o $@ $<
+	as -g -o $@ $<
 
 $(LIBREBOUND): $(OBJECTS) integrator_whfast512.asm_o
 	@echo ""        

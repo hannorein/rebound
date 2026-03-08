@@ -503,43 +503,44 @@ extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m5
 // ##################################################################################################
 // ##################################################################################################
 
-void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
+extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
         __m512d gr_prefac, __m512d gr_prefac2, __mmask8 mask, 
-        __m512d* hvx, __m512d* hvy, __m512d* hvz,__m512d mdt){
-    __m512d r2 = _mm512_mul_pd(x_j, x_j);
-    r2 = _mm512_fmadd_pd(y_j, y_j, r2);
-    r2 = _mm512_fmadd_pd(z_j, z_j, r2);
-    const __m512d r4 = _mm512_mul_pd(r2, r2);
-    __m512d prefac = _mm512_div_pd(gr_prefac,r4);
-    __m512d dvx = _mm512_mul_pd(prefac, x_j); 
-    __m512d dvy = _mm512_mul_pd(prefac, y_j); 
-    __m512d dvz = _mm512_mul_pd(prefac, z_j); 
-    *hvx  = dvx;
-    *hvy  = dvy;
-    *hvz  = dvz;
+        __m512d* hvx, __m512d* hvy, __m512d* hvz,__m512d mdt);
 
-    // Calculate back reaction onto star and apply them to planets (heliocentric) 
-    dvx = _mm512_maskz_mul_pd(mask, gr_prefac2, dvx); 
-    dvy = _mm512_maskz_mul_pd(mask, gr_prefac2, dvy); 
-    dvz = _mm512_maskz_mul_pd(mask, gr_prefac2, dvz); 
-
-    double sum_x = _mm512_reduce_add_pd(dvx);
-    double sum_y = _mm512_reduce_add_pd(dvy);
-    double sum_z = _mm512_reduce_add_pd(dvz);
-    *hvx = _mm512_maskz_sub_pd(mask, *hvx, _mm512_set1_pd(sum_x));
-    *hvy = _mm512_maskz_sub_pd(mask, *hvy, _mm512_set1_pd(sum_y));
-    *hvz = _mm512_maskz_sub_pd(mask, *hvz, _mm512_set1_pd(sum_z));
-
-    // Jacobi additions:
-    // Need to add stellar term. Easy: already in heliocentric coordinates.
-    // TODO: Should put a mask on particle 1 as +/- cancels.
-    const __m512d r1 = _mm512_sqrt_pd(r2);
-    const __m512d r3 = _mm512_mul_pd(r1, r2);
-    __m512d prefact = _mm512_div_pd(mdt,r3); // Note: using m0, m0, m0, ... for mass here
-    *hvx = _mm512_maskz_fnmadd_pd(mask, prefact, x_j, *hvx); 
-    *hvy = _mm512_maskz_fnmadd_pd(mask, prefact, y_j, *hvy); 
-    *hvz = _mm512_maskz_fnmadd_pd(mask, prefact, z_j, *hvz); 
-}
+//    __m512d r2 = _mm512_mul_pd(x_j, x_j);
+//    r2 = _mm512_fmadd_pd(y_j, y_j, r2);
+//    r2 = _mm512_fmadd_pd(z_j, z_j, r2);
+//    const __m512d r4 = _mm512_mul_pd(r2, r2);
+//    __m512d prefac = _mm512_div_pd(gr_prefac,r4);
+//    __m512d dvx = _mm512_mul_pd(prefac, x_j); 
+//    __m512d dvy = _mm512_mul_pd(prefac, y_j); 
+//    __m512d dvz = _mm512_mul_pd(prefac, z_j); 
+//    *hvx  = dvx;
+//    *hvy  = dvy;
+//    *hvz  = dvz;
+//
+//    // Calculate back reaction onto star and apply them to planets (heliocentric) 
+//    dvx = _mm512_maskz_mul_pd(mask, gr_prefac2, dvx); 
+//    dvy = _mm512_maskz_mul_pd(mask, gr_prefac2, dvy); 
+//    dvz = _mm512_maskz_mul_pd(mask, gr_prefac2, dvz); 
+//
+//    double sum_x = _mm512_reduce_add_pd(dvx);
+//    double sum_y = _mm512_reduce_add_pd(dvy);
+//    double sum_z = _mm512_reduce_add_pd(dvz);
+//    *hvx = _mm512_maskz_sub_pd(mask, *hvx, _mm512_set1_pd(sum_x));
+//    *hvy = _mm512_maskz_sub_pd(mask, *hvy, _mm512_set1_pd(sum_y));
+//    *hvz = _mm512_maskz_sub_pd(mask, *hvz, _mm512_set1_pd(sum_z));
+//
+//    // Jacobi additions:
+//    // Need to add stellar term. Easy: already in heliocentric coordinates.
+//    // TODO: Should put a mask on particle 1 as +/- cancels.
+//    const __m512d r1 = _mm512_sqrt_pd(r2);
+//    const __m512d r3 = _mm512_mul_pd(r1, r2);
+//    __m512d prefact = _mm512_div_pd(mdt,r3); // Note: using m0, m0, m0, ... for mass here
+//    *hvx = _mm512_maskz_fnmadd_pd(mask, prefact, x_j, *hvx); 
+//    *hvy = _mm512_maskz_fnmadd_pd(mask, prefact, y_j, *hvy); 
+//    *hvz = _mm512_maskz_fnmadd_pd(mask, prefact, z_j, *hvz); 
+//}
 
 
 
