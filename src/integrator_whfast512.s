@@ -128,7 +128,31 @@ gr_potential:
     ret
 
 
-
+//block1:
+//    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
+//    #           zmm3=m_j*dt
+//    #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
+//    // 0123 4567
+//    // 3201 7645
+//    __m512d prefact1 = _mm512_mul_pd(gr_prefact1, m_j1);
+//    p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j1, p512->hvx); 
+//    p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j1, p512->hvy); 
+//    p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j1, p512->hvz); 
+//
+//
+//    dx_j1    = _mm512_permutex_pd(dx_j1,    _MM_PERM_ABDC); // within 256
+//    dy_j1    = _mm512_permutex_pd(dy_j1,    _MM_PERM_ABDC);
+//    dz_j1    = _mm512_permutex_pd(dz_j1,    _MM_PERM_ABDC);
+//    gr_prefact1 = _mm512_permutex_pd(gr_prefact1, _MM_PERM_ABDC);
+//
+//    // 0123 4567
+//    // 2310 6754
+//    prefact1 = _mm512_mul_pd(gr_prefact1, m_j1b);
+//    p512->hvx = _mm512_fmadd_pd(prefact1, dx_j1, p512->hvx); 
+//    p512->hvy = _mm512_fmadd_pd(prefact1, dy_j1, p512->hvy); 
+//    p512->hvz = _mm512_fmadd_pd(prefact1, dz_j1, p512->hvz); 
+//
+//    ret
 
 
 

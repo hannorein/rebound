@@ -557,11 +557,11 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     __m512d y_j =  p512->hy;
     __m512d z_j =  p512->hz;
     __m512d dt512 = _mm512_set1_pd(r->dt); 
-    __m512d mdt = _mm512_set1_pd(-r->particles[0].m*r->dt);
+    __m512d m0_dt = _mm512_set1_pd(-r->particles[0].m*r->dt);
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
-        gr_potential(x_j, y_j, z_j, p512->gr_prefac, p512->gr_prefac2, mdt, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz);
+        gr_potential(x_j, y_j, z_j, p512->gr_prefac, p512->gr_prefac2, m0_dt, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz);
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
