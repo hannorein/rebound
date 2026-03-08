@@ -38,6 +38,7 @@
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
 .globl gr_potential
+.globl block1
 
 
 gravity_prefactor_avx512_one:
@@ -128,31 +129,71 @@ gr_potential:
     ret
 
 
-//block1:
-//    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
-//    #           zmm3=m_j*dt
-//    #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
-//    // 0123 4567
-//    // 3201 7645
-//    __m512d prefact1 = _mm512_mul_pd(gr_prefact1, m_j1);
-//    p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j1, p512->hvx); 
-//    p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j1, p512->hvy); 
-//    p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j1, p512->hvz); 
-//
-//
-//    dx_j1    = _mm512_permutex_pd(dx_j1,    _MM_PERM_ABDC); // within 256
-//    dy_j1    = _mm512_permutex_pd(dy_j1,    _MM_PERM_ABDC);
-//    dz_j1    = _mm512_permutex_pd(dz_j1,    _MM_PERM_ABDC);
-//    gr_prefact1 = _mm512_permutex_pd(gr_prefact1, _MM_PERM_ABDC);
-//
-//    // 0123 4567
-//    // 2310 6754
-//    prefact1 = _mm512_mul_pd(gr_prefact1, m_j1b);
-//    p512->hvx = _mm512_fmadd_pd(prefact1, dx_j1, p512->hvx); 
-//    p512->hvy = _mm512_fmadd_pd(prefact1, dy_j1, p512->hvy); 
-//    p512->hvz = _mm512_fmadd_pd(prefact1, dz_j1, p512->hvz); 
-//
-//    ret
+block1:
+    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
+    #           zmm3=m_j*dt
+    #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
+    #// 0123 4567
+    #// 3201 7645
+    
+    vpermpd $0x4B, %zmm0, %zmm4               # 01234567 -> 32017645
+    vpermpd $0x4B, %zmm1, %zmm5
+    vpermpd $0x4B, %zmm2, %zmm6
+    vpermpd $0x4B, %zmm3, %zmm15 
+
+    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
+    vsubpd  %zmm5, %zmm0, %zmm8
+    vsubpd  %zmm6, %zmm0, %zmm9
+    
+
+    # Prefactor calculation
+    vmulpd      %zmm7, %zmm7, %zmm10     
+    vfmadd231pd %zmm8, %zmm8, %zmm10      
+    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
+    
+    vsqrtpd     %zmm10, %zmm11             
+    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
+   
+    vbroadcastsd .one(%rip), %zmm13         # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm10, %zmm13, %zmm11      # 1/r^3
+    vmulpd      %zmm11, %zmm15, %zmm14      # m/r^3
+    
+    int3
+    vmovapd	(%rdi),  %zmm10             # TODO get rid of mov instruction
+	vmovapd	(%rsi),  %zmm11 
+	vmovapd	(%rdx),  %zmm12
+  
+    vfnmadd231pd %zmm14, %zmm7,  %zmm10
+    vfnmadd231pd %zmm14, %zmm8,  %zmm11
+    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+	
+    vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
+	vmovapd	%zmm11, (%rsi)
+	vmovapd	%zmm12, (%rdx)
+
+    vpermpd $0x1E, %zmm7, %zmm7               # 32017645 -> 01234567
+    vpermpd $0x1E, %zmm8, %zmm8
+    vpermpd $0x1E, %zmm9, %zmm9
+    vpermpd $0x1E, %zmm15, %zmm15
+
+    vmulpd      %zmm11, %zmm15, %zmm14      # m/r^3
+	
+    vmovapd	(%rdi),  %zmm10             # TODO get rid of mov instruction
+	vmovapd	(%rsi),  %zmm11 
+	vmovapd	(%rdx),  %zmm12 
+    
+    vfnmadd231pd %zmm14, %zmm7,  %zmm10
+    vfnmadd231pd %zmm14, %zmm8,  %zmm11
+    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+
+	vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
+	vmovapd	%zmm11, (%rsi)
+	vmovapd	%zmm12, (%rdx)
+
+    #// 0123 4567
+    #// 2310 6754
+
+    ret
 
 
 
