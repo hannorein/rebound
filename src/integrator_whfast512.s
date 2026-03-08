@@ -83,50 +83,54 @@ gravity_prefactor_avx512:
 gr_potential:
     # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
     #           zmm3 = gr_prefac, zmm4 = gr_prefac2
-    #           zmm5 = mdt
+    #           zmm5 = -m0*dt
     #           edi = mask
     #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
+    kmovw	%edi, %k1
 
 	vmulpd	%zmm0, %zmm0, %zmm6
 	vfmadd231pd	%zmm1, %zmm1, %zmm6
-	vfmadd231pd	%zmm2, %zmm2, %zmm6     # zmm6 is r^2
-	
-    vsqrtpd	%zmm6, %zmm18
-	vmulpd	%zmm6, %zmm18, %zmm18
-	vdivpd	%zmm18, %zmm5, %zmm8{%k1}{z}  # zmm8 is  m0*dt/r^3
+	vfmadd231pd	%zmm2, %zmm2, %zmm6     # r^2
+    vsqrtpd	%zmm6, %zmm18               # r
+	vmulpd	%zmm6, %zmm18, %zmm18       # r^3    
+	vdivpd	%zmm18, %zmm5, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
+	vmulpd	%zmm8, %zmm0, %zmm20          # -x_j*m0*dt/r^3
+	vmulpd	%zmm8, %zmm1, %zmm21
+	vmulpd	%zmm8, %zmm2, %zmm22
 
-	vmulpd	%zmm6, %zmm6, %zmm7         # zmm7 is r^4
-	vdivpd	%zmm7, %zmm3, %zmm9{%k1}{z}         
+	vmulpd	%zmm6, %zmm6, %zmm7                 # r^4
+	vdivpd	%zmm7, %zmm3, %zmm9{%k1}{z}         # -dt*6*m0*m0/(c*c) /r^4
 
-	vmulpd	%zmm9, %zmm0, %zmm15        # is x_j*gr_prefac/r^4 
+	vmulpd	%zmm9, %zmm0, %zmm15                # -x_j*dt*6*m0*m0/(c*c) /r^4
 	vmulpd	%zmm9, %zmm1, %zmm16
 	vmulpd	%zmm9, %zmm2, %zmm17
 
-    kmovw	%edi, %k1
-	vmulpd	%zmm15, %zmm4, %zmm10{%k1}{z}
+	vmulpd	%zmm15, %zmm4, %zmm10{%k1}{z}       # x_j*dt*6*m0*m/(c*c) /r^4 
 	vmulpd	%zmm16, %zmm4, %zmm11{%k1}{z}
 	vmulpd	%zmm17, %zmm4, %zmm12{%k1}{z}
 
-    REDUCE_ADD_AND_BROADCAST %zmm10, %zmm18   # sum_x
+    REDUCE_ADD_AND_BROADCAST %zmm10, %zmm18   # sum
     REDUCE_ADD_AND_BROADCAST %zmm11, %zmm18
     REDUCE_ADD_AND_BROADCAST %zmm12, %zmm18
 
-	vsubpd	%zmm10, %zmm15, %zmm10      # hvx = hvx - sum_x
-	vsubpd	%zmm11, %zmm16, %zmm11
-	vsubpd	%zmm12, %zmm17, %zmm12
+	vaddpd	%zmm10, %zmm15, %zmm10      # delta v_x due to gr
+    vaddpd	%zmm11, %zmm16, %zmm11
+	vaddpd	%zmm12, %zmm17, %zmm12
+	
+    vaddpd	%zmm10, %zmm20, %zmm10      # delta v_x due to gr + jacobi term
+    vaddpd	%zmm11, %zmm21, %zmm11
+	vaddpd	%zmm12, %zmm22, %zmm12
 
-    vbroadcastsd .t2(%rip), %zmm2
-    vbroadcastsd .t3(%rip), %zmm3
-    vbroadcastsd .t5(%rip), %zmm5
-	vfnmadd213pd	%zmm2, %zmm3, %zmm5    # zmm5 = -(2*5 +3)
-int3
-    # 3                 
-    # zmm0 = zmm10 - zmm8 * %zmm0 
-	vfnmadd213pd	%zmm10, %zmm8, %zmm0    # hvx = hvx - x_j*prefact
-	vmovapd	%zmm0, (%rsi)
-	vfnmadd213pd	%zmm11, %zmm8, %zmm1
-	vmovapd	%zmm1, (%rdx)
-	vfnmadd213pd	%zmm12, %zmm8, %zmm2
-	vmovapd	%zmm2, (%rcx)
+	vmovapd	%zmm10, (%rsi)
+	vmovapd	%zmm11, (%rdx)
+	vmovapd	%zmm12, (%rcx)
 	
     ret
+
+
+
+
+
+
+
+.section .note.GNU-stack,"",@progbits

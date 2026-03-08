@@ -504,8 +504,8 @@ extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m5
 // ##################################################################################################
 
 extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
-        __m512d gr_prefac, __m512d gr_prefac2, __mmask8 mask, 
-        __m512d* hvx, __m512d* hvy, __m512d* hvz,__m512d mdt);
+        __m512d gr_prefac, __m512d gr_prefac2, __m512d mdt, __mmask8 mask, 
+        __m512d* hvx, __m512d* hvy, __m512d* hvz);
 
 //    __m512d r2 = _mm512_mul_pd(x_j, x_j);
 //    r2 = _mm512_fmadd_pd(y_j, y_j, r2);
@@ -557,11 +557,11 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     __m512d y_j =  p512->hy;
     __m512d z_j =  p512->hz;
     __m512d dt512 = _mm512_set1_pd(r->dt); 
-    __m512d mdt = _mm512_set1_pd(r->dt*r->particles[0].m);
+    __m512d mdt = _mm512_set1_pd(-r->particles[0].m*r->dt);
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
-        gr_potential(x_j, y_j, z_j, p512->gr_prefac, p512->gr_prefac2, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz, mdt);
+        gr_potential(x_j, y_j, z_j, p512->gr_prefac, p512->gr_prefac2, mdt, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz);
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
@@ -1618,8 +1618,8 @@ void static recalculate_constants(struct reb_simulation* r){
         for (int p=1; p<N_per_system; p++){
             switch (ri_whfast512->coordinates){
                 case REB_WHFAST512_COORDINATES_JACOBI:
-                    _gr_prefac[s*p_per_system+(p-1)] = -r->dt*6.*m0*m0/(c*c); // Minus sign!
-                    _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m/m0;
+                    _gr_prefac[s*p_per_system+(p-1)] = -r->dt*6.*m0*m0/(c*c);
+                    _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m / m0;
                     break;
                 case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
                     _gr_prefac[s*p_per_system+(p-1)] = r->dt*6.*m0*m0/(c*c);
