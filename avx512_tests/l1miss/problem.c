@@ -54,6 +54,10 @@ const double all_ss_mass[9] = {
 const double C2 = 10065.32 * 10065.32;
 
 int main(int argc, char* argv[]) {
+    if (argc<2){
+        printf("Usage: ./rebound steps\n");
+        return EXIT_FAILURE;
+    }
     int steps = atof(argv[1]);
     
     struct reb_simulation* r = reb_simulation_create();

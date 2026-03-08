@@ -522,14 +522,15 @@ static __m512d inline gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m5
 //    return out;
 }
 
-static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz) {
-    __m512d r2 = _mm512_mul_pd(dx, dx);
-    r2 = _mm512_fmadd_pd(dy,dy, r2);
-    r2 = _mm512_fmadd_pd(dz,dz, r2);
-    const __m512d r = _mm512_sqrt_pd(r2);
-    const __m512d r3 = _mm512_mul_pd(r, r2);
-    return _mm512_div_pd(m,r3);
-}
+extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz);
+//static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz) {
+//    __m512d r2 = _mm512_mul_pd(dx, dx);
+//    r2 = _mm512_fmadd_pd(dy,dy, r2);
+//    r2 = _mm512_fmadd_pd(dz,dz, r2);
+//    const __m512d r = _mm512_sqrt_pd(r2);
+//    const __m512d r3 = _mm512_mul_pd(r, r2);
+//    return _mm512_div_pd(m,r3);
+//}
 
 // ##################################################################################################
 // ##################################################################################################
@@ -539,7 +540,7 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 
 
 // Performs one full interaction step
-static void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation * const r){
+void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation * const r){
 #ifdef PROF
     struct reb_timeval time_beginning;
     gettimeofday(&time_beginning,NULL);

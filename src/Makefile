@@ -12,10 +12,14 @@ ifneq ($(OS),Windows_NT)
 	@echo "Compiling source file $< ..."
 	$(CC) -c $(OPT) $(PREDEF) -o $@ $<
 
-$(LIBREBOUND): $(OBJECTS)
+integrator_whfast512.asm_o: integrator_whfast512.s
+	@echo "Assembling source file integrator_whfast512.s ..."
+	as -o $@ $<
+
+$(LIBREBOUND): $(OBJECTS) integrator_whfast512.asm_o
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) $(OPT) -shared $(OBJECTS) $(LIB) -o $@ 
+	$(CC) $(OPT) -shared $(OBJECTS) $(LIB) integrator_whfast512.asm_o -o $@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."

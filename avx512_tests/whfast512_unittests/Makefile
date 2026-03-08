@@ -1,10 +1,7 @@
-#export CC=clang
 export AVX512=1
 export OPENGL=0
 export SERVER=0
-export OPT+= -march=native -O3 -fno-omit-frame-pointer -g3  -fverbose-asm
-#export OPT+=-DPERF=1 -march=native -O3 
-#-fsanitize=address -fsanitize=undefined
+export OPT+=-march=native -O3 
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for
@@ -38,6 +35,3 @@ rebound_webgl.html: problem.c
 rebound_console.html: problem.c
 	@echo "Compiling problem.c with emscripten (WebGL disabled)..."
 	emcc -O3 -I../../src/ ../../src/*.c problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sSINGLE_FILE -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file ../../web_client/shell_rebound_console.html -o rebound_console.html
-
-run:
-	./rebound 1e5
