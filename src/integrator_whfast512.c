@@ -72,7 +72,7 @@ int setup_counter(uint32_t type, uint64_t config) {
 void static inline printavx512(__m512d a) {
     double _nax[8];
     _mm512_storeu_pd(&_nax[0], a);
-    printf("avx\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n %.15e\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
+    printf("avx = {%.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
 }
 
 // Print mask in binary format for debuggin
@@ -591,18 +591,25 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
         //p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j1, p512->hvx); 
         //p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j1, p512->hvy); 
         //p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j1, p512->hvz); 
+        //
 
-        printavx512(prefact1);
 
         dx_j1    = _mm512_permutex_pd(dx_j1,    _MM_PERM_ABDC); // within 256
         dy_j1    = _mm512_permutex_pd(dy_j1,    _MM_PERM_ABDC);
         dz_j1    = _mm512_permutex_pd(dz_j1,    _MM_PERM_ABDC);
         gr_prefact1 = _mm512_permutex_pd(gr_prefact1, _MM_PERM_ABDC);
-
+        
         // 0123 4567
         // 2310 6754
         prefact1 = _mm512_mul_pd(gr_prefact1, m_j1b);
+        
+//        printavx512(dx_j1);
+//        printavx512(m_j1);
+//        printavx512(gr_prefact1);
+//        printavx512(prefact1);
+
         //p512->hvx = _mm512_fmadd_pd(prefact1, dx_j1, p512->hvx); 
+        //printavx512(p512->hvx);
         //p512->hvy = _mm512_fmadd_pd(prefact1, dy_j1, p512->hvy); 
         //p512->hvz = _mm512_fmadd_pd(prefact1, dz_j1, p512->hvz); 
     }

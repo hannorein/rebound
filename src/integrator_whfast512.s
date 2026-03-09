@@ -142,8 +142,8 @@ block1:
     vpermpd $0x4B, %zmm3, %zmm15 
 
     vsubpd  %zmm4, %zmm0, %zmm7                # d_x
-    vsubpd  %zmm5, %zmm0, %zmm8
-    vsubpd  %zmm6, %zmm0, %zmm9
+    vsubpd  %zmm5, %zmm1, %zmm8
+    vsubpd  %zmm6, %zmm2, %zmm9
     
 
     # Prefactor calculation
@@ -154,11 +154,10 @@ block1:
     vsqrtpd     %zmm10, %zmm11             
     vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
    
-    vbroadcastsd .one(%rip), %zmm13         # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm10, %zmm13, %zmm11      # 1/r^3
-    vmulpd      %zmm11, %zmm15, %zmm14      # m/r^3
+    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
+    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
     
-    int3
     vmovapd	(%rdi),  %zmm10             # TODO get rid of mov instruction
 	vmovapd	(%rsi),  %zmm11 
 	vmovapd	(%rdx),  %zmm12
@@ -166,6 +165,7 @@ block1:
     vfnmadd231pd %zmm14, %zmm7,  %zmm10
     vfnmadd231pd %zmm14, %zmm8,  %zmm11
     vfnmadd231pd %zmm14, %zmm9,  %zmm12
+
 	
     vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
 	vmovapd	%zmm11, (%rsi)
@@ -174,17 +174,19 @@ block1:
     vpermpd $0x1E, %zmm7, %zmm7               # 32017645 -> 01234567
     vpermpd $0x1E, %zmm8, %zmm8
     vpermpd $0x1E, %zmm9, %zmm9
-    vpermpd $0x1E, %zmm15, %zmm15
+    vpermpd $0x1E, %zmm17, %zmm17
+    vpermpd $0x1E, %zmm3, %zmm15                # 01234567 -> 32017645
 
-    vmulpd      %zmm11, %zmm15, %zmm14      # m/r^3
+
+    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
 	
     vmovapd	(%rdi),  %zmm10             # TODO get rid of mov instruction
 	vmovapd	(%rsi),  %zmm11 
 	vmovapd	(%rdx),  %zmm12 
     
-    vfnmadd231pd %zmm14, %zmm7,  %zmm10
-    vfnmadd231pd %zmm14, %zmm8,  %zmm11
-    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+    vfmadd231pd %zmm14, %zmm7,  %zmm10
+    vfmadd231pd %zmm14, %zmm8,  %zmm11
+    vfmadd231pd %zmm14, %zmm9,  %zmm12
 
 	vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
 	vmovapd	%zmm11, (%rsi)
