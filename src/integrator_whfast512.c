@@ -501,6 +501,7 @@ extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j,
         __m512d* hvx, __m512d* hvy, __m512d* hvz);
 extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz);
 extern void block2( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz);
+extern void block3( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz, __m512d* dvx, __m512d* dvy, __m512d* dvz);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -548,26 +549,16 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
     __m512d m_j_01234567 = m_j;
     __m512d m_j1 = _mm512_permutex_pd(m_j, _MM_PERM_BACD);
-    __m512d m_j1b     = _mm512_permute_pd(m_j1,    _MM_PERM_BBBB);    // swap within 128
     __m512d m_j2 = _mm512_permutex_pd(m_j1, _MM_PERM_BACD); 
     __m512d m_j3 = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), m_j2);
     __m512d m_j4 = _mm512_permutex_pd(m_j3, _MM_PERM_ADCB);
     __m512d m_j_01234567_4 = _mm512_permutex_pd(m_j_01234567, _MM_PERM_CBAD);
-    __m512d dx_j1 = _mm512_sub_pd(p512->hx, x_j);
-    __m512d dy_j1 = _mm512_sub_pd(p512->hy, y_j);
-    __m512d dz_j1 = _mm512_sub_pd(p512->hz, z_j);
-    __m512d gr_prefact1 = gravity_prefactor_avx512_one(dx_j1, dy_j1, dz_j1);
     x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
     y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
     z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
     __m512d x_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // accros 512
     __m512d y_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
     __m512d z_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
-    
-    const __m512d dx_j2 = _mm512_sub_pd(p512->hx, x_j);
-    const __m512d dy_j2 = _mm512_sub_pd(p512->hy, y_j);
-    const __m512d dz_j2 = _mm512_sub_pd(p512->hz, z_j);
-    const __m512d prefact2 = gravity_prefactor_avx512(m_j2, dx_j2, dy_j2, dz_j2);
         
     __m512d dx_j3 = _mm512_sub_pd(p512->hx, x_jB);
     __m512d dy_j3 = _mm512_sub_pd(p512->hy, y_jB);
@@ -582,45 +573,7 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     __m512d gr_prefact4 = gravity_prefactor_avx512_one(dx_j4, dy_j4, dz_j4);
     __m512d prefact_f2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
 
-    if (1){
-
-        // 0123 4567
-        // 3201 7645
-        __m512d prefact1 = _mm512_mul_pd(gr_prefact1, m_j1);
-        //p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j1, p512->hvx); 
-        //p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j1, p512->hvy); 
-        //p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j1, p512->hvz); 
-        //
-
-
-        dx_j1    = _mm512_permutex_pd(dx_j1,    _MM_PERM_ABDC); // within 256
-        dy_j1    = _mm512_permutex_pd(dy_j1,    _MM_PERM_ABDC);
-        dz_j1    = _mm512_permutex_pd(dz_j1,    _MM_PERM_ABDC);
-        gr_prefact1 = _mm512_permutex_pd(gr_prefact1, _MM_PERM_ABDC);
-        
-        // 0123 4567
-        // 2310 6754
-        prefact1 = _mm512_mul_pd(gr_prefact1, m_j1b);
-        
-//        printavx512(dx_j1);
-//        printavx512(m_j1);
-//        printavx512(gr_prefact1);
-//        printavx512(prefact1);
-
-        //p512->hvx = _mm512_fmadd_pd(prefact1, dx_j1, p512->hvx); 
-        //printavx512(p512->hvx);
-        //p512->hvy = _mm512_fmadd_pd(prefact1, dy_j1, p512->hvy); 
-        //p512->hvz = _mm512_fmadd_pd(prefact1, dz_j1, p512->hvz); 
-    }
     block1(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz);
-    {
-
-        // 0123 4567
-        // 1032 5476 
-      //  p512->hvx = _mm512_fnmadd_pd(prefact2, dx_j2, p512->hvx); 
-      //  p512->hvy = _mm512_fnmadd_pd(prefact2, dy_j2, p512->hvy); 
-      //  p512->hvz = _mm512_fnmadd_pd(prefact2, dz_j2, p512->hvz); 
-    }
     block2(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz);
 
     // //////////////////////////////////////
@@ -634,24 +587,26 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
 
     {
 
-        // 0123 4567
-        // 4567 1230 
-        __m512d prefact1 = _mm512_mul_pd(gr_prefact3, m_j3);
-        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j3, p512->hvx); 
-        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j3, p512->hvy); 
-        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j3, p512->hvz); 
-
-
-        // 4567 1230 
-        // 0123 4567
-        prefact1 = _mm512_mul_pd(gr_prefact3, m_j_01234567);
-        dvx = _mm512_mul_pd(prefact1, dx_j3); 
-        dvy = _mm512_mul_pd(prefact1, dy_j3); 
-        dvz = _mm512_mul_pd(prefact1, dz_j3); 
-
+//        // 0123 4567
+//        // 4567 1230 
+//        printavx512(m_j3);
+//        __m512d prefact1 = _mm512_mul_pd(gr_prefact3, m_j3);
+//        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j3, p512->hvx); 
+//        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j3, p512->hvy); 
+//        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j3, p512->hvz); 
+//
+//
+//        // 4567 1230 
+//        // 0123 4567
+//        prefact1 = _mm512_mul_pd(gr_prefact3, m_j_01234567);
+//        dvx = _mm512_mul_pd(prefact1, dx_j3); 
+//        dvy = _mm512_mul_pd(prefact1, dy_j3); 
+//        dvz = _mm512_mul_pd(prefact1, dz_j3); 
+//
     }
+    
 
-
+    block3(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz, &dvx, &dvy, &dvz);
     {
 
         // 0123 4567

@@ -32,7 +32,9 @@
     .double 5.0
     .double 5.0
 
-
+.align 64
+b3idx:
+    .quad 4,5,6,7,1,2,3,0   # Eight 64-bit integers
 
 .section .text
 .globl gravity_prefactor_avx512_one
@@ -40,6 +42,7 @@
 .globl gr_potential
 .globl block1
 .globl block2
+.globl block3
 
 
 gravity_prefactor_avx512_one:
@@ -208,7 +211,7 @@ block2:
     #// 1032 5476
     
     vpermpd $0xB1, %zmm0, %zmm4               # 01234567 -> 10325476
-    vpermpd $0xB1, %zmm1, %zmm5
+    vpermpd $0xB1, %zmm1, %zmm5               # TODO: Use vshufpd instead here
     vpermpd $0xB1, %zmm2, %zmm6
     vpermpd $0xB1, %zmm3, %zmm15 
 
@@ -245,6 +248,67 @@ block2:
     ret
 
 
+
+block3:
+    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
+    #           zmm3=m_j*dt
+    #           rdi=&hvx , rsi=&hvy, rdx=&hvz 
+    #           rcx=&dvx , r8=&dvy, r9=&dvz 
+    #// 0123 4567
+    #// 4567 1230
+    
+    vmovdqa64 b3idx(%rip), %zmm18
+
+    vpermpd %zmm0, %zmm18, %zmm4               # 01234567 -> 45671230 
+    vpermpd %zmm1, %zmm18, %zmm5
+    vpermpd %zmm2, %zmm18, %zmm6
+    vpermpd %zmm3, %zmm18, %zmm15 
+
+    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
+    vsubpd  %zmm5, %zmm1, %zmm8
+    vsubpd  %zmm6, %zmm2, %zmm9
+    
+
+    # Prefactor calculation
+    vmulpd      %zmm7, %zmm7, %zmm10     
+    vfmadd231pd %zmm8, %zmm8, %zmm10      
+    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
+    
+    vsqrtpd     %zmm10, %zmm11             
+    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
+   
+    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
+    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    
+    vmovapd	(%rdi),  %zmm10             # TODO get rid of mov instruction
+	vmovapd	(%rsi),  %zmm11 
+	vmovapd	(%rdx),  %zmm12
+  
+    vfnmadd231pd %zmm14, %zmm7,  %zmm10
+    vfnmadd231pd %zmm14, %zmm8,  %zmm11
+    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+
+	
+    vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
+	vmovapd	%zmm11, (%rsi)
+	vmovapd	%zmm12, (%rdx)
+
+
+    vmulpd      %zmm17, %zmm3, %zmm14      # m/r^3
+	
+    #// 4567 1230
+    #// 0123 4567
+    vmulpd %zmm14, %zmm7,  %zmm10
+    vmulpd %zmm14, %zmm8,  %zmm11
+    vmulpd %zmm14, %zmm9,  %zmm12
+
+	vmovapd	%zmm10, (%rcx)              # TODO get rid of mov instruction
+	vmovapd	%zmm11, (%r8)
+	vmovapd	%zmm12, (%r9)
+
+
+    ret
 
 
 .section .note.GNU-stack,"",@progbits
