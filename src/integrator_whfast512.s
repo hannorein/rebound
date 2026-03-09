@@ -49,8 +49,6 @@ b34mergeidx:
 .globl gravity_prefactor_avx512
 .globl gr_potential
 .globl block1
-.globl block2
-.globl block3
 
 
 gravity_prefactor_avx512_one:
@@ -144,7 +142,8 @@ gr_potential:
 block1:
     # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
     #           zmm3=m_j*dt
-    #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
+    #           rdi=&hvx , rsi=&hvy, rdx=&hvz 
+    #           rcx=&dvx , r8=&dvy, r9=&dvz 
     #// 0123 4567
     #// 3201 7645
     
@@ -207,14 +206,6 @@ block1:
 	vmovapd	%zmm11, (%rsi)
 	vmovapd	%zmm12, (%rdx)
 
-
-    ret
-
-
-block2:
-    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
-    #           zmm3=m_j*dt
-    #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
     #// 0123 4567
     #// 1032 5476
     
@@ -253,15 +244,6 @@ block2:
 	vmovapd	%zmm11, (%rsi)
 	vmovapd	%zmm12, (%rdx)
 
-    ret
-
-
-
-block3:
-    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
-    #           zmm3=m_j*dt
-    #           rdi=&hvx , rsi=&hvy, rdx=&hvz 
-    #           rcx=&dvx , r8=&dvy, r9=&dvz 
     #// 0123 4567
     #// 4567 1230
     
