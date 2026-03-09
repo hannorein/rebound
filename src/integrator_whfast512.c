@@ -499,7 +499,7 @@ extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m5
 extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
         __m512d gr_prefac, __m512d gr_prefac2, __m512d mdt, __mmask8 mask, 
         __m512d* hvx, __m512d* hvy, __m512d* hvz);
-extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz, __m512d* dvx, __m512d* dvy, __m512d* dvz, __mmask8 mask);
+extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz, __mmask8 mask);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -519,49 +519,31 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     mat8_mul3_avx512(ri_whfast512->mat8_jacobi_to_heliocentric,
             p512->x, p512->y, p512->z,
             &p512->hx, &p512->hy, &p512->hz);
-    __m512d x_j =  p512->hx;
-    __m512d y_j =  p512->hy;
-    __m512d z_j =  p512->hz;
     __m512d dt512 = _mm512_set1_pd(r->dt); 
     __m512d m0_dt = _mm512_set1_pd(-r->particles[0].m*r->dt);
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
-        gr_potential(x_j, y_j, z_j, p512->gr_prefac, p512->gr_prefac2, m0_dt, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz);
+        gr_potential(p512->hx, p512->hy, p512->hz, p512->gr_prefac, p512->gr_prefac2, m0_dt, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz);
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
         // Need to add stellar term. Easy: already in heliocentric coordinates.
-        __m512d prefact = gravity_prefactor_avx512_one(x_j, y_j, z_j);
+        __m512d prefact = gravity_prefactor_avx512_one(p512->hx, p512->hy, p512->hz);
         __m512d prefact1 = _mm512_mul_pd(prefact, _mm512_set1_pd(-r->particles[0].m)); // Note: using m0, m0, m0, ...
         prefact1 = _mm512_mul_pd(prefact1, dt512);
-        p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, x_j); 
-        p512->hvy = _mm512_maskz_mul_pd(p512->mask, prefact1, y_j); 
-        p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, z_j); 
+        p512->hvx = _mm512_maskz_mul_pd(p512->mask, prefact1, p512->hx); 
+        p512->hvy = _mm512_maskz_mul_pd(p512->mask, prefact1, p512->hy); 
+        p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, p512->hz); 
     }
 
-
-    x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
-    y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
-    z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
+//printmask8(p512->mask);
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
-    x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
-    y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
-    z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
-    __m512d x_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), x_j); // accros 512
-    __m512d y_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
-    __m512d z_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
         
-    x_jB = _mm512_permutex_pd(x_jB, _MM_PERM_ADCB); // within 256
-    y_jB = _mm512_permutex_pd(y_jB, _MM_PERM_ADCB);
-    z_jB = _mm512_permutex_pd(z_jB, _MM_PERM_ADCB);
     __m512d prefact_f2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
 
-    block1(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz, &p512->hvx, &p512->hvy, &p512->hvz, p512->mask);
+    block1(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz, p512->mask);
     
-     p512->hvx = _mm512_maskz_mov_pd(p512->mask, p512->hvx);
-     p512->hvy = _mm512_maskz_mov_pd(p512->mask, p512->hvy);
-     p512->hvz = _mm512_maskz_mov_pd(p512->mask, p512->hvz);
 
     // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
     __m512d dvx;

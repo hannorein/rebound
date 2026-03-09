@@ -144,8 +144,12 @@ block1:
     #           zmm3=m_j*dt
     #           rdi=&hvx , rsi=&hvy, rdx=&hvz 
     #           rcx=&dvx , r8=&dvy, r9=&dvz 
+    #           ecx = mask
     #// 0123 4567
     #// 3201 7645
+    
+    kmovw   %ecx, %k1
+
     
     vpermpd $0x4B, %zmm0, %zmm4               # 01234567 -> 32017645
     vpermpd $0x4B, %zmm1, %zmm5
@@ -352,16 +356,16 @@ block1:
     ## Final 256 bit lane crossing and add
     vmovdqa64 b34mergeidx(%rip), %zmm18
 
-    vpermpd %zmm20, %zmm18, %zmm10
+    vpermpd %zmm20, %zmm18, %zmm10{%k1}{z}
     vpermpd %zmm21, %zmm18, %zmm11
     vpermpd %zmm22, %zmm18, %zmm12
     vmovapd	(%rdi),  %zmm13             # TODO get rid of mov instruction
 	vmovapd	(%rsi),  %zmm14 
 	vmovapd	(%rdx),  %zmm15
 
-    vaddpd %zmm10, %zmm13, %zmm10
-    vaddpd %zmm11, %zmm14, %zmm11
-    vaddpd %zmm12, %zmm15, %zmm12
+    vaddpd %zmm10, %zmm13, %zmm10{%k1}{z}
+    vaddpd %zmm11, %zmm14, %zmm11{%k1}{z}
+    vaddpd %zmm12, %zmm15, %zmm12{%k1}{z}
 
     vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
 	vmovapd	%zmm11, (%rsi)
