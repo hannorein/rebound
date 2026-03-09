@@ -36,6 +36,14 @@
 b3idx:
     .quad 4,5,6,7,1,2,3,0   # Eight 64-bit integers
 
+.align 64
+b4idx:
+    .quad 5,6,7,4,2,3,0,1
+
+.align 64
+b34mergeidx:
+    .quad 7,4,5,6,0,1,2,3
+
 .section .text
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
@@ -299,13 +307,83 @@ block3:
 	
     #// 4567 1230
     #// 0123 4567
-    vmulpd %zmm14, %zmm7,  %zmm10
-    vmulpd %zmm14, %zmm8,  %zmm11
-    vmulpd %zmm14, %zmm9,  %zmm12
+    vmulpd %zmm14, %zmm7,  %zmm20
+    vmulpd %zmm14, %zmm8,  %zmm21
+    vmulpd %zmm14, %zmm9,  %zmm22
 
-	vmovapd	%zmm10, (%rcx)              # TODO get rid of mov instruction
-	vmovapd	%zmm11, (%r8)
-	vmovapd	%zmm12, (%r9)
+
+    #// 0123 4567
+    #// 5674 2301
+    
+    vmovdqa64 b4idx(%rip), %zmm18
+
+    vpermpd %zmm0, %zmm18, %zmm4               # 01234567 -> 56742301  
+    vpermpd %zmm1, %zmm18, %zmm5                # TODO: Make this an in-line shuffle be reusing block3 data
+    vpermpd %zmm2, %zmm18, %zmm6
+    vpermpd %zmm3, %zmm18, %zmm15 
+
+    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
+    vsubpd  %zmm5, %zmm1, %zmm8
+    vsubpd  %zmm6, %zmm2, %zmm9
+    
+
+    # Prefactor calculation
+    vmulpd      %zmm7, %zmm7, %zmm10     
+    vfmadd231pd %zmm8, %zmm8, %zmm10      
+    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
+    
+    vsqrtpd     %zmm10, %zmm11             
+    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
+   
+    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
+    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    
+    vmovapd	(%rdi),  %zmm10             # TODO get rid of mov instruction
+	vmovapd	(%rsi),  %zmm11 
+	vmovapd	(%rdx),  %zmm12
+  
+    vfnmadd231pd %zmm14, %zmm7,  %zmm10
+    vfnmadd231pd %zmm14, %zmm8,  %zmm11
+    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+
+    vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
+	vmovapd	%zmm11, (%rsi)
+	vmovapd	%zmm12, (%rdx)
+
+    vpermpd $0x93, %zmm7, %zmm7               # 5674 2301 -> 4567 1230
+    vpermpd $0x93, %zmm8, %zmm8
+    vpermpd $0x93, %zmm9, %zmm9
+    vpermpd $0x93, %zmm17, %zmm17
+    vpermpd $0x93, %zmm3, %zmm15            
+
+
+    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+	
+    #// 4567 1230
+    #// 3012 7456
+    
+    vfmadd231pd %zmm14, %zmm7,  %zmm20
+    vfmadd231pd %zmm14, %zmm8,  %zmm21
+    vfmadd231pd %zmm14, %zmm9,  %zmm22
+    
+    ## Final 256 bit lane crossing and add
+    vmovdqa64 b34mergeidx(%rip), %zmm18
+
+    vpermpd %zmm20, %zmm18, %zmm10
+    vpermpd %zmm21, %zmm18, %zmm11
+    vpermpd %zmm22, %zmm18, %zmm12
+    vmovapd	(%rdi),  %zmm13             # TODO get rid of mov instruction
+	vmovapd	(%rsi),  %zmm14 
+	vmovapd	(%rdx),  %zmm15
+
+    vaddpd %zmm10, %zmm13, %zmm10
+    vaddpd %zmm11, %zmm14, %zmm11
+    vaddpd %zmm12, %zmm15, %zmm12
+
+    vmovapd	%zmm10, (%rdi)              # TODO get rid of mov instruction
+	vmovapd	%zmm11, (%rsi)
+	vmovapd	%zmm12, (%rdx)
 
 
     ret

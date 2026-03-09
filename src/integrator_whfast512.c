@@ -501,7 +501,7 @@ extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j,
         __m512d* hvx, __m512d* hvy, __m512d* hvz);
 extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz);
 extern void block2( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz);
-extern void block3( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz, __m512d* dvx, __m512d* dvy, __m512d* dvz);
+extern void block3( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz, __m512d* dvx, __m512d* dvy, __m512d* dvz, __mmask8 mask);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -547,12 +547,6 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
     z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
-    __m512d m_j_01234567 = m_j;
-    __m512d m_j1 = _mm512_permutex_pd(m_j, _MM_PERM_BACD);
-    __m512d m_j2 = _mm512_permutex_pd(m_j1, _MM_PERM_BACD); 
-    __m512d m_j3 = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), m_j2);
-    __m512d m_j4 = _mm512_permutex_pd(m_j3, _MM_PERM_ADCB);
-    __m512d m_j_01234567_4 = _mm512_permutex_pd(m_j_01234567, _MM_PERM_CBAD);
     x_j = _mm512_permutex_pd(x_j, _MM_PERM_BACD); // within 256
     y_j = _mm512_permutex_pd(y_j, _MM_PERM_BACD);
     z_j = _mm512_permutex_pd(z_j, _MM_PERM_BACD);
@@ -560,93 +554,26 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     __m512d y_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), y_j);
     __m512d z_jB = _mm512_permutexvar_pd(_mm512_set_epi64(1,2,3,0,6,7,4,5), z_j);
         
-    __m512d dx_j3 = _mm512_sub_pd(p512->hx, x_jB);
-    __m512d dy_j3 = _mm512_sub_pd(p512->hy, y_jB);
-    __m512d dz_j3 = _mm512_sub_pd(p512->hz, z_jB);
-    __m512d gr_prefact3 = gravity_prefactor_avx512_one(dx_j3, dy_j3, dz_j3);
     x_jB = _mm512_permutex_pd(x_jB, _MM_PERM_ADCB); // within 256
     y_jB = _mm512_permutex_pd(y_jB, _MM_PERM_ADCB);
     z_jB = _mm512_permutex_pd(z_jB, _MM_PERM_ADCB);
-    __m512d dx_j4 = _mm512_sub_pd(p512->hx, x_jB);
-    __m512d dy_j4 = _mm512_sub_pd(p512->hy, y_jB);
-    __m512d dz_j4 = _mm512_sub_pd(p512->hz, z_jB);
-    __m512d gr_prefact4 = gravity_prefactor_avx512_one(dx_j4, dy_j4, dz_j4);
     __m512d prefact_f2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
 
     block1(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz);
     block2(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz);
 
-    // //////////////////////////////////////
-    // 256 bit lane crossing
-    // //////////////////////////////////////
 
-    __m512d dvx; // delta vx for 4567 1230
+    block3(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz, &p512->hvx, &p512->hvy, &p512->hvz, p512->mask);
+    
+     p512->hvx = _mm512_maskz_mov_pd(p512->mask, p512->hvx);
+     p512->hvy = _mm512_maskz_mov_pd(p512->mask, p512->hvy);
+     p512->hvz = _mm512_maskz_mov_pd(p512->mask, p512->hvz);
+
+    // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
+    __m512d dvx;
     __m512d dvy;
     __m512d dvz;
 
-
-    {
-
-//        // 0123 4567
-//        // 4567 1230 
-//        printavx512(m_j3);
-//        __m512d prefact1 = _mm512_mul_pd(gr_prefact3, m_j3);
-//        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j3, p512->hvx); 
-//        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j3, p512->hvy); 
-//        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j3, p512->hvz); 
-//
-//
-//        // 4567 1230 
-//        // 0123 4567
-//        prefact1 = _mm512_mul_pd(gr_prefact3, m_j_01234567);
-//        dvx = _mm512_mul_pd(prefact1, dx_j3); 
-//        dvy = _mm512_mul_pd(prefact1, dy_j3); 
-//        dvz = _mm512_mul_pd(prefact1, dz_j3); 
-//
-    }
-    
-
-    block3(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz, &dvx, &dvy, &dvz);
-    {
-
-        // 0123 4567
-        // 5674 2301 
-        __m512d prefact1 = _mm512_mul_pd(gr_prefact4, m_j4);
-        p512->hvx = _mm512_fnmadd_pd(prefact1, dx_j4, p512->hvx); 
-        p512->hvy = _mm512_fnmadd_pd(prefact1, dy_j4, p512->hvy); 
-        p512->hvz = _mm512_fnmadd_pd(prefact1, dz_j4, p512->hvz); 
-
-
-
-        dx_j4         = _mm512_permutex_pd(dx_j4,         _MM_PERM_CBAD); // within 256
-        dy_j4         = _mm512_permutex_pd(dy_j4,         _MM_PERM_CBAD);
-        dz_j4         = _mm512_permutex_pd(dz_j4,         _MM_PERM_CBAD);
-        gr_prefact4      = _mm512_permutex_pd(gr_prefact4,      _MM_PERM_CBAD);
-
-        // 4567 1230 
-        // 3012 7456
-        prefact1 = _mm512_mul_pd(gr_prefact4, m_j_01234567_4);
-        dvx = _mm512_fmadd_pd(prefact1, dx_j4, dvx); 
-        dvy = _mm512_fmadd_pd(prefact1, dy_j4, dvy); 
-        dvz = _mm512_fmadd_pd(prefact1, dz_j4, dvz); 
-
-    }
-
-    // //////////////////////////////////////
-    // 256 bit lane crossing for final add
-    // //////////////////////////////////////
-
-    dvx = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvx); //across 512
-    dvy = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvy);
-    dvz = _mm512_permutexvar_pd(_mm512_set_epi64(3,2,1,0,6,5,4,7), dvz);
-
-    {
-        p512->hvx = _mm512_maskz_add_pd(p512->mask, dvx, p512->hvx); 
-        p512->hvy = _mm512_maskz_add_pd(p512->mask, dvy, p512->hvy); 
-        p512->hvz = _mm512_maskz_add_pd(p512->mask, dvz, p512->hvz); 
-    }
-
-    // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
     mat8_mul3_avx512(ri_whfast512->mat8_inertial_to_jacobi, 
             p512->hvx, p512->hvy, p512->hvz,
             &dvx, &dvy, &dvz);
