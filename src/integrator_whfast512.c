@@ -499,9 +499,8 @@ extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m5
 extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
         __m512d gr_prefac, __m512d gr_prefac2, __m512d mdt, __mmask8 mask, 
         __m512d* hvx, __m512d* hvy, __m512d* hvz);
-extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, 
-        __m512d m_j,
-        __m512d* hvx, __m512d* hvy, __m512d* hvz);
+extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz);
+extern void block2( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __m512d* hvx, __m512d* hvy, __m512d* hvz);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -618,10 +617,11 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
 
         // 0123 4567
         // 1032 5476 
-        p512->hvx = _mm512_fnmadd_pd(prefact2, dx_j2, p512->hvx); 
-        p512->hvy = _mm512_fnmadd_pd(prefact2, dy_j2, p512->hvy); 
-        p512->hvz = _mm512_fnmadd_pd(prefact2, dz_j2, p512->hvz); 
+      //  p512->hvx = _mm512_fnmadd_pd(prefact2, dx_j2, p512->hvx); 
+      //  p512->hvy = _mm512_fnmadd_pd(prefact2, dy_j2, p512->hvy); 
+      //  p512->hvz = _mm512_fnmadd_pd(prefact2, dz_j2, p512->hvz); 
     }
+    block2(p512->hx, p512->hy, p512->hz, m_j, &p512->hvx, &p512->hvy, &p512->hvz);
 
     // //////////////////////////////////////
     // 256 bit lane crossing
