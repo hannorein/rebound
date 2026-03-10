@@ -539,30 +539,10 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
         p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, p512->hz); 
     }
 
-//printmask8(p512->mask);
     __m512d m_j = _mm512_mul_pd(p512->m, dt512);
         
-    __m512d prefact_f2 = gravity_prefactor_avx512_one(p512->x, p512->y, p512->z);
 
     block1(p512->hx, p512->hy, p512->hz, m_j, p512->mask,p512);
-    
-
-    // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
-    //__m512d dvx;
-    //__m512d dvy;
-    //__m512d dvz;
-    //mat8_mul3_avx512(ri_whfast512->p512->mat8_inertial_to_jacobi, 
-    //        p512->hvx, p512->hvy, p512->hvz,
-    //        &dvx, &dvy, &dvz);
-    //p512->vx = _mm512_add_pd(dvx, p512->vx); 
-    //p512->vy = _mm512_add_pd(dvy, p512->vy); 
-    //p512->vz = _mm512_add_pd(dvz, p512->vz); 
-    // Add Jacobi term using Jacobi coordinates
-    __m512d prefact_f3 = _mm512_mul_pd(prefact_f2, p512->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
-    prefact_f3 = _mm512_mul_pd(prefact_f3, dt512);
-    p512->vx = _mm512_maskz_fmadd_pd(p512->mask, prefact_f3, p512->x, p512->vx); 
-    p512->vy = _mm512_maskz_fmadd_pd(p512->mask, prefact_f3, p512->y, p512->vy); 
-    p512->vz = _mm512_maskz_fmadd_pd(p512->mask, prefact_f3, p512->z, p512->vz); 
 
 }
 

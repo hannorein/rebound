@@ -579,13 +579,34 @@ block1:
     call mat8_mul3_avx512_nomem
 
     # Update velocities
-    vaddpd    576(%rax), %zmm0, %zmm0     #vx TODO get rid of memory
-    vaddpd    640(%rax), %zmm1, %zmm1
-    vaddpd    704(%rax), %zmm2, %zmm2
+    vaddpd    576(%rax), %zmm0, %zmm3     #vx TODO get rid of memory
+    vaddpd    640(%rax), %zmm1, %zmm4
+    vaddpd    704(%rax), %zmm2, %zmm5
     
-    vmovapd    %zmm0, 576(%rax)              # vx TODO get rid of mov instruction
-    vmovapd    %zmm1, 640(%rax)
-    vmovapd    %zmm2, 704(%rax)
+
+    # Add Jacobi term in Jacobi coordinates
+
+    vmovapd    384(%rax),  %zmm0             # x  TODO get rid of mov instruction
+    vmovapd    448(%rax),  %zmm1 
+    vmovapd    512(%rax),  %zmm2
+
+    call gravity_prefactor_avx512_one
+    vmulpd  (%rax), %zmm0, %zmm0        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd  64(%rax), %zmm0, %zmm7        # dt*1/r^3*M
+    
+    vmovapd    384(%rax),  %zmm0             # x  TODO get rid of mov instruction
+    vmovapd    448(%rax),  %zmm1 
+    vmovapd    512(%rax),  %zmm2
+
+    vfmadd231pd     %zmm0, %zmm7, %zmm3{%k1}{z} 
+    vfmadd231pd     %zmm1, %zmm7, %zmm4{%k1}{z} 
+    vfmadd231pd     %zmm2, %zmm7, %zmm5{%k1}{z} 
+    
+    # Store final new velocities in Jacobi coordinates
+    vmovapd    %zmm3, 576(%rax)              # vx TODO get rid of mov instruction
+    vmovapd    %zmm4, 640(%rax)
+    vmovapd    %zmm5, 704(%rax)
+    
     ret
 
 
