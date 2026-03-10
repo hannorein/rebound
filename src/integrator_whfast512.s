@@ -4,33 +4,6 @@
     .align 64
 .one: 
     .double 1.0
-.t2: 
-    .double 2.0
-    .double 2.0
-    .double 2.0
-    .double 2.0
-    .double 2.0
-    .double 2.0
-    .double 2.0
-    .double 2.0
-.t3: 
-    .double 3.0
-    .double 3.0
-    .double 3.0
-    .double 3.0
-    .double 3.0
-    .double 3.0
-    .double 3.0
-    .double 3.0
-.t5: 
-    .double 5.0
-    .double 5.0
-    .double 5.0
-    .double 5.0
-    .double 5.0
-    .double 5.0
-    .double 5.0
-    .double 5.0
 
 .align 64
 b3idx:
