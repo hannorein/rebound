@@ -196,6 +196,109 @@ mat8_mul3_avx512:
 	vmovapd	%zmm2, (%rcx)
     ret
 
+mat8_mul3_avx512_nomem:
+    # 8x8 matrix multiplied with 3 different 8 vectors
+    # in: rdi = vector to 64 matrix elements
+    # zmm0, zmm1, zmm2  input vectors
+    # zmm10, zmm11, zmm12  output vectors
+	vmovapd	(%rdi), %zmm4
+	vbroadcastsd	%xmm0, %zmm3
+	vmulpd	%zmm4, %zmm3, %zmm3
+	vmovapd	%zmm3, %zmm10
+	vbroadcastsd	%xmm1, %zmm3
+	movl	$1, %esi
+	vmulpd	%zmm4, %zmm3, %zmm3
+	vmovapd	%zmm3, %zmm11
+	vbroadcastsd	%xmm2, %zmm3
+	vmulpd	%zmm4, %zmm3, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	64(%rdi), %zmm4
+	movl	$2, %esi
+	vpermpd	%zmm0, %zmm3, %zmm5
+	vfmadd213pd	%zmm10, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm10  #TODO Remove mov
+	vpermpd	%zmm1, %zmm3, %zmm5
+	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vpermpd	%zmm2, %zmm3, %zmm3
+	vmovapd	%zmm5, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	128(%rdi), %zmm4
+	movl	$3, %esi
+	vpermpd	%zmm0, %zmm3, %zmm5
+	vfmadd213pd	%zmm10, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm10
+	vpermpd	%zmm1, %zmm3, %zmm5
+	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vpermpd	%zmm2, %zmm3, %zmm3
+	vmovapd	%zmm5, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	192(%rdi), %zmm4
+	movl	$4, %esi
+	vpermpd	%zmm0, %zmm3, %zmm5
+	vfmadd213pd	%zmm10, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm10
+	vpermpd	%zmm1, %zmm3, %zmm5
+	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vpermpd	%zmm2, %zmm3, %zmm3
+	vmovapd	%zmm5, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	256(%rdi), %zmm4
+	movl	$5, %esi
+	vpermpd	%zmm0, %zmm3, %zmm5
+	vfmadd213pd	%zmm10, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm10
+	vpermpd	%zmm1, %zmm3, %zmm5
+	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vpermpd	%zmm2, %zmm3, %zmm3
+	vmovapd	%zmm5, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	320(%rdi), %zmm4
+	movl	$6, %esi
+	vpermpd	%zmm0, %zmm3, %zmm5
+	vfmadd213pd	%zmm10, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm10
+	vpermpd	%zmm1, %zmm3, %zmm5
+	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vpermpd	%zmm2, %zmm3, %zmm3
+	vmovapd	%zmm5, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	384(%rdi), %zmm4
+	movl	$7, %esi
+	vpermpd	%zmm0, %zmm3, %zmm5
+	vfmadd213pd	%zmm10, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm10
+	vpermpd	%zmm1, %zmm3, %zmm5
+	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vpermpd	%zmm2, %zmm3, %zmm3
+	vmovapd	%zmm5, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm12
+	vpbroadcastq	%rsi, %zmm3
+	vmovapd	448(%rdi), %zmm4
+	vpermpd	%zmm0, %zmm3, %zmm0
+	vfmadd213pd	%zmm10, %zmm4, %zmm0
+	vpermpd	%zmm1, %zmm3, %zmm1
+	vpermpd	%zmm2, %zmm3, %zmm2
+	vmovapd	%zmm0, %zmm10
+	vfmadd213pd	%zmm11, %zmm4, %zmm1
+	vmovapd	%zmm1, %zmm11
+	vfmadd213pd	%zmm12, %zmm4, %zmm2
+	vmovapd	%zmm2, %zmm12
+    ret
+
+
+
 gr_potential:
     # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
     #           zmm3 = gr_prefac, zmm4 = gr_prefac2
@@ -471,24 +574,29 @@ block1:
     vaddpd %zmm11, %zmm14, %zmm11{%k1}{z}
     vaddpd %zmm12, %zmm15, %zmm12{%k1}{z}
 
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
 
     leaq 1152(%rsi), %rdi  # mat8_inertial_to_jacobi
-    leaq 5248(%rsi), %rdx  #tempi note order changed
-    leaq 5312(%rsi), %rcx  #tempi
-    leaq 5376(%rsi), %rsi  #tempi
-    # rsi, rdx, rcx     output vectors 
-#might work, just need to sort out ouput registers (rather than memory)
    
     vmovaps %zmm10, %zmm0
     vmovaps %zmm11, %zmm1
     vmovaps %zmm12, %zmm2
 
-    call mat8_mul3_avx512
+	movq	%rsi, %rax
+    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, 1024(%rsi)
+    vmovapd    %zmm12, 1088(%rsi)
+    call mat8_mul3_avx512_nomem
 
-    int3
+    vmovapd    576(%rax),  %zmm0             # vx TODO get rid of mov instruction
+    vaddpd    %zmm10, %zmm0, %zmm10
+    vmovapd    640(%rax),  %zmm0             # vx TODO get rid of mov instruction
+    vaddpd    %zmm11, %zmm0, %zmm11
+    vmovapd    704(%rax),  %zmm0             # vx TODO get rid of mov instruction
+    vaddpd    %zmm12, %zmm0, %zmm12
+    
+    vmovapd    %zmm10, 576(%rax)              # vx TODO get rid of mov instruction
+    vmovapd    %zmm11, 640(%rax)
+    vmovapd    %zmm12, 704(%rax)
     ret
 
 

@@ -122,6 +122,7 @@ static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector
 // Three 8x8 matrix multiplications with the same matrix using avx512
 // Used for coordinate transformations in x, y, and z
 extern void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3);
+extern void mat8_mul3_avx512_test(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3);
 //{
 //    __m512d col_i = _mm512_load_pd(matrix);
 //    __m512d vin1 = _mm512_set1_pd(in1[0]);
@@ -547,17 +548,15 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     
 
     // Convert accelerations (delta v) from heliocentric to Jacobi. Note: no difference between inertial and heliocentric here.
-    __m512d dvx;
-    __m512d dvy;
-    __m512d dvz;
-    mat8_mul3_avx512(ri_whfast512->p512->mat8_inertial_to_jacobi, 
-            p512->hvx, p512->hvy, p512->hvz,
-            &dvx, &dvy, &dvz);
-    printavx512(dvx);
-    exit(1);
-    p512->vx = _mm512_add_pd(dvx, p512->vx); 
-    p512->vy = _mm512_add_pd(dvy, p512->vy); 
-    p512->vz = _mm512_add_pd(dvz, p512->vz); 
+    //__m512d dvx;
+    //__m512d dvy;
+    //__m512d dvz;
+    //mat8_mul3_avx512(ri_whfast512->p512->mat8_inertial_to_jacobi, 
+    //        p512->hvx, p512->hvy, p512->hvz,
+    //        &dvx, &dvy, &dvz);
+    //p512->vx = _mm512_add_pd(dvx, p512->vx); 
+    //p512->vy = _mm512_add_pd(dvy, p512->vy); 
+    //p512->vz = _mm512_add_pd(dvz, p512->vz); 
     // Add Jacobi term using Jacobi coordinates
     __m512d prefact_f3 = _mm512_mul_pd(prefact_f2, p512->M); // Note: now M which is m0, m0+m1, m0+m1+m2, ...
     prefact_f3 = _mm512_mul_pd(prefact_f3, dt512);
