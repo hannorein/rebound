@@ -386,6 +386,9 @@ struct reb_particle_avx512{
     __m512d hvx __attribute__ ((aligned (64)));
     __m512d hvy __attribute__ ((aligned (64)));
     __m512d hvz __attribute__ ((aligned (64)));
+    double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
+    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
+    double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
     // Mask for cases with less than 8 planets
     __mmask8 mask __attribute__ ((aligned (64)));
 #else // AVX512
@@ -419,9 +422,6 @@ struct reb_integrator_whfast512 {
     double time_of_last_synchronize;                        // used to advance centre of mass
     unsigned int N_allocated;                               // 0: p512 structure not allocated. 1: p512 structure allocated
     struct reb_particle_avx512* p512;                       // Stores all avx512 variables. Needs to be alligned.
-    double* mat8_inertial_to_jacobi;                        // Coordinate transformation matricies. Can be recalculated from particle masses.
-    double* mat8_jacobi_to_inertial;
-    double* mat8_jacobi_to_heliocentric;
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)

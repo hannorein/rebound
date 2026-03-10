@@ -475,7 +475,20 @@ block1:
     vmovapd    %zmm11, 1024(%rsi)
     vmovapd    %zmm12, 1088(%rsi)
 
+    leaq 1152(%rsi), %rdi  # mat8_inertial_to_jacobi
+    leaq 5248(%rsi), %rdx  #tempi note order changed
+    leaq 5312(%rsi), %rcx  #tempi
+    leaq 5376(%rsi), %rsi  #tempi
+    # rsi, rdx, rcx     output vectors 
+#might work, just need to sort out ouput registers (rather than memory)
+   
+    vmovaps %zmm10, %zmm0
+    vmovaps %zmm11, %zmm1
+    vmovaps %zmm12, %zmm2
 
+    call mat8_mul3_avx512
+
+    int3
     ret
 
 
