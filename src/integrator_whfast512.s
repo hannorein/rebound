@@ -290,11 +290,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm10, %zmm4, %zmm0
 	vpermpd	%zmm1, %zmm3, %zmm1
 	vpermpd	%zmm2, %zmm3, %zmm2
-	vmovapd	%zmm0, %zmm10
 	vfmadd213pd	%zmm11, %zmm4, %zmm1
-	vmovapd	%zmm1, %zmm11
 	vfmadd213pd	%zmm12, %zmm4, %zmm2
-	vmovapd	%zmm2, %zmm12
     ret
 
 
@@ -570,33 +567,25 @@ block1:
     vmovapd    1024(%rsi),  %zmm14 
     vmovapd    1088(%rsi),  %zmm15
 
-    vaddpd %zmm10, %zmm13, %zmm10{%k1}{z}
-    vaddpd %zmm11, %zmm14, %zmm11{%k1}{z}
-    vaddpd %zmm12, %zmm15, %zmm12{%k1}{z}
+    vaddpd %zmm10, %zmm13, %zmm0{%k1}{z}
+    vaddpd %zmm11, %zmm14, %zmm1{%k1}{z}
+    vaddpd %zmm12, %zmm15, %zmm2{%k1}{z}
 
 
+    # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq 1152(%rsi), %rdi  # mat8_inertial_to_jacobi
    
-    vmovaps %zmm10, %zmm0
-    vmovaps %zmm11, %zmm1
-    vmovaps %zmm12, %zmm2
-
 	movq	%rsi, %rax
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
     call mat8_mul3_avx512_nomem
 
-    vmovapd    576(%rax),  %zmm0             # vx TODO get rid of mov instruction
-    vaddpd    %zmm10, %zmm0, %zmm10
-    vmovapd    640(%rax),  %zmm0             # vx TODO get rid of mov instruction
-    vaddpd    %zmm11, %zmm0, %zmm11
-    vmovapd    704(%rax),  %zmm0             # vx TODO get rid of mov instruction
-    vaddpd    %zmm12, %zmm0, %zmm12
+    # Update velocities
+    vaddpd    576(%rax), %zmm0, %zmm0     #vx TODO get rid of memory
+    vaddpd    640(%rax), %zmm1, %zmm1
+    vaddpd    704(%rax), %zmm2, %zmm2
     
-    vmovapd    %zmm10, 576(%rax)              # vx TODO get rid of mov instruction
-    vmovapd    %zmm11, 640(%rax)
-    vmovapd    %zmm12, 704(%rax)
+    vmovapd    %zmm0, 576(%rax)              # vx TODO get rid of mov instruction
+    vmovapd    %zmm1, 640(%rax)
+    vmovapd    %zmm2, 704(%rax)
     ret
 
 
