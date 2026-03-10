@@ -346,14 +346,14 @@ gr_potential:
 
 block1:
     # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
-    #           zmm3=m_j*dt
-    #           edi = mask
-    #           rsi = p512
+    #           rdi = p512
     #// 0123 4567
     #// 3201 7645
     
-    kmovw   %edi, %k1
+    kmovw   2688(%rdi), %k1             # mask
 
+    vmovapd 64(%rdi), %zmm3                 # dt
+    vmulpd  320(%rdi), %zmm3, %zmm3         # dt*m
     
     vpermpd $0x4B, %zmm0, %zmm4               # 01234567 -> 32017645
     vpermpd $0x4B, %zmm1, %zmm5
@@ -377,18 +377,18 @@ block1:
     vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
     vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rsi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rsi),  %zmm11 
-    vmovapd    1088(%rsi),  %zmm12
+    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
+    vmovapd    1024(%rdi),  %zmm11 
+    vmovapd    1088(%rdi),  %zmm12
   
     vfnmadd231pd %zmm14, %zmm7,  %zmm10
     vfnmadd231pd %zmm14, %zmm8,  %zmm11
     vfnmadd231pd %zmm14, %zmm9,  %zmm12
 
     
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
+    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, 1024(%rdi)
+    vmovapd    %zmm12, 1088(%rdi)
 
     vpermpd $0x1E, %zmm7, %zmm7               # 32017645 -> 01234567
     vpermpd $0x1E, %zmm8, %zmm8
@@ -399,9 +399,9 @@ block1:
 
     vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rsi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rsi),  %zmm11 
-    vmovapd    1088(%rsi),  %zmm12 
+    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
+    vmovapd    1024(%rdi),  %zmm11 
+    vmovapd    1088(%rdi),  %zmm12 
 
     #// 0123 4567
     #// 2310 6754
@@ -410,9 +410,9 @@ block1:
     vfmadd231pd %zmm14, %zmm8,  %zmm11
     vfmadd231pd %zmm14, %zmm9,  %zmm12
 
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
+    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, 1024(%rdi)
+    vmovapd    %zmm12, 1088(%rdi)
 
     #// 0123 4567
     #// 1032 5476
@@ -439,18 +439,18 @@ block1:
     vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
     vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rsi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rsi),  %zmm11 
-    vmovapd    1088(%rsi),  %zmm12
+    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
+    vmovapd    1024(%rdi),  %zmm11 
+    vmovapd    1088(%rdi),  %zmm12
   
     vfnmadd231pd %zmm14, %zmm7,  %zmm10
     vfnmadd231pd %zmm14, %zmm8,  %zmm11
     vfnmadd231pd %zmm14, %zmm9,  %zmm12
 
     
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
+    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, 1024(%rdi)
+    vmovapd    %zmm12, 1088(%rdi)
 
     #// 0123 4567
     #// 4567 1230
@@ -479,18 +479,18 @@ block1:
     vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
     vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rsi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rsi),  %zmm11 
-    vmovapd    1088(%rsi),  %zmm12
+    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
+    vmovapd    1024(%rdi),  %zmm11 
+    vmovapd    1088(%rdi),  %zmm12
   
     vfnmadd231pd %zmm14, %zmm7,  %zmm10
     vfnmadd231pd %zmm14, %zmm8,  %zmm11
     vfnmadd231pd %zmm14, %zmm9,  %zmm12
 
     
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
+    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, 1024(%rdi)
+    vmovapd    %zmm12, 1088(%rdi)
 
 
     vmulpd      %zmm17, %zmm3, %zmm14      # m/r^3
@@ -529,17 +529,17 @@ block1:
     vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
     vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rsi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rsi),  %zmm11 
-    vmovapd    1088(%rsi),  %zmm12
+    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
+    vmovapd    1024(%rdi),  %zmm11 
+    vmovapd    1088(%rdi),  %zmm12
   
     vfnmadd231pd %zmm14, %zmm7,  %zmm10
     vfnmadd231pd %zmm14, %zmm8,  %zmm11
     vfnmadd231pd %zmm14, %zmm9,  %zmm12
 
-    vmovapd    %zmm10, 960(%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rsi)
-    vmovapd    %zmm12, 1088(%rsi)
+    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, 1024(%rdi)
+    vmovapd    %zmm12, 1088(%rdi)
 
     vpermpd $0x93, %zmm7, %zmm7               # 5674 2301 -> 4567 1230
     vpermpd $0x93, %zmm8, %zmm8
@@ -563,9 +563,9 @@ block1:
     vpermpd %zmm20, %zmm18, %zmm10{%k1}{z}
     vpermpd %zmm21, %zmm18, %zmm11
     vpermpd %zmm22, %zmm18, %zmm12
-    vmovapd    960(%rsi),  %zmm13             # TODO get rid of mov instruction
-    vmovapd    1024(%rsi),  %zmm14 
-    vmovapd    1088(%rsi),  %zmm15
+    vmovapd    960(%rdi),  %zmm13             # TODO get rid of mov instruction
+    vmovapd    1024(%rdi),  %zmm14 
+    vmovapd    1088(%rdi),  %zmm15
 
     vaddpd %zmm10, %zmm13, %zmm0{%k1}{z}
     vaddpd %zmm11, %zmm14, %zmm1{%k1}{z}
@@ -573,9 +573,9 @@ block1:
 
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
-    leaq 1152(%rsi), %rdi  # mat8_inertial_to_jacobi
+	movq	%rdi, %rax
+    leaq 1152(%rdi), %rdi  # mat8_inertial_to_jacobi
    
-	movq	%rsi, %rax
     call mat8_mul3_avx512_nomem
 
     # Update velocities

@@ -501,7 +501,7 @@ extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m5
 extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
         __m512d gr_prefac, __m512d gr_prefac2, __m512d mdt, __mmask8 mask, 
         __m512d* hvx, __m512d* hvy, __m512d* hvz);
-extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, __m512d m_j, __mmask8 mask, struct reb_particle_avx512* p512);
+extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, struct reb_particle_avx512* p512);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -539,10 +539,7 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
         p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, p512->hz); 
     }
 
-    __m512d m_j = _mm512_mul_pd(p512->m, dt512);
-        
-
-    block1(p512->hx, p512->hy, p512->hz, m_j, p512->mask,p512);
+    block1(p512->hx, p512->hy, p512->hz,p512);
 
 }
 
