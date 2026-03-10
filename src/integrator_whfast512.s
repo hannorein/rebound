@@ -43,6 +43,17 @@ gravity_prefactor_avx512_one:
     
     ret                                 # return 1 / r^3 in zmm0
     
+.macro GRAVITY_PREFACTOR x, y, z, out, tmp
+    vmulpd      \x, \x, \out     
+    vfmadd231pd \y, \y, \out      
+    vfmadd231pd \z, \z, \out     # out is now r^2
+    
+    vsqrtpd     \out, \tmp         
+    vmulpd      \tmp, \out, \out     # out is r^3
+   
+    vbroadcastsd .one(%rip), \tmp      # Todo: keep 1 in a register at all times 
+    vdivpd      \out, \tmp, \out      # out is 1 / r^3 
+.endm
 
 gravity_prefactor_avx512:
     # Input:  zmm0=m, zmm1=dx, zmm2=dy, zmm3=dz
@@ -563,14 +574,11 @@ block1:
     vmovapd    448(%rax),  %zmm1 
     vmovapd    512(%rax),  %zmm2
 
-    call gravity_prefactor_avx512_one
-    vmulpd  (%rax), %zmm0, %zmm0        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd  64(%rax), %zmm0, %zmm7        # dt*1/r^3*M
+    GRAVITY_PREFACTOR %zmm0, %zmm1, %zmm2, %zmm6, %zmm7
     
-    vmovapd    384(%rax),  %zmm0             # x  TODO get rid of mov instruction
-    vmovapd    448(%rax),  %zmm1 
-    vmovapd    512(%rax),  %zmm2
-
+    vmulpd  (%rax), %zmm6, %zmm6        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd  64(%rax), %zmm6, %zmm7        # dt*1/r^3*M
+    
     vfmadd231pd     %zmm0, %zmm7, %zmm3{%k1}{z} 
     vfmadd231pd     %zmm1, %zmm7, %zmm4{%k1}{z} 
     vfmadd231pd     %zmm2, %zmm7, %zmm5{%k1}{z} 
