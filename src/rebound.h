@@ -389,6 +389,7 @@ struct reb_particle_avx512{
     double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
     double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
     double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
+    __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
     // Mask for cases with less than 8 planets
     __mmask8 mask __attribute__ ((aligned (64)));
 #else // AVX512

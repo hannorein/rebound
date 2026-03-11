@@ -21,6 +21,7 @@ matrixidx:
     .quad 0,0,0,0,0,0,0,0
 
 .section .text
+#.globl gravity_prefactor_avx512_one_test
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
 .globl gr_potential
@@ -42,18 +43,37 @@ gravity_prefactor_avx512_one:
     vdivpd      %zmm0, %zmm1, %zmm0      
     
     ret                                 # return 1 / r^3 in zmm0
+
+gravity_prefactor_avx512_one_zmm30:
+    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
     
-.macro GRAVITY_PREFACTOR x, y, z, out, tmp
-    vmulpd      \x, \x, \out     
-    vfmadd231pd \y, \y, \out      
-    vfmadd231pd \z, \z, \out     # out is now r^2
+    vmulpd      %zmm0, %zmm0, %zmm30     
+    vfmadd231pd %zmm1, %zmm1, %zmm30      
+    vfmadd231pd %zmm2, %zmm2, %zmm30     # zmm30 is now r^2
     
-    vsqrtpd     \out, \tmp         
-    vmulpd      \tmp, \out, \out     # out is r^3
+    vsqrtpd     %zmm30, %zmm31             
+    vmulpd      %zmm30, %zmm31, %zmm30     # zmm30 is r^3
    
-    vbroadcastsd .one(%rip), \tmp      # Todo: keep 1 in a register at all times 
-    vdivpd      \out, \tmp, \out      # out is 1 / r^3 
-.endm
+    vbroadcastsd .one(%rip), %zmm31      # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm30, %zmm31, %zmm30      
+    
+    ret                                 # return 1 / r^3 in zmm0
+gravity_prefactor_avx512_one_test:
+    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
+    
+    vmulpd      %zmm0, %zmm0, %zmm0     
+    vfmadd231pd %zmm1, %zmm1, %zmm0      
+    vfmadd231pd %zmm2, %zmm2, %zmm0     # zmm0 is now r^2
+    
+    vsqrtpd     %zmm0, %zmm1             
+    vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
+   
+    vbroadcastsd .one(%rip), %zmm1      # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm0, %zmm1, %zmm0      
+    
+    
+    ret                                 # return 1 / r^3 in zmm0
+    
 
 gravity_prefactor_avx512:
     # Input:  zmm0=m, zmm1=dx, zmm2=dy, zmm3=dz
@@ -279,6 +299,15 @@ mat8_mul3_avx512_nomem:
     ret
 
 
+.set P512_DT, 64
+.set P512_GR_PREFAC, 128
+.set P512_GR_PREFAC2, 192
+.set P512_M, 320
+.set P512_HVX, 960
+.set P512_HVY, 1024
+.set P512_HVZ, 1088
+.set P512_M0, 2688
+.set P512_MASK, 2752
 
 gr_potential:
     # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
@@ -286,7 +315,10 @@ gr_potential:
     #           zmm5 = -m0*dt
     #           edi = mask
     #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
-    kmovw    %edi, %k1
+    kmovw   P512_MASK(%rdi), %k1             # mask
+    vmovapd     P512_GR_PREFAC(%rdi), %zmm3
+    vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
+    vmovapd     P512_M0(%rdi), %zmm5
 
     vmulpd    %zmm0, %zmm0, %zmm6
     vfmadd231pd    %zmm1, %zmm1, %zmm6
@@ -321,9 +353,9 @@ gr_potential:
     vaddpd    %zmm11, %zmm21, %zmm11
     vaddpd    %zmm12, %zmm22, %zmm12
 
-    vmovapd    %zmm10, (%rsi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, (%rdx)
-    vmovapd    %zmm12, (%rcx)
+    vmovapd    %zmm10, P512_HVX(%rdi)              # TODO get rid of mov instruction
+    vmovapd    %zmm11, P512_HVY(%rdi)
+    vmovapd    %zmm12, P512_HVZ(%rdi)
     
     ret
 
@@ -334,54 +366,48 @@ block1:
     #// 0123 4567
     #// 3201 7645
     
-    kmovw   2688(%rdi), %k1             # mask
+    kmovw   P512_MASK(%rdi), %k1             # mask
 
-    vmovapd 64(%rdi), %zmm3                 # dt
-    vmulpd  320(%rdi), %zmm3, %zmm3         # dt*m
+    vmovapd P512_DT(%rdi), %zmm3                 # dt
+    vmulpd  P512_M(%rdi), %zmm3, %zmm3         # dt*m
     
-    vpermpd $0x4B, %zmm0, %zmm4               # 01234567 -> 32017645
-    vpermpd $0x4B, %zmm1, %zmm5
-    vpermpd $0x4B, %zmm2, %zmm6
+    vmovapd %zmm0, %zmm23           # x
+    vmovapd %zmm1, %zmm24
+    vmovapd %zmm2, %zmm25
+
+    vpermpd $0x4B, %zmm23, %zmm4               # 01234567 -> 32017645
+    vpermpd $0x4B, %zmm24, %zmm5
+    vpermpd $0x4B, %zmm25, %zmm6
     vpermpd $0x4B, %zmm3, %zmm15 
 
-    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
-    vsubpd  %zmm5, %zmm1, %zmm8
-    vsubpd  %zmm6, %zmm2, %zmm9
+    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
+    vsubpd  %zmm5, %zmm24, %zmm1
+    vsubpd  %zmm6, %zmm25, %zmm2
     
-
-    # Prefactor calculation
-    vmulpd      %zmm7, %zmm7, %zmm10     
-    vfmadd231pd %zmm8, %zmm8, %zmm10      
-    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
-    
-    vsqrtpd     %zmm10, %zmm11             
-    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
-   
-    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
-    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
+    vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
     vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
     vmovapd    1024(%rdi),  %zmm11 
     vmovapd    1088(%rdi),  %zmm12
   
-    vfnmadd231pd %zmm14, %zmm7,  %zmm10
-    vfnmadd231pd %zmm14, %zmm8,  %zmm11
-    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+    vfnmadd231pd %zmm14, %zmm0,  %zmm10
+    vfnmadd231pd %zmm14, %zmm1,  %zmm11
+    vfnmadd231pd %zmm14, %zmm2,  %zmm12
 
     
     vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
     vmovapd    %zmm11, 1024(%rdi)
     vmovapd    %zmm12, 1088(%rdi)
 
-    vpermpd $0x1E, %zmm7, %zmm7               # 32017645 -> 01234567
-    vpermpd $0x1E, %zmm8, %zmm8
-    vpermpd $0x1E, %zmm9, %zmm9
-    vpermpd $0x1E, %zmm17, %zmm17
+    vpermpd $0x1E, %zmm0, %zmm0               # 32017645 -> 01234567
+    vpermpd $0x1E, %zmm1, %zmm1
+    vpermpd $0x1E, %zmm2, %zmm2
+    vpermpd $0x1E, %zmm30, %zmm30
     vpermpd $0x1E, %zmm3, %zmm15                # 01234567 -> 32017645
 
 
-    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
     vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
     vmovapd    1024(%rdi),  %zmm11 
@@ -390,9 +416,9 @@ block1:
     #// 0123 4567
     #// 2310 6754
     
-    vfmadd231pd %zmm14, %zmm7,  %zmm10
-    vfmadd231pd %zmm14, %zmm8,  %zmm11
-    vfmadd231pd %zmm14, %zmm9,  %zmm12
+    vfmadd231pd %zmm14, %zmm0,  %zmm10
+    vfmadd231pd %zmm14, %zmm1,  %zmm11
+    vfmadd231pd %zmm14, %zmm2,  %zmm12
 
     vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
     vmovapd    %zmm11, 1024(%rdi)
@@ -401,35 +427,25 @@ block1:
     #// 0123 4567
     #// 1032 5476
     
-    vpermpd $0xB1, %zmm0, %zmm4               # 01234567 -> 10325476
-    vpermpd $0xB1, %zmm1, %zmm5               # TODO: Use vshufpd instead here
-    vpermpd $0xB1, %zmm2, %zmm6
+    vpermpd $0xB1, %zmm23, %zmm4               # 01234567 -> 10325476
+    vpermpd $0xB1, %zmm24, %zmm5               # TODO: Use vshufpd instead here
+    vpermpd $0xB1, %zmm25, %zmm6
     vpermpd $0xB1, %zmm3, %zmm15 
 
-    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
-    vsubpd  %zmm5, %zmm1, %zmm8
-    vsubpd  %zmm6, %zmm2, %zmm9
+    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
+    vsubpd  %zmm5, %zmm24, %zmm1
+    vsubpd  %zmm6, %zmm25, %zmm2
     
-
-    # Prefactor calculation
-    vmulpd      %zmm7, %zmm7, %zmm10     
-    vfmadd231pd %zmm8, %zmm8, %zmm10      
-    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
-    
-    vsqrtpd     %zmm10, %zmm11             
-    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
-   
-    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
-    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
+    vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
     vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
     vmovapd    1024(%rdi),  %zmm11 
     vmovapd    1088(%rdi),  %zmm12
   
-    vfnmadd231pd %zmm14, %zmm7,  %zmm10
-    vfnmadd231pd %zmm14, %zmm8,  %zmm11
-    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+    vfnmadd231pd %zmm14, %zmm0,  %zmm10
+    vfnmadd231pd %zmm14, %zmm1,  %zmm11
+    vfnmadd231pd %zmm14, %zmm2,  %zmm12
 
     
     vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
@@ -441,35 +457,26 @@ block1:
     
     vmovdqa64 b3idx(%rip), %zmm18
 
-    vpermpd %zmm0, %zmm18, %zmm4               # 01234567 -> 45671230 
-    vpermpd %zmm1, %zmm18, %zmm5
-    vpermpd %zmm2, %zmm18, %zmm6
+    vpermpd %zmm23, %zmm18, %zmm4               # 01234567 -> 45671230 
+    vpermpd %zmm24, %zmm18, %zmm5
+    vpermpd %zmm25, %zmm18, %zmm6
     vpermpd %zmm3, %zmm18, %zmm15 
 
-    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
-    vsubpd  %zmm5, %zmm1, %zmm8
-    vsubpd  %zmm6, %zmm2, %zmm9
+    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
+    vsubpd  %zmm5, %zmm24, %zmm1
+    vsubpd  %zmm6, %zmm25, %zmm2
     
 
-    # Prefactor calculation
-    vmulpd      %zmm7, %zmm7, %zmm10     
-    vfmadd231pd %zmm8, %zmm8, %zmm10      
-    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
-    
-    vsqrtpd     %zmm10, %zmm11             
-    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
-   
-    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
-    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
+    vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
     vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
     vmovapd    1024(%rdi),  %zmm11 
     vmovapd    1088(%rdi),  %zmm12
   
-    vfnmadd231pd %zmm14, %zmm7,  %zmm10
-    vfnmadd231pd %zmm14, %zmm8,  %zmm11
-    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+    vfnmadd231pd %zmm14, %zmm0,  %zmm10
+    vfnmadd231pd %zmm14, %zmm1,  %zmm11
+    vfnmadd231pd %zmm14, %zmm2,  %zmm12
 
     
     vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
@@ -477,13 +484,13 @@ block1:
     vmovapd    %zmm12, 1088(%rdi)
 
 
-    vmulpd      %zmm17, %zmm3, %zmm14      # m/r^3
+    vmulpd      %zmm30, %zmm3, %zmm14      # m/r^3
     
     #// 4567 1230
     #// 0123 4567
-    vmulpd %zmm14, %zmm7,  %zmm20
-    vmulpd %zmm14, %zmm8,  %zmm21
-    vmulpd %zmm14, %zmm9,  %zmm22
+    vmulpd %zmm14, %zmm0,  %zmm20
+    vmulpd %zmm14, %zmm1,  %zmm21
+    vmulpd %zmm14, %zmm2,  %zmm22
 
 
     #// 0123 4567
@@ -491,55 +498,46 @@ block1:
     
     vmovdqa64 b4idx(%rip), %zmm18
 
-    vpermpd %zmm0, %zmm18, %zmm4               # 01234567 -> 56742301  
-    vpermpd %zmm1, %zmm18, %zmm5                # TODO: Make this an in-line shuffle be reusing block3 data
-    vpermpd %zmm2, %zmm18, %zmm6
+    vpermpd %zmm23, %zmm18, %zmm4               # 01234567 -> 56742301  
+    vpermpd %zmm24, %zmm18, %zmm5                # TODO: Make this an in-line shuffle be reusing block3 data
+    vpermpd %zmm25, %zmm18, %zmm6
     vpermpd %zmm3, %zmm18, %zmm15 
 
-    vsubpd  %zmm4, %zmm0, %zmm7                # d_x
-    vsubpd  %zmm5, %zmm1, %zmm8
-    vsubpd  %zmm6, %zmm2, %zmm9
+    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
+    vsubpd  %zmm5, %zmm24, %zmm1
+    vsubpd  %zmm6, %zmm25, %zmm2
     
 
-    # Prefactor calculation
-    vmulpd      %zmm7, %zmm7, %zmm10     
-    vfmadd231pd %zmm8, %zmm8, %zmm10      
-    vfmadd231pd %zmm9, %zmm9, %zmm10     # zmm10 is now r^2
-    
-    vsqrtpd     %zmm10, %zmm11             
-    vmulpd      %zmm10, %zmm11, %zmm10      # zmm10 is r^3
-   
-    vbroadcastsd .one(%rip), %zmm11         # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm10, %zmm11, %zmm17      # 1/r^3
-    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
+    vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
     vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
     vmovapd    1024(%rdi),  %zmm11 
     vmovapd    1088(%rdi),  %zmm12
   
-    vfnmadd231pd %zmm14, %zmm7,  %zmm10
-    vfnmadd231pd %zmm14, %zmm8,  %zmm11
-    vfnmadd231pd %zmm14, %zmm9,  %zmm12
+    vfnmadd231pd %zmm14, %zmm0,  %zmm10
+    vfnmadd231pd %zmm14, %zmm1,  %zmm11
+    vfnmadd231pd %zmm14, %zmm2,  %zmm12
 
     vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
     vmovapd    %zmm11, 1024(%rdi)
     vmovapd    %zmm12, 1088(%rdi)
 
-    vpermpd $0x93, %zmm7, %zmm7               # 5674 2301 -> 4567 1230
-    vpermpd $0x93, %zmm8, %zmm8
-    vpermpd $0x93, %zmm9, %zmm9
-    vpermpd $0x93, %zmm17, %zmm17
+    vpermpd $0x93, %zmm0, %zmm0               # 5674 2301 -> 4567 1230
+    vpermpd $0x93, %zmm1, %zmm1
+    vpermpd $0x93, %zmm2, %zmm2
+    vpermpd $0x93, %zmm30, %zmm30
     vpermpd $0x93, %zmm3, %zmm15            
 
 
-    vmulpd      %zmm17, %zmm15, %zmm14      # m/r^3
+    vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
     #// 4567 1230
     #// 3012 7456
     
-    vfmadd231pd %zmm14, %zmm7,  %zmm20
-    vfmadd231pd %zmm14, %zmm8,  %zmm21
-    vfmadd231pd %zmm14, %zmm9,  %zmm22
+    vfmadd231pd %zmm14, %zmm0,  %zmm20
+    vfmadd231pd %zmm14, %zmm1,  %zmm21
+    vfmadd231pd %zmm14, %zmm2,  %zmm22
     
     ## Final 256 bit lane crossing and add
     vmovdqa64 b34mergeidx(%rip), %zmm18
@@ -574,11 +572,30 @@ block1:
     vmovapd    448(%rax),  %zmm1 
     vmovapd    512(%rax),  %zmm2
 
-    GRAVITY_PREFACTOR %zmm0, %zmm1, %zmm2, %zmm6, %zmm7
+    lfence
+    call gravity_prefactor_avx512_one_test
+# The following is the same code but much slower than the function call.
+# I do not understand why.    
+# Also much slower when I change output register to zmm30???
+#    vmulpd      %zmm0, %zmm0, %zmm0     
+#    vfmadd231pd %zmm1, %zmm1, %zmm0      
+#    vfmadd231pd %zmm2, %zmm2, %zmm0     # zmm0 is now r^2
+#    
+#    vsqrtpd     %zmm0, %zmm1             
+#    vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
+#   
+#    vbroadcastsd .one(%rip), %zmm1      # Todo: keep 1 in a register at all times 
+#    vdivpd      %zmm0, %zmm1, %zmm0      
     
-    vmulpd  (%rax), %zmm6, %zmm6        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd  64(%rax), %zmm6, %zmm7        # dt*1/r^3*M
+
+
+    vmulpd  (%rax), %zmm0, %zmm0        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd  64(%rax), %zmm0, %zmm7        # dt*1/r^3*M
     
+    vmovapd    384(%rax),  %zmm0             # x  TODO get rid of mov instruction
+    vmovapd    448(%rax),  %zmm1 
+    vmovapd    512(%rax),  %zmm2
+
     vfmadd231pd     %zmm0, %zmm7, %zmm3{%k1}{z} 
     vfmadd231pd     %zmm1, %zmm7, %zmm4{%k1}{z} 
     vfmadd231pd     %zmm2, %zmm7, %zmm5{%k1}{z} 

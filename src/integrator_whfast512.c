@@ -498,9 +498,7 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
 // Calculates 1/(dx**2+dy**2+dz**2)^(3/2)
 extern __m512d gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz);
 extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz);
-extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j, 
-        __m512d gr_prefac, __m512d gr_prefac2, __m512d mdt, __mmask8 mask, 
-        __m512d* hvx, __m512d* hvy, __m512d* hvz);
+extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j,  struct reb_particle_avx512* p512); 
 extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, struct reb_particle_avx512* p512);
 
 // ##################################################################################################
@@ -522,11 +520,10 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
             p512->x, p512->y, p512->z,
             &p512->hx, &p512->hy, &p512->hz);
     __m512d dt512 = _mm512_set1_pd(r->dt); 
-    __m512d m0_dt = _mm512_set1_pd(-r->particles[0].m*r->dt);
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
-        gr_potential(p512->hx, p512->hy, p512->hz, p512->gr_prefac, p512->gr_prefac2, m0_dt, p512->mask, &p512->hvx, &p512->hvy, &p512->hvz);
+        gr_potential(p512->hx, p512->hy, p512->hz, p512);
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
@@ -1323,6 +1320,7 @@ void static recalculate_constants(struct reb_simulation* r){
     const unsigned int N_per_system = r->N/N_systems;
     double mat8_inertial_to_heliocentric[64];
     double M[8] = {0.0};
+    double M0[8] = {0.0};
     switch (N_systems){
         case 1:
             ri_whfast512->p512->mask = (1 << (r->N -1)) - 1;
@@ -1388,6 +1386,7 @@ void static recalculate_constants(struct reb_simulation* r){
                             ri_whfast512->p512->mat8_jacobi_to_inertial[(s*p_per_system+ii-1)+8*(s*p_per_system+jj-1)] -= particles[s*N_per_system+jj].m/(ms+particles[s*N_per_system+jj].m);
                         }
                     }
+                    M0[(s*p_per_system+i-1)] = -particles[s*N_per_system+0].m*r->dt;
                 }
             }
 
@@ -1405,6 +1404,7 @@ void static recalculate_constants(struct reb_simulation* r){
     }
 
     ri_whfast512->p512->M = _mm512_loadu_pd(&M);
+    ri_whfast512->p512->M0 = _mm512_loadu_pd(&M0); //  = -particles[0].m * dt
 
     // GR and jump prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
