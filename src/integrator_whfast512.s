@@ -25,7 +25,8 @@ matrixidx:
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
 .globl gr_potential
-.globl block1
+.globl block1_gr
+.globl block1_nogr
 .globl mat8_mul3_avx512
 
 
@@ -303,6 +304,9 @@ mat8_mul3_avx512_nomem:
 .set P512_GR_PREFAC, 128
 .set P512_GR_PREFAC2, 192
 .set P512_M, 320
+.set P512_HX, 768
+.set P512_HY, 832
+.set P512_HZ, 896
 .set P512_HVX, 960
 .set P512_HVY, 1024
 .set P512_HVZ, 1088
@@ -316,6 +320,9 @@ gr_potential:
     #           edi = mask
     #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
     kmovw   P512_MASK(%rdi), %k1             # mask
+    vmovapd     P512_HX(%rdi), %zmm0
+    vmovapd     P512_HY(%rdi), %zmm1
+    vmovapd     P512_HZ(%rdi), %zmm2
     vmovapd     P512_GR_PREFAC(%rdi), %zmm3
     vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
     vmovapd     P512_M0(%rdi), %zmm5
@@ -360,7 +367,7 @@ gr_potential:
     ret
 
 
-block1:
+.macro BLOCK1 gr_flag
     # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
     #           rdi = p512
     #// 0123 4567
@@ -370,6 +377,9 @@ block1:
 
     vmovapd P512_DT(%rdi), %zmm3                 # dt
     vmulpd  P512_M(%rdi), %zmm3, %zmm3         # dt*m
+    vmovapd     P512_HX(%rdi), %zmm0
+    vmovapd     P512_HY(%rdi), %zmm1
+    vmovapd     P512_HZ(%rdi), %zmm2
     
     vmovapd %zmm0, %zmm23           # x
     vmovapd %zmm1, %zmm24
@@ -606,6 +616,10 @@ block1:
     vmovapd    %zmm5, 704(%rax)
     
     ret
+.endm
 
+block1_gr: BLOCK1 "gr"
+
+block1_nogr: BLOCK1 "nogr"
 
 .section .note.GNU-stack,"",@progbits

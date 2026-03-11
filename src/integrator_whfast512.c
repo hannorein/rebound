@@ -498,8 +498,8 @@ static void inline reb_whfast512_kepler_step(const struct reb_simulation* const 
 // Calculates 1/(dx**2+dy**2+dz**2)^(3/2)
 extern __m512d gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz);
 extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz);
-extern void gr_potential( __m512d x_j, __m512d y_j, __m512d z_j,  struct reb_particle_avx512* p512); 
-extern void block1( __m512d x_j, __m512d y_j, __m512d z_j, struct reb_particle_avx512* p512);
+extern void gr_potential(struct reb_particle_avx512* p512); 
+extern void block1_gr(struct reb_particle_avx512* p512);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -523,7 +523,7 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
     
     // General relativistic corrections
     if (ri_whfast512->gr_potential){
-        gr_potential(p512->hx, p512->hy, p512->hz, p512);
+        gr_potential(p512);
     }else{
         // Jacobi additions:
         // TODO: Should put a mask on particle 1 as +/- cancels.
@@ -536,7 +536,7 @@ void reb_whfast512_interaction_step_8planets_jacobi(const struct reb_simulation 
         p512->hvz = _mm512_maskz_mul_pd(p512->mask, prefact1, p512->hz); 
     }
 
-    block1(p512->hx, p512->hy, p512->hz,p512);
+    block1_gr(p512);
 
 }
 
