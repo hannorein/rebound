@@ -1,11 +1,7 @@
-	.file	"tmp.c"
-	.text
-	.p2align 4
-	.globl	reb_whfast512_kepler_step
-	.type	reb_whfast512_kepler_step, @function
+.text
+.p2align 4
+.globl	reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
-.LFB6406:
-	.cfi_startproc
 	vmovapd	384(%rdi), %zmm14
 	vmovapd	448(%rdi), %zmm12
 	vmulpd	%zmm14, %zmm14, %zmm5
@@ -218,11 +214,9 @@ reb_whfast512_kepler_step:
 	vmovapd	%zmm3, 704(%rdi)
 	vzeroupper
 	ret
-	.cfi_endproc
-.LFE6406:
-	.size	reb_whfast512_kepler_step, .-reb_whfast512_kepler_step
-	.section	.rodata.cst8,"aM",@progbits,8
-	.align 8
+
+.section	.rodata.cst8,"aM",@progbits,8
+.align 8
 .LC1:
 	.long	0
 	.long	1072693248
@@ -290,8 +284,9 @@ reb_whfast512_kepler_step:
 .LC33:
 	.long	1673100695
 	.long	1017545336
-	.section	.rodata
-	.align 64
+
+.section	.rodata
+.align 64
 .LC34:
 	.long	-416040929
 	.long	1026222067
@@ -327,8 +322,9 @@ reb_whfast512_kepler_step:
 	.long	1030416371
 	.long	-416040929
 	.long	1030416371
-	.section	.rodata.cst8
-	.align 8
+
+.section	.rodata.cst8
+.align 8
 .LC39:
 	.long	-1463780195
 	.long	1034500468
@@ -340,5 +336,5 @@ reb_whfast512_kepler_step:
 .LC43:
 	.long	-268904296
 	.long	1042411224
-	.ident	"GCC: (Debian 12.2.0-14+deb12u1) 12.2.0"
-	.section	.note.GNU-stack,"",@progbits
+	
+    .section	.note.GNU-stack,"",@progbits

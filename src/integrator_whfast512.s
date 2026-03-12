@@ -337,9 +337,7 @@ mat8_mul3_avx512_nomem:
 # Can't do loop yet because r8 will be overwritten by kepler step (I think)
 #.LMainLoop\grflag:    
 
-    pushq %rdi
     call reb_whfast512_kepler_step
-    popq %rdi
 
     kmovw   P512_MASK(%rdi), %k1             # mask
 	
