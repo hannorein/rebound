@@ -306,18 +306,25 @@ mat8_mul3_avx512_nomem:
 .set P512_X, 384
 .set P512_Y, 448
 .set P512_Z, 512
+.set P512_VX, 576
+.set P512_VY, 640
+.set P512_VZ, 704
 .set P512_MAT8_INERTIAL_TO_JACOBI, 768
 .set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1280
 .set P512_M0, 2304
 .set P512_MASK, 2368
 
+.set VX, %zmm13
+.set VY, %zmm19
+.set VZ, %zmm23
+
 .set HVX, %zmm27
 .set HVY, %zmm28
 .set HVZ, %zmm29
 
-.set HX, %zmm19
-.set HY, %zmm26
-.set HZ, %zmm13
+.set HX, %zmm24
+.set HY, %zmm25
+.set HZ, %zmm26
 
 .macro BLOCK1 grflag
     # Input:   
@@ -336,6 +343,29 @@ mat8_mul3_avx512_nomem:
     vmovapd     P512_X(%rdi), %zmm0
     vmovapd     P512_Y(%rdi), %zmm1
     vmovapd     P512_Z(%rdi), %zmm2
+
+    # Add Jacobi term in Jacobi coordinates
+    vmulpd      %zmm0, %zmm0, %zmm4     
+    vfmadd231pd %zmm1, %zmm1, %zmm4      
+    vfmadd231pd %zmm2, %zmm2, %zmm4     # r^2
+    vsqrtpd     %zmm4, %zmm5            # r 
+    vmulpd      %zmm4, %zmm5, %zmm4     # r^3
+  
+    vbroadcastsd .one(%rip), %zmm5      # Todo: keep 1 in a register at all times 
+    vdivpd      %zmm4, %zmm5, %zmm4      
+    vmulpd  (%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd  64(%rdi), %zmm4, %zmm6        # dt*1/r^3*M
+    
+    vmovapd     P512_VX(%rdi), VX
+    vmovapd     P512_VY(%rdi), VY
+    vmovapd     P512_VZ(%rdi), VZ
+    
+    vfmadd231pd     %zmm0, %zmm6, VX{%k1}{z} 
+    vfmadd231pd     %zmm1, %zmm6, VY{%k1}{z} 
+    vfmadd231pd     %zmm2, %zmm6, VZ{%k1}{z} 
+    
+######################
+
     movq	%rdi, %rax
     leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rdi  # mat8_inertial_to_jacobi
     call mat8_mul3_avx512_nomem
@@ -539,48 +569,16 @@ mat8_mul3_avx512_nomem:
     call mat8_mul3_avx512_nomem
 
     # Update velocities
-    vaddpd    576(%rax), %zmm0, %zmm3     #vx TODO get rid of memory
-    vaddpd    640(%rax), %zmm1, %zmm4
-    vaddpd    704(%rax), %zmm2, %zmm5
+    vaddpd    VX, %zmm0, VX
+    vaddpd    VY, %zmm1, VY
+    vaddpd    VZ, %zmm2, VZ
     
 
-    # Add Jacobi term in Jacobi coordinates
-
-    vmovapd    384(%rax),  %zmm0             # x  TODO get rid of mov instruction
-    vmovapd    448(%rax),  %zmm1 
-    vmovapd    512(%rax),  %zmm2
-
-    call gravity_prefactor_avx512_one_test
-# The following is the same code but much slower than the function call.
-# I do not understand why.    
-# Also much slower when I change output register to zmm30???
-#    vmulpd      %zmm0, %zmm0, %zmm0     
-#    vfmadd231pd %zmm1, %zmm1, %zmm0      
-#    vfmadd231pd %zmm2, %zmm2, %zmm0     # zmm0 is now r^2
-#    
-#    vsqrtpd     %zmm0, %zmm1             
-#    vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
-#   
-#    vbroadcastsd .one(%rip), %zmm1      # Todo: keep 1 in a register at all times 
-#    vdivpd      %zmm0, %zmm1, %zmm0      
-    
-
-
-    vmulpd  (%rax), %zmm0, %zmm0        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd  64(%rax), %zmm0, %zmm7        # dt*1/r^3*M
-    
-    vmovapd    384(%rax),  %zmm0             # x  TODO get rid of mov instruction
-    vmovapd    448(%rax),  %zmm1 
-    vmovapd    512(%rax),  %zmm2
-
-    vfmadd231pd     %zmm0, %zmm7, %zmm3{%k1}{z} 
-    vfmadd231pd     %zmm1, %zmm7, %zmm4{%k1}{z} 
-    vfmadd231pd     %zmm2, %zmm7, %zmm5{%k1}{z} 
     
     # Store final new velocities in Jacobi coordinates
-    vmovapd    %zmm3, 576(%rax)              # vx TODO get rid of mov instruction
-    vmovapd    %zmm4, 640(%rax)
-    vmovapd    %zmm5, 704(%rax)
+    vmovapd    VX, P512_VX(%rax)
+    vmovapd    VY, P512_VY(%rax)
+    vmovapd    VZ, P512_VZ(%rax)
     
 #    # Main Loop
 #    subq    $1, %r8
