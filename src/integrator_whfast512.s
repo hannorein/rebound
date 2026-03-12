@@ -203,9 +203,9 @@ mat8_mul3_avx512:
 
 mat8_mul3_avx512_nomem:
     # 8x8 matrix multiplied with 3 different 8 vectors
-    # in: rdi = vector to 64 matrix elements
+    # in: rax = vector to 64 matrix elements
     # zmm0, zmm1, zmm2  input and output vectors
-	vmovapd	(%rdi), %zmm4
+	vmovapd	(%rax), %zmm4
 	vbroadcastsd	%xmm0, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
 	vmovapd	%zmm3, %zmm10
@@ -217,7 +217,7 @@ mat8_mul3_avx512_nomem:
 	vmulpd	%zmm4, %zmm3, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	64(%rdi), %zmm4
+	vmovapd	64(%rax), %zmm4
 	movl	$2, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm10, %zmm4, %zmm5
@@ -229,7 +229,7 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm12, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	128(%rdi), %zmm4
+	vmovapd	128(%rax), %zmm4
 	movl	$3, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm10, %zmm4, %zmm5
@@ -241,7 +241,7 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm12, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	192(%rdi), %zmm4
+	vmovapd	192(%rax), %zmm4
 	movl	$4, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm10, %zmm4, %zmm5
@@ -253,7 +253,7 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm12, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	256(%rdi), %zmm4
+	vmovapd	256(%rax), %zmm4
 	movl	$5, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm10, %zmm4, %zmm5
@@ -265,7 +265,7 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm12, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	320(%rdi), %zmm4
+	vmovapd	320(%rax), %zmm4
 	movl	$6, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm10, %zmm4, %zmm5
@@ -277,7 +277,7 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm12, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	384(%rdi), %zmm4
+	vmovapd	384(%rax), %zmm4
 	movl	$7, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm10, %zmm4, %zmm5
@@ -289,7 +289,7 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm12, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm12
 	vpbroadcastq	%rsi, %zmm3
-	vmovapd	448(%rdi), %zmm4
+	vmovapd	448(%rax), %zmm4
 	vpermpd	%zmm0, %zmm3, %zmm0
 	vfmadd213pd	%zmm10, %zmm4, %zmm0
 	vpermpd	%zmm1, %zmm3, %zmm1
@@ -299,10 +299,11 @@ mat8_mul3_avx512_nomem:
     ret
 
 
+.set P512_M, 0
 .set P512_DT, 64
 .set P512_GR_PREFAC, 128
 .set P512_GR_PREFAC2, 192
-.set P512_M, 320
+.set P512_m, 320
 .set P512_X, 384
 .set P512_Y, 448
 .set P512_Z, 512
@@ -353,8 +354,8 @@ mat8_mul3_avx512_nomem:
   
     vbroadcastsd .one(%rip), %zmm5      # Todo: keep 1 in a register at all times 
     vdivpd      %zmm4, %zmm5, %zmm4      
-    vmulpd  (%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd  64(%rdi), %zmm4, %zmm6        # dt*1/r^3*M
+    vmulpd  P512_M(%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd  P512_DT(%rdi), %zmm4, %zmm6        # dt*1/r^3*M
     
     vmovapd     P512_VX(%rdi), VX
     vmovapd     P512_VY(%rdi), VY
@@ -364,12 +365,8 @@ mat8_mul3_avx512_nomem:
     vfmadd231pd     %zmm1, %zmm6, VY{%k1}{z} 
     vfmadd231pd     %zmm2, %zmm6, VZ{%k1}{z} 
     
-######################
-
-    movq	%rdi, %rax
-    leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rdi  # mat8_inertial_to_jacobi
+    leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rax  # mat8_inertial_to_jacobi
     call mat8_mul3_avx512_nomem
-    movq	%rax, %rdi
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
     vmovapd     %zmm1, HY
@@ -378,45 +375,44 @@ mat8_mul3_avx512_nomem:
     vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
     
     # Calculating r, r^2, r^3 for Jacobi term and GR
-    vmulpd    %zmm0, %zmm0, %zmm6
-    vfmadd231pd    %zmm1, %zmm1, %zmm6
-    vfmadd231pd    %zmm2, %zmm2, %zmm6     # r^2
-    vsqrtpd    %zmm6, %zmm18               # r
+    vmulpd      %zmm0, %zmm0, %zmm6
+    vfmadd231pd %zmm1, %zmm1, %zmm6
+    vfmadd231pd %zmm2, %zmm2, %zmm6         # r^2
+    vsqrtpd     %zmm6, %zmm7                # r
         
     # Jacobi term
-    vmulpd    %zmm6, %zmm18, %zmm18       # r^3    
-    vdivpd    %zmm18, %zmm5, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
-    vmulpd    %zmm8, %zmm0, HVX          # -x_j*m0*dt/r^3
-    vmulpd    %zmm8, %zmm1, HVY
-    vmulpd    %zmm8, %zmm2, HVZ
+    vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
+    vdivpd    %zmm7, %zmm5, %zmm7{%k1}{z}   # -m0*dt/r^3 (jacobi term)
+    vmulpd    %zmm7, %zmm0, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+    vmulpd    %zmm7, %zmm1, HVY
+    vmulpd    %zmm7, %zmm2, HVZ
 
     .if \grflag == 1
         vmovapd     P512_GR_PREFAC(%rdi), %zmm3
         vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
 
+        vmulpd    %zmm6, %zmm6, %zmm5                 # r^4
+        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}         # -dt*6*m0*m0/(c*c) /r^4
 
-        vmulpd    %zmm6, %zmm6, %zmm7                 # r^4
-        vdivpd    %zmm7, %zmm3, %zmm9{%k1}{z}         # -dt*6*m0*m0/(c*c) /r^4
-
-        vmulpd    %zmm9, %zmm0, %zmm15                # -x_j*dt*6*m0*m0/(c*c) /r^4
-        vmulpd    %zmm9, %zmm1, %zmm16
-        vmulpd    %zmm9, %zmm2, %zmm17
-
-        vmulpd    %zmm15, %zmm4, %zmm10{%k1}{z}       # x_j*dt*6*m0*m/(c*c) /r^4 
-        vmulpd    %zmm16, %zmm4, %zmm11{%k1}{z}
-        vmulpd    %zmm17, %zmm4, %zmm12{%k1}{z}
-
-        REDUCE_ADD_AND_BROADCAST %zmm10, %zmm18   # sum
-        REDUCE_ADD_AND_BROADCAST %zmm11, %zmm18
-        REDUCE_ADD_AND_BROADCAST %zmm12, %zmm18
-
-        vaddpd    %zmm10, %zmm15, %zmm10      # delta v_x due to gr TODO: Combine this with previous vmulpd
-        vaddpd    %zmm11, %zmm16, %zmm11
-        vaddpd    %zmm12, %zmm17, %zmm12
+        vmulpd    %zmm7, %zmm0, %zmm5                 # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm7, %zmm1, %zmm6
+        vmulpd    %zmm7, %zmm2, %zmm7
         
-        vaddpd    %zmm10, HVX, HVX      # delta v_x due to gr + jacobi term
-        vaddpd    %zmm11, HVY, HVY
-        vaddpd    %zmm12, HVZ, HVZ
+        vaddpd    %zmm5, HVX, HVX                     # delta v_x due to gr
+        vaddpd    %zmm6, HVY, HVY
+        vaddpd    %zmm7, HVZ, HVZ
+
+        vmulpd    %zmm5, %zmm4, %zmm5{%k1}{z}        # x_j*dt*6*m0*m/(c*c) /r^4 
+        vmulpd    %zmm6, %zmm4, %zmm6{%k1}{z}
+        vmulpd    %zmm7, %zmm4, %zmm7{%k1}{z}
+
+        REDUCE_ADD_AND_BROADCAST %zmm5, %zmm4
+        REDUCE_ADD_AND_BROADCAST %zmm6, %zmm4
+        REDUCE_ADD_AND_BROADCAST %zmm7, %zmm4
+
+        vaddpd    %zmm5, HVX, HVX                    # delta v_x due to gr backraction
+        vaddpd    %zmm6, HVY, HVY
+        vaddpd    %zmm7, HVZ, HVZ
 
     .endif
 
@@ -425,7 +421,7 @@ mat8_mul3_avx512_nomem:
     
 
     vmovapd P512_DT(%rdi), %zmm3                 # dt
-    vmulpd  P512_M(%rdi), %zmm3, %zmm3         # dt*m
+    vmulpd  P512_m(%rdi), %zmm3, %zmm3         # dt*m
     
 
     vpermpd $0x4B, HX, %zmm4               # 01234567 -> 32017645
@@ -563,8 +559,7 @@ mat8_mul3_avx512_nomem:
 
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
-	movq	%rdi, %rax
-    leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rdi  # mat8_inertial_to_jacobi
+    leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
    
     call mat8_mul3_avx512_nomem
 
@@ -575,9 +570,9 @@ mat8_mul3_avx512_nomem:
 
     
     # Store final new velocities in Jacobi coordinates
-    vmovapd    VX, P512_VX(%rax)
-    vmovapd    VY, P512_VY(%rax)
-    vmovapd    VZ, P512_VZ(%rax)
+    vmovapd    VX, P512_VX(%rdi)
+    vmovapd    VY, P512_VY(%rdi)
+    vmovapd    VZ, P512_VZ(%rdi)
     
 #    # Main Loop
 #    subq    $1, %r8
