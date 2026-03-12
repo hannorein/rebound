@@ -464,10 +464,10 @@ mat8_mul3_avx512_nomem:
     #// 0123 4567
     #// 1032 5476
     
-    vpermpd $0xB1, HX, %zmm4               # 01234567 -> 10325476
-    vpermpd $0xB1, HY, %zmm5               # TODO: Use vshufpd instead here
-    vpermpd $0xB1, HZ, %zmm6
-    vpermpd $0xB1, %zmm3, %zmm15 
+    vshufpd $0x55, HX, HX, %zmm4               # 01234567 -> 10325476
+    vshufpd $0x55, HY, HY, %zmm5               # Using vshufpd (1 cycle) rather than vpermpd (3 cycles) 
+    vshufpd $0x55, HZ, HZ, %zmm6
+    vshufpd $0x55, %zmm3, %zmm3, %zmm15 
 
     vsubpd  %zmm4, HX, %zmm0                # d_x
     vsubpd  %zmm5, HY, %zmm1
@@ -572,7 +572,6 @@ mat8_mul3_avx512_nomem:
     vaddpd    VX, %zmm0, VX
     vaddpd    VY, %zmm1, VY
     vaddpd    VZ, %zmm2, VZ
-    
 
     
     # Store final new velocities in Jacobi coordinates
