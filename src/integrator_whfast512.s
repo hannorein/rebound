@@ -317,6 +317,9 @@ mat8_mul3_avx512_nomem:
 .set P512_M0, 2688
 .set P512_MASK, 2752
 
+.set HVX, %zmm27
+.set HVY, %zmm28
+.set HVZ, %zmm29
 
 .macro BLOCK1 grflag
     # Input:   
@@ -327,9 +330,7 @@ mat8_mul3_avx512_nomem:
 # Can't do loop yet because r8 will be overwritten by kepler step (I think)
 #.LMainLoop\grflag:    
 
-    int3
     call reb_whfast512_kepler_step
-    int3
 
     kmovw   P512_MASK(%rdi), %k1             # mask
 	
@@ -346,9 +347,6 @@ mat8_mul3_avx512_nomem:
     vmovapd     %zmm1, P512_HY(%rdi)
     vmovapd     %zmm2, P512_HZ(%rdi)
         
-    vmovapd     P512_HX(%rdi), %zmm0
-    vmovapd     P512_HY(%rdi), %zmm1
-    vmovapd     P512_HZ(%rdi), %zmm2
     vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
     
     # Calculating r, r^2, r^3 for Jacobi term and GR
@@ -360,9 +358,9 @@ mat8_mul3_avx512_nomem:
     # Jacobi term
     vmulpd    %zmm6, %zmm18, %zmm18       # r^3    
     vdivpd    %zmm18, %zmm5, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
-    vmulpd    %zmm8, %zmm0, %zmm20          # -x_j*m0*dt/r^3
-    vmulpd    %zmm8, %zmm1, %zmm21
-    vmulpd    %zmm8, %zmm2, %zmm22
+    vmulpd    %zmm8, %zmm0, HVX          # -x_j*m0*dt/r^3
+    vmulpd    %zmm8, %zmm1, HVY
+    vmulpd    %zmm8, %zmm2, HVZ
 
     .if \grflag == 1
         vmovapd     P512_GR_PREFAC(%rdi), %zmm3
@@ -388,18 +386,14 @@ mat8_mul3_avx512_nomem:
         vaddpd    %zmm11, %zmm16, %zmm11
         vaddpd    %zmm12, %zmm17, %zmm12
         
-        vaddpd    %zmm10, %zmm20, %zmm10      # delta v_x due to gr + jacobi term
-        vaddpd    %zmm11, %zmm21, %zmm11
-        vaddpd    %zmm12, %zmm22, %zmm12
+        vaddpd    %zmm10, HVX, HVX      # delta v_x due to gr + jacobi term
+        vaddpd    %zmm11, HVY, HVY
+        vaddpd    %zmm12, HVZ, HVZ
 
-        vmovapd    %zmm10, P512_HVX(%rdi)              # TODO get rid of mov instruction
-        vmovapd    %zmm11, P512_HVY(%rdi)
-        vmovapd    %zmm12, P512_HVZ(%rdi)
-    .else
-        vmovapd    %zmm20, P512_HVX(%rdi)              # TODO get rid of mov instruction
-        vmovapd    %zmm21, P512_HVY(%rdi)
-        vmovapd    %zmm22, P512_HVZ(%rdi)
     .endif
+    vmovapd    HVX, P512_HVX(%rdi)              # TODO get rid of mov instruction
+    vmovapd    HVY, P512_HVY(%rdi)
+    vmovapd    HVZ, P512_HVZ(%rdi)
 
     #// 0123 4567
     #// 3201 7645
@@ -427,18 +421,10 @@ mat8_mul3_avx512_nomem:
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rdi),  %zmm11 
-    vmovapd    1088(%rdi),  %zmm12
-  
-    vfnmadd231pd %zmm14, %zmm0,  %zmm10
-    vfnmadd231pd %zmm14, %zmm1,  %zmm11
-    vfnmadd231pd %zmm14, %zmm2,  %zmm12
+    vfnmadd231pd %zmm14, %zmm0,  HVX
+    vfnmadd231pd %zmm14, %zmm1,  HVY
+    vfnmadd231pd %zmm14, %zmm2,  HVZ
 
-    
-    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rdi)
-    vmovapd    %zmm12, 1088(%rdi)
 
     vpermpd $0x1E, %zmm0, %zmm0               # 32017645 -> 01234567
     vpermpd $0x1E, %zmm1, %zmm1
@@ -448,21 +434,13 @@ mat8_mul3_avx512_nomem:
 
 
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
-    
-    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rdi),  %zmm11 
-    vmovapd    1088(%rdi),  %zmm12 
 
     #// 0123 4567
     #// 2310 6754
     
-    vfmadd231pd %zmm14, %zmm0,  %zmm10
-    vfmadd231pd %zmm14, %zmm1,  %zmm11
-    vfmadd231pd %zmm14, %zmm2,  %zmm12
-
-    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rdi)
-    vmovapd    %zmm12, 1088(%rdi)
+    vfmadd231pd %zmm14, %zmm0,  HVX
+    vfmadd231pd %zmm14, %zmm1,  HVY
+    vfmadd231pd %zmm14, %zmm2,  HVZ
 
     #// 0123 4567
     #// 1032 5476
@@ -479,18 +457,9 @@ mat8_mul3_avx512_nomem:
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
     
-    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rdi),  %zmm11 
-    vmovapd    1088(%rdi),  %zmm12
-  
-    vfnmadd231pd %zmm14, %zmm0,  %zmm10
-    vfnmadd231pd %zmm14, %zmm1,  %zmm11
-    vfnmadd231pd %zmm14, %zmm2,  %zmm12
-
-    
-    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rdi)
-    vmovapd    %zmm12, 1088(%rdi)
+    vfnmadd231pd %zmm14, %zmm0,  HVX
+    vfnmadd231pd %zmm14, %zmm1,  HVY
+    vfnmadd231pd %zmm14, %zmm2,  HVZ
 
     #// 0123 4567
     #// 4567 1230
@@ -509,19 +478,10 @@ mat8_mul3_avx512_nomem:
 
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
-    
-    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rdi),  %zmm11 
-    vmovapd    1088(%rdi),  %zmm12
   
-    vfnmadd231pd %zmm14, %zmm0,  %zmm10
-    vfnmadd231pd %zmm14, %zmm1,  %zmm11
-    vfnmadd231pd %zmm14, %zmm2,  %zmm12
-
-    
-    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rdi)
-    vmovapd    %zmm12, 1088(%rdi)
+    vfnmadd231pd %zmm14, %zmm0,  HVX
+    vfnmadd231pd %zmm14, %zmm1,  HVY
+    vfnmadd231pd %zmm14, %zmm2,  HVZ
 
 
     vmulpd      %zmm30, %zmm3, %zmm14      # m/r^3
@@ -550,18 +510,10 @@ mat8_mul3_avx512_nomem:
 
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
-    
-    vmovapd    960(%rdi),  %zmm10             # TODO get rid of mov instruction
-    vmovapd    1024(%rdi),  %zmm11 
-    vmovapd    1088(%rdi),  %zmm12
   
-    vfnmadd231pd %zmm14, %zmm0,  %zmm10
-    vfnmadd231pd %zmm14, %zmm1,  %zmm11
-    vfnmadd231pd %zmm14, %zmm2,  %zmm12
-
-    vmovapd    %zmm10, 960(%rdi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, 1024(%rdi)
-    vmovapd    %zmm12, 1088(%rdi)
+    vfnmadd231pd %zmm14, %zmm0,  HVX
+    vfnmadd231pd %zmm14, %zmm1,  HVY
+    vfnmadd231pd %zmm14, %zmm2,  HVZ
 
     vpermpd $0x93, %zmm0, %zmm0               # 5674 2301 -> 4567 1230
     vpermpd $0x93, %zmm1, %zmm1
@@ -585,13 +537,10 @@ mat8_mul3_avx512_nomem:
     vpermpd %zmm20, %zmm18, %zmm10{%k1}{z}
     vpermpd %zmm21, %zmm18, %zmm11
     vpermpd %zmm22, %zmm18, %zmm12
-    vmovapd    960(%rdi),  %zmm13             # TODO get rid of mov instruction
-    vmovapd    1024(%rdi),  %zmm14 
-    vmovapd    1088(%rdi),  %zmm15
 
-    vaddpd %zmm10, %zmm13, %zmm0{%k1}{z}
-    vaddpd %zmm11, %zmm14, %zmm1{%k1}{z}
-    vaddpd %zmm12, %zmm15, %zmm2{%k1}{z}
+    vaddpd %zmm10, HVX, %zmm0{%k1}{z}
+    vaddpd %zmm11, HVY, %zmm1{%k1}{z}
+    vaddpd %zmm12, HVZ, %zmm2{%k1}{z}
 
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
@@ -612,7 +561,6 @@ mat8_mul3_avx512_nomem:
     vmovapd    448(%rax),  %zmm1 
     vmovapd    512(%rax),  %zmm2
 
-    lfence
     call gravity_prefactor_avx512_one_test
 # The following is the same code but much slower than the function call.
 # I do not understand why.    
