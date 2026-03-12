@@ -306,20 +306,18 @@ mat8_mul3_avx512_nomem:
 .set P512_X, 384
 .set P512_Y, 448
 .set P512_Z, 512
-.set P512_HX, 768
-.set P512_HY, 832
-.set P512_HZ, 896
-.set P512_HVX, 960
-.set P512_HVY, 1024
-.set P512_HVZ, 1088
-.set P512_MAT8_INERTIAL_TO_JACOBI, 1152
-.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1664
-.set P512_M0, 2688
-.set P512_MASK, 2752
+.set P512_MAT8_INERTIAL_TO_JACOBI, 768
+.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1280
+.set P512_M0, 2304
+.set P512_MASK, 2368
 
 .set HVX, %zmm27
 .set HVY, %zmm28
 .set HVZ, %zmm29
+
+.set HX, %zmm19
+.set HY, %zmm26
+.set HZ, %zmm13
 
 .macro BLOCK1 grflag
     # Input:   
@@ -343,9 +341,9 @@ mat8_mul3_avx512_nomem:
     call mat8_mul3_avx512_nomem
     movq	%rax, %rdi
     
-    vmovapd     %zmm0, P512_HX(%rdi)        # TODO get rid of mov
-    vmovapd     %zmm1, P512_HY(%rdi)
-    vmovapd     %zmm2, P512_HZ(%rdi)
+    vmovapd     %zmm0, HX        # TODO get rid of mov
+    vmovapd     %zmm1, HY
+    vmovapd     %zmm2, HZ
         
     vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
     
@@ -391,9 +389,6 @@ mat8_mul3_avx512_nomem:
         vaddpd    %zmm12, HVZ, HVZ
 
     .endif
-    vmovapd    HVX, P512_HVX(%rdi)              # TODO get rid of mov instruction
-    vmovapd    HVY, P512_HVY(%rdi)
-    vmovapd    HVZ, P512_HVZ(%rdi)
 
     #// 0123 4567
     #// 3201 7645
@@ -401,22 +396,16 @@ mat8_mul3_avx512_nomem:
 
     vmovapd P512_DT(%rdi), %zmm3                 # dt
     vmulpd  P512_M(%rdi), %zmm3, %zmm3         # dt*m
-    vmovapd     P512_HX(%rdi), %zmm0
-    vmovapd     P512_HY(%rdi), %zmm1
-    vmovapd     P512_HZ(%rdi), %zmm2
     
-    vmovapd %zmm0, %zmm23           # x
-    vmovapd %zmm1, %zmm24
-    vmovapd %zmm2, %zmm25
 
-    vpermpd $0x4B, %zmm23, %zmm4               # 01234567 -> 32017645
-    vpermpd $0x4B, %zmm24, %zmm5
-    vpermpd $0x4B, %zmm25, %zmm6
+    vpermpd $0x4B, HX, %zmm4               # 01234567 -> 32017645
+    vpermpd $0x4B, HY, %zmm5
+    vpermpd $0x4B, HZ, %zmm6
     vpermpd $0x4B, %zmm3, %zmm15 
 
-    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
-    vsubpd  %zmm5, %zmm24, %zmm1
-    vsubpd  %zmm6, %zmm25, %zmm2
+    vsubpd  %zmm4, HX, %zmm0                # d_x
+    vsubpd  %zmm5, HY, %zmm1
+    vsubpd  %zmm6, HZ, %zmm2
     
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
@@ -445,14 +434,14 @@ mat8_mul3_avx512_nomem:
     #// 0123 4567
     #// 1032 5476
     
-    vpermpd $0xB1, %zmm23, %zmm4               # 01234567 -> 10325476
-    vpermpd $0xB1, %zmm24, %zmm5               # TODO: Use vshufpd instead here
-    vpermpd $0xB1, %zmm25, %zmm6
+    vpermpd $0xB1, HX, %zmm4               # 01234567 -> 10325476
+    vpermpd $0xB1, HY, %zmm5               # TODO: Use vshufpd instead here
+    vpermpd $0xB1, HZ, %zmm6
     vpermpd $0xB1, %zmm3, %zmm15 
 
-    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
-    vsubpd  %zmm5, %zmm24, %zmm1
-    vsubpd  %zmm6, %zmm25, %zmm2
+    vsubpd  %zmm4, HX, %zmm0                # d_x
+    vsubpd  %zmm5, HY, %zmm1
+    vsubpd  %zmm6, HZ, %zmm2
     
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
     vmulpd      %zmm30, %zmm15, %zmm14      # m/r^3
@@ -466,14 +455,14 @@ mat8_mul3_avx512_nomem:
     
     vmovdqa64 b3idx(%rip), %zmm18
 
-    vpermpd %zmm23, %zmm18, %zmm4               # 01234567 -> 45671230 
-    vpermpd %zmm24, %zmm18, %zmm5
-    vpermpd %zmm25, %zmm18, %zmm6
+    vpermpd HX, %zmm18, %zmm4               # 01234567 -> 45671230 
+    vpermpd HY, %zmm18, %zmm5
+    vpermpd HZ, %zmm18, %zmm6
     vpermpd %zmm3, %zmm18, %zmm15 
 
-    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
-    vsubpd  %zmm5, %zmm24, %zmm1
-    vsubpd  %zmm6, %zmm25, %zmm2
+    vsubpd  %zmm4, HX, %zmm0                # d_x
+    vsubpd  %zmm5, HY, %zmm1
+    vsubpd  %zmm6, HZ, %zmm2
     
 
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3
@@ -498,14 +487,14 @@ mat8_mul3_avx512_nomem:
     
     vmovdqa64 b4idx(%rip), %zmm18
 
-    vpermpd %zmm23, %zmm18, %zmm4               # 01234567 -> 56742301  
-    vpermpd %zmm24, %zmm18, %zmm5                # TODO: Make this an in-line shuffle be reusing block3 data
-    vpermpd %zmm25, %zmm18, %zmm6
+    vpermpd HX, %zmm18, %zmm4               # 01234567 -> 56742301  
+    vpermpd HY, %zmm18, %zmm5                # TODO: Make this an in-line shuffle be reusing block3 data
+    vpermpd HZ, %zmm18, %zmm6
     vpermpd %zmm3, %zmm18, %zmm15 
 
-    vsubpd  %zmm4, %zmm23, %zmm0                # d_x
-    vsubpd  %zmm5, %zmm24, %zmm1
-    vsubpd  %zmm6, %zmm25, %zmm2
+    vsubpd  %zmm4, HX, %zmm0                # d_x
+    vsubpd  %zmm5, HY, %zmm1
+    vsubpd  %zmm6, HZ, %zmm2
     
 
     call gravity_prefactor_avx512_one_zmm30  # zmm30 is 1/r^3

@@ -379,6 +379,13 @@ struct reb_particle_avx512{
     __m512d vx __attribute__ ((aligned (64)));
     __m512d vy __attribute__ ((aligned (64)));
     __m512d vz __attribute__ ((aligned (64)));
+    double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
+    double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
+    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
+    __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
+    // Mask for cases with less than 8 planets
+    __mmask8 mask __attribute__ ((aligned (64)));
+    // Legacy. Not used in ASM anymore:
     // Heliocentric positions and velocities used with Jacobi only.
     __m512d hx __attribute__ ((aligned (64)));
     __m512d hy __attribute__ ((aligned (64)));
@@ -386,12 +393,6 @@ struct reb_particle_avx512{
     __m512d hvx __attribute__ ((aligned (64)));
     __m512d hvy __attribute__ ((aligned (64)));
     __m512d hvz __attribute__ ((aligned (64)));
-    double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
-    double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
-    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
-    __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
-    // Mask for cases with less than 8 planets
-    __mmask8 mask __attribute__ ((aligned (64)));
 #else // AVX512
     double m[8]; // dummy for when AVX512 is not available
     double x[8];
