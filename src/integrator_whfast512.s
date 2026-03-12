@@ -208,94 +208,94 @@ mat8_mul3_avx512_nomem:
 	vmovapd	(%rax), %zmm4
 	vbroadcastsd	%xmm0, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm10
+	vmovapd	%zmm3, %zmm7
 	vbroadcastsd	%xmm1, %zmm3
 	movl	$1, %esi
 	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm11
+	vmovapd	%zmm3, %zmm8
 	vbroadcastsd	%xmm2, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	64(%rax), %zmm4
 	movl	$2, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm10, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm10  #TODO Remove mov
+	vfmadd213pd	%zmm7, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm7  #TODO Remove mov
 	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm11
-	vfmadd213pd	%zmm12, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm5, %zmm8
+	vfmadd213pd	%zmm9, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	128(%rax), %zmm4
 	movl	$3, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm10, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm10
+	vfmadd213pd	%zmm7, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm7
 	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm11
-	vfmadd213pd	%zmm12, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm5, %zmm8
+	vfmadd213pd	%zmm9, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	192(%rax), %zmm4
 	movl	$4, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm10, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm10
+	vfmadd213pd	%zmm7, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm7
 	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm11
-	vfmadd213pd	%zmm12, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm5, %zmm8
+	vfmadd213pd	%zmm9, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	256(%rax), %zmm4
 	movl	$5, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm10, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm10
+	vfmadd213pd	%zmm7, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm7
 	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm11
-	vfmadd213pd	%zmm12, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm5, %zmm8
+	vfmadd213pd	%zmm9, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	320(%rax), %zmm4
 	movl	$6, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm10, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm10
+	vfmadd213pd	%zmm7, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm7
 	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm11
-	vfmadd213pd	%zmm12, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm5, %zmm8
+	vfmadd213pd	%zmm9, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	384(%rax), %zmm4
 	movl	$7, %esi
 	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm10, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm10
+	vfmadd213pd	%zmm7, %zmm4, %zmm5
+	vmovapd	%zmm5, %zmm7
 	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm11, %zmm4, %zmm5
+	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm11
-	vfmadd213pd	%zmm12, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm12
+	vmovapd	%zmm5, %zmm8
+	vfmadd213pd	%zmm9, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm9
 	vpbroadcastq	%rsi, %zmm3
 	vmovapd	448(%rax), %zmm4
 	vpermpd	%zmm0, %zmm3, %zmm0
-	vfmadd213pd	%zmm10, %zmm4, %zmm0
+	vfmadd213pd	%zmm7, %zmm4, %zmm0
 	vpermpd	%zmm1, %zmm3, %zmm1
 	vpermpd	%zmm2, %zmm3, %zmm2
-	vfmadd213pd	%zmm11, %zmm4, %zmm1
-	vfmadd213pd	%zmm12, %zmm4, %zmm2
+	vfmadd213pd	%zmm8, %zmm4, %zmm1
+	vfmadd213pd	%zmm9, %zmm4, %zmm2
     ret
 
 
@@ -315,17 +315,17 @@ mat8_mul3_avx512_nomem:
 .set P512_M0, 2304
 .set P512_MASK, 2368
 
-.set VX, %zmm13
-.set VY, %zmm19
-.set VZ, %zmm23
+.set VX, %zmm10
+.set VY, %zmm11
+.set VZ, %zmm12
 
-.set HVX, %zmm27
-.set HVY, %zmm28
-.set HVZ, %zmm29
+.set HVX, %zmm13
+.set HVY, %zmm14
+.set HVZ, %zmm15
 
-.set HX, %zmm24
-.set HY, %zmm25
-.set HZ, %zmm26
+.set HX, %zmm16
+.set HY, %zmm17
+.set HZ, %zmm18
 
 .macro BLOCK1 grflag
     # Input:   
@@ -366,7 +366,7 @@ mat8_mul3_avx512_nomem:
     vfmadd231pd     %zmm2, %zmm6, VZ{%k1}{z} 
     
     leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rax  # mat8_inertial_to_jacobi
-    call mat8_mul3_avx512_nomem
+    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm7,zmm8,zmm9 
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
     vmovapd     %zmm1, HY
@@ -559,7 +559,7 @@ mat8_mul3_avx512_nomem:
     # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
    
-    call mat8_mul3_avx512_nomem
+    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm7,zmm8,zmm9 
 
     # Update velocities
     vaddpd    VX, %zmm0, VX
