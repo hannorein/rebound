@@ -16,10 +16,14 @@ integrator_whfast512.asm_o: integrator_whfast512.s
 	@echo "Assembling source file integrator_whfast512.s ..."
 	as -g -o $@ $<
 
-$(LIBREBOUND): $(OBJECTS) integrator_whfast512.asm_o
+kepler.asm_o: kepler.s
+	@echo "Assembling source file kepler.s ..."
+	as -g -o $@ $<
+
+$(LIBREBOUND): $(OBJECTS) integrator_whfast512.asm_o kepler.asm_o
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) $(OPT) -shared $(OBJECTS) $(LIB) integrator_whfast512.asm_o -o $@ 
+	$(CC) $(OPT) -shared $(OBJECTS) $(LIB) kepler.asm_o integrator_whfast512.asm_o -o $@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."

@@ -27,8 +27,9 @@ matrixidx:
 .globl block1_gr
 .globl block1_nogr
 .globl mat8_mul3_avx512
-
 .extern reb_whfast512_kepler_step
+.extern local_reb_whfast512_kepler_step
+
 
 gravity_prefactor_avx512_one:
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
@@ -336,7 +337,9 @@ mat8_mul3_avx512_nomem:
 # Can't do loop yet because r8 will be overwritten by kepler step (I think)
 #.LMainLoop\grflag:    
 
+    pushq %rdi
     call reb_whfast512_kepler_step
+    popq %rdi
 
     kmovw   P512_MASK(%rdi), %k1             # mask
 	
@@ -581,5 +584,6 @@ mat8_mul3_avx512_nomem:
 block1_gr: BLOCK1 1
 
 block1_nogr: BLOCK1 0
+   
 
 .section .note.GNU-stack,"",@progbits
