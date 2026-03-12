@@ -24,11 +24,11 @@ matrixidx:
 #.globl gravity_prefactor_avx512_one_test
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
-.globl gr_potential
 .globl block1_gr
 .globl block1_nogr
 .globl mat8_mul3_avx512
 
+.extern reb_whfast512_kepler_step
 
 gravity_prefactor_avx512_one:
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
@@ -204,8 +204,7 @@ mat8_mul3_avx512:
 mat8_mul3_avx512_nomem:
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rdi = vector to 64 matrix elements
-    # zmm0, zmm1, zmm2  input vectors
-    # zmm10, zmm11, zmm12  output vectors
+    # zmm0, zmm1, zmm2  input and output vectors
 	vmovapd	(%rdi), %zmm4
 	vbroadcastsd	%xmm0, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
@@ -304,76 +303,107 @@ mat8_mul3_avx512_nomem:
 .set P512_GR_PREFAC, 128
 .set P512_GR_PREFAC2, 192
 .set P512_M, 320
+.set P512_X, 384
+.set P512_Y, 448
+.set P512_Z, 512
 .set P512_HX, 768
 .set P512_HY, 832
 .set P512_HZ, 896
 .set P512_HVX, 960
 .set P512_HVY, 1024
 .set P512_HVZ, 1088
+.set P512_MAT8_INERTIAL_TO_JACOBI, 1152
+.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1664
 .set P512_M0, 2688
 .set P512_MASK, 2752
 
-gr_potential:
-    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
-    #           zmm3 = gr_prefac, zmm4 = gr_prefac2
-    #           zmm5 = -m0*dt
-    #           edi = mask
-    #           rsi=&hvx , rdx=&hvy, rcx=&hvz 
+
+.macro BLOCK1 grflag
+    # Input:   
+    #           rdi = p512
+    #           rsi = Number of steps
+
+#    movq %rsi, %r8
+# Can't do loop yet because r8 will be overwritten by kepler step (I think)
+#.LMainLoop\grflag:    
+
+    int3
+    call reb_whfast512_kepler_step
+    int3
+
     kmovw   P512_MASK(%rdi), %k1             # mask
+	
+
+    vmovapd     P512_X(%rdi), %zmm0
+    vmovapd     P512_Y(%rdi), %zmm1
+    vmovapd     P512_Z(%rdi), %zmm2
+    movq	%rdi, %rax
+    leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rdi  # mat8_inertial_to_jacobi
+    call mat8_mul3_avx512_nomem
+    movq	%rax, %rdi
+    
+    vmovapd     %zmm0, P512_HX(%rdi)        # TODO get rid of mov
+    vmovapd     %zmm1, P512_HY(%rdi)
+    vmovapd     %zmm2, P512_HZ(%rdi)
+        
     vmovapd     P512_HX(%rdi), %zmm0
     vmovapd     P512_HY(%rdi), %zmm1
     vmovapd     P512_HZ(%rdi), %zmm2
-    vmovapd     P512_GR_PREFAC(%rdi), %zmm3
-    vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
-    vmovapd     P512_M0(%rdi), %zmm5
-
+    vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
+    
+    # Calculating r, r^2, r^3 for Jacobi term and GR
     vmulpd    %zmm0, %zmm0, %zmm6
     vfmadd231pd    %zmm1, %zmm1, %zmm6
     vfmadd231pd    %zmm2, %zmm2, %zmm6     # r^2
     vsqrtpd    %zmm6, %zmm18               # r
+        
+    # Jacobi term
     vmulpd    %zmm6, %zmm18, %zmm18       # r^3    
     vdivpd    %zmm18, %zmm5, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
     vmulpd    %zmm8, %zmm0, %zmm20          # -x_j*m0*dt/r^3
     vmulpd    %zmm8, %zmm1, %zmm21
     vmulpd    %zmm8, %zmm2, %zmm22
 
-    vmulpd    %zmm6, %zmm6, %zmm7                 # r^4
-    vdivpd    %zmm7, %zmm3, %zmm9{%k1}{z}         # -dt*6*m0*m0/(c*c) /r^4
-
-    vmulpd    %zmm9, %zmm0, %zmm15                # -x_j*dt*6*m0*m0/(c*c) /r^4
-    vmulpd    %zmm9, %zmm1, %zmm16
-    vmulpd    %zmm9, %zmm2, %zmm17
-
-    vmulpd    %zmm15, %zmm4, %zmm10{%k1}{z}       # x_j*dt*6*m0*m/(c*c) /r^4 
-    vmulpd    %zmm16, %zmm4, %zmm11{%k1}{z}
-    vmulpd    %zmm17, %zmm4, %zmm12{%k1}{z}
-
-    REDUCE_ADD_AND_BROADCAST %zmm10, %zmm18   # sum
-    REDUCE_ADD_AND_BROADCAST %zmm11, %zmm18
-    REDUCE_ADD_AND_BROADCAST %zmm12, %zmm18
-
-    vaddpd    %zmm10, %zmm15, %zmm10      # delta v_x due to gr TODO: Combine this with previous vmulpd
-    vaddpd    %zmm11, %zmm16, %zmm11
-    vaddpd    %zmm12, %zmm17, %zmm12
-    
-    vaddpd    %zmm10, %zmm20, %zmm10      # delta v_x due to gr + jacobi term
-    vaddpd    %zmm11, %zmm21, %zmm11
-    vaddpd    %zmm12, %zmm22, %zmm12
-
-    vmovapd    %zmm10, P512_HVX(%rdi)              # TODO get rid of mov instruction
-    vmovapd    %zmm11, P512_HVY(%rdi)
-    vmovapd    %zmm12, P512_HVZ(%rdi)
-    
-    ret
+    .if \grflag == 1
+        vmovapd     P512_GR_PREFAC(%rdi), %zmm3
+        vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
 
 
-.macro BLOCK1 gr_flag
-    # Input:    zmm0=x_j, zmm1=y_j, zmm2=z_j
-    #           rdi = p512
+        vmulpd    %zmm6, %zmm6, %zmm7                 # r^4
+        vdivpd    %zmm7, %zmm3, %zmm9{%k1}{z}         # -dt*6*m0*m0/(c*c) /r^4
+
+        vmulpd    %zmm9, %zmm0, %zmm15                # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm9, %zmm1, %zmm16
+        vmulpd    %zmm9, %zmm2, %zmm17
+
+        vmulpd    %zmm15, %zmm4, %zmm10{%k1}{z}       # x_j*dt*6*m0*m/(c*c) /r^4 
+        vmulpd    %zmm16, %zmm4, %zmm11{%k1}{z}
+        vmulpd    %zmm17, %zmm4, %zmm12{%k1}{z}
+
+        REDUCE_ADD_AND_BROADCAST %zmm10, %zmm18   # sum
+        REDUCE_ADD_AND_BROADCAST %zmm11, %zmm18
+        REDUCE_ADD_AND_BROADCAST %zmm12, %zmm18
+
+        vaddpd    %zmm10, %zmm15, %zmm10      # delta v_x due to gr TODO: Combine this with previous vmulpd
+        vaddpd    %zmm11, %zmm16, %zmm11
+        vaddpd    %zmm12, %zmm17, %zmm12
+        
+        vaddpd    %zmm10, %zmm20, %zmm10      # delta v_x due to gr + jacobi term
+        vaddpd    %zmm11, %zmm21, %zmm11
+        vaddpd    %zmm12, %zmm22, %zmm12
+
+        vmovapd    %zmm10, P512_HVX(%rdi)              # TODO get rid of mov instruction
+        vmovapd    %zmm11, P512_HVY(%rdi)
+        vmovapd    %zmm12, P512_HVZ(%rdi)
+    .else
+        vmovapd    %zmm20, P512_HVX(%rdi)              # TODO get rid of mov instruction
+        vmovapd    %zmm21, P512_HVY(%rdi)
+        vmovapd    %zmm22, P512_HVZ(%rdi)
+    .endif
+
     #// 0123 4567
     #// 3201 7645
     
-    kmovw   P512_MASK(%rdi), %k1             # mask
 
     vmovapd P512_DT(%rdi), %zmm3                 # dt
     vmulpd  P512_M(%rdi), %zmm3, %zmm3         # dt*m
@@ -566,7 +596,7 @@ gr_potential:
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
 	movq	%rdi, %rax
-    leaq 1152(%rdi), %rdi  # mat8_inertial_to_jacobi
+    leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rdi  # mat8_inertial_to_jacobi
    
     call mat8_mul3_avx512_nomem
 
@@ -615,11 +645,14 @@ gr_potential:
     vmovapd    %zmm4, 640(%rax)
     vmovapd    %zmm5, 704(%rax)
     
+#    # Main Loop
+#    subq    $1, %r8
+#    jnz     .LMainLoop\grflag
     ret
 .endm
 
-block1_gr: BLOCK1 "gr"
+block1_gr: BLOCK1 1
 
-block1_nogr: BLOCK1 "nogr"
+block1_nogr: BLOCK1 0
 
 .section .note.GNU-stack,"",@progbits
