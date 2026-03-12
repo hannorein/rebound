@@ -1,4 +1,5 @@
-	.file	"tmp.c"
+.include "header.s"
+.file	"tmp.c"
 	.text
 	.p2align 4
 	.globl	mm_stiefel_Gs13_avx512
