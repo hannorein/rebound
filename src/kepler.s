@@ -194,12 +194,12 @@ reb_whfast512_kepler_step:
 	vfmadd231pd	    VY, %zmm1, %zmm22{%k1}{z}
 	vfmadd231pd	    VX, %zmm1, %zmm5{%k1}{z}
 	vfmadd231pd	    VZ, %zmm1, %zmm17{%k1}{z}
-	vfnmadd132pd	%zmm2, VX, %zmm14{%k1}{z}
+	vfnmadd132pd	%zmm2, VX, %zmm10{%k1}{z}
 	vfnmadd132pd	%zmm2, VY, %zmm12{%k1}{z}
-	vfnmadd132pd	%zmm2, VZ, %zmm10{%k1}{z}
-	vfnmadd132pd	%zmm0, %zmm14, %zmm13{%k1}{z}
+	vfnmadd132pd	%zmm2, VZ, %zmm14{%k1}{z}
+	vfnmadd132pd	%zmm0, %zmm10, %zmm13{%k1}{z}
 	vfnmadd132pd	%zmm0, %zmm12, %zmm11{%k1}{z}
-	vfnmadd132pd	%zmm0, %zmm10, %zmm15{%k1}{z}
+	vfnmadd132pd	%zmm0, %zmm14, %zmm15{%k1}{z}
 	vmovapd	%zmm5, P512_X(%rdi)
 	vmovapd	%zmm22, P512_Y(%rdi)
 	vmovapd	%zmm17, P512_Z(%rdi)
