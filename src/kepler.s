@@ -36,7 +36,7 @@ mm_stiefel_Gs13_avx512:
 .p2align 4
 mm_stiefel_Gs03_avx512:
 	vmulpd	%zmm1, %zmm1, %zmm2
-	vbroadcastsd	.LC17(%rip), %zmm3
+	vbroadcastsd	.LC17(%rip), %zmm5
 	vbroadcastsd	.LC19(%rip), %zmm4
 	vmulpd	%zmm2, %zmm0, %zmm0
 	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm5
@@ -49,14 +49,14 @@ mm_stiefel_Gs03_avx512:
 	vmovapd	%zmm4, %zmm3
 	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC37(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdi)
-	vmulpd	%zmm5, %zmm1, %zmm3
-	vfnmadd132pd	%zmm3, %zmm1, %zmm0
-	vmovapd	%zmm0, (%rsi)
-	vmulpd	%zmm3, %zmm2, %zmm0
-	vmovapd	%zmm0, (%rcx)
+	vmovapd	%zmm3, (%rdi)  # Gs0
+	vmulpd	%zmm5, %zmm1, %zmm24
+	vfnmadd132pd	%zmm24, %zmm1, %zmm0
+	vmovapd	%zmm0, (%rsi)  #Gs1
+	vmulpd	%zmm24, %zmm2, %zmm3
+	vmovapd	%zmm3, (%rcx)  #Gs3
 	vmulpd	%zmm4, %zmm2, %zmm2
-	vmovapd	%zmm2, (%rdx)
+	vmovapd	%zmm2, (%rdx)  #GS2
 	ret
 
 .p2align 4
@@ -76,14 +76,18 @@ reb_whfast512_kepler_step:
 .set VX, %zmm14
 .set VY, %zmm12
 .set VZ, %zmm10
+.set M, %zmm22
+.set DT, %zmm23
+.set XX, %zmm1
+.set BETA, %zmm29
 	vmovapd	P512_X(%rdi), X
 	vmovapd	P512_Y(%rdi), Y
 	vmovapd	P512_Z(%rdi), Z
 	vmovapd	P512_VX(%rdi), VX
 	vmovapd	P512_VY(%rdi), VY
 	vmovapd	P512_VZ(%rdi), VZ
-	vmovapd	P512_DT(%rdi), %zmm8           
-	vmovapd	P512_M(%rdi), %zmm4
+	vmovapd	P512_DT(%rdi), DT           
+	vmovapd	P512_M(%rdi), M
 	vmulpd	X, X, %zmm6
 	vfmadd231pd	Y, Y, %zmm6
 	vfmadd231pd	Z, Z, %zmm6                 # r^2
@@ -93,40 +97,34 @@ reb_whfast512_kepler_step:
 	vmulpd	VX, VX, %zmm0
 	vfmadd231pd	VY, VY, %zmm0
 	vfmadd231pd	VZ, VZ, %zmm0               # v^2
-	vaddpd	%zmm4, %zmm4, %zmm17            # 2*M
-	vfmsub132pd	%zmm16, %zmm0, %zmm17       # beta
+	vaddpd	M, M, BETA            # 2*M
+	vfmsub132pd	%zmm16, %zmm0, BETA       # beta
 	vmulpd	VX, X, %zmm0
 	vfmadd231pd	VY, Y, %zmm0
 	vfmadd231pd	VZ, Z, %zmm0                # eta
-	vmovapd	%zmm17, %zmm7
-	vfnmadd132pd	%zmm6, %zmm4, %zmm7     # zeta
-	vmulpd	%zmm16, %zmm8, %zmm30            # dt/r
-	vmulpd	%zmm0, %zmm30, %zmm1             # eta*dt/r
-	vmovapd	%zmm0, %zmm18
+	vmovapd	BETA, %zmm7
+	vfnmadd132pd	%zmm6, M, %zmm7     # zeta
+	vmulpd	%zmm16, DT, %zmm30           # dt/r
+	vmulpd	%zmm0, %zmm30, %zmm31            # eta*dt/r
 	vmovapd	%zmm0, %zmm21   
-	vmovapd	%zmm0, %zmm5
-	vmulpd	.LC35(%rip){1to8}, %zmm1, %zmm1     # 0.5*eta*dt/r
-	vfnmadd132pd	%zmm16, %zmm9, %zmm1        
-	vmulpd	%zmm30, %zmm1, %zmm1                # X (initial guess)
-	vmovapd	%zmm17, %zmm0                       # beta
+	vmulpd	.LC35(%rip){1to8}, %zmm31, %zmm31     # 0.5*eta*dt/r
+	vfnmadd132pd	%zmm16, %zmm9, %zmm31        
+	vmulpd	%zmm30, %zmm31, XX                # X (initial guess)
+	vmovapd	BETA, %zmm0                       # beta
 	
     leaq	-240(%rbp), %rdx #             Gs2
 	leaq	-304(%rbp), %rsi #             Gs1
 	leaq	-176(%rbp), %rcx #             Gs3
 	leaq	-112(%rbp), %rdi #             Gs0
-            subq     $64, %rsp
-            vmovdqu64 %zmm4, (%rsp)
-            subq     $64, %rsp
-            vmovdqu64 %zmm18, (%rsp)
+
 	call	mm_stiefel_Gs03_avx512
-            vmovdqu64 (%rsp), %zmm5
-            addq     $64, %rsp
-            vmovdqu64 (%rsp), %zmm4
-            addq     $64, %rsp
+
+	vmovapd	%zmm21, %zmm18
+	vmovapd	%zmm21, %zmm5
 	vmovapd	-304(%rbp), %zmm0
 	vmovapd	%zmm6, %zmm3
 	vfmadd132pd	%zmm0, %zmm6, %zmm18
-	vfmsub132pd	%zmm1, %zmm8, %zmm3
+	vfmsub132pd	XX, DT, %zmm3
 	vmovapd	-240(%rbp), %zmm2
 	vbroadcastsd	.LC41(%rip), %zmm19
 	vfmadd231pd	%zmm2, %zmm5, %zmm3
@@ -143,22 +141,17 @@ reb_whfast512_kepler_step:
 	vmulpd	%zmm20, %zmm3, %zmm3
 	vsqrtpd	%zmm0, %zmm0
 	vaddpd	%zmm0, %zmm2, %zmm2
-	vmovapd	%zmm17, %zmm0
-	vfmsub132pd	%zmm2, %zmm3, %zmm1
-	vdivpd	%zmm2, %zmm1, %zmm1
-            subq     $64, %rsp
-            vmovdqu64 %zmm4, (%rsp)
-            subq     $64, %rsp
-            vmovdqu64 %zmm5, (%rsp)
-	call	mm_stiefel_Gs03_avx512
-            vmovdqu64 (%rsp), %zmm5
-            addq     $64, %rsp
-            vmovdqu64 (%rsp), %zmm4
-            addq     $64, %rsp
-	vmovapd	-304(%rbp), %zmm0
+	vmovapd	BETA, %zmm0
+	vfmsub132pd	%zmm2, %zmm3, XX
+	vdivpd	%zmm2, XX, XX
+	
+    call	mm_stiefel_Gs03_avx512
+	
+    vmovapd	-304(%rbp), %zmm0
 	vmovapd	%zmm6, %zmm3
+	vmovapd	%zmm21, %zmm5
 	vfmadd132pd	%zmm0, %zmm6, %zmm21
-	vfmsub132pd	%zmm1, %zmm8, %zmm3
+	vfmsub132pd	XX, DT, %zmm3
 	vmovapd	-240(%rbp), %zmm2
 	movq	%rsi, %r8
 	movq	%rdx, %rsi
@@ -176,17 +169,13 @@ reb_whfast512_kepler_step:
 	vfnmadd132pd	%zmm18, %zmm19, %zmm0
 	vsqrtpd	%zmm0, %zmm0
 	vaddpd	%zmm0, %zmm2, %zmm2
-	vmovapd	%zmm17, %zmm0
+	vmovapd	BETA, %zmm0
 	vfmsub132pd	%zmm2, %zmm3, %zmm1
 	vdivpd	%zmm2, %zmm1, %zmm1
-            subq     $64, %rsp
-            vmovdqu64 %zmm4, (%rsp)
             subq     $64, %rsp
             vmovdqu64 %zmm5, (%rsp)
 	call	mm_stiefel_Gs13_avx512
             vmovdqu64 (%rsp), %zmm5
-            addq     $64, %rsp
-            vmovdqu64 (%rsp), %zmm4
             addq     $64, %rsp
 	vmulpd	-304(%rbp), %zmm5, %zmm2
 	vmovapd	-240(%rbp), %zmm0
@@ -196,34 +185,30 @@ reb_whfast512_kepler_step:
 	vaddpd	%zmm6, %zmm2, %zmm1
 	vdivpd	%zmm1, %zmm9, %zmm1
 	vfnmadd231pd	-176(%rbp), %zmm7, %zmm0
-	vaddpd	%zmm0, %zmm8, %zmm0
+	vaddpd	%zmm0, DT, %zmm0
 	vmulpd	%zmm0, %zmm1, %zmm1
-	vmovapd	%zmm17, %zmm0
-            subq     $64, %rsp
-            vmovdqu64 %zmm4, (%rsp)
+	vmovapd	BETA, %zmm0
             subq     $64, %rsp
             vmovdqu64 %zmm5, (%rsp)
 	call	mm_stiefel_Gs13_avx512
             vmovdqu64 (%rsp), %zmm5
             addq     $64, %rsp
-            vmovdqu64 (%rsp), %zmm4
-            addq     $64, %rsp
 	vmovapd	-304(%rbp), %zmm17
 	vmovapd	-240(%rbp), %zmm1
 	vmulpd	%zmm5, %zmm17, %zmm0
-	vmulpd	%zmm1, %zmm4, %zmm5
+	vmulpd	%zmm1, M, %zmm5
 	kmovb	P512_MASK(%rax), %k1
 	vfmadd231pd	%zmm1, %zmm7, %zmm0
 	vmulpd	%zmm16, %zmm5, %zmm3
-	vmovapd	%zmm8, %zmm1
-	vfnmadd231pd	-176(%rbp), %zmm4, %zmm1
+	vmovapd	DT, %zmm1
+	vfnmadd231pd	-176(%rbp), M, %zmm1
 	vaddpd	%zmm6, %zmm0, %zmm0
 	vdivpd	%zmm0, %zmm9, %zmm2
-	vmulpd	%zmm17, %zmm4, %zmm0
-	vmovapd	%zmm3, %zmm4
-	vfnmadd132pd	Y, Y, %zmm4{%k1}{z}
+	vmulpd	%zmm17, M, %zmm0
+	vmovapd	%zmm3, %zmm22
+	vfnmadd132pd	Y, Y, %zmm22{%k1}{z}
 	vmulpd	%zmm16, %zmm0, %zmm0
-	vfmadd231pd	VY, %zmm1, %zmm4{%k1}{z}
+	vfmadd231pd	VY, %zmm1, %zmm22{%k1}{z}
 	vmulpd	%zmm2, %zmm0, %zmm0
 	vmulpd	%zmm5, %zmm2, %zmm2
 	vmovapd	%zmm3, %zmm5
@@ -239,7 +224,7 @@ reb_whfast512_kepler_step:
 	vfnmadd132pd	%zmm15, %zmm10, %zmm0{%k1}{z}
 	vmovapd	%zmm5, P512_X(%rax)
 	vmovapd	%zmm13, P512_VX(%rax)
-	vmovapd	%zmm4, P512_Y(%rax)
+	vmovapd	%zmm22, P512_Y(%rax)
 	vmovapd	%zmm11, P512_VY(%rax)
 	vmovapd	%zmm1, P512_Z(%rax)
 	vmovapd	%zmm0, P512_VZ(%rax)
