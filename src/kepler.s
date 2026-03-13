@@ -1,71 +1,39 @@
 .include "header.s"
 .text
 .p2align 4
+# High accuracy: (Gs1, Gs2, Gs3)
 mm_stiefel_Gs13_avx512:
 	vmulpd	%zmm1, %zmm1, %zmm2     # X^2
 	vbroadcastsd	.LC1(%rip), %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vbroadcastsd	.LC3(%rip), %zmm3
+	vbroadcastsd	.LC3(%rip), %zmm5
 	vmulpd	%zmm2, %zmm0, %zmm0
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
 	vfnmadd213pd	.LC5(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC7(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC7(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC9(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC11(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC11(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC13(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC15(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC15(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC17(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC19(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC19(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC25(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC29(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmovapd	(%rdx), %zmm3
+	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm5
 	vfnmadd213pd	.LC33(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rsi), %zmm3
-	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vmulpd	(%rdx), %zmm1, %zmm3
+	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm5
+	vmulpd	%zmm3, %zmm1, %zmm3
 	vfnmadd132pd	%zmm3, %zmm1, %zmm0
-	vmovapd	%zmm3, (%rdx)
 	vmovapd	%zmm0, (%rdi)
-	vmulpd	(%rdx), %zmm2, %zmm0
+	vmulpd	%zmm3, %zmm2, %zmm0
 	vmovapd	%zmm0, (%rdx)
-	vmulpd	(%rsi), %zmm2, %zmm2
+	vmulpd	%zmm5, %zmm2, %zmm2
 	vmovapd	%zmm2, (%rsi)
 	ret
-	.p2align 4
+
+# Low accuracy: (Gs0, Gs1, Gs2, Gs3)
+.p2align 4
 mm_stiefel_Gs03_avx512:
 	vmulpd	%zmm1, %zmm1, %zmm2
 	vbroadcastsd	.LC17(%rip), %zmm3
@@ -90,7 +58,8 @@ mm_stiefel_Gs03_avx512:
 	vmulpd	%zmm4, %zmm2, %zmm2
 	vmovapd	%zmm2, (%rdx)
 	ret
-	.p2align 4
+
+.p2align 4
 .globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
 	leaq	8(%rsp), %r10
@@ -204,7 +173,19 @@ reb_whfast512_kepler_step:
 	vmovapd	%zmm17, %zmm0
 	vfmsub132pd	%zmm2, %zmm3, %zmm1
 	vdivpd	%zmm2, %zmm1, %zmm1
+            subq     $64, %rsp
+            vmovdqu64 %zmm4, (%rsp)
+            subq     $64, %rsp
+            vmovdqu64 %zmm5, (%rsp)
+            subq     $64, %rsp
+            vmovdqu64 %zmm6, (%rsp)
 	call	mm_stiefel_Gs13_avx512
+            vmovdqu64 (%rsp), %zmm6
+            addq     $64, %rsp
+            vmovdqu64 (%rsp), %zmm5
+            addq     $64, %rsp
+            vmovdqu64 (%rsp), %zmm4
+            addq     $64, %rsp
 	vmulpd	-304(%rbp), %zmm5, %zmm2
 	vmovapd	-240(%rbp), %zmm0
 	vfmadd231pd	%zmm0, %zmm7, %zmm2
@@ -216,7 +197,19 @@ reb_whfast512_kepler_step:
 	vaddpd	%zmm0, %zmm8, %zmm0
 	vmulpd	%zmm0, %zmm1, %zmm1
 	vmovapd	%zmm17, %zmm0
+            subq     $64, %rsp
+            vmovdqu64 %zmm4, (%rsp)
+            subq     $64, %rsp
+            vmovdqu64 %zmm5, (%rsp)
+            subq     $64, %rsp
+            vmovdqu64 %zmm6, (%rsp)
 	call	mm_stiefel_Gs13_avx512
+            vmovdqu64 (%rsp), %zmm6
+            addq     $64, %rsp
+            vmovdqu64 (%rsp), %zmm5
+            addq     $64, %rsp
+            vmovdqu64 (%rsp), %zmm4
+            addq     $64, %rsp
 	vmovapd	-304(%rbp), %zmm17
 	vmovapd	-240(%rbp), %zmm1
 	vmulpd	%zmm5, %zmm17, %zmm0
