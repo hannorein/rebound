@@ -74,8 +74,10 @@ reb_whfast512_kepler_step:
 .set M, %zmm22
 .set DT, %zmm23
 .set R, %zmm6
+.set RI, %zmm16
 .set ETA, %zmm8
 .set ZETA, %zmm7
+.set ONE, %zmm9
 	vmovapd	P512_X(%rdi), X
 	vmovapd	P512_Y(%rdi), Y
 	vmovapd	P512_Z(%rdi), Z
@@ -89,23 +91,23 @@ reb_whfast512_kepler_step:
 	vfmadd231pd	Y, Y, %zmm0
 	vfmadd231pd	Z, Z, %zmm0                 # r^2
 	vsqrtpd	%zmm0, R                        # r
-	vbroadcastsd	.LC37(%rip), %zmm9      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
-	vdivpd	R, %zmm9, %zmm16                # 1/r
+	vbroadcastsd	.LC37(%rip), ONE      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
+	vdivpd	R, ONE, RI                # 1/r
 	vmulpd	VX, VX, %zmm0
 	vfmadd231pd	VY, VY, %zmm0
 	vfmadd231pd	VZ, VZ, %zmm0               # v^2
 	vaddpd	M, M, BETA                      # 2*M
-	vfmsub132pd	%zmm16, %zmm0, BETA         # beta
+	vfmsub132pd	RI, %zmm0, BETA         # beta
 	vmulpd	VX, X, ETA
 	vfmadd231pd	VY, Y, ETA
 	vfmadd231pd	VZ, Z, ETA                  # eta
 	vmovapd	BETA, ZETA
 	vfnmadd132pd	R, M, ZETA              # zeta
-	vmulpd	%zmm16, DT, %zmm30              # dt/r
+	vmulpd	RI, DT, %zmm30              # dt/r
 	vmovapd	ETA, %zmm21   
 	vmulpd	ETA, %zmm30, %zmm31             # eta*dt/r
 	vmulpd	.LC35(%rip){1to8}, %zmm31, %zmm31     # 0.5*eta*dt/r
-	vfnmadd132pd	%zmm16, %zmm9, %zmm31        
+	vfnmadd132pd	RI, ONE, %zmm31        
 	vmulpd	%zmm30, %zmm31, XX              # X (initial guess)
 	
 	call	mm_stiefel_Gs03_avx512
@@ -161,34 +163,39 @@ reb_whfast512_kepler_step:
 	vmovapd	GS2, %zmm0
 	vfnmadd132pd	ETA, %zmm1, %zmm0
 	vaddpd	R, %zmm2, %zmm1
-	vdivpd	%zmm1, %zmm9, %zmm1
+	vdivpd	%zmm1, ONE, %zmm1
 	vfnmadd231pd	GS3, ZETA, %zmm0
 	vaddpd	%zmm0, DT, %zmm0
 	vmulpd	%zmm0, %zmm1, XX
 	
     call	mm_stiefel_Gs13_avx512
 	
-	vmulpd	ETA, GS1, %zmm0
-	vmulpd	GS2, M, %zmm5
+    vmulpd	ETA, GS1, %zmm0
 	vfmadd231pd	GS2, ZETA, %zmm0
-	vmulpd	%zmm16, %zmm5, %zmm3
-	vmovapd	DT, %zmm1
-	vfnmadd231pd	GS3, M, %zmm1
 	vaddpd	R, %zmm0, %zmm0
-	vdivpd	%zmm0, %zmm9, %zmm2
+	vdivpd	%zmm0, ONE, %zmm2  # ri in C
+	
+	vmulpd	GS2, M, %zmm5           
+	vmulpd	RI, %zmm5, %zmm3        # negative f
+	vmovapd	DT, %zmm1
+	vfnmadd231pd	GS3, M, %zmm1   # g 
+
+
 	vmulpd	GS1, M, %zmm0
+	vmulpd	RI, %zmm0, %zmm0
+	vmulpd	%zmm2, %zmm0, %zmm0           # negative fd
+
+	vmulpd	%zmm5, %zmm2, %zmm2            # negative gd
+
 	vmovapd	%zmm3, %zmm22
-	vfnmadd132pd	Y, Y, %zmm22{%k1}{z}
-	vmulpd	%zmm16, %zmm0, %zmm0
-	vfmadd231pd	VY, %zmm1, %zmm22{%k1}{z}
-	vmulpd	%zmm2, %zmm0, %zmm0
-	vmulpd	%zmm5, %zmm2, %zmm2
 	vmovapd	%zmm3, %zmm5
 	vfnmadd132pd	X, X, %zmm5{%k1}{z}
+	vfnmadd132pd	Y, Y, %zmm22{%k1}{z}
 	vfnmadd132pd	Z, Z, %zmm3{%k1}{z}
+	vfmadd231pd	    VY, %zmm1, %zmm22{%k1}{z}
 	vfnmadd132pd	%zmm2, VY, %zmm12{%k1}{z}
-	vfmadd231pd	VX, %zmm1, %zmm5{%k1}{z}
-	vfmadd132pd	VZ, %zmm3, %zmm1{%k1}{z}
+	vfmadd231pd	    VX, %zmm1, %zmm5{%k1}{z}
+	vfmadd132pd	    VZ, %zmm3, %zmm1{%k1}{z}
 	vfnmadd132pd	%zmm2, VX, %zmm14{%k1}{z}
 	vfnmadd132pd	%zmm2, VZ, %zmm10{%k1}{z}
 	vfnmadd132pd	%zmm0, %zmm12, %zmm11{%k1}{z}
