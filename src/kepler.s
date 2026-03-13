@@ -69,8 +69,6 @@ reb_whfast512_kepler_step:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	pushq	%r10
-	leaq	-240(%rbp), %r9 #           Gs2
-	leaq	-304(%rbp), %r8 #           Gs1
 	subq	$296, %rsp
 .set X, %zmm13
 .set Y, %zmm11
@@ -79,29 +77,29 @@ reb_whfast512_kepler_step:
 .set VY, %zmm12
 .set VZ, %zmm10
 	vmovapd	P512_X(%rdi), X
-	vmovapd	P512_VX(%rdi), VX
-	vmulpd	X, X, %zmm6
-	vmulpd	VX, VX, %zmm0
 	vmovapd	P512_Y(%rdi), Y
-	vmovapd	P512_VY(%rdi), VY
-	vfmadd231pd	Y, Y, %zmm6
-	vfmadd231pd	VY, VY, %zmm0
 	vmovapd	P512_Z(%rdi), Z
+	vmulpd	X, X, %zmm6
+	vfmadd231pd	Y, Y, %zmm6
+	vfmadd231pd	Z, Z, %zmm6                 # r^2
+	vsqrtpd	%zmm6, %zmm6                    # r
+	vbroadcastsd	.LC37(%rip), %zmm9      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
+	vdivpd	%zmm6, %zmm9, %zmm16            # 1/r
+	vmovapd	P512_VX(%rdi), VX
+	vmovapd	P512_VY(%rdi), VY
 	vmovapd	P512_VZ(%rdi), VZ
-	vfmadd231pd	Z, Z, %zmm6
-	vfmadd231pd	VZ, VZ, %zmm0
-	vmovapd	P512_M(%rdi), %zmm4
-	vbroadcastsd	.LC37(%rip), %zmm9
+	vmulpd	VX, VX, %zmm0
+	vfmadd231pd	VY, VY, %zmm0
+	vfmadd231pd	VZ, VZ, %zmm0               # v^2
+	vmovapd	P512_M(%rdi), %zmm4             # M
 	vaddpd	%zmm4, %zmm4, %zmm17            # beta
-	vmovapd	P512_DT(%rdi), %zmm8
-	leaq	-176(%rbp), %rcx #             Gs3
-	vsqrtpd	%zmm6, %zmm6
-	vdivpd	%zmm6, %zmm9, %zmm16
+	vmovapd	P512_DT(%rdi), %zmm8            # dt
 	vfmsub132pd	%zmm16, %zmm0, %zmm17
 	vmulpd	VX, X, %zmm0
+	leaq	-240(%rbp), %rdx #             Gs2
+	leaq	-304(%rbp), %rsi #             Gs1
+	leaq	-176(%rbp), %rcx #             Gs3
 	leaq	-112(%rbp), %rdi #             Gs0
-	movq	%r9, %rdx       #              Gs2
-	movq	%r8, %rsi       #              Gs1
 	vmovapd	%zmm17, %zmm7
 	vfmadd231pd	VY, Y, %zmm0
 	vfnmadd132pd	%zmm6, %zmm4, %zmm7
@@ -161,8 +159,9 @@ reb_whfast512_kepler_step:
 	vfmadd132pd	%zmm0, %zmm6, %zmm21
 	vfmsub132pd	%zmm1, %zmm8, %zmm3
 	vmovapd	-240(%rbp), %zmm2
+	movq	%rsi, %r8
+	movq	%rdx, %rsi
 	movq	%rcx, %rdx
-	movq	%r9, %rsi
 	movq	%r8, %rdi
 	vfmadd231pd	%zmm2, %zmm5, %zmm3
 	vfmadd132pd	%zmm7, %zmm21, %zmm2
@@ -398,7 +397,7 @@ invfactorial:
 	.long	0
 	.long	1071644672
 	.align 8
-.LC37:
+.LC37:      # 1.0
 	.long	0
 	.long	1072693248
 	.align 8
