@@ -173,40 +173,39 @@ reb_whfast512_kepler_step:
     vmulpd	ETA, GS1, %zmm0
 	vfmadd231pd	GS2, ZETA, %zmm0
 	vaddpd	R, %zmm0, %zmm0
-	vdivpd	%zmm0, ONE, %zmm2  # ri in C
+	vdivpd	%zmm0, ONE, %zmm4      # ri in C
 	
-	vmulpd	GS2, M, %zmm5           
-	vmulpd	RI, %zmm5, %zmm3        # negative f
+	vmulpd	GS2, M, %zmm0
+	vmulpd	RI, %zmm0, %zmm3        # negative f
+	vmulpd	%zmm0, %zmm4, %zmm2    # negative gd
 	vmovapd	DT, %zmm1
 	vfnmadd231pd	GS3, M, %zmm1   # g 
-
-
 	vmulpd	GS1, M, %zmm0
 	vmulpd	RI, %zmm0, %zmm0
-	vmulpd	%zmm2, %zmm0, %zmm0           # negative fd
+	vmulpd	%zmm4, %zmm0, %zmm0           # negative fd
 
-	vmulpd	%zmm5, %zmm2, %zmm2            # negative gd
 
-	vmovapd	%zmm3, %zmm22
 	vmovapd	%zmm3, %zmm5
+	vmovapd	%zmm3, %zmm22
+	vmovapd	%zmm3, %zmm17
 	vfnmadd132pd	X, X, %zmm5{%k1}{z}
 	vfnmadd132pd	Y, Y, %zmm22{%k1}{z}
-	vfnmadd132pd	Z, Z, %zmm3{%k1}{z}
+	vfnmadd132pd	Z, Z, %zmm17{%k1}{z}
 	vfmadd231pd	    VY, %zmm1, %zmm22{%k1}{z}
-	vfnmadd132pd	%zmm2, VY, %zmm12{%k1}{z}
 	vfmadd231pd	    VX, %zmm1, %zmm5{%k1}{z}
-	vfmadd132pd	    VZ, %zmm3, %zmm1{%k1}{z}
+	vfmadd231pd	    VZ, %zmm1, %zmm17{%k1}{z}
 	vfnmadd132pd	%zmm2, VX, %zmm14{%k1}{z}
+	vfnmadd132pd	%zmm2, VY, %zmm12{%k1}{z}
 	vfnmadd132pd	%zmm2, VZ, %zmm10{%k1}{z}
-	vfnmadd132pd	%zmm0, %zmm12, %zmm11{%k1}{z}
 	vfnmadd132pd	%zmm0, %zmm14, %zmm13{%k1}{z}
-	vfnmadd132pd	%zmm15, %zmm10, %zmm0{%k1}{z}
+	vfnmadd132pd	%zmm0, %zmm12, %zmm11{%k1}{z}
+	vfnmadd132pd	%zmm0, %zmm10, %zmm15{%k1}{z}
 	vmovapd	%zmm5, P512_X(%rdi)
-	vmovapd	%zmm13, P512_VX(%rdi)
 	vmovapd	%zmm22, P512_Y(%rdi)
+	vmovapd	%zmm17, P512_Z(%rdi)
+	vmovapd	%zmm13, P512_VX(%rdi)
 	vmovapd	%zmm11, P512_VY(%rdi)
-	vmovapd	%zmm1, P512_Z(%rdi)
-	vmovapd	%zmm0, P512_VZ(%rdi)
+	vmovapd	%zmm15, P512_VZ(%rdi)
 	ret
 
 .section	.rodata
