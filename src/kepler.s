@@ -153,22 +153,22 @@ reb_whfast512_kepler_step:
 	vfnmadd132pd	%zmm21, %zmm4, %zmm0
 	vsqrtpd	%zmm0, %zmm0
 	vaddpd	%zmm0, %zmm2, %zmm2
-	vfmsub132pd	%zmm2, %zmm3, %zmm1
-	vdivpd	%zmm2, %zmm1, XX
+	vfmsub132pd	%zmm2, %zmm3, XX
+	vdivpd	%zmm2, XX, XX
 
 	call	mm_stiefel_Gs13_avx512
 	
     # Newton
     vmulpd	GS1, ETA, %zmm2
 	vfmadd231pd	GS2, ZETA, %zmm2
-	vmulpd	%zmm2, %zmm1, %zmm1
+	vmulpd	%zmm2, %zmm3, %zmm3
 	vmovapd	GS2, %zmm0
-	vfnmadd132pd	ETA, %zmm1, %zmm0
-	vaddpd	R, %zmm2, %zmm1
-	vdivpd	%zmm1, ONE, %zmm1
+	vfnmadd132pd	ETA, %zmm3, %zmm0
+	vaddpd	R, %zmm2, %zmm3
+	vdivpd	%zmm3, ONE, %zmm3
 	vfnmadd231pd	GS3, ZETA, %zmm0
 	vaddpd	%zmm0, DT, %zmm0
-	vmulpd	%zmm0, %zmm1, XX
+	vmulpd	%zmm0, %zmm3, XX
 	
     call	mm_stiefel_Gs13_avx512
 	
