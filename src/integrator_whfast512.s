@@ -336,6 +336,8 @@ mat8_mul3_avx512_nomem:
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
+
+    #TODO: Make this an embedded load with {1to8} syntax
     vbroadcastsd .one(%rip), %zmm5      # Todo: keep 1 in a register at all times 
     vdivpd      %zmm4, %zmm5, %zmm4      
     vmulpd  P512_M(%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)

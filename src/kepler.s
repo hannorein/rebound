@@ -2,7 +2,7 @@
 .text
 .p2align 4
 mm_stiefel_Gs13_avx512:
-	vmulpd	%zmm1, %zmm1, %zmm2
+	vmulpd	%zmm1, %zmm1, %zmm2     # X^2
 	vbroadcastsd	.LC1(%rip), %zmm3
 	vmovapd	%zmm3, (%rdx)
 	vbroadcastsd	.LC3(%rip), %zmm3
@@ -65,61 +65,34 @@ mm_stiefel_Gs13_avx512:
 	vmulpd	(%rsi), %zmm2, %zmm2
 	vmovapd	%zmm2, (%rsi)
 	ret
-.LFE6404:
-	.size	mm_stiefel_Gs13_avx512, .-mm_stiefel_Gs13_avx512
 	.p2align 4
-	.globl	mm_stiefel_Gs03_avx512
-	.type	mm_stiefel_Gs03_avx512, @function
 mm_stiefel_Gs03_avx512:
-.LFB6405:
 	vmulpd	%zmm1, %zmm1, %zmm2
 	vbroadcastsd	.LC17(%rip), %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vbroadcastsd	.LC19(%rip), %zmm3
+	vbroadcastsd	.LC19(%rip), %zmm4
 	vmulpd	%zmm2, %zmm0, %zmm0
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rcx), %zmm3
-	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vmovapd	(%rdx), %zmm3
-	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rcx), %zmm3
-	vfnmadd213pd	.LC25(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vmovapd	(%rdx), %zmm3
-	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rcx), %zmm3
-	vfnmadd213pd	.LC29(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vmovapd	(%rdx), %zmm3
-	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vmovapd	(%rcx), %zmm3
-	vfnmadd213pd	.LC33(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vmovapd	(%rdx), %zmm3
-	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm3
-	vmovapd	%zmm3, (%rdx)
+	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm4
+	vfnmadd213pd	.LC25(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm4
+	vfnmadd213pd	.LC29(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm4
+	vfnmadd213pd	.LC33(%rip){1to8}, %zmm0, %zmm5
+	vmovapd	%zmm4, %zmm3
+	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC37(%rip){1to8}, %zmm0, %zmm3
 	vmovapd	%zmm3, (%rdi)
-	vmulpd	(%rcx), %zmm1, %zmm3
+	vmulpd	%zmm5, %zmm1, %zmm3
 	vfnmadd132pd	%zmm3, %zmm1, %zmm0
-	vmovapd	%zmm3, (%rcx)
 	vmovapd	%zmm0, (%rsi)
-	vmulpd	(%rcx), %zmm2, %zmm0
+	vmulpd	%zmm3, %zmm2, %zmm0
 	vmovapd	%zmm0, (%rcx)
-	vmulpd	(%rdx), %zmm2, %zmm2
+	vmulpd	%zmm4, %zmm2, %zmm2
 	vmovapd	%zmm2, (%rdx)
 	ret
-.LFE6405:
-	.size	mm_stiefel_Gs03_avx512, .-mm_stiefel_Gs03_avx512
 	.p2align 4
-	.globl	reb_whfast512_kepler_step
-	.type	reb_whfast512_kepler_step, @function
+.globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
-.LFB6406:
 	leaq	8(%rsp), %r10
 	andq	$-64, %rsp
 	pushq	-8(%r10)
@@ -167,7 +140,15 @@ reb_whfast512_kepler_step:
 	vfnmadd132pd	%zmm16, %zmm9, %zmm1
 	vmulpd	%zmm0, %zmm1, %zmm1
 	vmovapd	%zmm17, %zmm0
+            subq     $64, %rsp
+            vmovdqu64 %zmm4, (%rsp)
+            subq     $64, %rsp
+            vmovdqu64 %zmm5, (%rsp)
 	call	mm_stiefel_Gs03_avx512
+            vmovdqu64 (%rsp), %zmm5
+            addq     $64, %rsp
+            vmovdqu64 (%rsp), %zmm4
+            addq     $64, %rsp
 	vmovapd	-304(%rbp), %zmm0
 	vmovapd	%zmm6, %zmm3
 	vfmadd132pd	%zmm0, %zmm6, %zmm18
@@ -191,7 +172,15 @@ reb_whfast512_kepler_step:
 	vmovapd	%zmm17, %zmm0
 	vfmsub132pd	%zmm2, %zmm3, %zmm1
 	vdivpd	%zmm2, %zmm1, %zmm1
+            subq     $64, %rsp
+            vmovdqu64 %zmm4, (%rsp)
+            subq     $64, %rsp
+            vmovdqu64 %zmm5, (%rsp)
 	call	mm_stiefel_Gs03_avx512
+            vmovdqu64 (%rsp), %zmm5
+            addq     $64, %rsp
+            vmovdqu64 (%rsp), %zmm4
+            addq     $64, %rsp
 	vmovapd	-304(%rbp), %zmm0
 	vmovapd	%zmm6, %zmm3
 	vfmadd132pd	%zmm0, %zmm6, %zmm21
