@@ -213,46 +213,62 @@ reb_whfast512_kepler_step:
     ret
 
 .section    .rodata
-.align 32
-.type    invfactorial, @object
-.size    invfactorial, 280
+.align 8
 invfactorial:
-    .double    1
-    .double    1
-    .long    0
-    .long    1071644672
+.LC37:
+    .double     1.0
+    .double     1.0
+.LC35:
+    .double     0.5
+.LC33:
     .long    1431655765
     .long    1069897045
+.LC31:
     .long    1431655765
     .long    1067799893
+.LC29:
     .long    286331153
     .long    1065423121
+.LC27:
     .long    381774871
     .long    1062650220
+.LC25:
     .long    436314138
     .long    1059717536
+.LC23:
     .long    436314138
     .long    1056571808
+.LC21:
     .long    -1521039564
     .long    1053236707
+.LC19:
     .long    -1216831652
     .long    1049787983
+.LC17:
     .long    1744127204
     .long    1046144581
+.LC15:
     .long    -268904296
     .long    1042411224
+.LC13:
     .long    329805065
     .long    1038488134
+.LC11:
     .long    -1463780195
     .long    1034500468
+.LC9:
     .long    -416040929
     .long    1030416371
+.LC7:
     .long    -416040929
     .long    1026222067
+.LC5:
     .long    1882238282
     .long    1021924039
+.LC3:
     .long    1673100695
     .long    1017545336
+.LC1:
     .long    1182875991
     .long    1013118107
     .long    -1543372251
@@ -285,83 +301,6 @@ invfactorial:
     .long    943953938
     .long    834731386
     .long    938635522
-    .section    .rodata.cst8,"aM",@progbits,8
-    .align 8
-.LC1:
-    .long    1182875991
-    .long    1013118107
-    .align 8
-.LC3:
-    .long    1673100695
-    .long    1017545336
-    .align 8
-.LC5:
-    .long    1882238282
-    .long    1021924039
-    .align 8
-.LC7:
-    .long    -416040929
-    .long    1026222067
-    .align 8
-.LC9:
-    .long    -416040929
-    .long    1030416371
-    .align 8
-.LC11:
-    .long    -1463780195
-    .long    1034500468
-    .align 8
-.LC13:
-    .long    329805065
-    .long    1038488134
-    .align 8
-.LC15:
-    .long    -268904296
-    .long    1042411224
-    .align 8
-.LC17:
-    .long    1744127204
-    .long    1046144581
-    .align 8
-.LC19:
-    .long    -1216831652
-    .long    1049787983
-    .align 8
-.LC21:
-    .long    -1521039564
-    .long    1053236707
-    .align 8
-.LC23:
-    .long    436314138
-    .long    1056571808
-    .align 8
-.LC25:
-    .long    436314138
-    .long    1059717536
-    .align 8
-.LC27:
-    .long    381774871
-    .long    1062650220
-    .align 8
-.LC29:
-    .long    286331153
-    .long    1065423121
-    .align 8
-.LC31:
-    .long    1431655765
-    .long    1067799893
-    .align 8
-.LC33:
-    .long    1431655765
-    .long    1069897045
-    .align 8
-.LC35:
-    .long    0
-    .long    1071644672
-    .align 8
-.LC37:      # 1.0
-    .long    0
-    .long    1072693248
     .align 8
 .LC39:
     .long    0
@@ -374,5 +313,6 @@ invfactorial:
 .LC43:
     .long    0
     .long    1075052544
-    .ident    "GCC: (Debian 12.2.0-14+deb12u1) 12.2.0"
-    .section    .note.GNU-stack,"",@progbits
+    
+
+.section    .note.GNU-stack,"",@progbits
