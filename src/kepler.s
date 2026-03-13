@@ -13,52 +13,52 @@
 mm_stiefel_Gs13_avx512:
 	vmulpd	XX, XX, %zmm2     # X^2
 	vbroadcastsd	.LC1(%rip), %zmm3
-	vbroadcastsd	.LC3(%rip), %zmm5
+	vbroadcastsd	.LC3(%rip), %zmm4
 	vmulpd	%zmm2, BETA, %zmm0
 	vfnmadd213pd	.LC5(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC7(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC7(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC9(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC11(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC11(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC13(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC15(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC15(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC17(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC19(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC19(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC25(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC29(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC33(%rip){1to8}, %zmm0, %zmm3
-	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm4
 	vmulpd	%zmm3, XX, %zmm3
 	vfnmadd132pd	%zmm3, XX, %zmm0
 	vmovapd	%zmm0, GS1  # TODO: combine with previous instruction
 	vmulpd	%zmm3, %zmm2, GS3
-	vmulpd	%zmm5, %zmm2, GS2
+	vmulpd	%zmm4, %zmm2, GS2
 	ret
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 .p2align 4
 mm_stiefel_Gs03_avx512:
 	vmulpd	XX, XX, %zmm2
-	vbroadcastsd	.LC17(%rip), %zmm5
+	vbroadcastsd	.LC17(%rip), %zmm3
 	vbroadcastsd	.LC19(%rip), %zmm4
 	vmulpd	%zmm2, BETA, %zmm0
-	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC21(%rip){1to8}, %zmm0, %zmm3
 	vfnmadd213pd	.LC23(%rip){1to8}, %zmm0, %zmm4
-	vfnmadd213pd	.LC25(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC25(%rip){1to8}, %zmm0, %zmm3
 	vfnmadd213pd	.LC27(%rip){1to8}, %zmm0, %zmm4
-	vfnmadd213pd	.LC29(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC29(%rip){1to8}, %zmm0, %zmm3
 	vfnmadd213pd	.LC31(%rip){1to8}, %zmm0, %zmm4
-	vfnmadd213pd	.LC33(%rip){1to8}, %zmm0, %zmm5
+	vfnmadd213pd	.LC33(%rip){1to8}, %zmm0, %zmm3
 	vmovapd	%zmm4, GS0
 	vfnmadd213pd	.LC35(%rip){1to8}, %zmm0, %zmm4
 	vfnmadd213pd	.LC37(%rip){1to8}, %zmm0, GS0
-	vmulpd	%zmm5, XX, %zmm24
-	vfnmadd132pd	%zmm24, XX, %zmm0
+	vmulpd	%zmm3, XX, %zmm3
+	vfnmadd132pd	%zmm3, XX, %zmm0
 	vmovapd	%zmm0, GS1  # TODO: combine with previous instruction
-	vmulpd	%zmm24, %zmm2, GS3
+	vmulpd	%zmm3, %zmm2, GS3
 	vmulpd	%zmm4, %zmm2, GS2
 	ret
 
@@ -78,6 +78,9 @@ reb_whfast512_kepler_step:
 .set ETA, %zmm8
 .set ZETA, %zmm7
 .set ONE, %zmm9
+	vbroadcastsd	.LC39(%rip), %zmm21 # constants for Halley
+	vbroadcastsd	.LC41(%rip), %zmm19
+	vbroadcastsd	.LC43(%rip), %zmm20
 	vmovapd	P512_X(%rdi), X
 	vmovapd	P512_Y(%rdi), Y
 	vmovapd	P512_Z(%rdi), Z
@@ -103,31 +106,28 @@ reb_whfast512_kepler_step:
 	vfmadd231pd	VZ, Z, ETA                  # eta
 	vmovapd	BETA, ZETA
 	vfnmadd132pd	R, M, ZETA              # zeta
-	vmulpd	RI, DT, %zmm30              # dt/r
-	vmovapd	ETA, %zmm21   
-	vmulpd	ETA, %zmm30, %zmm31             # eta*dt/r
-	vmulpd	.LC35(%rip){1to8}, %zmm31, %zmm31     # 0.5*eta*dt/r
-	vfnmadd132pd	RI, ONE, %zmm31        
-	vmulpd	%zmm30, %zmm31, XX              # X (initial guess)
+	vmulpd	RI, DT, %zmm5              # dt/r
+	vmulpd	ETA, %zmm5, %zmm4             # eta*dt/r
+	vmulpd	.LC35(%rip){1to8}, %zmm4, %zmm4     # 0.5*eta*dt/r
+	vfnmadd132pd	RI, ONE, %zmm4        
+	vmulpd	%zmm5, %zmm4, XX              # X (initial guess)
 	
 	call	mm_stiefel_Gs03_avx512
 
-	vmovapd	ETA, %zmm18
-	vfmadd132pd	GS1, R, %zmm18
+    # Halley
+	vmovapd	ETA, %zmm5
+	vfmadd132pd	GS1, R, %zmm5
 	vmovapd	R, %zmm3
 	vfmsub132pd	XX, DT, %zmm3
 	vfmadd231pd	GS2, ETA, %zmm3
-	vfmadd132pd	ZETA, %zmm18, GS2
-	vmulpd	GS0, ETA, %zmm18
-	vfmadd231pd	GS3, ZETA, %zmm3
-	vmulpd	GS2, GS2, %zmm20
-	vfmadd132pd	ZETA, %zmm18, GS1
-	vbroadcastsd	.LC39(%rip), %zmm18
-	vbroadcastsd	.LC41(%rip), %zmm19
-	vmulpd	%zmm19, %zmm20, %zmm20
+	vfmadd132pd	ZETA, %zmm5, GS2
+	vfmadd231pd	GS3, ZETA, %zmm3        # f
+	vmulpd	GS0, ETA, %zmm5
+	vfmadd132pd	ZETA, %zmm5, GS1        # fpp
+	vmulpd	GS2, GS2, %zmm4
+	vmulpd	%zmm19, %zmm4, %zmm4
 	vmulpd	%zmm3, GS1, %zmm0
-	vfnmadd132pd	%zmm18, %zmm20, %zmm0
-	vbroadcastsd	.LC43(%rip), %zmm20
+	vfnmadd132pd	%zmm21, %zmm4, %zmm0
 	vmulpd	%zmm20, %zmm3, %zmm3
 	vsqrtpd	%zmm0, %zmm0
 	vaddpd	%zmm0, %zmm2, %zmm2
@@ -136,20 +136,21 @@ reb_whfast512_kepler_step:
 	
     call	mm_stiefel_Gs03_avx512
 	
+    # Halley
 	vmovapd	R, %zmm3
-	vfmadd132pd	GS1, R, %zmm21
+	vfmadd132pd	GS1, R, %zmm5
 	vfmsub132pd	XX, DT, %zmm3
 	vmovapd	GS2, %zmm2
 	vfmadd231pd	GS2, ETA, %zmm3
-	vfmadd132pd	ZETA, %zmm21, %zmm2
-	vmulpd	GS0, ETA, %zmm21
+	vfmadd132pd	ZETA, %zmm5, %zmm2
+	vmulpd	GS0, ETA, %zmm5
 	vfmadd231pd	GS3, ZETA, %zmm3
-	vfmadd132pd	ZETA, %zmm21, GS1
-	vmulpd	%zmm2, %zmm2, %zmm21
+	vfmadd132pd	ZETA, %zmm5, GS1
+	vmulpd	%zmm2, %zmm2, %zmm5
 	vmulpd	GS1, %zmm3, %zmm0
-	vmulpd	%zmm19, %zmm21, %zmm19
+	vmulpd	%zmm19, %zmm5, %zmm4
 	vmulpd	%zmm20, %zmm3, %zmm3
-	vfnmadd132pd	%zmm18, %zmm19, %zmm0
+	vfnmadd132pd	%zmm21, %zmm4, %zmm0
 	vsqrtpd	%zmm0, %zmm0
 	vaddpd	%zmm0, %zmm2, %zmm2
 	vfmsub132pd	%zmm2, %zmm3, %zmm1
@@ -157,6 +158,7 @@ reb_whfast512_kepler_step:
 
 	call	mm_stiefel_Gs13_avx512
 	
+    # Newton
     vmulpd	GS1, ETA, %zmm2
 	vfmadd231pd	GS2, ZETA, %zmm2
 	vmulpd	%zmm2, %zmm1, %zmm1
@@ -170,42 +172,44 @@ reb_whfast512_kepler_step:
 	
     call	mm_stiefel_Gs13_avx512
 	
+    # Newton
     vmulpd	ETA, GS1, %zmm0
 	vfmadd231pd	GS2, ZETA, %zmm0
 	vaddpd	R, %zmm0, %zmm0
-	vdivpd	%zmm0, ONE, %zmm4      # ri in C
+	vdivpd	%zmm0, ONE, %zmm4       # ri in C
 	
 	vmulpd	GS2, M, %zmm0
 	vmulpd	RI, %zmm0, %zmm3        # negative f
-	vmulpd	%zmm0, %zmm4, %zmm2    # negative gd
+	vmulpd	%zmm0, %zmm4, %zmm2     # negative gd
 	vmovapd	DT, %zmm1
 	vfnmadd231pd	GS3, M, %zmm1   # g 
 	vmulpd	GS1, M, %zmm0
 	vmulpd	RI, %zmm0, %zmm0
-	vmulpd	%zmm4, %zmm0, %zmm0           # negative fd
+	vmulpd	%zmm4, %zmm0, %zmm0     # negative fd
 
 
+	vmovapd	%zmm3, %zmm4
 	vmovapd	%zmm3, %zmm5
-	vmovapd	%zmm3, %zmm22
-	vmovapd	%zmm3, %zmm17
-	vfnmadd132pd	X, X, %zmm5{%k1}{z}
-	vfnmadd132pd	Y, Y, %zmm22{%k1}{z}
-	vfnmadd132pd	Z, Z, %zmm17{%k1}{z}
-	vfmadd231pd	    VY, %zmm1, %zmm22{%k1}{z}
-	vfmadd231pd	    VX, %zmm1, %zmm5{%k1}{z}
-	vfmadd231pd	    VZ, %zmm1, %zmm17{%k1}{z}
-	vfnmadd132pd	%zmm2, VX, %zmm10{%k1}{z}
-	vfnmadd132pd	%zmm2, VY, %zmm12{%k1}{z}
-	vfnmadd132pd	%zmm2, VZ, %zmm14{%k1}{z}
-	vfnmadd132pd	%zmm0, %zmm10, %zmm13{%k1}{z}
-	vfnmadd132pd	%zmm0, %zmm12, %zmm11{%k1}{z}
-	vfnmadd132pd	%zmm0, %zmm14, %zmm15{%k1}{z}
-	vmovapd	%zmm5, P512_X(%rdi)
-	vmovapd	%zmm22, P512_Y(%rdi)
-	vmovapd	%zmm17, P512_Z(%rdi)
-	vmovapd	%zmm13, P512_VX(%rdi)
-	vmovapd	%zmm11, P512_VY(%rdi)
-	vmovapd	%zmm15, P512_VZ(%rdi)
+    // Calculate new vx vy vz
+	vfnmadd132pd	X, X, %zmm3{%k1}{z}
+	vfnmadd132pd	Y, Y, %zmm4{%k1}{z}
+	vfnmadd132pd	Z, Z, %zmm5{%k1}{z}
+	vfmadd231pd	    VX, %zmm1, %zmm3{%k1}{z}
+	vfmadd231pd	    VY, %zmm1, %zmm4{%k1}{z}
+	vfmadd231pd	    VZ, %zmm1, %zmm5{%k1}{z}
+    // Calculate new xyz
+	vfnmadd132pd	%zmm2, VX, VX{%k1}{z}
+	vfnmadd132pd	%zmm2, VY, VY{%k1}{z}
+	vfnmadd132pd	%zmm2, VZ, VZ{%k1}{z}
+	vfnmadd231pd	%zmm0, X, VX{%k1}{z}
+	vfnmadd231pd	%zmm0, Y, VY{%k1}{z}
+	vfnmadd231pd	%zmm0, Z, VZ{%k1}{z}
+	vmovapd	%zmm3, P512_X(%rdi) # TODO: shuffle things around so that new X end up in X without copy
+	vmovapd	%zmm4, P512_Y(%rdi)
+	vmovapd	%zmm5, P512_Z(%rdi)
+	vmovapd	VX, P512_VX(%rdi)  # TODO: Remove memory
+	vmovapd	VY, P512_VY(%rdi)
+	vmovapd	VZ, P512_VZ(%rdi)
 	ret
 
 .section	.rodata
