@@ -92,27 +92,28 @@ reb_whfast512_kepler_step:
 	vfmadd231pd	VY, VY, %zmm0
 	vfmadd231pd	VZ, VZ, %zmm0               # v^2
 	vmovapd	P512_M(%rdi), %zmm4             # M
-	vaddpd	%zmm4, %zmm4, %zmm17            # beta
+	vaddpd	%zmm4, %zmm4, %zmm17            # 2*M
 	vmovapd	P512_DT(%rdi), %zmm8            # dt
-	vfmsub132pd	%zmm16, %zmm0, %zmm17
+	vfmsub132pd	%zmm16, %zmm0, %zmm17       # beta
 	vmulpd	VX, X, %zmm0
-	leaq	-240(%rbp), %rdx #             Gs2
-	leaq	-304(%rbp), %rsi #             Gs1
-	leaq	-176(%rbp), %rcx #             Gs3
-	leaq	-112(%rbp), %rdi #             Gs0
-	vmovapd	%zmm17, %zmm7
 	vfmadd231pd	VY, Y, %zmm0
-	vfnmadd132pd	%zmm6, %zmm4, %zmm7
+	vfmadd231pd	VZ, Z, %zmm0                # eta
+	vmovapd	%zmm17, %zmm7
+	vfnmadd132pd	%zmm6, %zmm4, %zmm7     # zeta
 	vmovapd	%zmm0, %zmm5
-	vfmadd231pd	VZ, Z, %zmm5
-	vmulpd	%zmm16, %zmm8, %zmm0
+	vmulpd	%zmm16, %zmm8, %zmm0            # dt/r
 	vmovapd	%zmm5, %zmm18
-	vmulpd	%zmm5, %zmm0, %zmm1
-	vmovapd	%zmm5, %zmm21
+	vmulpd	%zmm5, %zmm0, %zmm1             # eta*dt/r
+	vmovapd	%zmm5, %zmm21   
 	vmulpd	.LC35(%rip){1to8}, %zmm1, %zmm1
 	vfnmadd132pd	%zmm16, %zmm9, %zmm1
 	vmulpd	%zmm0, %zmm1, %zmm1
 	vmovapd	%zmm17, %zmm0
+	
+    leaq	-240(%rbp), %rdx #             Gs2
+	leaq	-304(%rbp), %rsi #             Gs1
+	leaq	-176(%rbp), %rcx #             Gs3
+	leaq	-112(%rbp), %rdi #             Gs0
             subq     $64, %rsp
             vmovdqu64 %zmm4, (%rsp)
             subq     $64, %rsp
