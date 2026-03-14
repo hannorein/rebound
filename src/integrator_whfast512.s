@@ -314,9 +314,8 @@ mat8_mul3_avx512_nomem:
     #           rdi = p512
     #           rsi = Number of steps
 
-#    movq %rsi, %r8
-# Can't do loop yet because r8 will be overwritten by kepler step (I think)
-#.LMainLoop\grflag:    
+    movq %rsi, %r8
+.LMainLoop\grflag:    
 
     pushq %rdi
     call reb_whfast512_kepler_step
@@ -559,8 +558,8 @@ mat8_mul3_avx512_nomem:
     vmovapd    VZ, P512_VZ(%rdi)
     
 #    # Main Loop
-#    subq    $1, %r8
-#    jnz     .LMainLoop\grflag
+    subq    $1, %r8
+    jnz     .LMainLoop\grflag
     ret
 .endm
 

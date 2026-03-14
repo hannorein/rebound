@@ -497,8 +497,8 @@ void local_reb_whfast512_kepler_step(struct reb_particle_avx512* const restrict 
 // Calculates 1/(dx**2+dy**2+dz**2)^(3/2)
 extern __m512d gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz);
 extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz);
-extern void block1_gr(struct reb_particle_avx512* p512);
-extern void block1_nogr(struct reb_particle_avx512* p512);
+extern void block1_gr(struct reb_particle_avx512* p512, long N_steps);
+extern void block1_nogr(struct reb_particle_avx512* p512, long N_steps);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -1653,13 +1653,13 @@ void reb_integrator_whfast512_part1(struct reb_simulation* const r){
     }else{ //JACOBI
         if (ri_whfast512->N_systems==1){
             if (ri_whfast512->gr_potential){
-                for (unsigned int i=0;i<N_steps;i++){
-                    block1_gr(ri_whfast512->p512);
-                }
+                //for (unsigned int i=0;i<N_steps;i++){
+                    block1_gr(ri_whfast512->p512, N_steps);
+                //}
             }else{
-                for (unsigned int i=0;i<N_steps;i++){
-                    block1_nogr(ri_whfast512->p512);
-                }
+                //for (unsigned int i=0;i<N_steps;i++){
+                    block1_nogr(ri_whfast512->p512, N_steps);
+                //}
             }
         }else if (ri_whfast512->N_systems==2){
             for (unsigned int i=0;i<N_steps;i++){
