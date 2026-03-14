@@ -16,37 +16,37 @@
 .set P512_MASK, 2368
 
 # Register use
-.set X, %zmm29
-.set Y, %zmm30
-.set Z, %zmm31
-.set VX, %zmm10
-.set VY, %zmm11
-.set VZ, %zmm12
-.set ONE, %zmm26
-.set DT, %zmm27
-.set HALF_MASK, %zmm28
-.set M, %zmm16
+.set X, %zmm10
+.set Y, %zmm11
+.set Z, %zmm12
+.set VX, %zmm13
+.set VY, %zmm14
+.set VZ, %zmm15
+.set ONE, %zmm16
+.set DT, %zmm17
+.set HALF_MASK, %zmm18
+.set M, %zmm19
 
 # Only used in Interaction step:
-.set HVX, %zmm13
-.set HVY, %zmm14
-.set HVZ, %zmm15
-.set HVXC, %zmm20
-.set HVYC, %zmm21
-.set HVZC, %zmm22
-.set HX, %zmm17
-.set HY, %zmm18
-.set HZ, %zmm19
+.set HVX, %zmm20
+.set HVY, %zmm21
+.set HVZ, %zmm22
+.set HVXC, %zmm23
+.set HVYC, %zmm24
+.set HVZC, %zmm25
+.set HX, %zmm26
+.set HY, %zmm27
+.set HZ, %zmm28
 
-# Onlt used in Kepler step:
-.set R, %zmm9
-.set RI, %zmm13
-.set ZETA, %zmm14
-.set ETA, %zmm15
-.set XX, %zmm17
-.set GS0, %zmm20
-.set GS1, %zmm21
-.set GS2, %zmm22
-.set GS3, %zmm23
-.set BETA, %zmm24
+# Only used in Kepler step:
+.set R, %zmm20
+.set RI, %zmm21
+.set ZETA, %zmm22
+.set ETA, %zmm23
+.set XX, %zmm24
+.set GS0, %zmm25
+.set GS1, %zmm26
+.set GS2, %zmm27
+.set GS3, %zmm28
+.set BETA, %zmm29
 
