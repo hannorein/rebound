@@ -138,7 +138,8 @@ extern double walltime_com;
 #endif // PROF
 
 int main(int argc, char* argv[]) {
-    printf("Integrating for 1 Myr with WHFast512:\n");
+    printf("Integrating for 1 Myr with WHFast512:  ");
+    fflush(stdout);
     struct reb_simulation* r1 = run(1,0);
     reb_simulation_free(r1);
     

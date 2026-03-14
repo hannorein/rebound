@@ -1,49 +1,63 @@
 .include "header.s"
 .text
-.p2align 4
 
-.set GS0, %zmm25
-.set GS1, %zmm26
-.set GS2, %zmm27
-.set GS3, %zmm28
-.set BETA, %zmm29
-.set XX, %zmm1
-.set X, %zmm13
-.set Y, %zmm11
-.set Z, %zmm15
-.set VX, %zmm14
-.set VY, %zmm12
+# general purpose:
+# zmm0
+# zmm1
+# zmm2
+# zmm3
+# zmm4
+# zmm5
+# reserved/persistant:
+.set X, %zmm6
+.set Y, %zmm7
+.set Z, %zmm8
+.set VX, %zmm9
 .set VZ, %zmm10
-.set M, %zmm22
-.set DT, %zmm23
-.set R, %zmm6
-.set RI, %zmm16
-.set ETA, %zmm8
-.set ZETA, %zmm7
-.set ONE, %zmm9
+.set VY, %zmm11
+.set R, %zmm12
+.set RI, %zmm13
+.set ZETA, %zmm14
+.set ETA, %zmm15
+.set ONE, %zmm16
+.set FIVE, %zmm17
+.set SIXTEEN, %zmm18
+.set TWENTY, %zmm19
+.set XX, %zmm20
+.set M, %zmm21
+.set DT, %zmm22
+.set GS0, %zmm23
+.set GS1, %zmm24
+.set GS2, %zmm25
+.set GS3, %zmm26
+.set BETA, %zmm27
+# zmm 28
+# zmm 29
+# zmm 30
+# zmm 31
 
 # High accuracy: (Gs1, Gs2, Gs3)
 mm_stiefel_Gs13_avx512:
     vmulpd    XX, XX, %zmm2     # X^2
-    vbroadcastsd    .LC1(%rip), %zmm3
-    vbroadcastsd    .LC3(%rip), %zmm4
+    vbroadcastsd    .IF19(%rip), %zmm3
+    vbroadcastsd    .IF18(%rip), %zmm4
     vmulpd    %zmm2, BETA, %zmm0
-    vfnmadd213pd    .LC5(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC7(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC9(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC11(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC13(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC15(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC17(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC19(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC21(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC23(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC25(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC27(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC29(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC31(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC33(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC35(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF17(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF16(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF15(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF14(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF13(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF12(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF11(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF10(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF9(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF8(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF7(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF6(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF5(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
     vmulpd    %zmm3, XX, %zmm3
     vfnmadd132pd    %zmm3, XX, %zmm0
     vmovapd    %zmm0, GS1  # TODO: combine with previous instruction
@@ -52,22 +66,21 @@ mm_stiefel_Gs13_avx512:
     ret
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
-.p2align 4
 mm_stiefel_Gs03_avx512:
     vmulpd    XX, XX, %zmm2
-    vbroadcastsd    .LC17(%rip), %zmm3
-    vbroadcastsd    .LC19(%rip), %zmm4
+    vbroadcastsd    .IF11(%rip), %zmm3
+    vbroadcastsd    .IF10(%rip), %zmm4
     vmulpd    %zmm2, BETA, %zmm0
-    vfnmadd213pd    .LC21(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC23(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC25(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC27(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC29(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .LC31(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC33(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF9(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF8(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF7(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF6(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF5(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
     vmovapd    %zmm4, GS0
-    vfnmadd213pd    .LC35(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .LC37(%rip){1to8}, %zmm0, GS0
+    vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF1(%rip){1to8}, %zmm0, GS0
     vmulpd    %zmm3, XX, %zmm3
     vfnmadd132pd    %zmm3, XX, %zmm0
     vmovapd    %zmm0, GS1  # TODO: combine with previous instruction
@@ -78,9 +91,10 @@ mm_stiefel_Gs03_avx512:
 .p2align 4
 .globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
-    vbroadcastsd    .LC39(%rip), %zmm21 # constants for Halley
-    vbroadcastsd    .LC41(%rip), %zmm19
-    vbroadcastsd    .LC43(%rip), %zmm20
+    vbroadcastsd    .DOUBLE_FIVE(%rip), FIVE
+    vbroadcastsd    .DOUBLE_SIXTEEN(%rip), SIXTEEN
+    vbroadcastsd    .DOUBLE_TWENTY(%rip), TWENTY # constants for Halley
+    vbroadcastsd    .DOUBLE_ONE(%rip), ONE      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
     vmovapd    P512_X(%rdi), X
     vmovapd    P512_Y(%rdi), Y
     vmovapd    P512_Z(%rdi), Z
@@ -94,7 +108,6 @@ reb_whfast512_kepler_step:
     vfmadd231pd    Y, Y, %zmm0
     vfmadd231pd    Z, Z, %zmm0                 # r^2
     vsqrtpd    %zmm0, R                        # r
-    vbroadcastsd    .LC37(%rip), ONE      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
     vdivpd    R, ONE, RI                # 1/r
     vmulpd    VX, VX, %zmm0
     vfmadd231pd    VY, VY, %zmm0
@@ -108,7 +121,7 @@ reb_whfast512_kepler_step:
     vfnmadd132pd    R, M, ZETA              # zeta
     vmulpd    RI, DT, %zmm5              # dt/r
     vmulpd    ETA, %zmm5, %zmm4             # eta*dt/r
-    vmulpd    .LC35(%rip){1to8}, %zmm4, %zmm4     # 0.5*eta*dt/r
+    vmulpd    .DOUBLE_HALF(%rip){1to8}, %zmm4, %zmm4     # 0.5*eta*dt/r
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd    %zmm5, %zmm4, XX              # X (initial guess)
     
@@ -125,10 +138,10 @@ reb_whfast512_kepler_step:
     vmulpd    GS0, ETA, %zmm5
     vfmadd132pd    ZETA, %zmm5, GS1        # fpp
     vmulpd    GS2, GS2, %zmm4
-    vmulpd    %zmm19, %zmm4, %zmm4
+    vmulpd    SIXTEEN, %zmm4, %zmm4
     vmulpd    %zmm3, GS1, %zmm0
-    vfnmadd132pd    %zmm21, %zmm4, %zmm0
-    vmulpd    %zmm20, %zmm3, %zmm3
+    vfnmadd132pd    TWENTY, %zmm4, %zmm0
+    vmulpd    FIVE, %zmm3, %zmm3
     vsqrtpd    %zmm0, %zmm0
     vaddpd    %zmm0, %zmm2, %zmm2
     vfmsub132pd    %zmm2, %zmm3, XX
@@ -148,9 +161,9 @@ reb_whfast512_kepler_step:
     vfmadd132pd    ZETA, %zmm5, GS1
     vmulpd    %zmm2, %zmm2, %zmm5
     vmulpd    GS1, %zmm3, %zmm0
-    vmulpd    %zmm19, %zmm5, %zmm4
-    vmulpd    %zmm20, %zmm3, %zmm3
-    vfnmadd132pd    %zmm21, %zmm4, %zmm0
+    vmulpd    SIXTEEN, %zmm5, %zmm4
+    vmulpd    FIVE, %zmm3, %zmm3
+    vfnmadd132pd    TWENTY, %zmm4, %zmm0
     vsqrtpd    %zmm0, %zmm0
     vaddpd    %zmm0, %zmm2, %zmm2
     vfmsub132pd    %zmm2, %zmm3, XX
@@ -214,105 +227,108 @@ reb_whfast512_kepler_step:
 
 .section    .rodata
 .align 8
-invfactorial:
-.LC37:
-    .double     1.0
-    .double     1.0
-.LC35:
-    .double     0.5
-.LC33:
-    .long    1431655765
-    .long    1069897045
-.LC31:
-    .long    1431655765
-    .long    1067799893
-.LC29:
-    .long    286331153
-    .long    1065423121
-.LC27:
-    .long    381774871
-    .long    1062650220
-.LC25:
-    .long    436314138
-    .long    1059717536
-.LC23:
-    .long    436314138
-    .long    1056571808
-.LC21:
-    .long    -1521039564
-    .long    1053236707
-.LC19:
-    .long    -1216831652
-    .long    1049787983
-.LC17:
-    .long    1744127204
-    .long    1046144581
-.LC15:
-    .long    -268904296
-    .long    1042411224
-.LC13:
-    .long    329805065
-    .long    1038488134
-.LC11:
-    .long    -1463780195
-    .long    1034500468
-.LC9:
-    .long    -416040929
-    .long    1030416371
-.LC7:
-    .long    -416040929
-    .long    1026222067
-.LC5:
-    .long    1882238282
-    .long    1021924039
-.LC3:
-    .long    1673100695
-    .long    1017545336
-.LC1:
-    .long    1182875991
-    .long    1013118107
-    .long    -1543372251
-    .long    1008620587
-    .long    -153291406
-    .long    1003953038
-    .long    1840773203
-    .long    999345721
-    .long    320223257
-    .long    994533812
-    .long    426964344
-    .long    989801712
-    .long    -585736279
-    .long    984871884
-    .long    -60141991
-    .long    979930757
-    .long    -1025716573
-    .long    974985905
-    .long    641009757
-    .long    969974154
-    .long    -1958520658
-    .long    964844025
-    .long    1346885134
-    .long    959681324
-    .long    -410782275
-    .long    954479826
-    .long    -410782275
-    .long    949236946
-    .long    1423773010
-    .long    943953938
-    .long    834731386
-    .long    938635522
-    .align 8
-.LC39:
-    .long    0
-    .long    1077149696
-    .align 8
-.LC41:
-    .long    0
-    .long    1076887552
-    .align 8
-.LC43:
+.DOUBLE_FIVE:
     .long    0
     .long    1075052544
+.align 8
+.DOUBLE_SIXTEEN:
+    .long    0
+    .long    1076887552
+.align 8
+.DOUBLE_TWENTY:
+    .long    0
+    .long    1077149696
+.align 8
+invfactorial:
+.IF1:
+.DOUBLE_ONE:
+    .double     1.0
+    .double     1.0
+.IF2:
+.DOUBLE_HALF:
+    .double     0.5
+.IF3:
+    .long    1431655765
+    .long    1069897045
+.IF4:
+    .long    1431655765
+    .long    1067799893
+.IF5:
+    .long    286331153
+    .long    1065423121
+.IF6:
+    .long    381774871
+    .long    1062650220
+.IF7:
+    .long    436314138
+    .long    1059717536
+.IF8:
+    .long    436314138
+    .long    1056571808
+.IF9:
+    .long    -1521039564
+    .long    1053236707
+.IF10:
+    .long    -1216831652
+    .long    1049787983
+.IF11:
+    .long    1744127204
+    .long    1046144581
+.IF12:
+    .long    -268904296
+    .long    1042411224
+.IF13:
+    .long    329805065
+    .long    1038488134
+.IF14:
+    .long    -1463780195
+    .long    1034500468
+.IF15:
+    .long    -416040929
+    .long    1030416371
+.IF16:
+    .long    -416040929
+    .long    1026222067
+.IF17:
+    .long    1882238282
+    .long    1021924039
+.IF18:
+    .long    1673100695
+    .long    1017545336
+.IF19:
+    .long    1182875991
+    .long    1013118107
+# Parts of inverse vactorial not used at the moment:    
+#    .long    -1543372251
+#    .long    1008620587
+#    .long    -153291406
+#    .long    1003953038
+#    .long    1840773203
+#    .long    999345721
+#    .long    320223257
+#    .long    994533812
+#    .long    426964344
+#    .long    989801712
+#    .long    -585736279
+#    .long    984871884
+#    .long    -60141991
+#    .long    979930757
+#    .long    -1025716573
+#    .long    974985905
+#    .long    641009757
+#    .long    969974154
+#    .long    -1958520658
+#    .long    964844025
+#    .long    1346885134
+#    .long    959681324
+#    .long    -410782275
+#    .long    954479826
+#    .long    -410782275
+#    .long    949236946
+#    .long    1423773010
+#    .long    943953938
+#    .long    834731386
+#    .long    938635522
     
 
 .section    .note.GNU-stack,"",@progbits
