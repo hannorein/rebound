@@ -53,6 +53,20 @@ reb_whfast512_init_registers:
     
     ret
 
+# Legacy. Called from C
+gravity_prefactor_avx512:
+    # Input:  zmm0=m, zmm1=dx, zmm2=dy, zmm3=dz
+    
+    vmulpd      %zmm1, %zmm1, %zmm1     
+    vfmadd231pd %zmm2, %zmm2, %zmm1      
+    vfmadd231pd %zmm3, %zmm3, %zmm1     # zmm1 is now r^2
+    
+    vsqrtpd     %zmm1, %zmm2             
+    vmulpd      %zmm1, %zmm2, %zmm2      
+    vdivpd      %zmm2, %zmm0, %zmm0      
+    
+    ret                                 # return m / r^3 in zmm0
+
 #Legacy called from C
 gravity_prefactor_avx512_one:
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
@@ -82,20 +96,6 @@ gravity_prefactor_avx512_one_zmm6:
     vdivpd      %zmm6, ONE, %zmm6      
     
     ret                                 # return 1 / r^3 in zmm0
-
-# Legacy. Called from C
-gravity_prefactor_avx512:
-    # Input:  zmm0=m, zmm1=dx, zmm2=dy, zmm3=dz
-    
-    vmulpd      %zmm1, %zmm1, %zmm1     
-    vfmadd231pd %zmm2, %zmm2, %zmm1      
-    vfmadd231pd %zmm3, %zmm3, %zmm1     # zmm1 is now r^2
-    
-    vsqrtpd     %zmm1, %zmm2             
-    vmulpd      %zmm1, %zmm2, %zmm2      
-    vdivpd      %zmm2, %zmm0, %zmm0      
-    
-    ret                                 # return m / r^3 in zmm0
 
 
 .macro REDUCE_ADD_AND_BROADCAST reg, temp_reg
@@ -213,6 +213,8 @@ mat8_mul3_avx512_nomem:
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
     # zmm0, zmm1, zmm2  input and output vectors
+    # uses: zmm4 zmm5 zmm6 zmm7 zmm8
+    # TODO: This can be significantly optimized
 	vmovapd	(%rax), %zmm4
 	vbroadcastsd	%xmm0, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
@@ -223,7 +225,7 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm3, %zmm8
 	vbroadcastsd	%xmm2, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	64(%rax), %zmm4
 	movl	$2, %edx
@@ -234,8 +236,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
 	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm9, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vfmadd213pd	%zmm6, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	128(%rax), %zmm4
 	movl	$3, %edx
@@ -246,8 +248,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
 	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm9, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vfmadd213pd	%zmm6, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	192(%rax), %zmm4
 	movl	$4, %edx
@@ -258,8 +260,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
 	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm9, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vfmadd213pd	%zmm6, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	256(%rax), %zmm4
 	movl	$5, %edx
@@ -270,8 +272,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
 	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm9, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vfmadd213pd	%zmm6, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	320(%rax), %zmm4
 	movl	$6, %edx
@@ -282,8 +284,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
 	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm9, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vfmadd213pd	%zmm6, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	384(%rax), %zmm4
 	movl	$7, %edx
@@ -294,8 +296,8 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm8, %zmm4, %zmm5
 	vpermpd	%zmm2, %zmm3, %zmm3
 	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm9, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm9
+	vfmadd213pd	%zmm6, %zmm4, %zmm3
+	vmovapd	%zmm3, %zmm6
 	vpbroadcastq	%rdx, %zmm3
 	vmovapd	448(%rax), %zmm4
 	vpermpd	%zmm0, %zmm3, %zmm0
@@ -303,7 +305,7 @@ mat8_mul3_avx512_nomem:
 	vpermpd	%zmm1, %zmm3, %zmm1
 	vpermpd	%zmm2, %zmm3, %zmm2
 	vfmadd213pd	%zmm8, %zmm4, %zmm1
-	vfmadd213pd	%zmm9, %zmm4, %zmm2
+	vfmadd213pd	%zmm6, %zmm4, %zmm2
     ret
 
 
@@ -344,7 +346,7 @@ mat8_mul3_avx512_nomem:
     vmovapd     Y, %zmm1
     vmovapd     Z, %zmm2
         
-    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm7,zmm8,zmm9 
+    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm6 zmm7,zmm8, 
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
     vmovapd     %zmm1, HY

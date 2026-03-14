@@ -15,38 +15,38 @@
 .set P512_M0, 2304
 .set P512_MASK, 2368
 
-# Register use
-.set X, %zmm10
-.set Y, %zmm11
-.set Z, %zmm12
-.set VX, %zmm13
-.set VY, %zmm14
-.set VZ, %zmm15
-.set ONE, %zmm16
-.set DT, %zmm17
-.set HALF_MASK, %zmm18
-.set M, %zmm19
 
 # Only used in Interaction step:
-.set HVX, %zmm20
-.set HVY, %zmm21
-.set HVZ, %zmm22
-.set HVXC, %zmm23
-.set HVYC, %zmm24
-.set HVZC, %zmm25
-.set HX, %zmm26
-.set HY, %zmm27
-.set HZ, %zmm28
+.set HVX, %zmm13
+.set HVY, %zmm14
+.set HVZ, %zmm15
+.set HVXC, %zmm16
+.set HVYC, %zmm17
+.set HVZC, %zmm18
+.set HX, %zmm19
+.set HY, %zmm20
+.set HZ, %zmm21
 
 # Only used in Kepler step:
-.set R, %zmm20
-.set RI, %zmm21
-.set ZETA, %zmm22
-.set ETA, %zmm23
-.set XX, %zmm24
-.set GS0, %zmm25
-.set GS1, %zmm26
-.set GS2, %zmm27
-.set GS3, %zmm28
-.set BETA, %zmm29
+.set R, %zmm12
+.set RI, %zmm13
+.set ZETA, %zmm14
+.set ETA, %zmm15
+.set XX, %zmm16
+.set GS0, %zmm17
+.set GS1, %zmm18
+.set GS2, %zmm19
+.set GS3, %zmm20
+.set BETA, %zmm21
 
+# Common register use
+.set X, %zmm22
+.set Y, %zmm23
+.set Z, %zmm24
+.set VX, %zmm25
+.set VY, %zmm26
+.set VZ, %zmm27
+.set ONE, %zmm28
+.set DT, %zmm29
+.set HALF_MASK, %zmm30
+.set M, %zmm31
