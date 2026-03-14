@@ -107,6 +107,7 @@ gravity_prefactor_avx512_one_zmm6:
     vaddpd     \reg, \temp_reg, \reg
 .endm
         
+#Legacy called from C
 mat8_mul3_avx512:
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rdi = vector to 64 matrix elements
@@ -207,105 +208,6 @@ mat8_mul3_avx512:
 	vmovapd	%zmm1, (%rdx)
 	vfmadd213pd	(%rcx), %zmm4, %zmm2
 	vmovapd	%zmm2, (%rcx)
-    ret
-
-mat8_mul3_avx512_nomem:
-    # 8x8 matrix multiplied with 3 different 8 vectors
-    # in: rax = vector to 64 matrix elements
-    # zmm0, zmm1, zmm2  input and output vectors
-    # uses: zmm4 zmm5 zmm6 zmm7 zmm8
-    # TODO: This can be significantly optimized
-	vmovapd	(%rax), %zmm4
-	vbroadcastsd	%xmm0, %zmm3
-	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm7
-	vbroadcastsd	%xmm1, %zmm3
-	movl	$1, %edx
-	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm8
-	vbroadcastsd	%xmm2, %zmm3
-	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	64(%rax), %zmm4
-	movl	$2, %edx
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm7, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm7  #TODO Remove mov
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm8, %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm6, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	128(%rax), %zmm4
-	movl	$3, %edx
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm7, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm7
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm8, %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm6, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	192(%rax), %zmm4
-	movl	$4, %edx
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm7, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm7
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm8, %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm6, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	256(%rax), %zmm4
-	movl	$5, %edx
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm7, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm7
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm8, %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm6, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	320(%rax), %zmm4
-	movl	$6, %edx
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm7, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm7
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm8, %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm6, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	384(%rax), %zmm4
-	movl	$7, %edx
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	%zmm7, %zmm4, %zmm5
-	vmovapd	%zmm5, %zmm7
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	%zmm8, %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, %zmm8
-	vfmadd213pd	%zmm6, %zmm4, %zmm3
-	vmovapd	%zmm3, %zmm6
-	vpbroadcastq	%rdx, %zmm3
-	vmovapd	448(%rax), %zmm4
-	vpermpd	%zmm0, %zmm3, %zmm0
-	vfmadd213pd	%zmm7, %zmm4, %zmm0
-	vpermpd	%zmm1, %zmm3, %zmm1
-	vpermpd	%zmm2, %zmm3, %zmm2
-	vfmadd213pd	%zmm8, %zmm4, %zmm1
-	vfmadd213pd	%zmm6, %zmm4, %zmm2
     ret
 
 mat8_mul3_avx512_new:
