@@ -165,9 +165,6 @@ reb_whfast512_kepler_step_noinit:
     vfnmadd231pd    %zmm0, X, VX{%k1}{z}
     vfnmadd231pd    %zmm0, Y, VY{%k1}{z}
     vfnmadd231pd    %zmm0, Z, VZ{%k1}{z}
-    vmovapd    %zmm3, P512_X(%rdi) # TODO: shuffle things around so that new X end up in X without copy
-    vmovapd    %zmm4, P512_Y(%rdi)
-    vmovapd    %zmm5, P512_Z(%rdi)
     vmovapd    %zmm3, X # TODO: shuffle things around so that new X end up in X without copy
     vmovapd    %zmm4, Y
     vmovapd    %zmm5, Z
