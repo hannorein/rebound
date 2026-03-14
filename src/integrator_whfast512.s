@@ -11,9 +11,11 @@
 .DOUBLE_ONE:
     .double 1.0
 
+# Shuffle Indicies
+# Each is eight 64-bit integers
 .align 64
 b3idx:
-    .quad 4,5,6,7,1,2,3,0   # Eight 64-bit integers
+    .quad 4,5,6,7,1,2,3,0   
 
 .align 64
 b4idx:
@@ -318,20 +320,18 @@ mat8_mul3_avx512_nomem:
     #           rdi = p512
     #           rsi = Number of steps
 
-
 # Load Constant
-    movq %rsi, %r8                           # Counter. TODO: leave in rsi and not use rsi elsewhere
     call reb_whfast512_init_registers
 
 
+####################################    
+#   Start Main Loop
+####################################
 .LMainLoop\grflag:    
 
     call reb_whfast512_kepler_step_noinit
 
-
 # Interaction step:
-	
-
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
     vfmadd231pd Y, Y, %zmm4      
@@ -555,10 +555,11 @@ mat8_mul3_avx512_nomem:
     vaddpd    VY, %zmm1, VY
     vaddpd    VZ, %zmm2, VZ
 
-    
-#    # Main Loop
-    subq    $1, %r8
+    subq    $1, %rsi
     jnz     .LMainLoop\grflag
+####################################    
+#   End  Main Loop
+####################################
 
 
     # Store final data in P512 structure
