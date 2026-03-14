@@ -20,14 +20,17 @@
 .set ZETA, %zmm14
 .set ETA, %zmm15
 .set ONE, %zmm16
-.set XX, %zmm20
-.set M, %zmm21
-.set DT, %zmm22
-.set GS0, %zmm23
-.set GS1, %zmm24
-.set GS2, %zmm25
-.set GS3, %zmm26
-.set BETA, %zmm27
+.set XX, %zmm17
+.set M, %zmm18
+.set DT, %zmm19
+.set GS0, %zmm20
+.set GS1, %zmm21
+.set GS2, %zmm22
+.set GS3, %zmm23
+.set BETA, %zmm24
+.set HALF_MASK, %zmm25
+# zmm 26
+# zmm 27
 # zmm 28
 # zmm 29
 # zmm 30
@@ -86,30 +89,37 @@ mm_stiefel_Gs03_avx512:
     ret
 
 halley:
-    vmovapd    R, %zmm3
-    vfmsub132pd    XX, DT, %zmm3
-    vfmadd231pd    GS2, ETA, %zmm3
-    vfmadd231pd    GS3, ZETA, %zmm3        # f  (TODO can overwrite GS3)
-    vmovapd    ETA, %zmm5
-    vfmadd132pd    GS1, R, %zmm5
-    vfmadd132pd    ZETA, %zmm5, GS2        # fp
-    vmulpd    GS0, ETA, %zmm5
-    vfmadd132pd    ZETA, %zmm5, GS1        # fpp
+    # In: GS0,GS1,GS2,GS3
+    # Out: XX
+    # No other registers used.
+    vfmsub213pd     DT, ZETA, GS3
+    vfmadd231pd     GS2, ETA, GS3
+    vfmadd231pd     XX, R, GS3              # f
 
-    vmulpd      GS1, %zmm3, GS1     # f*fpp
-    vmulpd      .DOUBLE_HALF(%rip){1to8}, GS1, GS1      # 0.5*f*fpp
-    vmulpd      GS2, GS2, %zmm5     # fp*fp
-    vsubpd      GS1, %zmm5, %zmm5   # fp*fp-0.5*f*fpp
-    vmulpd      %zmm3, GS2, %zmm3   # f*fp
-    vdivpd      %zmm5, %zmm3, %zmm3
-    vsubpd      %zmm3, XX, XX
+    vfmadd132pd     ZETA, R, GS2
+    vfmadd231pd     ETA, GS1, GS2           # fp
+
+    vmulpd          GS0, ETA, GS0
+    vfmadd132pd     ZETA, GS0, GS1          # fpp
+
+    vmulpd          GS1, GS3, GS1           # f*fpp
+    # Next instruction uses exponent trick to speed up multiplication by 0.5 using integer sub
+    vpsubq          HALF_MASK, GS1, GS1     # 0.5*f*fpp
+    vfmsub231pd     GS2, GS2, GS1           # fp*fp-0.5*f*fpp
+    vmulpd          GS3, GS2, GS3           # f*fp
+    vdivpd          GS1, GS3, GS3
+    vsubpd          GS3, XX, XX
     ret
 
 
 .p2align 4
 .globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
+
+    # TODO: Move out of loop
+    vpbroadcastq .HALF_MASK(%rip), HALF_MASK
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
+
     vmovapd    P512_X(%rdi), X
     vmovapd    P512_Y(%rdi), Y
     vmovapd    P512_Z(%rdi), Z
@@ -294,7 +304,12 @@ invfactorial:
 #    .long    943953938
 #    .long    834731386
 #    .long    938635522
-    
+    #
+
+
+.align 8
+.HALF_MASK:  # Used for fast division by 2
+    .quad   0x0010000000000000
 
 .section    .note.GNU-stack,"",@progbits
     
