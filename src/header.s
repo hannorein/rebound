@@ -31,6 +31,9 @@
 .set HVX, %zmm13
 .set HVY, %zmm14
 .set HVZ, %zmm15
+.set HVXC, %zmm20
+.set HVYC, %zmm21
+.set HVZC, %zmm22
 .set HX, %zmm17
 .set HY, %zmm18
 .set HZ, %zmm19

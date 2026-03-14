@@ -483,9 +483,9 @@ mat8_mul3_avx512_nomem:
     
     #// 4567 1230
     #// 0123 4567
-    vmulpd %zmm5, %zmm0,  %zmm20
-    vmulpd %zmm5, %zmm1,  %zmm21
-    vmulpd %zmm5, %zmm2,  %zmm22
+    vmulpd %zmm5, %zmm0,  HVXC
+    vmulpd %zmm5, %zmm1,  HVYC
+    vmulpd %zmm5, %zmm2,  HVZC
 
 
     #// 0123 4567
@@ -521,16 +521,16 @@ mat8_mul3_avx512_nomem:
     #// 4567 1230
     #// 3012 7456
     
-    vfmadd231pd %zmm5, %zmm0,  %zmm20
-    vfmadd231pd %zmm5, %zmm1,  %zmm21
-    vfmadd231pd %zmm5, %zmm2,  %zmm22
+    vfmadd231pd %zmm5, %zmm0,  HVXC
+    vfmadd231pd %zmm5, %zmm1,  HVYC
+    vfmadd231pd %zmm5, %zmm2,  HVZC
     
     ## Final 256 bit lane crossing and add
     vmovdqa64 b34mergeidx(%rip), %zmm7
 
-    vpermpd %zmm20, %zmm7, %zmm0
-    vpermpd %zmm21, %zmm7, %zmm1
-    vpermpd %zmm22, %zmm7, %zmm2
+    vpermpd HVXC, %zmm7, %zmm0
+    vpermpd HVYC, %zmm7, %zmm1
+    vpermpd HVZC, %zmm7, %zmm2
 
     vaddpd %zmm0, HVX, %zmm0{%k1}{z}
     vaddpd %zmm1, HVY, %zmm1{%k1}{z}
