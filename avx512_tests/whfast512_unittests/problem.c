@@ -114,7 +114,8 @@ int test_basic(int coordinates){
         
     for (int i=0;i<r->N;i++){
         if (fabs(r->particles[i].x - r512->particles[i].x)>1e-11){
-            printf("Accuracy not met in basic test.\n");
+            double delta = fabs(r->particles[i].x - r512->particles[i].x);
+            printf("Accuracy not met in basic test. Delta = %g\n",delta);
             return 0;
         }
     }

@@ -20,9 +20,6 @@
 .set ZETA, %zmm14
 .set ETA, %zmm15
 .set ONE, %zmm16
-.set FIVE, %zmm17
-.set SIXTEEN, %zmm18
-.set TWENTY, %zmm19
 .set XX, %zmm20
 .set M, %zmm21
 .set DT, %zmm22
@@ -88,12 +85,30 @@ mm_stiefel_Gs03_avx512:
     vmulpd    %zmm4, %zmm2, GS2
     ret
 
+halley:
+    vmovapd    R, %zmm3
+    vfmsub132pd    XX, DT, %zmm3
+    vfmadd231pd    GS2, ETA, %zmm3
+    vfmadd231pd    GS3, ZETA, %zmm3        # f  (TODO can overwrite GS3)
+    vmovapd    ETA, %zmm5
+    vfmadd132pd    GS1, R, %zmm5
+    vfmadd132pd    ZETA, %zmm5, GS2        # fp
+    vmulpd    GS0, ETA, %zmm5
+    vfmadd132pd    ZETA, %zmm5, GS1        # fpp
+
+    vmulpd      GS1, %zmm3, GS1     # f*fpp
+    vmulpd      .DOUBLE_HALF(%rip){1to8}, GS1, GS1      # 0.5*f*fpp
+    vmulpd      GS2, GS2, %zmm5     # fp*fp
+    vsubpd      GS1, %zmm5, %zmm5   # fp*fp-0.5*f*fpp
+    vmulpd      %zmm3, GS2, %zmm3   # f*fp
+    vdivpd      %zmm5, %zmm3, %zmm3
+    vsubpd      %zmm3, XX, XX
+    ret
+
+
 .p2align 4
 .globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
-    vbroadcastsd    .DOUBLE_FIVE(%rip), FIVE
-    vbroadcastsd    .DOUBLE_SIXTEEN(%rip), SIXTEEN
-    vbroadcastsd    .DOUBLE_TWENTY(%rip), TWENTY # constants for Halley
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
     vmovapd    P512_X(%rdi), X
     vmovapd    P512_Y(%rdi), Y
@@ -126,48 +141,11 @@ reb_whfast512_kepler_step:
     vmulpd    %zmm5, %zmm4, XX              # X (initial guess)
     
     call    mm_stiefel_Gs03_avx512
+    call    halley
 
-    # Halley
-    vmovapd    ETA, %zmm5
-    vfmadd132pd    GS1, R, %zmm5
-    vmovapd    R, %zmm3
-    vfmsub132pd    XX, DT, %zmm3
-    vfmadd231pd    GS2, ETA, %zmm3
-    vfmadd132pd    ZETA, %zmm5, GS2
-    vfmadd231pd    GS3, ZETA, %zmm3        # f
-    vmulpd    GS0, ETA, %zmm5
-    vfmadd132pd    ZETA, %zmm5, GS1        # fpp
-    vmulpd    GS2, GS2, %zmm4
-    vmulpd    SIXTEEN, %zmm4, %zmm4
-    vmulpd    %zmm3, GS1, %zmm0
-    vfnmadd132pd    TWENTY, %zmm4, %zmm0
-    vmulpd    FIVE, %zmm3, %zmm3
-    vsqrtpd    %zmm0, %zmm0
-    vaddpd    %zmm0, %zmm2, %zmm2
-    vfmsub132pd    %zmm2, %zmm3, XX
-    vdivpd    %zmm2, XX, XX
-    
     call    mm_stiefel_Gs03_avx512
+    call    halley
     
-    # Halley
-    vmovapd    R, %zmm3
-    vfmadd132pd    GS1, R, %zmm5
-    vfmsub132pd    XX, DT, %zmm3
-    vmovapd    GS2, %zmm2
-    vfmadd231pd    GS2, ETA, %zmm3
-    vfmadd132pd    ZETA, %zmm5, %zmm2
-    vmulpd    GS0, ETA, %zmm5
-    vfmadd231pd    GS3, ZETA, %zmm3
-    vfmadd132pd    ZETA, %zmm5, GS1
-    vmulpd    %zmm2, %zmm2, %zmm5
-    vmulpd    GS1, %zmm3, %zmm0
-    vmulpd    SIXTEEN, %zmm5, %zmm4
-    vmulpd    FIVE, %zmm3, %zmm3
-    vfnmadd132pd    TWENTY, %zmm4, %zmm0
-    vsqrtpd    %zmm0, %zmm0
-    vaddpd    %zmm0, %zmm2, %zmm2
-    vfmsub132pd    %zmm2, %zmm3, XX
-    vdivpd    %zmm2, XX, XX
 
     call    mm_stiefel_Gs13_avx512
     
@@ -226,19 +204,6 @@ reb_whfast512_kepler_step:
     ret
 
 .section    .rodata
-.align 8
-.DOUBLE_FIVE:
-    .long    0
-    .long    1075052544
-.align 8
-.DOUBLE_SIXTEEN:
-    .long    0
-    .long    1076887552
-.align 8
-.DOUBLE_TWENTY:
-    .long    0
-    .long    1077149696
-.align 8
 invfactorial:
 .IF1:
 .DOUBLE_ONE:
@@ -332,3 +297,35 @@ invfactorial:
     
 
 .section    .note.GNU-stack,"",@progbits
+    
+#.align 8
+#.DOUBLE_FIVE:
+#    .long    0
+#    .long    1075052544
+#.align 8
+#.DOUBLE_SIXTEEN:
+#    .long    0
+#    .long    1076887552
+#.align 8
+#.DOUBLE_TWENTY:
+#    .long    0
+#    .long    1077149696
+#.align 8
+#
+#.set FIVE, %zmm17
+#.set SIXTEEN, %zmm18
+#.set TWENTY, %zmm19
+#    vbroadcastsd    .DOUBLE_FIVE(%rip), FIVE
+#    vbroadcastsd    .DOUBLE_SIXTEEN(%rip), SIXTEEN
+#    vbroadcastsd    .DOUBLE_TWENTY(%rip), TWENTY # constants for Halley
+
+    # Old Halley
+    # vmulpd    GS2, GS2, %zmm4
+    # vmulpd    SIXTEEN, %zmm4, %zmm4
+    # vmulpd    %zmm3, GS1, %zmm0
+    # vfnmadd132pd    TWENTY, %zmm4, %zmm0
+    # vmulpd    FIVE, %zmm3, %zmm3
+    # vsqrtpd    %zmm0, %zmm0
+    # vaddpd    %zmm0, %zmm2, %zmm2
+    # vfmsub132pd    %zmm2, %zmm3, XX
+    # vdivpd    %zmm2, XX, XX
