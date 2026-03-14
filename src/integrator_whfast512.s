@@ -406,7 +406,6 @@ mat8_mul3_avx512_new:
     vmovapd     Y, %zmm1
     vmovapd     Z, %zmm2
         
-#    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm6 zmm7,zmm8, 
     call mat8_mul3_avx512_new
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
@@ -600,7 +599,7 @@ mat8_mul3_avx512_new:
     # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
    
-    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm6,zmm7,zmm8 
+    call mat8_mul3_avx512_new
 
     # Update velocities
     vaddpd    VX, %zmm0, VX
