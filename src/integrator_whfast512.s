@@ -27,7 +27,7 @@ matrixidx:
 .globl block1_gr
 .globl block1_nogr
 .globl mat8_mul3_avx512
-.extern reb_whfast512_kepler_step
+.extern reb_whfast512_kepler_step_noinit
 .extern local_reb_whfast512_kepler_step
 
 

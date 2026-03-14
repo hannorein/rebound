@@ -21,9 +21,11 @@
 .set VZ, %zmm12
 .set ONE, %zmm26
 .set DT, %zmm27
+.set HALF_MASK, %zmm28
 
 .macro whfast512_init_registers
     kmovw           P512_MASK(%rdi), %k1
     vmovapd         P512_DT(%rdi), DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
+    vpbroadcastq    .HALF_MASK(%rip), HALF_MASK
 .endm

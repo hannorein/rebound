@@ -115,12 +115,12 @@ halley:
 .p2align 4
 .globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
-    
+    # Need to init registers here when not called after interaction step.
+    # This is required for synchronizing.  
     whfast512_init_registers
 
+reb_whfast512_kepler_step_noinit:
     # TODO: Move out of loop
-    vpbroadcastq .HALF_MASK(%rip), HALF_MASK
-
     vmovapd    P512_X(%rdi), X
     vmovapd    P512_Y(%rdi), Y
     vmovapd    P512_Z(%rdi), Z
