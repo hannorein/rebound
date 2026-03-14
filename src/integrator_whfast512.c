@@ -121,26 +121,24 @@ static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector
 
 // Three 8x8 matrix multiplications with the same matrix using avx512
 // Used for coordinate transformations in x, y, and z
-extern void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3);
-extern void mat8_mul3_avx512_test(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3);
-//{
-//    __m512d col_i = _mm512_load_pd(matrix);
-//    __m512d vin1 = _mm512_set1_pd(in1[0]);
-//    *out1 = _mm512_mul_pd(vin1, col_i);
-//    __m512d vin2 = _mm512_set1_pd(in2[0]);
-//    *out2 = _mm512_mul_pd(vin2, col_i);
-//    __m512d vin3 = _mm512_set1_pd(in3[0]);
-//    *out3 = _mm512_mul_pd(vin3, col_i);
-//    for (int i = 1; i < 8; i++) {
-//        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
-//        __m512d vin1 = _mm512_set1_pd(in1[i]);
-//        *out1 = _mm512_fmadd_pd(vin1, col_i, *out1);
-//        __m512d vin2 = _mm512_set1_pd(in2[i]);
-//        *out2 = _mm512_fmadd_pd(vin2, col_i, *out2);
-//        __m512d vin3 = _mm512_set1_pd(in3[i]);
-//        *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
-//    }
-//}
+extern void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3){
+    __m512d col_i = _mm512_load_pd(matrix);
+    __m512d vin1 = _mm512_set1_pd(in1[0]);
+    *out1 = _mm512_mul_pd(vin1, col_i);
+    __m512d vin2 = _mm512_set1_pd(in2[0]);
+    *out2 = _mm512_mul_pd(vin2, col_i);
+    __m512d vin3 = _mm512_set1_pd(in3[0]);
+    *out3 = _mm512_mul_pd(vin3, col_i);
+    for (int i = 1; i < 8; i++) {
+        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
+        __m512d vin1 = _mm512_set1_pd(in1[i]);
+        *out1 = _mm512_fmadd_pd(vin1, col_i, *out1);
+        __m512d vin2 = _mm512_set1_pd(in2[i]);
+        *out2 = _mm512_fmadd_pd(vin2, col_i, *out2);
+        __m512d vin3 = _mm512_set1_pd(in3[i]);
+        *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
+    }
+}
    
 // Hepler function to load particle data into avx512 registers
 static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N){
@@ -495,8 +493,23 @@ void local_reb_whfast512_kepler_step(struct reb_particle_avx512* const restrict 
 
 // Helper functions for the interaction step
 // Calculates 1/(dx**2+dy**2+dz**2)^(3/2)
-extern __m512d gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz);
-extern __m512d gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz);
+static __m512d inline gravity_prefactor_avx512_one( __m512d dx, __m512d dy, __m512d dz) {
+    __m512d r2 = _mm512_mul_pd(dx, dx);
+    r2 = _mm512_fmadd_pd(dy,dy, r2);
+    r2 = _mm512_fmadd_pd(dz,dz, r2);
+    const __m512d r = _mm512_sqrt_pd(r2);
+    const __m512d r3 = _mm512_mul_pd(r, r2);
+    return _mm512_div_pd(_mm512_set1_pd(1.0),r3); 
+}
+
+static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d dy, __m512d dz) {
+    __m512d r2 = _mm512_mul_pd(dx, dx);
+    r2 = _mm512_fmadd_pd(dy,dy, r2);
+    r2 = _mm512_fmadd_pd(dz,dz, r2);
+    const __m512d r = _mm512_sqrt_pd(r2);
+    const __m512d r3 = _mm512_mul_pd(r, r2);
+    return _mm512_div_pd(m,r3);
+}
 extern void block1_gr(struct reb_particle_avx512* p512, long N_steps);
 extern void block1_nogr(struct reb_particle_avx512* p512, long N_steps);
 

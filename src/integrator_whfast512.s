@@ -26,11 +26,8 @@ b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
 
 .section .text
-.globl gravity_prefactor_avx512_one
-.globl gravity_prefactor_avx512
 .globl block1_gr
 .globl block1_nogr
-.globl mat8_mul3_avx512
 .extern reb_whfast512_kepler_step_noinit
 .extern local_reb_whfast512_kepler_step
 
@@ -53,37 +50,8 @@ reb_whfast512_init_registers:
     
     ret
 
-# Legacy. Called from C
-gravity_prefactor_avx512:
-    # Input:  zmm0=m, zmm1=dx, zmm2=dy, zmm3=dz
-    
-    vmulpd      %zmm1, %zmm1, %zmm1     
-    vfmadd231pd %zmm2, %zmm2, %zmm1      
-    vfmadd231pd %zmm3, %zmm3, %zmm1     # zmm1 is now r^2
-    
-    vsqrtpd     %zmm1, %zmm2             
-    vmulpd      %zmm1, %zmm2, %zmm2      
-    vdivpd      %zmm2, %zmm0, %zmm0      
-    
-    ret                                 # return m / r^3 in zmm0
 
-#Legacy called from C
-gravity_prefactor_avx512_one:
-    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
-    
-    vmulpd      %zmm0, %zmm0, %zmm0     
-    vfmadd231pd %zmm1, %zmm1, %zmm0      
-    vfmadd231pd %zmm2, %zmm2, %zmm0     # zmm0 is now r^2
-    
-    vsqrtpd     %zmm0, %zmm1             
-    vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
-   
-    vbroadcastsd .DOUBLE_ONE(%rip), %zmm1      
-    vdivpd      %zmm0, %zmm1, %zmm0      
-    
-    ret                                 # return 1 / r^3 in zmm0
-
-gravity_prefactor_avx512_one_zmm6:
+gravity_prefactor:
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
     
     vmulpd      %zmm0, %zmm0, %zmm6     
@@ -107,110 +75,7 @@ gravity_prefactor_avx512_one_zmm6:
     vaddpd     \reg, \temp_reg, \reg
 .endm
         
-#Legacy called from C
-mat8_mul3_avx512:
-    # 8x8 matrix multiplied with 3 different 8 vectors
-    # in: rdi = vector to 64 matrix elements
-    # zmm0, zmm1, zmm2  input vectors
-    # rsi, rdx, rcx     output vectors 
-	vmovapd	(%rdi), %zmm4
-	vbroadcastsd	%xmm0, %zmm3
-	movq	%rsi, %rax
-	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, (%rsi)
-	vbroadcastsd	%xmm1, %zmm3
-	movl	$1, %esi
-	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, (%rdx)
-	vbroadcastsd	%xmm2, %zmm3
-	vmulpd	%zmm4, %zmm3, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	64(%rdi), %zmm4
-	movl	$2, %esi
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	(%rax), %zmm4, %zmm5
-	vmovapd	%zmm5, (%rax)
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	(%rdx), %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	128(%rdi), %zmm4
-	movl	$3, %esi
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	(%rax), %zmm4, %zmm5
-	vmovapd	%zmm5, (%rax)
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	(%rdx), %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	192(%rdi), %zmm4
-	movl	$4, %esi
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	(%rax), %zmm4, %zmm5
-	vmovapd	%zmm5, (%rax)
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	(%rdx), %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	256(%rdi), %zmm4
-	movl	$5, %esi
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	(%rax), %zmm4, %zmm5
-	vmovapd	%zmm5, (%rax)
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	(%rdx), %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	320(%rdi), %zmm4
-	movl	$6, %esi
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	(%rax), %zmm4, %zmm5
-	vmovapd	%zmm5, (%rax)
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	(%rdx), %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	384(%rdi), %zmm4
-	movl	$7, %esi
-	vpermpd	%zmm0, %zmm3, %zmm5
-	vfmadd213pd	(%rax), %zmm4, %zmm5
-	vmovapd	%zmm5, (%rax)
-	vpermpd	%zmm1, %zmm3, %zmm5
-	vfmadd213pd	(%rdx), %zmm4, %zmm5
-	vpermpd	%zmm2, %zmm3, %zmm3
-	vmovapd	%zmm5, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm3
-	vmovapd	%zmm3, (%rcx)
-	vpbroadcastq	%rsi, %zmm3
-	vmovapd	448(%rdi), %zmm4
-	vpermpd	%zmm0, %zmm3, %zmm0
-	vfmadd213pd	(%rax), %zmm4, %zmm0
-	vpermpd	%zmm1, %zmm3, %zmm1
-	vpermpd	%zmm2, %zmm3, %zmm2
-	vmovapd	%zmm0, (%rax)
-	vfmadd213pd	(%rdx), %zmm4, %zmm1
-	vmovapd	%zmm1, (%rdx)
-	vfmadd213pd	(%rcx), %zmm4, %zmm2
-	vmovapd	%zmm2, (%rcx)
-    ret
-
-mat8_mul3_avx512_new:
+mat8_mul3:
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
     # zmm0, zmm1, zmm2  input and output vectors
@@ -308,7 +173,7 @@ mat8_mul3_avx512_new:
     vmovapd     Y, %zmm1
     vmovapd     Z, %zmm2
         
-    call mat8_mul3_avx512_new
+    call mat8_mul3
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
     vmovapd     %zmm1, HY
@@ -373,7 +238,7 @@ mat8_mul3_avx512_new:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    call gravity_prefactor_avx512_one_zmm6  # zmm6 is 1/r^3
+    call gravity_prefactor  # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
     
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -410,7 +275,7 @@ mat8_mul3_avx512_new:
     vsubpd  %zmm2, HZ, %zmm2
     
     # TODO: Combine 1/r with multiplication
-    call gravity_prefactor_avx512_one_zmm6  # zmm6 is 1/r^3
+    call gravity_prefactor  # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
     
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -432,7 +297,7 @@ mat8_mul3_avx512_new:
     vsubpd  %zmm2, HZ, %zmm2
     
 
-    call gravity_prefactor_avx512_one_zmm6  # zmm6 is 1/r^3
+    call gravity_prefactor  # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -464,7 +329,7 @@ mat8_mul3_avx512_new:
     vsubpd  %zmm2, HZ, %zmm2
     
 
-    call gravity_prefactor_avx512_one_zmm6  # zmm6 is 1/r^3
+    call gravity_prefactor  # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -501,7 +366,7 @@ mat8_mul3_avx512_new:
     # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
    
-    call mat8_mul3_avx512_new
+    call mat8_mul3
 
     # Update velocities
     vaddpd    VX, %zmm0, VX
