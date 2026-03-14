@@ -331,11 +331,8 @@ mat8_mul3_avx512_nomem:
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-
-    #TODO: Make this an embedded load with {1to8} syntax
-    vdivpd      %zmm4, ONE, %zmm4      
-    vmulpd  M, %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd  DT, %zmm4, %zmm6        # dt*1/r^3*M
+    vdivpd      %zmm4, M, %zmm4  # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd      DT, %zmm4, %zmm6        # dt*1/r^3*M
     
     vfmadd231pd     X, %zmm6, VX{%k1}{z} 
     vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
