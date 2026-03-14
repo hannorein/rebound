@@ -2,8 +2,13 @@
 .include "header.s"
 
 .section .rodata
-    .align 64
-.DOUBLE_ONE: 
+
+.align 8
+.HALF_MASK:  # Used for fast division by 2
+    .quad   0x0010000000000000
+
+.align 64
+.DOUBLE_ONE:
     .double 1.0
 
 .align 64
@@ -18,9 +23,6 @@ b4idx:
 b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
 
-matrixidx:
-    .quad 0,0,0,0,0,0,0,0
-
 .section .text
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
@@ -30,6 +32,24 @@ matrixidx:
 .extern reb_whfast512_kepler_step_noinit
 .extern local_reb_whfast512_kepler_step
 
+
+.globl reb_whfast512_init_registers
+reb_whfast512_init_registers:
+    kmovw           P512_MASK(%rdi), %k1
+    vmovapd         P512_DT(%rdi), DT
+    vmovapd         P512_M(%rdi), M
+    vbroadcastsd    .DOUBLE_ONE(%rip), ONE
+    vpbroadcastq    .HALF_MASK(%rip), HALF_MASK
+    
+    vmovapd     P512_X(%rdi), X
+    vmovapd     P512_Y(%rdi), Y
+    vmovapd     P512_Z(%rdi), Z
+    
+    vmovapd     P512_VX(%rdi), VX
+    vmovapd     P512_VY(%rdi), VY
+    vmovapd     P512_VZ(%rdi), VZ
+    
+    ret
 
 #Legacy called from C
 gravity_prefactor_avx512_one:
@@ -289,9 +309,9 @@ mat8_mul3_avx512_nomem:
 .set HVY, %zmm14
 .set HVZ, %zmm15
 
-.set HX, %zmm16
-.set HY, %zmm17
-.set HZ, %zmm18
+.set HX, %zmm17
+.set HY, %zmm18
+.set HZ, %zmm19
 
 .macro BLOCK1 grflag
     # Input:   
@@ -301,43 +321,40 @@ mat8_mul3_avx512_nomem:
 
 # Load Constant
     movq %rsi, %r8                           # Counter. TODO: leave in rsi and not use rsi elsewhere
-    whfast512_init_registers
+    call reb_whfast512_init_registers
 
 
 .LMainLoop\grflag:    
 
-    call reb_whfast512_kepler_step
+    call reb_whfast512_kepler_step_noinit
 
 
 # Interaction step:
 	
 
-    vmovapd     P512_X(%rdi), %zmm0
-    vmovapd     P512_Y(%rdi), %zmm1
-    vmovapd     P512_Z(%rdi), %zmm2
-
     # Add Jacobi term in Jacobi coordinates
-    vmulpd      %zmm0, %zmm0, %zmm4     
-    vfmadd231pd %zmm1, %zmm1, %zmm4      
-    vfmadd231pd %zmm2, %zmm2, %zmm4     # r^2
+    vmulpd      X, X, %zmm4     
+    vfmadd231pd Y, Y, %zmm4      
+    vfmadd231pd Z, Z, %zmm4     # r^2
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
 
     #TODO: Make this an embedded load with {1to8} syntax
     vdivpd      %zmm4, ONE, %zmm4      
-    vmulpd  P512_M(%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd  M, %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
     vmulpd  DT, %zmm4, %zmm6        # dt*1/r^3*M
     
-    vmovapd     P512_VX(%rdi), VX
-    vmovapd     P512_VY(%rdi), VY
-    vmovapd     P512_VZ(%rdi), VZ
-    
-    vfmadd231pd     %zmm0, %zmm6, VX{%k1}{z} 
-    vfmadd231pd     %zmm1, %zmm6, VY{%k1}{z} 
-    vfmadd231pd     %zmm2, %zmm6, VZ{%k1}{z} 
+    vfmadd231pd     X, %zmm6, VX{%k1}{z} 
+    vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
+    vfmadd231pd     Z, %zmm6, VZ{%k1}{z} 
     
     leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rax  # mat8_inertial_to_jacobi
+    
+    vmovapd     X, %zmm0        # TODO get rid of mov
+    vmovapd     Y, %zmm1
+    vmovapd     Z, %zmm2
+        
     call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm7,zmm8,zmm9 
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
@@ -539,20 +556,25 @@ mat8_mul3_avx512_nomem:
     vaddpd    VZ, %zmm2, VZ
 
     
-    # Store final new velocities in Jacobi coordinates
-    vmovapd    VX, P512_VX(%rdi)
-    vmovapd    VY, P512_VY(%rdi)
-    vmovapd    VZ, P512_VZ(%rdi)
-    
 #    # Main Loop
     subq    $1, %r8
     jnz     .LMainLoop\grflag
+
+
+    # Store final data in P512 structure
+    vmovapd    VX, P512_VX(%rdi)
+    vmovapd    VY, P512_VY(%rdi)
+    vmovapd    VZ, P512_VZ(%rdi)
+    vmovapd    X, P512_X(%rdi)
+    vmovapd    Y, P512_Y(%rdi)
+    vmovapd    Z, P512_Z(%rdi)
+
     ret
 .endm
 
 block1_gr: BLOCK1 1
 
 block1_nogr: BLOCK1 0
-   
+  
 
 .section .note.GNU-stack,"",@progbits

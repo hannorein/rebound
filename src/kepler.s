@@ -1,4 +1,5 @@
 .include "header.s"
+
 .text
 
 # general purpose:
@@ -9,29 +10,18 @@
 # zmm4
 # zmm5
 # reserved/persistant:
-.set X, %zmm6
-.set Y, %zmm7
-.set Z, %zmm8
 .set R, %zmm9
-# VX zmm10
-# VY zmm11
-# VZ zmm12
 .set RI, %zmm13
 .set ZETA, %zmm14
 .set ETA, %zmm15
 # zmm 16
 .set XX, %zmm17
-.set M, %zmm18
-.set DT, %zmm19
 .set GS0, %zmm20
 .set GS1, %zmm21
 .set GS2, %zmm22
 .set GS3, %zmm23
 .set BETA, %zmm24
-.set HALF_MASK, %zmm25
-# ONE zmm26
 # zmm 27
-# zmm 28
 # zmm 29
 # zmm 30
 # zmm 31
@@ -113,22 +103,16 @@ halley:
 
 
 .p2align 4
-.globl reb_whfast512_kepler_step
+#.globl reb_whfast512_kepler_step #not used right now
+.extern reb_whfast512_init_registers
+.globl reb_whfast512_kepler_step_noinit
 reb_whfast512_kepler_step:
     # Need to init registers here when not called after interaction step.
-    # This is required for synchronizing.  
-    whfast512_init_registers
+    # This will be required for synchronizing.  
+    call reb_whfast512_init_registers
 
 reb_whfast512_kepler_step_noinit:
-    # TODO: Move out of loop
-    vmovapd    P512_X(%rdi), X
-    vmovapd    P512_Y(%rdi), Y
-    vmovapd    P512_Z(%rdi), Z
-    vmovapd    P512_VX(%rdi), VX
-    vmovapd    P512_VY(%rdi), VY
-    vmovapd    P512_VZ(%rdi), VZ
-    vmovapd    P512_M(%rdi), M
-    kmovb    P512_MASK(%rdi), %k1
+
     vmulpd    X, X, %zmm0
     vfmadd231pd    Y, Y, %zmm0
     vfmadd231pd    Z, Z, %zmm0                 # r^2
@@ -208,15 +192,14 @@ reb_whfast512_kepler_step_noinit:
     vmovapd    %zmm3, P512_X(%rdi) # TODO: shuffle things around so that new X end up in X without copy
     vmovapd    %zmm4, P512_Y(%rdi)
     vmovapd    %zmm5, P512_Z(%rdi)
-    vmovapd    VX, P512_VX(%rdi)  # TODO: Remove memory
-    vmovapd    VY, P512_VY(%rdi)
-    vmovapd    VZ, P512_VZ(%rdi)
+    vmovapd    %zmm3, X # TODO: shuffle things around so that new X end up in X without copy
+    vmovapd    %zmm4, Y
+    vmovapd    %zmm5, Z
     ret
 
 .section    .rodata
 invfactorial:
 .IF0:
-.DOUBLE_ONE:
     .double     1.0
 .IF1:
     .double     1.0
@@ -307,10 +290,6 @@ invfactorial:
 #    .long    938635522
     #
 
-
-.align 8
-.HALF_MASK:  # Used for fast division by 2
-    .quad   0x0010000000000000
 
 .section    .note.GNU-stack,"",@progbits
     
