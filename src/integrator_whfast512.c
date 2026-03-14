@@ -1362,6 +1362,18 @@ void static recalculate_constants(struct reb_simulation* r){
                     }
                 }
             }
+            // Quick transpose test
+            double tmp[64];
+            for (unsigned int i=0; i<0; i++){
+                for (unsigned int j=0; j<0; j++){
+                    tmp[i+8*j] = ri_whfast512->p512->mat8_jacobi_to_heliocentric[i+8*j];
+                }
+            }
+            for (unsigned int i=0; i<0; i++){
+                for (unsigned int j=0; j<0; j++){
+                    ri_whfast512->p512->mat8_jacobi_to_heliocentric[i+8*j] = tmp[j+8*i];
+                }
+            }
             break;
         default:
             reb_simulation_error(r,"Coordinate system not supported.");

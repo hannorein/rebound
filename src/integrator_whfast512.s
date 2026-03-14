@@ -308,6 +308,66 @@ mat8_mul3_avx512_nomem:
 	vfmadd213pd	%zmm6, %zmm4, %zmm2
     ret
 
+mat8_mul3_avx512_new:
+    # 8x8 matrix multiplied with 3 different 8 vectors
+    # in: rax = vector to 64 matrix elements
+    # zmm0, zmm1, zmm2  input and output vectors
+    # uses: zmm3-zmm10
+    # The idea is to use embedded broadcast loads
+    # Note: matrix needs to be transposed.
+    subq    $192, %rsp
+    vmovupd %zmm0,   0(%rsp)
+    vmovupd %zmm1,  64(%rsp)
+    vmovupd %zmm2, 128(%rsp)
+
+    # Preload all matrix elements into registers.
+    # One register at a time might be just as fast?
+    vmovapd     (%rax), %zmm3
+    vmovapd     64(%rax), %zmm4
+    vmovapd     128(%rax), %zmm5
+    vmovapd     192(%rax), %zmm6
+    vmovapd     256(%rax), %zmm7
+    vmovapd     320(%rax), %zmm8
+    vmovapd     384(%rax), %zmm9
+    vmovapd     448(%rax), %zmm10
+
+    # Keeping three independent FMA chains going
+    vmulpd       0(%rsp){1to8}, %zmm3, %zmm0
+    vmulpd      64(%rsp){1to8}, %zmm3, %zmm1
+    vmulpd     128(%rsp){1to8}, %zmm3, %zmm2
+
+    vfmadd231pd   8(%rsp){1to8}, %zmm4, %zmm0
+    vfmadd231pd  72(%rsp){1to8}, %zmm4, %zmm1
+    vfmadd231pd 136(%rsp){1to8}, %zmm4, %zmm2
+
+    vfmadd231pd   16(%rsp){1to8}, %zmm5, %zmm0
+    vfmadd231pd  80(%rsp){1to8}, %zmm5, %zmm1
+    vfmadd231pd 144(%rsp){1to8}, %zmm5, %zmm2
+    
+    vfmadd231pd   24(%rsp){1to8}, %zmm6, %zmm0
+    vfmadd231pd  88(%rsp){1to8}, %zmm6, %zmm1
+    vfmadd231pd 152(%rsp){1to8}, %zmm6, %zmm2
+    
+    vfmadd231pd   32(%rsp){1to8}, %zmm7, %zmm0
+    vfmadd231pd  96(%rsp){1to8}, %zmm7, %zmm1
+    vfmadd231pd 160(%rsp){1to8}, %zmm7, %zmm2
+    
+    vfmadd231pd   40(%rsp){1to8}, %zmm8, %zmm0
+    vfmadd231pd  104(%rsp){1to8}, %zmm8, %zmm1
+    vfmadd231pd 168(%rsp){1to8}, %zmm8, %zmm2
+    
+    vfmadd231pd   48(%rsp){1to8}, %zmm9, %zmm0
+    vfmadd231pd  112(%rsp){1to8}, %zmm9, %zmm1
+    vfmadd231pd 176(%rsp){1to8}, %zmm9, %zmm2
+    
+    vfmadd231pd   56(%rsp){1to8}, %zmm10, %zmm0
+    vfmadd231pd  120(%rsp){1to8}, %zmm10, %zmm1
+    vfmadd231pd 184(%rsp){1to8}, %zmm10, %zmm2
+
+    addq    $192, %rsp
+    ret
+
+
 
 .macro BLOCK1 grflag
     # Input:   
@@ -346,7 +406,8 @@ mat8_mul3_avx512_nomem:
     vmovapd     Y, %zmm1
     vmovapd     Z, %zmm2
         
-    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm6 zmm7,zmm8, 
+#    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm6 zmm7,zmm8, 
+    call mat8_mul3_avx512_new
     
     vmovapd     %zmm0, HX        # TODO get rid of mov
     vmovapd     %zmm1, HY
@@ -539,7 +600,7 @@ mat8_mul3_avx512_nomem:
     # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
    
-    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm7,zmm8,zmm9 
+    call mat8_mul3_avx512_nomem # inout: zmm0, zmm1, zmm2. uses: zmm3,zmm4,zmm5,zmm6,zmm7,zmm8 
 
     # Update velocities
     vaddpd    VX, %zmm0, VX
