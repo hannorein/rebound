@@ -22,7 +22,6 @@ matrixidx:
     .quad 0,0,0,0,0,0,0,0
 
 .section .text
-#.globl gravity_prefactor_avx512_one_test
 .globl gravity_prefactor_avx512_one
 .globl gravity_prefactor_avx512
 .globl block1_gr
@@ -32,6 +31,7 @@ matrixidx:
 .extern local_reb_whfast512_kepler_step
 
 
+#Legacy called from C
 gravity_prefactor_avx512_one:
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
     
@@ -42,7 +42,7 @@ gravity_prefactor_avx512_one:
     vsqrtpd     %zmm0, %zmm1             
     vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
    
-    vbroadcastsd .one(%rip), %zmm1      # Todo: keep 1 in a register at all times 
+    vbroadcastsd .one(%rip), %zmm1      
     vdivpd      %zmm0, %zmm1, %zmm0      
     
     ret                                 # return 1 / r^3 in zmm0
@@ -57,27 +57,11 @@ gravity_prefactor_avx512_one_zmm6:
     vsqrtpd     %zmm6, %zmm7             
     vmulpd      %zmm6, %zmm7, %zmm6     # zmm6 is r^3
    
-    vbroadcastsd .one(%rip), %zmm7      # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm6, %zmm7, %zmm6      
+    vdivpd      %zmm6, ONE, %zmm6      
     
     ret                                 # return 1 / r^3 in zmm0
-gravity_prefactor_avx512_one_test:
-    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
-    
-    vmulpd      %zmm0, %zmm0, %zmm0     
-    vfmadd231pd %zmm1, %zmm1, %zmm0      
-    vfmadd231pd %zmm2, %zmm2, %zmm0     # zmm0 is now r^2
-    
-    vsqrtpd     %zmm0, %zmm1             
-    vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
-   
-    vbroadcastsd .one(%rip), %zmm1      # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm0, %zmm1, %zmm0      
-    
-    
-    ret                                 # return 1 / r^3 in zmm0
-    
 
+# Legacy. Called from C
 gravity_prefactor_avx512:
     # Input:  zmm0=m, zmm1=dx, zmm2=dy, zmm3=dz
     
@@ -314,14 +298,19 @@ mat8_mul3_avx512_nomem:
     #           rdi = p512
     #           rsi = Number of steps
 
-    movq %rsi, %r8
+
+# Load Constant
+    movq %rsi, %r8                           # Counter. TODO: leave in rsi and not use rsi elsewhere
+    kmovw   P512_MASK(%rdi), %k1             # mask
+    vbroadcastsd .one(%rip), ONE
+
+
 .LMainLoop\grflag:    
 
-    pushq %rdi
     call reb_whfast512_kepler_step
-    popq %rdi
 
-    kmovw   P512_MASK(%rdi), %k1             # mask
+
+# Interaction step:
 	
 
     vmovapd     P512_X(%rdi), %zmm0
@@ -337,8 +326,7 @@ mat8_mul3_avx512_nomem:
   
 
     #TODO: Make this an embedded load with {1to8} syntax
-    vbroadcastsd .one(%rip), %zmm5      # Todo: keep 1 in a register at all times 
-    vdivpd      %zmm4, %zmm5, %zmm4      
+    vdivpd      %zmm4, ONE, %zmm4      
     vmulpd  P512_M(%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
     vmulpd  P512_DT(%rdi), %zmm4, %zmm6        # dt*1/r^3*M
     
@@ -453,6 +441,7 @@ mat8_mul3_avx512_nomem:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
+    # TODO: Combine 1/r with multiplication
     call gravity_prefactor_avx512_one_zmm6  # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
     

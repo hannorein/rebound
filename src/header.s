@@ -19,4 +19,4 @@
 .set VX, %zmm10
 .set VY, %zmm11
 .set VZ, %zmm12
-
+.set ONE, %zmm26

@@ -12,14 +12,14 @@
 .set X, %zmm6
 .set Y, %zmm7
 .set Z, %zmm8
-.set VX, %zmm9
-.set VZ, %zmm10
-.set VY, %zmm11
-.set R, %zmm12
+.set R, %zmm9
+# VX zmm10
+# VY zmm11
+# VZ zmm12
 .set RI, %zmm13
 .set ZETA, %zmm14
 .set ETA, %zmm15
-.set ONE, %zmm16
+# zmm 16
 .set XX, %zmm17
 .set M, %zmm18
 .set DT, %zmm19
@@ -29,7 +29,7 @@
 .set GS3, %zmm23
 .set BETA, %zmm24
 .set HALF_MASK, %zmm25
-# zmm 26
+# ONE zmm26
 # zmm 27
 # zmm 28
 # zmm 29
@@ -118,7 +118,6 @@ reb_whfast512_kepler_step:
 
     # TODO: Move out of loop
     vpbroadcastq .HALF_MASK(%rip), HALF_MASK
-    vbroadcastsd    .DOUBLE_ONE(%rip), ONE      # 1.0  #TODO: Keep in memory or try loading 8 doubles in one go
 
     vmovapd    P512_X(%rdi), X
     vmovapd    P512_Y(%rdi), Y
