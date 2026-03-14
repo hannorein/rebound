@@ -3,7 +3,7 @@
 
 .section .rodata
     .align 64
-.one: 
+.DOUBLE_ONE: 
     .double 1.0
 
 .align 64
@@ -42,7 +42,7 @@ gravity_prefactor_avx512_one:
     vsqrtpd     %zmm0, %zmm1             
     vmulpd      %zmm0, %zmm1, %zmm0     # zmm0 is r^3
    
-    vbroadcastsd .one(%rip), %zmm1      
+    vbroadcastsd .DOUBLE_ONE(%rip), %zmm1      
     vdivpd      %zmm0, %zmm1, %zmm0      
     
     ret                                 # return 1 / r^3 in zmm0
@@ -301,8 +301,7 @@ mat8_mul3_avx512_nomem:
 
 # Load Constant
     movq %rsi, %r8                           # Counter. TODO: leave in rsi and not use rsi elsewhere
-    kmovw   P512_MASK(%rdi), %k1             # mask
-    vbroadcastsd .one(%rip), ONE
+    whfast512_init_registers
 
 
 .LMainLoop\grflag:    
@@ -328,7 +327,7 @@ mat8_mul3_avx512_nomem:
     #TODO: Make this an embedded load with {1to8} syntax
     vdivpd      %zmm4, ONE, %zmm4      
     vmulpd  P512_M(%rdi), %zmm4, %zmm4        # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd  P512_DT(%rdi), %zmm4, %zmm6        # dt*1/r^3*M
+    vmulpd  DT, %zmm4, %zmm6        # dt*1/r^3*M
     
     vmovapd     P512_VX(%rdi), VX
     vmovapd     P512_VY(%rdi), VY
@@ -392,8 +391,7 @@ mat8_mul3_avx512_nomem:
     #// 3201 7645
     
 
-    vmovapd P512_DT(%rdi), %zmm3                 # dt
-    vmulpd  P512_m(%rdi), %zmm3, %zmm3         # dt*m
+    vmulpd  P512_m(%rdi), DT, %zmm3         # dt*m
     
 
     vpermpd $0x4B, HX, %zmm0               # 01234567 -> 32017645

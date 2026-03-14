@@ -115,6 +115,8 @@ halley:
 .p2align 4
 .globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
+    
+    whfast512_init_registers
 
     # TODO: Move out of loop
     vpbroadcastq .HALF_MASK(%rip), HALF_MASK
@@ -125,7 +127,6 @@ reb_whfast512_kepler_step:
     vmovapd    P512_VX(%rdi), VX
     vmovapd    P512_VY(%rdi), VY
     vmovapd    P512_VZ(%rdi), VZ
-    vmovapd    P512_DT(%rdi), DT           
     vmovapd    P512_M(%rdi), M
     kmovb    P512_MASK(%rdi), %k1
     vmulpd    X, X, %zmm0
@@ -214,9 +215,10 @@ reb_whfast512_kepler_step:
 
 .section    .rodata
 invfactorial:
-.IF1:
+.IF0:
 .DOUBLE_ONE:
     .double     1.0
+.IF1:
     .double     1.0
 .IF2:
 .DOUBLE_HALF:
