@@ -27,3 +27,23 @@
 .set HALF_MASK, %zmm28
 .set M, %zmm16
 
+# Only used in Interaction step:
+.set HVX, %zmm13
+.set HVY, %zmm14
+.set HVZ, %zmm15
+.set HX, %zmm17
+.set HY, %zmm18
+.set HZ, %zmm19
+
+# Onlt used in Kepler step:
+.set R, %zmm9
+.set RI, %zmm13
+.set ZETA, %zmm14
+.set ETA, %zmm15
+.set XX, %zmm17
+.set GS0, %zmm20
+.set GS1, %zmm21
+.set GS2, %zmm22
+.set GS3, %zmm23
+.set BETA, %zmm24
+

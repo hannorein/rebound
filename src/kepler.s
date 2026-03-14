@@ -2,30 +2,6 @@
 
 .text
 
-# general purpose:
-# zmm0
-# zmm1
-# zmm2
-# zmm3
-# zmm4
-# zmm5
-# reserved/persistant:
-.set R, %zmm9
-.set RI, %zmm13
-.set ZETA, %zmm14
-.set ETA, %zmm15
-# zmm 16
-.set XX, %zmm17
-.set GS0, %zmm20
-.set GS1, %zmm21
-.set GS2, %zmm22
-.set GS3, %zmm23
-.set BETA, %zmm24
-# zmm 27
-# zmm 29
-# zmm 30
-# zmm 31
-
 # High accuracy: (Gs1, Gs2, Gs3)
 mm_stiefel_Gs13_avx512:
     vmulpd    XX, XX, %zmm2     # X^2
@@ -93,7 +69,7 @@ halley:
     vfmadd132pd     ZETA, GS0, GS1          # fpp
 
     vmulpd          GS1, GS3, GS1           # f*fpp
-    # Next instruction uses exponent trick to speed up multiplication by 0.5 using integer sub
+    # Next instruction uses exponent trick to speed up multiplication by 0.5 by using integer subtraction
     vpsubq          HALF_MASK, GS1, GS1     # 0.5*f*fpp
     vfmsub231pd     GS2, GS2, GS1           # fp*fp-0.5*f*fpp
     vmulpd          GS3, GS2, GS3           # f*fp
@@ -130,7 +106,7 @@ reb_whfast512_kepler_step_noinit:
     vfnmadd132pd    R, M, ZETA              # zeta
     vmulpd    RI, DT, %zmm5              # dt/r
     vmulpd    ETA, %zmm5, %zmm4             # eta*dt/r
-    vmulpd    .DOUBLE_HALF(%rip){1to8}, %zmm4, %zmm4     # 0.5*eta*dt/r
+    vpsubq          HALF_MASK, %zmm4, %zmm4     # 0.5*eta*dt/r  (Note: integer sub trick)
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd    %zmm5, %zmm4, XX              # X (initial guess)
     
@@ -204,7 +180,6 @@ invfactorial:
 .IF1:
     .double     1.0
 .IF2:
-.DOUBLE_HALF:
     .double     0.5
 .IF3:
     .long    1431655765
@@ -290,37 +265,5 @@ invfactorial:
 #    .long    938635522
     #
 
-
 .section    .note.GNU-stack,"",@progbits
     
-#.align 8
-#.DOUBLE_FIVE:
-#    .long    0
-#    .long    1075052544
-#.align 8
-#.DOUBLE_SIXTEEN:
-#    .long    0
-#    .long    1076887552
-#.align 8
-#.DOUBLE_TWENTY:
-#    .long    0
-#    .long    1077149696
-#.align 8
-#
-#.set FIVE, %zmm17
-#.set SIXTEEN, %zmm18
-#.set TWENTY, %zmm19
-#    vbroadcastsd    .DOUBLE_FIVE(%rip), FIVE
-#    vbroadcastsd    .DOUBLE_SIXTEEN(%rip), SIXTEEN
-#    vbroadcastsd    .DOUBLE_TWENTY(%rip), TWENTY # constants for Halley
-
-    # Old Halley
-    # vmulpd    GS2, GS2, %zmm4
-    # vmulpd    SIXTEEN, %zmm4, %zmm4
-    # vmulpd    %zmm3, GS1, %zmm0
-    # vfnmadd132pd    TWENTY, %zmm4, %zmm0
-    # vmulpd    FIVE, %zmm3, %zmm3
-    # vsqrtpd    %zmm0, %zmm0
-    # vaddpd    %zmm0, %zmm2, %zmm2
-    # vfmsub132pd    %zmm2, %zmm3, XX
-    # vdivpd    %zmm2, XX, XX

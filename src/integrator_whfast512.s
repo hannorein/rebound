@@ -218,15 +218,15 @@ mat8_mul3_avx512_nomem:
 	vmulpd	%zmm4, %zmm3, %zmm3
 	vmovapd	%zmm3, %zmm7
 	vbroadcastsd	%xmm1, %zmm3
-	movl	$1, %esi
+	movl	$1, %edx
 	vmulpd	%zmm4, %zmm3, %zmm3
 	vmovapd	%zmm3, %zmm8
 	vbroadcastsd	%xmm2, %zmm3
 	vmulpd	%zmm4, %zmm3, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	64(%rax), %zmm4
-	movl	$2, %esi
+	movl	$2, %edx
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm7, %zmm4, %zmm5
 	vmovapd	%zmm5, %zmm7  #TODO Remove mov
@@ -236,9 +236,9 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm5, %zmm8
 	vfmadd213pd	%zmm9, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	128(%rax), %zmm4
-	movl	$3, %esi
+	movl	$3, %edx
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm7, %zmm4, %zmm5
 	vmovapd	%zmm5, %zmm7
@@ -248,9 +248,9 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm5, %zmm8
 	vfmadd213pd	%zmm9, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	192(%rax), %zmm4
-	movl	$4, %esi
+	movl	$4, %edx
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm7, %zmm4, %zmm5
 	vmovapd	%zmm5, %zmm7
@@ -260,9 +260,9 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm5, %zmm8
 	vfmadd213pd	%zmm9, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	256(%rax), %zmm4
-	movl	$5, %esi
+	movl	$5, %edx
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm7, %zmm4, %zmm5
 	vmovapd	%zmm5, %zmm7
@@ -272,9 +272,9 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm5, %zmm8
 	vfmadd213pd	%zmm9, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	320(%rax), %zmm4
-	movl	$6, %esi
+	movl	$6, %edx
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm7, %zmm4, %zmm5
 	vmovapd	%zmm5, %zmm7
@@ -284,9 +284,9 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm5, %zmm8
 	vfmadd213pd	%zmm9, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	384(%rax), %zmm4
-	movl	$7, %esi
+	movl	$7, %edx
 	vpermpd	%zmm0, %zmm3, %zmm5
 	vfmadd213pd	%zmm7, %zmm4, %zmm5
 	vmovapd	%zmm5, %zmm7
@@ -296,7 +296,7 @@ mat8_mul3_avx512_nomem:
 	vmovapd	%zmm5, %zmm8
 	vfmadd213pd	%zmm9, %zmm4, %zmm3
 	vmovapd	%zmm3, %zmm9
-	vpbroadcastq	%rsi, %zmm3
+	vpbroadcastq	%rdx, %zmm3
 	vmovapd	448(%rax), %zmm4
 	vpermpd	%zmm0, %zmm3, %zmm0
 	vfmadd213pd	%zmm7, %zmm4, %zmm0
@@ -307,18 +307,10 @@ mat8_mul3_avx512_nomem:
     ret
 
 
-.set HVX, %zmm13
-.set HVY, %zmm14
-.set HVZ, %zmm15
-
-.set HX, %zmm17
-.set HY, %zmm18
-.set HZ, %zmm19
-
 .macro BLOCK1 grflag
     # Input:   
     #           rdi = p512
-    #           rsi = Number of steps
+    #           rsi = Number of steps (counting down)
 
 # Load Constant
     call reb_whfast512_init_registers
