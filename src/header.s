@@ -29,13 +29,13 @@
 .set HZ, %zmm21
 
 # Only used in Kepler step:
-.set R, %zmm12
-.set RI, %zmm13
-.set ZETA, %zmm14
-.set ETA, %zmm15
-.set XX, %zmm16
-.set GS0, %zmm17
-.set GS1, %zmm18
+.set R, %zmm13
+.set RI, %zmm14
+.set ZETA, %zmm15
+.set ETA, %zmm16
+.set XX, %zmm17
+.set GS0, %zmm18
+.set GS1, %zmm0     # Note: reusing register zmm0
 .set GS2, %zmm19
 .set GS3, %zmm20
 .set BETA, %zmm21

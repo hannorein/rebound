@@ -3,6 +3,7 @@
 .text
 
 # High accuracy: (Gs1, Gs2, Gs3)
+# Output: GS0, GS1==%zmm0, GS2, GS3
 mm_stiefel_Gs13_avx512:
     vmulpd    XX, XX, %zmm2     # X^2
     vbroadcastsd    .IF19(%rip), %zmm3
@@ -24,14 +25,14 @@ mm_stiefel_Gs13_avx512:
     vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
     vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
-    vmulpd    %zmm3, XX, %zmm3
-    vfnmadd132pd    %zmm3, XX, %zmm0
-    vmovapd    %zmm0, GS1  # TODO: combine with previous instruction
-    vmulpd    %zmm3, %zmm2, GS3
     vmulpd    %zmm4, %zmm2, GS2
+    vmulpd    %zmm3, XX, %zmm3
+    vmulpd    %zmm3, %zmm2, GS3
+    vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
     ret
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
+# Output: GS0, GS1==%zmm0, GS2, GS3
 mm_stiefel_Gs03_avx512:
     vmulpd    XX, XX, %zmm2
     vbroadcastsd    .IF11(%rip), %zmm3
@@ -47,11 +48,10 @@ mm_stiefel_Gs03_avx512:
     vmovapd    %zmm4, GS0
     vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF1(%rip){1to8}, %zmm0, GS0
-    vmulpd    %zmm3, XX, %zmm3
-    vfnmadd132pd    %zmm3, XX, %zmm0
-    vmovapd    %zmm0, GS1  # TODO: combine with previous instruction
-    vmulpd    %zmm3, %zmm2, GS3
     vmulpd    %zmm4, %zmm2, GS2
+    vmulpd    %zmm3, XX, %zmm3
+    vmulpd    %zmm3, %zmm2, GS3
+    vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
     ret
 
 halley:
@@ -139,9 +139,9 @@ reb_whfast512_kepler_step_noinit:
     vaddpd    R, %zmm2, XX
     vdivpd  XX, ONE, %zmm4       # ri in C
     
-    vmulpd    GS2, M, %zmm0
-    vmulpd    RI, %zmm0, %zmm3        # negative f
-    vmulpd    %zmm0, %zmm4, %zmm2     # negative gd
+    vmulpd    GS2, M, %zmm5
+    vmulpd    RI, %zmm5, %zmm3        # negative f
+    vmulpd    %zmm5, %zmm4, %zmm2     # negative gd
     vmovapd    DT, %zmm1
     vfnmadd231pd    GS3, M, %zmm1   # g 
     vmulpd    GS1, M, %zmm0
