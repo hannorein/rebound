@@ -3,12 +3,12 @@
 .text
 
 # High accuracy: (Gs1, Gs2, Gs3)
-# Output: GS0, GS1==%zmm0, GS2, GS3
+# Output: GS1==%zmm0, GS2, GS3
 mm_stiefel_Gs13_avx512:
-    vmulpd    XX, XX, %zmm2     # X^2
+    vmulpd          XX, XX, %zmm2     # X^2
     vbroadcastsd    .IF19(%rip), %zmm3
     vbroadcastsd    .IF18(%rip), %zmm4
-    vmulpd    %zmm2, BETA, %zmm0
+    vmulpd          %zmm2, BETA, %zmm0
     vfnmadd213pd    .IF17(%rip){1to8}, %zmm0, %zmm3
     vfnmadd213pd    .IF16(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF15(%rip){1to8}, %zmm0, %zmm3
@@ -25,19 +25,19 @@ mm_stiefel_Gs13_avx512:
     vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
     vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
-    vmulpd    %zmm4, %zmm2, GS2
-    vmulpd    %zmm3, XX, %zmm3
-    vmulpd    %zmm3, %zmm2, GS3
+    vmulpd          %zmm4, %zmm2, GS2
+    vmulpd          %zmm3, XX, %zmm3
+    vmulpd          %zmm3, %zmm2, GS3
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
     ret
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: GS0, GS1==%zmm0, GS2, GS3
-mm_stiefel_Gs03_avx512:
-    vmulpd    XX, XX, %zmm2
+.macro mm_stiefel_Gs03_avx512
+    vmulpd          XX, XX, %zmm2
     vbroadcastsd    .IF11(%rip), %zmm3
     vbroadcastsd    .IF10(%rip), %zmm4
-    vmulpd    %zmm2, BETA, %zmm0
+    vmulpd          %zmm2, BETA, %zmm0
     vfnmadd213pd    .IF9(%rip){1to8}, %zmm0, %zmm3
     vfnmadd213pd    .IF8(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF7(%rip){1to8}, %zmm0, %zmm3
@@ -45,16 +45,16 @@ mm_stiefel_Gs03_avx512:
     vfnmadd213pd    .IF5(%rip){1to8}, %zmm0, %zmm3
     vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
-    vmovapd    %zmm4, GS0
+    vmovapd         %zmm4, GS0
     vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
     vfnmadd213pd    .IF1(%rip){1to8}, %zmm0, GS0
-    vmulpd    %zmm4, %zmm2, GS2
-    vmulpd    %zmm3, XX, %zmm3
-    vmulpd    %zmm3, %zmm2, GS3
+    vmulpd          %zmm4, %zmm2, GS2
+    vmulpd          %zmm3, XX, %zmm3
+    vmulpd          %zmm3, %zmm2, GS3
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
-    ret
+.endm
 
-halley:
+.macro halley
     # In: GS0,GS1,GS2,GS3
     # Out: XX
     # No other registers used.
@@ -75,7 +75,7 @@ halley:
     vmulpd          GS3, GS2, GS3           # f*fp
     vdivpd          GS1, GS3, GS3
     vsubpd          GS3, XX, XX
-    ret
+.endm
 
 
 .p2align 4
@@ -110,11 +110,11 @@ reb_whfast512_kepler_step_noinit:
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd    %zmm5, %zmm4, XX              # X (initial guess)
     
-    call    mm_stiefel_Gs03_avx512
-    call    halley
+    mm_stiefel_Gs03_avx512
+    halley
 
-    call    mm_stiefel_Gs03_avx512
-    call    halley
+    mm_stiefel_Gs03_avx512
+    halley
     
 
     call    mm_stiefel_Gs13_avx512
