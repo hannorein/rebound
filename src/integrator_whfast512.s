@@ -75,17 +75,16 @@ gravity_prefactor:
     vaddpd     \reg, \temp_reg, \reg
 .endm
         
-mat8_mul3:
+.macro mat8_mul3 in0, in1, in2, out0, out1, out2
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
     # zmm0, zmm1, zmm2  input and output vectors
     # uses: zmm3-zmm10
     # The idea is to use embedded broadcast loads
     # Note: matrix needs to be transposed.
-    subq    $192, %rsp
-    vmovupd %zmm0,   0(%rsp)
-    vmovupd %zmm1,  64(%rsp)
-    vmovupd %zmm2, 128(%rsp)
+    vmovupd \in0,   0(%rsp)
+    vmovupd \in1,  64(%rsp)
+    vmovupd \in2, 128(%rsp)
 
     # Preload all matrix elements into registers.
     # One register at a time might be just as fast?
@@ -99,41 +98,39 @@ mat8_mul3:
     vmovapd     448(%rax), %zmm10
 
     # Keeping three independent FMA chains going
-    vmulpd       0(%rsp){1to8}, %zmm3, %zmm0
-    vmulpd      64(%rsp){1to8}, %zmm3, %zmm1
-    vmulpd     128(%rsp){1to8}, %zmm3, %zmm2
+    vmulpd       0(%rsp){1to8}, %zmm3, \out0
+    vmulpd      64(%rsp){1to8}, %zmm3, \out1
+    vmulpd     128(%rsp){1to8}, %zmm3, \out2
 
-    vfmadd231pd   8(%rsp){1to8}, %zmm4, %zmm0
-    vfmadd231pd  72(%rsp){1to8}, %zmm4, %zmm1
-    vfmadd231pd 136(%rsp){1to8}, %zmm4, %zmm2
+    vfmadd231pd   8(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd  72(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 136(%rsp){1to8}, %zmm4, \out2
 
-    vfmadd231pd   16(%rsp){1to8}, %zmm5, %zmm0
-    vfmadd231pd  80(%rsp){1to8}, %zmm5, %zmm1
-    vfmadd231pd 144(%rsp){1to8}, %zmm5, %zmm2
+    vfmadd231pd  16(%rsp){1to8}, %zmm5, \out0
+    vfmadd231pd  80(%rsp){1to8}, %zmm5, \out1
+    vfmadd231pd 144(%rsp){1to8}, %zmm5, \out2
     
-    vfmadd231pd   24(%rsp){1to8}, %zmm6, %zmm0
-    vfmadd231pd  88(%rsp){1to8}, %zmm6, %zmm1
-    vfmadd231pd 152(%rsp){1to8}, %zmm6, %zmm2
+    vfmadd231pd  24(%rsp){1to8}, %zmm6, \out0
+    vfmadd231pd  88(%rsp){1to8}, %zmm6, \out1
+    vfmadd231pd 152(%rsp){1to8}, %zmm6, \out2
     
-    vfmadd231pd   32(%rsp){1to8}, %zmm7, %zmm0
-    vfmadd231pd  96(%rsp){1to8}, %zmm7, %zmm1
-    vfmadd231pd 160(%rsp){1to8}, %zmm7, %zmm2
+    vfmadd231pd  32(%rsp){1to8}, %zmm7, \out0
+    vfmadd231pd  96(%rsp){1to8}, %zmm7, \out1
+    vfmadd231pd 160(%rsp){1to8}, %zmm7, \out2
     
-    vfmadd231pd   40(%rsp){1to8}, %zmm8, %zmm0
-    vfmadd231pd  104(%rsp){1to8}, %zmm8, %zmm1
-    vfmadd231pd 168(%rsp){1to8}, %zmm8, %zmm2
+    vfmadd231pd  40(%rsp){1to8}, %zmm8, \out0
+    vfmadd231pd 104(%rsp){1to8}, %zmm8, \out1
+    vfmadd231pd 168(%rsp){1to8}, %zmm8, \out2
     
-    vfmadd231pd   48(%rsp){1to8}, %zmm9, %zmm0
-    vfmadd231pd  112(%rsp){1to8}, %zmm9, %zmm1
-    vfmadd231pd 176(%rsp){1to8}, %zmm9, %zmm2
+    vfmadd231pd  48(%rsp){1to8}, %zmm9, \out0
+    vfmadd231pd 112(%rsp){1to8}, %zmm9, \out1
+    vfmadd231pd 176(%rsp){1to8}, %zmm9, \out2
     
-    vfmadd231pd   56(%rsp){1to8}, %zmm10, %zmm0
-    vfmadd231pd  120(%rsp){1to8}, %zmm10, %zmm1
-    vfmadd231pd 184(%rsp){1to8}, %zmm10, %zmm2
+    vfmadd231pd  56(%rsp){1to8}, %zmm10, \out0
+    vfmadd231pd 120(%rsp){1to8}, %zmm10, \out1
+    vfmadd231pd 184(%rsp){1to8}, %zmm10, \out2
 
-    addq    $192, %rsp
-    ret
-
+   .endm
 
 
 .macro BLOCK1 grflag
@@ -141,9 +138,10 @@ mat8_mul3:
     #           rdi = p512
     #           rsi = Number of steps (counting down)
 
-# Load Constant
+    # Load Constant
     call reb_whfast512_init_registers
-
+    # Allocate space on stack for matrix multiplications
+    subq    $192, %rsp
 
 ####################################    
 #   Start Main Loop
@@ -152,7 +150,7 @@ mat8_mul3:
 
     call reb_whfast512_kepler_step_noinit
 
-# Interaction step:
+    # Interaction step:
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
     vfmadd231pd Y, Y, %zmm4      
@@ -168,26 +166,16 @@ mat8_mul3:
     vfmadd231pd     Z, %zmm6, VZ{%k1}{z} 
     
     leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rax  # mat8_inertial_to_jacobi
-    
-    vmovapd     X, %zmm0        # TODO get rid of mov
-    vmovapd     Y, %zmm1
-    vmovapd     Z, %zmm2
-        
-    call mat8_mul3
-    
-    vmovapd     %zmm0, HX       # TODO get rid of mov
-    vmovapd     %zmm1, HY
-    vmovapd     %zmm2, HZ
-        
-    vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
+    mat8_mul3 X, Y, Z, HX, HY, HZ
     
     # Calculating r, r^2, r^3 for Jacobi term and GR
-    vmulpd      %zmm0, %zmm0, %zmm6
-    vfmadd231pd %zmm1, %zmm1, %zmm6
-    vfmadd231pd %zmm2, %zmm2, %zmm6         # r^2
+    vmulpd      HX, HX, %zmm6
+    vfmadd231pd HY, HY, %zmm6
+    vfmadd231pd HZ, HZ, %zmm6         # r^2
     vsqrtpd     %zmm6, %zmm7                # r
         
     # Jacobi term
+    vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
     vdivpd    %zmm7, %zmm5, %zmm8{%k1}{z}   # -m0*dt/r^3 (jacobi term)
 
@@ -198,9 +186,9 @@ mat8_mul3:
         vmulpd    %zmm6, %zmm6, %zmm5               # r^4
         vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}       # -dt*6*m0*m0/(c*c) /r^4
 
-        vmulpd    %zmm7, %zmm0, %zmm5               # -x_j*dt*6*m0*m0/(c*c) /r^4
-        vmulpd    %zmm7, %zmm1, %zmm6
-        vmulpd    %zmm7, %zmm2, %zmm7
+        vmulpd    %zmm7, HX, %zmm5               # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm7, HY, %zmm6
+        vmulpd    %zmm7, HZ, %zmm7
         
         vmulpd    %zmm5, %zmm4, HVX{%k1}{z}         # x_j*dt*6*m0*m/(c*c) /r^4 
         vmulpd    %zmm6, %zmm4, HVY{%k1}{z}
@@ -210,28 +198,26 @@ mat8_mul3:
         REDUCE_ADD_AND_BROADCAST HVY, %zmm4
         REDUCE_ADD_AND_BROADCAST HVZ, %zmm4
 
-        vfmadd231pd  %zmm8, %zmm0, HVX          # delta v_x due to Jacobi term + GR backreaction
-        vfmadd231pd  %zmm8, %zmm1, HVY
-        vfmadd231pd  %zmm8, %zmm2, HVZ
+        vfmadd231pd  %zmm8, HX, HVX          # delta v_x due to Jacobi term + GR backreaction
+        vfmadd231pd  %zmm8, HY, HVY
+        vfmadd231pd  %zmm8, HZ, HVZ
         
-        vaddpd    %zmm5, HVX, HVX               # delta v_x due to gr
+        vaddpd    %zmm5, HVX, HVX               # delta v_x due to Jacobi term + GR backreaction + GR
         vaddpd    %zmm6, HVY, HVY
         vaddpd    %zmm7, HVZ, HVZ
     .else
-        vmulpd    %zmm8, %zmm0, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
-        vmulpd    %zmm8, %zmm1, HVY
-        vmulpd    %zmm8, %zmm2, HVZ
+        vmulpd    %zmm8, HX, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+        vmulpd    %zmm8, HY, HVY
+        vmulpd    %zmm8, HZ, HVZ
     .endif
 
     #################################################################
     #// 0123 4567
     #// 3201 7645
-    
 
     vmulpd  P512_m(%rdi), DT, %zmm3         # dt*m
-    
 
-    vpermpd $0x4B, HX, %zmm0               # 01234567 -> 32017645
+    vpermpd $0x4B, HX, %zmm0                # 01234567 -> 32017645
     vpermpd $0x4B, HY, %zmm1
     vpermpd $0x4B, HZ, %zmm2
     vpermpd $0x4B, %zmm3, %zmm4
@@ -240,21 +226,18 @@ mat8_mul3:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    call gravity_prefactor  # zmm6 is 1/r^3
-    vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
+    call gravity_prefactor                  # zmm6 is 1/r^3
+    vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
     
     vfnmadd231pd %zmm5, %zmm0,  HVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
-
-    vmulpd      %zmm6, %zmm3, %zmm5      # m/r^3
-    vpermpd $0x1E, %zmm0, %zmm0               # 32017645 -> 01234567
+    vmulpd      %zmm6, %zmm3, %zmm5         # dt*m/r^3
+    vpermpd $0x1E, %zmm0, %zmm0             # 32017645 -> 01234567
     vpermpd $0x1E, %zmm1, %zmm1
     vpermpd $0x1E, %zmm2, %zmm2
     vpermpd $0x1E, %zmm5, %zmm5
-
-
 
     #// 0123 4567
     #// 2310 6754
@@ -267,18 +250,18 @@ mat8_mul3:
     #// 0123 4567
     #// 1032 5476
     
-    vshufpd $0x55, HX, HX, %zmm0               # 01234567 -> 10325476
-    vshufpd $0x55, HY, HY, %zmm1               # Using vshufpd (1 cycle) rather than vpermpd (3 cycles) 
+    vshufpd $0x55, HX, HX, %zmm0                # 01234567 -> 10325476
+    vshufpd $0x55, HY, HY, %zmm1                # Using vshufpd (1 cycle) rather than vpermpd (3 cycles) 
     vshufpd $0x55, HZ, HZ, %zmm2
     vshufpd $0x55, %zmm3, %zmm3, %zmm4 
 
-    vsubpd  %zmm0, HX, %zmm0                # d_x
+    vsubpd  %zmm0, HX, %zmm0                    # d_x
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
     # TODO: Combine 1/r with multiplication
-    call gravity_prefactor  # zmm6 is 1/r^3
-    vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
+    call gravity_prefactor                      # zmm6 is 1/r^3
+    vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
     
     vfnmadd231pd %zmm5, %zmm0,  HVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
@@ -290,25 +273,23 @@ mat8_mul3:
     
     vmovdqa64 b3idx(%rip), %zmm7
 
-    vpermpd HX, %zmm7, %zmm0               # 01234567 -> 45671230 
+    vpermpd HX, %zmm7, %zmm0                    # 01234567 -> 45671230 
     vpermpd HY, %zmm7, %zmm1
     vpermpd HZ, %zmm7, %zmm2
     vpermpd %zmm3, %zmm7, %zmm4 
 
-    vsubpd  %zmm0, HX, %zmm0                # d_x
+    vsubpd  %zmm0, HX, %zmm0                    # d_x
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-
-    call gravity_prefactor  # zmm6 is 1/r^3
-    vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
+    call gravity_prefactor                      # zmm6 is 1/r^3
+    vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
-
-    vmulpd      %zmm6, %zmm3, %zmm5      # m/r^3
+    vmulpd      %zmm6, %zmm3, %zmm5             # m/r^3
     
     #// 4567 1230
     #// 0123 4567
@@ -316,36 +297,33 @@ mat8_mul3:
     vmulpd %zmm5, %zmm1,  HVYC
     vmulpd %zmm5, %zmm2,  HVZC
 
-
     #################################################################
     #// 0123 4567
     #// 5674 2301
     
     vmovdqa64 b4idx(%rip), %zmm7
 
-    vpermpd HX, %zmm7, %zmm0               # 01234567 -> 56742301  
-    vpermpd HY, %zmm7, %zmm1                # TODO: Make this an in-line shuffle be reusing block3 data
+    vpermpd HX, %zmm7, %zmm0                    # 01234567 -> 56742301  
+    vpermpd HY, %zmm7, %zmm1                    # TODO: Make this an in-line shuffle be reusing block3 data
     vpermpd HZ, %zmm7, %zmm2
     vpermpd %zmm3, %zmm7, %zmm4 
 
-    vsubpd  %zmm0, HX, %zmm0                # d_x
+    vsubpd  %zmm0, HX, %zmm0                    # d_x
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-
-    call gravity_prefactor  # zmm6 is 1/r^3
-    vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
+    call gravity_prefactor                      # zmm6 is 1/r^3
+    vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
-    vmulpd      %zmm6, %zmm3, %zmm5      # m/r^3
-    vpermpd $0x93, %zmm0, %zmm0               # 5674 2301 -> 4567 1230
+    vmulpd      %zmm6, %zmm3, %zmm5             # m/r^3
+    vpermpd $0x93, %zmm0, %zmm0                 # 5674 2301 -> 4567 1230
     vpermpd $0x93, %zmm1, %zmm1
     vpermpd $0x93, %zmm2, %zmm2
     vpermpd $0x93, %zmm5, %zmm5
-
     
     #// 4567 1230
     #// 3012 7456
@@ -366,14 +344,15 @@ mat8_mul3:
     vaddpd %zmm1, HVY, %zmm1{%k1}{z}
     vaddpd %zmm2, HVZ, %zmm2{%k1}{z}
 
-
     # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
    
-    call mat8_mul3
+    mat8_mul3 %zmm0, %zmm1, %zmm2, %zmm0, %zmm1, %zmm2
 
     # Update velocities
-    vaddpd    VX, %zmm0, VX
+    # This could be combined with mat8_mul3.
+    # However, that would increase floating point errors because sum(DVX) << VX
+    vaddpd    VX, %zmm0, VX        
     vaddpd    VY, %zmm1, VY
     vaddpd    VZ, %zmm2, VZ
 
@@ -392,6 +371,7 @@ mat8_mul3:
     vmovapd    Y, P512_Y(%rdi)
     vmovapd    Z, P512_Z(%rdi)
 
+    addq    $192, %rsp
     ret
 .endm
 
