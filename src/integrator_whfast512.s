@@ -337,7 +337,7 @@
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
     vfmadd231pd Y, Y, %zmm4      
-    vfmadd231pd Z, Z, %zmm4     # r^2
+    vfmadd231pd Z, Z, %zmm4             # r^2
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
@@ -353,11 +353,11 @@
     # Calculating r, r^2, r^3 for Jacobi term and GR
     vmulpd      HX, HX, %zmm6
     vfmadd231pd HY, HY, %zmm6
-    vfmadd231pd HZ, HZ, %zmm6         # r^2
+    vfmadd231pd HZ, HZ, %zmm6               # r^2
     vsqrtpd     %zmm6, %zmm7                # r
         
     # Jacobi term
-    vmovapd     P512_M0(%rdi), %zmm5   # -m0*dt
+    vmovapd     P512_M0(%rdi), %zmm5        # -m0*dt
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
     vdivpd    %zmm7, %zmm5, %zmm8{%k1}{z}   # -m0*dt/r^3 (jacobi term)
 
@@ -368,7 +368,7 @@
         vmulpd    %zmm6, %zmm6, %zmm5               # r^4
         vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}       # -dt*6*m0*m0/(c*c) /r^4
 
-        vmulpd    %zmm7, HX, %zmm5               # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm7, HX, %zmm5                  # -x_j*dt*6*m0*m0/(c*c) /r^4
         vmulpd    %zmm7, HY, %zmm6
         vmulpd    %zmm7, HZ, %zmm7
         
@@ -384,7 +384,7 @@
         vfmadd231pd  %zmm8, HY, HVY
         vfmadd231pd  %zmm8, HZ, HVZ
         
-        vaddpd    %zmm5, HVX, HVX               # delta v_x due to Jacobi term + GR backreaction + GR
+        vaddpd    %zmm5, HVX, HVX            # delta v_x due to Jacobi term + GR backreaction + GR
         vaddpd    %zmm6, HVY, HVY
         vaddpd    %zmm7, HVZ, HVZ
     .else
@@ -408,7 +408,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    gravity_prefactor                  # zmm6 is 1/r^3
+    gravity_prefactor                       # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
     
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -462,7 +462,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    gravity_prefactor                      # zmm6 is 1/r^3
+    gravity_prefactor                           # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -492,7 +492,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    gravity_prefactor                      # zmm6 is 1/r^3
+    gravity_prefactor                           # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -650,7 +650,7 @@ invfactorial:
 .IF19:
     .long    1182875991
     .long    1013118107
-# Parts of inverse vactorial not used at the moment:    
+# Parts of inverse factorial not used at the moment:    
 #    .long    -1543372251
 #    .long    1008620587
 #    .long    -153291406
