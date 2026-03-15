@@ -1,4 +1,7 @@
 # file: integrator_whfast512.s
+.section .text
+.globl block1_gr
+.globl block1_nogr
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -57,10 +60,6 @@
 .set HALF_MASK, %zmm30
 .set M, %zmm31
 .set M_DT, %zmm12   # Only used once per step.
-
-.section .text
-.globl block1_gr
-.globl block1_nogr
 
 .macro reb_whfast512_init_registers
     kmovw           P512_MASK(%rdi), %k1
@@ -244,7 +243,7 @@
     vmulpd          GS1, XX, XX
     vfnmadd132pd    ETA, XX, GS2
     vaddpd          R, GS1, XX
-    vdivpd          XX, ONE, XX
+    vdivpd          XX, ONE, XX         # TODO: Hot spot
     vfnmadd231pd    GS3, ZETA, GS2
     vaddpd          GS2, DT, GS2
     vmulpd          GS2, XX, XX
@@ -279,7 +278,7 @@
     vmulpd          ETA, %zmm5, %zmm4           # eta*dt/r
     vpsubq          HALF_MASK, %zmm4, %zmm4     # 0.5*eta*dt/r  (Note: integer sub trick)
     vfnmadd132pd    RI, ONE, %zmm4        
-    vmulpd          %zmm5, %zmm4, XX            # X (initial guess)
+    vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
    
     # Iterations to improve X
     mm_stiefel_Gs03_avx512
@@ -590,7 +589,7 @@ b4idx:
 b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
 
-
+# Inverse factorial table
 .align 64
 invfactorial:
 .IF0:
