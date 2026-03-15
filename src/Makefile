@@ -12,7 +12,7 @@ ifneq ($(OS),Windows_NT)
 	@echo "Compiling source file $< ..."
 	$(CC) -c $(OPT) $(PREDEF) -o $@ $<
 
-integrator_whfast512.asm_o: integrator_whfast512.s header.s
+integrator_whfast512.asm_o: integrator_whfast512.s
 	@echo "Assembling source file integrator_whfast512.s ..."
 	as -g -o $@ $<
 
