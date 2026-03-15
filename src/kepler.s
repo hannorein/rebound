@@ -4,7 +4,7 @@
 
 # High accuracy: (Gs1, Gs2, Gs3)
 # Output: GS1==%zmm0, GS2, GS3
-mm_stiefel_Gs13_avx512:
+.macro mm_stiefel_Gs13_avx512
     vmulpd          XX, XX, %zmm2     # X^2
     vbroadcastsd    .IF19(%rip), %zmm3
     vbroadcastsd    .IF18(%rip), %zmm4
@@ -29,11 +29,11 @@ mm_stiefel_Gs13_avx512:
     vmulpd          %zmm3, XX, %zmm3
     vmulpd          %zmm3, %zmm2, GS3
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
-    ret
+.endm
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: GS0, GS1==%zmm0, GS2, GS3
-mm_stiefel_Gs03_avx512:
+.macro mm_stiefel_Gs03_avx512
     vmulpd          XX, XX, %zmm2
     vbroadcastsd    .IF11(%rip), %zmm3
     vbroadcastsd    .IF10(%rip), %zmm4
@@ -52,9 +52,9 @@ mm_stiefel_Gs03_avx512:
     vmulpd          %zmm3, XX, %zmm3
     vmulpd          %zmm3, %zmm2, GS3
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
-    ret
+.endm
 
-halley:
+.macro halley
     # In: GS0,GS1,GS2,GS3
     # Out: XX
     # No other registers used. Destroys input.
@@ -75,9 +75,9 @@ halley:
     vmulpd          GS3, GS2, GS3           # f*fp
     vdivpd          GS1, GS3, GS3
     vsubpd          GS3, XX, XX
-    ret
+.endm
 
-newton:
+.macro newton
     # In: GS1,GS2,GS3
     # Out: XX
     # No other registers used. Destroys input.
@@ -90,7 +90,7 @@ newton:
     vfnmadd231pd    GS3, ZETA, GS2
     vaddpd          GS2, DT, GS2
     vmulpd          GS2, XX, XX
-    ret
+.endm
 
 .p2align 4
 #.globl reb_whfast512_kepler_step #not used right now
@@ -124,16 +124,16 @@ reb_whfast512_kepler_step_noinit:
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd          %zmm5, %zmm4, XX            # X (initial guess)
     
-    call    mm_stiefel_Gs03_avx512
-    call    halley
+    mm_stiefel_Gs03_avx512
+    halley
 
-    call    mm_stiefel_Gs03_avx512
-    call    halley
+    mm_stiefel_Gs03_avx512
+    halley
 
-    call    mm_stiefel_Gs13_avx512
-    call    newton 
+    mm_stiefel_Gs13_avx512
+    newton 
     
-    call    mm_stiefel_Gs13_avx512
+    mm_stiefel_Gs13_avx512
     
     # Newton (XX no longer needed)
     vmulpd          GS1, ETA, %zmm2

@@ -51,8 +51,9 @@ reb_whfast512_init_registers:
     ret
 
 
-gravity_prefactor:
+.macro gravity_prefactor multiplier=ONE
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
+    # Output: zmm6 = multiplier / r^3
     
     vmulpd      %zmm0, %zmm0, %zmm6     
     vfmadd231pd %zmm1, %zmm1, %zmm6      
@@ -61,9 +62,8 @@ gravity_prefactor:
     vsqrtpd     %zmm6, %zmm7             
     vmulpd      %zmm6, %zmm7, %zmm6     # zmm6 is r^3
    
-    vdivpd      %zmm6, ONE, %zmm6      
-    
-    ret                                 # return 1 / r^3 in zmm0
+    vdivpd      %zmm6, \multiplier, %zmm6      
+.endm
 
 
 .macro REDUCE_ADD_AND_BROADCAST reg, temp_reg
@@ -226,7 +226,7 @@ gravity_prefactor:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    call gravity_prefactor                  # zmm6 is 1/r^3
+    gravity_prefactor                  # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
     
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -259,13 +259,11 @@ gravity_prefactor:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    # TODO: Combine 1/r with multiplication
-    call gravity_prefactor                      # zmm6 is 1/r^3
-    vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
+    gravity_prefactor %zmm4                     # zmm6 is 1/r^3
     
-    vfnmadd231pd %zmm5, %zmm0,  HVX
-    vfnmadd231pd %zmm5, %zmm1,  HVY
-    vfnmadd231pd %zmm5, %zmm2,  HVZ
+    vfnmadd231pd %zmm6, %zmm0,  HVX
+    vfnmadd231pd %zmm6, %zmm1,  HVY
+    vfnmadd231pd %zmm6, %zmm2,  HVZ
 
     #################################################################
     #// 0123 4567
@@ -282,7 +280,7 @@ gravity_prefactor:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    call gravity_prefactor                      # zmm6 is 1/r^3
+    gravity_prefactor                      # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -312,7 +310,7 @@ gravity_prefactor:
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    call gravity_prefactor                      # zmm6 is 1/r^3
+    gravity_prefactor                      # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
