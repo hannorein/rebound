@@ -175,7 +175,7 @@ mat8_mul3:
         
     call mat8_mul3
     
-    vmovapd     %zmm0, HX        # TODO get rid of mov
+    vmovapd     %zmm0, HX       # TODO get rid of mov
     vmovapd     %zmm1, HY
     vmovapd     %zmm2, HZ
         
@@ -189,37 +189,38 @@ mat8_mul3:
         
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
-    vdivpd    %zmm7, %zmm5, %zmm7{%k1}{z}   # -m0*dt/r^3 (jacobi term)
-    vmulpd    %zmm7, %zmm0, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
-    vmulpd    %zmm7, %zmm1, HVY
-    vmulpd    %zmm7, %zmm2, HVZ
+    vdivpd    %zmm7, %zmm5, %zmm8{%k1}{z}   # -m0*dt/r^3 (jacobi term)
 
     .if \grflag == 1
         vmovapd     P512_GR_PREFAC(%rdi), %zmm3
         vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
 
-        vmulpd    %zmm6, %zmm6, %zmm5                 # r^4
-        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}         # -dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm6, %zmm6, %zmm5               # r^4
+        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}       # -dt*6*m0*m0/(c*c) /r^4
 
-        vmulpd    %zmm7, %zmm0, %zmm5                 # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm7, %zmm0, %zmm5               # -x_j*dt*6*m0*m0/(c*c) /r^4
         vmulpd    %zmm7, %zmm1, %zmm6
         vmulpd    %zmm7, %zmm2, %zmm7
         
-        vaddpd    %zmm5, HVX, HVX                     # delta v_x due to gr
+        vmulpd    %zmm5, %zmm4, HVX{%k1}{z}         # x_j*dt*6*m0*m/(c*c) /r^4 
+        vmulpd    %zmm6, %zmm4, HVY{%k1}{z}
+        vmulpd    %zmm7, %zmm4, HVZ{%k1}{z}
+
+        REDUCE_ADD_AND_BROADCAST HVX, %zmm4
+        REDUCE_ADD_AND_BROADCAST HVY, %zmm4
+        REDUCE_ADD_AND_BROADCAST HVZ, %zmm4
+
+        vfmadd231pd  %zmm8, %zmm0, HVX          # delta v_x due to Jacobi term + GR backreaction
+        vfmadd231pd  %zmm8, %zmm1, HVY
+        vfmadd231pd  %zmm8, %zmm2, HVZ
+        
+        vaddpd    %zmm5, HVX, HVX               # delta v_x due to gr
         vaddpd    %zmm6, HVY, HVY
         vaddpd    %zmm7, HVZ, HVZ
-
-        vmulpd    %zmm5, %zmm4, %zmm5{%k1}{z}        # x_j*dt*6*m0*m/(c*c) /r^4 
-        vmulpd    %zmm6, %zmm4, %zmm6{%k1}{z}
-        vmulpd    %zmm7, %zmm4, %zmm7{%k1}{z}
-
-        REDUCE_ADD_AND_BROADCAST %zmm5, %zmm4
-        REDUCE_ADD_AND_BROADCAST %zmm6, %zmm4
-        REDUCE_ADD_AND_BROADCAST %zmm7, %zmm4
-
-        vaddpd    %zmm5, HVX, HVX                    # delta v_x due to gr backraction
-        vaddpd    %zmm6, HVY, HVY
-        vaddpd    %zmm7, HVZ, HVZ
+    .else
+        vmulpd    %zmm8, %zmm0, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+        vmulpd    %zmm8, %zmm1, HVY
+        vmulpd    %zmm8, %zmm2, HVZ
     .endif
 
     #################################################################

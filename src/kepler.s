@@ -33,7 +33,7 @@ mm_stiefel_Gs13_avx512:
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: GS0, GS1==%zmm0, GS2, GS3
-.macro mm_stiefel_Gs03_avx512
+mm_stiefel_Gs03_avx512:
     vmulpd          XX, XX, %zmm2
     vbroadcastsd    .IF11(%rip), %zmm3
     vbroadcastsd    .IF10(%rip), %zmm4
@@ -52,12 +52,12 @@ mm_stiefel_Gs13_avx512:
     vmulpd          %zmm3, XX, %zmm3
     vmulpd          %zmm3, %zmm2, GS3
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
-.endm
+    ret
 
-.macro halley
+halley:
     # In: GS0,GS1,GS2,GS3
     # Out: XX
-    # No other registers used.
+    # No other registers used. Destroys input.
     vfmsub213pd     DT, ZETA, GS3
     vfmadd231pd     GS2, ETA, GS3
     vfmadd231pd     XX, R, GS3              # f
@@ -75,8 +75,22 @@ mm_stiefel_Gs13_avx512:
     vmulpd          GS3, GS2, GS3           # f*fp
     vdivpd          GS1, GS3, GS3
     vsubpd          GS3, XX, XX
-.endm
+    ret
 
+newton:
+    # In: GS1,GS2,GS3
+    # Out: XX
+    # No other registers used. Destroys input.
+    vmulpd          GS1, ETA, GS1
+    vfmadd231pd     GS2, ZETA, GS1
+    vmulpd          GS1, XX, XX
+    vfnmadd132pd    ETA, XX, GS2
+    vaddpd          R, GS1, XX
+    vdivpd          XX, ONE, XX
+    vfnmadd231pd    GS3, ZETA, GS2
+    vaddpd          GS2, DT, GS2
+    vmulpd          GS2, XX, XX
+    ret
 
 .p2align 4
 #.globl reb_whfast512_kepler_step #not used right now
@@ -89,79 +103,68 @@ reb_whfast512_kepler_step:
 
 reb_whfast512_kepler_step_noinit:
 
-    vmulpd    X, X, %zmm0
-    vfmadd231pd    Y, Y, %zmm0
-    vfmadd231pd    Z, Z, %zmm0                 # r^2
-    vsqrtpd    %zmm0, R                        # r
-    vdivpd    R, ONE, RI                # 1/r
-    vmulpd    VX, VX, %zmm0
-    vfmadd231pd    VY, VY, %zmm0
-    vfmadd231pd    VZ, VZ, %zmm0               # v^2
-    vaddpd    M, M, BETA                      # 2*M
-    vfmsub132pd    RI, %zmm0, BETA         # beta
-    vmulpd    VX, X, ETA
-    vfmadd231pd    VY, Y, ETA
-    vfmadd231pd    VZ, Z, ETA                  # eta
-    vmovapd    BETA, ZETA
-    vfnmadd132pd    R, M, ZETA              # zeta
-    vmulpd    RI, DT, %zmm5              # dt/r
-    vmulpd    ETA, %zmm5, %zmm4             # eta*dt/r
+    vmulpd          X, X, %zmm0
+    vmulpd          VX, VX, %zmm1
+    vfmadd231pd     Y, Y, %zmm0
+    vfmadd231pd     VY, VY, %zmm1
+    vfmadd231pd     Z, Z, %zmm0                 # r^2
+    vfmadd231pd     VZ, VZ, %zmm1               # v^2
+    vsqrtpd         %zmm0, R                    # r
+    vdivpd          R, ONE, RI                  # 1/r
+    vaddpd          M, M, BETA                  # 2*M
+    vfmsub132pd     RI, %zmm1, BETA             # beta
+    vmulpd          VX, X, ETA
+    vfmadd231pd     VY, Y, ETA
+    vfmadd231pd     VZ, Z, ETA                  # eta
+    vmovapd         BETA, ZETA
+    vfnmadd132pd    R, M, ZETA                  # zeta
+    vmulpd          RI, DT, %zmm5               # dt/r
+    vmulpd          ETA, %zmm5, %zmm4           # eta*dt/r
     vpsubq          HALF_MASK, %zmm4, %zmm4     # 0.5*eta*dt/r  (Note: integer sub trick)
     vfnmadd132pd    RI, ONE, %zmm4        
-    vmulpd    %zmm5, %zmm4, XX              # X (initial guess)
+    vmulpd          %zmm5, %zmm4, XX            # X (initial guess)
     
-    mm_stiefel_Gs03_avx512
-    halley
+    call    mm_stiefel_Gs03_avx512
+    call    halley
 
-    mm_stiefel_Gs03_avx512
-    halley
-    
+    call    mm_stiefel_Gs03_avx512
+    call    halley
 
     call    mm_stiefel_Gs13_avx512
-    
-    # Newton
-    vmulpd    GS1, ETA, %zmm2
-    vfmadd231pd    GS2, ZETA, %zmm2
-    vmulpd    %zmm2, XX, XX
-    vmovapd    GS2, %zmm0
-    vfnmadd132pd    ETA, XX, %zmm0
-    vaddpd    R, %zmm2, XX
-    vdivpd    XX, ONE, XX
-    vfnmadd231pd    GS3, ZETA, %zmm0
-    vaddpd    %zmm0, DT, %zmm0
-    vmulpd    %zmm0, XX, XX
+    call    newton 
     
     call    mm_stiefel_Gs13_avx512
     
     # Newton (XX no longer needed)
-    vmulpd    GS1, ETA, %zmm2
-    vfmadd231pd    GS2, ZETA, %zmm2
-    vaddpd    R, %zmm2, XX
-    vdivpd  XX, ONE, %zmm4       # ri in C
+    vmulpd          GS1, ETA, %zmm2
+    vfmadd231pd     GS2, ZETA, %zmm2
+    vaddpd          R, %zmm2, XX
+    vdivpd          XX, ONE, %zmm4          # ri in C
     
-    vmulpd    GS2, M, %zmm5
-    vmulpd    RI, %zmm5, %zmm3        # negative f
-    vmulpd    %zmm5, %zmm4, %zmm2     # negative gd
-    vmovapd    DT, %zmm1
-    vfnmadd231pd    GS3, M, %zmm1   # g 
-    vmulpd    GS1, M, %zmm0
-    vmulpd    RI, %zmm0, %zmm0
-    vmulpd    %zmm4, %zmm0, %zmm0     # negative fd
+    # Calculate f and g functions
+    vmulpd          GS2, M, %zmm5
+    vmulpd          RI, %zmm5, %zmm3        # negative f
+    vmulpd          %zmm5, %zmm4, %zmm2     # negative gd
+    vmovapd         DT, %zmm1
+    vfnmadd231pd    GS3, M, %zmm1           # g 
+    vmulpd          GS1, M, %zmm0
+    vmulpd          RI, %zmm0, %zmm0
+    vmulpd          %zmm4, %zmm0, %zmm0     # negative fd
 
 
     vmovapd    %zmm3, %zmm4
     vmovapd    %zmm3, %zmm5
     // Calculate new vx vy vz
-    vfnmadd132pd    X, X, %zmm3{%k1}{z}
-    vfnmadd132pd    Y, Y, %zmm4{%k1}{z}
-    vfnmadd132pd    Z, Z, %zmm5{%k1}{z}
+    vfnmadd132pd    X, X, %zmm3
+    vfnmadd132pd    Y, Y, %zmm4
+    vfnmadd132pd    Z, Z, %zmm5
     vfmadd231pd        VX, %zmm1, %zmm3{%k1}{z}
     vfmadd231pd        VY, %zmm1, %zmm4{%k1}{z}
     vfmadd231pd        VZ, %zmm1, %zmm5{%k1}{z}
     // Calculate new xyz
-    vfnmadd132pd    %zmm2, VX, VX{%k1}{z}
-    vfnmadd132pd    %zmm2, VY, VY{%k1}{z}
-    vfnmadd132pd    %zmm2, VZ, VZ{%k1}{z}
+    vfnmadd132pd    %zmm2, VX, VX
+    vfnmadd132pd    %zmm2, VY, VY
+    vfnmadd132pd    %zmm2, VZ, VZ
     vfnmadd231pd    %zmm0, X, VX{%k1}{z}
     vfnmadd231pd    %zmm0, Y, VY{%k1}{z}
     vfnmadd231pd    %zmm0, Z, VZ{%k1}{z}
