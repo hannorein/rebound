@@ -56,6 +56,7 @@
 .set DT, %zmm29
 .set HALF_MASK, %zmm30
 .set M, %zmm31
+.set M_DT, %zmm12   # Only used once per step.
 
 .section .text
 .globl block1_gr
@@ -65,6 +66,7 @@
     kmovw           P512_MASK(%rdi), %k1
     vmovapd         P512_DT(%rdi), DT
     vmovapd         P512_M(%rdi), M
+    vmulpd          DT, M, M_DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vpbroadcastq    .HALF_MASK(%rip), HALF_MASK
     
@@ -248,14 +250,16 @@
     vmulpd          GS2, XX, XX
 .endm
 
+###############################################################################
+# Kepler Step
+###############################################################################
 #.globl reb_whfast512_kepler_step #not used right now
 #reb_whfast512_kepler_step:
 #    # Need to init registers here when not called after interaction step.
 #    # This will be required for synchronizing.  
 #    reb_whfast512_init_registers
 
-.macro reb_whfast512_kepler_step_noinit
-
+.macro kepler_step
     vmulpd          X, X, %zmm0
     vmulpd          VX, VX, %zmm1
     vfmadd231pd     Y, Y, %zmm0
@@ -326,25 +330,10 @@
     vmovapd    %zmm5, Z
 .endm
 
-
-.macro BLOCK1 grflag
-    # Input:   
-    #           rdi = p512
-    #           rsi = Number of steps (counting down)
-
-    # Load Constant
-    reb_whfast512_init_registers
-    # Allocate space on stack for matrix multiplications
-    subq    $192, %rsp
-
-####################################    
-#   Start Main Loop
-####################################
-.LMainLoop\grflag:    
-
-    reb_whfast512_kepler_step_noinit
-
-    # Interaction step:
+###############################################################################
+# Interaction Step
+###############################################################################
+.macro interaction_step grflag
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
     vfmadd231pd Y, Y, %zmm4      
@@ -352,8 +341,7 @@
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-    vdivpd      %zmm4, M, %zmm4  # 1/r^3*M (where M=(m0, m0+m1, m0+m1+m2,...)
-    vmulpd      DT, %zmm4, %zmm6        # dt*1/r^3*M
+    vdivpd      %zmm4, M_DT, %zmm6  # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
     
     vfmadd231pd     X, %zmm6, VX{%k1}{z} 
     vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
@@ -547,13 +535,25 @@
     vaddpd    VX, %zmm0, VX        
     vaddpd    VY, %zmm1, VY
     vaddpd    VZ, %zmm2, VZ
+.endm 
 
+# Macro creates two functions for branchless GR/no-GR
+.macro BLOCK1 grflag
+    # Input:   
+    #           rdi = p512
+    #           rsi = Number of steps (counting down)
+
+    # Load constants
+    reb_whfast512_init_registers
+    # Allocate space on stack for matrix multiplications
+    subq    $192, %rsp
+
+    # Main loop
+.LMainLoop\grflag:    
+    kepler_step
+    interaction_step \grflag
     subq    $1, %rsi
     jnz     .LMainLoop\grflag
-####################################    
-#   End  Main Loop
-####################################
-
 
     # Store final data in P512 structure
     vmovapd    VX, P512_VX(%rdi)
