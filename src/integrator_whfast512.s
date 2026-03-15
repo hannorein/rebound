@@ -2,6 +2,7 @@
 .section .text
 .globl block1_gr
 .globl block1_nogr
+.globl reb_whfast512_kepler_step
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -221,6 +222,7 @@
 .endm
 
 .macro halley
+    mm_stiefel_Gs03_avx512
     # In: GS0,GS1,GS2,GS3
     # Out: XX
     # No other registers used. Destroys input.
@@ -244,6 +246,7 @@
 .endm
 
 .macro newton
+    mm_stiefel_Gs13_avx512
     # In: GS1,GS2,GS3
     # Out: XX
     # No other registers used. Destroys input.
@@ -261,11 +264,6 @@
 ###############################################################################
 # Kepler Step
 ###############################################################################
-#.globl reb_whfast512_kepler_step #not used right now
-#reb_whfast512_kepler_step:
-#    # Need to init registers here when not called after interaction step.
-#    # This will be required for synchronizing.  
-#    reb_whfast512_init_registers
 
 .macro kepler_step
     vmulpd          X, X, %zmm0
@@ -290,14 +288,11 @@
     vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
    
     # Iterations to improve X
-    mm_stiefel_Gs03_avx512
+    # PYTHON REPLACE START
     halley
-
-    mm_stiefel_Gs03_avx512
     halley
-
-    mm_stiefel_Gs13_avx512
     newton 
+    # PYTHON REPLACE STOP
     
     # Calculate 1/r
     mm_stiefel_Gs13_avx512
@@ -545,6 +540,22 @@
     vaddpd    VY, %zmm1, VY
     vaddpd    VZ, %zmm2, VZ
 .endm 
+
+###############################################################################
+# Global functions
+###############################################################################
+reb_whfast512_kepler_step:
+    # Need to init registers here when not called after interaction step.
+    # This will be required for synchronizing.  
+    reb_whfast512_init_registers
+    kepler_step
+    vmovapd    VX, P512_VX(%rdi)
+    vmovapd    VY, P512_VY(%rdi)
+    vmovapd    VZ, P512_VZ(%rdi)
+    vmovapd    X, P512_X(%rdi)
+    vmovapd    Y, P512_Y(%rdi)
+    vmovapd    Z, P512_Z(%rdi)
+    ret
 
 # Macro creates two functions for branchless GR/no-GR
 .macro BLOCK1 grflag

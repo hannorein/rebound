@@ -121,7 +121,7 @@ static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector
 
 // Three 8x8 matrix multiplications with the same matrix using avx512
 // Used for coordinate transformations in x, y, and z
-extern void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3){
+void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3){
     __m512d col_i = _mm512_load_pd(matrix);
     __m512d vin1 = _mm512_set1_pd(in1[0]);
     *out1 = _mm512_mul_pd(vin1, col_i);
@@ -512,6 +512,7 @@ static __m512d inline gravity_prefactor_avx512( __m512d m, __m512d dx, __m512d d
 }
 extern void block1_gr(struct reb_particle_avx512* p512, long N_steps);
 extern void block1_nogr(struct reb_particle_avx512* p512, long N_steps);
+extern void reb_whfast512_kepler_step(struct reb_particle_avx512* p512);
 
 // ##################################################################################################
 // ##################################################################################################
@@ -1761,7 +1762,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
             memcpy(sync_pj,ri_whfast512->p512, sizeof(struct reb_particle_avx512));
         }
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt/2.0); 
-        local_reb_whfast512_kepler_step(r->ri_whfast512.p512);    
+        reb_whfast512_kepler_step(r->ri_whfast512.p512);    
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); // Reset
         switch (ri_whfast512->coordinates){
             case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
