@@ -281,7 +281,7 @@
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd          %zmm5, %zmm4, XX            # X (initial guess)
    
-    # Iterations 
+    # Iterations to improve X
     mm_stiefel_Gs03_avx512
     halley
 
@@ -291,9 +291,8 @@
     mm_stiefel_Gs13_avx512
     newton 
     
-    mm_stiefel_Gs13_avx512
-    
     # Calculate 1/r
+    mm_stiefel_Gs13_avx512
     vmulpd          GS1, ETA, %zmm2
     vfmadd231pd     GS2, ZETA, %zmm2
     vaddpd          R, %zmm2, XX
