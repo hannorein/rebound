@@ -114,57 +114,58 @@
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
     # zmm0, zmm1, zmm2  input and output vectors
-    # uses: zmm3-zmm10
+    # uses: zmm3-zmm7
     # The idea is to use embedded broadcast loads
     # Note: matrix needs to be transposed.
     vmovupd \in0,   0(%rsp)
     vmovupd \in1,  64(%rsp)
     vmovupd \in2, 128(%rsp)
 
-    # Preload all matrix elements into registers.
-    # One register at a time might be just as fast?
-    vmovapd     (%rax), %zmm3
-    vmovapd     64(%rax), %zmm4
-    vmovapd     128(%rax), %zmm5
-    vmovapd     192(%rax), %zmm6
-    vmovapd     256(%rax), %zmm7
-    vmovapd     320(%rax), %zmm8
-    vmovapd     384(%rax), %zmm9
-    vmovapd     448(%rax), %zmm10
+    # Keeping six independent FMA chains going
+    vmovapd        (%rax), %zmm4
+    vmovapd      64(%rax), %zmm3
+    vmulpd        0(%rsp){1to8}, %zmm4, \out0
+    vmulpd       64(%rsp){1to8}, %zmm4, \out1
+    vmulpd      128(%rsp){1to8}, %zmm4, \out2
 
-    # Keeping three independent FMA chains going
-    vmulpd       0(%rsp){1to8}, %zmm3, \out0
-    vmulpd      64(%rsp){1to8}, %zmm3, \out1
-    vmulpd     128(%rsp){1to8}, %zmm3, \out2
+    vmulpd        8(%rsp){1to8}, %zmm3, %zmm5
+    vmulpd       72(%rsp){1to8}, %zmm3, %zmm6
+    vmulpd      136(%rsp){1to8}, %zmm3, %zmm7
 
-    vfmadd231pd   8(%rsp){1to8}, %zmm4, \out0
-    vfmadd231pd  72(%rsp){1to8}, %zmm4, \out1
-    vfmadd231pd 136(%rsp){1to8}, %zmm4, \out2
+    vmovapd     128(%rax), %zmm4
+    vmovapd     192(%rax), %zmm3
+    vfmadd231pd  16(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd  80(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 144(%rsp){1to8}, %zmm4, \out2
+    
+    vfmadd231pd  24(%rsp){1to8}, %zmm3, %zmm5
+    vfmadd231pd  88(%rsp){1to8}, %zmm3, %zmm6
+    vfmadd231pd 152(%rsp){1to8}, %zmm3, %zmm7
+    
+    vmovapd     256(%rax), %zmm4
+    vmovapd     320(%rax), %zmm3
+    vfmadd231pd  32(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd  96(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 160(%rsp){1to8}, %zmm4, \out2
+    
+    vfmadd231pd  40(%rsp){1to8}, %zmm3, %zmm5
+    vfmadd231pd 104(%rsp){1to8}, %zmm3, %zmm6
+    vfmadd231pd 168(%rsp){1to8}, %zmm3, %zmm7
+    
+    vmovapd     384(%rax), %zmm4
+    vmovapd     448(%rax), %zmm3
+    vfmadd231pd  48(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd 112(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 176(%rsp){1to8}, %zmm4, \out2
+    
+    vfmadd231pd  56(%rsp){1to8}, %zmm3, %zmm5
+    vfmadd231pd 120(%rsp){1to8}, %zmm3, %zmm6
+    vfmadd231pd 184(%rsp){1to8}, %zmm3, %zmm7
 
-    vfmadd231pd  16(%rsp){1to8}, %zmm5, \out0
-    vfmadd231pd  80(%rsp){1to8}, %zmm5, \out1
-    vfmadd231pd 144(%rsp){1to8}, %zmm5, \out2
-    
-    vfmadd231pd  24(%rsp){1to8}, %zmm6, \out0
-    vfmadd231pd  88(%rsp){1to8}, %zmm6, \out1
-    vfmadd231pd 152(%rsp){1to8}, %zmm6, \out2
-    
-    vfmadd231pd  32(%rsp){1to8}, %zmm7, \out0
-    vfmadd231pd  96(%rsp){1to8}, %zmm7, \out1
-    vfmadd231pd 160(%rsp){1to8}, %zmm7, \out2
-    
-    vfmadd231pd  40(%rsp){1to8}, %zmm8, \out0
-    vfmadd231pd 104(%rsp){1to8}, %zmm8, \out1
-    vfmadd231pd 168(%rsp){1to8}, %zmm8, \out2
-    
-    vfmadd231pd  48(%rsp){1to8}, %zmm9, \out0
-    vfmadd231pd 112(%rsp){1to8}, %zmm9, \out1
-    vfmadd231pd 176(%rsp){1to8}, %zmm9, \out2
-    
-    vfmadd231pd  56(%rsp){1to8}, %zmm10, \out0
-    vfmadd231pd 120(%rsp){1to8}, %zmm10, \out1
-    vfmadd231pd 184(%rsp){1to8}, %zmm10, \out2
-
+    # Using two accumulators, adding at end
+    vaddpd  %zmm5, \out0, \out0
+    vaddpd  %zmm6, \out1, \out1
+    vaddpd  %zmm7, \out2, \out2
    .endm
 
 # High accuracy: (Gs1, Gs2, Gs3)
