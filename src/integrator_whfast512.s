@@ -62,6 +62,14 @@
 .set M_DT, %zmm12   # Only used once per step.
 
 .macro reb_whfast512_init_registers
+    # Ignore exceptions
+    subq $8, %rsp
+    stmxcsr (%rsp)
+    orl $0x8040, (%rsp)    # Set Global FTZ and DAZ
+    ldmxcsr (%rsp)
+    addq $8, %rsp
+
+    # Load data
     kmovw           P512_MASK(%rdi), %k1
     vmovapd         P512_DT(%rdi), DT
     vmovapd         P512_M(%rdi), M
