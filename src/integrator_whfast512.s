@@ -222,6 +222,7 @@ mat8_mul3:
         vaddpd    %zmm7, HVZ, HVZ
     .endif
 
+    #################################################################
     #// 0123 4567
     #// 3201 7645
     
@@ -246,14 +247,13 @@ mat8_mul3:
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
 
+    vmulpd      %zmm6, %zmm3, %zmm5      # m/r^3
     vpermpd $0x1E, %zmm0, %zmm0               # 32017645 -> 01234567
     vpermpd $0x1E, %zmm1, %zmm1
     vpermpd $0x1E, %zmm2, %zmm2
-    vpermpd $0x1E, %zmm6, %zmm6
-    vpermpd $0x1E, %zmm3, %zmm4                # 01234567 -> 32017645
+    vpermpd $0x1E, %zmm5, %zmm5
 
 
-    vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
 
     #// 0123 4567
     #// 2310 6754
@@ -262,6 +262,7 @@ mat8_mul3:
     vfmadd231pd %zmm5, %zmm1,  HVY
     vfmadd231pd %zmm5, %zmm2,  HVZ
 
+    #################################################################
     #// 0123 4567
     #// 1032 5476
     
@@ -282,6 +283,7 @@ mat8_mul3:
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
+    #################################################################
     #// 0123 4567
     #// 4567 1230
     
@@ -314,6 +316,7 @@ mat8_mul3:
     vmulpd %zmm5, %zmm2,  HVZC
 
 
+    #################################################################
     #// 0123 4567
     #// 5674 2301
     
@@ -336,13 +339,12 @@ mat8_mul3:
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
+    vmulpd      %zmm6, %zmm3, %zmm5      # m/r^3
     vpermpd $0x93, %zmm0, %zmm0               # 5674 2301 -> 4567 1230
     vpermpd $0x93, %zmm1, %zmm1
     vpermpd $0x93, %zmm2, %zmm2
-    vpermpd $0x93, %zmm6, %zmm6
-    vpermpd $0x93, %zmm3, %zmm4            
+    vpermpd $0x93, %zmm5, %zmm5
 
-    vmulpd      %zmm6, %zmm4, %zmm5      # m/r^3
     
     #// 4567 1230
     #// 3012 7456
@@ -351,6 +353,7 @@ mat8_mul3:
     vfmadd231pd %zmm5, %zmm1,  HVYC
     vfmadd231pd %zmm5, %zmm2,  HVZC
     
+    #################################################################
     ## Final 256 bit lane crossing and add
     vmovdqa64 b34mergeidx(%rip), %zmm7
 
