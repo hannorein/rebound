@@ -280,7 +280,8 @@
     vpsubq          HALF_MASK, %zmm4, %zmm4     # 0.5*eta*dt/r  (Note: integer sub trick)
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd          %zmm5, %zmm4, XX            # X (initial guess)
-    
+   
+    # Iterations 
     mm_stiefel_Gs03_avx512
     halley
 
@@ -292,11 +293,11 @@
     
     mm_stiefel_Gs13_avx512
     
-    # Newton (XX no longer needed)
+    # Calculate 1/r
     vmulpd          GS1, ETA, %zmm2
     vfmadd231pd     GS2, ZETA, %zmm2
     vaddpd          R, %zmm2, XX
-    vdivpd          XX, ONE, %zmm4          # ri in C
+    vdivpd          XX, ONE, %zmm4          # 1/r
     
     # Calculate f and g functions
     vmulpd          GS2, M, %zmm5
@@ -308,24 +309,23 @@
     vmulpd          RI, %zmm0, %zmm0
     vmulpd          %zmm4, %zmm0, %zmm0     # negative fd
 
-
-    vmovapd    %zmm3, %zmm4
-    vmovapd    %zmm3, %zmm5
-    // Calculate new vx vy vz
+    vmovapd         %zmm3, %zmm4
+    vmovapd         %zmm3, %zmm5
+    // Calculate new x y z
     vfnmadd132pd    X, X, %zmm3
     vfnmadd132pd    Y, Y, %zmm4
     vfnmadd132pd    Z, Z, %zmm5
-    vfmadd231pd        VX, %zmm1, %zmm3{%k1}{z}
-    vfmadd231pd        VY, %zmm1, %zmm4{%k1}{z}
-    vfmadd231pd        VZ, %zmm1, %zmm5{%k1}{z}
-    // Calculate new xyz
+    vfmadd231pd     VX, %zmm1, %zmm3{%k1}{z}
+    vfmadd231pd     VY, %zmm1, %zmm4{%k1}{z}
+    vfmadd231pd     VZ, %zmm1, %zmm5{%k1}{z}
+    // Calculate new vx vy vz
     vfnmadd132pd    %zmm2, VX, VX
     vfnmadd132pd    %zmm2, VY, VY
     vfnmadd132pd    %zmm2, VZ, VZ
     vfnmadd231pd    %zmm0, X, VX{%k1}{z}
     vfnmadd231pd    %zmm0, Y, VY{%k1}{z}
     vfnmadd231pd    %zmm0, Z, VZ{%k1}{z}
-    vmovapd    %zmm3, X # TODO: shuffle things around so that new X end up in X without copy
+    vmovapd    %zmm3, X 
     vmovapd    %zmm4, Y
     vmovapd    %zmm5, Z
 .endm
@@ -334,6 +334,7 @@
 # Interaction Step
 ###############################################################################
 .macro interaction_step grflag
+    # TODO: Floating point error accumulation might be less if Jacobi and GR are added after P-P perturbations
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
     vfmadd231pd Y, Y, %zmm4      
@@ -362,6 +363,7 @@
     vdivpd    %zmm7, %zmm5, %zmm8{%k1}{z}   # -m0*dt/r^3 (jacobi term)
 
     .if \grflag == 1
+        # GR term
         vmovapd     P512_GR_PREFAC(%rdi), %zmm3
         vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
 
