@@ -169,29 +169,27 @@
     vaddpd  %zmm7, \out2, \out2
    .endm
 
+.macro vfnmadd_auto_inc reg1 reg2
+    vfnmadd213pd    .IF0+(IF_offset*8)(%rip){1to8}, \reg1, \reg2
+    .set IF_offset, IF_offset - 1
+.endm
+
 # High accuracy: (Gs1, Gs2, Gs3)
 # Output: GS1==%zmm0, GS2, GS3
-.macro mm_stiefel_Gs13_avx512
+# numTerms must be an odd number
+.macro mm_stiefel_Gs13_avx512 numTerms=19
+    .set IF_offset, \numTerms
     vmulpd          XX, XX, %zmm2     # X^2
-    vbroadcastsd    .IF19(%rip), %zmm3
-    vbroadcastsd    .IF18(%rip), %zmm4
+    vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
+    .set IF_offset, IF_offset - 1
+    vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm4
+    .set IF_offset, IF_offset - 1
     vmulpd          %zmm2, BETA, %zmm0
-    vfnmadd213pd    .IF17(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF16(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF15(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF14(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF13(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF12(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF11(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF10(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF9(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF8(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF7(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF6(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF5(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
+    .set GS_iterations, (IF_offset -1)/2
+    .rept GS_iterations
+    vfnmadd_auto_inc %zmm0, %zmm3
+    vfnmadd_auto_inc %zmm0, %zmm4
+    .endr
     vmulpd          %zmm4, %zmm2, GS2
     vmulpd          %zmm3, XX, %zmm3
     vmulpd          %zmm3, %zmm2, GS3
@@ -200,17 +198,20 @@
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: GS0, GS1==%zmm0, GS2, GS3
-.macro mm_stiefel_Gs03_avx512
-    vmulpd          XX, XX, %zmm2
-    vbroadcastsd    .IF11(%rip), %zmm3
-    vbroadcastsd    .IF10(%rip), %zmm4
+# numTerms must be an odd number
+.macro mm_stiefel_Gs03_avx512 numTerms=11
+    .set IF_offset, \numTerms
+    vmulpd          XX, XX, %zmm2     # X^2
+    vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
+    .set IF_offset, IF_offset - 1
+    vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm4
+    .set IF_offset, IF_offset - 1
     vmulpd          %zmm2, BETA, %zmm0
-    vfnmadd213pd    .IF9(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF8(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF7(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF6(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF5(%rip){1to8}, %zmm0, %zmm3
-    vfnmadd213pd    .IF4(%rip){1to8}, %zmm0, %zmm4
+    .set GS_iterations, (IF_offset -1)/2 -1
+    .rept GS_iterations
+    vfnmadd_auto_inc %zmm0, %zmm3
+    vfnmadd_auto_inc %zmm0, %zmm4
+    .endr
     vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
     vmovapd         %zmm4, GS0
     vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
@@ -222,7 +223,6 @@
 .endm
 
 .macro halley
-    mm_stiefel_Gs03_avx512
     # In: GS0,GS1,GS2,GS3
     # Out: XX
     # No other registers used. Destroys input.
@@ -246,7 +246,6 @@
 .endm
 
 .macro newton
-    mm_stiefel_Gs13_avx512
     # In: GS1,GS2,GS3
     # Out: XX
     # No other registers used. Destroys input.
@@ -289,8 +288,11 @@
    
     # Iterations to improve X
     # PYTHON REPLACE START
+    mm_stiefel_Gs03_avx512
     halley
+    mm_stiefel_Gs03_avx512
     halley
+    mm_stiefel_Gs13_avx512
     newton 
     # PYTHON REPLACE STOP
     

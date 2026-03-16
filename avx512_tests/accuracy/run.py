@@ -37,14 +37,18 @@ def replace_block_in_file(filepath, new_content):
 os.system("cp ../../src/integrator_whfast512.s .")
 
 for solvers in [
-        ["halley", "halley", "halley", "newton"],
-        ["halley", "halley", "halley"],
-        ["halley", "halley", "newton"],
-        ["halley", "newton", "newton"],
-        ["halley", "newton"],
+        ["newton", "newton", "newton", "newton"],
+        ["newton", "newton", "newton"],
         ["newton", "newton"],
-        ["halley"],
         ["newton"],
+        ["halley", "halley", "halley", "halley"],
+        ["halley", "halley", "halley"],
+        ["halley", "halley"],
+        ["halley"],
+        #["halley", "newton", "newton"],
+        #["halley", "newton"],
+        #["newton", "newton"],
+        #["newton"],
         ]:
     replace_block_in_file("integrator_whfast512.s", solvers)
 
