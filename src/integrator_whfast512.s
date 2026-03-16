@@ -573,8 +573,7 @@ reb_whfast512_kepler_step:
     # Main loop
 .LMainLoop\grflag:    
     kepler_step
-##################################FOR TESTING!!
-    #interaction_step \grflag
+    interaction_step \grflag
     subq    $1, %rsi
     jnz     .LMainLoop\grflag
 
