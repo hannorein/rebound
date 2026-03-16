@@ -77,6 +77,8 @@
     vmulpd          DT, M, M_DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vpbroadcastq    .HALF_MASK(%rip), HALF_MASK
+    vmovdqa64    .SIGN_MASK(%rip), %zmm10
+    vmovapd      .EPS(%rip),     %zmm11
     
     vmovapd     P512_X(%rdi), X
     vmovapd     P512_Y(%rdi), Y
@@ -264,7 +266,7 @@
 # Kepler Step
 ###############################################################################
 
-.macro kepler_step
+.macro kepler_step grflag
     vmulpd          X, X, %zmm0
     vmulpd          VX, VX, %zmm1
     vfmadd231pd     Y, Y, %zmm0
@@ -288,12 +290,24 @@
    
     # Iterations to improve X
     # PYTHON REPLACE START
-    mm_stiefel_Gs03_avx512
-    halley
-    mm_stiefel_Gs03_avx512
-    halley
+    #mm_stiefel_Gs03_avx512
+    #halley
+    #mm_stiefel_Gs03_avx512
+    #halley
+   
+.NewtonLoop\grflag:    
+    vmovapd         XX,     %zmm9
     mm_stiefel_Gs13_avx512
     newton 
+
+    vsubpd      XX, %zmm9, %zmm9  # Delta XX
+    vpandq      %zmm10, %zmm9, %zmm9  # abs(Delta XX)
+
+    vcmppd     $25, %zmm11, %zmm9, %k2         # abs(Delta XX) < eps    25 = Not greater or equal, unordered (nans pass), quiet
+    kmovb   %k2, %eax
+    cmpb    $0xFF, %al
+    jne .NewtonLoop\grflag
+
     mm_stiefel_Gs13_avx512
     # PYTHON REPLACE STOP
     
@@ -550,7 +564,7 @@ reb_whfast512_kepler_step:
     # Need to init registers here when not called after interaction step.
     # This will be required for synchronizing.  
     reb_whfast512_init_registers
-    kepler_step
+    kepler_step 2
     vmovapd    VX, P512_VX(%rdi)
     vmovapd    VY, P512_VY(%rdi)
     vmovapd    VZ, P512_VZ(%rdi)
@@ -572,7 +586,7 @@ reb_whfast512_kepler_step:
 
     # Main loop
 .LMainLoop\grflag:    
-    kepler_step
+    kepler_step \grflag
     interaction_step \grflag
     subq    $1, %rsi
     jnz     .LMainLoop\grflag
@@ -613,7 +627,26 @@ b34mergeidx:
 
 # Inverse factorial table
 .align 64
-invfactorial:
+.SIGN_MASK:
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+    .quad 0x7FFFFFFFFFFFFFFF
+.align 64   
+.EPS:
+    .double 0.00000001
+    .double 0.00000001
+    .double 0.00000001
+    .double 0.00000001
+    .double 0.00000001
+    .double 0.00000001
+    .double 0.00000001
+    .double 0.00000001
+.align 64
 .IF0:
 .DOUBLE_ONE:
     .double     1.0
