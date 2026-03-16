@@ -290,8 +290,8 @@
    
     # Iterations to improve X
     # PYTHON REPLACE START
-    #mm_stiefel_Gs03_avx512
-    #halley
+    mm_stiefel_Gs03_avx512
+    halley
     #mm_stiefel_Gs03_avx512
     #halley
    
