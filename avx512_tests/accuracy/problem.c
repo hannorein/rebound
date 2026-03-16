@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "m", 1.0);
     const double a_init = 0.387098;
     for (int i=0;i<8;i++){
-        reb_simulation_add_fmt(r, "m a e", 0.0, a_init, 0.1*(double)i);
+        reb_simulation_add_fmt(r, "m a e", 0.0, a_init, 0.3+0.06*(double)i);
     }
 
     double min_walltime = 1e300; 
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     for (int i=0;i<8;i++){
         struct reb_orbit o = reb_orbit_from_particle(r->G, r->particles[i+1], r->particles[0]);
         //printf("%.8f\n", o.M-n_init*periods);
-        printf("%.8e\t%.8e\t%.8e\t%.8e\t", o.e-0.1*i, o.a-a_init, o.pomega, o.M-n_init*periods);
+        printf("%.8e\t%.8e\t%.8e\t%.8e\t", o.e-(0.3+0.06*i), o.a-a_init, o.pomega, o.M-n_init*periods);
     }
     printf("\n");
     
