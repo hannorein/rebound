@@ -212,10 +212,10 @@
     vfnmadd_auto_inc %zmm0, %zmm3
     vfnmadd_auto_inc %zmm0, %zmm4
     .endr
-    vfnmadd213pd    .IF3(%rip){1to8}, %zmm0, %zmm3
+    vfnmadd213pd    .IF0+(3*8)(%rip){1to8}, %zmm0, %zmm3
     vmovapd         %zmm4, GS0
-    vfnmadd213pd    .IF2(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF1(%rip){1to8}, %zmm0, GS0
+    vfnmadd213pd    .IF0+(2*8)(%rip){1to8}, %zmm0, %zmm4
+    vfnmadd213pd    .IF0+(1*8)(%rip){1to8}, %zmm0, GS0
     vmulpd          %zmm4, %zmm2, GS2
     vmulpd          %zmm3, XX, %zmm3
     vmulpd          %zmm3, %zmm2, GS3
@@ -617,93 +617,72 @@ invfactorial:
 .IF0:
 .DOUBLE_ONE:
     .double     1.0
-.IF1:
     .double     1.0
-.IF2:
     .double     0.5
-.IF3:
     .long    1431655765
     .long    1069897045
-.IF4:
     .long    1431655765
     .long    1067799893
-.IF5:
     .long    286331153
     .long    1065423121
-.IF6:
     .long    381774871
     .long    1062650220
-.IF7:
     .long    436314138
     .long    1059717536
-.IF8:
     .long    436314138
     .long    1056571808
-.IF9:
     .long    -1521039564
     .long    1053236707
-.IF10:
     .long    -1216831652
     .long    1049787983
-.IF11:
     .long    1744127204
     .long    1046144581
-.IF12:
     .long    -268904296
     .long    1042411224
-.IF13:
     .long    329805065
     .long    1038488134
-.IF14:
     .long    -1463780195
     .long    1034500468
-.IF15:
     .long    -416040929
     .long    1030416371
-.IF16:
     .long    -416040929
     .long    1026222067
-.IF17:
     .long    1882238282
     .long    1021924039
-.IF18:
     .long    1673100695
     .long    1017545336
-.IF19:
     .long    1182875991
     .long    1013118107
 # Parts of inverse factorial not used at the moment:    
-#    .long    -1543372251
-#    .long    1008620587
-#    .long    -153291406
-#    .long    1003953038
-#    .long    1840773203
-#    .long    999345721
-#    .long    320223257
-#    .long    994533812
-#    .long    426964344
-#    .long    989801712
-#    .long    -585736279
-#    .long    984871884
-#    .long    -60141991
-#    .long    979930757
-#    .long    -1025716573
-#    .long    974985905
-#    .long    641009757
-#    .long    969974154
-#    .long    -1958520658
-#    .long    964844025
-#    .long    1346885134
-#    .long    959681324
-#    .long    -410782275
-#    .long    954479826
-#    .long    -410782275
-#    .long    949236946
-#    .long    1423773010
-#    .long    943953938
-#    .long    834731386
-#    .long    938635522
-    #
-
+    .long    -1543372251
+    .long    1008620587
+    .long    -153291406
+    .long    1003953038
+    .long    1840773203
+    .long    999345721
+    .long    320223257
+    .long    994533812
+    .long    426964344
+    .long    989801712
+    .long    -585736279
+    .long    984871884
+    .long    -60141991
+    .long    979930757
+    .long    -1025716573
+    .long    974985905
+    .long    641009757
+    .long    969974154
+    .long    -1958520658
+    .long    964844025
+    .long    1346885134
+    .long    959681324
+    .long    -410782275
+    .long    954479826
+    .long    -410782275
+    .long    949236946
+    .long    1423773010
+    .long    943953938
+    .long    834731386
+    .long    938635522
 
 .section .note.GNU-stack,"",@progbits
