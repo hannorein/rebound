@@ -41,7 +41,7 @@ combinations = []
 
 for stages in range(1,4):
     combinations += list(itertools.product(["newton", "halley"], repeat=stages))
-orders = [19, 17, 15, 13, 11, 9]
+orders = [19, 15, 11, 7]
 
 combinations2 = []
 for c in combinations:

@@ -294,10 +294,10 @@
     halley
     mm_stiefel_Gs13_avx512
     newton 
+    mm_stiefel_Gs13_avx512
     # PYTHON REPLACE STOP
     
     # Calculate 1/r
-    mm_stiefel_Gs13_avx512
     vmulpd          GS1, ETA, %zmm2
     vfmadd231pd     GS2, ZETA, %zmm2
     vaddpd          R, %zmm2, XX
@@ -573,7 +573,8 @@ reb_whfast512_kepler_step:
     # Main loop
 .LMainLoop\grflag:    
     kepler_step
-    interaction_step \grflag
+##################################FOR TESTING!!
+    #interaction_step \grflag
     subq    $1, %rsi
     jnz     .LMainLoop\grflag
 
