@@ -36,15 +36,20 @@ def replace_block_in_file(filepath, new_content):
 
 os.system("cp ../../src/integrator_whfast512.s .")
 
-for update_data in [
+for solvers in [
+        ["halley", "halley", "halley", "newton"],
+        ["halley", "halley", "halley"],
         ["halley", "halley", "newton"],
-        ["newton", "newton"],
+        ["halley", "newton", "newton"],
         ["halley", "newton"],
+        ["newton", "newton"],
+        ["halley"],
+        ["newton"],
         ]:
-    replace_block_in_file("integrator_whfast512.s", update_data)
+    replace_block_in_file("integrator_whfast512.s", solvers)
 
     os.system("as -g -o integrator_whfast512.asm_o integrator_whfast512.s")
     os.system("cc -march=native -O3  -std=c99 -Wpointer-arith -D_GNU_SOURCE -fPIC -Wall -g  -Wno-unknown-pragmas -std=c99 -Wpointer-arith -D_GNU_SOURCE -fPIC -Wall -g  -Wno-unknown-pragmas -shared ../../src/*.o -lm -lrt integrator_whfast512.asm_o -o librebound.so")
     output = subprocess.check_output(["./rebound"], text=True)
 
-    print(",".join(update_data) + "\t"+ output)
+    print(",".join(solvers) + "\t"+ output.strip())
