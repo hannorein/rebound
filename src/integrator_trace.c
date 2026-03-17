@@ -528,7 +528,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         ri_trace->encounter_map[i] = 0;
     }
     ri_trace->encounter_map[0] = 1;
-    ri_trace->encounter_map_backup[0] = 1;
     ri_trace->encounter_N = 1;
 
     // Reset encounter triggers.
@@ -566,7 +565,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         ri_trace->encounter_N = N;
         for (int i = 1; i < N; i++){
             ri_trace->encounter_map[i] = 1; //  trigger encounter
-            ri_trace->encounter_map_backup[i] = 1;
         }
 
     }
@@ -580,12 +578,10 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
                 if (ri_trace->encounter_map[i] == 0){
                     ri_trace->encounter_map[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
-                    ri_trace->encounter_map_backup[i] = 1;
                 }
                 if (ri_trace->encounter_map[j] == 0){
                     ri_trace->encounter_map[j] = 1; // trigger encounter
                     ri_trace->encounter_N++;
-                    ri_trace->encounter_map_backup[j] = 1;
                 }
 
                 if (j < Nactive){ // Two massive particles have a close encounter
@@ -594,6 +590,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    memcpy(ri_trace->encounter_map_backup, ri_trace->encounter_map, N*sizeof(int));
 }
 
 double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
