@@ -7,6 +7,10 @@
 #include <math.h>
 #include "rebound.h"
 
+// Approximate Apophis mass in solar-mass units.
+// static const double apophis_mass = 1.358e-20;
+static const double apophis_mass = 3.0034896149156e-6;
+
 double ss_pos[3][3] =
     {
         {0.0, 0.0, 0.0}, // Sun
@@ -24,7 +28,7 @@ double ss_mass[3] =
     {
         1.0, // Sun
         3.0034896149156e-6, // Earth
-        0.0, // Apophis put mass 
+        apophis_mass, // Apophis
     };
 
 double tmax = 7.3e8;
@@ -39,10 +43,6 @@ void heartbeat(struct reb_simulation *const r);
 int main(int argc, char *argv[])
 {
     struct reb_simulation *r = reb_simulation_create();
-
-    // This allows you to connect to the simulation using
-    // a web browser by pointing it to http://localhost:1234
-    reb_simulation_start_server(r, 1234);
 
     // Setup constants
     const double k = 0.01720209895; // Gaussian constant
@@ -70,12 +70,17 @@ int main(int argc, char *argv[])
 
     reb_simulation_move_to_com(r);
 
-    r->N_active = 2; // Sun and Earth active; Apophis is a test particle.
+    r->N_active = 3; // Sun, Earth, and Apophis all contribute to gravity.
 
     double e_initial = reb_simulation_energy(r);
 
     // Start integration
-    reb_simulation_integrate(r, 23009.95224-365.25); // Runs to 1 year before close encounter
+
+    // reb_simulation_integrate(r, 23009.9522-365.25); // Runs to 1 year before close encounter
+
+    reb_simulation_integrate(r, 54207.6304 - 365.25); // big astoid
+
+    // Save a clean restart state without live server/runtime pointers attached.
     reb_simulation_save_to_file(r, "apophis_1yr_before.bin"); // save it
 
     // reb_simulation_integrate(r, tmax);      // Integrates only to tmax

@@ -76,9 +76,9 @@ def main():
     ax2.legend()
 
     fig.tight_layout()
-    # fig.savefig(args.out, dpi=150)
-    plt.show(block=True)
-    # print(f"Saved plot to {args.out}")
+    fig.savefig(args.out, dpi=150)
+    print(f"Saved plot to {args.out}")
+    # plt.show(block=True)
 
 
 if __name__ == "__main__":

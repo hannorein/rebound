@@ -29,19 +29,8 @@ int main(int argc, char *argv[])
     // a web browser by pointing it to http://localhost:1234
     reb_simulation_start_server(r, 1234);
 
-    // Setup constants
-    const double k = 0.01720209895; // Gaussian constant
-    r->dt = 1.0;                    // in days
-    r->G = k * k;                   // same units as used by the mercury6 code.
-    // r->ri_whfast.safe_mode = 1;     // Keep synchronized for reliable visualization/output.
-    // r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
-    // r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
-
-    // Setup callbacks:
+    // Keep the saved integrator state from the snapshot for a clean restart.
     r->heartbeat = heartbeat;
-    r->force_is_velocity_dependent = 0; // Force only depends on positions.
-    // r->integrator = REB_INTEGRATOR_WHFAST;
-    r->integrator    = REB_INTEGRATOR_IAS15;
 
     // Initial conditions are loaded from snapshot file.
     if (r->N < 3){
@@ -49,8 +38,7 @@ int main(int argc, char *argv[])
         reb_simulation_free(r);
         return 1;
     }
-    r->N_active = 2;        // Sun and Earth are active.
-    r->particles[2].m = 0.; // Apophis as test particle.
+    r->N_active = 3;                // Sun, Earth, and Apophis are active.
 
     double e_initial = reb_simulation_energy(r);
 

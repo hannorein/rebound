@@ -8,8 +8,6 @@
 #include <inttypes.h>
 #include "rebound.h"
 
-double tmax = 22644.7022 + 365.25 * 2; // run 2 years first 
-
 static FILE* diag_fp = NULL;
 static double e_initial = 0.0;
 
@@ -31,19 +29,19 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error: could not load snapshot file find_close_encounter/apophis_1yr_before.bin\n");
         return 1;
     }
-    reb_simulation_reset_function_pointers(r);
+
+    const double tmax = r->t + 365.25 * 2.0; // Run for 2 years from the saved snapshot.
 
     // This allows you to connect to the simulation using
     // a web browser by pointing it to http://localhost:1234
     reb_simulation_start_server(r, 1234);
 
-    // Setup constants
-    const double k = 0.01720209895; // Gaussian constant
-    r->dt = 10;                    // in days
-    r->G = k * k;                   // same units as used by the mercury6 code.
-
-    r->force_is_velocity_dependent = 0; // Force only depends on positions.
+    // Keep the saved IAS15 state unless we explicitly switch integrators.
     if (strcmp(integrator_name, "whfast") == 0){
+        const double k = 0.01720209895; // Gaussian constant
+        r->dt = 10.0;                   // in days
+        r->G = k * k;                   // same units as used by the mercury6 code.
+        r->force_is_velocity_dependent = 0; // Force only depends on positions.
         r->integrator = REB_INTEGRATOR_WHFAST;
         r->ri_whfast.safe_mode = 1;     // Keep synchronized for reliable output.
         r->ri_whfast.corrector = 11;    // Turn on symplectic corrector.
@@ -62,8 +60,7 @@ int main(int argc, char *argv[])
         reb_simulation_free(r);
         return 1;
     }
-    r->N_active = 2;        // Sun and Earth are active.
-    r->particles[2].m = 0.; // Apophis as test particle.
+    r->N_active = 3;                // Sun, Earth, and Apophis are active.
 
     diag_fp = fopen(output_csv, "w");
     if (diag_fp == NULL){
