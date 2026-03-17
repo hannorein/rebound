@@ -42,7 +42,7 @@
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
     // for this test hard code no binary close encounter
-    if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_DHC && (j == 7 || i == 7)) return 0;
+//    if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_DHC && (j == 7 || i == 7)) return 0;
 
     // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
@@ -714,7 +714,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 y[i*6+3] = p.vx;
                 y[i*6+4] = p.vy;
                 y[i*6+5] = p.vz;
-                printf("BS step: particle %d mapped to %d, pos=(%g,%g,%g), vel=(%g,%g,%g)\n", mi, i, p.x, p.y, p.z, p.vx, p.vy, p.vz);
             }
 
             int success = reb_integrator_bs_step_odes(r, dt);
@@ -794,7 +793,6 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
-    printf("Pre-TS\n");
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
@@ -856,7 +854,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*r->N+j] = 1;
-                printf("Pre-TS close encounter detected between particles %d and %d\n", i, j);
                 if (ri_trace->encounter_map[i] == 0){
                     ri_trace->encounter_map[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
@@ -887,7 +884,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     int new_close_encounter = 0; // New CEs
 
-    // Try just re-creating old encounter_map. I don't think we need to reset encounter_N
+    // Re-create old encounter_map. I don't think we need to reset encounter_N
     memcpy(ri_trace->encounter_map, ri_trace->encounter_map_backup, N*sizeof(int));
 
     if (!ri_trace->current_C){
@@ -923,7 +920,6 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
         for (int j = i + 1; j < N; j++){
             if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
-                printf("Post-TS close encounter detected between particles %d and %d\n", i, j);
                 if (ri_trace->current_Ks[i*r->N+j] == 0){
                     new_close_encounter = 1;
                 }
@@ -1108,12 +1104,6 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 
     // Check if there are any close encounters
     reb_integrator_trace_pre_ts_check(r);
-
-    printf("Before step:\n");
-    for (int i = 0; i < r->N; i++){
-        printf("%d ", ri_trace->encounter_map[i]);
-    }
-    printf("\n");
 
     // Attempt one step. 
     reb_integrator_trace_step_try(r);

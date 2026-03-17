@@ -7,6 +7,7 @@ from ..particle import Particle
 from ..vectors import Vec3dBasic
 
 TRACE_PERI_MODES = {"FULL_BS": 1, "PARTIAL_BS": 0, "FULL_IAS15": 2}
+TRACE_COORDINATES = {"democraticheliocentric":0, "widebinary":1}
 
 class IntegratorTRACE(ctypes.Structure):
     """
@@ -38,6 +39,7 @@ class IntegratorTRACE(ctypes.Structure):
     _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
                 ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
                 ("peri_mode", ctypes.c_uint),
+                ("_coordinates", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
                 ("_mode", ctypes.c_uint),
@@ -80,6 +82,34 @@ class IntegratorTRACE(ctypes.Structure):
         else:
             self._S_perifp = TRACECF(func)
             self._S_peri = self._S_perifp
+
+    @property
+    def coordinates(self):
+        """
+        Get or set the internal coordinate system.
+
+        Available coordinate systems are:
+
+        - ``'jacobi'`` (default)
+        - ``'democraticheliocentric'``
+        - ``'whds'``
+        - ``'barycentric'``
+        """
+        i = self._coordinates
+        for name, _i in TRACE_COORDINATES.items():
+            if i==_i:
+                return name
+        return i
+    @coordinates.setter
+    def coordinates(self, value):
+        if isinstance(value, int):
+            self._coordinates = ctypes.c_uint(value)
+        elif isinstance(value, basestring):
+            value = value.lower()
+            if value in TRACE_COORDINATES: 
+                self._coordinates = TRACE_COORDINATES[value]
+            else:
+                raise ValueError("Warning. Coordinate system not found.")
     
     @property
     def peri_mode(self):
