@@ -42,7 +42,11 @@
 #define REB_RESTRICT
 #define DLLEXPORT
 #else // Linux and MacOS
+#ifdef __cplusplus
+#define REB_RESTRICT __restrict__
+#else
 #define REB_RESTRICT restrict
+#endif
 #define DLLEXPORT
 #endif // _WIN32
 
@@ -52,7 +56,11 @@
 #include <signal.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-
+#ifdef __cplusplus
+#ifndef restrict
+#define restrict __restrict__
+#endif
+#endif
 #ifdef _WIN32
 typedef struct reb_timeval {
     int64_t tv_sec;
