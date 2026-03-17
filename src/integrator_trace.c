@@ -714,6 +714,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 y[i*6+3] = p.vx;
                 y[i*6+4] = p.vy;
                 y[i*6+5] = p.vz;
+                printf("BS step: particle %d mapped to %d, pos=(%g,%g,%g), vel=(%g,%g,%g)\n", mi, i, p.x, p.y, p.z, p.vx, p.vy, p.vz);
             }
 
             int success = reb_integrator_bs_step_odes(r, dt);
@@ -793,6 +794,7 @@ void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const doub
 
 
 void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
+    printf("Pre-TS\n");
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const int N = r->N;
     const int Nactive = r->N_active==-1?r->N:r->N_active;
@@ -854,6 +856,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*r->N+j] = 1;
+                printf("Pre-TS close encounter detected between particles %d and %d\n", i, j);
                 if (ri_trace->encounter_map[i] == 0){
                     ri_trace->encounter_map[i] = 1; // trigger encounter
                     ri_trace->encounter_N++;
@@ -869,6 +872,8 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             }
         }
     }
+
+    // Create copy of encounter map, to use for post-ts check
     memcpy(ri_trace->encounter_map_backup, ri_trace->encounter_map, N*sizeof(int));
 }
 
@@ -882,16 +887,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     int (*_switch_peri) (struct reb_simulation* const r, const unsigned int j) = ri_trace->S_peri ? ri_trace->S_peri : reb_integrator_trace_switch_peri_default;
     int new_close_encounter = 0; // New CEs
 
-    // Clear encounter maps
-    /*
-       for (unsigned int i=1; i<r->N; i++){
-       ri_trace->encounter_map[i] = 0;
-       }
-       ri_trace->encounter_map[0] = 1;
-       ri_trace->encounter_N = 1;
-     */
-
-    // Set this from pre-ts encounter map. I don't think we need to reset encounter_N here.
+    // Try just re-creating old encounter_map. I don't think we need to reset encounter_N
     memcpy(ri_trace->encounter_map, ri_trace->encounter_map_backup, N*sizeof(int));
 
     if (!ri_trace->current_C){
@@ -927,6 +923,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
         for (int j = i + 1; j < N; j++){
             if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
+                printf("Post-TS close encounter detected between particles %d and %d\n", i, j);
                 if (ri_trace->current_Ks[i*r->N+j] == 0){
                     new_close_encounter = 1;
                 }
@@ -1103,7 +1100,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     if (ri_trace->coordinates == REB_TRACE_COORDINATES_WB) reb_integrator_trace_inertial_to_wb(r);
     else reb_integrator_trace_inertial_to_dh(r);
 
-    // Create copy of all particle to allow for the step to be rejected.
+    // Create copy of all particles to allow for the step to be rejected.
     memcpy(ri_trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
 
     // This will be set to 1 if a collision occurred.
@@ -1111,6 +1108,12 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 
     // Check if there are any close encounters
     reb_integrator_trace_pre_ts_check(r);
+
+    printf("Before step:\n");
+    for (int i = 0; i < r->N; i++){
+        printf("%d ", ri_trace->encounter_map[i]);
+    }
+    printf("\n");
 
     // Attempt one step. 
     reb_integrator_trace_step_try(r);
