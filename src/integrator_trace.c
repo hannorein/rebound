@@ -259,9 +259,14 @@ void reb_integrator_trace_inertial_to_wb(struct reb_simulation* r){
     particles[idxB].z -= (mA*particles[idxA].z + sum_mx.z)/(mA+mplanets);
 
     // X_A = (mA xA + mB xB + sum_mx) / mtot
-    particles[idxA].x = (mA * particles[idxA].x + mB * xB_orig.x + sum_mx.x) / mtot;
-    particles[idxA].y = (mA * particles[idxA].y + mB * xB_orig.y + sum_mx.y) / mtot;
-    particles[idxA].z = (mA * particles[idxA].z + mB * xB_orig.z + sum_mx.z) / mtot;
+    // X_A = COM position — save it, then zero particle A
+    r->ri_trace.com_pos.x = (mA * particles[idxA].x + mB * xB_orig.x + sum_mx.x) / mtot;
+    r->ri_trace.com_pos.y = (mA * particles[idxA].y + mB * xB_orig.y + sum_mx.y) / mtot;
+    r->ri_trace.com_pos.z = (mA * particles[idxA].z + mB * xB_orig.z + sum_mx.z) / mtot;
+    // Particle 0 is also changed to allow for easy collision detection
+    particles[idxA].x = 0.0;
+    particles[idxA].y = 0.0;
+    particles[idxA].z = 0.0;
 
     // ------------------ VELOCITIES ------------------
     // Save original inertial velocities before any writes
@@ -269,7 +274,6 @@ void reb_integrator_trace_inertial_to_wb(struct reb_simulation* r){
     struct reb_vec3d vB_orig = { particles[idxB].vx, particles[idxB].vy, particles[idxB].vz };
 
     // Planets: V_i = v_i - (mA vA + sum_mvx)/(mA+mplanets)
-    // Particle 0 is also changed to allow for easy collision detection NOT YET BUT PUT THIS BACK IN!!!!!
     for (int i=N-1; i>0; i--) {
         if (i == idxB) continue; // skip binary companion
         particles[i].vx -= (mA*vA_orig.x + sum_mvx.x)/(mA+mplanets);
@@ -285,25 +289,19 @@ void reb_integrator_trace_inertial_to_wb(struct reb_simulation* r){
     };
 
     // A DOF is the COM: V_A = Ptot / mtot
-    particles[idxA].vx = Ptot.x / mtot;
-    particles[idxA].vy = Ptot.y / mtot;
-    particles[idxA].vz = Ptot.z / mtot;
-
-    // B DOF: V_B = v_B - Ptot/mtot  (i.e. v_B - V_A)
-    particles[idxB].vx -= Ptot.x / mtot;
-    particles[idxB].vy -= Ptot.y / mtot;
-    particles[idxB].vz -= Ptot.z / mtot;
-
-    // Save COM info (inertial COM before transform)
-    r->ri_trace.com_pos.x = particles[idxA].x;
-    r->ri_trace.com_pos.y = particles[idxA].y;
-    r->ri_trace.com_pos.z = particles[idxA].z;
     r->ri_trace.com_vel.x = Ptot.x / mtot;
     r->ri_trace.com_vel.y = Ptot.y / mtot;
     r->ri_trace.com_vel.z = Ptot.z / mtot;
+    particles[idxA].vx = 0.0;
+    particles[idxA].vy = 0.0;
+    particles[idxA].vz = 0.0;
+
+    // B DOF: V_B = v_B - Ptot/mtot  (i.e. v_B - V_A)
+    particles[idxB].vx -= r->ri_trace.com_vel.x;
+    particles[idxB].vy -= r->ri_trace.com_vel.y;
+    particles[idxB].vz -= r->ri_trace.com_vel.z;
 }
 
-// CHATGPT function, seems to work correctly but need to carefully verify
 void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
     struct reb_particle* particles = r->particles;
     const int N = r->N;
@@ -336,102 +334,63 @@ void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
     const double mtot   = mA + mB + M;
     const double denomA = mA + M;  // (mA + Σ m_i)
 
-    // Cache WB star DOFs (avoid clobbering)
-    const struct reb_vec3d X_A = { particles[idxA].x,  particles[idxA].y,  particles[idxA].z };
+    // Cache WB star
+    // const struct reb_vec3d X_A = { particles[idxA].x,  particles[idxA].y,  particles[idxA].z };
     const struct reb_vec3d X_B = { particles[idxB].x,  particles[idxB].y,  particles[idxB].z };
-    const struct reb_vec3d V_A = { particles[idxA].vx, particles[idxA].vy, particles[idxA].vz }; // COM velocity
+    // const struct reb_vec3d V_A = { particles[idxA].vx, particles[idxA].vy, particles[idxA].vz }; // COM velocity
     const struct reb_vec3d V_B = { particles[idxB].vx, particles[idxB].vy, particles[idxB].vz };
 
-    // ------------------ POSITIONS inverse ------------------
-    // Using:
-    //   X_i = x_i - x_A                      => x_i = X_i + x_A
-    //   X_B = x_B - (mA x_A + Σ m_i x_i)/(mA+M)
-    //   X_A = (mA x_A + mB x_B + Σ m_i x_i)/m_tot
-    //
-    // Let Σ m_i x_i = Σ m_i (X_i + x_A) = Σ m_i X_i + M x_A = sum_mX + M x_A
-    // Then (mA x_A + Σ m_i x_i) = (mA+M) x_A + sum_mX = denomA * x_A + sum_mX
-    // So:
-    //   x_B = X_B + x_A + sum_mX/denomA
-    // Plug into X_A:
-    //   m_tot X_A = mA x_A + mB x_B + Σ m_i x_i
-    //            = m_tot x_A + mB X_B + mB (sum_mX/denomA) + sum_mX
-    // => x_A = X_A - [ mB X_B + mB (sum_mX/denomA) + sum_mX ] / m_tot
-
+    // POSITIONS
     struct reb_vec3d sum_mX_over_d = {0.0, 0.0, 0.0};
     sum_mX_over_d.x = sum_mX.x / denomA;
     sum_mX_over_d.y = sum_mX.y / denomA;
     sum_mX_over_d.z = sum_mX.z / denomA;
 
-    struct reb_vec3d xA = X_A;
-    xA.x = X_A.x - (mB * X_B.x + mB * sum_mX_over_d.x + sum_mX.x) / mtot;
-    xA.y = X_A.y - (mB * X_B.y + mB * sum_mX_over_d.y + sum_mX.y) / mtot;
-    xA.z = X_A.z - (mB * X_B.z + mB * sum_mX_over_d.z + sum_mX.z) / mtot;
+    // Use com to calculate central object's position.
+    // This ignores previous values stored in particles[0].
+    // Should not matter unless collisions occurred.
+    particles[idxA].x = r->ri_trace.com_pos.x - (mB * X_B.x + mB * sum_mX_over_d.x + sum_mX.x) / mtot;
+    particles[idxA].y = r->ri_trace.com_pos.y - (mB * X_B.y + mB * sum_mX_over_d.y + sum_mX.y) / mtot;
+    particles[idxA].z = r->ri_trace.com_pos.z - (mB * X_B.z + mB * sum_mX_over_d.z + sum_mX.z) / mtot;
 
     // Planets: x_i = X_i + x_A
+    // Loop over all N to include test particles
     for (int i=1;i<N;i++) {
         if (i == idxB) continue; // skip binary companion
-        particles[i].x += xA.x; // particles[i].x currently X_i
-        particles[i].y += xA.y;
-        particles[i].z += xA.z;
+        particles[i].x += particles[idxA].x; // particles[i].x currently X_i
+        particles[i].y += particles[idxA].y;
+        particles[i].z += particles[idxA].z;
     }
 
     // Star B: x_B = X_B + x_A + sum_mX/denomA
-    const struct reb_vec3d xB = {
-        X_B.x + xA.x + sum_mX_over_d.x,
-        X_B.y + xA.y + sum_mX_over_d.y,
-        X_B.z + xA.z + sum_mX_over_d.z
-    };
+    particles[idxB].x = X_B.x + particles[idxA].x + sum_mX_over_d.x; 
+    particles[idxB].y = X_B.y + particles[idxA].y + sum_mX_over_d.y; 
+    particles[idxB].z = X_B.z + particles[idxA].z + sum_mX_over_d.z;
 
-    // Write inertial star positions
-    particles[idxA].x = xA.x; particles[idxA].y = xA.y; particles[idxA].z = xA.z;
-    particles[idxB].x = xB.x; particles[idxB].y = xB.y; particles[idxB].z = xB.z;
-
-    // ------------------ VELOCITIES inverse ------------------
-    // Forward (with your corrected V_A):
-    //   V_A = P_tot / m_tot  (COM velocity)
-    //   V_B = v_B - V_A
-    //   V_i = v_i - W, where W = (mA v_A + Σ m_i v_i)/(mA+M)
-    //
-    // Invert:
-    //   v_B = V_B + V_A
-    //   W   = V_A - (mB/(mA+M)) V_B      (from COM momentum algebra)
-    //   v_i = V_i + W = V_i + V_A - (mB/(mA+M)) V_B
-    //   v_A = V_A - (mB/(mA+M)) V_B - (1/mA) Σ m_i V_i
-
-    const double coefB = (denomA != 0.0) ? (mB / denomA) : 0.0;
-
-    // Common additive term for all planets: add = V_A - coefB * V_B
-    const struct reb_vec3d add_planet = {
-        V_A.x - coefB * V_B.x,
-        V_A.y - coefB * V_B.y,
-        V_A.z - coefB * V_B.z
+    // Common additive term for all planets: W = V_A - coefB * V_B
+    const struct reb_vec3d W = {
+        r->ri_trace.com_vel.x - (mB / denomA) * V_B.x,
+        r->ri_trace.com_vel.y - (mB / denomA) * V_B.y,
+        r->ri_trace.com_vel.z - (mB / denomA) * V_B.z
     };
 
     // v_A
-    struct reb_vec3d vA = {
-        add_planet.x - ((mA != 0.0) ? (sum_mV.x / mA) : 0.0),
-        add_planet.y - ((mA != 0.0) ? (sum_mV.y / mA) : 0.0),
-        add_planet.z - ((mA != 0.0) ? (sum_mV.z / mA) : 0.0)
-    };
+    particles[idxA].vx = W.x - sum_mV.x / mA;
+    particles[idxA].vy = W.y - sum_mV.y / mA;
+    particles[idxA].vz = W.z - sum_mV.z / mA;
 
     // v_B
-    struct reb_vec3d vB = {
-        V_B.x + V_A.x,
-        V_B.y + V_A.y,
-        V_B.z + V_A.z
-    };
+    particles[idxB].vx = V_B.x + r->ri_trace.com_vel.x;
+    particles[idxB].vy = V_B.y + r->ri_trace.com_vel.y;
+    particles[idxB].vz = V_B.z + r->ri_trace.com_vel.z;
 
     // Planets: v_i = V_i + add_planet
-    for (int i = first_planet; i <= N; ++i) {
+    for (int i = first_planet; i < N; ++i) {
         if (i == idxB) continue;
-        particles[i].vx += add_planet.x; // particles[i].vx currently V_i
-        particles[i].vy += add_planet.y;
-        particles[i].vz += add_planet.z;
+        particles[i].vx += W.x; // particles[i].vx currently V_i
+        particles[i].vy += W.y;
+        particles[i].vz += W.z;
     }
-
-    // Write inertial star velocities
-    particles[idxA].vx = vA.x; particles[idxA].vy = vA.y; particles[idxA].vz = vA.z;
-    particles[idxB].vx = vB.x; particles[idxB].vy = vB.y; particles[idxB].vz = vB.z;
 }
 
 
