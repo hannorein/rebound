@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <fenv.h>
 
 void heartbeat(struct reb_simulation* r);
 double E0;
@@ -23,7 +22,6 @@ double E0;
 enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge_pass_through(struct reb_simulation* const r, struct reb_collision c);
 
 int main(int argc, char* argv[]){
-    feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW);
     struct reb_simulation* r = reb_simulation_create();
     
     // Start the REBOUND visualization server. This
