@@ -230,6 +230,7 @@ void reb_omp_set_num_threads(int num_threads){
 #ifdef OPENMP
     omp_set_num_threads(num_threads);
 #else // OPENMP
+    (void)num_threads; // Unused.
     reb_message(NULL, 0, REB_MESSAGE_TYPE_ERROR, "Cannot set number of OpenMP threads. Recompile with OpenMP.");
 #endif // OPENMP
 }
