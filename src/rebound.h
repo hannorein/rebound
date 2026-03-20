@@ -120,10 +120,10 @@ struct reb_vec6d{
 
 // Structure representing one particle-particle collision
 struct reb_collision{
-    int p1;                 // Index of first particle involved in collision
-    int p2;                 // Index of second particle
+    size_t p1;              // Index of first particle involved in collision
+    size_t p2;              // Index of second particle
     struct reb_vec6d gb;    // Offset due to boundary conditions
-    int ri;                 // Root cell index (MPI only)
+    size_t ri;              // Root cell index (MPI only)
 };
 
 // Generic pointer with 7 elements, for internal use only (IAS15).
@@ -140,8 +140,8 @@ struct reb_dp7 {
 // Integrator structures 
 // IAS15 (Rein & Spiegel 2015)
 struct reb_integrator_ias15 {
-    double epsilon;                         // Precision control parameter
-    double min_dt;                          // Minimal timestep
+    double epsilon;                 // Precision control parameter
+    double min_dt;                  // Minimal timestep
     enum {
         REB_IAS15_INDIVIDUAL = 0,   // fractional error is calculated separately for each particle
         REB_IAS15_GLOBAL = 1,       // fractional error is calculated globally (was default until 01/2024)
@@ -163,8 +163,8 @@ struct reb_integrator_ias15 {
     struct reb_dp7 e;
     struct reb_dp7 br;              // Used for resetting the b coefficients if a timestep gets rejected
     struct reb_dp7 er;              // Same for e coefficients
-    int* map;                       // internal map to particles (this is an identity map except when MERCURIUS is used
-    unsigned int N_allocated_map;   // allocated size for map
+    size_t* map;                    // internal map to particles (this is an identity map except when MERCURIUS is used
+    size_t N_allocated_map;         // allocated size for map
 };
 
 // Mercurius (Rein et al. 2019)
