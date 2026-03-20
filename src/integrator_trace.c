@@ -164,6 +164,28 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     if (r->dt * r->dt > dt_prs2){
         return 1;
     }else{
+        // In WB coordinates, we also switch if we enter the binary's hill sphere
+        if (ri_trace->coordinates == REB_TRACE_COORDINATES_WB){
+          const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+          const int idxB = N_active-1; // star B assumed to be last active particle
+          double bx = r->particles[idxB].x;
+          double by = r->particles[idxB].y;
+          double bz = r->particles[idxB].z;
+          double br2 = bx*bx + by*by + bz*bz;
+          double mr = r->particles[idxB].m/(3.*r->particles[0].m);
+
+          double factor2 = ri_trace->r_crit_WB*ri_trace->r_crit_WB;
+          const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+
+          double dxb = r->particles[j].x - r->particles[idxB].x;
+          double dyb = r->particles[j].y - r->particles[idxB].y;
+          double dzb = r->particles[j].z - r->particles[idxB].z;
+          double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+
+          if (d2b*d2b*d2b < rhillb6){
+              return 1;
+          }
+        }
         return 0;
     }
 }
@@ -488,23 +510,6 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
     r->ri_trace.com_pos.z += dt*r->ri_trace.com_vel.z;
 }
 
-/*
-void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
-    //struct reb_particle* restrict const particles = r->particles;
-    const int N = r->N;
-    double total_mass = r->particles[0].m;
-    for (int i=1;i<N;i++){
-        // if WB, we need to change the central mass
-        if (i==N-1 && r->ri_trace.coordinates==REB_TRACE_COORDINATES_WB){
-            reb_whfast_kepler_solver(r,r->particles,r->G*total_mass,i,dt);
-            break;
-        }
-        else reb_whfast_kepler_solver(r,r->particles,r->G*r->particles[0].m,i,dt);
-        total_mass += r->particles[i].m;
-    }
-}
-    */
-
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
     const int N = r->N;
     const int N_active = r->N_active==-1?r->N:r->N_active;
@@ -783,6 +788,9 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // Don't think this needs to change for WB
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
+        // in WB coordinates this is checked against the WB itself
+        if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue;
+
         if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
             if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
@@ -848,6 +856,10 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     if (!ri_trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timestep.
         for (int j = 1; j < Nactive; j++){
+
+            // in WB coordinates this is checked against the WB itself
+            if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue;
+
             if (_switch_peri(r, j)){
                 ri_trace->current_C = 1;
                 new_close_encounter = 1;
@@ -1095,6 +1107,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_eta = 1.0;
+    r->ri_trace.r_crit_WB = 0.5;
     r->ri_trace.force_accept = 0;
 
     // Internal arrays (only used within one timestep)

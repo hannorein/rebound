@@ -280,6 +280,7 @@ struct reb_integrator_trace {
 
     double r_crit_hill;
     double peri_crit_eta;
+    double r_crit_WB; // critical distance (units of hill radius) for close encounters with the binary in WB coordinates
 
     // Internal use
     enum {

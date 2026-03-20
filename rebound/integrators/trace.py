@@ -42,6 +42,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("_coordinates", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
+                ("r_crit_WB", ctypes.c_double),
                 ("_mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_uint),
                 ("_encounter_N_active", ctypes.c_uint),
