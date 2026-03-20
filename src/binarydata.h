@@ -46,6 +46,7 @@ enum REB_BINARYDATA_DTYPE {
     REB_PARTICLE4 = 15,          // Used for WHFast512
     REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
     REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
+    REB_SIZE_T = 18,
 };
 
 // Possible errors that might occur during binary file reading.

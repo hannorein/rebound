@@ -73,7 +73,7 @@ class IntegratorIAS15(ctypes.Structure):
                 ("min_dt", ctypes.c_double),
                 ("_adaptive_mode", ctypes.c_uint),
                 ("_iterations_max_exceeded", ctypes.c_uint64),
-                ("_N_allocated", ctypes.c_uint),
+                ("_N_allocated", ctypes.c_size_t),
                 ("_at", ctypes.POINTER(ctypes.c_double)),
                 ("_x0", ctypes.POINTER(ctypes.c_double)),
                 ("_v0", ctypes.POINTER(ctypes.c_double)),
