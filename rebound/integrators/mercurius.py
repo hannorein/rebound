@@ -40,7 +40,7 @@ class IntegratorMercurius(ctypes.Structure):
                 ("_dcrit", ctypes.POINTER(ctypes.c_double)),
                 ("_particles_backup", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
-                ("_encounter_map", ctypes.POINTER(ctypes.csize_t)),
+                ("_encounter_map", ctypes.POINTER(ctypes.c_size_t)),
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
                 ]

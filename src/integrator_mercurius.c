@@ -101,7 +101,7 @@ void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r){
     struct reb_vec3d com_pos = {0};
     struct reb_vec3d com_vel = {0};
     double mtot = 0.;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?(size_t)r->N:r->N_active;
+    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
     const size_t N = r->N;
     for (size_t i=0;i<N_active;i++){
         double m = particles[i].m;
@@ -132,7 +132,7 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_particle temp = {0};
     const size_t N = r->N;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?(size_t)r->N:r->N_active;
+    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
     for (size_t i=1;i<N_active;i++){
         double m = particles[i].m;
         temp.x += m * particles[i].x;
@@ -180,7 +180,7 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     struct reb_particle* const particles_backup = rim->particles_backup;
     const double* const dcrit = rim->dcrit;
     const size_t N = r->N;
-    const size_t N_active = r->N_active==-1?r->N:(size_t)r->N_active;
+    const size_t N_active = r->N_active==-1?r->N:r->N_active;
     const double dt = r->dt;
     rim->encounter_N = 1;
     rim->encounter_map[0] = 1;
@@ -268,7 +268,7 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
-    const size_t N_active = r->N_active==-1?r->N: (size_t)r->N_active;
+    const size_t N_active = r->N_active==-1?r->N:r->N_active;
     const size_t N = r->testparticle_type==0 ? N_active: r->N;
     double px=0., py=0., pz=0.;
     for (size_t i=1;i<N;i++){
@@ -296,7 +296,7 @@ void reb_integrator_mercurius_com_step(struct reb_simulation* const r, double dt
 void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
-    size_t timestep_too_large = 0;
+    int timestep_too_large = 0;
     for (size_t i=1;i<N;i++){
         timestep_too_large |= reb_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL); // in dh
     }
