@@ -303,8 +303,8 @@ struct reb_integrator_whfast {
     struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
     struct reb_particle* REB_RESTRICT p_temp;   // Used for lazy implementer's kernel 
     unsigned int is_synchronized;
-    unsigned int N_allocated;
-    unsigned int N_allocated_tmp;               // Used for lazy implementer's kernel 
+    size_t N_allocated;
+    size_t N_allocated_tmp;                     // Used for lazy implementer's kernel 
     unsigned int timestep_warning;
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
