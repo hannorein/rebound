@@ -63,7 +63,7 @@ void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type
         if (*messages==NULL){
             *messages = calloc(reb_messages_max_N,sizeof(char*));
         }
-        int n = 0;
+        size_t n = 0;
         for (;n<reb_messages_max_N;n++){
             if ((*messages)[n]==NULL){
                 break;
@@ -71,7 +71,7 @@ void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type
         }
         if (n==reb_messages_max_N){
             free((*messages)[0]);
-            for (int i=0;i<reb_messages_max_N-1;i++){
+            for (size_t i=0;i<reb_messages_max_N-1;i++){
                 (*messages)[i] = (*messages)[i+1];
             }
             (*messages)[reb_messages_max_N-1] = NULL;
@@ -89,7 +89,7 @@ int reb_pop_message(char** messages, char* const buf){
     if (messages){
         char* w0 = messages[0];
         if (w0){
-            for(int i=0;i<reb_messages_max_N-1;i++){
+            for(size_t i=0;i<reb_messages_max_N-1;i++){
                 messages[i] = messages[i+1];
             }
             messages[reb_messages_max_N-1] = NULL;

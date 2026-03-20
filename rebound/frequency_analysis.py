@@ -50,7 +50,7 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
         raise ValueError("Input array must be have datatype np.float64")
 
     if isinstance(type, int):
-        type = ctypes.c_int(type)
+        type = ctypes.c_uint(type)
     elif isinstance(type, str):
         type = type.lower()
         if type in FREQUENCY_ANALYSIS_TYPES:
@@ -67,9 +67,9 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
     out = np.zeros(nfreq*3,dtype=np.double)
     out_ptr = out.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
     clibrebound.reb_frequency_analysis.restype = ctypes.c_int
-    ret = clibrebound.reb_frequency_analysis(out_ptr, ctypes.c_int(nfreq), ctypes.c_double(minfreq), ctypes.c_double(maxfreq), type, inp_ptr, ctypes.c_uint(ndata))
+    ret = clibrebound.reb_frequency_analysis(out_ptr, ctypes.c_size_t(nfreq), ctypes.c_double(minfreq), ctypes.c_double(maxfreq), type, inp_ptr, ctypes.c_size_t(ndata))
     for value, message in FREQUENCY_ANALYSIS_ERRORS:
-        if ret & value:
+        if ret == value:
             raise RuntimeError(message)
     return np.split(out,3)
 
