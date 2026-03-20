@@ -414,7 +414,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     }else{ // Not in a tree, particles get removed immediately 
                            // Update p2 of current collision
                         if (collision_resolve_keep_sorted){
-                            if (c.p2 > c.p1){
+                            if (c.p2 > c.p1 && c.p2!=SIZE_MAX){
                                 c.p2--;
                             }
                         }else{
@@ -431,10 +431,10 @@ void reb_collision_search(struct reb_simulation* const r){
                             }
                             // Adjust collisions
                             if (collision_resolve_keep_sorted){
-                                if (cp->p1 > c.p1){
+                                if (cp->p1 > c.p1 && cp->p1!=SIZE_MAX){
                                     cp->p1--;
                                 }
-                                if (cp->p2 > c.p1){
+                                if (cp->p2 > c.p1 && cp->p2!=SIZE_MAX){
                                     cp->p2--;
                                 }
                             }else{
@@ -472,10 +472,10 @@ void reb_collision_search(struct reb_simulation* const r){
                             }
                             // Adjust collisions
                             if (collision_resolve_keep_sorted){
-                                if (cp->p1 > c.p2){
+                                if (cp->p1 > c.p2 && cp->p1!=SIZE_MAX){
                                     cp->p1--;
                                 }
-                                if (cp->p2 > c.p2){
+                                if (cp->p2 > c.p2 && cp->p2!=SIZE_MAX){
                                     cp->p2--;
                                 }
                             }else{

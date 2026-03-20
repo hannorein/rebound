@@ -788,10 +788,10 @@ void reb_simulation_init(struct reb_simulation* r){
 }
 
 // Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the particles.
-void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int* p2) {
+void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, size_t* p2) {
     struct reb_particle* particles = r->particles;
-    *p1 = -1;
-    *p2 = -1;
+    *p1 = SIZE_MAX;
+    *p2 = SIZE_MAX;
     double largest1 = -1.0;
     double largest2 = -1.0;
 #ifdef OPENMP
@@ -800,8 +800,8 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int
     struct two_max {
         double largest1;
         double largest2;
-        int p1;
-        int p2;
+        size_t p1;
+        size_t p2;
     };
 
     // Array to store the two largest values from each thread
@@ -818,11 +818,11 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int
         int thread_id = omp_get_thread_num();
         thread_max[thread_id].largest1 = -1.0;
         thread_max[thread_id].largest2 = -1.0;
-        thread_max[thread_id].p1 = -1;
-        thread_max[thread_id].p2 = -1;
+        thread_max[thread_id].p1 = SIZE_MAX;
+        thread_max[thread_id].p2 = SIZE_MAX;
 
 #pragma omp for
-        for (int i=0; i<r->N; i++) {
+        for (size_t i=0; i<r->N; i++) {
             if (particles[i].r > thread_max[thread_id].largest1) {
                 thread_max[thread_id].largest2 = thread_max[thread_id].largest1;
                 thread_max[thread_id].p2 = thread_max[thread_id].p1;
@@ -855,7 +855,7 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, int* p1, int
 
     free(thread_max);
 #else // OPENMP
-    for (int i=0; i<r->N; i++) {
+    for (size_t i=0; i<r->N; i++) {
         if (particles[i].r > largest1) {
             largest2 = largest1;
             *p2 = *p1;
