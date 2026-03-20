@@ -49,10 +49,10 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
 
 void reb_collision_search(struct reb_simulation* const r){
     r->collisions_N = 0;
-    int N = r->N - r->N_var;
-    int Ninner = N;
+    size_t N = r->N - r->N_var;
+    size_t Ninner = N;
 
-    int* map = NULL;
+    size_t* map = NULL;
     switch (r->integrator){
         case REB_INTEGRATOR_MERCURIUS:
             if (r->ri_mercurius.mode==0){
@@ -94,18 +94,18 @@ void reb_collision_search(struct reb_simulation* const r){
         case REB_COLLISION_DIRECT:
             {
                 // Loop over ghost boxes, but only the inner most ring.
-                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                    for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                        for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                    for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                        for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                             // Loop over all particles
-                            for (int i=0;i<N;i++){
+                            for (size_t i=0;i<N;i++){
 #ifndef OPENMP
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
-                                int ip = i;
+                                size_t ip = i;
                                 if (map){
                                     ip = map[i];
                                 }
@@ -120,10 +120,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vy += p1.vy;
                                 gb.vz += p1.vz;
                                 // Loop over all particles again
-                                for (int j=0;j<Ninner;j++){
+                                for (size_t j=0;j<Ninner;j++){
                                     // Do not collide particle with itself.
                                     if (i==j) continue;
-                                    int jp = j;
+                                    size_t jp = j;
                                     if (map){
                                         jp = map[j];
                                     }
@@ -162,18 +162,18 @@ void reb_collision_search(struct reb_simulation* const r){
             {
                 double dt_last_done = r->dt_last_done;
                 // Loop over ghost boxes, but only the inner most ring.
-                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                    for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                        for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                    for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                        for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                             // Loop over all particles
-                            for (int i=0;i<N;i++){
+                            for (size_t i=0;i<N;i++){
 #ifndef OPENMP
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
-                                int ip = i;
+                                size_t ip = i;
                                 if (map){
                                     ip = map[i];
                                 }
@@ -188,8 +188,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vy += p1.vy;
                                 gb.vz += p1.vz;
                                 // Loop over all particles again
-                                for (int j=i+1;j<N;j++){
-                                    int jp = j;
+                                for (size_t j=i+1;j<N;j++){
+                                    size_t jp = j;
                                     if (map){
                                         jp = map[j];
                                     }
@@ -254,13 +254,13 @@ void reb_collision_search(struct reb_simulation* const r){
 #endif // MPI
 
                 // Loop over ghost boxes, but only the inner most ring.
-                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
-                const int N = r->N - r->N_var;
+                const size_t N = r->N - r->N_var;
                 // Find second largest radius
-                int l1 = -1;
+                int l1 = -1;        // TODO Fix. Should use size_t.
                 int l2 = -1;
                 reb_simulation_two_largest_particles(r, &l1, &l2);
                 double second_largest_radius = 0;
@@ -270,19 +270,19 @@ void reb_collision_search(struct reb_simulation* const r){
 
                 // Loop over all particles
 #pragma omp parallel for schedule(guided)
-                for (int i=0;i<N;i++){
+                for (size_t i=0;i<N;i++){
 #ifndef OPENMP
                     if (reb_sigint > 1) return;
 #endif // OPENMP
                     struct reb_particle p1 = particles[i];
                     struct reb_collision collision_nearest;
                     collision_nearest.p1 = i;
-                    collision_nearest.p2 = -1;
+                    collision_nearest.p2 = SIZE_MAX;
                     double p1_r = p1.r;
                     // Loop over ghost boxes.
-                    for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                        for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                    for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                        for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                            for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                                 // Calculated shifted position (for speedup). 
                                 struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                                 struct reb_vec6d gbunmod = gb;
@@ -293,7 +293,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vy += p1.vy; 
                                 gb.vz += p1.vz; 
                                 // Loop over all root boxes.
-                                for (int ri=0;ri<r->N_root;ri++){
+                                for (size_t ri=0;ri<r->N_root;ri++){
                                     struct reb_treecell* rootcell = r->tree_root[ri];
                                     if (rootcell!=NULL){
                                         reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod, ri, p1_r, second_largest_radius, &collision_nearest, rootcell);
@@ -303,7 +303,7 @@ void reb_collision_search(struct reb_simulation* const r){
                         }
                     }
                     // Continue if no collision was found
-                    if (collision_nearest.p2==-1) continue;
+                    if (collision_nearest.p2==SIZE_MAX) continue;
                 }
             }
             break;
@@ -311,7 +311,7 @@ void reb_collision_search(struct reb_simulation* const r){
             {
                 // Calculate max drift (can also be stored in tree for further speedup)
                 double vmax2 = 0.;
-                for (int i=0;i<N;i++){
+                for (size_t i=0;i<N;i++){
                     struct reb_particle p1 = particles[i];
                     vmax2 = MAX(vmax2, p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
                 }
@@ -321,28 +321,28 @@ void reb_collision_search(struct reb_simulation* const r){
                 reb_tree_update(r);          
 
                 // Loop over ghost boxes, but only the inner most ring.
-                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
-                const int N = r->N - r->N_var;
+                const size_t N = r->N - r->N_var;
                 // Loop over all particles
 #pragma omp parallel for schedule(guided)
-                for (int i=0;i<N;i++){
+                for (size_t i=0;i<N;i++){
 #ifndef OPENMP
                     if (reb_sigint > 1) return;
 #endif // OPENMP
                     struct reb_particle p1 = particles[i];
                     struct reb_collision collision_nearest;
                     collision_nearest.p1 = i;
-                    collision_nearest.p2 = -1;
+                    collision_nearest.p2 = SIZE_MAX;
                     double p1_r = p1.r;
                     // Add drift during last timestep
                     double p1_r_plus_dtv = p1_r + r->dt_last_done*sqrt(p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
                     // Loop over ghost boxes.
-                    for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                        for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                    for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                        for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                            for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                                 // Calculated shifted position (for speedup). 
                                 struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                                 struct reb_vec6d gbunmod = gb;
@@ -353,7 +353,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vy += p1.vy; 
                                 gb.vz += p1.vz; 
                                 // Loop over all root boxes.
-                                for (int ri=0;ri<r->N_root;ri++){
+                                for (size_t ri=0;ri<r->N_root;ri++){
                                     struct reb_treecell* rootcell = r->tree_root[ri];
                                     if (rootcell!=NULL){
                                         reb_tree_check_for_overlapping_trajectories_in_cell(r, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
@@ -363,7 +363,7 @@ void reb_collision_search(struct reb_simulation* const r){
                         }
                     }
                     // Continue if no collision was found
-                    if (collision_nearest.p2==-1) continue;
+                    if (collision_nearest.p2==SIZE_MAX) continue;
                 }
             }
             break;
@@ -372,8 +372,8 @@ void reb_collision_search(struct reb_simulation* const r){
     }
 
     // randomize
-    for (int i=0;i<r->collisions_N;i++){
-        int new = rand_r(&(r->rand_seed))%r->collisions_N;
+    for (size_t i=0;i<r->collisions_N;i++){
+        size_t new = rand_r(&(r->rand_seed))%r->collisions_N;
         struct reb_collision c1 = r->collisions[i];
         r->collisions[i] = r->collisions[new];
         r->collisions[new] = c1;
@@ -390,10 +390,10 @@ void reb_collision_search(struct reb_simulation* const r){
         collision_resolve_keep_sorted = 1; // Force keep_sorted for hybrid integrator
     }
 
-    for (int i=0;i<r->collisions_N;i++){
+    for (size_t i=0;i<r->collisions_N;i++){
 
         struct reb_collision c = r->collisions[i];
-        if (c.p1 != -1 && c.p2 != -1){
+        if (c.p1 != SIZE_MAX && c.p2 != SIZE_MAX){
             // Resolve collision
             enum REB_COLLISION_RESOLVE_OUTCOME outcome = resolve(r, c);
 
@@ -403,12 +403,12 @@ void reb_collision_search(struct reb_simulation* const r){
                 int removedp1 = !reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
                 if (removedp1){
                     if (r->tree_root){ // In a tree, particles get removed later. 
-                        for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
+                        for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involved the removed particle
                             if (cp->p1==c.p1 || cp->p2==c.p1){
-                                cp->p1 = -1;
-                                cp->p2 = -1;
+                                cp->p1 = SIZE_MAX;
+                                cp->p2 = SIZE_MAX;
                             }
                         }
                     }else{ // Not in a tree, particles get removed immediately 
@@ -418,16 +418,16 @@ void reb_collision_search(struct reb_simulation* const r){
                                 c.p2--;
                             }
                         }else{
-                            if (c.p2 == (int)(r->N-r->N_var)){
+                            if (c.p2 == r->N-r->N_var){
                                 c.p2 = c.p1;
                             }
                         }
-                        for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
+                        for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involve the removed particle
                             if (cp->p1==c.p1 || cp->p2==c.p1){
-                                cp->p1 = -1;
-                                cp->p2 = -1;
+                                cp->p1 = SIZE_MAX;
+                                cp->p2 = SIZE_MAX;
                             }
                             // Adjust collisions
                             if (collision_resolve_keep_sorted){
@@ -438,10 +438,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == (int)(r->N-r->N_var)){
+                                if (cp->p1 == r->N-r->N_var){
                                     cp->p1 = c.p1;
                                 }
-                                if (cp->p2 == (int)(r->N-r->N_var)){
+                                if (cp->p2 == r->N-r->N_var){
                                     cp->p2 = c.p1;
                                 }
                             }
@@ -454,21 +454,21 @@ void reb_collision_search(struct reb_simulation* const r){
                 int removedp2 = !reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
                 if (removedp2){ // Update other collisions
                     if (r->tree_root){ // In a tree, particles get removed later. 
-                        for (int j=i+1;j<r->collisions_N;j++){ // Update other collisions
+                        for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involved the removed particle
                             if (cp->p1==c.p2 || cp->p2==c.p2){
-                                cp->p1 = -1;
-                                cp->p2 = -1;
+                                cp->p1 = SIZE_MAX;
+                                cp->p2 = SIZE_MAX;
                             }
                         }
                     }else{ // Not in a tree, particles get removed immediately 
-                        for (int j=i+1;j<r->collisions_N;j++){
+                        for (size_t j=i+1;j<r->collisions_N;j++){
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involve the removed particle
                             if (cp->p1==c.p2 || cp->p2==c.p2){
-                                cp->p1 = -1;
-                                cp->p2 = -1;
+                                cp->p1 = SIZE_MAX;
+                                cp->p2 = SIZE_MAX;
                             }
                             // Adjust collisions
                             if (collision_resolve_keep_sorted){
@@ -479,10 +479,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == (int)(r->N-r->N_var)){
+                                if (cp->p1 == r->N-r->N_var){
                                     cp->p1 = c.p2;
                                 }
-                                if (cp->p2 == (int)(r->N-r->N_var)){
+                                if (cp->p2 == r->N-r->N_var){
                                     cp->p2 = c.p2;
                                 }
                             }
@@ -769,8 +769,8 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
     // Always remove particle with larger index and merge into lower index particle.
     // This will keep N_active meaningful even after mergers.
     int swap = 0;
-    unsigned int i = c.p1;
-    unsigned int j = c.p2;
+    size_t i = c.p1;
+    size_t j = c.p2;
     if (j<i){
         swap = 1;
         i = c.p2;
@@ -822,7 +822,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
 
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
         }
-        const unsigned int N_active = ((r->N_active==-1)?r->N-r->N_var: (unsigned int)r->N_active);
+        const size_t N_active = ((r->N_active==-1)?r->N-r->N_var:r->N_active);
         // No potential energy between test particles
         if (i<N_active || j<N_active){
             double x = pi->x - pj->x;

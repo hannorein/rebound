@@ -89,7 +89,7 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         reb_simulation_error(r, "Update particles called without valid y pointer.");
         return;
     }
-    for (unsigned int i=0; i<r->N; i++){
+    for (size_t i=0; i<r->N; i++){
         struct reb_particle* const p = &(r->particles[i]);
         p->x  = y[i*6+0];
         p->y  = y[i*6+1];
@@ -326,7 +326,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         reb_simulation_update_acceleration(r);
     }
 
-    for (unsigned int i=0; i<r->N; i++){
+    for (size_t i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
         yDot[i*6+0] = p.vx;
         yDot[i*6+1] = p.vy;
@@ -404,13 +404,13 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
     // maxError not used at the moment.
     // double  maxError = DBL_MAX;
 
-    int Ns = r->N_odes; // Number of ode sets
+    size_t Ns = r->N_odes; // Number of ode sets
     struct reb_ode** odes = r->odes;
     double error;
     int reject = 0;
 
     // Check if ODEs have been set up correctly 
-    for (int s=0; s < Ns; s++){
+    for (size_t s=0; s < Ns; s++){
         if (!odes[s]->derivatives){
             reb_simulation_error(r,"A user-specified set of ODEs has not been provided with a derivatives function.");
             r->status = REB_STATUS_GENERIC_ERROR;
@@ -418,7 +418,7 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
         }
     }
 
-    for (int s=0; s < Ns; s++){
+    for (size_t s=0; s < Ns; s++){
         // Check if ODEs need pre timestep setup
         if (odes[s]->pre_timestep){
             odes[s]->pre_timestep(odes[s], odes[s]->y);
@@ -432,7 +432,7 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
     }
 
     // first evaluation, at the beginning of the step
-    for (int s=0; s < Ns; s++){
+    for (size_t s=0; s < Ns; s++){
         odes[s]->derivatives(odes[s], odes[s]->y0Dot, odes[s]->y, t);
     }
 
@@ -470,7 +470,7 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
 
                 // extrapolate the state at the end of the step
                 // using last iteration data
-                for (int s=0; s < Ns; s++){
+                for (size_t s=0; s < Ns; s++){
                     extrapolate(odes[s], ri_bs->coeff, k);
                     if (odes[s]->getscale){
                         odes[s]->getscale(odes[s], odes[s]->y, odes[s]->y1);
@@ -482,7 +482,7 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
                 // estimate the error at the end of the step.
                 error = 0;
                 //long int combined_length = 0;
-                for (int s=0; s < Ns; s++){
+                for (size_t s=0; s < Ns; s++){
                     const int length = odes[s]->length;
                     //combined_length += length;
                     double * C = odes[s]->C;
@@ -617,7 +617,7 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
         printf("."); 
 #endif
         // Swap arrays
-        for (int s=0; s < Ns; s++){
+        for (size_t s=0; s < Ns; s++){
             double* y_tmp = odes[s]->y;
             odes[s]->y = odes[s]->y1; 
             odes[s]->y1 = y_tmp; 
@@ -746,12 +746,12 @@ void reb_integrator_bs_step(struct reb_simulation* r){
     }
 
     struct reb_ode** odes = r->odes;
-    int Ns = r->N_odes;
-    for (int s=0; s < Ns; s++){
+    size_t Ns = r->N_odes;
+    for (size_t s=0; s < Ns; s++){
         const int length = odes[s]->length;
         double* y0 = odes[s]->y;
         double* y1 = odes[s]->y1;
-        for (int i = 0; i < length; ++i) {
+        for (size_t i = 0; i < length; ++i) {
             y1[i] = y0[i];
         }
     }
@@ -760,7 +760,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
 
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
 
-    unsigned int nbody_length = r->N*3*2;
+    size_t nbody_length = r->N*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
         if (ri_bs->nbody_ode->length != nbody_length){
@@ -775,14 +775,14 @@ void reb_integrator_bs_step(struct reb_simulation* r){
         ri_bs->first_or_last_step = 1;
     }
 
-    for (int s=0; s < r->N_odes; s++){
+    for (size_t s=0; s < r->N_odes; s++){
         if (r->odes[s]->needs_nbody){
             ri_bs->user_ode_needs_nbody = 1;
         }
     }
 
     double* const y = ri_bs->nbody_ode->y;
-    for (unsigned int i=0; i<r->N; i++){
+    for (size_t i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
         y[i*6+0] = p.x;
         y[i*6+1] = p.y;
@@ -835,7 +835,7 @@ void reb_ode_free(struct reb_ode* ode){
     if (r){ // only do this is ode is in a simulation
         struct reb_integrator_bs* ri_bs = &r->ri_bs;
         int shift = 0;
-        for (int s=0; s < r->N_odes; s++){
+        for (size_t s=0; s < r->N_odes; s++){
             if (r->odes[s] == ode){
                 r->N_odes--;
                 shift = 1;
