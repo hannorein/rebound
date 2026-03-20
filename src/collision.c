@@ -260,11 +260,11 @@ void reb_collision_search(struct reb_simulation* const r){
                 const struct reb_particle* const particles = r->particles;
                 const size_t N = r->N - r->N_var;
                 // Find second largest radius
-                int l1 = -1;        // TODO Fix. Should use size_t.
-                int l2 = -1;
+                size_t l1 = SIZE_MAX;
+                size_t l2 = SIZE_MAX;
                 reb_simulation_two_largest_particles(r, &l1, &l2);
                 double second_largest_radius = 0;
-                if (l2 != -1){
+                if (l2 != SIZE_MAX){
                     second_largest_radius = r->particles[l2].r;
                 }
 

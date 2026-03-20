@@ -313,7 +313,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     if (rim->encounter_N<2){
         return; // If there are no particles (other than the star) having a close encounter, then there is nothing to do.
     }
-
+    size_t N_active = (r->N_active==-1) ? r->N : r->N_active;
     size_t i_enc = 0;
     rim->encounter_N_active = 0;
     for (size_t i=0; i<r->N; i++){
@@ -322,7 +322,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             r->particles[i] = rim->particles_backup[i];     // Use coordinates before whfast step
             rim->encounter_map[i_enc] = i;
             i_enc++;
-            if (r->N_active==-1 || i<r->N_active){
+            if (i<r->N_active){
                 rim->encounter_N_active++;
                 if (rim->tponly_encounter){
                     rim->particles_backup[i] = tmp;         // Make copy of particles after the kepler step.
