@@ -112,7 +112,7 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
 
     /* 1 LOOP FOR MFT, 2 LOOPS FOR FMFT, 3 LOOPS FOR NON-LINEAR FMFT */
 
-    for(enum REB_FREQUENCY_ANALYSIS_TYPE l= REB_FREQUENCY_ANALYSIS_MFT; l<=type; l++){
+    for(int l=0; l<=(int)type; l++){
         if(l==0){
             /* SEPARATE REAL AND IMAGINARY PARTS */ 
             for(size_t j=0;j<ndata;j++){
