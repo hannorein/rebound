@@ -116,7 +116,7 @@ void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r){
     com_pos.x /= mtot; com_pos.y /= mtot; com_pos.z /= mtot;
     com_vel.x /= mtot; com_vel.y /= mtot; com_vel.z /= mtot;
     // Particle 0 is also changed to allow for easy collision detection
-    for (size_t i=N-1;i>=0;i--){ 
+    for (size_t i=0;i<N;i++){ 
         particles[i].x -= particles[0].x;
         particles[i].y -= particles[0].y;
         particles[i].z -= particles[0].z;
@@ -381,7 +381,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             //   - will not be used after this
             //   - com velocity is unchanged. this velocity will be used
             //     to reconstruct star's velocity later.
-            for (size_t i=r->N-1; i>=0; i--){
+            for (size_t i=0; i<r->N; i++){
                 r->particles[i].x -= r->particles[0].x;
                 r->particles[i].y -= r->particles[0].y;
                 r->particles[i].z -= r->particles[0].z;

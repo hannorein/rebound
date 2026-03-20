@@ -178,16 +178,16 @@ struct reb_integrator_mercurius {
     // Internal use
     unsigned int is_synchronized;   
     unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
-    unsigned int encounter_N;       // Number of particles currently having an encounter
-    unsigned int encounter_N_active;// Number of active particles currently having an encounter
+    size_t encounter_N;             // Number of particles currently having an encounter
+    size_t encounter_N_active;      // Number of active particles currently having an encounter
     unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
-    unsigned int N_allocated;
-    unsigned int N_allocated_additional_forces;
-    unsigned int N_allocated_dcrit; // Current size of dcrit arrays
+    size_t N_allocated;
+    size_t N_allocated_additional_forces;
+    size_t N_allocated_dcrit;       // Current size of dcrit arrays
     double* dcrit;                  // Precalculated switching radii for particles
     struct reb_particle* REB_RESTRICT particles_backup; //  contains coordinates before Kepler step for encounter prediction
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // contains coordinates before Kepler step for encounter prediction
-    int* encounter_map;             // Map to represent which particles are integrated with ias15
+    size_t* encounter_map;          // Map to represent which particles are integrated with ias15
     struct reb_vec3d com_pos;       // Used to keep track of the center of mass during the timestep
     struct reb_vec3d com_vel;
 };
@@ -212,8 +212,8 @@ struct reb_integrator_leapfrog {
 
 // TRACE (Lu Hernandez & Rein 2024)
 struct reb_integrator_trace {
-    int (*S) (struct reb_simulation* const r, const unsigned int i, const unsigned int j);
-    int (*S_peri) (struct reb_simulation* const r, const unsigned int j);
+    int (*S) (struct reb_simulation* const r, const size_t i, const size_t j);
+    int (*S_peri) (struct reb_simulation* const r, const size_t j);
 
     enum {
         REB_TRACE_PERI_PARTIAL_BS = 0,
@@ -231,20 +231,20 @@ struct reb_integrator_trace {
         REB_TRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
         REB_TRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
     } mode;
-    unsigned int encounter_N;           // Number of particles currently having an encounter
-    unsigned int encounter_N_active;    // Number of active particles currently having an encounter
+    size_t encounter_N;                 // Number of particles currently having an encounter
+    size_t encounter_N_active;          // Number of active particles currently having an encounter
 
-    unsigned int N_allocated;
-    unsigned int N_allocated_additional_forces;
-    unsigned int tponly_encounter; // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
+    size_t N_allocated;
+    size_t N_allocated_additional_forces;
+    unsigned int tponly_encounter;      // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
 
     struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
     struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
 
-    int* encounter_map;             // Map to represent which particles are integrated with BS
-    int* encounter_map_backup;      // Contains encounter map from after pre-ts check. Used to retain memory of CEs flagged at this step.
-    struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
+    size_t* encounter_map;              // Map to represent which particles are integrated with BS
+    size_t* encounter_map_backup;       // Contains encounter map from after pre-ts check. Used to retain memory of CEs flagged at this step.
+    struct reb_vec3d com_pos;           // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
     int* current_Ks; // Tracking K_ij for the entire timestep
@@ -792,9 +792,9 @@ DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* cons
 
 // Built in trace switching functions
 
-DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const unsigned int j);
-DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j);
+DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const size_t j);
+DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j);
+DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j);
 
 // Built in collision resolve functions
 

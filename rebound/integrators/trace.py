@@ -35,22 +35,22 @@ class IntegratorTRACE(ctypes.Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, r_crit_hill={3}, peri_mode=={4}, peri_crit_eta=={5}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.r_crit_hill, self.peri_mode, self.peri_crit_eta)
 
-    _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)),
-                ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)),
+    _fields_ = [("_S", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_size_t, ctypes.c_size_t)),
+                ("_S_peri", ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_size_t)),
                 ("peri_mode", ctypes.c_uint),
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
                 ("_mode", ctypes.c_uint),
-                ("_encounter_N", ctypes.c_uint),
-                ("_encounter_N_active", ctypes.c_uint),
-                ("_N_allocated", ctypes.c_uint),
-                ("_N_allocated_additionalforces", ctypes.c_uint),
+                ("_encounter_N", ctypes.c_size_t),
+                ("_encounter_N_active", ctypes.c_size_t),
+                ("_N_allocated", ctypes.c_size_t),
+                ("_N_allocated_additionalforces", ctypes.c_size_t),
                 ("_tponly_encounter", ctypes.c_uint),
                 ("_particles_backup", ctypes.POINTER(Particle)),
                 ("_particles_backup_kepler", ctypes.POINTER(Particle)),
                 ("_particles_backup_additional_forces", ctypes.POINTER(Particle)),
-                ("_encounter_map", ctypes.POINTER(ctypes.c_int)),
-                ("_encounter_map_backup", ctypes.POINTER(ctypes.c_int)),
+                ("_encounter_map", ctypes.POINTER(ctypes.csize_t)),
+                ("_encounter_map_backup", ctypes.POINTER(ctypes.csize_t)),
                 ("_com_pos", Vec3dBasic),
                 ("_com_vel", Vec3dBasic),
                 ("_current_Ks", ctypes.POINTER(ctypes.c_int)),
@@ -107,5 +107,5 @@ class IntegratorTRACE(ctypes.Structure):
             else:
                 raise ValueError("Warning. Pericenter switching mode not found.")
 
-TRACEKF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint, ctypes.c_uint)
-TRACECF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_uint)
+TRACEKF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_size_t, ctypes.c_size_t)
+TRACECF = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.POINTER(Simulation), ctypes.c_size_t)
