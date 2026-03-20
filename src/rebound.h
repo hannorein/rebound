@@ -295,6 +295,7 @@ struct reb_integrator_trace {
     struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
 
     int* encounter_map;             // Map to represent which particles are integrated with BS
+    int* encounter_map_backup;      // Contains encounter map from after pre-ts check. Used to retain memory of CEs flagged at this step.
     struct reb_vec3d com_pos;       // Used to keep track of the centre of mass during the timestep
     struct reb_vec3d com_vel;
 
