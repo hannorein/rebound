@@ -1073,8 +1073,10 @@ class Simulation(Structure):
         """
         if last is None:
             last = self.N_real
+        if first<0 or last <0:
+            raise AttributeError("first and last in com() can not be negative.")
         clibrebound.reb_simulation_com_range.restype = Particle
-        return clibrebound.reb_simulation_com_range(byref(self), c_int(first), c_int(last))
+        return clibrebound.reb_simulation_com_range(byref(self), c_size_t(first), c_size_t(last))
 
 # Tools
     def serialize_particle_data(self,**kwargs):
@@ -1504,7 +1506,7 @@ Simulation._fields_ = [
                 ("N_ghost_z", c_size_t),
                 ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
-                ("N_allocated_collisions", c_int),
+                ("N_allocated_collisions", c_size_t),
                 ("collisions_N", c_uint),
                 ("minimum_collision_velocity", c_double),
                 ("collisions_plog", c_double),

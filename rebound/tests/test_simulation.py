@@ -125,8 +125,6 @@ class TestSimulation(unittest.TestCase):
         self.assertAlmostEqual(com.x, 1., delta=1e-15)
         com = sim.com(first=1,last=2)
         self.assertAlmostEqual(com.x, 2., delta=1e-15)
-        com = sim.com(first=4, last=-3)
-        self.assertAlmostEqual(com.x, 0., delta=1e-15)
     
     def test_jacobi_com(self):
         sim = rebound.Simulation()

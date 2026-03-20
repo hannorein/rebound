@@ -422,7 +422,7 @@ static void reb_server_cerror(SOCKET clientS, char cause[]){
                         goto screenshot_finish;
                     }
 
-                    int rc_len = strlen(dataURL)+1;
+                    size_t rc_len = strlen(dataURL)+1;
                     char* base64 = strchr(dataURL, ',');
                     if (content_length != rc_len){
                         printf("Received screenshot with incorrect size.\n");
@@ -526,7 +526,7 @@ screenshot_finish:
 
                 /* read (and ignore) the HTTP headers */
                 char* curLine = recbuf;
-                unsigned long content_length = 0;
+                size_t content_length = 0;
                 while(curLine){
                     char* nextLine = strchr(curLine, '\n');
                     if (nextLine) *nextLine = '\0';

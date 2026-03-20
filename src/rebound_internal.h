@@ -63,8 +63,8 @@ DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
 DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
 DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
 DLLEXPORT extern const unsigned int reb_favicon_len;
-DLLEXPORT extern const int reb_messages_max_length;
-DLLEXPORT extern const int reb_messages_max_N;
+DLLEXPORT extern const size_t reb_messages_max_length;
+DLLEXPORT extern const size_t reb_messages_max_N;
 
 // Free any pointer. Alias for free(). Used by python.
 DLLEXPORT void reb_free(void* p);

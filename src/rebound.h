@@ -504,7 +504,7 @@ struct reb_simulation {
 
     int collision_resolve_keep_sorted;      // 0 (default): may reorder particles during collisions, 1: keep particles sorted.
     struct reb_collision* collisions;       // Array of current collisions. Do not change manually
-    int N_allocated_collisions;
+    size_t N_allocated_collisions;
     unsigned int collisions_N;              // Number of collisions found during last collision search.
     double minimum_collision_velocity;      // Ensure relative velocity during collisions is at least this much (to avoid particles sinking into each other)
     double collisions_plog;                 // Keeping track of momentum transfer in collisions (for ring simulations)
@@ -628,7 +628,7 @@ DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
 // Compare r1 to r2. If exactly equal then 0 is returned, otherwise 1. If output_option=1, then difference is also printed on screen.
 DLLEXPORT int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
 // Setup simulation domain and root boxes. This needs to be called before particles are added if the tree code is used.
-DLLEXPORT void reb_simulation_configure_box(struct reb_simulation* const r, const double boxsize, const int N_root_x, const int N_root_y, const int N_root_z); // Configure the boundary/root box
+DLLEXPORT void reb_simulation_configure_box(struct reb_simulation* const r, const double boxsize, const size_t N_root_x, const size_t N_root_y, const size_t N_root_z); // Configure the boundary/root box
 
 // Start webserver for visualization. Returns 0 on success.
 DLLEXPORT int reb_simulation_start_server(struct reb_simulation* r, int port);
@@ -711,7 +711,7 @@ DLLEXPORT struct reb_particle reb_simulation_com(struct reb_simulation* r);
 // Returns the center of mass of two particles.
 DLLEXPORT struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 // Returns the center of mass of particles in the simulation within a given range.
-DLLEXPORT struct reb_particle reb_simulation_com_range(struct reb_simulation* r, int first, int last);
+DLLEXPORT struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t first, size_t last);
 // Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
 DLLEXPORT double reb_integrator_ias15_timescale(struct reb_simulation* r);
 
@@ -722,7 +722,7 @@ DLLEXPORT void reb_simulation_add(struct reb_simulation* const r, struct reb_par
 // Use this function to add a particle to a simulation using orbital parameters or cartesian coordinates. See examples on usage.
 DLLEXPORT void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...);
 // This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius. Particles get added to simulation.
-DLLEXPORT void reb_simulation_add_plummer(struct reb_simulation* r, int _N, double M, double R); 
+DLLEXPORT void reb_simulation_add_plummer(struct reb_simulation* r, size_t _N, double M, double R); 
 // Returns a particle given a set of orbital parameters. Also sets err to error code if initialization failed.
 DLLEXPORT struct reb_particle reb_particle_from_orbit_err(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f, int* err);
 // Same as above but without error code.
@@ -928,7 +928,7 @@ DLLEXPORT int reb_simulation_add_variation_1st_order(struct reb_simulation* cons
 // index_1st_order_a is the index of the corresponding first variational particles.
 // index_1st_order_b is the index of the corresponding first variational particles.
 // Returns the index of the first variational particle added
-DLLEXPORT int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b);
+DLLEXPORT int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, size_t index_1st_order_a, size_t index_1st_order_b);
 
 // Rescale all sets of variational particles if their size gets too large (>1e100).
 // This can prevent an overflow in floating point numbers. The logarithm of the rescaling
@@ -1025,7 +1025,7 @@ enum REB_FREQUENCY_ANALYSIS_TYPE {
     REB_FREQUENCY_ANALYSIS_FMFT2 = 2,
 };
 // Returns 0 on success
-DLLEXPORT int reb_frequency_analysis(double *output, int nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, unsigned long ndata);
+DLLEXPORT int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, size_t ndata);
 
 // Functions to convert between coordinate systems
 

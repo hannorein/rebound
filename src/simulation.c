@@ -121,8 +121,8 @@ static void run_heartbeat(struct reb_simulation* const r){
         // Check for escaping particles
         const double max2 = r->exit_max_distance * r->exit_max_distance;
         const struct reb_particle* const particles = r->particles;
-        const int N = r->N - r->N_var;
-        for (int i=0;i<N;i++){
+        const size_t N = r->N - r->N_var;
+        for (size_t i=0;i<N;i++){
             struct reb_particle p = particles[i];
             double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
             if (r2>max2){
@@ -134,10 +134,10 @@ static void run_heartbeat(struct reb_simulation* const r){
         // Check for close encounters
         const double min2 = r->exit_min_distance * r->exit_min_distance;
         const struct reb_particle* const particles = r->particles;
-        const int N = r->N - r->N_var;
-        for (int i=0;i<N;i++){
+        const size_t N = r->N - r->N_var;
+        for (size_t i=0;i<N;i++){
             struct reb_particle pi = particles[i];
-            for (int j=0;j<i;j++){
+            for (size_t j=0;j<i;j++){
                 struct reb_particle pj = particles[j];
                 const double x = pi.x-pj.x;
                 const double y = pi.y-pj.y;
@@ -153,7 +153,7 @@ static void run_heartbeat(struct reb_simulation* const r){
 
 static int error_message_waiting(struct reb_simulation* const r){
     if (r->messages){
-        for (int i=0;i<reb_messages_max_N;i++){
+        for (size_t i=0;i<reb_messages_max_N;i++){
             if (r->messages[i]!=NULL){
                 if (r->messages[i][0]=='e'){
                     return 1;
@@ -309,20 +309,20 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
         r->ri_custom.reset(r);
     }
     if(r->free_particle_ap){
-        for(unsigned int i=0; i<r->N; i++){
+        for(size_t i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
         }
     }
     if (r->particles){
         free(r->particles   );
     }
-    for (int i=0;i<r->N_name_list;i++){
+    for (size_t i=0;i<r->N_name_list;i++){
         free(r->name_list[i]);
     }
     free(r->name_list);
     free(r->name_hash_table);
     if (r->messages){
-        for (int i=0;i<reb_messages_max_N;i++){
+        for (size_t i=0;i<reb_messages_max_N;i++){
             free(r->messages[i]);
         }
     }
@@ -335,7 +335,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->var_config){
         free(r->var_config);
     }
-    for (int s=0; s<r->N_odes; s++){
+    for (size_t s=0; s<r->N_odes; s++){
         r->odes[s]->r = NULL;
     }
     free(r->odes);
@@ -871,7 +871,7 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, 
 #endif // OPENMP
 }
 
-void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const int N_root_x, const int N_root_y, const int N_root_z){
+void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const size_t N_root_x, const size_t N_root_y, const size_t N_root_z){
     r->root_size = root_size;
     r->N_root_x = N_root_x;
     r->N_root_y = N_root_y;
@@ -888,9 +888,9 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
 }
 
 void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
-    const int N_real = r->N - r->N_var;
+    const size_t N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
-    for (int i=0;i<N_real;i++){
+    for (size_t i=0;i<N_real;i++){
         if (m){
             m[i] = particles[i].m;
         }
@@ -919,9 +919,9 @@ void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, doubl
 }
 
 void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
-    const int N_real = r->N - r->N_var;
+    const size_t N_real = r->N - r->N_var;
     struct reb_particle* restrict const particles = r->particles;
-    for (int i=0;i<N_real;i++){
+    for (size_t i=0;i<N_real;i++){
         if (m){
             particles[i].m = m[i];
         }

@@ -66,8 +66,8 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
     }
     // Apply acceleration (jerk already applied)
     struct reb_particle* restrict const particles = r->particles;
-    const int N = r->N;
-    for (int i=0;i<N;i++){
+    const size_t N = r->N;
+    for (size_t i=0;i<N;i++){
         particles[i].vx += y*particles[i].ax;
         particles[i].vy += y*particles[i].ay;
         particles[i].vz += y*particles[i].az;
@@ -75,9 +75,9 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
 }
 
 static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* r, double y, double v){
-    const int N = r->N;
-    const int N_real   = N - r->N_var;
-    const int N_active = r->N_active==-1?N_real:r->N_active;
+    const size_t N = r->N;
+    const size_t N_real   = N - r->N_var;
+    const size_t N_active = r->N_active==-1?N_real:r->N_active;
     const int testparticle_type   = r->testparticle_type;
     struct reb_particle* restrict const particles = r->particles;
 
@@ -89,7 +89,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
         particles[0].ay = 0;
         particles[0].az = 0;
         // Interactions between central object and all other active particles
-        for (int j=1; j<N_active; j++){
+        for (size_t j=1; j<N_active; j++){
             const double dx = particles[0].x - particles[j].x;
             const double dy = particles[0].y - particles[j].y;
             const double dz = particles[0].z - particles[j].z;
@@ -106,7 +106,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             particles[j].az    = prefacti*dz;
         }
         // Interactions between central object and all test particles
-        for (int j=N_active; j<N_real; j++){
+        for (size_t j=N_active; j<N_real; j++){
             const double dx = particles[0].x - particles[j].x;
             const double dy = particles[0].y - particles[j].y;
             const double dz = particles[0].z - particles[j].z;
@@ -126,7 +126,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
         }
         // Jerk calculation
         // Interactions between central object and all other active particles
-        for (int i=1; i<N_active; i++){
+        for (size_t i=1; i<N_active; i++){
             const double dx = particles[0].x - particles[i].x; 
             const double dy = particles[0].y - particles[i].y; 
             const double dz = particles[0].z - particles[i].z; 
@@ -151,7 +151,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             particles[i].vz    += y*particles[i].az + daz*prefact2j - dz*prefact1j;
         }
         // Interactions between central object and all test particles
-        for (int i=N_active; i<N_real; i++){
+        for (size_t i=N_active; i<N_real; i++){
             const double dx = particles[0].x - particles[i].x; 
             const double dy = particles[0].y - particles[i].y; 
             const double dz = particles[0].z - particles[i].z; 
@@ -183,7 +183,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
     }else{
         // Normal force calculation 
         // Interactions between central object and all other active particles
-        for (int j=1; j<N_active; j++){
+        for (size_t j=1; j<N_active; j++){
             const double dx = particles[0].x - particles[j].x;
             const double dy = particles[0].y - particles[j].y;
             const double dz = particles[0].z - particles[j].z;
@@ -200,7 +200,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             particles[j].vz    += prefacti*dz;
         }
         // Interactions between central object and all test particles
-        for (int j=N_active; j<N_real; j++){
+        for (size_t j=N_active; j<N_real; j++){
             const double dx = particles[0].x - particles[j].x;
             const double dy = particles[0].y - particles[j].y;
             const double dz = particles[0].z - particles[j].z;
@@ -218,7 +218,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                 particles[0].vz    += prefactj*dz;
             }
         }
-        for (int v=0;v<r->N_var_config;v++){
+        for (size_t v=0;v<r->N_var_config;v++){
             struct reb_variational_configuration const vc = r->var_config[v];
             if (vc.order==1){
                 //////////////////
@@ -226,7 +226,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                 //////////////////
                 struct reb_particle* const particles_var1 = particles + vc.index;
                 if (vc.testparticle<0){
-                    for (int j=1; j<N_active; j++){
+                    for (size_t j=1; j<N_active; j++){
                         const double dx = particles[0].x - particles[j].x;
                         const double dy = particles[0].y - particles[j].y;
                         const double dz = particles[0].z - particles[j].z;
@@ -264,7 +264,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                         particles_var1[j].vz -= Gmi * daz - dGmi*r3inv*dz; 
                     }
                 }else{ //testparticle
-                    int i = vc.testparticle;
+                    size_t i = vc.testparticle;
                     const double dx = particles[i].x - particles[0].x;
                     const double dy = particles[i].y - particles[0].y;
                     const double dz = particles[i].z - particles[0].z;
@@ -348,8 +348,8 @@ static inline void reb_integrator_eos_postprocessor(struct reb_simulation* const
 }
 static void reb_integrator_eos_drift_shell1(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
-    unsigned int N = r->N;
-    for (unsigned int i=0;i<N;i++){  
+    size_t N = r->N;
+    for (size_t i=0;i<N;i++){  
         particles[i].x += dt*particles[i].vx;
         particles[i].y += dt*particles[i].vy;
         particles[i].z += dt*particles[i].vz;
@@ -358,13 +358,13 @@ static void reb_integrator_eos_drift_shell1(struct reb_simulation* const r, doub
 
 static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, double _dt){
     struct reb_integrator_eos* const reos = &(r->ri_eos);
-    const int n = reos->n;
+    const size_t n = reos->n;
     const double dt = _dt/n;
     reb_integrator_eos_preprocessor(r, dt, reos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
     switch(reos->phi1){
         case REB_EOS_LF:
             reb_integrator_eos_drift_shell1(r, dt*0.5); 
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt, 0.);
                 if (i<n-1){
                     reb_integrator_eos_drift_shell1(r, dt);
@@ -374,7 +374,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_LF4:
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf4_a);
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*2.*reb_integrator_leapfrog_lf4_a, 0.);
                 reb_integrator_eos_drift_shell1(r, dt*(0.5-reb_integrator_leapfrog_lf4_a));
                 reb_integrator_eos_interaction_shell1(r, dt*(1.-4.*reb_integrator_leapfrog_lf4_a), 0.);
@@ -388,7 +388,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_LF6:
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[0], 0.);
                 reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf6_a[0]+reb_integrator_leapfrog_lf6_a[1])*0.5);
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[1], 0.);
@@ -414,7 +414,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break; 
         case REB_EOS_LF8: 
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf8_a[0], 0.);
                 reb_integrator_eos_drift_shell1(r, dt*(reb_integrator_leapfrog_lf8_a[0]+reb_integrator_leapfrog_lf8_a[1])*0.5);
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf8_a[1], 0.);
@@ -456,7 +456,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_LF4_2: 
             reb_integrator_eos_drift_shell1(r, dt*lf4_2_a); 
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*0.5, 0.); 
                 reb_integrator_eos_drift_shell1(r, dt*(1.-2.*lf4_2_a));
                 reb_integrator_eos_interaction_shell1(r, dt*0.5, 0.); 
@@ -468,7 +468,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_LF8_6_4:
             reb_integrator_eos_drift_shell1(r, dt*lf8_6_4_a[0]);   
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, lf8_6_4_b[0]*dt,0);
                 reb_integrator_eos_drift_shell1(r, lf8_6_4_a[1]*dt);   
                 reb_integrator_eos_interaction_shell1(r, lf8_6_4_b[1]*dt,0);
@@ -490,7 +490,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_PMLF4:
             reb_integrator_eos_drift_shell1(r, dt*0.5); 
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt, dt*dt*dt/24.); 
                 if (i<n-1){
                     reb_integrator_eos_drift_shell1(r, dt);
@@ -500,7 +500,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_PMLF6:
             reb_integrator_eos_drift_shell1(r, dt*pmlf6_a[0]); 
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*pmlf6_b[0], dt*dt*dt*pmlf6_c[0]); 
                 reb_integrator_eos_drift_shell1(r, dt*pmlf6_a[1]);
                 reb_integrator_eos_interaction_shell1(r, dt*pmlf6_b[1], dt*dt*dt*pmlf6_c[1]); 
@@ -514,7 +514,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             break;
         case REB_EOS_PLF7_6_4:
             reb_integrator_eos_drift_shell1(r, dt*plf7_6_4_a[0]);   
-            for (int i=0;i<n;i++){
+            for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, plf7_6_4_b[0]*dt,0);
                 reb_integrator_eos_drift_shell1(r, plf7_6_4_a[1]*dt);   
                 reb_integrator_eos_interaction_shell1(r, plf7_6_4_b[1]*dt,0);
