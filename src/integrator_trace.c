@@ -41,9 +41,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
-    // for this test hard code no binary close encounter
-//    if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_DHC && (j == 7 || i == 7)) return 0;
-
+    
     // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double h2 = r->dt/2.;
@@ -518,6 +516,7 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     double Mpl = 0.0;
     for (int i=1; i<N; ++i){
         if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WB && i==idxB){
+            // This is ONLY to integrate the wide binary in WB coordinates
             // Kepler parameter for relative coordinate X_B is G * m_tot
             const double GM = r->G * (mA + Mpl + mB);
 
