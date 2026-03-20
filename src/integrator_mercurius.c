@@ -116,10 +116,11 @@ void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r){
     com_pos.x /= mtot; com_pos.y /= mtot; com_pos.z /= mtot;
     com_vel.x /= mtot; com_vel.y /= mtot; com_vel.z /= mtot;
     // Particle 0 is also changed to allow for easy collision detection
+    struct reb_particle p0 = particles[0];
     for (size_t i=0;i<N;i++){ 
-        particles[i].x -= particles[0].x;
-        particles[i].y -= particles[0].y;
-        particles[i].z -= particles[0].z;
+        particles[i].x -= p0.x;
+        particles[i].y -= p0.y;
+        particles[i].z -= p0.z;
         particles[i].vx -= com_vel.x;
         particles[i].vy -= com_vel.y;
         particles[i].vz -= com_vel.z;
@@ -370,11 +371,12 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         if (r->post_timestep_modifications){
             r->post_timestep_modifications(r);
         }
-
-        star.vx = r->particles[0].vx; // keep track of changed star velocity for later collisions
-        star.vy = r->particles[0].vy;
-        star.vz = r->particles[0].vz;
-        if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
+        
+        struct reb_particle p0 = r->particles[0];
+        star.vx = p0.vx; // keep track of changed star velocity for later collisions
+        star.vy = p0.vy;
+        star.vz = p0.vz;
+        if (p0.x !=0 || p0.y !=0 || p0.z !=0){
             // Collision with star occurred
             // Shift all particles back to heliocentric coordinates
             // Ignore stars velocity:
@@ -382,9 +384,9 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             //   - com velocity is unchanged. this velocity will be used
             //     to reconstruct star's velocity later.
             for (size_t i=0; i<r->N; i++){
-                r->particles[i].x -= r->particles[0].x;
-                r->particles[i].y -= r->particles[0].y;
-                r->particles[i].z -= r->particles[0].z;
+                r->particles[i].x -= p0.x;
+                r->particles[i].y -= p0.y;
+                r->particles[i].z -= p0.z;
             }
         }
     }
