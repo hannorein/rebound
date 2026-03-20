@@ -96,7 +96,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
             if (rim->N_allocated<r->N){
                 rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
-                rim->encounter_map      = realloc(rim->encounter_map,sizeof(int)*r->N);
+                rim->encounter_map      = realloc(rim->encounter_map,sizeof(size_t)*r->N);
                 rim->N_allocated = r->N;
             }
             rim->encounter_map[rim->encounter_N] = r->N-1;
@@ -119,7 +119,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
                 ri_trace->particles_backup = realloc(ri_trace->particles_backup, sizeof(struct reb_particle)*r->N);
                 ri_trace->particles_backup_kepler = realloc(ri_trace->particles_backup_kepler, sizeof(struct reb_particle)*r->N);
                 ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
-                ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(int)*r->N);
+                ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(size_t)*r->N);
                 ri_trace->N_allocated   = r->N;
             }
 
