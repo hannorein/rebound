@@ -456,9 +456,9 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
             loop   = 0;
 
         } else {
-            for (int s=0; s < Ns; s++){
-                const int length = odes[s]->length;
-                for (int i = 0; i < length; ++i) {
+            for (size_t s=0; s < Ns; s++){
+                const size_t length = odes[s]->length;
+                for (size_t i = 0; i < length; ++i) {
                     double CD = odes[s]->y1[i];
                     odes[s]->C[i] = CD;
                     odes[s]->D[k][i] = CD;
@@ -748,7 +748,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
     struct reb_ode** odes = r->odes;
     size_t Ns = r->N_odes;
     for (size_t s=0; s < Ns; s++){
-        const int length = odes[s]->length;
+        const size_t length = odes[s]->length;
         double* y0 = odes[s]->y;
         double* y1 = odes[s]->y1;
         for (size_t i = 0; i < length; ++i) {
@@ -804,6 +804,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
 
 void reb_integrator_bs_synchronize(struct reb_simulation* r){
     // Do nothing.
+    (void)r; // not used.
 }
 
 void reb_ode_free(struct reb_ode* ode){

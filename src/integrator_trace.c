@@ -167,6 +167,8 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
 
 int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j){
     // No pericenter flags
+    (void)r; // Not used
+    (void)j; // Not used
     return 0;
 }
 
@@ -323,6 +325,7 @@ void reb_integrator_trace_update_particles(struct reb_simulation* r, const doubl
 }
 
 void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+    (void)t; // Not timedependent.
     struct reb_simulation* const r = ode->r;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
     reb_integrator_trace_update_particles(r, y);
@@ -378,6 +381,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     }
 
     size_t i_enc = 0;
+    const size_t N_active = r->N_active==-1 ? r->N : r->N_active;
     ri_trace->encounter_N_active = 0;
     for (size_t i=0; i<r->N; i++){
         if(ri_trace->encounter_map[i]){
@@ -385,7 +389,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             r->particles[i] = ri_trace->particles_backup_kepler[i]; // Coordinates before WHFast step, overwrite particles with close encounters
             ri_trace->encounter_map[i_enc] = i;
             i_enc++;
-            if (r->N_active==-1 || i<r->N_active){
+            if (i<N_active){
                 ri_trace->encounter_N_active++;
                 if (ri_trace->tponly_encounter){
                     ri_trace->particles_backup_kepler[i] = tmp;         // Make copy of particles after the kepler step.
@@ -667,6 +671,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
 
 // TODO: Should be reused from BS
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+    (void)t; // Not timedependent.
     struct reb_simulation* const r = ode->r;
     reb_integrator_bs_update_particles(r, y);
     reb_simulation_update_acceleration(r);
@@ -842,6 +847,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
+    (void)r; // Not used.
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){

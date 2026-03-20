@@ -442,7 +442,7 @@ struct reb_simulation {
     unsigned int   N_allocated;     // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
     struct reb_vec3d* gravity_cs; 
-    int     N_allocated_gravity_cs;
+    size_t N_allocated_gravity_cs;
     struct reb_treecell** tree_root;
     int     tree_needs_update;      // Flag to force a tree update (after boundary check)
     double opening_angle2;          // Opening angle for tree-based gravity calculation. Default 0.25.
@@ -475,13 +475,13 @@ struct reb_simulation {
     struct  reb_vec3d boxsize;      // Size of the entire simulation box, root_x*boxsize. Set in box_init().
     double  boxsize_max;            // Maximum size of the entire box in any direction. Set in box_init().
     double  root_size;              // Size of a root box. 
-    int     N_root;                 // Total number of root boxes in all directions, N_root_x*N_root_y*N_root_z. Default: 1. Set in box_init().
-    int     N_root_x;               // Number of ghost boxes in x direction. Do not change manually.
-    int     N_root_y;
-    int     N_root_z;
-    int     N_ghost_x;              // Number of ghost boxes in x direction.
-    int     N_ghost_y;
-    int     N_ghost_z;
+    size_t  N_root;                 // Total number of root boxes in all directions, N_root_x*N_root_y*N_root_z. Default: 1. Set in box_init().
+    size_t  N_root_x;               // Number of ghost boxes in x direction. Do not change manually.
+    size_t  N_root_y;
+    size_t  N_root_z;
+    size_t  N_ghost_x;              // Number of ghost boxes in x direction.
+    size_t  N_ghost_y;
+    size_t  N_ghost_z;
 
     // MPI Parallelization
 #ifdef MPI
@@ -589,8 +589,8 @@ struct reb_simulation {
 
     // ODEs. Do not access these variables directly. Use functions provided instead.
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)
-    int N_odes;                 // number of ode sets
-    int N_allocated_odes;
+    size_t N_odes;                 // number of ode sets
+    size_t N_allocated_odes;
     int ode_warnings;
 
     // Callback functions

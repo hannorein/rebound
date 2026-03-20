@@ -61,12 +61,11 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
-    const size_t N_active = r->N_active;
     const double G = r->G;
     const double softening2 = r->softening*r->softening;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
     const size_t _N_real   = N  - r->N_var;
-    const size_t _N_active = ((N_active==-1)?_N_real:N_active);
+    const size_t _N_active = ((r->N_active==-1)?_N_real:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     switch (r->gravity){
         case REB_GRAVITY_NONE: // Do nothing.
@@ -1016,7 +1015,7 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
                     cs[i].z = 0.;
                 }
             }
-            // Fallthrough is on purpose.
+            /* fallthrough */
         case REB_GRAVITY_BASIC:
             for (size_t v=0;v<r->N_var_config;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
@@ -1336,10 +1335,9 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
     PROFILING_START();
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
-    const size_t N_active = r->N_active;
     const double G = r->G;
     const size_t _N_real   = N  - r->N_var;
-    const size_t _N_active = ((N_active==-1)?_N_real:N_active);
+    const size_t _N_active = ((r->N_active==-1)?_N_real:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     const size_t starti = (r->gravity_ignore_terms==0)?1:2;
     const size_t startj = (r->gravity_ignore_terms==2)?1:0;
@@ -1434,7 +1432,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
 static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* const r, const int pt, const struct reb_treecell *node, const struct reb_vec6d gb);
 
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
-    for(int i=0;i<r->N_root;i++){
+    for(size_t i=0;i<r->N_root;i++){
         struct reb_treecell* node = r->tree_root[i];
         if (node!=NULL){
             reb_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
