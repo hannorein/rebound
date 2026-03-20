@@ -618,7 +618,7 @@ The following code shows how to enable JANUS and set the length and velocity sca
     ```
 
 
-The `reb_integrator_janus` structure contains the configuration and data structures used by the bib-wise reversible JANUS integrator.
+The `reb_integrator_janus` structure contains the configuration and data structures used by the bit-wise reversible JANUS integrator.
 
 `double scale_pos`
 :   Scale of the problem. Positions get divided by this number before the conversion to an integer. Default: $10^{-16}$.

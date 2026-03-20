@@ -593,6 +593,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    memcpy(ri_trace->encounter_map_backup, ri_trace->encounter_map, N*sizeof(int));
 }
 
 double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
@@ -605,11 +606,16 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     int new_close_encounter = 0; // New CEs
 
     // Clear encounter maps
-    for (unsigned int i=1; i<r->N; i++){
-        ri_trace->encounter_map[i] = 0;
-    }
-    ri_trace->encounter_map[0] = 1;
-    ri_trace->encounter_N = 1;
+    /*
+       for (unsigned int i=1; i<r->N; i++){
+       ri_trace->encounter_map[i] = 0;
+       }
+       ri_trace->encounter_map[0] = 1;
+       ri_trace->encounter_N = 1;
+     */
+
+    // Set this from pre-ts encounter map. I don't think we need to reset encounter_N here.
+    memcpy(ri_trace->encounter_map, ri_trace->encounter_map_backup, N*sizeof(int));
 
     if (!ri_trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timestep.
@@ -792,6 +798,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
         ri_trace->particles_backup_kepler   = realloc(ri_trace->particles_backup_kepler,sizeof(struct reb_particle)*N);
         ri_trace->current_Ks             = realloc(ri_trace->current_Ks,sizeof(int)*N*N);
         ri_trace->encounter_map          = realloc(ri_trace->encounter_map,sizeof(int)*N);
+        ri_trace->encounter_map_backup   = realloc(ri_trace->encounter_map_backup,sizeof(int)*N);
         ri_trace->N_allocated = N;
     }
 
@@ -862,6 +869,8 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
 
     free(r->ri_trace.encounter_map);
     r->ri_trace.encounter_map = NULL;
+    free(r->ri_trace.encounter_map_backup);
+    r->ri_trace.encounter_map_backup = NULL;
 
     r->ri_trace.current_C = 0;
     free(r->ri_trace.current_Ks);
