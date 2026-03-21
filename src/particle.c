@@ -120,6 +120,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
                 ri_trace->particles_backup_kepler = realloc(ri_trace->particles_backup_kepler, sizeof(struct reb_particle)*r->N);
                 ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
                 ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(size_t)*r->N);
+                ri_trace->encounter_map_backup = realloc(ri_trace->encounter_map_backup, sizeof(size_t)*r->N);
                 ri_trace->N_allocated   = r->N;
             }
 
