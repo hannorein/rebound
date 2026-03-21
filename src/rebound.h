@@ -149,7 +149,7 @@ struct reb_integrator_ias15 {
         REB_IAS15_AARSETH85 = 3,    // Aarseth (1985) timestep criterion
     } adaptive_mode;
     uint64_t iterations_max_exceeded; // Counter how many times the iteration did not converge. 
-    unsigned int N_allocated;          
+    size_t N_allocated;          
     double* REB_RESTRICT at;
     double* REB_RESTRICT x0;
     double* REB_RESTRICT v0;
@@ -320,7 +320,7 @@ struct reb_integrator_whfast512 {
 
     // Internal use
     unsigned int is_synchronized;
-    unsigned int N_allocated;
+    size_t N_allocated;
     unsigned int recalculate_constants;
     struct reb_particle_avx512* p_jh;
     struct reb_particle p_jh0[4];
@@ -388,7 +388,7 @@ struct reb_integrator_janus {
 
     // Internal use
     struct reb_particle_int* REB_RESTRICT p_int;
-    unsigned int N_allocated;
+    size_t N_allocated;
 };
 
 // Generic custom integrator
@@ -880,7 +880,7 @@ struct reb_ode{
     void (*post_timestep)(struct reb_ode* const ode, const double* const y0);                                   // Function pointer, gets called just after the ODE integration (optional)
 
     // Internal use
-    unsigned int N_allocated;   
+    size_t N_allocated;   
     double* scale;
     double* C;                  // Temporary internal array (extrapolation) 
     double** D;                 // Temporary internal array (extrapolation) 

@@ -1,4 +1,4 @@
-from ctypes import c_uint, c_double, c_void_p, CFUNCTYPE, POINTER, c_int, Structure
+from ctypes import c_uint, c_double, c_void_p, CFUNCTYPE, POINTER, c_int, Structure, c_size_t
 from .. import clibrebound
 
 class ODE(Structure):
@@ -23,7 +23,7 @@ ODE._fields_ = [
                 ("_getscale", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double))),
                 ("_pre_timestep", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double))),
                 ("_post_timestep", CFUNCTYPE(None,POINTER(ODE), POINTER(c_double))),
-                ("N_allocated", c_uint),
+                ("N_allocated", c_size_t),
                 ("_scale", POINTER(c_double)),
                 ("_C", POINTER(c_double)),
                 ("_D", POINTER(POINTER(c_double))),

@@ -186,6 +186,7 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r){
 
 void reb_integrator_leapfrog_synchronize(struct reb_simulation* r){
     // Do nothing.
+    (void)r; // not used.
 }
 
 void reb_integrator_leapfrog_reset(struct reb_simulation* r){

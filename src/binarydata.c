@@ -44,10 +44,10 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 1,  REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0},
     { 2,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0},
     { 3,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0},
-    { 4,  REB_UINT,         "N",                            offsetof(struct reb_simulation, N), 0, 0},
-    { 5,  REB_INT,          "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0},
+    { 4,  REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0},
+    { 5,  REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0},
     // 6 Used to be varconfig
-    { 7,  REB_INT,          "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0},
+    { 7,  REB_SIZE_T,       "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0},
     { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0},
     { 10, REB_DOUBLE,       "opening_angle2",               offsetof(struct reb_simulation, opening_angle2), 0, 0},
     { 11, REB_INT,          "status",                       offsetof(struct reb_simulation, status), 0, 0},
@@ -64,17 +64,17 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 22, REB_VEC3D,        "boxsize",                      offsetof(struct reb_simulation, boxsize), 0, 0},
     { 23, REB_DOUBLE,       "boxsize_max",                  offsetof(struct reb_simulation, boxsize_max), 0, 0},
     { 24, REB_DOUBLE,       "root_size",                    offsetof(struct reb_simulation, root_size), 0, 0},
-    { 25, REB_INT,          "N_root",                       offsetof(struct reb_simulation, N_root), 0, 0},
-    { 26, REB_INT,          "N_root_x",                      offsetof(struct reb_simulation, N_root_x), 0, 0},
-    { 27, REB_INT,          "N_root_y",                      offsetof(struct reb_simulation, N_root_y), 0, 0},
-    { 28, REB_INT,          "N_root_z",                      offsetof(struct reb_simulation, N_root_z), 0, 0},
-    { 29, REB_INT,          "N_ghost_x",                      offsetof(struct reb_simulation, N_ghost_x), 0, 0},
-    { 30, REB_INT,          "N_ghost_y",                      offsetof(struct reb_simulation, N_ghost_y), 0, 0},
-    { 31, REB_INT,          "N_ghost_z",                      offsetof(struct reb_simulation, N_ghost_z), 0, 0},
+    { 25, REB_SIZE_T,       "N_root",                       offsetof(struct reb_simulation, N_root), 0, 0},
+    { 26, REB_SIZE_T,       "N_root_x",                     offsetof(struct reb_simulation, N_root_x), 0, 0},
+    { 27, REB_SIZE_T,       "N_root_y",                     offsetof(struct reb_simulation, N_root_y), 0, 0},
+    { 28, REB_SIZE_T,       "N_root_z",                     offsetof(struct reb_simulation, N_root_z), 0, 0},
+    { 29, REB_SIZE_T,       "N_ghost_x",                    offsetof(struct reb_simulation, N_ghost_x), 0, 0},
+    { 30, REB_SIZE_T,       "N_ghost_y",                    offsetof(struct reb_simulation, N_ghost_y), 0, 0},
+    { 31, REB_SIZE_T,       "N_ghost_z",                    offsetof(struct reb_simulation, N_ghost_z), 0, 0},
     { 32, REB_INT,          "collision_resolve_keep_sorted",offsetof(struct reb_simulation, collision_resolve_keep_sorted), 0, 0},
     { 33, REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0},
     { 34, REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0},
-    { 36, REB_INT64,         "collisions_log_n",              offsetof(struct reb_simulation, collisions_log_n), 0, 0},
+    { 36, REB_INT64,        "collisions_log_n",             offsetof(struct reb_simulation, collisions_log_n), 0, 0},
     { 37, REB_INT,          "calculate_megno",              offsetof(struct reb_simulation, calculate_megno), 0, 0},
     { 38, REB_DOUBLE,       "megno_Ys",                     offsetof(struct reb_simulation, megno_Ys), 0, 0},
     { 39, REB_DOUBLE,       "megno_Yss",                    offsetof(struct reb_simulation, megno_Yss), 0, 0},
@@ -83,7 +83,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 42, REB_DOUBLE,       "megno_mean_t",                 offsetof(struct reb_simulation, megno_mean_t), 0, 0},
     { 43, REB_DOUBLE,       "megno_mean_Y",                 offsetof(struct reb_simulation, megno_mean_Y), 0, 0},
     { 49, REB_DOUBLE,       "megno_initial_t",              offsetof(struct reb_simulation, megno_initial_t), 0, 0},
-    { 44, REB_INT64,         "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0},
+    { 44, REB_INT64,        "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0},
     { 47, REB_DOUBLE,       "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval), 0, 0},
     { 102, REB_DOUBLE,      "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0},
     { 48, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0},
@@ -262,6 +262,9 @@ static void asprintf_reb_type(char** buf, enum REB_BINARYDATA_DTYPE dtype, char*
             break;
         case REB_INT:
             asprintf(&newbuf,"%d",*(int*)(pointer));
+            break;
+        case REB_SIZE_T:
+            asprintf(&newbuf,"%zu",*(size_t*)(pointer));
             break;
         case REB_UINT:
             asprintf(&newbuf,"%u",*(unsigned int*)(pointer));
@@ -602,7 +605,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
         // Simple data types:
         if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
                 || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
-                || dtype == REB_PARTICLE4 || dtype == REB_VEC3D ){
+                || dtype == REB_PARTICLE4 || dtype == REB_VEC3D || dtype == REB_SIZE_T){
             struct reb_binarydata_field field;
             memset(&field,0,sizeof(struct reb_binarydata_field));
             field.type = reb_binarydata_field_descriptor_list[i].type;
@@ -612,6 +615,9 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                     break;
                 case REB_INT: 
                     field.size = sizeof(int);
+                    break;
+                case REB_SIZE_T: 
+                    field.size = sizeof(size_t);
                     break;
                 case REB_UINT: 
                     field.size = sizeof(unsigned int);
@@ -644,7 +650,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             struct reb_binarydata_field field;
             memset(&field,0,sizeof(struct reb_binarydata_field));
             field.type = reb_binarydata_field_descriptor_list[i].type;
-            unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
+            size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binarydata_field_descriptor_list[i].element_size;
 
             if (field.size){
@@ -772,7 +778,7 @@ next_field:
                 if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
                         || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
                         || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
-                        || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D ){
+                        || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
                     char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
                     fread(pointer, field.size, 1, inf);
                     goto next_field;

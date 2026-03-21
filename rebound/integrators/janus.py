@@ -18,5 +18,5 @@ class IntegratorJanus(ctypes.Structure):
                 ("order", ctypes.c_uint),
                 ("recalculate_integer_coordinates_this_timestep", ctypes.c_uint),
                 ("p_int", ctypes.POINTER(ParticleInt)),
-                ("_N_allocated",ctypes.c_uint),
+                ("_N_allocated",ctypes.c_size_t),
                 ]
