@@ -511,7 +511,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
             r->particles[index] = r->particles[r->N];
         }
     }
-
+    
     return 0; // Success
 }
 

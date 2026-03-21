@@ -94,12 +94,12 @@ void reb_collision_search(struct reb_simulation* const r){
         case REB_COLLISION_DIRECT:
             {
                 // Loop over ghost boxes, but only the inner most ring.
-                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-                for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                    for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                        for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                    for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                        for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                             // Loop over all particles
                             for (size_t i=0;i<N;i++){
 #ifndef OPENMP
@@ -162,12 +162,12 @@ void reb_collision_search(struct reb_simulation* const r){
             {
                 double dt_last_done = r->dt_last_done;
                 // Loop over ghost boxes, but only the inner most ring.
-                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
-                for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                    for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                        for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                    for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                        for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                             // Loop over all particles
                             for (size_t i=0;i<N;i++){
 #ifndef OPENMP
@@ -254,9 +254,9 @@ void reb_collision_search(struct reb_simulation* const r){
 #endif // MPI
 
                 // Loop over ghost boxes, but only the inner most ring.
-                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
                 const size_t N = r->N - r->N_var;
                 // Find second largest radius
@@ -280,9 +280,9 @@ void reb_collision_search(struct reb_simulation* const r){
                     collision_nearest.p2 = SIZE_MAX;
                     double p1_r = p1.r;
                     // Loop over ghost boxes.
-                    for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                        for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                            for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                    for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                        for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                                 // Calculated shifted position (for speedup). 
                                 struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                                 struct reb_vec6d gbunmod = gb;
@@ -321,9 +321,9 @@ void reb_collision_search(struct reb_simulation* const r){
                 reb_tree_update(r);          
 
                 // Loop over ghost boxes, but only the inner most ring.
-                size_t N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
-                size_t N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
-                size_t N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
+                int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
+                int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
+                int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
                 const size_t N = r->N - r->N_var;
                 // Loop over all particles
@@ -340,9 +340,9 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Add drift during last timestep
                     double p1_r_plus_dtv = p1_r + r->dt_last_done*sqrt(p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
                     // Loop over ghost boxes.
-                    for (size_t gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
-                        for (size_t gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
-                            for (size_t gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
+                    for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
+                        for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
+                            for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
                                 // Calculated shifted position (for speedup). 
                                 struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                                 struct reb_vec6d gbunmod = gb;

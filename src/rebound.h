@@ -479,9 +479,9 @@ struct reb_simulation {
     size_t  N_root_x;               // Number of ghost boxes in x direction. Do not change manually.
     size_t  N_root_y;
     size_t  N_root_z;
-    size_t  N_ghost_x;              // Number of ghost boxes in x direction.
-    size_t  N_ghost_y;
-    size_t  N_ghost_z;
+    int  N_ghost_x;              // Number of ghost boxes in x direction.
+    int  N_ghost_y;
+    int  N_ghost_z;
 
     // MPI Parallelization
 #ifdef MPI

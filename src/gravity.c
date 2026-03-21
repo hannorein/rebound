@@ -135,9 +135,9 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
             break;
         case REB_GRAVITY_BASIC:
             {
-                const size_t N_ghost_x = r->N_ghost_x;
-                const size_t N_ghost_y = r->N_ghost_y;
-                const size_t N_ghost_z = r->N_ghost_z;
+                const int N_ghost_x = r->N_ghost_x;
+                const int N_ghost_y = r->N_ghost_y;
+                const int N_ghost_z = r->N_ghost_z;
 #ifndef OPENMP // OPENMP off
                 const size_t starti = (_gravity_ignore_terms==0)?1:2;
                 const size_t startj = (_gravity_ignore_terms==2)?1:0;
@@ -149,9 +149,9 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                     particles[i].az = 0; 
                 }
                 // Summing over all Ghost Boxes
-                for (size_t gbx=-N_ghost_x; gbx<=N_ghost_x; gbx++){
-                    for (size_t gby=-N_ghost_y; gby<=N_ghost_y; gby++){
-                        for (size_t gbz=-N_ghost_z; gbz<=N_ghost_z; gbz++){
+                for (int gbx=-N_ghost_x; gbx<=N_ghost_x; gbx++){
+                    for (int gby=-N_ghost_y; gby<=N_ghost_y; gby++){
+                        for (int gbz=-N_ghost_z; gbz<=N_ghost_z; gbz++){
                             struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                             // All active particle pairs
 #ifndef OPENMP // OPENMP off, do O(1/2*N^2)
@@ -492,9 +492,9 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                     particles[i].az = 0; 
                 }
                 // Summing over all Ghost Boxes
-                for (size_t gbx=-r->N_ghost_x; gbx<=r->N_ghost_x; gbx++){
-                    for (size_t gby=-r->N_ghost_y; gby<=r->N_ghost_y; gby++){
-                        for (size_t gbz=-r->N_ghost_z; gbz<=r->N_ghost_z; gbz++){
+                for (int gbx=-r->N_ghost_x; gbx<=r->N_ghost_x; gbx++){
+                    for (int gby=-r->N_ghost_y; gby<=r->N_ghost_y; gby++){
+                        for (int gbz=-r->N_ghost_z; gbz<=r->N_ghost_z; gbz++){
                             // Summing over all particle pairs
 #pragma omp parallel for schedule(guided)
                             for (size_t i=0; i<N; i++){
