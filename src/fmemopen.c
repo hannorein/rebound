@@ -49,7 +49,7 @@ static int readfn(void *handler, char *buf, int size) {
     struct fmem *mem = handler;
     size_t available = mem->size - mem->pos;
 
-    if (size > available) {
+    if (size > (int)available) {
         size = (int)available;
     }
     memcpy(buf, mem->buffer + mem->pos, sizeof(char) * size);
@@ -62,7 +62,7 @@ static int writefn(void *handler, const char *buf, int size) {
     struct fmem *mem = handler;
     size_t available = mem->size - mem->pos;
 
-    if (size > available) {
+    if (size > (int)available) {
         size = (int)available;
     }
     memcpy(mem->buffer + mem->pos, buf, sizeof(char) * size);
@@ -96,6 +96,7 @@ static int closefn(void *handler) {
 }
 
 FILE *reb_fmemopen(void *buf, size_t size, const char *mode) {
+    (void)mode; // not used
     // This data is released on fclose.
     struct fmem* mem = (struct fmem *) malloc(sizeof(struct fmem));
 
