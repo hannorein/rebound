@@ -427,19 +427,19 @@ struct reb_simulation {
     double  softening;              // Gravitational softening. Default: 0.
     double  dt;                     // Timestep. Default: 0.001.
     double  dt_last_done;           // Last successful timestep.
-    uint64_t steps_done;  // Number of timesteps done.
-    unsigned int     N;             // Number of particles (includes variational particles). Default: 0.
-    int     N_var;                  // Number of variational particles. Default 0.
-    unsigned int     N_var_config; 
+    uint64_t steps_done;            // Number of timesteps done.
+    size_t  N;                      // Number of particles (includes variational particles). Default: 0.
+    size_t  N_var;                  // Number of variational particles. Default 0.
+    size_t  N_var_config; 
     struct reb_variational_configuration* var_config;   // Configuration structs. These contain details on variational particles. 
     int     var_rescale_warning;    
-    int     N_active;               // Number of active (i.e. not test-particle) particles. Default: -1 (all particles are active). 
+    size_t  N_active;               // Number of active (i.e. not test-particle) particles. Default: -1 (all particles are active). 
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
     char**  name_list;              // List of names used to identify particles. Managed by REBOUND. Do not directly edit/access.
-    unsigned int N_name_list;       // Number of entries in reb_name_list.
+    size_t  N_name_list;            // Number of entries in reb_name_list.
     struct reb_name_hash_item*    name_hash_table;        // Internal use only. Speeds up name search.
-    unsigned int   N_allocated;     // Current maximum space allocated in the particles array on this node. 
+    size_t  N_allocated;            // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
     struct reb_vec3d* gravity_cs; 
     size_t N_allocated_gravity_cs;
@@ -449,8 +449,8 @@ struct reb_simulation {
     enum REB_STATUS status;         // Current simulation status
     int     exact_finish_time;      // 1 (default): integrate exactly to the time requested and adjust timestep if needed, 0: may overshoot by one timestep
 
-    unsigned int force_is_velocity_dependent; // 0 (default): force only depends on position, 1: force also depends on velocities
-    unsigned int gravity_ignore_terms;
+    int force_is_velocity_dependent; // 0 (default): force only depends on position, 1: force also depends on velocities
+    int gravity_ignore_terms;
     double output_timing_last;      // Time when reb_simulation_output_timing() was called the last time. 
     int save_messages;              // 0 (default): print messages on screen, 1: ignore messages (used in python interface).
     char** messages;                // Array of strings containing last messages (only used if save_messages==1). 
@@ -508,7 +508,7 @@ struct reb_simulation {
     unsigned int collisions_N;              // Number of collisions found during last collision search.
     double minimum_collision_velocity;      // Ensure relative velocity during collisions is at least this much (to avoid particles sinking into each other)
     double collisions_plog;                 // Keeping track of momentum transfer in collisions (for ring simulations)
-    int64_t collisions_log_n;                  // Cumulative number of collisions in entire simulation.
+    int64_t collisions_log_n;               // Cumulative number of collisions in entire simulation.
 
     // MEGNO Chaos indicator. These variables should not be accessed directly. Use functions provided instead.
     int calculate_megno;    // Do not change manually. Internal flag that determines if megno is calculated (default=0, but megno_init() sets it to the index of variational particles used for megno)
