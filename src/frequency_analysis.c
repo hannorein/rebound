@@ -463,7 +463,7 @@ static void four1(double* data, size_t nn){
 static double bracket(double *powsd, size_t ndata){
     /* FINDS THE MAXIMUM OF THE POWER SPECTRAL DENSITY  */ 
     // Not sure why this is so complicated. Could just be one loop?
-    int maxj = 0;
+    size_t maxj = 0;
     double maxpow = 0;
 
     for(size_t j=1;j<ndata/2-1;j++){ // Changed end from -2 to -1.
@@ -490,7 +490,7 @@ static double bracket(double *powsd, size_t ndata){
     if(maxj < ndata/2-1){
         return -TWOPI*maxj / ndata;
     }else{ //  maxj > ndata/2-1
-        return -TWOPI*(maxj-(int)ndata) / ndata;
+        return -TWOPI*((int)maxj-(int)ndata) / ndata;
     }
     /* negative signs and TWOPI compensate for the Numerical Recipes 
        definition of the DFT */
