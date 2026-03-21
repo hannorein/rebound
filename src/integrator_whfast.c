@@ -349,7 +349,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, d
  * Interaction Hamiltonian  */
 void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, const double _dt){
     const size_t N_real = r->N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N_real:r->N_active;
     const double G = r->G;
     struct reb_particle* particles = r->particles;
     const double m0 = particles[0].m;
@@ -444,7 +444,7 @@ void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const
     const struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_h = r->ri_whfast.p_jh;
     const size_t N_real = r->N - r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N_real:r->N_active;
     const double m0 = r->particles[0].m;
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
@@ -506,7 +506,7 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
     const double m0 = r->particles[0].m;
     const double G = r->G;
     const size_t N_real = r->N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type ==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N_real:r->N_active;
     const int coordinates = r->ri_whfast.coordinates;
     struct reb_particle* const p_j = r->ri_whfast.p_jh;
     double eta = m0;
@@ -571,7 +571,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* restrict const particles = r->particles;
     const size_t N_real = r->N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N_real:r->N_active;
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
             reb_integrator_whfast_kepler_step(r, a);
@@ -674,7 +674,7 @@ static void reb_whfast_operator_C(struct reb_simulation* const r, double a, doub
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_real = r->N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N_real:r->N_active;
     reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N_active);
     reb_simulation_update_acceleration(r);
     reb_integrator_whfast_interaction_step(r, b);
@@ -855,7 +855,7 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_real = N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N_real:r->N_active;
 
     switch (ri_whfast->coordinates){
         case REB_WHFAST_COORDINATES_JACOBI:
@@ -882,7 +882,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_real = N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N_real:r->N_active;
 
     // Prepare coordinates for KICK step
     if (r->force_is_velocity_dependent){
@@ -949,7 +949,7 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     }
     if (ri_whfast->is_synchronized == 0){
         const size_t N_real = r->N-r->N_var;
-        const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+        const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N_real:r->N_active;
         struct reb_particle* sync_pj  = NULL;
         if (ri_whfast->keep_unsynchronized){
             sync_pj = malloc(sizeof(struct reb_particle)*r->N);
@@ -1009,7 +1009,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
     const double dt = r->dt;
     const size_t N = r->N;
     const size_t N_real = N-r->N_var;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?N_real:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N_real:r->N_active;
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occurred.
         return;

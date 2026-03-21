@@ -101,7 +101,7 @@ void reb_integrator_mercurius_inertial_to_dh(struct reb_simulation* r){
     struct reb_vec3d com_pos = {0};
     struct reb_vec3d com_vel = {0};
     double mtot = 0.;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?r->N:r->N_active;
     const size_t N = r->N;
     for (size_t i=0;i<N_active;i++){
         double m = particles[i].m;
@@ -133,7 +133,7 @@ void reb_integrator_mercurius_dh_to_inertial(struct reb_simulation* r){
     struct reb_particle* restrict const particles = r->particles;
     struct reb_particle temp = {0};
     const size_t N = r->N;
-    const size_t N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?r->N:r->N_active;
     for (size_t i=1;i<N_active;i++){
         double m = particles[i].m;
         temp.x += m * particles[i].x;
@@ -181,7 +181,7 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r){
     struct reb_particle* const particles_backup = rim->particles_backup;
     const double* const dcrit = rim->dcrit;
     const size_t N = r->N;
-    const size_t N_active = r->N_active==-1?r->N:r->N_active;
+    const size_t N_active = r->N_active==SIZE_MAX?r->N:r->N_active;
     const double dt = r->dt;
     rim->encounter_N = 1;
     rim->encounter_map[0] = 1;
@@ -269,7 +269,7 @@ void reb_integrator_mercurius_interaction_step(struct reb_simulation* const r, d
 
 void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
-    const size_t N_active = r->N_active==-1?r->N:r->N_active;
+    const size_t N_active = r->N_active==SIZE_MAX?r->N:r->N_active;
     const size_t N = r->testparticle_type==0 ? N_active: r->N;
     double px=0., py=0., pz=0.;
     for (size_t i=1;i<N;i++){
@@ -313,7 +313,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     if (rim->encounter_N<2){
         return; // If there are no particles (other than the star) having a close encounter, then there is nothing to do.
     }
-    size_t N_active = (r->N_active==-1) ? r->N : r->N_active;
+    size_t N_active = (r->N_active==SIZE_MAX)?r->N:r->N_active;
     size_t i_enc = 0;
     rim->encounter_N_active = 0;
     for (size_t i=0; i<r->N; i++){
@@ -322,7 +322,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             r->particles[i] = rim->particles_backup[i];     // Use coordinates before whfast step
             rim->encounter_map[i_enc] = i;
             i_enc++;
-            if (i<r->N_active){
+            if (i<N_active){
                 rim->encounter_N_active++;
                 if (rim->tponly_encounter){
                     rim->particles_backup[i] = tmp;         // Make copy of particles after the kepler step.

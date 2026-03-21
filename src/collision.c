@@ -822,7 +822,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
 
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
         }
-        const size_t N_active = ((r->N_active==-1)?r->N-r->N_var:r->N_active);
+        const size_t N_active = ((r->N_active==SIZE_MAX)?r->N-r->N_var:r->N_active);
         // No potential energy between test particles
         if (i<N_active || j<N_active){
             double x = pi->x - pj->x;

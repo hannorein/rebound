@@ -111,16 +111,16 @@ double reb_simulation_energy(struct reb_simulation* const r){
 #endif
     const size_t N = r->N;
     const size_t N_var = r->N_var;
-    const size_t _N_active = (r->N_active==-1)?(N-N_var):r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX)?(N-N_var):r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
     double e_kin = 0.;
     double e_pot = 0.;
-    size_t N_interact = (r->testparticle_type==0)?_N_active:(N-N_var);
+    size_t N_interact = (r->testparticle_type==0)?N_active:(N-N_var);
     for (size_t i=0;i<N_interact;i++){
         struct reb_particle pi = particles[i];
         e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
     }
-    for (size_t i=0;i<_N_active;i++){
+    for (size_t i=0;i<N_active;i++){
         struct reb_particle pi = particles[i];
         for (size_t j=i+1;j<N_interact;j++){
             struct reb_particle pj = particles[j];
@@ -135,7 +135,7 @@ double reb_simulation_energy(struct reb_simulation* const r){
     reb_communication_mpi_distribute_particles_all_to_all(r);
     for (size_t m=0;m<r->mpi_num;m++){
         if (m==r->mpi_id) continue;
-        for (size_t i=0;i<_N_active;i++){
+        for (size_t i=0;i<N_active;i++){
             struct reb_particle pi = particles[i];
             // TODO: Use N_interact from other node for test_particle_type==1
             for (size_t j=0;j<r->N_particles_recv[m];j++){

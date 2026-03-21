@@ -634,7 +634,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_ghost_z  = 0;
     r->N        = 0;    
     r->N_allocated   = 0;    
-    r->N_active     = -1;   
+    r->N_active     = SIZE_MAX; 
     r->var_rescale_warning   = 0;   
     r->name_list = NULL;
     r->name_hash_table = NULL;
