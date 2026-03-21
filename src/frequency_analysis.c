@@ -579,8 +579,8 @@ static void phifun(double *xphi, double *yphi, double freq, double* xdata, doubl
     size_t nn = n;
     while(nn != 1){
         nn = nn / 2;
-        double c = cos(-nn*freq);
-        double s = sin(-nn*freq);
+        double c = cos(-freq*nn);
+        double s = sin(-freq*nn);
 
         for(size_t i=0;i<nn;i++){
             size_t j=i+nn;
