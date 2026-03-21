@@ -738,7 +738,7 @@ DLLEXPORT struct reb_particle reb_particle_nan(void);
 // Remove all particles
 DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const r);
 // Remove one particle. keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
-DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, int index, int keep_sorted);
+DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index, int keep_sorted);
 // Remove one particle by name. If multiple particles share the name, one particle will be remove. Which one is undetermined.
 // keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
 DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); 

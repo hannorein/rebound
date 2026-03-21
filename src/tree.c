@@ -285,7 +285,7 @@ static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* co
 }
 
 void reb_tree_update_gravity_data(struct reb_simulation* const r){
-    for(int i=0;i<r->N_root;i++){
+    for(size_t i=0;i<r->N_root;i++){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
@@ -302,7 +302,7 @@ void reb_tree_update(struct reb_simulation* const r){
     if (r->tree_root==NULL){
         r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
     }
-    for(int i=0;i<r->N_root;i++){
+    for(size_t i=0;i<r->N_root;i++){
 
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
@@ -329,7 +329,7 @@ static void reb_tree_delete_cell(struct reb_treecell* node){
 
 void reb_tree_delete(struct reb_simulation* const r){
     if (r->tree_root!=NULL){
-        for(int i=0;i<r->N_root;i++){
+        for(size_t i=0;i<r->N_root;i++){
             reb_tree_delete_cell(r->tree_root[i]);
         }
         free(r->tree_root);

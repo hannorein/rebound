@@ -84,6 +84,7 @@ void reb_integrator_sei_step(struct reb_simulation* const r){
 
 void reb_integrator_sei_synchronize(struct reb_simulation* r){
     // Do nothing.
+    (void)r; // not used.
 }
 
 void reb_integrator_sei_reset(struct reb_simulation* r){
