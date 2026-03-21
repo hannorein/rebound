@@ -30,7 +30,7 @@ struct reb_particle;
 // Hash table for names.
 // Open Hashing, linked list.
 struct reb_name_hash_item {
-    int index;
+    size_t index;
     struct reb_name_hash_item* next;
 };
 

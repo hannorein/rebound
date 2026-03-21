@@ -65,7 +65,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     const double softening2 = r->softening*r->softening;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
     const size_t _N_real   = N  - r->N_var;
-    const size_t _N_active = ((r->N_active==-1)?_N_real:r->N_active);
+    const size_t _N_active = ((r->N_active==SIZE_MAX)?_N_real:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     switch (r->gravity){
         case REB_GRAVITY_NONE: // Do nothing.
@@ -999,7 +999,7 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
     const int _testparticle_type   = r->testparticle_type;
     const size_t N = r->N;
     const size_t _N_real   = N - r->N_var;
-    const size_t _N_active = ((r->N_active==-1)?_N_real:r->N_active);
+    const size_t _N_active = ((r->N_active==SIZE_MAX)?_N_real:r->N_active);
     const size_t starti = (r->gravity_ignore_terms==0)?1:2;
     const size_t startj = (r->gravity_ignore_terms==2)?1:0;
     switch (r->gravity){
@@ -1337,7 +1337,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
     const size_t N = r->N;
     const double G = r->G;
     const size_t _N_real   = N  - r->N_var;
-    const size_t _N_active = ((r->N_active==-1)?_N_real:r->N_active);
+    const size_t _N_active = ((r->N_active==SIZE_MAX)?_N_real:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     const size_t starti = (r->gravity_ignore_terms==0)?1:2;
     const size_t startj = (r->gravity_ignore_terms==2)?1:0;

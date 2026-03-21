@@ -104,7 +104,7 @@ struct reb_binarydata_field {
 // List of all possible input/ouput fields
 DLLEXPORT extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[];
 // Helper functions to find descriptor data. Used by python.
-DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(int type);
+DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type);
 DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
 
 #endif // _BINARYDATA_H

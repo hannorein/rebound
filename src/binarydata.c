@@ -227,7 +227,7 @@ int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2){
     return differ;
 }
 
-struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(int type){
+struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type){
     int i=-1;
     do{
         i++;
@@ -931,7 +931,7 @@ finish_fields:
         // Restore names
         if (r->particles[l].name){
             int name_found = 0;
-            for (int n=0;n<r->N_name_list;n++){
+            for (size_t n=0;n<r->N_name_list;n++){
                 char* original_pointer = *((char**)(r->name_list[n]+strlen(r->name_list[n])+1));
                 if (r->particles[l].name==original_pointer){
                     name_found = 1;

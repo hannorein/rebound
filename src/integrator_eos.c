@@ -77,7 +77,7 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
 static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* r, double y, double v){
     const size_t N = r->N;
     const size_t N_real   = N - r->N_var;
-    const size_t N_active = r->N_active==-1?N_real:r->N_active;
+    const size_t N_active = r->N_active==SIZE_MAX?N_real:r->N_active;
     const int testparticle_type   = r->testparticle_type;
     struct reb_particle* restrict const particles = r->particles;
 

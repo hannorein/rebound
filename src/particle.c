@@ -299,7 +299,7 @@ struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* 
         }
     }
     // If not found loop over all particles
-    for (int i=0; i<r->N; i++){
+    for (size_t i=0; i<r->N; i++){
         const char* p_name = r->particles[i].name;
         if (p_name){
             if (strcmp(p_name,name)==0){
@@ -315,7 +315,7 @@ struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* 
 
 #ifdef MPI
 struct reb_particle* reb_simulation_get_particle_by_id(struct reb_simulation* r, int id){
-    for (int i=0; i<r->N; i++){
+    for (size_t i=0; i<r->N; i++){
         int p_id = (int)(uintptr_t)(r->particles[i].name);
         if (p_id){
             if (p_id == id){
@@ -474,7 +474,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
     }
     if (index >= r->N){
         char warning[1024];
-        sprintf(warning, "Index %zu passed to particles_remove was out of range (N=%d).  Did not remove particle.", index, r->N);
+        sprintf(warning, "Index %zu passed to particles_remove was out of range (N=%zu).  Did not remove particle.", index, r->N);
         reb_simulation_error(r, warning);
         return 1;
     }

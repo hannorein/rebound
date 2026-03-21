@@ -52,7 +52,7 @@ static void reb_whfast512_com_step(struct reb_simulation* r, const double _dt){
     gettimeofday(&time_beginning,NULL);
 #endif
     const unsigned int N_systems = r->ri_whfast512.N_systems;
-    for (int s=0; s<N_systems; s++){
+    for (size_t s=0; s<N_systems; s++){
         r->ri_whfast512.p_jh0[s].x += _dt*r->ri_whfast512.p_jh0[s].vx;
         r->ri_whfast512.p_jh0[s].y += _dt*r->ri_whfast512.p_jh0[s].vy;
         r->ri_whfast512.p_jh0[s].z += _dt*r->ri_whfast512.p_jh0[s].vz;
@@ -1083,7 +1083,7 @@ void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const 
         const unsigned int p_per_system = 8/N_systems;
         const unsigned int N_per_system = r->N/N_systems;
         double dt = r->dt;
-        for (int s=0; s<N_systems; s++){
+        for (size_t s=0; s<N_systems; s++){
             double m0 = r->particles[s*N_per_system].m;
             // 1/2 Kepler
             for (unsigned int i=1;i<N_per_system;i++){
