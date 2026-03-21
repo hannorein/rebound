@@ -112,7 +112,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
     // TRACE can add particles mid-timestep now
     if (r->integrator == REB_INTEGRATOR_TRACE){
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
-        if (r->ri_trace.mode==1 || r->ri_trace.mode==3){ // BS part
+        if (ri_trace->mode==REB_TRACE_MODE_KEPLER){
             const size_t old_N = r->N-1;
             if (ri_trace->N_allocated < r->N){
                 ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
@@ -428,7 +428,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
         keep_sorted = 1; // Force keepSorted for hybrid integrator
         struct reb_integrator_trace* ri_trace = &(r->ri_trace);
         reb_integrator_bs_reset(r);
-        if (r->ri_trace.mode==1 || r->ri_trace.mode==3){
+        if (ri_trace->mode==REB_TRACE_MODE_KEPLER){
             // Only removed mid-timestep if collision - BS Step!
             int after_to_be_removed_particle = 0;
             size_t encounter_index = SIZE_MAX;
