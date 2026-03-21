@@ -371,7 +371,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         if (r->post_timestep_modifications){
             r->post_timestep_modifications(r);
         }
-        
+
         struct reb_particle p0 = r->particles[0];
         star.vx = p0.vx; // keep track of changed star velocity for later collisions
         star.vy = p0.vy;

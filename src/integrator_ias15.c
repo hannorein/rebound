@@ -537,8 +537,8 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 double maxa = 0.0;
                 double maxj = 0.0;
                 for(size_t i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
-                                                   // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
-                                                   // close encounters more stable if variational particles are present.
+                                             // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
+                                             // close encounters more stable if variational particles are present.
                     size_t mi = map[i];
                     const double v2 = particles[mi].vx*particles[mi].vx+particles[mi].vy*particles[mi].vy+particles[mi].vz*particles[mi].vz;
                     const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
