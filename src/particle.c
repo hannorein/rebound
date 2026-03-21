@@ -101,7 +101,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             }
             rim->encounter_map[rim->encounter_N] = r->N-1;
             rim->encounter_N++;
-            if (r->N_active==-1){ 
+            if (r->N_active==SIZE_MAX){ 
                 // If global N_active is not set, then all particles are active, so the new one as well.
                 // Otherwise, assume we're adding non active particle. 
                 rim->encounter_N_active++;
@@ -141,7 +141,7 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
             ri_trace->encounter_map[ri_trace->encounter_N] = old_N;
             ri_trace->encounter_N++;
 
-            if (r->N_active==-1){ 
+            if (r->N_active==SIZE_MAX){ 
                 // If global N_active is not set, then all particles are active, so the new one as well.
                 // Otherwise, assume we're adding non active particle. 
                 ri_trace->encounter_N_active++;
@@ -156,7 +156,7 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
     int rootbox = reb_get_rootbox_for_particle(r, pt);
     int N_root_per_node = r->N_root/r->mpi_num;
     int proc_id = rootbox/N_root_per_node;
-    const unsigned int N_active = (r->N_active==-1)?r->N: (unsigned int)r->N_active;
+    const unsigned int N_active = (r->N_active==SIZE_MAX)?r->N: (unsigned int)r->N_active;
     if (proc_id != r->mpi_id && r->N >= N_active){
         // Add particle to array and send them to proc_id later. 
         reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
@@ -168,7 +168,7 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
 }
 
 int reb_particle_check_testparticles(struct reb_simulation* const r){
-    if (r->N_active == (int)r->N || r->N_active == -1){
+    if (r->N_active == r->N || r->N_active == SIZE_MAX){
         return 0;
     }
     // Check if testparticle of type 0 has mass!=0
@@ -382,7 +382,7 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
 void reb_simulation_remove_all_particles(struct reb_simulation* const r){
     r->N 		= 0;
     r->N_allocated 	= 0;
-    r->N_active 	= -1;
+    r->N_active 	= SIZE_MAX;
     r->N_var 	= 0;
     free(r->particles);
     r->particles 	= NULL;
@@ -486,7 +486,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
         if(r->free_particle_ap){
             r->free_particle_ap(&r->particles[index]);
         }
-        if(index<r->N_active){
+        if(index<r->N_active && r->N_active!=SIZE_MAX){
             r->N_active--;
         }
         for(size_t j=index; j<r->N; j++){
