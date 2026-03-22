@@ -164,9 +164,9 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
     // Check if testparticle of type 0 has mass!=0
     if (r->testparticle_type == 0){
         int found_issue = 0;
-        const int N_real = r->N - r->N_var;
+        const int N = r->N;
 #pragma omp parallel for
-        for (int i=r->N_active; i<N_real; i++){
+        for (int i=r->N_active; i<N; i++){
             if (r->particles[i].m!=0.){
                 found_issue = 1;
             }
@@ -370,15 +370,22 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
 
 
 void reb_simulation_remove_all_particles(struct reb_simulation* const r){
-    r->N 		= 0;
-    r->N_allocated 	= 0;
-    r->N_active 	= SIZE_MAX;
-    r->N_var 	= 0;
+    r->N = 0;
+    r->N_allocated = 0;
+    r->N_active = SIZE_MAX;
+    r->N_varX = 0;
+    r->N_varX_allocated = 0;
     free(r->particles);
-    r->particles 	= NULL;
+    r->particles = NULL;
+    free(r->particles_varX);
+    r->particles_varX = NULL;
 }
 
 int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index, int keep_sorted){
+    if (r->N_varX){
+        reb_simulation_error(r, "Removing particles not supported when variational particles are in use. Did not remove particle.");
+        return 1;
+    }
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         keep_sorted = 1; // Force keep_sorted for hybrid integrator
         struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
@@ -465,10 +472,6 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
         char warning[1024];
         sprintf(warning, "Index %zu passed to particles_remove was out of range (N=%zu).  Did not remove particle.", index, r->N);
         reb_simulation_error(r, warning);
-        return 1;
-    }
-    if (r->N_var){
-        reb_simulation_error(r, "Removing particles not supported when calculating MEGNO.  Did not remove particle.");
         return 1;
     }
     if(keep_sorted){

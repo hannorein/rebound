@@ -203,6 +203,7 @@ void reb_simulation_move_to_hel(struct reb_simulation* const r){
 void reb_simulation_move_to_com(struct reb_simulation* const r){
     struct reb_particle com = reb_simulation_com(r); // Particles will be redistributed in this call if MPI used
     struct reb_particle* restrict const particles = r->particles;
+    struct reb_particle* restrict const particles_var = r->particles_var;
     const size_t N_real = r->N - r->N_var; 
 
     // First do second order
@@ -219,66 +220,66 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
                 double dmb = 0.;
                 double ddm = 0.;
                 for (size_t i=0;i<N_real;i++){
-                    dma += particles[i+index_1st_order_a].m;
-                    dmb += particles[i+index_1st_order_b].m;
-                    ddm += particles[i+index].m;
+                    dma += particles_var[i+index_1st_order_a].m;
+                    dmb += particles_var[i+index_1st_order_b].m;
+                    ddm += particles_var[i+index].m;
                 }
                 for (size_t i=0;i<N_real;i++){
-                    com_shift.x  += particles[i+index].x /com.m * particles[i].m; 
-                    com_shift.y  += particles[i+index].y /com.m * particles[i].m; 
-                    com_shift.z  += particles[i+index].z /com.m * particles[i].m; 
-                    com_shift.vx += particles[i+index].vx/com.m * particles[i].m; 
-                    com_shift.vy += particles[i+index].vy/com.m * particles[i].m; 
-                    com_shift.vz += particles[i+index].vz/com.m * particles[i].m; 
+                    com_shift.x  += particles_var[i+index].x /com.m * particles[i].m; 
+                    com_shift.y  += particles_var[i+index].y /com.m * particles[i].m; 
+                    com_shift.z  += particles_var[i+index].z /com.m * particles[i].m; 
+                    com_shift.vx += particles_var[i+index].vx/com.m * particles[i].m; 
+                    com_shift.vy += particles_var[i+index].vy/com.m * particles[i].m; 
+                    com_shift.vz += particles_var[i+index].vz/com.m * particles[i].m; 
 
-                    com_shift.x  += particles[i+index_1st_order_a].x  /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.y  += particles[i+index_1st_order_a].y  /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.z  += particles[i+index_1st_order_a].z  /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.vx += particles[i+index_1st_order_a].vx /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.vy += particles[i+index_1st_order_a].vy /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.vz += particles[i+index_1st_order_a].vz /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.x  += particles_var[i+index_1st_order_a].x  /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.y  += particles_var[i+index_1st_order_a].y  /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.z  += particles_var[i+index_1st_order_a].z  /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.vx += particles_var[i+index_1st_order_a].vx /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.vy += particles_var[i+index_1st_order_a].vy /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.vz += particles_var[i+index_1st_order_a].vz /com.m * particles_var[i+index_1st_order_b].m; 
 
-                    com_shift.x  -= particles[i+index_1st_order_a].x  * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.y  -= particles[i+index_1st_order_a].y  * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.z  -= particles[i+index_1st_order_a].z  * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.vx -= particles[i+index_1st_order_a].vx * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.vy -= particles[i+index_1st_order_a].vy * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.vz -= particles[i+index_1st_order_a].vz * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.x  -= particles_var[i+index_1st_order_a].x  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.y  -= particles_var[i+index_1st_order_a].y  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.z  -= particles_var[i+index_1st_order_a].z  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vx -= particles_var[i+index_1st_order_a].vx * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vy -= particles_var[i+index_1st_order_a].vy * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vz -= particles_var[i+index_1st_order_a].vz * particles[i].m/com.m/com.m*dmb; 
 
-                    com_shift.x  += particles[i+index_1st_order_b].x  /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.y  += particles[i+index_1st_order_b].y  /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.z  += particles[i+index_1st_order_b].z  /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.vx += particles[i+index_1st_order_b].vx /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.vy += particles[i+index_1st_order_b].vy /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.vz += particles[i+index_1st_order_b].vz /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.x  += particles_var[i+index_1st_order_b].x  /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.y  += particles_var[i+index_1st_order_b].y  /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.z  += particles_var[i+index_1st_order_b].z  /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.vx += particles_var[i+index_1st_order_b].vx /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.vy += particles_var[i+index_1st_order_b].vy /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.vz += particles_var[i+index_1st_order_b].vz /com.m * particles_var[i+index_1st_order_a].m; 
 
-                    com_shift.x  += particles[i].x  /com.m * particles[i+index].m; 
-                    com_shift.y  += particles[i].y  /com.m * particles[i+index].m; 
-                    com_shift.z  += particles[i].z  /com.m * particles[i+index].m; 
-                    com_shift.vx += particles[i].vx /com.m * particles[i+index].m; 
-                    com_shift.vy += particles[i].vy /com.m * particles[i+index].m; 
-                    com_shift.vz += particles[i].vz /com.m * particles[i+index].m; 
+                    com_shift.x  += particles[i].x  /com.m * particles_var[i+index].m; 
+                    com_shift.y  += particles[i].y  /com.m * particles_var[i+index].m; 
+                    com_shift.z  += particles[i].z  /com.m * particles_var[i+index].m; 
+                    com_shift.vx += particles[i].vx /com.m * particles_var[i+index].m; 
+                    com_shift.vy += particles[i].vy /com.m * particles_var[i+index].m; 
+                    com_shift.vz += particles[i].vz /com.m * particles_var[i+index].m; 
 
-                    com_shift.x  -= particles[i].x  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.y  -= particles[i].y  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.z  -= particles[i].z  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.vx -= particles[i].vx * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.vy -= particles[i].vy * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.vz -= particles[i].vz * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.x  -= particles[i].x  * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.y  -= particles[i].y  * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.z  -= particles[i].z  * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vx -= particles[i].vx * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vy -= particles[i].vy * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vz -= particles[i].vz * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
 
-                    com_shift.x  -= particles[i+index_1st_order_b].x  * particles[i].m/com.m/com.m*dma; 
-                    com_shift.y  -= particles[i+index_1st_order_b].y  * particles[i].m/com.m/com.m*dma; 
-                    com_shift.z  -= particles[i+index_1st_order_b].z  * particles[i].m/com.m/com.m*dma; 
-                    com_shift.vx -= particles[i+index_1st_order_b].vx * particles[i].m/com.m/com.m*dma; 
-                    com_shift.vy -= particles[i+index_1st_order_b].vy * particles[i].m/com.m/com.m*dma; 
-                    com_shift.vz -= particles[i+index_1st_order_b].vz * particles[i].m/com.m/com.m*dma; 
+                    com_shift.x  -= particles_var[i+index_1st_order_b].x  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.y  -= particles_var[i+index_1st_order_b].y  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.z  -= particles_var[i+index_1st_order_b].z  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vx -= particles_var[i+index_1st_order_b].vx * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vy -= particles_var[i+index_1st_order_b].vy * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vz -= particles_var[i+index_1st_order_b].vz * particles[i].m/com.m/com.m*dma; 
 
-                    com_shift.x  -= particles[i].x  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.y  -= particles[i].y  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.z  -= particles[i].z  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.vx -= particles[i].vx * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.vy -= particles[i].vy * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.vz -= particles[i].vz * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.x  -= particles[i].x  * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.y  -= particles[i].y  * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.z  -= particles[i].z  * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vx -= particles[i].vx * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vy -= particles[i].vy * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vz -= particles[i].vz * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
 
                     com_shift.x  += 2.*particles[i].x  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
                     com_shift.y  += 2.*particles[i].y  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
@@ -300,12 +301,12 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
 
                 }
                 for (size_t i=0;i<N_real;i++){
-                    particles[i+index].x -= com_shift.x; 
-                    particles[i+index].y -= com_shift.y; 
-                    particles[i+index].z -= com_shift.z; 
-                    particles[i+index].vx -= com_shift.vx; 
-                    particles[i+index].vy -= com_shift.vy; 
-                    particles[i+index].vz -= com_shift.vz; 
+                    particles_var[i+index].x -= com_shift.x; 
+                    particles_var[i+index].y -= com_shift.y; 
+                    particles_var[i+index].z -= com_shift.z; 
+                    particles_var[i+index].vx -= com_shift.vx; 
+                    particles_var[i+index].vy -= com_shift.vy; 
+                    particles_var[i+index].vz -= com_shift.vz; 
                 }
             }
         }
@@ -323,19 +324,19 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
                     dm += particles[i+index].m;
                 }
                 for (size_t i=0;i<N_real;i++){
-                    com_shift.x  += particles[i].m/com.m * particles[i+index].x ; 
-                    com_shift.y  += particles[i].m/com.m * particles[i+index].y ; 
-                    com_shift.z  += particles[i].m/com.m * particles[i+index].z ; 
-                    com_shift.vx += particles[i].m/com.m * particles[i+index].vx; 
-                    com_shift.vy += particles[i].m/com.m * particles[i+index].vy; 
-                    com_shift.vz += particles[i].m/com.m * particles[i+index].vz; 
+                    com_shift.x  += particles[i].m/com.m * particles_var[i+index].x ; 
+                    com_shift.y  += particles[i].m/com.m * particles_var[i+index].y ; 
+                    com_shift.z  += particles[i].m/com.m * particles_var[i+index].z ; 
+                    com_shift.vx += particles[i].m/com.m * particles_var[i+index].vx; 
+                    com_shift.vy += particles[i].m/com.m * particles_var[i+index].vy; 
+                    com_shift.vz += particles[i].m/com.m * particles_var[i+index].vz; 
 
-                    com_shift.x  += particles[i].x /com.m * particles[i+index].m; 
-                    com_shift.y  += particles[i].y /com.m * particles[i+index].m; 
-                    com_shift.z  += particles[i].z /com.m * particles[i+index].m; 
-                    com_shift.vx += particles[i].vx/com.m * particles[i+index].m; 
-                    com_shift.vy += particles[i].vy/com.m * particles[i+index].m; 
-                    com_shift.vz += particles[i].vz/com.m * particles[i+index].m; 
+                    com_shift.x  += particles[i].x /com.m * particles_var[i+index].m; 
+                    com_shift.y  += particles[i].y /com.m * particles_var[i+index].m; 
+                    com_shift.z  += particles[i].z /com.m * particles_var[i+index].m; 
+                    com_shift.vx += particles[i].vx/com.m * particles_var[i+index].m; 
+                    com_shift.vy += particles[i].vy/com.m * particles_var[i+index].m; 
+                    com_shift.vz += particles[i].vz/com.m * particles_var[i+index].m; 
 
                     com_shift.x  -= particles[i].x /(com.m*com.m) * particles[i].m*dm; 
                     com_shift.y  -= particles[i].y /(com.m*com.m) * particles[i].m*dm; 
@@ -345,12 +346,12 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
                     com_shift.vz -= particles[i].vz/(com.m*com.m) * particles[i].m*dm; 
                 }
                 for (size_t i=0;i<N_real;i++){
-                    particles[i+index].x -= com_shift.x; 
-                    particles[i+index].y -= com_shift.y; 
-                    particles[i+index].z -= com_shift.z; 
-                    particles[i+index].vx -= com_shift.vx; 
-                    particles[i+index].vy -= com_shift.vy; 
-                    particles[i+index].vz -= com_shift.vz; 
+                    particles_var[i+index].x -= com_shift.x; 
+                    particles_var[i+index].y -= com_shift.y; 
+                    particles_var[i+index].z -= com_shift.z; 
+                    particles_var[i+index].vx -= com_shift.vx; 
+                    particles_var[i+index].vy -= com_shift.vy; 
+                    particles_var[i+index].vz -= com_shift.vz; 
                 }
             }
         }
@@ -1279,7 +1280,7 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
             N = r->N - r->N_var;
         }
         double scale = 0;
-        struct reb_particle* const particles = r->particles + vc->index;
+        struct reb_particle* const particles = r->particles_var + vc->index;
         for (size_t i=0; i<N; i++){
             struct reb_particle p = particles[i];
             scale = MAX(fabs(p.x), scale);
@@ -1348,20 +1349,20 @@ int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int t
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
     r->var_config[r->N_var_config-1].order = 1;
-    size_t index = r->N;
+    size_t index = r->N_varX;
     r->var_config[r->N_var_config-1].index = index;
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
     struct reb_particle p0 = {0};
     if (testparticle>=0){
         reb_simulation_add(r,p0);
-        r->N_var++;
+        r->N_varX++;
     }else{
-        size_t N_real = r->N - r->N_var;
-        for (size_t i=0;i<N_real;i++){
-            reb_simulation_add(r,p0);
+        size_t N = r->N;
+        for (size_t i=0;i<N;i++){
+            reb_simulation_add(r,p0); // TODO: update adding variational particlees
         }
-        r->N_var += N_real;
+        r->N_varX += N;
     }
     return index;
 }
@@ -1372,7 +1373,7 @@ int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int t
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
     r->var_config[r->N_var_config-1].order = 2;
-    size_t index = r->N;
+    size_t index = r->N_varX;
     r->var_config[r->N_var_config-1].index = index;
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
@@ -1383,11 +1384,11 @@ int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int t
         reb_simulation_add(r,p0);
         r->N_var++;
     }else{
-        size_t N_real = r->N - r->N_var;
-        for (size_t i=0;i<N_real;i++){
+        size_t N = r->N;
+        for (size_t i=0;i<N;i++){
             reb_simulation_add(r,p0);
         }
-        r->N_var += N_real;
+        r->N_varX += N_real;
     }
     return index;
 }

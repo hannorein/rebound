@@ -64,8 +64,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     const double G = r->G;
     const double softening2 = r->softening*r->softening;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
-    const size_t _N_real   = N  - r->N_var;
-    const size_t _N_active = ((r->N_active==SIZE_MAX)?_N_real:r->N_active);
+    const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     switch (r->gravity){
         case REB_GRAVITY_NONE: // Do nothing.
@@ -155,7 +154,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                             // All active particle pairs
 #ifndef OPENMP // OPENMP off, do O(1/2*N^2)
-                            for (size_t i=starti; i<_N_active; i++){
+                            for (size_t i=starti; i<N_active; i++){
                                 if (reb_sigint > 1) return;
                                 for (size_t j=startj; j<i; j++){
                                     const double dx = (gb.x+particles[i].x) - particles[j].x;
@@ -176,8 +175,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             }
 #else // OPENMP on, do O(N^2)
 #pragma omp parallel for
-                            for (size_t i=0; i<_N_real; i++){
-                                for (size_t j=0; j<_N_active; j++){
+                            for (size_t i=0; i<N; i++){
+                                for (size_t j=0; j<N_active; j++){
                                     if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0) )) continue;
                                     if (_gravity_ignore_terms==2 && ((j==0 || i==0) )) continue;
                                     if (i==j) continue;
@@ -195,10 +194,10 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 #endif // OPENMP
        // Interactions of test particles with active particles
 #ifndef OPENMP // OPENMP off
-                            const size_t startitestp = MAX(_N_active, starti);
-                            for (size_t i=startitestp; i<_N_real; i++){
+                            const size_t startitestp = MAX(N_active, starti);
+                            for (size_t i=startitestp; i<N; i++){
                                 if (reb_sigint > 1) return;
-                                for (size_t j=startj; j<_N_active; j++){
+                                for (size_t j=startj; j<N_active; j++){
                                     const double dx = (gb.x+particles[i].x) - particles[j].x;
                                     const double dy = (gb.y+particles[i].y) - particles[j].y;
                                     const double dz = (gb.z+particles[i].z) - particles[j].z;
@@ -220,8 +219,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 #else // OPENMP on
                             if (_testparticle_type){
 #pragma omp parallel for
-                                for (size_t i=0; i<_N_active; i++){
-                                    for (size_t j=_N_active; j<_N_real; j++){
+                                for (size_t i=0; i<N_active; i++){
+                                    for (size_t j=N_active; j<N; j++){
                                         if (_gravity_ignore_terms==1 && ((j==1 && i==0) )) continue;
                                         if (_gravity_ignore_terms==2 && ((j==0 || i==0) )) continue;
                                         const double dx = (gb.x+particles[i].x) - particles[j].x;
@@ -250,7 +249,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                 }
                 struct reb_vec3d* restrict const cs = r->gravity_cs;
 #pragma omp parallel for schedule(guided)
-                for (size_t i=0; i<_N_real; i++){
+                for (size_t i=0; i<N; i++){
                     particles[i].ax = 0.; 
                     particles[i].ay = 0.; 
                     particles[i].az = 0.; 
@@ -261,8 +260,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                 // Summing over all massive particle pairs
 #ifdef OPENMP
 #pragma omp parallel for schedule(guided)
-                for (size_t i=0; i<_N_active; i++){
-                    for (size_t j=0; j<_N_active; j++){
+                for (size_t i=0; i<N_active; i++){
+                    for (size_t j=0; j<N_active; j++){
                         if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                         if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                         if (i==j) continue;
@@ -298,8 +297,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 
                 // Testparticles
 #pragma omp parallel for schedule(guided)
-                for (size_t i=_N_active; i<_N_real; i++){
-                    for (size_t j=0; j<_N_active; j++){
+                for (size_t i=N_active; i<N; i++){
+                    for (size_t j=0; j<N_active; j++){
                         if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                         if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                         const double dx = particles[i].x - particles[j].x;
@@ -333,8 +332,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                 }
                 if (_testparticle_type){
 #pragma omp parallel for schedule(guided)
-                    for (size_t j=0; j<_N_active; j++){
-                        for (size_t i=_N_active; i<_N_real; i++){
+                    for (size_t j=0; j<N_active; j++){
+                        for (size_t i=N_active; i<N; i++){
                             if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                             if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                             const double dx = particles[i].x - particles[j].x;
@@ -367,9 +366,9 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                     }
                 }
 #else // OPENMP
-                for (size_t i=0; i<_N_active; i++){
+                for (size_t i=0; i<N_active; i++){
                     if (reb_sigint > 1) return;
-                    for (size_t j=i+1; j<_N_active; j++){
+                    for (size_t j=i+1; j<N_active; j++){
                         if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                         if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                         const double dx = particles[i].x - particles[j].x;
@@ -424,9 +423,9 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                 }
 
                 // Testparticles
-                for (size_t i=_N_active; i<_N_real; i++){
+                for (size_t i=N_active; i<N; i++){
                     if (reb_sigint > 1) return;
-                    for (size_t j=0; j<_N_active; j++){
+                    for (size_t j=0; j<N_active; j++){
                         if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                         if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
                         const double dx = particles[i].x - particles[j].x;
@@ -521,12 +520,12 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                         {
                             const double* const dcrit = r->ri_mercurius.dcrit;
 #ifndef OPENMP
-                            for (size_t i=0; i<_N_real; i++){
+                            for (size_t i=0; i<N; i++){
                                 particles[i].ax = 0; 
                                 particles[i].ay = 0; 
                                 particles[i].az = 0; 
                             }
-                            for (size_t i=2; i<_N_active; i++){
+                            for (size_t i=2; i<N_active; i++){
                                 if (reb_sigint > 1) return;
                                 for (size_t j=1; j<i; j++){
                                     const double dx = particles[i].x - particles[j].x;
@@ -546,10 +545,10 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                     particles[j].az    += prefacti*dz;
                                 }
                             }
-                            const size_t startitestp = MAX(_N_active,2);
-                            for (size_t i=startitestp; i<_N_real; i++){
+                            const size_t startitestp = MAX(N_active,2);
+                            for (size_t i=startitestp; i<N; i++){
                                 if (reb_sigint > 1) return;
-                                for (size_t j=1; j<_N_active; j++){
+                                for (size_t j=1; j<N_active; j++){
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
                                     const double dz = particles[i].z - particles[j].z;
@@ -574,11 +573,11 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             particles[0].ay = 0; 
                             particles[0].az = 0; 
 #pragma omp parallel for schedule(guided)
-                            for (size_t i=1; i<_N_real; i++){
+                            for (size_t i=1; i<N; i++){
                                 particles[i].ax = 0; 
                                 particles[i].ay = 0; 
                                 particles[i].az = 0; 
-                                for (size_t j=1; j<_N_active; j++){
+                                for (size_t j=1; j<N_active; j++){
                                     if (i==j) continue;
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
@@ -593,8 +592,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 }
                             }
                             if (_testparticle_type){
-                                for (size_t i=1; i<_N_active; i++){
-                                    for (size_t j=_N_active; j<_N_real; j++){
+                                for (size_t i=1; i<N_active; i++){
+                                    for (size_t j=N_active; j<N; j++){
                                         const double dx = particles[i].x - particles[j].x;
                                         const double dy = particles[i].y - particles[j].y;
                                         const double dz = particles[i].z - particles[j].z;
@@ -754,12 +753,12 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                 case REB_TRACE_MODE_INTERACTION: // Interaction step
                     {
 #ifndef OPENMP
-                        for (size_t i=0; i<_N_real; i++){
+                        for (size_t i=0; i<N; i++){
                             particles[i].ax = 0;
                             particles[i].ay = 0;
                             particles[i].az = 0;
                         }
-                        for (size_t i=2; i<_N_active; i++){
+                        for (size_t i=2; i<N_active; i++){
                             if (reb_sigint > 1) return;
                             for (size_t j=1; j<i; j++){
                                 if (r->ri_trace.current_Ks[j*N+i]) continue;
@@ -778,10 +777,10 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 particles[j].az    += prefacti*dz;
                             }
                         }
-                        const size_t startitestp = MAX(_N_active,2);
-                        for (size_t i=startitestp; i<_N_real; i++){
+                        const size_t startitestp = MAX(N_active,2);
+                        for (size_t i=startitestp; i<N; i++){
                             if (reb_sigint > 1) return;
-                            for (size_t j=1; j<_N_active; j++){
+                            for (size_t j=1; j<N_active; j++){
                                 if (r->ri_trace.current_Ks[j*N+i]) continue;
                                 const double dx = particles[i].x - particles[j].x;
                                 const double dy = particles[i].y - particles[j].y;
@@ -806,11 +805,11 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                         particles[0].ay = 0;
                         particles[0].az = 0;
 #pragma omp parallel for schedule(guided)
-                        for (size_t i=1; i<_N_real; i++){
+                        for (size_t i=1; i<N; i++){
                             particles[i].ax = 0;
                             particles[i].ay = 0;
                             particles[i].az = 0;
-                            for (size_t j=1; j<_N_active; j++){
+                            for (size_t j=1; j<N_active; j++){
                                 if (i==j) continue;
                                 if (r->ri_trace.current_Ks[j*N+i]) continue;
                                 const double dx = particles[i].x - particles[j].x;
@@ -824,8 +823,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             }
                         }
                         if (_testparticle_type){
-                            for (size_t i=1; i<_N_active; i++){
-                                for (size_t j=_N_active; j<_N_real; j++){
+                            for (size_t i=1; i<N_active; i++){
+                                for (size_t j=N_active; j<N; j++){
                                     if (r->ri_trace.current_Ks[j*N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
                                     const double dy = particles[i].y - particles[j].y;
@@ -994,12 +993,13 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
     PROFILING_START();
     struct reb_particle* const particles = r->particles;
+    struct reb_particle* const particles_var = r->particles_varX;
     const double G = r->G;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
     const int _testparticle_type   = r->testparticle_type;
     const size_t N = r->N;
-    const size_t _N_real   = N - r->N_var;
-    const size_t _N_active = ((r->N_active==SIZE_MAX)?_N_real:r->N_active);
+    const size_t N_var = r->N_varX;
+    const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const size_t starti = (r->gravity_ignore_terms==0)?1:2;
     const size_t startj = (r->gravity_ignore_terms==2)?1:0;
     switch (r->gravity){
@@ -1009,7 +1009,7 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
             {
                 struct reb_vec3d* restrict const cs = r->gravity_cs;
 #pragma omp parallel for schedule(guided)
-                for (size_t i=_N_real; i<N; i++){
+                for (size_t i=N; i<N; i++){
                     cs[i].x = 0.;
                     cs[i].y = 0.;
                     cs[i].z = 0.;
@@ -1023,14 +1023,14 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
                     //////////////////
                     /// 1st order  ///
                     //////////////////
-                    struct reb_particle* const particles_var1 = particles + vc.index;
+                    struct reb_particle* const particles_var1 = particles_var + vc.index;
                     if (vc.testparticle<0){
-                        for (size_t i=0; i<_N_real; i++){
+                        for (size_t i=0; i<N; i++){
                             particles_var1[i].ax = 0.; 
                             particles_var1[i].ay = 0.; 
                             particles_var1[i].az = 0.; 
                         }
-                        for (size_t i=starti; i<_N_active; i++){
+                        for (size_t i=starti; i<N_active; i++){
                             for (size_t j=startj; j<i; j++){
                                 const double dx = particles[i].x - particles[j].x;
                                 const double dy = particles[i].y - particles[j].y;
@@ -1069,8 +1069,8 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
                                 particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
                             }
                         }
-                        for (size_t i=_N_active; i<_N_real; i++){
-                            for (size_t j=startj; j<_N_active; j++){
+                        for (size_t i=N_active; i<N; i++){
+                            for (size_t j=startj; j<N_active; j++){
                                 const double dx = particles[i].x - particles[j].x;
                                 const double dy = particles[i].y - particles[j].y;
                                 const double dz = particles[i].z - particles[j].z;
@@ -1115,7 +1115,7 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
                         particles_var1[0].ax = 0.; 
                         particles_var1[0].ay = 0.; 
                         particles_var1[0].az = 0.; 
-                        for (size_t j=0; j<_N_real; j++){
+                        for (size_t j=0; j<N; j++){
                             if (i==j) continue;
                             if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                             if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
@@ -1157,17 +1157,17 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
                     //////////////////
                     /// 2nd order  ///
                     //////////////////
-                    struct reb_particle* const particles_var2 = particles + vc.index;
-                    struct reb_particle* const particles_var1a = particles + vc.index_1st_order_a;
-                    struct reb_particle* const particles_var1b = particles + vc.index_1st_order_b;
+                    struct reb_particle* const particles_var2 = particles_var + vc.index;
+                    struct reb_particle* const particles_var1a = particles_var + vc.index_1st_order_a;
+                    struct reb_particle* const particles_var1b = particles_var + vc.index_1st_order_b;
                     if (vc.testparticle<0){
-                        for (size_t i=0; i<_N_real; i++){
+                        for (size_t i=0; i<N; i++){
                             particles_var2[i].ax = 0.; 
                             particles_var2[i].ay = 0.; 
                             particles_var2[i].az = 0.; 
                         }
-                        for (size_t i=0; i<_N_real; i++){
-                            for (size_t j=i+1; j<_N_real; j++){
+                        for (size_t i=0; i<N; i++){
+                            for (size_t j=i+1; j<N; j++){
                                 // TODO: Need to implement WH skipping
                                 //if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
                                 //if (_gravity_ignore_terms==2 && ((j==0 || i==0))) continue;
@@ -1260,7 +1260,7 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
                         particles_var2[0].ax = 0.; 
                         particles_var2[0].ay = 0.; 
                         particles_var2[0].az = 0.; 
-                        for (size_t j=0; j<_N_real; j++){
+                        for (size_t j=0; j<N; j++){
                             if (i==j) continue;
                             // TODO: Need to implement WH skipping
                             //if (_gravity_ignore_terms==1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
@@ -1336,8 +1336,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
     const double G = r->G;
-    const size_t _N_real   = N  - r->N_var;
-    const size_t _N_active = ((r->N_active==SIZE_MAX)?_N_real:r->N_active);
+    const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     const size_t starti = (r->gravity_ignore_terms==0)?1:2;
     const size_t startj = (r->gravity_ignore_terms==2)?1:0;
@@ -1347,7 +1346,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
         case REB_GRAVITY_BASIC:
             // All interactions between active particles
 #pragma omp parallel for
-            for (size_t i=starti; i<_N_active; i++){
+            for (size_t i=starti; i<N_active; i++){
 #ifndef OPENMP
                 if (reb_sigint > 1) return;
 #endif // OPENMP
@@ -1378,7 +1377,7 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
             }
             // Interactions between active particles and test particles
 #pragma omp parallel for
-            for (size_t i=_N_active; i<_N_real; i++){
+            for (size_t i=N_active; i<N; i++){
 #ifndef OPENMP
                 if (reb_sigint > 1) return;
 #endif // OPENMP
