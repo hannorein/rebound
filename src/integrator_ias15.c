@@ -352,7 +352,6 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
 
             // Prepare particles arrays for force calculation
             for(size_t i=0;i<N+N_varX;i++) {                      // Predict positions at interval n using b values
-                size_t mi = map[i];
                 const size_t k0 = 3*i+0;
                 const size_t k1 = 3*i+1;
                 const size_t k2 = 3*i+2;
@@ -363,13 +362,20 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 xk0 = -csx[k0] + ((((((((b.p6[k0]*7.*h[n]/9. + b.p5[k0])*3.*h[n]/4. + b.p4[k0])*5.*h[n]/7. + b.p3[k0])*2.*h[n]/3. + b.p2[k0])*3.*h[n]/5. + b.p1[k0])*h[n]/2. + b.p0[k0])*h[n]/3. + a0[k0])*r->dt*h[n]/2. + v0[k0])*r->dt*h[n];
                 xk1 = -csx[k1] + ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
                 xk2 = -csx[k2] + ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
-                particles[mi].x = xk0 + x0[k0];
-                particles[mi].y = xk1 + x0[k1];
-                particles[mi].z = xk2 + x0[k2];
+                if (i<N){
+                    size_t mi = map[i];
+                    particles[mi].x = xk0 + x0[k0];
+                    particles[mi].y = xk1 + x0[k1];
+                    particles[mi].z = xk2 + x0[k2];
+                }else{
+                    size_t mi = i-N;
+                    particles_varX[mi].x = xk0 + x0[k0];
+                    particles_varX[mi].y = xk1 + x0[k1];
+                    particles_varX[mi].z = xk2 + x0[k2];
+                }
             }
             if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
                 for(size_t i=0;i<N+N_varX;i++) {                  // Predict velocities at interval n using b values
-                    size_t mi = map[i];
                     const size_t k0 = 3*i+0;
                     const size_t k1 = 3*i+1;
                     const size_t k2 = 3*i+2;
@@ -380,9 +386,17 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                     vk0 =  -csv[k0] + (((((((b.p6[k0]*7.*h[n]/8. + b.p5[k0])*6.*h[n]/7. + b.p4[k0])*5.*h[n]/6. + b.p3[k0])*4.*h[n]/5. + b.p2[k0])*3.*h[n]/4. + b.p1[k0])*2.*h[n]/3. + b.p0[k0])*h[n]/2. + a0[k0])*r->dt*h[n];
                     vk1 =  -csv[k1] + (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
                     vk2 =  -csv[k2] + (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
-                    particles[mi].vx = vk0 + v0[k0];
-                    particles[mi].vy = vk1 + v0[k1];
-                    particles[mi].vz = vk2 + v0[k2];
+                    if (i<N){
+                        size_t mi = map[i];
+                        particles[mi].vx = vk0 + v0[k0];
+                        particles[mi].vy = vk1 + v0[k1];
+                        particles[mi].vz = vk2 + v0[k2];
+                    }else{
+                        size_t mi = i-N;
+                        particles_varX[mi].vx = vk0 + v0[k0];
+                        particles_varX[mi].vy = vk1 + v0[k1];
+                        particles_varX[mi].vz = vk2 + v0[k2];
+                    }
                 }
             }
 
@@ -392,11 +406,17 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 integrator_megno_thisdt += w[n] * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
             }
 
-            for(size_t k=0;k<N+N_varX;++k) {
+            for(size_t k=0;k<N;++k) {
                 size_t mk = map[k];
                 at[3*k]   = particles[mk].ax;
                 at[3*k+1] = particles[mk].ay;  
                 at[3*k+2] = particles[mk].az;
+            }
+            for(size_t mk=0;mk<N_varX;++mk) {
+                size_t k = mk+N;;
+                at[3*k]   = particles_varX[mk].ax;
+                at[3*k+1] = particles_varX[mk].ay;  
+                at[3*k+2] = particles_varX[mk].az;
             }
             switch (n) {                            // Improve b and g values
                 case 1: 
