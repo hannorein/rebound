@@ -1457,7 +1457,6 @@ Simulation._fields_ = [
                 ("N_allocated", c_size_t),
                 ("_particles", POINTER(Particle)),
                 ("N_var", c_size_t),
-                ("N_var_allocated", c_size_t),
                 ("_particles_var", POINTER(Particle)),
                 ("N_var_config", c_size_t),
                 ("var_config", POINTER(Variation)),

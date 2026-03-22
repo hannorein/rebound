@@ -386,7 +386,6 @@ void reb_simulation_remove_all_particles(struct reb_simulation* const r){
     r->N_allocated = 0;
     r->N_active = SIZE_MAX;
     r->N_varX = 0;
-    r->N_varX_allocated = 0;
     free(r->particles);
     r->particles = NULL;
     free(r->particles_varX);

@@ -925,7 +925,6 @@ finish_fields:
         r->var_config[l].sim = r;
     }
     r->N_allocated = r->N; // This used to be different. Now only saving N.
-    r->N_varX_allocated = r->N_varX;
     for (unsigned int l=0;l<r->N_allocated;l++){
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
@@ -947,7 +946,7 @@ finish_fields:
         }
 #endif // MPI
     }
-    for (unsigned int l=0;l<r->N_varX_allocated;l++){
+    for (unsigned int l=0;l<r->N_varX;l++){
         r->particles_varX[l].ap = NULL;
         r->particles_varX[l].sim = r;
     }

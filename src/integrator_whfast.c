@@ -794,7 +794,7 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
     for (size_t v=0;v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
         if (vc.order!=1){
-            reb_simulation_error(r, "WHFast/MEGNO only supports first order variational equations.");
+            reb_simulation_error(r, "WHFast only supports first order variational equations.");
             return 1; // Error
         }
         if (vc.testparticle>=0){

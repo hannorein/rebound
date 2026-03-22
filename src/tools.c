@@ -1340,15 +1340,16 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
     }
 }
 
-static void reb_simulation_add_var_particle_local(struct reb_simulation* r){
-    if (r->N_varX_allocated<=r->N_varX){
-        r->N_varX_allocated = r->N_varX_allocated ? r->N_varX_allocated * 2 : 8;
-        r->particles_varX = realloc(r->particles_varX,sizeof(struct reb_particle)*r->N_varX_allocated);
+static void reb_simulation_add_var_particle_local(struct reb_simulation* r, size_t N_var_add){
+    // Calling realloc every time a variational particle is added.
+    // Somewhat inefficient but avoid storing a capacity for the array
+    // and variational particles are really only added once at the beginning.
+    r->particles_varX = realloc(r->particles_varX,sizeof(struct reb_particle)*(r->N_varX+N_var_add));
+    for (size_t i=0; i<N_var_add;i++){
+        r->particles_varX[r->N_varX+i] = (struct reb_particle){0};
+        r->particles_varX[r->N_varX+i].sim = r;
     }
-
-    r->particles_varX[r->N_varX] = (struct reb_particle){0};
-    r->particles_varX[r->N_varX].sim = r;
-    r->N_varX++;
+    r->N_varX += N_var_add;
 }
 
 int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle){
@@ -1361,12 +1362,9 @@ int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int t
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
     if (testparticle>=0){
-        reb_simulation_add_var_particle_local(r);
+        reb_simulation_add_var_particle_local(r,1);
     }else{
-        size_t N = r->N;
-        for (size_t i=0;i<N;i++){
-            reb_simulation_add_var_particle_local(r);
-        }
+        reb_simulation_add_var_particle_local(r,r->N);
     }
     return index;
 }
@@ -1384,12 +1382,9 @@ int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int t
     r->var_config[r->N_var_config-1].index_1st_order_a = index_1st_order_a;
     r->var_config[r->N_var_config-1].index_1st_order_b = index_1st_order_b;
     if (testparticle>=0){
-        reb_simulation_add_var_particle_local(r);
+        reb_simulation_add_var_particle_local(r,1);
     }else{
-        size_t N = r->N;
-        for (size_t i=0;i<N;i++){
-            reb_simulation_add_var_particle_local(r);
-        }
+        reb_simulation_add_var_particle_local(r,r->N);
     }
     return index;
 }

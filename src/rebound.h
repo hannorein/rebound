@@ -431,7 +431,6 @@ struct reb_simulation {
 
     // Variational particles array
     size_t  N_varX;                  // Number of variational particles. Default 0.
-    size_t  N_varX_allocated;
     struct reb_particle* particles_varX;
 
     size_t  N_var_config; 
