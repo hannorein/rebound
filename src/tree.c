@@ -108,7 +108,6 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
             return NULL;
         }
         node->pt = pt; 
-        particles[pt].c = node;
         return node;
     }
     // In a existing node
@@ -138,85 +137,6 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
     if (p.y < node->y) octant+=2;
     if (p.z < node->z) octant+=4;
     return octant;
-}
-
-/**
- * @brief The function tests whether the particle is still within the cubic cell box. If the particle has moved outside the box, it returns 0. Otherwise, it returns 1. 
- *
- * @param r REBOUND simulation to operate on
- * @param node is the pointer to a node cell
- * @return 0 is particle is not in cell, 1 if it is.
- */
-static int reb_tree_particle_is_inside_cell(const struct reb_simulation* const r, struct reb_treecell *node){
-    if (fabs(r->particles[node->pt].x-node->x) > node->w/2. || 
-            fabs(r->particles[node->pt].y-node->y) > node->w/2. || 
-            fabs(r->particles[node->pt].z-node->z) > node->w/2. || 
-            isnan(r->particles[node->pt].y)) {
-        return 0;
-    }
-    return 1;
-}
-
-/**
- * @brief The function is called to walk through the whole tree to update its structure and node->pt at the end of each time step.
- *
- * @param r REBOUND simulation to operate on
- * @param node is the pointer to a node cell
- */
-static struct reb_treecell *reb_tree_update_cell(struct reb_simulation* const r, struct reb_treecell *node){
-    int test = -1; /**< A temporary int variable is used to store the index of an octant when it needs to be freed. */
-    if (node == NULL) {
-        return NULL;
-    }
-    // Non-leaf nodes	
-    if (node->pt < 0) {
-        for (int o=0; o<8; o++) {
-            node->oct[o] = reb_tree_update_cell(r, node->oct[o]);
-        }
-        node->pt = 0;
-        for (int o=0; o<8; o++) {
-            struct reb_treecell *d = node->oct[o];
-            if (d != NULL) {
-                // Update node->pt
-                if (d->pt >= 0) {	// The child is a leaf
-                    node->pt--;
-                    test = o;
-                }else{				// The child cell contains several particles
-                    node->pt += d->pt;
-                }
-            }		
-        }
-        // Check if the node requires derefinement.
-        if (node->pt == 0) {	// The node is empty.
-            free(node);
-            return NULL;
-        } else if (node->pt == -1) { // The node becomes a leaf.
-            node->pt = node->oct[test]->pt;
-            r->particles[node->pt].c = node;
-            free(node->oct[test]);
-            node->oct[test]=NULL;
-            return node;
-        }
-        return node;
-    } 
-    // Leaf nodes
-    if (reb_tree_particle_is_inside_cell(r, node) == 0) {
-        int oldpos = node->pt;
-        struct reb_particle reinsertme = r->particles[oldpos];
-        if (r->N){ // Check if there remains any particle in the simulation 
-            (r->N)--;
-            r->particles[oldpos] = r->particles[r->N];
-            r->particles[oldpos].c->pt = oldpos;
-            if (!isnan(reinsertme.y)){ // Do not reinsert if flagged for removal
-                reb_simulation_add(r, reinsertme);
-            }
-        }
-        free(node);
-        return NULL; 
-    } else {
-        r->particles[node->pt].c = node;
-        return node;
-    }
 }
 
 /**
@@ -298,22 +218,6 @@ void reb_tree_update_gravity_data(struct reb_simulation* const r){
     }
 }
 
-void reb_tree_update(struct reb_simulation* const r){
-    if (r->tree_root==NULL){
-        r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
-    }
-    for(size_t i=0;i<r->N_root;i++){
-
-#ifdef MPI
-        if (reb_communication_mpi_rootbox_is_local(r, i)==1){
-#endif // MPI
-            r->tree_root[i] = reb_tree_update_cell(r, r->tree_root[i]);
-#ifdef MPI
-        }
-#endif // MPI
-    }
-    r->tree_needs_update= 0;
-}
 static void reb_tree_delete_cell(struct reb_treecell* node){
     if (node==NULL){
         return;
@@ -337,6 +241,24 @@ void reb_tree_delete(struct reb_simulation* const r){
     }
 }
 
+void reb_tree_construct(struct reb_simulation* const r){
+    if (r->tree_root!=NULL){
+        reb_simulation_error(r,"Cannot construct tree. Tree already exists.");
+        return;
+    }
+    if (r->root_size==-1){
+        reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
+        return;
+    }
+    for (size_t i=0;i<r->N;i++){
+        struct reb_particle p = r->particles[i];
+        if(fabs(p.x)>r->boxsize.x/2. || fabs(p.y)>r->boxsize.y/2. || fabs(p.z)>r->boxsize.z/2.){
+            reb_simulation_error(r,"Particle is outside of simulation box. Cannot add to tree.");
+            return;
+        }
+        reb_tree_add_particle_to_tree(r, i);
+    }
+}
 
 
 #ifdef MPI

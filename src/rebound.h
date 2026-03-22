@@ -83,7 +83,6 @@ struct reb_particle {
     double m;                   // Mass in code units
     double r;                   // Physical radius in code units
     double last_collision;      // Last time the particle had a physical collision
-    struct reb_treecell* c;     // Pointer to the cell the particle is currently in
 #if !defined(_LP64)
     char pad1[4];               // Padding. c is short by 4 bytes
 #endif
@@ -444,7 +443,6 @@ struct reb_simulation {
     struct reb_vec3d* gravity_cs; 
     size_t N_allocated_gravity_cs;
     struct reb_treecell** tree_root;
-    int     tree_needs_update;      // Flag to force a tree update (after boundary check)
     double opening_angle2;          // Opening angle for tree-based gravity calculation. Default 0.25.
     enum REB_STATUS status;         // Current simulation status
     int     exact_finish_time;      // 1 (default): integrate exactly to the time requested and adjust timestep if needed, 0: may overshoot by one timestep

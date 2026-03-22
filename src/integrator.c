@@ -198,16 +198,14 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
     /***********************************************************
-     * Prepare TREE for force calculations
+     * Prepare TREE for force calculation and distribute
+     * particles to other nodes. 
      **********************************************************/
-    // Update and simplify tree. 
-    // Prepare particles for distribution to other nodes. 
-    // This function also creates the tree if called for the first time.
-    if (r->tree_needs_update || r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
+    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
         // Check for root crossings.
         reb_boundary_check(r);     
-        // Update tree (this will remove particles which left the box)
-        reb_tree_update(r);          
+        // Build the tree
+        reb_tree_construct(r);
     }
 
 #ifdef MPI
@@ -289,5 +287,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
     }
+    // Delete tree (if it exists)    
+    reb_tree_delete(r);
 }
 

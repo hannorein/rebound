@@ -56,11 +56,9 @@ struct reb_treecell {
 };
 
 /**
- * @brief This function updates the tree.
- * @details The tree needs to be updated when particles move, this function does that.
- * @param r Rebound simulation to operate on
+ * @brief construct tree by adding all particles currently in simulation.
  */
-void reb_tree_update(struct reb_simulation* const r);
+void reb_tree_construct(struct reb_simulation* const r);
 
 /**
  * @brief The wrap function calls reb_tree_update_gravity_data_in_cell() for each tree.

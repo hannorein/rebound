@@ -238,9 +238,8 @@ void reb_collision_search(struct reb_simulation* const r){
             break;
         case REB_COLLISION_TREE:
             {
-                // Update and simplify tree. 
-                // Prepare particles for distribution to other nodes. 
-                reb_tree_update(r);          
+                // Construct tree
+                reb_tree_construct(r);          
 
 #ifdef MPI
                 // Distribute particles and add newly received particles to tree.
@@ -272,7 +271,10 @@ void reb_collision_search(struct reb_simulation* const r){
 #pragma omp parallel for schedule(guided)
                 for (size_t i=0;i<N;i++){
 #ifndef OPENMP
-                    if (reb_sigint > 1) return;
+                    if (reb_sigint > 1){
+                        reb_tree_delete(r);
+                        return;
+                    }
 #endif // OPENMP
                     struct reb_particle p1 = particles[i];
                     struct reb_collision collision_nearest;
@@ -305,6 +307,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Continue if no collision was found
                     if (collision_nearest.p2==SIZE_MAX) continue;
                 }
+                reb_tree_delete(r);
             }
             break;
         case REB_COLLISION_LINETREE:
@@ -316,9 +319,8 @@ void reb_collision_search(struct reb_simulation* const r){
                     vmax2 = MAX(vmax2, p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
                 }
                 double maxdrift = r->dt_last_done*sqrt(vmax2);
-                // Update and simplify tree. 
-                // Prepare particles for distribution to other nodes. 
-                reb_tree_update(r);          
+                // Construct tree
+                reb_tree_construct(r);          
 
                 // Loop over ghost boxes, but only the inner most ring.
                 int N_ghost_xcol = (r->N_ghost_x>1?1:r->N_ghost_x);
@@ -330,7 +332,10 @@ void reb_collision_search(struct reb_simulation* const r){
 #pragma omp parallel for schedule(guided)
                 for (size_t i=0;i<N;i++){
 #ifndef OPENMP
-                    if (reb_sigint > 1) return;
+                    if (reb_sigint > 1){
+                        reb_tree_delete(r);
+                        return;
+                    }
 #endif // OPENMP
                     struct reb_particle p1 = particles[i];
                     struct reb_collision collision_nearest;
@@ -365,6 +370,7 @@ void reb_collision_search(struct reb_simulation* const r){
                     // Continue if no collision was found
                     if (collision_nearest.p2==SIZE_MAX) continue;
                 }
+                reb_tree_delete(r);
             }
             break;
         default:
@@ -403,6 +409,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 int removedp1 = !reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
                 if (removedp1){
                     if (r->tree_root){ // In a tree, particles get removed later. 
+                                       // TODO: Think about this logic with non-persistent trees
                         for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
                             struct reb_collision* cp = &(r->collisions[j]);
                             // Skip collisions which involved the removed particle
