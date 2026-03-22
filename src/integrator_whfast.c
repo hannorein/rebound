@@ -312,7 +312,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, d
     //Variations
     for (size_t v=0;r && v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        const size_t pindex = p-r->ri_whfast.p_jh;
+        const size_t pindex = p - r->ri_whfast.p_jh;
         struct reb_particle* dp1p = r->ri_whfast.p_jh_var + pindex + vc.index;
         struct reb_particle dp1 = *dp1p;
         stiefel_Gs(Gs, beta, X);    // Recalculate (to get Gs[4] and Gs[5])
