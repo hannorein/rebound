@@ -998,7 +998,6 @@ void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
     const int _testparticle_type   = r->testparticle_type;
     const size_t N = r->N;
-    const size_t N_var = r->N_varX;
     const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const size_t starti = (r->gravity_ignore_terms==0)?1:2;
     const size_t startj = (r->gravity_ignore_terms==2)?1:0;

@@ -15,13 +15,17 @@ class Particles(MutableMapping):
     This class allows the user to access particles like a dictionary using the particle's index or name.
     Allows for negative indices and slicing.
     """
-    def __init__(self, sim):
+    def __init__(self, sim, var=False):
         self.sim = sim
+        self.var = var
 
     @property
     def _ps(self):
         ParticleList = Particle*self.sim.N
-        pl = ParticleList.from_address(addressof(self.sim._particles.contents))
+        if var:
+            pl = ParticleList.from_address(addressof(self.sim._particles_var.contents))
+        else:
+            pl = ParticleList.from_address(addressof(self.sim._particles.contents))
         pl._sim = self.sim # keep reference to sim until ParticleList is deallocated to avoid memory issues
         return pl
 
@@ -66,7 +70,7 @@ class Particles(MutableMapping):
                 self._ps[p.index] = value
 
     def __delitem__(self, key):
-        pass
+        raise RuntimeError("Use sim.remove() to delete particles.")
 
     def __iter__(self):
         if self.sim.N>0:
