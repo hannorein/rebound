@@ -121,7 +121,7 @@ static void run_heartbeat(struct reb_simulation* const r){
         // Check for escaping particles
         const double max2 = r->exit_max_distance * r->exit_max_distance;
         const struct reb_particle* const particles = r->particles;
-        const size_t N = r->N - r->N_var;
+        const size_t N = r->N;
         for (size_t i=0;i<N;i++){
             struct reb_particle p = particles[i];
             double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
@@ -134,7 +134,7 @@ static void run_heartbeat(struct reb_simulation* const r){
         // Check for close encounters
         const double min2 = r->exit_min_distance * r->exit_min_distance;
         const struct reb_particle* const particles = r->particles;
-        const size_t N = r->N - r->N_var;
+        const size_t N = r->N;
         for (size_t i=0;i<N;i++){
             struct reb_particle pi = particles[i];
             for (size_t j=0;j<i;j++){
@@ -293,12 +293,8 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #ifdef SERVER
     reb_simulation_stop_server(r);
 #endif // SERVER
-    if (r->gravity_cs){
-        free(r->gravity_cs  );
-    }
-    if (r->collisions){
-        free(r->collisions  );
-    }
+    free(r->gravity_cs);
+    free(r->collisions);
     reb_integrator_whfast_reset(r);
     reb_integrator_ias15_reset(r);
     reb_integrator_mercurius_reset(r);
@@ -312,9 +308,8 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
             r->free_particle_ap(&r->particles[i]);
         }
     }
-    if (r->particles){
-        free(r->particles   );
-    }
+    free(r->particles);
+    free(r->particles_varX);
     for (size_t i=0;i<r->N_name_list;i++){
         free(r->name_list[i]);
     }
@@ -521,7 +516,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
 
-    if (r->N_var){
+    if (r->N_varX){
         reb_simulation_rescale_var(r);
     }
 
@@ -635,7 +630,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_name_list = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;
-    r->N_var    = 0;    
+    r->N_varX    = 0;    
     r->N_var_config = 0;    
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    
@@ -881,9 +876,9 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
 }
 
 void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
-    const size_t N_real = r->N - r->N_var;
+    const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
-    for (size_t i=0;i<N_real;i++){
+    for (size_t i=0;i<N;i++){
         if (m){
             m[i] = particles[i].m;
         }
@@ -912,9 +907,9 @@ void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, doubl
 }
 
 void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
-    const size_t N_real = r->N - r->N_var;
+    const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
-    for (size_t i=0;i<N_real;i++){
+    for (size_t i=0;i<N;i++){
         if (m){
             particles[i].m = m[i];
         }

@@ -45,7 +45,8 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 2,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0},
     { 3,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0},
     { 4,  REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0},
-    { 5,  REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0},
+    { 5,  REB_SIZE_T,       "N_varX",                        offsetof(struct reb_simulation, N_varX), 0, 0},
+    // TODO: Add particles_var
     // 6 Used to be varconfig
     { 7,  REB_SIZE_T,       "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0},
     { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0},

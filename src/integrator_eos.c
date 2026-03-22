@@ -76,8 +76,7 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
 
 static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* r, double y, double v){
     const size_t N = r->N;
-    const size_t N_real   = N - r->N_var;
-    const size_t N_active = r->N_active==SIZE_MAX?N_real:r->N_active;
+    const size_t N_active = r->N_active==SIZE_MAX?N:r->N_active;
     const int testparticle_type   = r->testparticle_type;
     struct reb_particle* restrict const particles = r->particles;
 
@@ -106,7 +105,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             particles[j].az    = prefacti*dz;
         }
         // Interactions between central object and all test particles
-        for (size_t j=N_active; j<N_real; j++){
+        for (size_t j=N_active; j<N; j++){
             const double dx = particles[0].x - particles[j].x;
             const double dy = particles[0].y - particles[j].y;
             const double dz = particles[0].z - particles[j].z;
@@ -151,7 +150,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             particles[i].vz    += y*particles[i].az + daz*prefact2j - dz*prefact1j;
         }
         // Interactions between central object and all test particles
-        for (size_t i=N_active; i<N_real; i++){
+        for (size_t i=N_active; i<N; i++){
             const double dx = particles[0].x - particles[i].x; 
             const double dy = particles[0].y - particles[i].y; 
             const double dz = particles[0].z - particles[i].z; 
@@ -200,7 +199,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
             particles[j].vz    += prefacti*dz;
         }
         // Interactions between central object and all test particles
-        for (size_t j=N_active; j<N_real; j++){
+        for (size_t j=N_active; j<N; j++){
             const double dx = particles[0].x - particles[j].x;
             const double dy = particles[0].y - particles[j].y;
             const double dz = particles[0].z - particles[j].z;

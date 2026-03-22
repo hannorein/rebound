@@ -530,7 +530,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         // r->ri_ias15.adaptive_mode==REB_IAS15_PRS23
         //   Here, the acceleration, jerk and snap are used to estimate the new timestep. 
         //   The method is described in detail in Pham, Rein, Spiegel 2023
-        size_t Nreal = N - r->N_var;
+        size_t Nreal = N;
         if (r->ri_ias15.adaptive_mode==REB_IAS15_INDIVIDUAL || r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
             if (r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){

@@ -110,12 +110,11 @@ double reb_simulation_energy(struct reb_simulation* const r){
     reb_communication_mpi_distribute_particles(r);
 #endif
     const size_t N = r->N;
-    const size_t N_var = r->N_var;
-    const size_t N_active = (r->N_active==SIZE_MAX)?(N-N_var):r->N_active;
+    const size_t N_active = (r->N_active==SIZE_MAX)?N:r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
     double e_kin = 0.;
     double e_pot = 0.;
-    size_t N_interact = (r->testparticle_type==0)?N_active:(N-N_var);
+    size_t N_interact = (r->testparticle_type==0)?N_active:N;
     for (size_t i=0;i<N_interact;i++){
         struct reb_particle pi = particles[i];
         e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
@@ -165,9 +164,8 @@ double reb_simulation_energy(struct reb_simulation* const r){
 struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* const r){
     const size_t N = r->N;
     const struct reb_particle* restrict const particles = r->particles;
-    const size_t N_var = r->N_var;
     struct reb_vec3d L = {0};
-    for (size_t i=0;i<N-N_var;i++){
+    for (size_t i=0;i<N;i++){
         struct reb_particle pi = particles[i];
         L.x += pi.m*(pi.y*pi.vz - pi.z*pi.vy);
         L.y += pi.m*(pi.z*pi.vx - pi.x*pi.vz);
@@ -177,12 +175,12 @@ struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* co
 }
 
 void reb_simulation_move_to_hel(struct reb_simulation* const r){
-    const size_t N_real = r->N - r->N_var;
-    if (N_real>0){
+    const size_t N = r->N;
+    if (N>0){
         struct reb_particle* restrict const particles = r->particles;
         struct reb_particle hel = r->particles[0];
         // Note: Variational particles will not be affected.
-        for (size_t i=1;i<N_real;i++){
+        for (size_t i=1;i<N;i++){
             particles[i].x  -= hel.x;
             particles[i].y  -= hel.y;
             particles[i].z  -= hel.z;
@@ -203,8 +201,8 @@ void reb_simulation_move_to_hel(struct reb_simulation* const r){
 void reb_simulation_move_to_com(struct reb_simulation* const r){
     struct reb_particle com = reb_simulation_com(r); // Particles will be redistributed in this call if MPI used
     struct reb_particle* restrict const particles = r->particles;
-    struct reb_particle* restrict const particles_var = r->particles_var;
-    const size_t N_real = r->N - r->N_var; 
+    struct reb_particle* restrict const particles_var = r->particles_varX;
+    const size_t N = r->N; 
 
     // First do second order
     for (size_t v=0;v<r->N_var_config;v++){
@@ -219,12 +217,12 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
                 double dma = 0.;
                 double dmb = 0.;
                 double ddm = 0.;
-                for (size_t i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     dma += particles_var[i+index_1st_order_a].m;
                     dmb += particles_var[i+index_1st_order_b].m;
                     ddm += particles_var[i+index].m;
                 }
-                for (size_t i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     com_shift.x  += particles_var[i+index].x /com.m * particles[i].m; 
                     com_shift.y  += particles_var[i+index].y /com.m * particles[i].m; 
                     com_shift.z  += particles_var[i+index].z /com.m * particles[i].m; 
@@ -300,7 +298,7 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
 
 
                 }
-                for (size_t i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     particles_var[i+index].x -= com_shift.x; 
                     particles_var[i+index].y -= com_shift.y; 
                     particles_var[i+index].z -= com_shift.z; 
@@ -320,10 +318,10 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
             if (r->var_config[v].order==1){
                 struct reb_particle com_shift = {0};
                 double dm = 0.;
-                for (size_t i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     dm += particles[i+index].m;
                 }
-                for (size_t i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     com_shift.x  += particles[i].m/com.m * particles_var[i+index].x ; 
                     com_shift.y  += particles[i].m/com.m * particles_var[i+index].y ; 
                     com_shift.z  += particles[i].m/com.m * particles_var[i+index].z ; 
@@ -345,7 +343,7 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
                     com_shift.vy -= particles[i].vy/(com.m*com.m) * particles[i].m*dm; 
                     com_shift.vz -= particles[i].vz/(com.m*com.m) * particles[i].m*dm; 
                 }
-                for (size_t i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     particles_var[i+index].x -= com_shift.x; 
                     particles_var[i+index].y -= com_shift.y; 
                     particles_var[i+index].z -= com_shift.z; 
@@ -358,7 +356,7 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
     }
 
     // Finally do normal particles
-    for (size_t i=0;i<N_real;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].x  -= com.x;
         particles[i].y  -= com.y;
         particles[i].z  -= com.z;
@@ -412,8 +410,8 @@ struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t fi
 struct reb_particle reb_simulation_com(struct reb_simulation* r){
 #ifdef MPI
     reb_communication_mpi_distribute_particles(r);
-    size_t N_real = r->N-r->N_var;
-    struct reb_particle com = reb_simulation_com_range(r, 0, N_real);
+    size_t N = r->N;
+    struct reb_particle com = reb_simulation_com_range(r, 0, N);
     com.x  *= com.m;
     com.y  *= com.m;
     com.z  *= com.m;
@@ -449,8 +447,7 @@ struct reb_particle reb_simulation_com(struct reb_simulation* r){
 
     return com; 
 #else // MPI
-    size_t N_real = r->N-r->N_var;
-    return reb_simulation_com_range(r, 0, N_real);
+    return reb_simulation_com_range(r, 0, r->N);
 #endif // MPI
 }
 
@@ -1277,10 +1274,10 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
 
         size_t N = 1;
         if (vc->testparticle<0){
-            N = r->N - r->N_var;
+            N = r->N;
         }
         double scale = 0;
-        struct reb_particle* const particles = r->particles_var + vc->index;
+        struct reb_particle* const particles = r->particles_varX + vc->index;
         for (size_t i=0; i<N; i++){
             struct reb_particle p = particles[i];
             scale = MAX(fabs(p.x), scale);
@@ -1382,13 +1379,13 @@ int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int t
     struct reb_particle p0 = {0};
     if (testparticle>=0){
         reb_simulation_add(r,p0);
-        r->N_var++;
+        r->N_varX++;
     }else{
         size_t N = r->N;
         for (size_t i=0;i<N;i++){
             reb_simulation_add(r,p0);
         }
-        r->N_varX += N_real;
+        r->N_varX += N;
     }
     return index;
 }
@@ -1409,8 +1406,8 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
     r->megno_mean_t = 0;
     size_t i = reb_simulation_add_variation_1st_order(r,-1);
     r->calculate_megno = i;
-    const size_t imax = i + (r->N-r->N_var);
-    struct reb_particle* const particles = r->particles;
+    const size_t imax = i + r->N;
+    struct reb_particle* const particles = r->particles_varX;
     for (;i<imax;i++){ 
         particles[i].m  = 0.;
         particles[i].x  = reb_random_normal(r,1.);
@@ -1447,11 +1444,11 @@ double reb_simulation_lyapunov(struct reb_simulation* r){
     return r->megno_cov_Yt/r->megno_var_t;
 }
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
-    const struct reb_particle* restrict const particles = r->particles;
+    const struct reb_particle* restrict const particles = r->particles_varX;
     double deltad = 0;
     double delta2 = 0;
     size_t i = r->calculate_megno;
-    const size_t imax = i + (r->N-r->N_var);
+    const size_t imax = i + r->N;
     for (;i<imax;i++){
         deltad += particles[i].vx * particles[i].x; 
         deltad += particles[i].vy * particles[i].y; 

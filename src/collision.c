@@ -49,7 +49,7 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
 
 void reb_collision_search(struct reb_simulation* const r){
     r->collisions_N = 0;
-    size_t N = r->N - r->N_var;
+    size_t N = r->N;
     size_t Ninner = N;
 
     size_t* map = NULL;
@@ -257,7 +257,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
                 int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
-                const size_t N = r->N - r->N_var;
+                const size_t N = r->N;
                 // Find second largest radius
                 size_t l1 = SIZE_MAX;
                 size_t l2 = SIZE_MAX;
@@ -327,7 +327,7 @@ void reb_collision_search(struct reb_simulation* const r){
                 int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
                 int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
-                const size_t N = r->N - r->N_var;
+                const size_t N = r->N;
                 // Loop over all particles
 #pragma omp parallel for schedule(guided)
                 for (size_t i=0;i<N;i++){
@@ -425,7 +425,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 c.p2--;
                             }
                         }else{
-                            if (c.p2 == r->N-r->N_var){
+                            if (c.p2 == r->N){
                                 c.p2 = c.p1;
                             }
                         }
@@ -445,10 +445,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == r->N-r->N_var){
+                                if (cp->p1 == r->N){
                                     cp->p1 = c.p1;
                                 }
-                                if (cp->p2 == r->N-r->N_var){
+                                if (cp->p2 == r->N){
                                     cp->p2 = c.p1;
                                 }
                             }
@@ -486,10 +486,10 @@ void reb_collision_search(struct reb_simulation* const r){
                                     cp->p2--;
                                 }
                             }else{
-                                if (cp->p1 == r->N-r->N_var){
+                                if (cp->p1 == r->N){
                                     cp->p1 = c.p2;
                                 }
-                                if (cp->p2 == r->N-r->N_var){
+                                if (cp->p2 == r->N){
                                     cp->p2 = c.p2;
                                 }
                             }
@@ -824,7 +824,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
 
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
         }
-        const size_t N_active = ((r->N_active==SIZE_MAX)?r->N-r->N_var:r->N_active);
+        const size_t N_active = ((r->N_active==SIZE_MAX)?r->N:r->N_active);
         // No potential energy between test particles
         if (i<N_active || j<N_active){
             double x = pi->x - pj->x;
