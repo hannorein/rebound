@@ -88,6 +88,7 @@ int main(int argc, char* argv[]) {
 
 // This example is using a custom velocity dependent coefficient of restitution
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){
+    (void)r;
     // assumes v in units of [m/s]
     double eps = 0.32*pow(fabs(v)*100.,-0.234);
     if (eps>1) eps=1;

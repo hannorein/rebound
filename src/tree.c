@@ -142,7 +142,7 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
 /**
  * @brief The function calculates the total mass and center of mass of a node. When QUADRUPOLE is defined, it also calculates the mass quadrupole tensor for all non-leaf nodes.
  */
-static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* const r, struct reb_treecell *node){
+static void reb_tree_calculate_gravity_data_in_cell(const struct reb_simulation* const r, struct reb_treecell *node){
 #ifdef QUADRUPOLE
     node->mxx = 0;
     node->mxy = 0;
@@ -160,7 +160,7 @@ static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* co
         for (int o=0; o<8; o++) {
             struct reb_treecell* d = node->oct[o];
             if (d!=NULL){
-                reb_tree_update_gravity_data_in_cell(r, d);
+                reb_tree_calculate_gravity_data_in_cell(r, d);
                 // Calculate the total mass and the center of mass
                 double d_m = d->m;
                 node->mx += d->mx*d_m;
@@ -204,13 +204,14 @@ static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* co
     }
 }
 
-void reb_tree_update_gravity_data(struct reb_simulation* const r){
+void reb_tree_calculate_gravity_data(struct reb_simulation* const r){
+    if (r->tree_root==NULL) return;
     for(size_t i=0;i<r->N_root;i++){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
             if (r->tree_root[i]!=NULL){
-                reb_tree_update_gravity_data_in_cell(r, r->tree_root[i]);
+                reb_tree_calculate_gravity_data_in_cell(r, r->tree_root[i]);
             }
 #ifdef MPI
         }

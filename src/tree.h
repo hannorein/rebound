@@ -61,10 +61,10 @@ struct reb_treecell {
 void reb_tree_construct(struct reb_simulation* const r);
 
 /**
- * @brief The wrap function calls reb_tree_update_gravity_data_in_cell() for each tree.
+ * @brief The wrap function calls reb_tree_calculate_gravity_data_in_cell() for each tree.
  * @param r Rebound simulation to operate on
  */
-void reb_tree_update_gravity_data(struct reb_simulation* const r);
+void reb_tree_calculate_gravity_data(struct reb_simulation* const r);
 
 /**
  * @brief The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the tree. 
