@@ -1125,8 +1125,8 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
         case REB_WHFAST_KERNEL_LAZY: 
             {
                 // Need temporary array to store old positions
-                if (ri_whfast->N_allocated_tmp != N){
-                    ri_whfast->N_allocated_tmp = N;
+                if (ri_whfast->N_allocated_temp != N){
+                    ri_whfast->N_allocated_temp = N;
                     ri_whfast->p_temp = realloc(ri_whfast->p_temp,sizeof(struct reb_particle)*N);
                 }
                 struct reb_particle* p_temp = ri_whfast->p_temp;
@@ -1256,15 +1256,14 @@ void reb_integrator_whfast_reset(struct reb_simulation* const r){
     ri_whfast->safe_mode = 1;
     ri_whfast->recalculate_coordinates_this_timestep = 0;
     ri_whfast->N_allocated = 0;
-    ri_whfast->N_allocated_tmp = 0;
+    ri_whfast->N_allocated_var = 0;
+    ri_whfast->N_allocated_temp = 0;
     ri_whfast->timestep_warning = 0;
     ri_whfast->recalculate_coordinates_but_not_synchronized_warning = 0;
-    if (ri_whfast->p_jh){
-        free(ri_whfast->p_jh);
-        ri_whfast->p_jh = NULL;
-    }
-    if (ri_whfast->p_temp){
-        free(ri_whfast->p_temp);
-        ri_whfast->p_temp = NULL;
-    }
+    free(ri_whfast->p_jh);
+    ri_whfast->p_jh = NULL;
+    free(ri_whfast->p_jh_var);
+    ri_whfast->p_jh_var = NULL;
+    free(ri_whfast->p_temp);
+    ri_whfast->p_temp = NULL;
 }

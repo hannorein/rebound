@@ -58,11 +58,13 @@ class IntegratorWHFast(ctypes.Structure):
                 ("recalculate_coordinates_this_timestep", ctypes.c_uint),
                 ("safe_mode", ctypes.c_uint),
                 ("keep_unsynchronized", ctypes.c_uint),
+                ("_N_allocated", ctypes.c_size_t),
                 ("_p_jh", ctypes.POINTER(Particle)),
+                ("_N_allocated_var", ctypes.c_size_t),
+                ("_p_jh_var", ctypes.POINTER(Particle)),
+                ("_N_allocated_temp", ctypes.c_size_t),
                 ("_p_temp", ctypes.POINTER(Particle)),
                 ("is_synchronized", ctypes.c_uint),
-                ("_N_allocated", ctypes.c_size_t),
-                ("_N_allocated_tmp", ctypes.c_size_t),
                 ("_timestep_warning", ctypes.c_uint),
                 ("_recalculate_coordinates_but_not_synchronized_warning", ctypes.c_uint)]
 

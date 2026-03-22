@@ -147,8 +147,8 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
         case 2: // lazy corrector
             {
                 // Need temporary array to store old positions
-                if (ri_whfast->N_allocated_tmp != N){
-                    ri_whfast->N_allocated_tmp = N;
+                if (ri_whfast->N_allocated_temp != N){
+                    ri_whfast->N_allocated_temp = N;
                     ri_whfast->p_temp = realloc(ri_whfast->p_temp,sizeof(struct reb_particle)*N);
                 }
                 struct reb_particle* p_temp = ri_whfast->p_temp;
