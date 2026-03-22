@@ -397,14 +397,13 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
                                 p_jh_var[i+index].vz += prefac1*p_jh_var[i+index].z + prefac2*pji.z;
                             }
                         }
-                        // TODO, this is the COM term, isn't it??
-                        //for(size_t v=0;v<r->N_var_config;v++){
-                        //    struct reb_variational_configuration const vc = r->var_config[v];
-                        //    const size_t index = vc.index;
-                        //    p_jh[i+index].vx += _dt * p_jh[i+index].ax;
-                        //    p_jh[i+index].vy += _dt * p_jh[i+index].ay;
-                        //    p_jh[i+index].vz += _dt * p_jh[i+index].az;
-                        //}
+                        for(size_t v=0;v<r->N_var_config;v++){
+                            struct reb_variational_configuration const vc = r->var_config[v];
+                            const size_t index = vc.index;
+                            p_jh_var[i+index].vx += _dt * p_jh_var[i+index].ax;
+                            p_jh_var[i+index].vy += _dt * p_jh_var[i+index].ay;
+                            p_jh_var[i+index].vz += _dt * p_jh_var[i+index].az;
+                        }
                     }
                 }
             }
