@@ -329,7 +329,6 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    // TODO: Fix variational equations in BS 
     // TODO. Remove the manual call to update_accelerations in _step(). Then remove if statement.
     if (r->t != t) { 
         // Not needed for first step. Accelerations already calculated. Just need to copy them
