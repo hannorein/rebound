@@ -22,7 +22,7 @@ class Particles(MutableMapping):
     @property
     def _ps(self):
         ParticleList = Particle*self.sim.N
-        if var:
+        if self.var:
             pl = ParticleList.from_address(addressof(self.sim._particles_var.contents))
         else:
             pl = ParticleList.from_address(addressof(self.sim._particles.contents))
