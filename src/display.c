@@ -965,7 +965,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 }
             }
             strlcat(str, line, 10240);
-            sprintf(line, "N = %d<br />",data->r_copy->N);
+            sprintf(line, "N = %zu<br />",data->r_copy->N);
             strlcat(str, line, 10240);
             sprintf(line, "t = %g<br />",data->r_copy->t);
             strlcat(str, line, 10240);

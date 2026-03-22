@@ -555,6 +555,5 @@ struct reb_particle reb_particle_nan(void){
     p.az = nan("");
     p.m = nan("");
     p.r = nan("");
-    p.last_collision = nan("");
     return p;
 }

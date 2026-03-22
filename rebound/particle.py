@@ -26,10 +26,6 @@ class Particle(Structure):
         Particle mass
     r           : float       
         Particle radius
-    last_collision : float       
-        Last time the particle had a physical collision (if checking for collisions)
-    c           : c_void_p (C void pointer) 
-        Pointer to the cell the particle is currently in (if using tree code)
     name        : string         
         Particle name (permanent identifier for the particle)
     ap          : c_void_p (C void pointer)
@@ -168,7 +164,6 @@ class Particle(Structure):
             buft = c_char * len(binarydata)
             buf = buft.from_buffer_copy(binarydata)
             memmove(byref(self), byref(buf), sizeof(self))
-            self.c = 0
             self.sim = 0
             self.ap = 0
             return
@@ -297,8 +292,6 @@ class Particle(Structure):
             self.r = 0.
         else:
             self.r = r
-        self.last_collision = 0.
-        self.c = None
         self.ap = None
         
         if notNone([e,inc,omega,pomega,Omega,M,f,E,theta,T]) and notNone(pal):
@@ -1019,9 +1012,6 @@ if sizeof(c_void_p)==4:
                     ("az", c_double),
                     ("m", c_double),
                     ("r", c_double),
-                    ("last_collision", c_double),
-                    ("c", c_void_p),
-                    ("_pad1", c_char*4),
                     ("_name", c_char_p),
                     ("_pad2", c_char*4),
                     ("ap", c_void_p),
@@ -1041,8 +1031,6 @@ else:
                     ("az", c_double),
                     ("m", c_double),
                     ("r", c_double),
-                    ("last_collision", c_double),
-                    ("c", c_void_p),
                     ("_name", c_char_p),
                     ("ap", c_void_p),
                     ("_sim", POINTER(Simulation)),

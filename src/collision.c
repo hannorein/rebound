@@ -532,7 +532,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
              * different particles. 
              * TODO: This can probably be written in a cleaner way.
              */
-            condition = (c->pt != collision_nearest->p1);
+            condition = ((size_t)c->pt != collision_nearest->p1);
 #ifdef MPI
         }
 #endif // MPI
@@ -603,7 +603,7 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
     const struct reb_particle* const particles = r->particles;
     if (c->pt>=0){     
         // c is a leaf node
-        if (c->pt != collision_nearest->p1){
+        if ((size_t)c->pt != collision_nearest->p1){
             struct reb_particle p2 = particles[c->pt];
             double dt_done_last = r->dt_last_done;
             const double dx1 = gb.x - p2.x; // distance at beginning
@@ -682,7 +682,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_s
         p2 = r->particles_recv[proc_id][c.p2];
     }
 #endif // MPI
-       //    if (p1.last_collision==t || p2.last_collision==t) return;
     struct reb_vec6d gb = c.gb;
     double x21  = p1.x + gb.x  - p2.x; 
     double y21  = p1.y + gb.y  - p2.y; 
@@ -741,7 +740,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_s
         particles[c.p2].vx -=    p2pf*dvx2n;
         particles[c.p2].vy -=    p2pf*dvy2nn;
         particles[c.p2].vz -=    p2pf*dvz2nn;
-        particles[c.p2].last_collision = r->t;
 #ifdef MPI
     }
 #endif // MPI
@@ -749,7 +747,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_s
     particles[c.p1].vx +=    p1pf*dvx2n; 
     particles[c.p1].vy +=    p1pf*dvy2nn; 
     particles[c.p1].vz +=    p1pf*dvz2nn; 
-    particles[c.p1].last_collision = r->t;
 
     // Return y-momentum change
     if (x21>0){
@@ -763,15 +760,13 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_s
 }
 
 enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c){
+    (void)c; // Not used.
     r->status = REB_STATUS_COLLISION;
-    r->particles[c.p1].last_collision = r->t;
-    r->particles[c.p2].last_collision = r->t;
+    // TODO: Add an easy way to find the triggering collision from user side
     return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // don't remove either particle
 }
 
 enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c){
-    if (r->particles[c.p1].last_collision==r->t || r->particles[c.p2].last_collision==r->t) return 0;
-
     // Every collision will cause two callbacks (with p1/p2 interchanged).
     // Always remove particle with larger index and merge into lower index particle.
     // This will keep N_active meaningful even after mergers.
@@ -850,7 +845,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
     pi->z  = (pi->z*pi->m + pj->z*pj->m)*invmass;
     pi->m  = pi->m + pj->m;
     pi->r  = cbrt(pi->r*pi->r*pi->r + pj->r*pj->r*pj->r);
-    pi->last_collision = r->t;
 
 
     // Keeping track of energy offset
