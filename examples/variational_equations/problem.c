@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     // We first integrate the vanilla simulation forward in time and look at the position of the testparticle at the end of the simulation.
     r = create_sim();
     reb_simulation_integrate(r,100.);
-    printf("Position of testparticle at t=100:                             %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
+    printf("Position of testparticle at t=100:                             %.18f %.18f\n",r->particles[2].x,r->particles[2].y);
     reb_simulation_free(r);
     
     // Next, we shift the planet's initial x coordinate by a small amount and integrate the system again up til t=100. 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     r = create_sim();
     r->particles[1].x += DeltaX;
     reb_simulation_integrate(r,100.);
-    printf("Position of testparticle at t=100 in shifted simulation:       %.8f %.8f\n",r->particles[2].x,r->particles[2].y);
+    printf("Position of testparticle at t=100 in shifted simulation:       %.18f %.18f\n",r->particles[2].x,r->particles[2].y);
     reb_simulation_free(r);
     
     // Instead of shifting the initial x coordinate, we can also use variational equations. 
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     r->particles_varX[var_i+1].x = 1.;           
     reb_simulation_integrate(r,100.);
     // After the integration ran, we can estimate where the test particle would have been had we shifted the inner planet's initial x coordinate.
-    printf("Position of testparticle at t=100 using 1st order var. eqs.:   %.8f %.8f\n",r->particles[2].x+DeltaX*r->particles_varX[var_i+2].x,r->particles[2].y+DeltaX*r->particles_varX[var_i+2].y);
+    printf("Position of testparticle at t=100 using 1st order var. eqs.:   %.18f %.18f\n",r->particles[2].x+DeltaX*r->particles_varX[var_i+2].x,r->particles[2].y+DeltaX*r->particles_varX[var_i+2].y);
     reb_simulation_free(r);
 
 //    // Better yet, we can use second order variational particles.

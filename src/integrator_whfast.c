@@ -334,8 +334,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, d
         double dg = -mu*dG3;
         double dfd = -mu*dG1*r0i*ri + mu*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
         double dgd = -mu*dG2*ri + mu*Gs[2]*dr*ri*ri;
-
-
+        
         dp1p->x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
         dp1p->y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
         dp1p->z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
@@ -589,7 +588,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
             reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N_active);
             for (size_t v=0;v<r->N_var_config;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
-                reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N, N_active);
+                reb_particles_transform_jacobi_to_inertial_pos(r->particles_varX+vc.index, ri_whfast->p_jh_var+vc.index, particles, N, N_active);
             }
             reb_simulation_update_acceleration(r);
             reb_integrator_whfast_interaction_step(r, -b);
@@ -597,7 +596,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
             reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N_active);
             for (size_t v=0;v<r->N_var_config;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
-                reb_particles_transform_jacobi_to_inertial_pos(particles+vc.index, ri_whfast->p_jh+vc.index, particles, N, N_active);
+                reb_particles_transform_jacobi_to_inertial_pos(r->particles_varX+vc.index, ri_whfast->p_jh_var+vc.index, particles, N, N_active);
             }
             reb_simulation_update_acceleration(r);
             reb_integrator_whfast_interaction_step(r, b);
@@ -685,7 +684,8 @@ static void reb_whfast_operator_C(struct reb_simulation* const r, double a, doub
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
-    reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N_active); // TODO: var particles
+    reb_particles_transform_jacobi_to_inertial_pos(particles, ri_whfast->p_jh, particles, N, N_active); 
+    // Note: variational particles not implemented.
     reb_simulation_update_acceleration(r);
     reb_integrator_whfast_interaction_step(r, b);
 
@@ -809,6 +809,14 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
         }
         if (ri_whfast->kernel != REB_WHFAST_KERNEL_DEFAULT){
             reb_simulation_error(r, "Variational particles are only compatible with the standard kernel.");
+            return 1; // Error
+        }
+        if (ri_whfast->corrector2){
+            reb_simulation_error(r, "Variational particles not compatible with 2nd corrector.");
+            return 1; // Error
+        }
+        if (ri_whfast->safe_mode==0&&r->calculate_megno){
+            reb_simulation_error(r, "MEGNO is not compatible with WHFast's safe_mode=0.");
             return 1; // Error
         }
         if (ri_whfast->N_allocated_var != r->N_varX){
@@ -1182,72 +1190,49 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
     r->t+=r->dt/2.;
     r->dt_last_done = r->dt;
 
-    // TODO: Check logic. Is this needed for all variational equations or only for megno?
-    if (r->N_var_config){
+    if (r->calculate_megno){
         // Need to have x,v,a synchronized to calculate ddot/d for MEGNO. 
-        struct reb_particle* sync_pj  = NULL;
-        if (ri_whfast->keep_unsynchronized){ // cache the p_jh and set back at the end
-                                             // TODO: implement this for new variational equation structures
-            sync_pj = malloc(sizeof(struct reb_particle)*r->N);
-            memcpy(sync_pj,p_jh,r->N*sizeof(struct reb_particle));
-            ri_whfast->keep_unsynchronized=0; // synchronize will revert the p_jh to midstep if keep_unsync=0. 
-            reb_integrator_whfast_synchronize(r);
-            ri_whfast->keep_unsynchronized=1; // Manually avoid synchronize reverting the p_jh and do it ourselves when we're done
-        }
-        else{
-            reb_integrator_whfast_synchronize(r);
-        }
+        reb_simulation_update_acceleration_gravity_var(r);
         // Add additional acceleration term for MEGNO calculation
         struct reb_particle* restrict const particles = r->particles;
         for (size_t v=0;v<r->N_var_config;v++){
             struct reb_variational_configuration const vc = r->var_config[v];
             struct reb_particle* const particles_var1 = r->particles_varX + vc.index;
-            if (r->calculate_megno){
-                reb_simulation_update_acceleration_gravity_var(r);
-                const double dx = particles[0].x - particles[1].x;
-                const double dy = particles[0].y - particles[1].y;
-                const double dz = particles[0].z - particles[1].z;
-                const double r2 = dx*dx + dy*dy + dz*dz + r->softening*r->softening;
-                const double _r  = sqrt(r2);
-                const double r3inv = 1./(r2*_r);
-                const double r5inv = 3.*r3inv/r2;
-                const double ddx = particles_var1[0].x - particles_var1[1].x;
-                const double ddy = particles_var1[0].y - particles_var1[1].y;
-                const double ddz = particles_var1[0].z - particles_var1[1].z;
-                const double Gmi = r->G * particles[0].m;
-                const double Gmj = r->G * particles[1].m;
-                const double dax =   ddx * ( dx*dx*r5inv - r3inv )
-                    + ddy * ( dx*dy*r5inv )
-                    + ddz * ( dx*dz*r5inv );
-                const double day =   ddx * ( dy*dx*r5inv )
-                    + ddy * ( dy*dy*r5inv - r3inv )
-                    + ddz * ( dy*dz*r5inv );
-                const double daz =   ddx * ( dz*dx*r5inv )
-                    + ddy * ( dz*dy*r5inv )
-                    + ddz * ( dz*dz*r5inv - r3inv );
+            const double dx = particles[0].x - particles[1].x;
+            const double dy = particles[0].y - particles[1].y;
+            const double dz = particles[0].z - particles[1].z;
+            const double r2 = dx*dx + dy*dy + dz*dz + r->softening*r->softening;
+            const double _r  = sqrt(r2);
+            const double r3inv = 1./(r2*_r);
+            const double r5inv = 3.*r3inv/r2;
+            const double ddx = particles_var1[0].x - particles_var1[1].x;
+            const double ddy = particles_var1[0].y - particles_var1[1].y;
+            const double ddz = particles_var1[0].z - particles_var1[1].z;
+            const double Gmi = r->G * particles[0].m;
+            const double Gmj = r->G * particles[1].m;
+            const double dax =   ddx * ( dx*dx*r5inv - r3inv )
+                + ddy * ( dx*dy*r5inv )
+                + ddz * ( dx*dz*r5inv );
+            const double day =   ddx * ( dy*dx*r5inv )
+                + ddy * ( dy*dy*r5inv - r3inv )
+                + ddz * ( dy*dz*r5inv );
+            const double daz =   ddx * ( dz*dx*r5inv )
+                + ddy * ( dz*dy*r5inv )
+                + ddz * ( dz*dz*r5inv - r3inv );
+            // TODO: Check these are the only two terms missing.
+            particles_var1[0].ax += Gmj * dax;
+            particles_var1[0].ay += Gmj * day;
+            particles_var1[0].az += Gmj * daz;
 
-                particles_var1[0].ax += Gmj * dax;
-                particles_var1[0].ay += Gmj * day;
-                particles_var1[0].az += Gmj * daz;
+            particles_var1[1].ax -= Gmi * dax;
+            particles_var1[1].ay -= Gmi * day;
+            particles_var1[1].az -= Gmi * daz;
 
-                particles_var1[1].ax -= Gmi * dax;
-                particles_var1[1].ay -= Gmi * day;
-                particles_var1[1].az -= Gmi * daz;
-
-                // TODO Need to add mass terms. Also need to add them to tangent map above.
-            }
+            // TODO Need to add mass terms. Also need to add them to tangent map above.
         }
 
-        // Update MEGNO in middle of timestep as we need synchronized x/v/a.
-        if (r->calculate_megno){
-            double dY = r->dt * 2. * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
-            reb_tools_megno_update(r, dY, dt);
-        }
-        if (ri_whfast->keep_unsynchronized){
-            memcpy(p_jh,sync_pj,r->N*sizeof(struct reb_particle));
-            free(sync_pj);
-            ri_whfast->is_synchronized=0;
-        }
+        double dY = r->dt * 2. * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
+        reb_tools_megno_update(r, dY, dt);
     }
 }
 
