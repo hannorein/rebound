@@ -714,13 +714,13 @@ void reb_render_frame(void* p){
                         glUniform1i(data->shader_point.breadcrumb_N_location, data->breadcrumb_N_allocated);
                         if (data->breadcrumb_N_allocated>1){
                             glUniform4f(data->shader_point.color_location, 1.,1.,1.,0.8);
-                            glUniform1i(data->shader_point.N_real_location, N);
+                            glUniform1i(data->shader_point.N_location, N);
                             glUniform1i(data->shader_point.current_index_location, data->breadcrumb_current_index);
                             glDrawArrays(GL_POINTS, 0, N*data->breadcrumb_N_allocated);
                         }
                         // Points
                         glUniform4f(data->shader_point.color_location, 1.,1.,0.,0.8);
-                        glUniform1i(data->shader_point.N_real_location, 0);
+                        glUniform1i(data->shader_point.N_location, 0);
                         glDrawArrays(GL_POINTS, N*data->breadcrumb_current_index, N);
                         glBindVertexArray(0);
                     }
@@ -732,12 +732,12 @@ void reb_render_frame(void* p){
                         glUniform1i(data->shader_orbit.vertex_count_location, data->shader_orbit.vertex_count);
                         if (data->breadcrumb_N_allocated>1){
                             glBindVertexArray(data->shader_orbit.particle_vao);
-                            glUniform1i(data->shader_orbit.N_real_location, N-1);
+                            glUniform1i(data->shader_orbit.N_location, N-1);
                             glUniform1i(data->shader_orbit.current_index_location, data->breadcrumb_current_index);
                             reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->breadcrumb_N_allocated*(N-1));
                         }else{
                             glBindVertexArray(data->shader_orbit.particle_vao_current);
-                            glUniform1i(data->shader_orbit.N_real_location, 0);
+                            glUniform1i(data->shader_orbit.N_location, 0);
                             reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, N-1);
                         }
                         glBindVertexArray(0);
@@ -1251,7 +1251,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_point.color_location = glGetUniformLocation(data->shader_point.program, "vc");
         data->shader_point.current_index_location = glGetUniformLocation(data->shader_point.program, "current_index");
         data->shader_point.breadcrumb_N_location = glGetUniformLocation(data->shader_point.program, "breadcrumb_N");
-        data->shader_point.N_real_location = glGetUniformLocation(data->shader_point.program, "N");
+        data->shader_point.N_location = glGetUniformLocation(data->shader_point.program, "N");
 
         glUseProgram(data->shader_point.program);
         glGenVertexArrays(1, &data->shader_point.particle_vao);
@@ -1533,7 +1533,7 @@ void reb_display_init(struct reb_simulation * const r){
         data->shader_orbit.current_index_location = glGetUniformLocation(data->shader_orbit.program, "current_index");
         data->shader_orbit.vertex_count_location = glGetUniformLocation(data->shader_orbit.program, "vertex_count");
         data->shader_orbit.breadcrumb_N_location = glGetUniformLocation(data->shader_orbit.program, "breadcrumb_N");
-        data->shader_orbit.N_real_location = glGetUniformLocation(data->shader_orbit.program, "N");
+        data->shader_orbit.N_location = glGetUniformLocation(data->shader_orbit.program, "N");
         data->shader_orbit.vertex_count = 500; // higher number = smoother orbits
 
         // Generate two orbit vao

@@ -105,7 +105,7 @@ struct reb_display_data {
         unsigned int color_location;
         unsigned int current_index_location;
         unsigned int breadcrumb_N_location;
-        unsigned int N_real_location;
+        unsigned int N_location;
         unsigned int program;
         unsigned int particle_vao;
     } shader_point;
@@ -119,7 +119,7 @@ struct reb_display_data {
         unsigned int mvp_location;
         unsigned int current_index_location;
         unsigned int breadcrumb_N_location;
-        unsigned int N_real_location;
+        unsigned int N_location;
         unsigned int vertex_count_location;
         unsigned int program;
         unsigned int particle_vao_current;

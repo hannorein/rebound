@@ -165,7 +165,7 @@ class OrbitPlot:
 
         particles = self._particles
         if not particles:
-            particles = range(1, self.sim.N_real)
+            particles = range(1, self.sim.N)
 
         # Color stuff
         color = self.color
@@ -239,7 +239,7 @@ class OrbitPlot:
         projection = self.projection
         particles = self._particles
         if not particles:
-            particles = range(1, self.sim.N_real)
+            particles = range(1, self.sim.N)
         
         prim = self.sim.particles[0] if self._primary is None else self._primary 
         px, py = getattr(prim,projection[0])+offset_x, getattr(prim,projection[1])+offset_y
