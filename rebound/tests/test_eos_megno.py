@@ -49,7 +49,7 @@ class TestMegno(unittest.TestCase):
         self.sim.add(m=1.e-4, P=1.17)
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
-        self.sim.integrate(1000.)
+        self.sim.integrate(200.)
         self.megnoIAS = self.sim.megno()
         self.sim = rebound.Simulation()
         self.sim.integrator = "eos"
@@ -61,7 +61,7 @@ class TestMegno(unittest.TestCase):
         self.sim.dt = self.sim.particles[1].P*0.01
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
-        self.sim.integrate(1000)
+        self.sim.integrate(200)
         self.megnoEOS = self.sim.megno()
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
@@ -71,13 +71,14 @@ class TestMegno(unittest.TestCase):
         self.sim.dt = self.sim.particles[1].P*0.01
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
-        self.sim.integrate(1000)
+        self.sim.integrate(200)
         self.megnoWHFast = self.sim.megno()
-        print(self.megnoIAS,self.megnoEOS, self.megnoWHFast)
-        if sys.maxsize > 2**32: # 64 bit
-            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoEOS)/self.megnoIAS), 0., delta=0.3)
+        if sys.maxsize > 2**32: # 64 bit  // Not sure why there was a difference
+            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoEOS)/self.megnoIAS), 0., delta=0.01)
+            self.assertAlmostEqual(abs((self.megnoWHFast-self.megnoEOS)/self.megnoWHFast), 0., delta=0.01)
         else: # 32 bit
-            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoEOS)/self.megnoIAS), 0., delta=1.9)
+            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoEOS)/self.megnoIAS), 0., delta=0.01)
+            self.assertAlmostEqual(abs((self.megnoWHFast-self.megnoEOS)/self.megnoWHFast), 0., delta=0.01)
 
 if __name__ == "__main__":
     unittest.main()
