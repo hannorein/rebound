@@ -19,12 +19,27 @@ class Particles(MutableMapping):
         self.sim = sim
         self.var = var
 
+    def _sanitize_int_key(self, key):
+        if self.var:
+            if key < 0: # accept negative indices
+                key += self.sim.N_var
+            if key < 0 or key >= self.sim.N_var:
+                raise AttributeError("Index {0} used to access variational particles is out of range.".format(key))
+        else:
+            if key < 0: # accept negative indices
+                key += self.sim.N
+            if key < 0 or key >= self.sim.N:
+                raise AttributeError("Index {0} used to access particles is out of range.".format(key))
+        return key
+
+
     @property
     def _ps(self):
-        ParticleList = Particle*self.sim.N
         if self.var:
+            ParticleList = Particle*self.sim.N_var
             pl = ParticleList.from_address(addressof(self.sim._particles_var.contents))
         else:
+            ParticleList = Particle*self.sim.N
             pl = ParticleList.from_address(addressof(self.sim._particles.contents))
         pl._sim = self.sim # keep reference to sim until ParticleList is deallocated to avoid memory issues
         return pl
@@ -42,10 +57,7 @@ class Particles(MutableMapping):
             return [self[i] for i in range(*key.indices(len(self)))]
 
         if isinstance(key, int_types):
-            if key < 0: # accept negative indices
-                key += self.sim.N
-            if key < 0 or key >= self.sim.N:
-                raise AttributeError("Index {0} used to access particles out of range.".format(key))
+            key = self._sanitize_int_key(key)
             return self._ps[key]
 
         if isinstance(key, string_types):
@@ -64,18 +76,31 @@ class Particles(MutableMapping):
         if isinstance(value, Particle):
             value._sim = pointer(self.sim)
             p = self[key]
-            if p.index == -1:
+            if self.var:
+                index = p.index_var
+            else:
+                index = p.index
+            if index == -1:
                 raise AttributeError("Can't set particle (particle not found in simulation).")
             else:
-                self._ps[p.index] = value
+                self._ps[index] = value
+            value._sim = pointer(self.sim)
 
     def __delitem__(self, key):
         raise RuntimeError("Use sim.remove() to delete particles.")
 
     def __iter__(self):
-        if self.sim.N>0:
-            for p in self._ps:
-                yield p
+        if self.var:
+            if self.sim.N_var>0:
+                for p in self._ps:
+                    yield p
+        else:
+            if self.sim.N>0:
+                for p in self._ps:
+                    yield p
 
     def __len__(self):
-        return self.sim.N
+        if self.var:
+            return self.sim.N_var
+        else:
+            return self.sim.N

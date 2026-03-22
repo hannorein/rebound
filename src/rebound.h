@@ -746,6 +746,8 @@ DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, siz
 DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); 
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
 DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
+// Returns a variational particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
+DLLEXPORT int reb_simulation_particle_var_index(struct reb_particle* p); 
 // Subtract particle p2 from p1
 DLLEXPORT void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2);
 // Add particle p2 to p1

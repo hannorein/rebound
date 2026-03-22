@@ -967,6 +967,13 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_remove_all_particles(byref(self))
         self.process_messages()
+    @property
+    def particles_var(self):
+        """
+        Returns a Particles object that allows users to access variational particles.
+        """
+        particles = Particles(self, var=True)
+        return particles
 
     def remove(self, identifier, keep_sorted=True):
         """ 

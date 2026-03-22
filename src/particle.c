@@ -190,10 +190,21 @@ int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct re
 }
 
 int reb_simulation_particle_index(struct reb_particle* p){
-    struct reb_simulation* r = p->sim;
     if (!p) return -1;
+    struct reb_simulation* r = p->sim;
+    if (!r) return -1;
+    if (p<r->particles) return -1;
     size_t index = p-r->particles;
     if (index<r->N) return index;
+    return -1; // Not found.
+}
+int reb_simulation_particle_var_index(struct reb_particle* p){
+    if (!p) return -1;
+    struct reb_simulation* r = p->sim;
+    if (!r) return -1;
+    if (p<r->particles_varX) return -1;
+    size_t index = p-r->particles_varX;
+    if (index<r->N_varX) return index;
     return -1; // Not found.
 }
 

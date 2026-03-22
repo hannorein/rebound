@@ -707,6 +707,11 @@ class Particle(Structure):
         return clibrebound.reb_simulation_particle_index(byref(self)) 
     
     @property
+    def index_var(self):
+        clibrebound.reb_simulation_particle_var_index.restype = c_int
+        return clibrebound.reb_simulation_particle_var_index(byref(self)) 
+    
+    @property
     def xyz(self):
         """
         Get or set the xyz position coordinates of the particle.
