@@ -438,7 +438,7 @@ struct reb_simulation {
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
     struct reb_vec3d* gravity_cs; 
     size_t N_allocated_gravity_cs;
-    struct reb_treecell** tree_root;
+    struct reb_treecell** tree_root;// Pointer to the temporary tree structure.
     double opening_angle2;          // Opening angle for tree-based gravity calculation. Default 0.25.
     enum REB_STATUS status;         // Current simulation status
     int     exact_finish_time;      // 1 (default): integrate exactly to the time requested and adjust timestep if needed, 0: may overshoot by one timestep
@@ -461,9 +461,9 @@ struct reb_simulation {
     double walltime_last_steps;     // Average wall time of last step (updated every 0.1s).
     double walltime_last_steps_sum;
     int walltime_last_steps_N;
-    uint32_t python_unit_l;         // Only used for when working with units in python.
-    uint32_t python_unit_m;         // Only used for when working with units in python.
-    uint32_t python_unit_t;         // Only used for when working with units in python.
+    uint32_t python_unit_l;         // Only used when working with units in python.
+    uint32_t python_unit_m;         // Only used when working with units in python.
+    uint32_t python_unit_t;         // Only used when working with units in python.
 
     // Simulation domain and ghost boxes 
     struct  reb_vec3d boxsize;      // Size of the entire simulation box, root_x*boxsize. Set in box_init().

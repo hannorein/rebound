@@ -97,7 +97,7 @@ static int closefn(void *handler) {
 
 FILE *reb_fmemopen(void *buf, size_t size, const char *mode) {
     (void)mode; // not used
-    // This data is released on fclose.
+                // This data is released on fclose.
     struct fmem* mem = (struct fmem *) malloc(sizeof(struct fmem));
 
     // Zero-out the structure.
