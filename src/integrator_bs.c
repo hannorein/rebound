@@ -98,6 +98,16 @@ void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* 
         p->vy = y[i*6+4];
         p->vz = y[i*6+5];
     }
+    for (size_t i=0; i<r->N_var; i++){
+        struct reb_particle* const p = &(r->particles_var[i]);
+        size_t io = (i+r->N)*6;
+        p->x  = y[io+0];
+        p->y  = y[io+1];
+        p->z  = y[io+2];
+        p->vx = y[io+3];
+        p->vy = y[io+4];
+        p->vz = y[io+5];
+    }
 }
 
 
@@ -335,6 +345,16 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
         yDot[i*6+3] = p.ax;
         yDot[i*6+4] = p.ay;
         yDot[i*6+5] = p.az;
+    }
+    for (size_t i=0; i<r->N_var; i++){
+        const struct reb_particle p = r->particles_var[i];
+        size_t io = (i+r->N)*6;
+        yDot[io+0] = p.vx;
+        yDot[io+1] = p.vy;
+        yDot[io+2] = p.vz;
+        yDot[io+3] = p.ax;
+        yDot[io+4] = p.ay;
+        yDot[io+5] = p.az;
     }
 }
 
@@ -761,7 +781,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
 
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
 
-    size_t nbody_length = r->N*3*2;
+    size_t nbody_length = (r->N+r->N_var)*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.
     if (ri_bs->nbody_ode != NULL){ 
         if (ri_bs->nbody_ode->length != nbody_length){
@@ -791,6 +811,16 @@ void reb_integrator_bs_step(struct reb_simulation* r){
         y[i*6+3] = p.vx;
         y[i*6+4] = p.vy;
         y[i*6+5] = p.vz;
+    }
+    for (size_t i=0; i<r->N_var; i++){
+        const struct reb_particle p = r->particles_var[i];
+        size_t io = (i+r->N)*6;
+        y[io+0] = p.x;
+        y[io+1] = p.y;
+        y[io+2] = p.z;
+        y[io+3] = p.vx;
+        y[io+4] = p.vy;
+        y[io+5] = p.vz;
     }
 
     int success = reb_integrator_bs_step_odes(r, r->dt);

@@ -223,7 +223,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                 //////////////////
                 /// 1st order  ///
                 //////////////////
-                struct reb_particle* const particles_var1 = r->particles_varX + vc.index;
+                struct reb_particle* const particles_var1 = r->particles_var + vc.index;
                 if (vc.testparticle<0){
                     for (size_t j=1; j<N_active; j++){
                         const double dx = particles[0].x - particles[j].x;
@@ -530,6 +530,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
 }
 
 void reb_integrator_eos_step(struct reb_simulation* r){
+    // TODO Variational equations no longer working.
     if (r->gravity != REB_GRAVITY_BASIC){
         reb_simulation_warning(r,"EOS only supports the BASIC gravity routine.");
     }

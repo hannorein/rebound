@@ -202,9 +202,9 @@ int reb_simulation_particle_var_index(struct reb_particle* p){
     if (!p) return -1;
     struct reb_simulation* r = p->sim;
     if (!r) return -1;
-    if (p<r->particles_varX) return -1;
-    size_t index = p-r->particles_varX;
-    if (index<r->N_varX) return index;
+    if (p<r->particles_var) return -1;
+    size_t index = p-r->particles_var;
+    if (index<r->N_var) return index;
     return -1; // Not found.
 }
 
@@ -385,15 +385,15 @@ void reb_simulation_remove_all_particles(struct reb_simulation* const r){
     r->N = 0;
     r->N_allocated = 0;
     r->N_active = SIZE_MAX;
-    r->N_varX = 0;
+    r->N_var = 0;
     free(r->particles);
     r->particles = NULL;
-    free(r->particles_varX);
-    r->particles_varX = NULL;
+    free(r->particles_var);
+    r->particles_var = NULL;
 }
 
 int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index, int keep_sorted){
-    if (r->N_varX){
+    if (r->N_var){
         reb_simulation_error(r, "Removing particles not supported when variational particles are in use. Did not remove particle.");
         return 1;
     }

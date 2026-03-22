@@ -231,7 +231,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
      * REB_GRAVITY_NONE is used.
      **********************************************************/
     reb_simulation_update_acceleration_gravity(r);
-    if (r->N_varX){
+    if (r->N_var){
         reb_simulation_update_acceleration_gravity_var(r);
     }
 

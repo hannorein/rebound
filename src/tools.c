@@ -201,7 +201,7 @@ void reb_simulation_move_to_hel(struct reb_simulation* const r){
 void reb_simulation_move_to_com(struct reb_simulation* const r){
     struct reb_particle com = reb_simulation_com(r); // Particles will be redistributed in this call if MPI used
     struct reb_particle* restrict const particles = r->particles;
-    struct reb_particle* restrict const particles_var = r->particles_varX;
+    struct reb_particle* restrict const particles_var = r->particles_var;
     const size_t N = r->N; 
 
     // First do second order
@@ -1277,7 +1277,7 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
             N = r->N;
         }
         double scale = 0;
-        struct reb_particle* const particles = r->particles_varX + vc->index;
+        struct reb_particle* const particles = r->particles_var + vc->index;
         for (size_t i=0; i<N; i++){
             struct reb_particle p = particles[i];
             scale = MAX(fabs(p.x), scale);
@@ -1344,12 +1344,12 @@ static void reb_simulation_add_var_particle_local(struct reb_simulation* r, size
     // Calling realloc every time a variational particle is added.
     // Somewhat inefficient but avoid storing a capacity for the array
     // and variational particles are really only added once at the beginning.
-    r->particles_varX = realloc(r->particles_varX,sizeof(struct reb_particle)*(r->N_varX+N_var_add));
+    r->particles_var = realloc(r->particles_var,sizeof(struct reb_particle)*(r->N_var+N_var_add));
     for (size_t i=0; i<N_var_add;i++){
-        r->particles_varX[r->N_varX+i] = (struct reb_particle){0};
-        r->particles_varX[r->N_varX+i].sim = r;
+        r->particles_var[r->N_var+i] = (struct reb_particle){0};
+        r->particles_var[r->N_var+i].sim = r;
     }
-    r->N_varX += N_var_add;
+    r->N_var += N_var_add;
 }
 
 int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle){
@@ -1357,7 +1357,7 @@ int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int t
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
     r->var_config[r->N_var_config-1].order = 1;
-    size_t index = r->N_varX;
+    size_t index = r->N_var;
     r->var_config[r->N_var_config-1].index = index;
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
@@ -1375,7 +1375,7 @@ int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int t
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
     r->var_config[r->N_var_config-1].order = 2;
-    size_t index = r->N_varX;
+    size_t index = r->N_var;
     r->var_config[r->N_var_config-1].index = index;
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
@@ -1405,7 +1405,7 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
     r->megno_mean_t = 0;
     reb_simulation_add_variation_1st_order(r,-1);
     r->calculate_megno = 1;
-    struct reb_particle* const particles = r->particles_varX;
+    struct reb_particle* const particles = r->particles_var;
     for (size_t i=0;i<r->N;i++){
         particles[i].m  = 0.;
         particles[i].x  = reb_random_normal(r,1.);
@@ -1442,7 +1442,7 @@ double reb_simulation_lyapunov(struct reb_simulation* r){
     return r->megno_cov_Yt/r->megno_var_t;
 }
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
-    const struct reb_particle* restrict const particles = r->particles_varX;
+    const struct reb_particle* restrict const particles = r->particles_var;
     double deltad = 0;
     double delta2 = 0;
     for (size_t i=0;i<r->N;i++){

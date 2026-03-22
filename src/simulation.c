@@ -309,7 +309,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
         }
     }
     free(r->particles);
-    free(r->particles_varX);
+    free(r->particles_var);
     for (size_t i=0;i<r->N_name_list;i++){
         free(r->name_list[i]);
     }
@@ -516,7 +516,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
 
-    if (r->N_varX){
+    if (r->N_var){
         reb_simulation_rescale_var(r);
     }
 
@@ -630,7 +630,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_name_list = 0;
     r->testparticle_type = 0;   
     r->testparticle_hidewarnings = 0;
-    r->N_varX    = 0;    
+    r->N_var    = 0;    
     r->N_var_config = 0;    
     r->var_config   = NULL;     
     r->exit_min_distance    = 0;    

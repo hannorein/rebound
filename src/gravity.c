@@ -993,7 +993,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r){
     PROFILING_START();
     struct reb_particle* const particles = r->particles;
-    struct reb_particle* const particles_var = r->particles_varX;
+    struct reb_particle* const particles_var = r->particles_var;
     const double G = r->G;
     const unsigned int _gravity_ignore_terms = r->gravity_ignore_terms;
     const int _testparticle_type   = r->testparticle_type;

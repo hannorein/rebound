@@ -10,7 +10,7 @@ class TestMegno(unittest.TestCase):
     def tearDown(self):
         self.sim = None
     
-    def test_whfast(self):
+    def test_eos(self):
         self.sim.integrator = "eos"
         self.sim.ri_eos.phi0 = "lf4"
         self.sim.ri_eos.phi1 = "lf4"
@@ -24,7 +24,7 @@ class TestMegno(unittest.TestCase):
         self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
 
-    def test_whfast_close_regular(self):
+    def test_eos_close_regular(self):
         self.sim = rebound.Simulation()
         self.sim.integrator = "eos"
         self.sim.ri_eos.phi0 = "lf4"
@@ -62,11 +62,22 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
         self.sim.integrate(1000)
+        self.megnoEOS = self.sim.megno()
+        self.sim = rebound.Simulation()
+        self.sim.integrator = "whfast"
+        self.sim.add(m=1.)
+        self.sim.add(m=1.e-4, P=1.)
+        self.sim.add(m=1.e-4, P=1.17)
+        self.sim.dt = self.sim.particles[1].P*0.01
+        self.sim.init_megno(seed=0)
+        self.sim.move_to_com()
+        self.sim.integrate(1000)
         self.megnoWHFast = self.sim.megno()
+        print(self.megnoIAS,self.megnoEOS, self.megnoWHFast)
         if sys.maxsize > 2**32: # 64 bit
-            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.3)
+            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoEOS)/self.megnoIAS), 0., delta=0.3)
         else: # 32 bit
-            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=1.9)
+            self.assertAlmostEqual(abs((self.megnoIAS-self.megnoEOS)/self.megnoIAS), 0., delta=1.9)
 
 if __name__ == "__main__":
     unittest.main()

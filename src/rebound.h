@@ -432,8 +432,8 @@ struct reb_simulation {
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
 
     // Variational particles array
-    size_t  N_varX;                  // Number of variational particles. Default 0.
-    struct reb_particle* particles_varX;
+    size_t  N_var;                  // Number of variational particles. Default 0.
+    struct reb_particle* particles_var;
 
     size_t  N_var_config; 
     struct  reb_variational_configuration* var_config;   // Configuration structs. These contain details on variational particles. 

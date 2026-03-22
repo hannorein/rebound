@@ -170,7 +170,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){
         N3 = 3*r->ri_trace.encounter_N;// trace close encounter
     }else{ 
-        N3 = 3*(r->N+r->N_varX);
+        N3 = 3*(r->N+r->N_var);
     }
     if (N3 > r->ri_ias15.N_allocated) {
         realloc_dp7(&(r->ri_ias15.g),N3);
@@ -212,9 +212,9 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
-    struct reb_particle* const particles_varX = r->particles_varX;
+    struct reb_particle* const particles_var = r->particles_var;
     size_t N;           // Number of real particles
-    size_t N_varX = 0;  // Number of variational particles
+    size_t N_var = 0;  // Number of variational particles
     size_t* map; // this map allow for integrating only a selection of particles 
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
         N = r->ri_mercurius.encounter_N;
@@ -232,10 +232,10 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         }
     }else{ 
         N = r->N;
-        N_varX = r->N_varX;
+        N_var = r->N_var;
         map = r->ri_ias15.map; // identity map
     }
-    const size_t N3 = 3*(N+N_varX);
+    const size_t N3 = 3*(N+N_var);
 
     reb_simulation_update_acceleration(r);
 
@@ -265,20 +265,20 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         a0[3*k+1] = particles[mk].ay; 
         a0[3*k+2] = particles[mk].az;
     }
-    for(size_t mk=0;mk<N_varX;mk++) {
+    for(size_t mk=0;mk<N_var;mk++) {
         size_t k = mk + N;
-        x0[3*k]   = particles_varX[mk].x;
-        x0[3*k+1] = particles_varX[mk].y;
-        x0[3*k+2] = particles_varX[mk].z;
-        v0[3*k]   = particles_varX[mk].vx;
-        v0[3*k+1] = particles_varX[mk].vy;
-        v0[3*k+2] = particles_varX[mk].vz;
-        a0[3*k]   = particles_varX[mk].ax;
-        a0[3*k+1] = particles_varX[mk].ay; 
-        a0[3*k+2] = particles_varX[mk].az;
+        x0[3*k]   = particles_var[mk].x;
+        x0[3*k+1] = particles_var[mk].y;
+        x0[3*k+2] = particles_var[mk].z;
+        v0[3*k]   = particles_var[mk].vx;
+        v0[3*k+1] = particles_var[mk].vy;
+        v0[3*k+2] = particles_var[mk].vz;
+        a0[3*k]   = particles_var[mk].ax;
+        a0[3*k+1] = particles_var[mk].ay; 
+        a0[3*k+2] = particles_var[mk].az;
     }
     if (r->gravity==REB_GRAVITY_COMPENSATED){
-        for(size_t k=0;k<N+N_varX;k++) {
+        for(size_t k=0;k<N+N_var;k++) {
             size_t mk = map[k];
             csa0[3*k]   = gravity_cs[mk].x;
             csa0[3*k+1] = gravity_cs[mk].y;  
@@ -351,7 +351,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
             r->t = t_beginning + r->dt * h[n];
 
             // Prepare particles arrays for force calculation
-            for(size_t i=0;i<N+N_varX;i++) {                      // Predict positions at interval n using b values
+            for(size_t i=0;i<N+N_var;i++) {                      // Predict positions at interval n using b values
                 const size_t k0 = 3*i+0;
                 const size_t k1 = 3*i+1;
                 const size_t k2 = 3*i+2;
@@ -369,13 +369,13 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                     particles[mi].z = xk2 + x0[k2];
                 }else{
                     size_t mi = i-N;
-                    particles_varX[mi].x = xk0 + x0[k0];
-                    particles_varX[mi].y = xk1 + x0[k1];
-                    particles_varX[mi].z = xk2 + x0[k2];
+                    particles_var[mi].x = xk0 + x0[k0];
+                    particles_var[mi].y = xk1 + x0[k1];
+                    particles_var[mi].z = xk2 + x0[k2];
                 }
             }
             if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
-                for(size_t i=0;i<N+N_varX;i++) {                  // Predict velocities at interval n using b values
+                for(size_t i=0;i<N+N_var;i++) {                  // Predict velocities at interval n using b values
                     const size_t k0 = 3*i+0;
                     const size_t k1 = 3*i+1;
                     const size_t k2 = 3*i+2;
@@ -393,9 +393,9 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                         particles[mi].vz = vk2 + v0[k2];
                     }else{
                         size_t mi = i-N;
-                        particles_varX[mi].vx = vk0 + v0[k0];
-                        particles_varX[mi].vy = vk1 + v0[k1];
-                        particles_varX[mi].vz = vk2 + v0[k2];
+                        particles_var[mi].vx = vk0 + v0[k0];
+                        particles_var[mi].vy = vk1 + v0[k1];
+                        particles_var[mi].vz = vk2 + v0[k2];
                     }
                 }
             }
@@ -412,11 +412,11 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 at[3*k+1] = particles[mk].ay;  
                 at[3*k+2] = particles[mk].az;
             }
-            for(size_t mk=0;mk<N_varX;++mk) {
+            for(size_t mk=0;mk<N_var;++mk) {
                 size_t k = mk+N;;
-                at[3*k]   = particles_varX[mk].ax;
-                at[3*k+1] = particles_varX[mk].ay;  
-                at[3*k+2] = particles_varX[mk].az;
+                at[3*k]   = particles_var[mk].ax;
+                at[3*k+1] = particles_var[mk].ay;  
+                at[3*k+2] = particles_var[mk].az;
             }
             switch (n) {                            // Improve b and g values
                 case 1: 
@@ -665,19 +665,19 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 particles[mk].ay = a0[3*k+1];
                 particles[mk].az = a0[3*k+2];
             }
-            for(size_t mk=0;mk<N_varX;++mk) {
+            for(size_t mk=0;mk<N_var;++mk) {
                 size_t k = mk + N;
-                particles_varX[mk].x = x0[3*k+0]; // Set initial position
-                particles_varX[mk].y = x0[3*k+1];
-                particles_varX[mk].z = x0[3*k+2];
+                particles_var[mk].x = x0[3*k+0]; // Set initial position
+                particles_var[mk].y = x0[3*k+1];
+                particles_var[mk].z = x0[3*k+2];
 
-                particles_varX[mk].vx = v0[3*k+0];    // Set initial velocity
-                particles_varX[mk].vy = v0[3*k+1];
-                particles_varX[mk].vz = v0[3*k+2];
+                particles_var[mk].vx = v0[3*k+0];    // Set initial velocity
+                particles_var[mk].vy = v0[3*k+1];
+                particles_var[mk].vz = v0[3*k+2];
 
-                particles_varX[mk].ax = a0[3*k+0];    // Set initial acceleration
-                particles_varX[mk].ay = a0[3*k+1];
-                particles_varX[mk].az = a0[3*k+2];
+                particles_var[mk].ax = a0[3*k+0];    // Set initial acceleration
+                particles_var[mk].ay = a0[3*k+1];
+                particles_var[mk].az = a0[3*k+2];
             }
             r->dt = dt_new;
             if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.
@@ -737,15 +737,15 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         particles[mk].vy = v0[3*k+1];
         particles[mk].vz = v0[3*k+2];
     }
-    for(size_t mk=0;mk<N_varX;++mk) {
+    for(size_t mk=0;mk<N_var;++mk) {
         size_t k = mk + N;
-        particles_varX[mk].x = x0[3*k+0]; // Set final position
-        particles_varX[mk].y = x0[3*k+1];
-        particles_varX[mk].z = x0[3*k+2];
+        particles_var[mk].x = x0[3*k+0]; // Set final position
+        particles_var[mk].y = x0[3*k+1];
+        particles_var[mk].z = x0[3*k+2];
 
-        particles_varX[mk].vx = v0[3*k+0];    // Set final velocity
-        particles_varX[mk].vy = v0[3*k+1];
-        particles_varX[mk].vz = v0[3*k+2];
+        particles_var[mk].vx = v0[3*k+0];    // Set final velocity
+        particles_var[mk].vy = v0[3*k+1];
+        particles_var[mk].vz = v0[3*k+2];
     }
     copybuffers(e,er,N3);       
     copybuffers(b,br,N3);       
