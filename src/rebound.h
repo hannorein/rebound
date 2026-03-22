@@ -83,9 +83,6 @@ struct reb_particle {
     double m;                   // Mass in code units
     double r;                   // Physical radius in code units
     double last_collision;      // Last time the particle had a physical collision
-#if !defined(_LP64)
-    char pad1[4];               // Padding. c is short by 4 bytes
-#endif
     const char* name;           // Pointer to a NULL terminated string with the particle's name.
 #if !defined(_LP64)
     char pad2[4];               // Padding. ap is not padded to 8 bytes
