@@ -924,7 +924,6 @@ finish_fields:
     }
     r->N_allocated = r->N; // This used to be different. Now only saving N.
     for (unsigned int l=0;l<r->N_allocated;l++){
-        r->particles[l].c = NULL;
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
 #ifndef MPI

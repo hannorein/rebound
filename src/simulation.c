@@ -293,7 +293,6 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #ifdef SERVER
     reb_simulation_stop_server(r);
 #endif // SERVER
-    reb_tree_delete(r);
     if (r->gravity_cs){
         free(r->gravity_cs  );
     }
@@ -530,13 +529,8 @@ static void reb_simulation_step(struct reb_simulation* const r){
     // Check for root crossings.
     PROFILING_START();
     reb_boundary_check(r);     
-    if (r->tree_needs_update){
-        // Update tree (this will remove particles which left the box)
-        reb_tree_update(r);          
-    }
     PROFILING_STOP(PROFILING_CAT_BOUNDARY);
 
-    // Search for collisions using local and essential tree.
     PROFILING_START();
     reb_collision_search(r);
     PROFILING_STOP(PROFILING_CAT_COLLISION);
@@ -759,7 +753,6 @@ void reb_simulation_init(struct reb_simulation* r){
     reb_integrator_bs_reset(r);
 
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
-    r->tree_needs_update= 0;
     r->tree_root        = NULL;
     r->opening_angle2   = 0.25;
 
