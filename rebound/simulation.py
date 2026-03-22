@@ -1469,7 +1469,6 @@ Simulation._fields_ = [
                 ("gravity_cs", POINTER(Vec3dBasic)),
                 ("N_allocated_gravity_cs", c_size_t),
                 ("_tree_root", c_void_p),
-                ("_tree_needs_update", c_int),
                 ("opening_angle2", c_double),
                 ("_status", c_int),
                 ("exact_finish_time", c_int),

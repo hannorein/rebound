@@ -58,8 +58,6 @@ class TestShearingSheet(unittest.TestCase):
         sim.remove(0,keep_sorted=0)
         sim.steps(1)
         self.assertEqual(Nbefore-1,sim.N)
-        with self.assertRaises(RuntimeError):
-            sim.remove(0,keep_sorted=1)
         self.assertNotEqual(sim.ri_sei._lastdt,0.0)
         sim.reset_integrator()
         self.assertEqual(sim.ri_sei._lastdt,0.0)

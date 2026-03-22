@@ -103,9 +103,10 @@ class TestGravity(unittest.TestCase):
         sim.configure_box(10)
         sim.gravity = "tree"
         sim.add(m=1.)
+        sim.add(m=1.)
         with self.assertRaises(RuntimeError):
-            # Cannot add two particles on top of each other
-            sim.add(m=1.)
+            # Cannot add two particles on top of each other in tree
+            sim.steps(1)
 
 
 
