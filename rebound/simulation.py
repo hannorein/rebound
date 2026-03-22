@@ -560,13 +560,6 @@ class Simulation(Structure):
         self._free_particle_ap = self._fpa
 
 # Setter/getter of parameters and constants
-    @property 
-    def N_real(self):
-        """
-        Get the current number of real (i.e. no variational/shadow) particles in the simulation.
-        """
-        return self.N-self.N_var
-
     @property
     def integrator(self):
         """
@@ -1027,7 +1020,7 @@ class Simulation(Structure):
         else:
             jacobi = False
 
-        for p in self.particles[1:self.N_real]:
+        for p in self.particles[1:self.N]:
             if jacobi_masses is True:
                 interior_mass = primary.m
                 # orbit conversion uses mu=G*(p.m+primary.m) so set prim.m=Mjac-m so mu=G*Mjac
@@ -1072,7 +1065,7 @@ class Simulation(Structure):
 
         """
         if last is None:
-            last = self.N_real
+            last = self.N
         if first<0 or last <0:
             raise AttributeError("first and last in com() can not be negative.")
         clibrebound.reb_simulation_com_range.restype = Particle

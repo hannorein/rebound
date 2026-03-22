@@ -1408,11 +1408,10 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
     r->megno_mean_Y = 0;
     r->megno_initial_t = r->t;
     r->megno_mean_t = 0;
-    size_t i = reb_simulation_add_variation_1st_order(r,-1);
-    r->calculate_megno = i;
-    const size_t imax = i + r->N;
+    reb_simulation_add_variation_1st_order(r,-1);
+    r->calculate_megno = 1;
     struct reb_particle* const particles = r->particles_varX;
-    for (;i<imax;i++){ 
+    for (size_t i=0;i<r->N;i++){
         particles[i].m  = 0.;
         particles[i].x  = reb_random_normal(r,1.);
         particles[i].y  = reb_random_normal(r,1.);
@@ -1451,9 +1450,7 @@ double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
     const struct reb_particle* restrict const particles = r->particles_varX;
     double deltad = 0;
     double delta2 = 0;
-    size_t i = r->calculate_megno;
-    const size_t imax = i + r->N;
-    for (;i<imax;i++){
+    for (size_t i=0;i<r->N;i++){
         deltad += particles[i].vx * particles[i].x; 
         deltad += particles[i].vy * particles[i].y; 
         deltad += particles[i].vz * particles[i].z; 

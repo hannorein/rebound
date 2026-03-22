@@ -110,6 +110,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 71, REB_UINT,         "ri_ias15.adaptive_mode",       offsetof(struct reb_simulation, ri_ias15.adaptive_mode), 0, 0},
     { 72, REB_UINT64,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
+    { 403, REB_POINTER,     "particles_varX",                offsetof(struct reb_simulation, particles_varX), offsetof(struct reb_simulation, N_varX), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration)},
     { 87, REB_OTHER,        "functionpointers", 0, 0, 0},
     { 89, REB_POINTER,      "ri_ias15.at",                  offsetof(struct reb_simulation, ri_ias15.at), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
@@ -187,6 +188,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
     { 401, REB_POINTER,     "ri_custom.data",               offsetof(struct reb_simulation, ri_custom.data), offsetof(struct reb_simulation, ri_custom.data_size), 1},
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0},
+    // 403  particles_varX
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0},
     { 9999, REB_FIELD_END,  "end", 0, 0, 0}
@@ -923,6 +925,7 @@ finish_fields:
         r->var_config[l].sim = r;
     }
     r->N_allocated = r->N; // This used to be different. Now only saving N.
+    r->N_varX_allocated = r->N_varX;
     for (unsigned int l=0;l<r->N_allocated;l++){
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
@@ -944,18 +947,10 @@ finish_fields:
         }
 #endif // MPI
     }
-    reb_tree_delete(r);
-    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-        for (unsigned int l=0;l<r->N_allocated;l++){
-            reb_tree_add_particle_to_tree(r, l);
-        }
+    for (unsigned int l=0;l<r->N_varX_allocated;l++){
+        r->particles_varX[l].ap = NULL;
+        r->particles_varX[l].sim = r;
     }
-    // Commented out on Nov 26 2024. Not sure why this was added. Might be for an older SA version.
-    // if (r->ri_ias15.at){ 
-    //     // Assume that all arrays were saved whenever ri_ias15.at was saved.
-    //     // Only 3*N entries got saved. 
-    //     r->ri_ias15.N_allocated = 3*r->N;
-    // }
     r->ri_whfast512.recalculate_constants = 1;
 }
 

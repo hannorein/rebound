@@ -140,8 +140,8 @@ class TestSimulation(unittest.TestCase):
 
     def test_init_megno(self):
         self.sim.init_megno()
-        self.assertEqual(self.sim.N,4)
-        self.assertEqual(self.sim.N_real,2)
+        self.assertEqual(self.sim.N,2)
+        self.assertEqual(self.sim.N_var,2)
         self.assertEqual(self.sim.megno(),0)
         self.assertEqual(self.sim.lyapunov(),0)
         
@@ -183,9 +183,6 @@ class TestSimulation(unittest.TestCase):
 
     def test_N(self):
         self.assertEqual(self.sim.N, 2)
-    
-    def test_N_real(self):
-        self.assertEqual(self.sim.N_real, 2)
     
     def test_integrator(self):
         self.assertEqual(self.sim.integrator, "ias15")
