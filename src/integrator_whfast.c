@@ -1222,7 +1222,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
             particles_var1[0].ax += Gmj * dax;
             particles_var1[0].ay += Gmj * day;
             particles_var1[0].az += Gmj * daz;
-
+            // TODO: I think this should be a loop over all particles 1...N-1
             particles_var1[1].ax -= Gmi * dax;
             particles_var1[1].ay -= Gmi * day;
             particles_var1[1].az -= Gmi * daz;
