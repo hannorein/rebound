@@ -223,7 +223,7 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                 //////////////////
                 /// 1st order  ///
                 //////////////////
-                struct reb_particle* const particles_var1 = particles + vc.index;
+                struct reb_particle* const particles_var1 = r->particles_varX + vc.index;
                 if (vc.testparticle<0){
                     for (size_t j=1; j<N_active; j++){
                         const double dx = particles[0].x - particles[j].x;
