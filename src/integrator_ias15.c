@@ -170,7 +170,7 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
     }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){
         N3 = 3*r->ri_trace.encounter_N;// trace close encounter
     }else{ 
-        N3 = 3*r->N;
+        N3 = 3*(r->N+r->N_varX);
     }
     if (N3 > r->ri_ias15.N_allocated) {
         realloc_dp7(&(r->ri_ias15.g),N3);
@@ -195,12 +195,12 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         }
         r->ri_ias15.N_allocated = N3;
     }
-    if (N3/3 > r->ri_ias15.N_allocated_map){
-        r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(size_t)*(N3/3));
-        for (size_t i=0;i<N3/3;i++){
+    if (r->N > r->ri_ias15.N_allocated_map){
+        r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(size_t)*r->N);
+        for (size_t i=0;i<r->N;i++){
             r->ri_ias15.map[i] = i;
         }
-        r->ri_ias15.N_allocated_map = N3/3;
+        r->ri_ias15.N_allocated_map = r->N;
     }
 
 }
@@ -212,7 +212,9 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
-    size_t N;
+    struct reb_particle* const particles_varX = r->particles_varX;
+    size_t N;           // Number of real particles
+    size_t N_varX = 0;  // Number of variational particles
     size_t* map; // this map allow for integrating only a selection of particles 
     if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
         N = r->ri_mercurius.encounter_N;
@@ -230,9 +232,10 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         }
     }else{ 
         N = r->N;
+        N_varX = r->N_varX;
         map = r->ri_ias15.map; // identity map
     }
-    const size_t N3 = 3*N;
+    const size_t N3 = 3*(N+N_varX);
 
     reb_simulation_update_acceleration(r);
 
@@ -262,8 +265,20 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         a0[3*k+1] = particles[mk].ay; 
         a0[3*k+2] = particles[mk].az;
     }
+    for(size_t mk=0;mk<N_varX;mk++) {
+        size_t k = mk + N;
+        x0[3*k]   = particles_varX[mk].x;
+        x0[3*k+1] = particles_varX[mk].y;
+        x0[3*k+2] = particles_varX[mk].z;
+        v0[3*k]   = particles_varX[mk].vx;
+        v0[3*k+1] = particles_varX[mk].vy;
+        v0[3*k+2] = particles_varX[mk].vz;
+        a0[3*k]   = particles_varX[mk].ax;
+        a0[3*k+1] = particles_varX[mk].ay; 
+        a0[3*k+2] = particles_varX[mk].az;
+    }
     if (r->gravity==REB_GRAVITY_COMPENSATED){
-        for(size_t k=0;k<N;k++) {
+        for(size_t k=0;k<N+N_varX;k++) {
             size_t mk = map[k];
             csa0[3*k]   = gravity_cs[mk].x;
             csa0[3*k+1] = gravity_cs[mk].y;  
@@ -336,7 +351,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
             r->t = t_beginning + r->dt * h[n];
 
             // Prepare particles arrays for force calculation
-            for(size_t i=0;i<N;i++) {                      // Predict positions at interval n using b values
+            for(size_t i=0;i<N+N_varX;i++) {                      // Predict positions at interval n using b values
                 size_t mi = map[i];
                 const size_t k0 = 3*i+0;
                 const size_t k1 = 3*i+1;
@@ -353,7 +368,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 particles[mi].z = xk2 + x0[k2];
             }
             if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
-                for(size_t i=0;i<N;i++) {                  // Predict velocities at interval n using b values
+                for(size_t i=0;i<N+N_varX;i++) {                  // Predict velocities at interval n using b values
                     size_t mi = map[i];
                     const size_t k0 = 3*i+0;
                     const size_t k1 = 3*i+1;
@@ -377,7 +392,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 integrator_megno_thisdt += w[n] * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
             }
 
-            for(size_t k=0;k<N;++k) {
+            for(size_t k=0;k<N+N_varX;++k) {
                 size_t mk = map[k];
                 at[3*k]   = particles[mk].ax;
                 at[3*k+1] = particles[mk].ay;  
@@ -530,15 +545,12 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         // r->ri_ias15.adaptive_mode==REB_IAS15_PRS23
         //   Here, the acceleration, jerk and snap are used to estimate the new timestep. 
         //   The method is described in detail in Pham, Rein, Spiegel 2023
-        size_t Nreal = N;
         if (r->ri_ias15.adaptive_mode==REB_IAS15_INDIVIDUAL || r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
             if (r->ri_ias15.adaptive_mode==REB_IAS15_GLOBAL){
                 double maxa = 0.0;
                 double maxj = 0.0;
-                for(size_t i=0;i<Nreal;i++){ // Looping over all particles and all 3 components of the acceleration. 
-                                             // Note: Before December 2020, N-N_var, was simply N. This change should make timestep choices during
-                                             // close encounters more stable if variational particles are present.
+                for(size_t i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
                     size_t mi = map[i];
                     const double v2 = particles[mi].vx*particles[mi].vx+particles[mi].vy*particles[mi].vy+particles[mi].vz*particles[mi].vz;
                     const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
@@ -574,7 +586,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
             };
         }else{ // adaptive_mode >= 2 (New adaptive timestepping method, default since January 2024)
             double min_timescale2 = INFINITY;  // note factor of dt_done**2 not included
-            for(size_t i=0;i<Nreal;i++){
+            for(size_t i=0;i<N;i++){
                 double a0i = 0; // (acceleration at beginning of timestep)^2
                 double y2 = 0;  // (accaleration at end of timestep)^2
                 double y3 = 0;  // (jerk * dt_done)^2
@@ -633,6 +645,20 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 particles[mk].ay = a0[3*k+1];
                 particles[mk].az = a0[3*k+2];
             }
+            for(size_t mk=0;mk<N_varX;++mk) {
+                size_t k = mk + N;
+                particles_varX[mk].x = x0[3*k+0]; // Set initial position
+                particles_varX[mk].y = x0[3*k+1];
+                particles_varX[mk].z = x0[3*k+2];
+
+                particles_varX[mk].vx = v0[3*k+0];    // Set initial velocity
+                particles_varX[mk].vy = v0[3*k+1];
+                particles_varX[mk].vz = v0[3*k+2];
+
+                particles_varX[mk].ax = a0[3*k+0];    // Set initial acceleration
+                particles_varX[mk].ay = a0[3*k+1];
+                particles_varX[mk].az = a0[3*k+2];
+            }
             r->dt = dt_new;
             if (r->dt_last_done!=0.){       // Do not predict next e/b values if this is the first time step.
                 double ratio = r->dt/r->dt_last_done;
@@ -690,6 +716,16 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         particles[mk].vx = v0[3*k+0];    // Set final velocity
         particles[mk].vy = v0[3*k+1];
         particles[mk].vz = v0[3*k+2];
+    }
+    for(size_t mk=0;mk<N_varX;++mk) {
+        size_t k = mk + N;
+        particles_varX[mk].x = x0[3*k+0]; // Set final position
+        particles_varX[mk].y = x0[3*k+1];
+        particles_varX[mk].z = x0[3*k+2];
+
+        particles_varX[mk].vx = v0[3*k+0];    // Set final velocity
+        particles_varX[mk].vy = v0[3*k+1];
+        particles_varX[mk].vz = v0[3*k+2];
     }
     copybuffers(e,er,N3);       
     copybuffers(b,br,N3);       
