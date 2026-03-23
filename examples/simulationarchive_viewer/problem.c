@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Simulationarchive loaded from file `%s`.\n",argv[1]);
-    printf("Number of snapshots: %lld.\n", sa->nblobs);
+    printf("Number of snapshots: %ld.\n", sa->nblobs);
     printf("You can step through the Simulationarchive using the following keys in the visualization window:\n");
     printf(" Right arrow: jump to next snapshot\n");
     printf(" Left arrow:  jump to previous snapshot\n");
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     printf(" End key:     jump to last snapshot\n\n");
 
     while(1){
-        printf("Loading snapshot %lld.\n", current_snapshot);
+        printf("Loading snapshot %ld.\n", current_snapshot);
         struct reb_simulation* r = reb_simulation_create_from_simulationarchive(sa, current_snapshot);
         if (!r){
             printf("Error loading Simulation from Simulationarchive.\n");
