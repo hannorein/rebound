@@ -223,7 +223,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r){
         r->gravity = REB_GRAVITY_JACOBI;
     }else{
         // Otherwise can do either way
-        r->gravity_ignore_terms = 1;
+        r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1;
     }
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occurred.

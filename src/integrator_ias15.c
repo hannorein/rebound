@@ -821,7 +821,7 @@ static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
 void reb_integrator_ias15_step(struct reb_simulation* r){
-    r->gravity_ignore_terms = 0;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
 #ifdef GENERATE_CONSTANTS
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS

@@ -857,11 +857,11 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
         r->gravity = REB_GRAVITY_JACOBI;
     }else{
         if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI){
-            r->gravity_ignore_terms = 1;
+            r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1;
         }else if (ri_whfast->coordinates==REB_WHFAST_COORDINATES_BARYCENTRIC){
-            r->gravity_ignore_terms = 0;
+            r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
         }else{
-            r->gravity_ignore_terms = 2;
+            r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_INVOLVING_0;
         }
     }
     const size_t N = r->N;
@@ -964,7 +964,7 @@ void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* con
         return;
     }
     reb_integrator_whfast_from_inertial(r);
-    r->gravity_ignore_terms = 1;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1;
     reb_simulation_update_acceleration(r);
     reb_integrator_whfast_interaction_step(r, dt);
     reb_integrator_whfast_to_inertial(r);
@@ -1191,9 +1191,9 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
 
     if (r->calculate_megno){
         // Need to have x,v,a synchronized to calculate ddot/d for MEGNO. 
-        r->gravity_ignore_terms = 0; // Need all terms.
+        r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE; // Need all terms.
         reb_simulation_update_acceleration_gravity_var(r);
-        r->gravity_ignore_terms = 2;
+        r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_INVOLVING_0;
 
         double dY = r->dt * 2. * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
         reb_tools_megno_update(r, dY, dt);

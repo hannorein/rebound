@@ -453,7 +453,11 @@ struct reb_simulation {
     int     exact_finish_time;      // 1 (default): integrate exactly to the time requested and adjust timestep if needed, 0: may overshoot by one timestep
 
     int force_is_velocity_dependent; // 0 (default): force only depends on position, 1: force also depends on velocities
-    int gravity_ignore_terms;
+    enum {
+        REB_GRAVITY_IGNORE_TERMS_NONE = 0,              // Include all pairwise interactions in gravity calculations.
+        REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 = 1,   // Ignore interactions between particles 0 and 1 in gravity calculations (used for WHFast)
+        REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 = 2,       // Ignore all interactions with particle 0 in gravity calculations (used for WHFast)
+    } gravity_ignore_terms;         // This flag determines which interactions are included in the gravity calculation.
     double output_timing_last;      // Time when reb_simulation_output_timing() was called the last time. 
     int save_messages;              // 0 (default): print messages on screen, 1: ignore messages (used in python interface).
     char** messages;                // Array of strings containing last messages (only used if save_messages==1). 

@@ -58,7 +58,7 @@ static const double plf7_6_4_y[6] = {-1.6218101180868010, 0.0061709468110142, 0.
 
 static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* r, double y, double v){
     // Calculate gravity using standard gravity routine
-    r->gravity_ignore_terms = 2;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_INVOLVING_0;
     r->gravity = REB_GRAVITY_BASIC;
     reb_simulation_update_acceleration(r);
     if (v!=0.){

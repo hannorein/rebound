@@ -161,7 +161,7 @@ static void kick(struct reb_simulation* r, double dt, double scale_vel){
 }
 
 void reb_integrator_janus_step(struct reb_simulation* r){
-    r->gravity_ignore_terms = 0;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const unsigned int N = r->N;
     const double dt = r->dt;

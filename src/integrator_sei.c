@@ -58,7 +58,7 @@ static void reb_integrator_sei_init(struct reb_simulation* const r){
 }
 
 void reb_integrator_sei_step(struct reb_simulation* const r){
-    r->gravity_ignore_terms = 0;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const int N = r->N;
     struct reb_particle* const particles = r->particles;
     if (r->ri_sei.lastdt!=r->dt){

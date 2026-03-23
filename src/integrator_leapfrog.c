@@ -60,7 +60,7 @@ static void kick(struct reb_simulation* r, double dt){
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
 void reb_integrator_leapfrog_step(struct reb_simulation* r){
-    r->gravity_ignore_terms = 0;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const double dt = r->dt;
     switch (r->ri_leapfrog.order){
         case 2:
