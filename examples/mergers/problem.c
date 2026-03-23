@@ -40,7 +40,6 @@ int main(int argc, char* argv[]){
         struct reb_particle planet = {0};
         planet.m = 1e-4; 
         planet.r = 4e-2;                                 // radius in AU (it is unphysically large in this example)
-        planet.last_collision = 0;                       // The first time particles can collide with each other
         planet.x = a; 
         planet.vy = v;
         reb_simulation_add(r, planet); 

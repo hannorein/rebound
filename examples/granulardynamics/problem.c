@@ -90,7 +90,6 @@ void heartbeat(struct reb_simulation* r){
 }
 
 enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struct reb_simulation* r, struct reb_collision c){
-    const double t = r->t;
     struct reb_particle* particles = r->particles;
     struct reb_particle p1 = particles[c.p1];
     struct reb_particle p2 = particles[c.p2];
