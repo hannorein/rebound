@@ -1191,44 +1191,9 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
 
     if (r->calculate_megno){
         // Need to have x,v,a synchronized to calculate ddot/d for MEGNO. 
+        r->gravity_ignore_terms = 0; // Need all terms.
         reb_simulation_update_acceleration_gravity_var(r);
-        // Add additional acceleration term for MEGNO calculation
-        struct reb_particle* restrict const particles = r->particles;
-        for (size_t v=0;v<r->N_var_config;v++){
-            struct reb_variational_configuration const vc = r->var_config[v];
-            struct reb_particle* const particles_var1 = r->particles_var + vc.index;
-            const double dx = particles[0].x - particles[1].x;
-            const double dy = particles[0].y - particles[1].y;
-            const double dz = particles[0].z - particles[1].z;
-            const double r2 = dx*dx + dy*dy + dz*dz + r->softening*r->softening;
-            const double _r  = sqrt(r2);
-            const double r3inv = 1./(r2*_r);
-            const double r5inv = 3.*r3inv/r2;
-            const double ddx = particles_var1[0].x - particles_var1[1].x;
-            const double ddy = particles_var1[0].y - particles_var1[1].y;
-            const double ddz = particles_var1[0].z - particles_var1[1].z;
-            const double Gmi = r->G * particles[0].m;
-            const double Gmj = r->G * particles[1].m;
-            const double dax =   ddx * ( dx*dx*r5inv - r3inv )
-                + ddy * ( dx*dy*r5inv )
-                + ddz * ( dx*dz*r5inv );
-            const double day =   ddx * ( dy*dx*r5inv )
-                + ddy * ( dy*dy*r5inv - r3inv )
-                + ddz * ( dy*dz*r5inv );
-            const double daz =   ddx * ( dz*dx*r5inv )
-                + ddy * ( dz*dy*r5inv )
-                + ddz * ( dz*dz*r5inv - r3inv );
-            // TODO: Check these are the only two terms missing.
-            particles_var1[0].ax += Gmj * dax;
-            particles_var1[0].ay += Gmj * day;
-            particles_var1[0].az += Gmj * daz;
-            // TODO: I think this should be a loop over all particles 1...N-1
-            particles_var1[1].ax -= Gmi * dax;
-            particles_var1[1].ay -= Gmi * day;
-            particles_var1[1].az -= Gmi * daz;
-
-            // TODO Need to add mass terms. Also need to add them to tangent map above.
-        }
+        r->gravity_ignore_terms = 2;
 
         double dY = r->dt * 2. * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
         reb_tools_megno_update(r, dY, dt);
