@@ -113,12 +113,10 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve(struct reb_simulation* cons
 	particles[c.p2].vx -=	p2pf*dvx2n;
 	particles[c.p2].vy -=	p2pf*dvy2nn;
 	particles[c.p2].vz -=	p2pf*dvz2nn;
-	particles[c.p2].last_collision = r->t;
 	const double p1pf = p2.m/(p1.m+p2.m);
 	particles[c.p1].vx +=	p1pf*dvx2n; 
 	particles[c.p1].vy +=	p1pf*dvy2nn; 
 	particles[c.p1].vz +=	p1pf*dvz2nn; 
-	particles[c.p1].last_collision = r->t;
 		
     struct reb_particle new1 = particles[c.p1];
     struct reb_particle new2 = particles[c.p2];

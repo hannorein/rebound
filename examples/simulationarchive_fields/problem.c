@@ -33,7 +33,6 @@ void print_particle(struct reb_particle v, char* padding){
     printf("%svx=%.16g vy=%.16g vz=%.16g\n", padding, v.vx, v.vy, v.vz);
     printf("%sax=%.16g ay=%.16g az=%.16g\n", padding, v.ax, v.ay, v.az);
     printf("%sm=%.16g r=%.16g\n", padding, v.m, v.r);
-    printf("%slast_collision=%.16g name=%s\n", padding, v.last_collision, v.name);
 }
 
 int main(int argc, char* argv[]) {

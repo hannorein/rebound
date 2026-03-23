@@ -172,7 +172,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct 
     particles[c.p2].vx -=    p1pf*dvx2n;
     particles[c.p2].vy -=    p1pf*dvy2nn;
     particles[c.p2].vz -=    p1pf*dvz2nn;
-    particles[c.p2].last_collision = r->t;
     particles[c.p2].x -=    p1pf*dxx2n;
     particles[c.p2].y -=    p1pf*dxy2nn;
     particles[c.p2].z -=    p1pf*dxz2nn;
@@ -185,7 +184,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct 
     particles[c.p1].y +=    p2pf*dxy2nn; 
     particles[c.p1].z +=    p2pf*dxz2nn; 
 
-    particles[c.p1].last_collision = r->t;
 
     return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // Do not remove any particle
 }
