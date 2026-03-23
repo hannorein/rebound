@@ -30,6 +30,9 @@
 #ifdef MPI
 #include <mpi.h>
 #endif // MPI
+#ifdef OPENMP
+#include <omp.h>
+#endif // OPENMP
 #include "tree.h"
 #include "particle.h"
 #include "simulation.h"
