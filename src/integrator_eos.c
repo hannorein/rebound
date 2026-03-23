@@ -217,86 +217,9 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
                 particles[0].vz    += prefactj*dz;
             }
         }
-        for (size_t v=0;v<r->N_var_config;v++){
-            struct reb_variational_configuration const vc = r->var_config[v];
-            if (vc.order==1){
-                //////////////////
-                /// 1st order  ///
-                //////////////////
-                struct reb_particle* const particles_var1 = r->particles_var + vc.index;
-                if (vc.testparticle<0){
-                    for (size_t j=1; j<N_active; j++){
-                        const double dx = particles[0].x - particles[j].x;
-                        const double dy = particles[0].y - particles[j].y;
-                        const double dz = particles[0].z - particles[j].z;
-                        const double r2 = dx*dx + dy*dy + dz*dz;
-                        const double _r  = sqrt(r2);
-                        const double r3inv = 1./(r2*_r);
-                        const double r5inv = 3.*r3inv/r2;
-                        const double ddx = particles_var1[0].x - particles_var1[j].x;
-                        const double ddy = particles_var1[0].y - particles_var1[j].y;
-                        const double ddz = particles_var1[0].z - particles_var1[j].z;
-                        const double Gmi = y*G * particles[0].m;
-                        const double Gmj = y*G * particles[j].m;
-
-                        // Variational equations
-                        const double dxdx = dx*dx*r5inv - r3inv;
-                        const double dydy = dy*dy*r5inv - r3inv;
-                        const double dzdz = dz*dz*r5inv - r3inv;
-                        const double dxdy = dx*dy*r5inv;
-                        const double dxdz = dx*dz*r5inv;
-                        const double dydz = dy*dz*r5inv;
-                        const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
-                        const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
-                        const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
-
-                        // Variational mass contributions
-                        const double dGmi = y*G*particles_var1[0].m;
-                        const double dGmj = y*G*particles_var1[j].m;
-
-                        particles_var1[0].vx += Gmj * dax - dGmj*r3inv*dx;
-                        particles_var1[0].vy += Gmj * day - dGmj*r3inv*dy;
-                        particles_var1[0].vz += Gmj * daz - dGmj*r3inv*dz;
-
-                        particles_var1[j].vx -= Gmi * dax - dGmi*r3inv*dx;
-                        particles_var1[j].vy -= Gmi * day - dGmi*r3inv*dy;
-                        particles_var1[j].vz -= Gmi * daz - dGmi*r3inv*dz; 
-                    }
-                }else{ //testparticle
-                    size_t i = vc.testparticle;
-                    const double dx = particles[i].x - particles[0].x;
-                    const double dy = particles[i].y - particles[0].y;
-                    const double dz = particles[i].z - particles[0].z;
-                    const double r2 = dx*dx + dy*dy + dz*dz;
-                    const double _r  = sqrt(r2);
-                    const double r3inv = 1./(r2*_r);
-                    const double r5inv = 3.*r3inv/r2;
-                    const double ddx = particles_var1[0].x;
-                    const double ddy = particles_var1[0].y;
-                    const double ddz = particles_var1[0].z;
-                    const double Gmj = y*G*particles[0].m;
-
-                    // Variational equations
-                    const double dxdx = dx*dx*r5inv - r3inv;
-                    const double dydy = dy*dy*r5inv - r3inv;
-                    const double dzdz = dz*dz*r5inv - r3inv;
-                    const double dxdy = dx*dy*r5inv;
-                    const double dxdz = dx*dz*r5inv;
-                    const double dydz = dy*dz*r5inv;
-                    const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
-                    const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
-                    const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
-
-                    // No variational mass contributions for test particles!
-                    particles_var1[0].vx += Gmj * dax;
-                    particles_var1[0].vy += Gmj * day;
-                    particles_var1[0].vz += Gmj * daz;
-                }
-            }
-        }
     }
-
 }
+
 static inline void reb_integrator_eos_preprocessor(struct reb_simulation* const r, double dt, enum REB_EOS_TYPE type, void (*drift_step)(struct reb_simulation* const r, double a), void (*interaction_step)(struct reb_simulation* const r, double y, double v)){
     switch(type){
         case REB_EOS_PMLF6:
@@ -321,6 +244,7 @@ static inline void reb_integrator_eos_preprocessor(struct reb_simulation* const 
             break;
     }
 }
+
 static inline void reb_integrator_eos_postprocessor(struct reb_simulation* const r, double dt, enum REB_EOS_TYPE type, void (*drift_step)(struct reb_simulation* const r, double a), void (*interaction_step)(struct reb_simulation* const r, double y, double v)){
     switch(type){
         case REB_EOS_PMLF6:
@@ -534,6 +458,9 @@ void reb_integrator_eos_step(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC){
         reb_simulation_warning(r,"EOS only supports the BASIC gravity routine.");
     }
+    if (r->N_var){
+        reb_simulation_warning(r, "Variational particles/MEGNO in EOS no longer supported since REBOUND version 5.");
+    }
     r->gravity = REB_GRAVITY_NONE;
 
     struct reb_integrator_eos* const reos = &(r->ri_eos);
@@ -665,14 +592,6 @@ void reb_integrator_eos_step(struct reb_simulation* r){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-
-    if (r->calculate_megno){
-        r->gravity_ignore_terms = 0;
-        reb_simulation_update_acceleration_gravity_var(r);
-        double dY = r->dt * 2. * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
-        reb_tools_megno_update(r, dY, r->dt);
-    }
-
 }
 
 void reb_integrator_eos_synchronize(struct reb_simulation* r){
