@@ -1052,7 +1052,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     }
 
     // Calculate gravity with special function
-    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
+    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE && r->gravity != REB_GRAVITY_WB){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
 
@@ -1107,7 +1107,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.r_crit_WB = 0.5;
+    r->ri_trace.r_crit_WB = 0.25;
     r->ri_trace.force_accept = 0;
 
     // Internal arrays (only used within one timestep)
