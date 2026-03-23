@@ -329,12 +329,11 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 
 static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
-    // TODO. Remove the manual call to update_accelerations in _step(). Then remove if statement.
-    if (r->t != t) { 
-        // Not needed for first step. Accelerations already calculated. Just need to copy them
-        reb_integrator_bs_update_particles(r, y);
-        reb_simulation_update_acceleration(r);
-    }
+    const double t_backup = r->t;
+    r->t = t; // Set correct time for time dependent additional forces
+    reb_integrator_bs_update_particles(r, y);
+    reb_simulation_update_acceleration(r);
+    r->t = t_backup;
 
     for (size_t i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
@@ -775,8 +774,6 @@ void reb_integrator_bs_step(struct reb_simulation* r){
             y1[i] = y0[i];
         }
     }
-
-    reb_simulation_update_acceleration(r);
 
     struct reb_integrator_bs* ri_bs = &(r->ri_bs);
 
