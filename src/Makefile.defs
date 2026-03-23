@@ -43,11 +43,13 @@ endif
 endif
 # Removed -march=native for now
 ifeq ($(OS), Linux)
-	OPT+= -Wextra -Wall -g 
+	OPT+= -Wall -g 
+	OPTLIB+= -Wextra
 	LIB+= -lm -lrt
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include -Wextra -Wall -g #-Wsign-compare
+	OPT+= -I/usr/local/include -Wall -g
+	OPTLIB+= -Wextra
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib
 endif

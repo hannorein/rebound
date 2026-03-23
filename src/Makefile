@@ -10,12 +10,12 @@ ifneq ($(OS),Windows_NT)
 # Linux, MacOS
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."
-	$(CC) -c $(OPT) $(PREDEF) -o $@ $<
+	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) -o $@ $<
 
 $(LIBREBOUND): $(OBJECTS)
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) $(OPT) -shared $(OBJECTS) $(LIB) -o $@ 
+	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) $(LIB) -o $@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."
@@ -23,7 +23,7 @@ else
 # Windows
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."
-	$(CC) -c $(OPT) $(PREDEF) /Fo: $@ $<
+	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) /Fo: $@ $<
 
 $(LIBREBOUND): $(OBJECTS)
 	@echo ""        
