@@ -147,6 +147,7 @@ int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filen
         }
     }
 #else //SERVER
+    (void)filename; // not used
     reb_simulation_error(r, "To take a screenshot compile with SERVER=1, call reb_simulation_start_server(), and connect with a web browser.");
 #endif //SERVER
     return 1;

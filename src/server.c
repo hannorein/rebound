@@ -727,6 +727,7 @@ screenshot_finish:
                 return -1;
             }
 #else // SERVER
+            (void)port; // Not used
 #ifndef SERVERHIDEWARNING
             reb_simulation_error(r, "REBOUND has been compiled without SERVER support.");
 #endif // SERVERHIDEWARNING
@@ -756,6 +757,7 @@ screenshot_finish:
                 r->server_data = NULL;
             }
 #endif //SERVER
+            (void)r; // not used
         }
 
 

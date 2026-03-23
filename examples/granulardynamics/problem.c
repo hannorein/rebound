@@ -135,13 +135,11 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_withborder(struc
         particles[c.p2].vx -=    m21*dvx2n;
         particles[c.p2].vy -=    m21*dvy2nn;
         particles[c.p2].vz -=    m21*dvz2nn;
-        particles[c.p2].last_collision = t;
     }
     if (!p1.name || strcmp(p1.name,"border")){
         particles[c.p1].vx +=    dvx2n; 
         particles[c.p1].vy +=    dvy2nn; 
         particles[c.p1].vz +=    dvz2nn; 
-        particles[c.p1].last_collision = t;
     }
     return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // Do not remove any particle from simulation.
 }

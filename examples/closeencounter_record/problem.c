@@ -8,7 +8,7 @@
  * are recorded can be easily modified. It is also possible to implement some
  * additional physics whenever a collision has been detection (e.g. fragmentation).
  * The collision search is by default a direct search, i.e. O(N^2) but can be
- * changed to a tree by using the `collisions_tree.c` module.
+ * changed to a tree by using the COLLISIONS_TREE module.
  */
 #include "rebound.h"
 #include <stdio.h>
@@ -17,22 +17,17 @@
 
 // Define our own collision resolve function, which will only record collisions but not change any of the particles.        
 enum REB_COLLISION_RESOLVE_OUTCOME collision_record_only(struct reb_simulation* const r, struct reb_collision c){
-    double delta_t = 2.*M_PI;     
     struct reb_particle* particles = r->particles;
     const double t = r->t;
 
-    // only record a maximum of one collision per year per particle
-    if ( particles[c.p1].last_collision+delta_t < t  &&  particles[c.p2].last_collision+delta_t < t ){
-        particles[c.p1].last_collision = t; 
-        particles[c.p2].last_collision = t;
-        printf("\nCollision detected.\n");        
-        FILE* of = fopen("collisions.txt","a+b");        // open file for collision output
-        fprintf(of, "%e\t", t);                    // time
-        fprintf(of, "%e\t", (particles[c.p1].x+particles[c.p2].x)/2.);    // x position
-        fprintf(of, "%e\t", (particles[c.p1].y+particles[c.p2].y)/2.);    // y position
-        fprintf(of, "\n");
-        fclose(of);                        // close file
-    }
+    printf("\nCollision detected.\n");        
+    FILE* of = fopen("collisions.txt","a+b");        // open file for collision output
+    fprintf(of, "%e\t", t);                    // time
+    fprintf(of, "%e\t", (particles[c.p1].x+particles[c.p2].x)/2.);    // x position
+    fprintf(of, "%e\t", (particles[c.p1].y+particles[c.p2].y)/2.);    // y position
+    fprintf(of, "\n");
+    fclose(of);                        // close file
+    
     return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE;
 }
 
@@ -73,7 +68,6 @@ int main(int argc, char* argv[]){
         planet.r = rhill;           // Set planet radius to hill radius 
                                     // A collision is recorded when planets get within their hill radius
                                     // The hill radius of the particles might change, so it should be recalculated after a while
-        planet.last_collision = 0; 
         planet.x = a;
         planet.vy = v;
         reb_simulation_add(r, planet); 
