@@ -334,7 +334,7 @@ int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, d
         double dg = -mu*dG3;
         double dfd = -mu*dG1*r0i*ri + mu*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
         double dgd = -mu*dG2*ri + mu*Gs[2]*dr*ri*ri;
-        
+
         dp1p->x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
         dp1p->y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
         dp1p->z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;

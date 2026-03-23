@@ -437,7 +437,7 @@ struct reb_simulation {
 
     size_t  N_var_config; 
     struct  reb_variational_configuration* var_config;   // Configuration structs. These contain details on variational particles. 
-    
+
     int     var_rescale_warning;    
     size_t  N_active;               // Number of active (i.e. not test-particle) particles. Default: -1 (all particles are active). 
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
