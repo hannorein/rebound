@@ -29,6 +29,7 @@
 #include <string.h>
 #ifdef MPI
 #include <mpi.h>
+#include "communication_mpi.h"
 #endif // MPI
 #ifdef OPENMP
 #include <omp.h>

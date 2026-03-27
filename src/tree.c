@@ -309,7 +309,7 @@ void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_tree
     }
 }
 void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r){
-    for(int i=0;i<r->N_root;i++){
+    for(size_t i=0;i<r->N_root;i++){
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
             reb_communication_mpi_prepare_essential_tree_for_gravity(r, r->tree_root[i]);
         }else{
@@ -321,7 +321,7 @@ void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r)
     }
 }
 void reb_tree_prepare_essential_tree_for_collisions(struct reb_simulation* const r){
-    for(int i=0;i<r->N_root;i++){
+    for(size_t i=0;i<r->N_root;i++){
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
             reb_communication_mpi_prepare_essential_tree_for_collisions(r, r->tree_root[i]);
         }else{

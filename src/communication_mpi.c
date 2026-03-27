@@ -35,11 +35,15 @@
  */
 #ifdef MPI
 #include <mpi.h>
+#include <math.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "rebound.h"
 #include "particle.h"
 #include "tree.h"
 #include "boundary.h"
 #include "communication_mpi.h"
+#include "simulation.h"
 
 
 void reb_mpi_init(struct reb_simulation* const r){
@@ -48,7 +52,7 @@ void reb_mpi_init(struct reb_simulation* const r){
     if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
         if (r->mpi_id==0){
             char msg[1024];
-            sprintf(msg, "Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
+            sprintf(msg, "Number of root boxes (%zu) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
             reb_simulation_error(r,msg);
         }
         exit(-1);
@@ -311,11 +315,11 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
 }
 void reb_communication_mpi_prepare_essential_tree_for_collisions(struct reb_simulation* const r, struct reb_treecell* root){
     if (root==NULL) return;
-    int l1 = -1;
-    int l2 = -1;
+    size_t l1 = SIZE_MAX;
+    size_t l2 = SIZE_MAX;
     reb_simulation_two_largest_particles(r, &l1, &l2);
     double largest_radius = 0;
-    if (l1!=-1){
+    if (l1!=SIZE_MAX){
         largest_radius = r->particles[l1].r;
     }
     // Find out which cells are needed by every other node

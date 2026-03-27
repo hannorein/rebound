@@ -44,6 +44,9 @@
 #include "integrator_janus.h"
 #include "integrator_eos.h"
 #include "integrator_bs.h"
+#ifdef MPI
+#include "communication_mpi.h"
+#endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
