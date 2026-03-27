@@ -69,9 +69,11 @@ static void reb_simulation_add_local(struct reb_simulation* const r, struct reb_
     r->particles[r->N].sim = r;
     (r->N)++;
     // Particle was added successfully. Do other work now.
+#ifndef MPI
     if (pt.name){
         reb_particle_set_name(&r->particles[r->N-1], pt.name);
     }
+#endif // MPI
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
         if (r->ri_mercurius.mode==0){ //WHFast part
@@ -211,7 +213,9 @@ int reb_simulation_particle_var_index(struct reb_particle* p){
 
 static const char* get_registered_name(struct reb_simulation* r, const char* const name){
 #ifdef MPI
-    return name; // Does not register.
+    (void)name; // not used
+    reb_simulation_error(r, "Particle names are not supported with MPI. Use integer ids instead.\n");
+    return NULL; // Does not register.
 #else // MPI
     if (name==NULL) return NULL; // NULL string not allowed.
     if (r->name_hash_table){
@@ -315,20 +319,16 @@ struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* 
 
 
 #ifdef MPI
-struct reb_particle* reb_simulation_get_particle_by_id(struct reb_simulation* r, int id){
+struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, size_t id){
+    struct reb_particle* p = NULL;
     for (size_t i=0; i<r->N; i++){
-        int p_id = (int)(uintptr_t)(r->particles[i].name);
-        if (p_id){
-            if (p_id == id){
-                return &(r->particles[i]);
-            }
+        size_t p_id = (size_t)(r->particles[i].name);
+        if (p_id == id){
+            p = &(r->particles[i]);
+            break;
         }
     }
-    return NULL; // Not found
-}
 
-struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simulation* const r, int id){
-    struct reb_particle* p = reb_simulation_get_particle_by_id(r, id);
     int found = (p==NULL)?0:1;
     MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (found == 0){
@@ -368,6 +368,7 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
         return;
     }
     struct reb_simulation* r = p->sim;
+#ifndef MPI
     if (!r){
         reb_simulation_error(NULL,"Cannot set particle name using_reb_particle_set_name() as the particle is not part of a simulation. You can set the name manually.");
         return;
@@ -375,8 +376,11 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
     p->name = reb_simulation_register_name(r,name);
 
     uint32_t index = p - r->particles;
-#ifndef MPI
     add_to_name_hash_table(r, index, name);
+#else //  MPI
+    (void)name; // not used
+    reb_simulation_error(r, "Particle names are not supported with MPI. Use integer ids instead.\n");
+    __asm__ ("int3");
 #endif //  MPI
 }
 

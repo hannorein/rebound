@@ -303,6 +303,8 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     reb_integrator_mercurius_reset(r);
     reb_integrator_trace_reset(r);
     reb_integrator_bs_reset(r);
+    free(r->tree_root);
+    r->tree_root = NULL;
     if (r->ri_custom.reset){
         r->ri_custom.reset(r);
     }
@@ -873,6 +875,7 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
     r->boxsize.z = r->root_size *(double)r->N_root_z;
     r->N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
+    r->tree_root = calloc(r->N_root,sizeof(struct reb_treecell*));
     if (r->N_root_x <=0 || r->N_root_y <=0 || r->N_root_z <= 0){
         reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
     }

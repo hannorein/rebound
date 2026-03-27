@@ -62,6 +62,7 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
 
 void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
     if (r->tree_root==NULL){
+        // Should already be allocated in configure_box
         r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
     }
     struct reb_particle p = r->particles[pt];
@@ -236,17 +237,12 @@ void reb_tree_delete(struct reb_simulation* const r){
     if (r->tree_root!=NULL){
         for(size_t i=0;i<r->N_root;i++){
             reb_tree_delete_cell(r->tree_root[i]);
+            r->tree_root[i] = NULL;
         }
-        free(r->tree_root);
-        r->tree_root = NULL;
     }
 }
 
 void reb_tree_construct(struct reb_simulation* const r){
-    if (r->tree_root!=NULL){
-        reb_simulation_error(r,"Cannot construct tree. Tree already exists.");
-        return;
-    }
     if (r->root_size==-1){
         reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
         return;
@@ -290,12 +286,6 @@ int reb_reb_tree_get_octant_for_cell_in_cell(struct reb_treecell* nnode, struct 
     return octant;
 }
 
-/**
- * @brief Needs more comments!
- *
- * @param nnode is a pointer to a child cell of the cell which node points to.
- * @param node is a pointer to a node cell.
- */
 void reb_tree_add_essential_node_to_node(struct reb_treecell* nnode, struct reb_treecell* node){
     int o = reb_reb_tree_get_octant_for_cell_in_cell(nnode, node);
     if (node->oct[o]==NULL){
