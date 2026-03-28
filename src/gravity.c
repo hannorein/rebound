@@ -32,6 +32,7 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <math.h>
+#include <stdio.h>
 #include "particle.h"
 #include "output.h"
 #include "tree.h"
