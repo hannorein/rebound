@@ -408,49 +408,36 @@ void reb_collision_search(struct reb_simulation* const r){
                 // Remove p1
                 int removedp1 = !reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
                 if (removedp1){
-                    if (r->tree_root){ // In a tree, particles get removed later. 
-                                       // TODO: Think about this logic with non-persistent trees
-                        for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
-                            struct reb_collision* cp = &(r->collisions[j]);
-                            // Skip collisions which involved the removed particle
-                            if (cp->p1==c.p1 || cp->p2==c.p1){
-                                cp->p1 = SIZE_MAX;
-                                cp->p2 = SIZE_MAX;
-                            }
+                    if (collision_resolve_keep_sorted){
+                        if (c.p2 > c.p1 && c.p2!=SIZE_MAX){
+                            c.p2--;
                         }
-                    }else{ // Not in a tree, particles get removed immediately 
-                           // Update p2 of current collision
+                    }else{
+                        if (c.p2 == r->N){
+                            c.p2 = c.p1;
+                        }
+                    }
+                    for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
+                        struct reb_collision* cp = &(r->collisions[j]);
+                        // Skip collisions which involve the removed particle
+                        if (cp->p1==c.p1 || cp->p2==c.p1){
+                            cp->p1 = SIZE_MAX;
+                            cp->p2 = SIZE_MAX;
+                        }
+                        // Adjust collisions
                         if (collision_resolve_keep_sorted){
-                            if (c.p2 > c.p1 && c.p2!=SIZE_MAX){
-                                c.p2--;
+                            if (cp->p1 > c.p1 && cp->p1!=SIZE_MAX){
+                                cp->p1--;
+                            }
+                            if (cp->p2 > c.p1 && cp->p2!=SIZE_MAX){
+                                cp->p2--;
                             }
                         }else{
-                            if (c.p2 == r->N){
-                                c.p2 = c.p1;
+                            if (cp->p1 == r->N){
+                                cp->p1 = c.p1;
                             }
-                        }
-                        for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
-                            struct reb_collision* cp = &(r->collisions[j]);
-                            // Skip collisions which involve the removed particle
-                            if (cp->p1==c.p1 || cp->p2==c.p1){
-                                cp->p1 = SIZE_MAX;
-                                cp->p2 = SIZE_MAX;
-                            }
-                            // Adjust collisions
-                            if (collision_resolve_keep_sorted){
-                                if (cp->p1 > c.p1 && cp->p1!=SIZE_MAX){
-                                    cp->p1--;
-                                }
-                                if (cp->p2 > c.p1 && cp->p2!=SIZE_MAX){
-                                    cp->p2--;
-                                }
-                            }else{
-                                if (cp->p1 == r->N){
-                                    cp->p1 = c.p1;
-                                }
-                                if (cp->p2 == r->N){
-                                    cp->p2 = c.p1;
-                                }
+                            if (cp->p2 == r->N){
+                                cp->p2 = c.p1;
                             }
                         }
                     }
@@ -460,38 +447,27 @@ void reb_collision_search(struct reb_simulation* const r){
                 // Remove p1
                 int removedp2 = !reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
                 if (removedp2){ // Update other collisions
-                    if (r->tree_root){ // In a tree, particles get removed later. 
-                        for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
-                            struct reb_collision* cp = &(r->collisions[j]);
-                            // Skip collisions which involved the removed particle
-                            if (cp->p1==c.p2 || cp->p2==c.p2){
-                                cp->p1 = SIZE_MAX;
-                                cp->p2 = SIZE_MAX;
-                            }
+                    for (size_t j=i+1;j<r->collisions_N;j++){
+                        struct reb_collision* cp = &(r->collisions[j]);
+                        // Skip collisions which involve the removed particle
+                        if (cp->p1==c.p2 || cp->p2==c.p2){
+                            cp->p1 = SIZE_MAX;
+                            cp->p2 = SIZE_MAX;
                         }
-                    }else{ // Not in a tree, particles get removed immediately 
-                        for (size_t j=i+1;j<r->collisions_N;j++){
-                            struct reb_collision* cp = &(r->collisions[j]);
-                            // Skip collisions which involve the removed particle
-                            if (cp->p1==c.p2 || cp->p2==c.p2){
-                                cp->p1 = SIZE_MAX;
-                                cp->p2 = SIZE_MAX;
+                        // Adjust collisions
+                        if (collision_resolve_keep_sorted){
+                            if (cp->p1 > c.p2 && cp->p1!=SIZE_MAX){
+                                cp->p1--;
                             }
-                            // Adjust collisions
-                            if (collision_resolve_keep_sorted){
-                                if (cp->p1 > c.p2 && cp->p1!=SIZE_MAX){
-                                    cp->p1--;
-                                }
-                                if (cp->p2 > c.p2 && cp->p2!=SIZE_MAX){
-                                    cp->p2--;
-                                }
-                            }else{
-                                if (cp->p1 == r->N){
-                                    cp->p1 = c.p2;
-                                }
-                                if (cp->p2 == r->N){
-                                    cp->p2 = c.p2;
-                                }
+                            if (cp->p2 > c.p2 && cp->p2!=SIZE_MAX){
+                                cp->p2--;
+                            }
+                        }else{
+                            if (cp->p1 == r->N){
+                                cp->p1 = c.p2;
+                            }
+                            if (cp->p2 == r->N){
+                                cp->p2 = c.p2;
                             }
                         }
                     }
