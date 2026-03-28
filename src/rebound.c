@@ -24,7 +24,13 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef _WIN32
+    #include <io.h>
+    #define isatty _isatty
+    #define STDERR_FILENO 2
+#else
+    #include <unistd.h>
+#endif
 #include "rebound.h"
 #include "rebound_internal.h"
 #ifdef OPENMP
