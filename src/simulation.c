@@ -506,7 +506,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
-   
+
     PROFILING_START();
     reb_integrator_step(r);
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR);

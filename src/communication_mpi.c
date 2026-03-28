@@ -127,7 +127,7 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
         }else{
         }
     }
-    
+
     // Distribute the number of particles to be transferred.
     for (int i=0;i<r->mpi_num;i++){
         MPI_Scatter(r->N_particles_send, 1, MPI_INT, &(r->N_particles_recv[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
