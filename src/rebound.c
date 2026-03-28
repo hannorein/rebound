@@ -24,6 +24,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "rebound.h"
 #include "rebound_internal.h"
 #ifdef OPENMP
@@ -47,17 +48,27 @@ void reb_exit(const char* const msg){
 
 void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg){
     if (!save_messages || messages==NULL){
+        fprintf(stderr,"\n");
         switch (type){
             case REB_MESSAGE_TYPE_INFO:
-                fprintf(stderr,"\nREBOUND Message! %s\n",msg);
+                fprintf(stderr,"REBOUND Message!");
                 break;
             case REB_MESSAGE_TYPE_WARNING:
-                fprintf(stderr,"\n\033[1mWarning!\033[0m %s\n",msg);
+                if (isatty(STDERR_FILENO)) { // Is stderr a terminal?
+                    fprintf(stderr, "\033[1;33mWarning!\033[0m");
+                }else{
+                    fprintf(stderr,"Warning!");
+                }
                 break;
             case REB_MESSAGE_TYPE_ERROR:
-                fprintf(stderr,"\n\033[1mError!\033[0m %s\n",msg);
+                if (isatty(STDERR_FILENO)) { // Is stderr a terminal?
+                    fprintf(stderr, "\033[1;31mError!\033[0m");
+                }else{
+                    fprintf(stderr,"Error!");
+                }
                 break;
         }
+        fprintf(stderr, " %s\n",msg);
     }else{
         // Note: not thread safe.
         if (*messages==NULL){
