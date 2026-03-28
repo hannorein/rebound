@@ -59,6 +59,27 @@ static void reb_calculate_acceleration_for_particle(const struct reb_simulation*
  */
 void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     PROFILING_START();
+    if (r->gravity == REB_GRAVITY_TREE){
+        // Construct tree first.
+        // Note the boundary_check and distribute_particles can change the number of particles on the current node. 
+        // This is not compatible with some integrators. Also the reason this is up here, rather than in 
+        // the switch statement below.
+
+        // Check if particles are in box 
+        PROFILING_START();
+        reb_boundary_check(r);     
+        PROFILING_STOP(PROFILING_CAT_BOUNDARY);
+#ifdef MPI
+        // Check if particles are in local rootbox, if not distribute 
+        reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+
+        reb_tree_construct(r);
+        // Update center of mass and quadrupole moments in tree in preparation of force calculation.
+        // Also distributed essential tree if MPI is used.
+        reb_tree_calculate_gravity_data(r); 
+    }
+
 
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
@@ -485,29 +506,6 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
             break;
         case REB_GRAVITY_TREE:
             {
-                // Note the boundary_check and distribute_particles can change the number of particles on the current node. 
-                // This is not compatible with some integrators. 
-
-                // Check if particles are in box 
-                PROFILING_START();
-                reb_boundary_check(r);     
-                PROFILING_STOP(PROFILING_CAT_BOUNDARY);
-#ifdef MPI
-                // Check if particles are in local rootbox, if not distribute 
-                reb_communication_mpi_distribute_particles(r);
-#endif // MPI
-
-                reb_tree_construct(r);
-                // Update center of mass and quadrupole moments in tree in preparation of force calculation.
-                reb_tree_calculate_gravity_data(r); 
-#ifdef MPI
-                // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-                reb_tree_prepare_essential_tree_for_gravity(r);
-
-                // Transfer essential tree and particles needed for collisions.
-                reb_communication_mpi_distribute_essential_tree_for_gravity(r);
-#endif // MPI
-
 #pragma omp parallel for schedule(guided)
                 for (size_t i=0; i<N; i++){
                     particles[i].ax = 0; 
@@ -1473,11 +1471,11 @@ void reb_tree_print(const struct reb_treecell *node, int indent){
 }
 
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
-    printf("calcualte acc for %d\n", pt);
+    printf("!!!!!!!!!!!! node %d calcualte acc for %d N=%d\n", r->mpi_id, pt, r->N);
     for(size_t i=0;i<r->N_root;i++){
         struct reb_treecell* node = r->tree_root[i];
         if (node!=NULL){
-            printf("rootcell %d\n", i);
+            printf("node %d rootcell %d\n", r->mpi_id, i);
             reb_tree_print(node, 8);
             reb_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
         }
@@ -1523,7 +1521,7 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
         if (node->remote == 0 && node->pt == pt) return;
         double _r = sqrt(r2 + softening2);
         double prefact = -G/(_r*_r*_r)*node->m;
-            printf("here %g %g \n", node->m, _r);
+        printf(" ++++++++++  node %d   node->remote=%d  prefact = %g\n", r->mpi_id, node->remote, prefact);
         particles[pt].ax += prefact*dx; 
         particles[pt].ay += prefact*dy; 
         particles[pt].az += prefact*dz; 
