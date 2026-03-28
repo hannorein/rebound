@@ -485,6 +485,18 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
             break;
         case REB_GRAVITY_TREE:
             {
+                // Note the boundary_check and distribute_particles can change the number of particles on the current node. 
+                // This is not compatible with some integrators. 
+
+                // Check if particles are in box 
+                PROFILING_START();
+                reb_boundary_check(r);     
+                PROFILING_STOP(PROFILING_CAT_BOUNDARY);
+#ifdef MPI
+                // Check if particles are in local rootbox, if not distribute 
+                reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+
                 reb_tree_construct(r);
                 // Update center of mass and quadrupole moments in tree in preparation of force calculation.
                 reb_tree_calculate_gravity_data(r); 
@@ -1448,8 +1460,8 @@ void reb_tree_print(const struct reb_treecell *node, int indent){
             for (int i=0;i<indent;i++){
                 printf(" ");
             }
-            printf("%d",o);
-            reb_tree_print(node->oct[o], indent++);
+            printf("%d\n",o);
+            reb_tree_print(node->oct[o], indent+1);
         }
     }
     if (node->pt >=0){

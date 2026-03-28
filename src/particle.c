@@ -490,19 +490,11 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
             return 1;
         }
     }else{
-        if (r->tree_root){
-            // Just flag particle, will be removed in update_tree.
-            r->particles[index].y = nan("");
-            if(r->free_particle_ap){
-                r->free_particle_ap(&r->particles[index]);
-            }
-        }else{
-            r->N--;
-            if(r->free_particle_ap){
-                r->free_particle_ap(&r->particles[index]);
-            }
-            r->particles[index] = r->particles[r->N];
+        r->N--;
+        if(r->free_particle_ap){
+            r->free_particle_ap(&r->particles[index]);
         }
+        r->particles[index] = r->particles[r->N];
     }
 
     return 0; // Success

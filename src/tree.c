@@ -71,8 +71,10 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
         return;
     } 
     int rootbox = reb_get_rootbox_for_particle(r, p);
+    printf("node %d   adding particle %d to rootbox %d  x=%g y=%g\n",r->mpi_id, pt, rootbox, p.x,p.y);
 #ifdef MPI
     if (!reb_communication_mpi_rootbox_is_local(r, rootbox)){
+        printf("node %d  problem particle %d has rootbox=%d\n", r->mpi_id, pt, rootbox);
         reb_simulation_error(r, "Particle has non-local rootbox. Cannot add to tree. Distribute particles before constructing tree.");
         return;
     }
@@ -213,7 +215,6 @@ void reb_tree_calculate_gravity_data(struct reb_simulation* const r){
         if (reb_communication_mpi_rootbox_is_local(r, i)){
 #endif // MPI
             if (r->tree_root[i]!=NULL){
-    printf("calculate grav\n");
                 reb_tree_calculate_gravity_data_in_cell(r, r->tree_root[i]);
             }
 #ifdef MPI

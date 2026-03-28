@@ -104,13 +104,14 @@ int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int r
     }
 }
 
-void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
+void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
     // Check if all particles on this node are within rootbox
     struct reb_particle* particles = r->particles;
     for (size_t i=0;i<r->N;i++){
         int rootbox = reb_get_rootbox_for_particle(r,particles[i]);
         int local = reb_communication_mpi_rootbox_is_local(r, rootbox);
         if (!local){
+        printf("node %d, N=%d, distribute &&&&&& particle %d should have rootbox %d  x=%g y=%g (REMOTW)\n", r->mpi_id, r->N, i, rootbox, particles[i].x, particles[i].y);
             // Add particle to send queue
             int N_root_per_node = r->N_root/r->mpi_num;
             int proc_id = rootbox/N_root_per_node;
@@ -124,6 +125,8 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
             // Remove particle locally
             reb_simulation_remove_particle(r, i, 0); // Do not keep sorted
             i--; // still need to check the particle that replaced the removed one
+        }else{
+        printf("node %d, distribute &&&&&& particle %d should have rootbox %d  x=%g y=%g  (LOCAL!)\n", r->mpi_id, i, rootbox, particles[i].x, particles[i].y);
         }
     }
     
@@ -162,8 +165,10 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
         MPI_Wait(&(request[i]), &status);
     }
     // Add particles to local tree
+
     for (int i=0;i<r->mpi_num;i++){
         for (int j=0;j<r->N_particles_recv[i];j++){
+            printf("@@@@@@@@@@@@@@@@@ node %d adding x=%g y=%g\n", r->mpi_id, r->particles_recv[i][j].x, r->particles_recv[i][j].y);
             reb_simulation_add(r,r->particles_recv[i][j]);
         }
     }
