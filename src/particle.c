@@ -465,7 +465,9 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
         if(r->free_particle_ap){
             r->free_particle_ap(&r->particles[index]);
         }
+#ifndef MPI // There might be empty nodes when MPI is used.
         reb_simulation_warning(r, "Last particle removed.");
+#endif // MPI
         return 0;
     }
     if (index >= r->N){
