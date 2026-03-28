@@ -1429,6 +1429,25 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
  */
 static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* const r, const int pt, const struct reb_treecell *node, const struct reb_vec6d gb);
 
+// For debugging
+void reb_tree_print(const struct reb_treecell *node, int indent){
+    for (int o=0; o<8; o++) {
+        if (node->oct[o] != NULL) {
+            for (int i=0;i<indent;i++){
+                printf(" ");
+            }
+            printf("%d",o);
+            reb_tree_print(node->oct[o], indent++);
+        }
+    }
+    if (node->pt >=0){
+        for (int i=0;i<indent;i++){
+            printf(" ");
+        }
+        printf("pt=%d\n",node->pt);
+    }
+}
+
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
     for(size_t i=0;i<r->N_root;i++){
         struct reb_treecell* node = r->tree_root[i];

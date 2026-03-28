@@ -154,6 +154,8 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
     }
 }
 
+// Distribute all particle to all other nodes, but do not add to local simulation.
+// Used for energy calculation (not ideal, should be improved).
 void reb_communication_mpi_distribute_particles_all_to_all(struct reb_simulation* const r){
     // Distribute the number of particles to be transferred.
     MPI_Allgather(&r->N, 1, MPI_INT, r->N_particles_recv, 1, MPI_INT, MPI_COMM_WORLD);

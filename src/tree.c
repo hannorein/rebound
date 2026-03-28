@@ -72,10 +72,7 @@ void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
     } 
     int rootbox = reb_get_rootbox_for_particle(r, p);
 #ifdef MPI
-    // Do not add particles that do not belong to this tree (avoid removing active particles)
-    int N_root_per_node = r->N_root/r->mpi_num;
-    int proc_id = rootbox/N_root_per_node;
-    if (proc_id!=r->mpi_id) return;
+    if (reb_communication_mpi_rootbox_is_local(r, rootbox)==0) return;
 #endif 	// MPI
     r->tree_root[rootbox] = reb_tree_add_particle_to_cell(r, r->tree_root[rootbox],pt,NULL,0);
 }
