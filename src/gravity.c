@@ -59,6 +59,27 @@ static void reb_calculate_acceleration_for_particle(const struct reb_simulation*
  */
 void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     PROFILING_START();
+    if (r->gravity == REB_GRAVITY_TREE){
+        // Construct tree first.
+        // Note the boundary_check and distribute_particles can change the number of particles on the current node. 
+        // This is not compatible with some integrators. Also the reason this is up here, rather than in 
+        // the switch statement below.
+
+        // Check if particles are in box 
+        PROFILING_START();
+        reb_boundary_check(r);     
+        PROFILING_STOP(PROFILING_CAT_BOUNDARY);
+#ifdef MPI
+        // Check if particles are in local rootbox, if not distribute 
+        reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+
+        reb_tree_construct(r);
+        // Update center of mass and quadrupole moments in tree in preparation of force calculation.
+        // Also distributed essential tree if MPI is used.
+        reb_tree_calculate_gravity_data(r); 
+    }
+
 
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
@@ -511,6 +532,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                         }
                     }
                 }
+                // Delete tree (if it exists)    
+                reb_tree_delete(r);
             }
             break;
         case REB_GRAVITY_MERCURIUS:
@@ -1429,6 +1452,25 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
  * @param gb Ghostbox plus position of the particle (precalculated). 
  */
 static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* const r, const int pt, const struct reb_treecell *node, const struct reb_vec6d gb);
+
+// For debugging
+void reb_tree_print(const struct reb_treecell *node, int indent){
+    for (int o=0; o<8; o++) {
+        if (node->oct[o] != NULL) {
+            for (int i=0;i<indent;i++){
+                printf(" ");
+            }
+            printf("%d\n",o);
+            reb_tree_print(node->oct[o], indent+1);
+        }
+    }
+    if (node->pt >=0){
+        for (int i=0;i<indent;i++){
+            printf(" ");
+        }
+        printf("pt=%d\n",node->pt);
+    }
+}
 
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
     for(size_t i=0;i<r->N_root;i++){

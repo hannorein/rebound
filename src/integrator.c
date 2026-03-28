@@ -30,7 +30,6 @@
 #include <math.h>
 #include "gravity.h"
 #include "tree.h"
-#include "boundary.h"
 #include "output.h"
 #include "integrator.h"
 #include "integrator_whfast.h"
@@ -44,6 +43,9 @@
 #include "integrator_janus.h"
 #include "integrator_eos.h"
 #include "integrator_bs.h"
+#ifdef MPI
+#include "communication_mpi.h"
+#endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
@@ -198,34 +200,6 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
     /***********************************************************
-     * Prepare TREE for force calculation and distribute
-     * particles to other nodes. 
-     **********************************************************/
-    if (r->gravity==REB_GRAVITY_TREE){
-        // Check for root crossings.
-        reb_boundary_check(r);     
-        // Build the tree
-        reb_tree_construct(r);
-    }
-
-#ifdef MPI
-    // Distribute particles and add newly received particles to tree.
-    reb_communication_mpi_distribute_particles(r);
-#endif // MPI
-
-    if (r->gravity==REB_GRAVITY_TREE){
-        // Update center of mass and quadrupole moments in tree in preparation of force calculation.
-        reb_tree_calculate_gravity_data(r); 
-#ifdef MPI
-        // Prepare essential tree (and particles close to the boundary needed for collisions) for distribution to other nodes.
-        reb_tree_prepare_essential_tree_for_gravity(r);
-
-        // Transfer essential tree and particles needed for collisions.
-        reb_communication_mpi_distribute_essential_tree_for_gravity(r);
-#endif // MPI
-    }
-
-    /***********************************************************
      * Main gravity calculation
      * This first sets accelerations to zero even if
      * REB_GRAVITY_NONE is used.
@@ -287,7 +261,5 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
     }
-    // Delete tree (if it exists)    
-    reb_tree_delete(r);
 }
 

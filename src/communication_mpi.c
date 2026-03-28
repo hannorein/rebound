@@ -1,7 +1,7 @@
 /**
- * @file 	communication_mpi.c
- * @brief	Handles communication between nodes using MPI.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * @file    communication_mpi.c
+ * @brief   Handles communication between nodes using MPI.
+ * @author  Hanno Rein <hanno@hanno-rein.de>
  *
  * @details These routines handle the communication between
  * different nodes via the Message Passing Interface (MPI). 
@@ -35,11 +35,15 @@
  */
 #ifdef MPI
 #include <mpi.h>
+#include <math.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "rebound.h"
 #include "particle.h"
 #include "tree.h"
 #include "boundary.h"
 #include "communication_mpi.h"
+#include "simulation.h"
 
 
 void reb_mpi_init(struct reb_simulation* const r){
@@ -48,7 +52,7 @@ void reb_mpi_init(struct reb_simulation* const r){
     if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
         if (r->mpi_id==0){
             char msg[1024];
-            sprintf(msg, "Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
+            sprintf(msg, "Number of root boxes (%zu) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
             reb_simulation_error(r,msg);
         }
         exit(-1);
@@ -74,25 +78,25 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
     MPI_Comm_rank(MPI_COMM_WORLD,&(r->mpi_id));
 
     // Prepare send/recv buffers for particles
-    r->particles_send   	= calloc(r->mpi_num,sizeof(struct reb_particle*));
-    r->N_particles_send 	= calloc(r->mpi_num,sizeof(int));
-    r->N_particles_send_max 	= calloc(r->mpi_num,sizeof(int));
-    r->particles_recv   	= calloc(r->mpi_num,sizeof(struct reb_particle*));
-    r->N_particles_recv 	= calloc(r->mpi_num,sizeof(int));
-    r->N_particles_recv_max 	= calloc(r->mpi_num,sizeof(int));
+    r->particles_send       = calloc(r->mpi_num,sizeof(struct reb_particle*));
+    r->N_particles_send     = calloc(r->mpi_num,sizeof(int));
+    r->N_particles_send_max = calloc(r->mpi_num,sizeof(int));
+    r->particles_recv       = calloc(r->mpi_num,sizeof(struct reb_particle*));
+    r->N_particles_recv     = calloc(r->mpi_num,sizeof(int));
+    r->N_particles_recv_max = calloc(r->mpi_num,sizeof(int));
 
     // Prepare send/recv buffers for essential tree
-    r->tree_essential_send   	= calloc(r->mpi_num,sizeof(struct reb_treecell*));
-    r->N_tree_essential_send 	= calloc(r->mpi_num,sizeof(int));
-    r->N_tree_essential_send_max = calloc(r->mpi_num,sizeof(int));
-    r->tree_essential_recv   	= calloc(r->mpi_num,sizeof(struct reb_treecell*));
-    r->N_tree_essential_recv 	= calloc(r->mpi_num,sizeof(int));
+    r->tree_essential_send      = calloc(r->mpi_num,sizeof(struct reb_treecell*));
+    r->N_tree_essential_send    = calloc(r->mpi_num,sizeof(int));
+    r->N_tree_essential_send_max= calloc(r->mpi_num,sizeof(int));
+    r->tree_essential_recv      = calloc(r->mpi_num,sizeof(struct reb_treecell*));
+    r->N_tree_essential_recv    = calloc(r->mpi_num,sizeof(int));
     r->N_tree_essential_recv_max = calloc(r->mpi_num,sizeof(int));
 }
 
-int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i){
+int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int rootbox){
     int N_root_per_node = r->N_root/r->mpi_num;
-    int proc_id = i/N_root_per_node;
+    int proc_id = rootbox/N_root_per_node;
     if (proc_id != r->mpi_id){
         return 0;
     }else{
@@ -100,8 +104,30 @@ int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i
     }
 }
 
+void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
+    // Check if all particles on this node are within rootbox
+    struct reb_particle* particles = r->particles;
+    for (size_t i=0;i<r->N;i++){
+        int rootbox = reb_get_rootbox_for_particle(r,particles[i]);
+        int local = reb_communication_mpi_rootbox_is_local(r, rootbox);
+        if (!local){
+            // Add particle to send queue
+            int N_root_per_node = r->N_root/r->mpi_num;
+            int proc_id = rootbox/N_root_per_node;
+            int send_N = r->N_particles_send[proc_id];
+            if (r->N_particles_send_max[proc_id] <= send_N){
+                r->N_particles_send_max[proc_id] += 128;
+                r->particles_send[proc_id] = realloc(r->particles_send[proc_id],sizeof(struct reb_particle)*r->N_particles_send_max[proc_id]);
+            }
+            r->particles_send[proc_id][send_N] = particles[i];
+            r->N_particles_send[proc_id]++;
+            // Remove particle locally
+            reb_simulation_remove_particle(r, i, 0); // Do not keep sorted
+            i--; // still need to check the particle that replaced the removed one
+        }else{
+        }
+    }
 
-void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
     // Distribute the number of particles to be transferred.
     for (int i=0;i<r->mpi_num;i++){
         MPI_Scatter(r->N_particles_send, 1, MPI_INT, &(r->N_particles_recv[i]), 1, MPI_INT, i, MPI_COMM_WORLD);
@@ -137,6 +163,7 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
         MPI_Wait(&(request[i]), &status);
     }
     // Add particles to local tree
+
     for (int i=0;i<r->mpi_num;i++){
         for (int j=0;j<r->N_particles_recv[i];j++){
             reb_simulation_add(r,r->particles_recv[i][j]);
@@ -150,6 +177,8 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
     }
 }
 
+// Distribute all particle to all other nodes, but do not add to local simulation.
+// Used for energy calculation (not ideal, should be improved).
 void reb_communication_mpi_distribute_particles_all_to_all(struct reb_simulation* const r){
     // Distribute the number of particles to be transferred.
     MPI_Allgather(&r->N, 1, MPI_INT, r->N_particles_recv, 1, MPI_INT, MPI_COMM_WORLD);
@@ -187,15 +216,6 @@ void reb_communication_mpi_distribute_particles_all_to_all(struct reb_simulation
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
-void reb_communication_mpi_add_particle_to_send_queue(struct reb_simulation* const r, struct reb_particle pt, int proc_id){
-    int send_N = r->N_particles_send[proc_id];
-    while (r->N_particles_send_max[proc_id] <= send_N){
-        r->N_particles_send_max[proc_id] += 128;
-        r->particles_send[proc_id] = realloc(r->particles_send[proc_id],sizeof(struct reb_particle)*r->N_particles_send_max[proc_id]);
-    }
-    r->particles_send[proc_id][send_N] = pt;
-    r->N_particles_send[proc_id]++;
-}
 
 
 /** 
@@ -297,7 +317,7 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
         // Update reference from cell to particle
         r->tree_essential_send[proc][r->N_tree_essential_send[proc]-1].pt = r->N_particles_send[proc];
         r->N_particles_send[proc]++;
-    }else{		// Not a leaf. Check if we need to transfer daughters.
+    }else{  // Not a leaf. Check if we need to transfer daughters.
         double distance2 = reb_communication_distance2_of_proc_to_node(r, proc,node);
         double rp  = 2.*largest_radius + 0.86602540378443*node->w;
         if (distance2 < rp*rp ){
@@ -311,17 +331,17 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
 }
 void reb_communication_mpi_prepare_essential_tree_for_collisions(struct reb_simulation* const r, struct reb_treecell* root){
     if (root==NULL) return;
-    int l1 = -1;
-    int l2 = -1;
+    size_t l1 = SIZE_MAX;
+    size_t l2 = SIZE_MAX;
     reb_simulation_two_largest_particles(r, &l1, &l2);
     double largest_radius = 0;
-    if (l1!=-1){
+    if (l1!=SIZE_MAX){
         largest_radius = r->particles[l1].r;
     }
     // Find out which cells are needed by every other node
     for (int i=0; i<r->mpi_num; i++){
         if (i==r->mpi_id) continue;
-        reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(r, root,i,largest_radius);	
+        reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(r, root,i,largest_radius);
     }
 }
 
@@ -335,7 +355,7 @@ void reb_communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct re
     // Copy node to send buffer
     r->tree_essential_send[proc][r->N_tree_essential_send[proc]] = (*node);
     r->N_tree_essential_send[proc]++;
-    if (node->pt<0){		// Not a leaf. Check if we need to transfer daughters.
+    if (node->pt<0){    // Not a leaf. Check if we need to transfer daughters.
         double width = node->w;
         double distance2 = reb_communication_distance2_of_proc_to_node(r, proc,node);
         if ( width*width > r->opening_angle2*distance2) {
@@ -350,11 +370,11 @@ void reb_communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct re
 }
 
 void reb_communication_mpi_prepare_essential_tree_for_gravity(struct reb_simulation* const r,struct reb_treecell* root){
-    if (root==NULL) return;
+    if (!root) return;
     // Find out which cells are needed by every other node
     for (int i=0; i<r->mpi_num; i++){
         if (i==r->mpi_id) continue;
-        reb_communication_mpi_prepare_essential_cell_for_gravity_for_proc(r, root,i);	
+        reb_communication_mpi_prepare_essential_cell_for_gravity_for_proc(r, root,i);
     }
 }
 

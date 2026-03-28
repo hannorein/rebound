@@ -704,7 +704,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
         }
 #ifdef MPI
         if (0==strcmp(token,"id")){
-            name = (size_t)va_arg(args, int);
+            name = (void*)va_arg(args, int);
         }
 #else // MPI
         if (0==strcmp(token,"name")){

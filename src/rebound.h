@@ -772,10 +772,9 @@ DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const n
 DLLEXPORT const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
 // Returns a pointer to a particle given its name. Returns NULL if not found.
 DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
-// When MPI is used, particles cannot be accessed by name. Need to use id instead.
 #ifdef MPI
-DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, int id);
-DLLEXPORT struct reb_particle reb_simulation_particle_by_id_mpi(struct reb_simulation* const r, int id);
+// When MPI is used, particles cannot be accessed by name. Need to use id instead.
+DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, size_t id);
 #endif // MPI
 
 

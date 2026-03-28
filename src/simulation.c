@@ -29,6 +29,7 @@
 #include <string.h>
 #ifdef MPI
 #include <mpi.h>
+#include "communication_mpi.h"
 #endif // MPI
 #ifdef OPENMP
 #include <omp.h>
@@ -303,6 +304,8 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     reb_integrator_mercurius_reset(r);
     reb_integrator_trace_reset(r);
     reb_integrator_bs_reset(r);
+    free(r->tree_root);
+    r->tree_root = NULL;
     if (r->ri_custom.reset){
         r->ri_custom.reset(r);
     }
@@ -343,10 +346,6 @@ static void* reb_simulation_integrate_raw(void* args){
     signal(SIGINT, reb_sigint_handler);
     struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
     struct reb_simulation* const r = thread_info->r;
-#ifdef MPI
-    // Distribute particles
-    reb_communication_mpi_distribute_particles(r);
-#endif // MPI
 
     if (thread_info->tmax != r->t){
         int dt_sign = (thread_info->tmax > r->t) ? 1.0 : -1.0; // determine integration direction
@@ -523,15 +522,19 @@ static void reb_simulation_step(struct reb_simulation* const r){
         reb_simulation_rescale_var(r);
     }
 
-    // Do collisions here. We need both the positions and velocities at the same time.
-    // Check for root crossings.
     PROFILING_START();
     reb_boundary_check(r);     
     PROFILING_STOP(PROFILING_CAT_BOUNDARY);
 
-    PROFILING_START();
-    reb_collision_search(r);
-    PROFILING_STOP(PROFILING_CAT_COLLISION);
+    if (r->collision != REB_COLLISION_NONE){
+#ifdef MPI
+        reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+
+        PROFILING_START();
+        reb_collision_search(r);
+        PROFILING_STOP(PROFILING_CAT_COLLISION);
+    }
 
     // Update walltime
     struct reb_timeval time_end;
@@ -620,7 +623,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_root_x  = 1;
     r->N_root_y  = 1;
     r->N_root_z  = 1;
-    r->N_root   = 1;
+    r->N_root    = 1;
     r->N_ghost_x  = 0;
     r->N_ghost_y  = 0;
     r->N_ghost_z  = 0;
@@ -862,6 +865,7 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, 
 #endif // OPENMP
 }
 
+// TODO: Make this function obsolute by calculating these constants on the fly when building the tree.
 void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const size_t N_root_x, const size_t N_root_y, const size_t N_root_z){
     r->root_size = root_size;
     r->N_root_x = N_root_x;
@@ -873,6 +877,9 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
     r->boxsize.z = r->root_size *(double)r->N_root_z;
     r->N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
+    if (r->tree_root==NULL){
+        r->tree_root = calloc(r->N_root,sizeof(struct reb_treecell*));
+    }
     if (r->N_root_x <=0 || r->N_root_y <=0 || r->N_root_z <= 0){
         reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
     }
