@@ -49,17 +49,6 @@
 
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
-//#ifdef MPI
-//    int rootbox = reb_get_rootbox_for_particle(r, pt);
-//    int N_root_per_node = r->N_root/r->mpi_num;
-//    int proc_id = rootbox/N_root_per_node;
-//    const unsigned int N_active = (r->N_active==SIZE_MAX)?r->N: (unsigned int)r->N_active;
-//    if (proc_id != r->mpi_id && r->N >= N_active){
-//        // Add particle to array and send them to proc_id later. 
-//        reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
-//        return;
-//    }
-//#endif // MPI
     if (reb_boundary_particle_is_in_box(r, pt)==0){
         if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
             reb_simulation_error(r,"Cannot add particle because simulation box not initialized. Call reb_simulation_configure_box() before adding particles.");

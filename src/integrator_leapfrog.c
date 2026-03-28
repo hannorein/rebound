@@ -54,6 +54,7 @@ static void kick(struct reb_simulation* r, double dt){
         particles[i].vx += dt * particles[i].ax;
         particles[i].vy += dt * particles[i].ay;
         particles[i].vz += dt * particles[i].az;
+        printf("*********** node=%d i=%d ax=%f ay=%f\n",r->mpi_id, i, particles[i].ax, particles[i].ay);
     }
 }
 

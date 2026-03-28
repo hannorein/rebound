@@ -47,3 +47,6 @@ problems/
 *.pete
 examples/solar_system_tes
 rebound.html
+tags
+.nfs*
+*.asm_o

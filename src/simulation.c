@@ -346,10 +346,6 @@ static void* reb_simulation_integrate_raw(void* args){
     signal(SIGINT, reb_sigint_handler);
     struct reb_thread_info* thread_info = (struct reb_thread_info*)args;
     struct reb_simulation* const r = thread_info->r;
-#ifdef MPI
-    // Distribute particles
-    reb_communication_mpi_distribute_particles(r);
-#endif // MPI
 
     if (thread_info->tmax != r->t){
         int dt_sign = (thread_info->tmax > r->t) ? 1.0 : -1.0; // determine integration direction
@@ -510,6 +506,13 @@ static void reb_simulation_step(struct reb_simulation* const r){
         r->ri_whfast.recalculate_coordinates_this_timestep = 1;
         r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
+    
+    PROFILING_START();
+    reb_boundary_check(r);     
+#ifdef MPI
+    reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+    PROFILING_STOP(PROFILING_CAT_BOUNDARY);
 
     PROFILING_START();
     reb_integrator_step(r);
@@ -526,15 +529,18 @@ static void reb_simulation_step(struct reb_simulation* const r){
         reb_simulation_rescale_var(r);
     }
 
-    // Do collisions here. We need both the positions and velocities at the same time.
-    // Check for root crossings.
-    PROFILING_START();
-    reb_boundary_check(r);     
-    PROFILING_STOP(PROFILING_CAT_BOUNDARY);
+    if (r->collision != REB_COLLISION_NONE){
+        PROFILING_START();
+        reb_boundary_check(r);     
+#ifdef MPI
+        reb_communication_mpi_distribute_particles(r);
+#endif // MPI
+        PROFILING_STOP(PROFILING_CAT_BOUNDARY);
 
-    PROFILING_START();
-    reb_collision_search(r);
-    PROFILING_STOP(PROFILING_CAT_COLLISION);
+        PROFILING_START();
+        reb_collision_search(r);
+        PROFILING_STOP(PROFILING_CAT_COLLISION);
+    }
 
     // Update walltime
     struct reb_timeval time_end;
