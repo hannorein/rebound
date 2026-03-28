@@ -61,10 +61,6 @@ static int reb_reb_tree_get_octant_for_particle_in_cell(const struct reb_particl
 static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation* const r, struct reb_treecell *node, int pt, struct reb_treecell *parent, int o);
 
 void reb_tree_add_particle_to_tree(struct reb_simulation* const r, int pt){
-    if (r->tree_root==NULL){
-        // Should already be allocated in configure_box
-        r->tree_root = calloc(r->N_root_x*r->N_root_y*r->N_root_z,sizeof(struct reb_treecell*));
-    }
     struct reb_particle p = r->particles[pt];
     if (!isfinite(p.x) || !isfinite(p.y) || !isfinite(p.z)){
         reb_simulation_error(r, "Particle has non-finite coordinates. Cannot add to tree.");
@@ -210,7 +206,7 @@ void reb_tree_calculate_gravity_data(struct reb_simulation* const r){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)){
 #endif // MPI
-            if (r->tree_root[i]!=NULL){
+            if (r->tree_root && r->tree_root[i]!=NULL){
                 reb_tree_calculate_gravity_data_in_cell(r, r->tree_root[i]);
             }
 #ifdef MPI
@@ -315,6 +311,7 @@ void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_tree
     }
 }
 void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r){
+    if (!r->tree_root) return;
     for(size_t i=0;i<r->N_root;i++){
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
             reb_communication_mpi_prepare_essential_tree_for_gravity(r, r->tree_root[i]);

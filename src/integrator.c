@@ -261,7 +261,5 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             }
         }
     }
-    // Delete tree (if it exists)    
-    reb_tree_delete(r);
 }
 

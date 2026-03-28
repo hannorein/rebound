@@ -532,6 +532,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                         }
                     }
                 }
+                // Delete tree (if it exists)    
+                reb_tree_delete(r);
             }
             break;
         case REB_GRAVITY_MERCURIUS:
@@ -1471,12 +1473,9 @@ void reb_tree_print(const struct reb_treecell *node, int indent){
 }
 
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
-    printf("!!!!!!!!!!!! node %d calcualte acc for %d N=%d\n", r->mpi_id, pt, r->N);
     for(size_t i=0;i<r->N_root;i++){
         struct reb_treecell* node = r->tree_root[i];
         if (node!=NULL){
-            printf("node %d rootcell %d\n", r->mpi_id, i);
-            reb_tree_print(node, 8);
             reb_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
         }
     }
@@ -1521,7 +1520,6 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
         if (node->remote == 0 && node->pt == pt) return;
         double _r = sqrt(r2 + softening2);
         double prefact = -G/(_r*_r*_r)*node->m;
-        printf(" ++++++++++  node %d   node->remote=%d  prefact = %g\n", r->mpi_id, node->remote, prefact);
         particles[pt].ax += prefact*dx; 
         particles[pt].ay += prefact*dy; 
         particles[pt].az += prefact*dz; 

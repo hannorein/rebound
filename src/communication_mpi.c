@@ -111,7 +111,6 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
         int rootbox = reb_get_rootbox_for_particle(r,particles[i]);
         int local = reb_communication_mpi_rootbox_is_local(r, rootbox);
         if (!local){
-        printf("node %d, N=%d, distribute &&&&&& particle %d should have rootbox %d  x=%g y=%g (REMOTW)\n", r->mpi_id, r->N, i, rootbox, particles[i].x, particles[i].y);
             // Add particle to send queue
             int N_root_per_node = r->N_root/r->mpi_num;
             int proc_id = rootbox/N_root_per_node;
@@ -126,7 +125,6 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
             reb_simulation_remove_particle(r, i, 0); // Do not keep sorted
             i--; // still need to check the particle that replaced the removed one
         }else{
-        printf("node %d, distribute &&&&&& particle %d should have rootbox %d  x=%g y=%g  (LOCAL!)\n", r->mpi_id, i, rootbox, particles[i].x, particles[i].y);
         }
     }
     
@@ -168,7 +166,6 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
 
     for (int i=0;i<r->mpi_num;i++){
         for (int j=0;j<r->N_particles_recv[i];j++){
-            printf("@@@@@@@@@@@@@@@@@ node %d adding x=%g y=%g\n", r->mpi_id, r->particles_recv[i][j].x, r->particles_recv[i][j].y);
             reb_simulation_add(r,r->particles_recv[i][j]);
         }
     }
@@ -373,7 +370,7 @@ void reb_communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct re
 }
 
 void reb_communication_mpi_prepare_essential_tree_for_gravity(struct reb_simulation* const r,struct reb_treecell* root){
-    if (root==NULL) return;
+    if (!root) return;
     // Find out which cells are needed by every other node
     for (int i=0; i<r->mpi_num; i++){
         if (i==r->mpi_id) continue;
