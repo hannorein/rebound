@@ -249,6 +249,9 @@ void reb_tree_construct(struct reb_simulation* const r){
         reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
         return;
     }
+    if (!r->tree_root){
+        r->tree_root = calloc(r->N_root,sizeof(struct reb_treecell*));
+    }
     for (size_t i=0;i<r->N;i++){
         struct reb_particle p = r->particles[i];
         if(fabs(p.x)>r->boxsize.x/2. || fabs(p.y)>r->boxsize.y/2. || fabs(p.z)>r->boxsize.z/2.){

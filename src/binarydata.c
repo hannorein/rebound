@@ -952,10 +952,6 @@ finish_fields:
         r->particles_var[l].sim = r;
     }
     r->ri_whfast512.recalculate_constants = 1;
-    if (r->N_root){ // replacement of reb_simulation_configure_box();
-        free(r->tree_root);
-        r->tree_root = calloc(r->N_root,sizeof(struct reb_treecell*));
-    }
 }
 
 struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE warnings){

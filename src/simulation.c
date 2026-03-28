@@ -623,7 +623,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_root_x  = 1;
     r->N_root_y  = 1;
     r->N_root_z  = 1;
-    r->N_root   = 1;
+    r->N_root    = 1;
     r->N_ghost_x  = 0;
     r->N_ghost_y  = 0;
     r->N_ghost_z  = 0;

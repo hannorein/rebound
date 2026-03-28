@@ -487,10 +487,6 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
         for(size_t j=index; j<r->N; j++){
             r->particles[j] = r->particles[j+1];
         }
-        if (r->tree_root){
-            reb_simulation_error(r, "REBOUND cannot remove a particle in a tree and keep the particles sorted. Did not remove particle.");
-            return 1;
-        }
     }else{
         r->N--;
         if(r->free_particle_ap){
