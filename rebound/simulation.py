@@ -1497,7 +1497,6 @@ Simulation._fields_ = [
                 ("boxsize", Vec3dBasic),
                 ("boxsize_max", c_double),
                 ("root_size", c_double),
-                ("N_root", c_size_t),
                 ("N_root_x", c_size_t),
                 ("N_root_y", c_size_t),
                 ("N_root_z", c_size_t),

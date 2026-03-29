@@ -202,7 +202,8 @@ static void reb_tree_calculate_gravity_data_in_cell(const struct reb_simulation*
 }
 
 void reb_tree_calculate_gravity_data(struct reb_simulation* const r){
-    for(size_t i=0;i<r->N_root;i++){
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    for(size_t i=0;i<N_root;i++){
 #ifdef MPI
         if (reb_communication_mpi_rootbox_is_local(r, i)){
 #endif // MPI
@@ -237,7 +238,8 @@ static void reb_tree_delete_cell(struct reb_treecell* node){
 
 void reb_tree_delete(struct reb_simulation* const r){
     if (r->tree_root!=NULL){
-        for(size_t i=0;i<r->N_root;i++){
+        size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+        for(size_t i=0;i<N_root;i++){
             reb_tree_delete_cell(r->tree_root[i]);
             r->tree_root[i] = NULL;
         }
@@ -250,7 +252,8 @@ void reb_tree_construct(struct reb_simulation* const r){
         return;
     }
     if (!r->tree_root){
-        r->tree_root = calloc(r->N_root,sizeof(struct reb_treecell*));
+        size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+        r->tree_root = calloc(N_root,sizeof(struct reb_treecell*));
     }
     for (size_t i=0;i<r->N;i++){
         struct reb_particle p = r->particles[i];
@@ -315,7 +318,8 @@ void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_tree
 }
 void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r){
     if (!r->tree_root) return;
-    for(size_t i=0;i<r->N_root;i++){
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    for(size_t i=0;i<N_root;i++){
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
             reb_communication_mpi_prepare_essential_tree_for_gravity(r, r->tree_root[i]);
         }else{
@@ -327,7 +331,8 @@ void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r)
     }
 }
 void reb_tree_prepare_essential_tree_for_collisions(struct reb_simulation* const r){
-    for(size_t i=0;i<r->N_root;i++){
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    for(size_t i=0;i<N_root;i++){
         if (reb_communication_mpi_rootbox_is_local(r, i)==1){
             reb_communication_mpi_prepare_essential_tree_for_collisions(r, r->tree_root[i]);
         }else{

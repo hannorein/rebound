@@ -623,7 +623,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_root_x  = 1;
     r->N_root_y  = 1;
     r->N_root_z  = 1;
-    r->N_root    = 1;
     r->N_ghost_x  = 0;
     r->N_ghost_y  = 0;
     r->N_ghost_z  = 0;
@@ -879,7 +878,6 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
     r->boxsize.x = r->root_size *(double)r->N_root_x;
     r->boxsize.y = r->root_size *(double)r->N_root_y;
     r->boxsize.z = r->root_size *(double)r->N_root_z;
-    r->N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     r->boxsize_max = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
 }
 
