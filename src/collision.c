@@ -51,6 +51,7 @@ void reb_collision_search(struct reb_simulation* const r){
     r->collisions_N = 0;
     size_t N = r->N;
     size_t Ninner = N;
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
 
     size_t* map = NULL;
     switch (r->integrator){
@@ -295,7 +296,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vy += p1.vy; 
                                 gb.vz += p1.vz; 
                                 // Loop over all root boxes.
-                                for (size_t ri=0;ri<r->N_root;ri++){
+                                for (size_t ri=0;ri<N_root;ri++){
                                     struct reb_treecell* rootcell = r->tree_root[ri];
                                     if (rootcell!=NULL){
                                         reb_tree_get_nearest_neighbour_in_cell(r, gb, gbunmod, ri, p1_r, second_largest_radius, &collision_nearest, rootcell);
@@ -358,7 +359,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vy += p1.vy; 
                                 gb.vz += p1.vz; 
                                 // Loop over all root boxes.
-                                for (size_t ri=0;ri<r->N_root;ri++){
+                                for (size_t ri=0;ri<N_root;ri++){
                                     struct reb_treecell* rootcell = r->tree_root[ri];
                                     if (rootcell!=NULL){
                                         reb_tree_check_for_overlapping_trajectories_in_cell(r, gb, gbunmod,ri,p1_r,p1_r_plus_dtv,&collision_nearest,rootcell,maxdrift);
@@ -520,7 +521,8 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
                 p2 = particles[c->pt];
 #ifdef MPI
             }else{
-                int N_root_per_node = r->N_root/r->mpi_num;
+                int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+                int N_root_per_node = N_root/r->mpi_num;
                 int proc_id = ri/N_root_per_node;
                 p2 = r->particles_recv[proc_id][c->pt];
             }
@@ -653,7 +655,8 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_s
         p2 = particles[c.p2];
 #ifdef MPI
     }else{
-        int N_root_per_node = r->N_root/r->mpi_num;
+        int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+        int N_root_per_node = N_root/r->mpi_num;
         int proc_id = c.ri/N_root_per_node;
         p2 = r->particles_recv[proc_id][c.p2];
     }

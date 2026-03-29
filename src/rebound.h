@@ -479,10 +479,7 @@ struct reb_simulation {
     uint32_t python_unit_t;         // Only used when working with units in python.
 
     // Simulation domain and ghost boxes 
-    struct  reb_vec3d boxsize;      // Size of the entire simulation box, root_x*boxsize. Set in box_init().
-    double  boxsize_max;            // Maximum size of the entire box in any direction. Set in box_init().
     double  root_size;              // Size of a root box. 
-    size_t  N_root;                 // Total number of root boxes in all directions, N_root_x*N_root_y*N_root_z. Default: 1. Set in box_init().
     size_t  N_root_x;               // Number of ghost boxes in x direction. Do not change manually.
     size_t  N_root_y;
     size_t  N_root_z;
@@ -634,8 +631,6 @@ DLLEXPORT void reb_simulation_reset_integrator(struct reb_simulation* r);
 DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
 // Compare r1 to r2. If exactly equal then 0 is returned, otherwise 1. If output_option=1, then difference is also printed on screen.
 DLLEXPORT int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
-// Setup simulation domain and root boxes. This needs to be called before particles are added if the tree code is used.
-DLLEXPORT void reb_simulation_configure_box(struct reb_simulation* const r, const double boxsize, const size_t N_root_x, const size_t N_root_y, const size_t N_root_z); // Configure the boundary/root box
 
 // Start webserver for visualization. Returns 0 on success.
 DLLEXPORT int reb_simulation_start_server(struct reb_simulation* r, int port);

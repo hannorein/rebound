@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
     r->N_active     = 2;    // Only the star and the planet have non-zero mass
     r->heartbeat    = heartbeat;
 
-    reb_simulation_configure_box(r,8.,1,1,1); // Box with size 8 AU
+    r->root_size = 8.;  // Box with size 8 AU
     
     // Initial conditions for star
     struct reb_particle star = {0};

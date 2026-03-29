@@ -61,7 +61,12 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
         }
         scale *= 1.1;
     }else{
-        scale = r->boxsize_max/2.;
+        struct reb_vec3d boxsize = {
+            .x = r->root_size*(double)r->N_root_x,
+            .y = r->root_size*(double)r->N_root_y,
+            .z = r->root_size*(double)r->N_root_z,
+        };
+        scale = MAX(boxsize.x, MAX(boxsize.y, boxsize.z));
     }
 
     struct reb_mat4df oldview = s->view;
@@ -752,7 +757,7 @@ void reb_render_frame(void* p){
                         boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
                     }else{
                         glBindVertexArray(data->shader_box.box_vao);
-                        boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
+                        boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->root_size*(double)r->N_root_x/2., data->r_copy->root_size*(double)r->N_root_y/2., data->r_copy->root_size*(double)r->N_root_z/2.);
                     }
                     struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
                     glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);

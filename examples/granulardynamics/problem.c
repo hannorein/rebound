@@ -32,33 +32,39 @@ int main(int argc, char* argv[]){
     // Override default collision handling to account for border particles
     r->collision_resolve = collision_resolve_hardsphere_withborder;
     r->heartbeat         = heartbeat;
-    reb_simulation_configure_box(r, 20., 1, 1, 4);
+    r->root_size = 20.0;
+    r->N_root_z = 4;
     
     r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;     
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     
-    double N_part     = 0.00937*r->boxsize.x*r->boxsize.y*r->boxsize.z;
+    double N_part     = 0.00937*boxsize.x*boxsize.y*boxsize.z;
 
     // Add Border Particles
     double radius         = 1;
     double mass        = 1;
-    double border_spacing_x = r->boxsize.x/(floor(r->boxsize.x/radius/2.)-1.);
-    double border_spacing_y = r->boxsize.y/(floor(r->boxsize.y/radius/2.)-1.);
+    double border_spacing_x = boxsize.x/(floor(boxsize.x/radius/2.)-1.);
+    double border_spacing_y = boxsize.y/(floor(boxsize.y/radius/2.)-1.);
     struct reb_particle pt = {0};
     pt.r         = radius;
     pt.m         = mass;
     pt.name      = "border";
-    for(double x = -r->boxsize.x/2.; x<r->boxsize.x/2.-border_spacing_x/2.;x+=border_spacing_x){
-        for(double y = -r->boxsize.y/2.; y<r->boxsize.y/2.-border_spacing_y/2.;y+=border_spacing_y){
+    for(double x = -boxsize.x/2.; x<boxsize.x/2.-border_spacing_x/2.;x+=border_spacing_x){
+        for(double y = -boxsize.y/2.; y<boxsize.y/2.-border_spacing_y/2.;y+=border_spacing_y){
             pt.x         = x;
             pt.y         = y;
             
             // Add particle to bottom
-            pt.z         = -r->boxsize.z/2.+radius;
+            pt.z         = -boxsize.z/2.+radius;
             pt.vy         = 1;
             reb_simulation_add(r, pt);
 
             // Add particle to top
-            pt.z         = r->boxsize.z/2.-radius;
+            pt.z         = boxsize.z/2.-radius;
             pt.vy         = -1;
             reb_simulation_add(r, pt);
         }
@@ -69,9 +75,9 @@ int main(int argc, char* argv[]){
     // Add real particles
     while(r->N-N_border<N_part){
         struct reb_particle pt = {0};
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
-        pt.z         = 0.758*reb_random_uniform(r, -r->boxsize.z/2.,r->boxsize.z/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
+        pt.z         = 0.758*reb_random_uniform(r, -boxsize.z/2.,boxsize.z/2.);
         pt.vx         = reb_random_normal(r, 0.001);
         pt.vy         = reb_random_normal(r, 0.001);
         pt.vz         = reb_random_normal(r, 0.001);

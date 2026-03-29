@@ -55,11 +55,18 @@ int main(int argc, char* argv[]) {
     double particle_radius_min    = 1;          // m
     double particle_radius_max    = 4;          // m
     double particle_radius_slope  = -3;    
-    double boxsize                = 100;        // m
-    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+    double root_size                = 100;        // m
+    r->root_size = root_size; 
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     r->N_ghost_x = 2;
     r->N_ghost_y = 2;
     r->N_ghost_z = 0;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     
     // Use Bridges et al coefficient of restitution.
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
@@ -69,12 +76,12 @@ int main(int argc, char* argv[]) {
 
 
     // Add all ring particles
-    double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
+    double total_mass = surfacedensity*boxsize.x*boxsize.y;
     double mass = 0;
     while(mass<total_mass){
         struct reb_particle pt;
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vx         = 0;
         pt.vy         = -1.5*pt.x*OMEGA;
@@ -98,7 +105,7 @@ double mean_normal_geometric_optical_depth(const struct reb_simulation* const r)
         struct reb_particle p = r->particles[i];
         area += M_PI*p.r*p.r;
     }
-    return area/(r->boxsize.x*r->boxsize.y);
+    return area/(r->root_size*r->root_size*r->N_root_x*r->N_root_y);
 }
 
 double midplane_fillingfactor(const struct reb_simulation* const r){
@@ -110,7 +117,7 @@ double midplane_fillingfactor(const struct reb_simulation* const r){
             area += M_PI*R2;
         }
     }
-    return area/(r->boxsize.x*r->boxsize.y);
+    return area/(r->root_size*r->root_size*r->N_root_x*r->N_root_y);
 }
 
 struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r){

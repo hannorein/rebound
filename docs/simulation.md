@@ -42,25 +42,3 @@ It's the one structure you will work with most when using REBOUND.
         sim = None           # free simulation
         print(sim.particles) # segmentation fault
         ```
-
-There are several instances where you need to initialize a simulation's root boxes:
-
-- If you use a tree code for collision detection or for calculating gravity.
-- If you want to use open, periodic or shear-periodic boundary conditions.
-
-Initializing root boxes is done after the simulation is created:
-=== "C"
-    ```c
-    struct reb_simulation* r = reb_simulation_create();
-    double size = 100.;
-    reb_simulation_configure_box(r, size, 1, 2, 3);
-    ```
-=== "Python"
-    ```python
-    sim = rebound.Simulation()
-    size = 100.
-    sim.configure_box(size, 1, 2, 3);
-    ```
-In the above example, there is one root box in the x direction, there are two in the y direction, and three in the z direction. 
-In most cases you want exactly one root box in each direction.
-

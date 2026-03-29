@@ -36,10 +36,11 @@ int main(int argc, char* argv[]){
     // Setup root boxes for gravity tree.
     // Here, we use 2x2=4 root boxes (each with length 'boxsize')
     // This allows you to use up to 4 MPI nodes.
-    reb_simulation_configure_box(r,boxsize,2,2,1);
+    r->root_size = boxsize;
+    r->N_root_x = 2;
+    r->N_root_y = 2;
 
     // Initialize MPI
-    // This can only be done after reb_simulation_configure_box.
     reb_mpi_init(r);
 
     // Setup particles only on master node

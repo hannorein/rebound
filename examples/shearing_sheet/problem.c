@@ -43,14 +43,21 @@ int main(int argc, char* argv[]) {
     double particle_radius_min     = 1;       // m
     double particle_radius_max     = 4;       // m
     double particle_radius_slope   = -3;    
-    double boxsize             = 100;         // m
-    if (argc>1){                              // Try to read boxsize from command line
-        boxsize = atof(argv[1]);
+    double root_size             = 100;         // m
+    if (argc>1){                              // Try to read root_size from command line
+        root_size = atof(argv[1]);
     }
-    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+    r->root_size = root_size; 
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     r->N_ghost_x = 2;
     r->N_ghost_y = 2;
     r->N_ghost_z = 0;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     
     // Initial conditions
     printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
@@ -62,12 +69,12 @@ int main(int argc, char* argv[]) {
 
 
     // Add all ring particles
-    double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
+    double total_mass = surfacedensity*boxsize.x*boxsize.y;
     double mass = 0;
     while(mass<total_mass){
         struct reb_particle pt;
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vx         = 0;
         pt.vy         = -1.5*pt.x*OMEGA;

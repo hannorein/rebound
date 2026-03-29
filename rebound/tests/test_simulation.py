@@ -70,11 +70,6 @@ class TestSimulation(unittest.TestCase):
         self.sim.steps(1)
         self.assertNotEqual(self.sim.t, 1.246)
 
-    def test_configure_box(self):
-        self.assertEqual(self.sim.root_size,-1.)
-        self.sim.configure_box(100.,1,1,1)
-        self.assertEqual(self.sim.root_size,100.)
-    
     def test_orbits(self):
         orbits = self.sim.orbits()
         self.assertAlmostEqual(orbits[0].a,1.,delta=1e-15)
@@ -95,7 +90,7 @@ class TestSimulation(unittest.TestCase):
         self.assertAlmostEqual(com.x, 0., delta=1e-15)
         # Check if tree is adjusted.
         sim = rebound.Simulation()
-        sim.configure_box(10)
+        sim.root_size = 10.0
         sim.gravity = "tree"
         sim.add(m=1,x=1)
         sim.move_to_com()
@@ -278,7 +273,7 @@ class TestSimulationCollisions(unittest.TestCase):
         self.assertAlmostEqual(self.sim.particles[0].x,-1,delta=1e-15)
 
     def test_tree(self):
-        self.sim.configure_box(10)
+        self.sim.root_size = 10
         self.sim.collision = "tree"
         self.sim.collision_resolve = "hardsphere"
         self.sim.add(m=1.,x=-1,vx=1.,r=0.5)

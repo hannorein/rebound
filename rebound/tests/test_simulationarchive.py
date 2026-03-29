@@ -586,7 +586,9 @@ class TestSimulationarchiveMercurius(unittest.TestCase):
         sim = rebound.Simulation()
         sim.gravity = "tree"
         sim.integrator = "leapfrog"
-        sim.configure_box(100,2,2,1)
+        sim.root_size = 100.0
+        sim.N_root_x = 2
+        sim.N_root_y = 2
         sim.add(m=1.)
         sim.add(m=1e-3,a=1.)
         sim.add(m=5e-3,a=2.25)

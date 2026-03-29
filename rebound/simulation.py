@@ -1207,25 +1207,6 @@ class Simulation(Structure):
         clibrebound.reb_integrator_ias15_timescale.restype = c_double
         return clibrebound.reb_integrator_ias15_timescale(byref(self))
 
-    def configure_box(self, boxsize, N_root_x=1, N_root_y=1, N_root_z=1):
-        """
-        Initialize the simulation box.
-
-        This function only needs to be called it boundary conditions other than "none"
-        are used. In such a case the boxsize must be known and is set with this function.
-
-        Parameters
-        ----------
-        boxsize : float
-            The size of one root box.
-        N_root_x, N_root_y, N_root_z : int, optional
-            The number of root boxes in each direction. The total size of the simulation box
-            will be ``N_root_x * boxsize``, ``N_root_y * boxsize`` and ``N_root_z * boxsize``.
-            By default, there will be exactly one root box in each direction.
-        """
-        clibrebound.reb_simulation_configure_box(byref(self), c_double(boxsize), c_int(N_root_x), c_int(N_root_y), c_int(N_root_z))
-        return
-   
 # Output to file (Simulationarchive)
     def save_to_file(self, filename, interval=None, walltime=None, step=None, delete_file=False):
         """
@@ -1494,10 +1475,7 @@ Simulation._fields_ = [
                 ("python_unit_t",c_uint32),
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),
-                ("boxsize", Vec3dBasic),
-                ("boxsize_max", c_double),
                 ("root_size", c_double),
-                ("N_root", c_size_t),
                 ("N_root_x", c_size_t),
                 ("N_root_y", c_size_t),
                 ("N_root_z", c_size_t),

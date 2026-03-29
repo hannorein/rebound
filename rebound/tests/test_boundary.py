@@ -9,7 +9,7 @@ class TestBoundary(unittest.TestCase):
             sim.boundary = "open"
             sim.integrator = "leapfrog"
             sim.gravity  = gravity
-            sim.configure_box(10.)
+            sim.root_size = 10
             sim.add(m=0.1,x=1., vx=5.0)
             sim.add(m=0.1,x=-1., vx=-5.0)
             sim.add(m=0.1,y=1., vx=6.0)
@@ -25,7 +25,7 @@ class TestBoundary(unittest.TestCase):
     def test_periodic(self):
         sim = rebound.Simulation()
         sim.boundary = "periodic"
-        sim.configure_box(10.)
+        sim.root_size = 10
         sim.add(m=0.0,x=1., vx=5.0, vy=15.1, vz=26.)
         sim.add(m=0.0,x=-1., vx=-5.0, vy=-15.1, vz=-26.)
         sim.integrate(1.)
@@ -44,7 +44,7 @@ class TestBoundary(unittest.TestCase):
         # Note: not physical
         sim = rebound.Simulation()
         sim.ri_sei.OMEGA = 1
-        sim.configure_box(1)
+        sim.root_size = 1
         sim.N_ghost_x = 2
         sim.N_ghost_y = 2
         sim.integrator = "sei"
@@ -58,7 +58,7 @@ class TestBoundary(unittest.TestCase):
         for boundary in ["open", "shear", "periodic"]:
             sim = rebound.Simulation()
             sim.boundary = boundary
-            sim.configure_box(10.)
+            sim.root_size = 10
             with self.assertRaises(RuntimeError):
                 sim.add(x=6.)
             with self.assertRaises(RuntimeError):

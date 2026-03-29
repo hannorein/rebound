@@ -49,10 +49,11 @@
 void reb_mpi_init(struct reb_simulation* const r){
     reb_communication_mpi_init(r,0,NULL);
     // Make sure domain can be decomposed into equal number of root boxes per node.
-    if ((r->N_root/r->mpi_num)*r->mpi_num != r->N_root){
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    if ((N_root/r->mpi_num)*r->mpi_num != N_root){
         if (r->mpi_id==0){
             char msg[1024];
-            sprintf(msg, "Number of root boxes (%zu) not a multiple of mpi nodes (%d).\n",r->N_root,r->mpi_num);
+            sprintf(msg, "Number of root boxes (%zu) not a multiple of mpi nodes (%d).\n",N_root,r->mpi_num);
             reb_simulation_error(r,msg);
         }
         exit(-1);
@@ -95,7 +96,8 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 }
 
 int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int rootbox){
-    int N_root_per_node = r->N_root/r->mpi_num;
+    int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    int N_root_per_node = N_root/r->mpi_num;
     int proc_id = rootbox/N_root_per_node;
     if (proc_id != r->mpi_id){
         return 0;
@@ -106,13 +108,14 @@ int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int r
 
 void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
     // Check if all particles on this node are within rootbox
+    int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     struct reb_particle* particles = r->particles;
     for (size_t i=0;i<r->N;i++){
         int rootbox = reb_get_rootbox_for_particle(r,particles[i]);
         int local = reb_communication_mpi_rootbox_is_local(r, rootbox);
         if (!local){
             // Add particle to send queue
-            int N_root_per_node = r->N_root/r->mpi_num;
+            int N_root_per_node = N_root/r->mpi_num;
             int proc_id = rootbox/N_root_per_node;
             int send_N = r->N_particles_send[proc_id];
             if (r->N_particles_send_max[proc_id] <= send_N){
@@ -235,17 +238,18 @@ struct reb_aabb communication_boundingbox_for_root(struct reb_simulation* const 
     int j = ((index-i)/r->N_root_x)%r->N_root_y;
     int k = ((index-i)/r->N_root_x-j)/r->N_root_y;
     struct reb_aabb boundingbox;
-    boundingbox.xmin = -r->boxsize.x/2.+r->root_size*(double)i;
-    boundingbox.ymin = -r->boxsize.y/2.+r->root_size*(double)j;
-    boundingbox.zmin = -r->boxsize.z/2.+r->root_size*(double)k;
-    boundingbox.xmax = -r->boxsize.x/2.+r->root_size*(double)(i+1);
-    boundingbox.ymax = -r->boxsize.y/2.+r->root_size*(double)(j+1);
-    boundingbox.zmax = -r->boxsize.z/2.+r->root_size*(double)(k+1);
+    boundingbox.xmin = -r->root_size*(double)r->N_root_x/2.+r->root_size*(double)i;
+    boundingbox.ymin = -r->root_size*(double)r->N_root_y/2.+r->root_size*(double)j;
+    boundingbox.zmin = -r->root_size*(double)r->N_root_z/2.+r->root_size*(double)k;
+    boundingbox.xmax = -r->root_size*(double)r->N_root_x/2.+r->root_size*(double)(i+1);
+    boundingbox.ymax = -r->root_size*(double)r->N_root_y/2.+r->root_size*(double)(j+1);
+    boundingbox.zmax = -r->root_size*(double)r->N_root_z/2.+r->root_size*(double)(k+1);
     return boundingbox;
 }
 
 struct reb_aabb reb_communication_boundingbox_for_proc(struct reb_simulation* const r, int proc_id){
-    int N_root_per_node = r->N_root/r->mpi_num;
+    int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    int N_root_per_node = N_root/r->mpi_num;
     int root_start = proc_id*N_root_per_node;
     int root_stop  = (proc_id+1)*N_root_per_node;
     struct reb_aabb boundingbox = communication_boundingbox_for_root(r, root_start);
@@ -275,7 +279,8 @@ double reb_communication_distance2_of_proc_to_node(struct reb_simulation* const 
     int N_ghost_xcol = (r->N_ghost_x>0?1:0);
     int N_ghost_ycol = (r->N_ghost_y>0?1:0);
     int N_ghost_zcol = (r->N_ghost_z>0?1:0);
-    double distance2 = r->root_size*(double)r->N_root; // A conservative estimate for the minimum distance.
+    int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    double distance2 = r->root_size*(double)N_root; // A conservative estimate for the minimum distance.
     distance2 *= distance2;
     for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
         for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){

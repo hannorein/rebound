@@ -15,7 +15,7 @@ class TestShearingSheet(unittest.TestCase):
         sim.dt = 1e-3*2.*math.pi/OMEGA
         sim.softening = 0.2       # [m]
         boxsize = 50.            # [m]
-        sim.configure_box(boxsize)
+        sim.root_size = boxsize
         sim.N_ghost_x = 2
         sim.N_ghost_y = 2
         sim.integrator = "sei"

@@ -32,7 +32,9 @@ void test_twobody(){
     r->opening_angle2   = 1.5; 
     r->G                = 1;        
     r->dt               = 0.1;
-    reb_simulation_configure_box(r,30,2,2,1);
+    r->root_size = 30; 
+    r->N_root_x = 2; 
+    r->N_root_y = 2; 
 
     printf("MPI init...\n");
     reb_mpi_init(r);

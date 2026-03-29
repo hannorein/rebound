@@ -24,13 +24,13 @@ int main(int argc, char* argv[]){
         r->dt         = 1e-4*2.*M_PI; 
         r->exact_finish_time = 1; // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
         r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;
-        reb_simulation_configure_box(r,2.,1,1,1);
+        r->root_size = 2;
 
         while (r->N<50){
             struct reb_particle p = {0};
-            p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.x;
-            p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.y;
-            p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.z;
+            p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
             p.vy = -1.5*p.x*r->ri_sei.OMEGA;
             p.m  = 0.0001;
             p.r  = 0.1;

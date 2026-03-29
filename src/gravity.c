@@ -1473,7 +1473,8 @@ void reb_tree_print(const struct reb_treecell *node, int indent){
 }
 
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
-    for(size_t i=0;i<r->N_root;i++){
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    for(size_t i=0;i<N_root;i++){
         struct reb_treecell* node = r->tree_root[i];
         if (node!=NULL){
             reb_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);

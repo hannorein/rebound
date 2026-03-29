@@ -69,14 +69,14 @@ Below is an example on how to enable the tree based collision search.
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_configure_box(r, 10, 1, 1, 1); # confine the simulation to a box of size 10
+    r->root_size = 10.0; // confine the simulation to a box of size 10
     r->collision = REB_COLLISION_TREE;
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
-    sim.configure_box(10)   # confine the simulation to a box of size 10
+    sim.root_size = 10.0 # confine the simulation to a box of size 10
     sim.collision = "tree"
     ```
 
@@ -92,14 +92,14 @@ Below is an example on how to enable the line-tree collision search.
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_configure_box(r, 10, 1, 1, 1); # confine the simulation to a box of size 10
+    r->root_size = 10.0; // confine the simulation to a box of size 10
     r->collision = REB_COLLISION_LINETREE;
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
-    sim.configure_box(10)   # confine the simulation to a box of size 10
+    sim.root_size = 10.0   # confine the simulation to a box of size 10
     sim.collision = "linetree"
     ```
 

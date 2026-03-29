@@ -31,7 +31,9 @@ struct reb_simulation* r = reb_simulation_create();
 r->gravity          = REB_GRAVITY_TREE;
 r->collision        = REB_COLLISION_TREE;
 // other configuration options
-reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+r->root_size = boxsize;
+r->N_root_x = 2;
+r->N_root_y = 2;
 ```    
 
 The number of root trees needs to be an integer multiple of the number of MPI processes.

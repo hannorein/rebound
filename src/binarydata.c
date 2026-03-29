@@ -62,10 +62,10 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 19, REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0},
     { 20, REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0},
     { 21, REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0},
-    { 22, REB_VEC3D,        "boxsize",                      offsetof(struct reb_simulation, boxsize), 0, 0},
-    { 23, REB_DOUBLE,       "boxsize_max",                  offsetof(struct reb_simulation, boxsize_max), 0, 0},
+    // 22 was boxsize
+    // 23 was boxsize_max
     { 24, REB_DOUBLE,       "root_size",                    offsetof(struct reb_simulation, root_size), 0, 0},
-    { 25, REB_SIZE_T,       "N_root",                       offsetof(struct reb_simulation, N_root), 0, 0},
+    // 25 was N_root
     { 26, REB_SIZE_T,       "N_root_x",                     offsetof(struct reb_simulation, N_root_x), 0, 0},
     { 27, REB_SIZE_T,       "N_root_y",                     offsetof(struct reb_simulation, N_root_y), 0, 0},
     { 28, REB_SIZE_T,       "N_root_z",                     offsetof(struct reb_simulation, N_root_z), 0, 0},
