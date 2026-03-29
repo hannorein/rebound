@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     r->usleep    = 1000;            // Slow down integration (for visualization only)
     r->dt = 1e-2;
 
-    reb_simulation_configure_box(r, 3.0, 1, 1, 1);
+    r->root_size = 3;
     
     // Initial conditions
     {

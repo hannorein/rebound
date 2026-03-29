@@ -49,8 +49,10 @@ int main(int argc, char* argv[]) {
     }
     // Setup 2x2 root boxes.
     // This allows you to use up to 4 MPI nodes.
-    reb_simulation_configure_box(r, root_size, 2, 2, 1);
-    // Initialize MPI (this only works after reb_simulation_configure_box)
+    r->root_size = root_size; 
+    r->N_root_x = 2;
+    r->N_root_y = 2;
+    
     reb_mpi_init(r);
     r->N_ghost_x = 2;
     r->N_ghost_y = 2;

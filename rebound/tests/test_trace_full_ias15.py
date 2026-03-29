@@ -296,8 +296,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.track_energy_offset = 1
 
         sim.boundary = "open"
-        boxsize = 3.
-        sim.configure_box(boxsize)
+        sim.root_size = 3
 
         E0 = sim.energy()
         sim.integrate(1)

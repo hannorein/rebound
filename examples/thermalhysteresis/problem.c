@@ -320,7 +320,8 @@ int main(int argc, char* argv[]) {
     r->dt                 = 1e-2*2.*M_PI/OMEGA;
     r->heartbeat          = heartbeat;
     double root_size        = 200; 
-    reb_simulation_configure_box(r, root_size, 8, 1, 1);
+    r->root_size = root_size;
+    r->N_root_x = 8;
     r->N_ghost_x = 1;
     r->N_ghost_y = 1;
     r->N_ghost_z = 0;

@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
     r->heartbeat         = heartbeat;
     
     double boxsize = 4.8;
-    reb_simulation_configure_box(r, boxsize, 1, 1, 1);
+    r->root_size = boxsize;
 
     // Setup particles
     int _N = 1000;

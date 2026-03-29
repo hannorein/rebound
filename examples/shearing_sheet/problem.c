@@ -47,7 +47,9 @@ int main(int argc, char* argv[]) {
     if (argc>1){                              // Try to read root_size from command line
         root_size = atof(argv[1]);
     }
-    reb_simulation_configure_box(r, root_size, 2, 2, 1);
+    r->root_size = root_size; 
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     r->N_ghost_x = 2;
     r->N_ghost_y = 2;
     r->N_ghost_z = 0;

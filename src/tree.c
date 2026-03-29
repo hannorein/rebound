@@ -251,8 +251,8 @@ void reb_tree_delete(struct reb_simulation* const r){
 }
 
 void reb_tree_construct(struct reb_simulation* const r){
-    if (r->root_size==-1){
-        reb_simulation_error(r,"root_size is -1. Make sure you call reb_simulation_configure_box() before using a tree based gravity or collision solver.");
+    if (r->root_size<=0.0){
+        reb_simulation_error(r,"Set root_size to a finite value to use a tree based gravity or collision solver.");
         return;
     }
     if (!r->tree_root){

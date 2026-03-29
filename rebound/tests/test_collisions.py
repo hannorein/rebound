@@ -10,7 +10,7 @@ class TestLineTreeCollisions(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "linetree"
-        sim.configure_box(100)
+        sim.root_size = 100
         sim.dt = 10
         sim.add(r=1,x=0)
         sim.add(r=1,x=3,vx=-1)
@@ -21,7 +21,7 @@ class TestLineTreeCollisions(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "linetree"
-        sim.configure_box(100)
+        sim.root_size = 100
         sim.dt = 10
         sim.add(r=1,x=0)
         sim.add(r=1,x=1,vx=-1)
@@ -32,7 +32,7 @@ class TestLineTreeCollisions(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "linetree"
-        sim.configure_box(100)
+        sim.root_size = 100
         sim.dt = 10
         sim.add(r=1,x=0)
         sim.add(r=1,x=11,vx=-1)
@@ -42,7 +42,7 @@ class TestLineTreeCollisions(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "linetree"
-        sim.configure_box(100)
+        sim.root_size = 100
         sim.dt = 10
         sim.add(r=1,x=0)
         sim.add(r=1,x=2.1,vx=1)
@@ -92,7 +92,7 @@ class TestLineCollisions(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "leapfrog"
         sim.collision  = "line"
-        sim.configure_box(100)
+        sim.root_size = 100
         sim.dt = 10
         sim.add(r=1,x=0)
         sim.add(r=1,x=2.1,vx=1)
@@ -104,7 +104,7 @@ class TestCollisions(unittest.TestCase):
     def test_tree_remove_both(self):
         sim = rebound.Simulation()
         boxsize = 50000.           
-        sim.configure_box(boxsize)
+        sim.root_size = boxsize
         sim.integrator = "leapfrog"
         sim.boundary   = "open"
         sim.gravity    = "tree"
@@ -127,7 +127,7 @@ class TestCollisions(unittest.TestCase):
     def test_direct_remove_both(self):
         sim = rebound.Simulation()
         boxsize = 50000.           
-        sim.configure_box(boxsize)
+        sim.root_size = boxsize
         sim.integrator = "leapfrog"
         sim.boundary   = "open"
         sim.collision  = "direct"
@@ -148,7 +148,7 @@ class TestCollisions(unittest.TestCase):
     def test_tree_remove_one(self):
         sim = rebound.Simulation()
         boxsize = 50000.           
-        sim.configure_box(boxsize)
+        sim.root_size = boxsize
         sim.integrator = "leapfrog"
         sim.boundary   = "open"
         sim.gravity    = "tree"
@@ -170,7 +170,7 @@ class TestCollisions(unittest.TestCase):
     def test_direct_remove_one(self):
         sim = rebound.Simulation()
         boxsize = 50000.           
-        sim.configure_box(boxsize)
+        sim.root_size = boxsize
         sim.integrator = "leapfrog"
         sim.boundary   = "open"
         sim.collision  = "direct"

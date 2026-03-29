@@ -32,7 +32,8 @@ int main(int argc, char* argv[]){
     // Override default collision handling to account for border particles
     r->collision_resolve = collision_resolve_hardsphere_withborder;
     r->heartbeat         = heartbeat;
-    reb_simulation_configure_box(r, 20., 1, 1, 4);
+    r->root_size = 20.0;
+    r->N_root_z = 4;
     
     r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;     
     struct reb_vec3d boxsize = {

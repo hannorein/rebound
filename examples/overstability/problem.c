@@ -43,7 +43,8 @@ int main(int argc, char* argv[]){
     r->gravity              = REB_GRAVITY_NONE;
     r->boundary             = REB_BOUNDARY_SHEAR;
 
-    reb_simulation_configure_box(r,1.,200,5,20);
+    r->root_size = 1;
+    r->N_root_x = 200;    r->N_root_y = 5;      r->N_root_z = 20;
     r->N_ghost_x = 1;     r->N_ghost_y = 1;     r->N_ghost_z = 0;
 
     // Initial conditions

@@ -100,7 +100,7 @@ class TestGravity(unittest.TestCase):
     
     def test_tree_duplicate_particle(self):
         sim = rebound.Simulation()
-        sim.configure_box(10)
+        sim.root_size = 10
         sim.gravity = "tree"
         sim.add(m=1.)
         sim.add(m=1.)

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
     r->dt          = 1e-3;
     r->boundary    = REB_BOUNDARY_PERIODIC;
     r->usleep     = 1000;            // Slow down integration (for visualization only)
-    reb_simulation_configure_box(r,3.,1,1,1);
+    r->root_size = 3; 
     
     // Initial conditions
     int problem_id = 1;

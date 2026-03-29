@@ -864,18 +864,6 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, 
 #endif // OPENMP
 }
 
-// TODO: Make this function obsolute by calculating these constants on the fly when building the tree.
-void reb_simulation_configure_box(struct reb_simulation* const r, const double root_size, const size_t N_root_x, const size_t N_root_y, const size_t N_root_z){
-    r->root_size = root_size;
-    if (N_root_x <=0 || N_root_y <=0 || N_root_z <= 0){
-        reb_simulation_error(r,"Number of root boxes must be greater or equal to 1 in each direction.");
-        return;
-    }
-    r->N_root_x = N_root_x;
-    r->N_root_y = N_root_y;
-    r->N_root_z = N_root_z;
-}
-
 void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
     const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;

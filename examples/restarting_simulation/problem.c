@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
         r->dt         = 1e-4*2.*M_PI; 
         r->exact_finish_time = 1; // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
         r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;
-        reb_simulation_configure_box(r,2.,1,1,1);
+        r->root_size = 2;
 
         while (r->N<50){
             struct reb_particle p = {0};

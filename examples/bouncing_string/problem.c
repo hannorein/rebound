@@ -26,7 +26,10 @@ int main(int argc, char* argv[]){
     r->gravity           = REB_GRAVITY_NONE;
     r->usleep            = 5000;      // Slow down integration (for visualization only)
     
-    reb_simulation_configure_box(r,10.,3,1,1);  // boxsize 10., three root boxes in x direction, one in y and z
+    // boxsize 10., three root boxes in x direction, one in y and z
+    r->root_size = 10.0;
+    r->N_root_x = 2; 
+
     r->N_ghost_x = 1; 
     r->N_ghost_y = 1; 
     r->N_ghost_z = 0;

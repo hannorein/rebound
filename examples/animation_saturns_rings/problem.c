@@ -50,8 +50,10 @@ int main(int argc, char* argv[]) {
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
     r->dt                = 1e-3*2.*M_PI/r->ri_sei.OMEGA;  // s
-    
-    reb_simulation_configure_box(r, 100, 2, 2, 1); // 100m box
+   
+    r->root_size = 100.0;
+    r->N_root_x = 2; 
+    r->N_root_y = 2; 
     r->N_ghost_x = 2; r->N_ghost_y = 2; r->N_ghost_z = 0;
     
     // Add all ring particles

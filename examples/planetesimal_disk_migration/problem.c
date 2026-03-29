@@ -48,7 +48,9 @@ int main(int argc, char* argv[]){
     // Boundaries
     r->boundary = REB_BOUNDARY_OPEN;
     const double boxsize = 6;
-    reb_simulation_configure_box(r,boxsize,2,2,1);
+    r->root_size = boxsize;
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     
     srand(12);
     double m_earth = 3.003e-6;
