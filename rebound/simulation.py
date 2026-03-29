@@ -1495,7 +1495,6 @@ Simulation._fields_ = [
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),
                 ("boxsize", Vec3dBasic),
-                ("boxsize_max", c_double),
                 ("root_size", c_double),
                 ("N_root_x", c_size_t),
                 ("N_root_y", c_size_t),

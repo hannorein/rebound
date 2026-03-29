@@ -61,7 +61,7 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
         }
         scale *= 1.1;
     }else{
-        scale = r->boxsize_max/2.;
+        scale = MAX(r->boxsize.x, MAX(r->boxsize.y, r->boxsize.z));
     }
 
     struct reb_mat4df oldview = s->view;

@@ -49,7 +49,7 @@
 void reb_mpi_init(struct reb_simulation* const r){
     reb_communication_mpi_init(r,0,NULL);
     // Make sure domain can be decomposed into equal number of root boxes per node.
-    int N_root = r->N_root_x*r->N_root_y*r->N_root_z;
+    size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     if ((N_root/r->mpi_num)*r->mpi_num != N_root){
         if (r->mpi_id==0){
             char msg[1024];

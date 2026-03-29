@@ -132,12 +132,12 @@ double reb_simulation_energy(struct reb_simulation* const r){
 #ifdef MPI
     assert(r->testparticle_type==0); // ==1 not yet implemented
     reb_communication_mpi_distribute_particles_all_to_all(r);
-    for (size_t m=0;m<r->mpi_num;m++){
+    for (int m=0;m<r->mpi_num;m++){
         if (m==r->mpi_id) continue;
         for (size_t i=0;i<N_active;i++){
             struct reb_particle pi = particles[i];
             // TODO: Use N_interact from other node for test_particle_type==1
-            for (size_t j=0;j<r->N_particles_recv[m];j++){
+            for (int j=0;j<r->N_particles_recv[m];j++){
                 struct reb_particle pj = r->particles_recv[m][j];
                 double dx = pi.x - pj.x;
                 double dy = pi.y - pj.y;
@@ -147,7 +147,7 @@ double reb_simulation_energy(struct reb_simulation* const r){
             }
         }
     }
-    for (size_t i=0;i<r->mpi_num;i++){
+    for (int i=0;i<r->mpi_num;i++){
         r->N_particles_recv[i] = 0;
     }
 
@@ -704,7 +704,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
         }
 #ifdef MPI
         if (0==strcmp(token,"id")){
-            name = (void*)va_arg(args, int);
+            name = (void*)(size_t)va_arg(args, int);
         }
 #else // MPI
         if (0==strcmp(token,"name")){
