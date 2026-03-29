@@ -50,12 +50,7 @@
 
 void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
     if (reb_boundary_particle_is_in_box(r, pt)==0){
-        if (r->boxsize.x==0 && r->boxsize.y==0 && r->boxsize.z==0){ 
-            reb_simulation_error(r,"Cannot add particle because simulation box not initialized. Call reb_simulation_configure_box() before adding particles.");
-        }else{
-            // reb_particle has left the box. Do not add.
-            reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
-        }
+        reb_simulation_error(r,"Particle outside of box boundaries. Did not add particle.");
         return;
     }
     // Allocate memory if needed.
@@ -169,9 +164,9 @@ int reb_particle_check_testparticles(struct reb_simulation* const r){
 
 int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct reb_particle pt){
     if (r->root_size==-1) return 0;
-    int i = ((int)floor((pt.x + r->boxsize.x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
-    int j = ((int)floor((pt.y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
-    int k = ((int)floor((pt.z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
+    int i = ((int)floor((pt.x + r->root_size*(double)r->N_root_x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
+    int j = ((int)floor((pt.y + r->root_size*(double)r->N_root_y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
+    int k = ((int)floor((pt.z + r->root_size*(double)r->N_root_z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
     int index = (k*r->N_root_y+j)*r->N_root_x+i;
     return index;
 }

@@ -36,7 +36,11 @@
 void reb_boundary_check(struct reb_simulation* const r){
     struct reb_particle* const particles = r->particles;
     int N = r->N;
-    const struct reb_vec3d boxsize = r->boxsize;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     switch(r->boundary){
         case REB_BOUNDARY_OPEN:
             for (int i=0;i<N;i++){ // run through loop backwards so we don't have to recheck same index after removing
@@ -140,13 +144,18 @@ void reb_boundary_check(struct reb_simulation* const r){
 static const struct reb_vec6d nan_ghostbox = {.x = 0, .y = 0, .z = 0, .vx = 0, .vy = 0, .vz = 0};
 
 struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i, int j, int k){
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     switch(r->boundary){
         case REB_BOUNDARY_OPEN:
             {
                 struct reb_vec6d gb;
-                gb.x = r->boxsize.x*(double)i;
-                gb.y = r->boxsize.y*(double)j;
-                gb.z = r->boxsize.z*(double)k;
+                gb.x = boxsize.x*(double)i;
+                gb.y = boxsize.y*(double)j;
+                gb.z = boxsize.z*(double)k;
                 gb.vx = 0;
                 gb.vy = 0;
                 gb.vz = 0;
@@ -158,30 +167,30 @@ struct reb_vec6d reb_boundary_get_ghostbox(struct reb_simulation* const r, int i
                 struct reb_vec6d gb;
                 // Ghostboxes have a finite velocity.
                 gb.vx = 0.;
-                gb.vy = -1.5*(double)i*OMEGA*r->boxsize.x;
+                gb.vy = -1.5*(double)i*OMEGA*boxsize.x;
                 gb.vz = 0.;
                 // The shift in the y direction is time dependent. 
                 double shift;
                 if (i==0){
-                    shift = -fmod(gb.vy*r->t,r->boxsize.y); 
+                    shift = -fmod(gb.vy*r->t,boxsize.y); 
                 }else{
                     if (i>0){
-                        shift = -fmod(gb.vy*r->t-r->boxsize.y/2.,r->boxsize.y)-r->boxsize.y/2.; 
+                        shift = -fmod(gb.vy*r->t-boxsize.y/2.,boxsize.y)-boxsize.y/2.; 
                     }else{
-                        shift = -fmod(gb.vy*r->t+r->boxsize.y/2.,r->boxsize.y)+r->boxsize.y/2.; 
+                        shift = -fmod(gb.vy*r->t+boxsize.y/2.,boxsize.y)+boxsize.y/2.; 
                     }	
                 }
-                gb.x = r->boxsize.x*(double)i;
-                gb.y = r->boxsize.y*(double)j-shift;
-                gb.z = r->boxsize.z*(double)k;
+                gb.x = boxsize.x*(double)i;
+                gb.y = boxsize.y*(double)j-shift;
+                gb.z = boxsize.z*(double)k;
                 return gb;
             }
         case REB_BOUNDARY_PERIODIC:
             {
                 struct reb_vec6d gb;
-                gb.x = r->boxsize.x*(double)i;
-                gb.y = r->boxsize.y*(double)j;
-                gb.z = r->boxsize.z*(double)k;
+                gb.x = boxsize.x*(double)i;
+                gb.y = boxsize.y*(double)j;
+                gb.z = boxsize.z*(double)k;
                 gb.vx = 0;
                 gb.vy = 0;
                 gb.vz = 0;
@@ -197,25 +206,32 @@ int reb_boundary_particle_is_in_box(const struct reb_simulation* const r, struct
         case REB_BOUNDARY_OPEN:
         case REB_BOUNDARY_SHEAR:
         case REB_BOUNDARY_PERIODIC:
-            if(p.x>r->boxsize.x/2.){
-                return 0;
+            {
+                struct reb_vec3d boxsize = {
+                    .x = r->root_size*(double)r->N_root_x,
+                    .y = r->root_size*(double)r->N_root_y,
+                    .z = r->root_size*(double)r->N_root_z,
+                };
+                if(p.x>boxsize.x/2.){
+                    return 0;
+                }
+                if(p.x<-boxsize.x/2.){
+                    return 0;
+                }
+                if(p.y>boxsize.y/2.){
+                    return 0;
+                }
+                if(p.y<-boxsize.y/2.){
+                    return 0;
+                }
+                if(p.z>boxsize.z/2.){
+                    return 0;
+                }
+                if(p.z<-boxsize.z/2.){
+                    return 0;
+                }
+                return 1;
             }
-            if(p.x<-r->boxsize.x/2.){
-                return 0;
-            }
-            if(p.y>r->boxsize.y/2.){
-                return 0;
-            }
-            if(p.y<-r->boxsize.y/2.){
-                return 0;
-            }
-            if(p.z>r->boxsize.z/2.){
-                return 0;
-            }
-            if(p.z<-r->boxsize.z/2.){
-                return 0;
-            }
-            return 1;
         default:
         case REB_BOUNDARY_NONE:
             return 1;

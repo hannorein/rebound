@@ -874,10 +874,6 @@ void reb_simulation_configure_box(struct reb_simulation* const r, const double r
     r->N_root_x = N_root_x;
     r->N_root_y = N_root_y;
     r->N_root_z = N_root_z;
-    // Setup box sizes
-    r->boxsize.x = r->root_size *(double)r->N_root_x;
-    r->boxsize.y = r->root_size *(double)r->N_root_y;
-    r->boxsize.z = r->root_size *(double)r->N_root_z;
 }
 
 void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){

@@ -84,12 +84,16 @@ static struct reb_treecell *reb_tree_add_particle_to_cell(struct reb_simulation*
         struct reb_particle p = particles[pt];
         if (parent == NULL){ // The new node is a root
             node->w = r->root_size;
-            int i = ((int)floor((p.x + r->boxsize.x/2.)/r->root_size))%r->N_root_x;
-            int j = ((int)floor((p.y + r->boxsize.y/2.)/r->root_size))%r->N_root_y;
-            int k = ((int)floor((p.z + r->boxsize.z/2.)/r->root_size))%r->N_root_z;
-            node->x = -r->boxsize.x/2.+r->root_size*(0.5+(double)i);
-            node->y = -r->boxsize.y/2.+r->root_size*(0.5+(double)j);
-            node->z = -r->boxsize.z/2.+r->root_size*(0.5+(double)k);
+            struct reb_vec3d boxsize;
+            boxsize.x = r->root_size*(double)r->N_root_x;
+            boxsize.y = r->root_size*(double)r->N_root_y;
+            boxsize.z = r->root_size*(double)r->N_root_z;
+            int i = ((int)floor((p.x + boxsize.x/2.)/r->root_size))%r->N_root_x;
+            int j = ((int)floor((p.y + boxsize.y/2.)/r->root_size))%r->N_root_y;
+            int k = ((int)floor((p.z + boxsize.z/2.)/r->root_size))%r->N_root_z;
+            node->x = -boxsize.x/2.+r->root_size*(0.5+(double)i);
+            node->y = -boxsize.y/2.+r->root_size*(0.5+(double)j);
+            node->z = -boxsize.z/2.+r->root_size*(0.5+(double)k);
         }else{ // The new node is a normal node
             node->w 	= parent->w/2.;
             node->x 	= parent->x + node->w/2.*((o>>0)%2==0?1.:-1);
@@ -257,7 +261,7 @@ void reb_tree_construct(struct reb_simulation* const r){
     }
     for (size_t i=0;i<r->N;i++){
         struct reb_particle p = r->particles[i];
-        if(fabs(p.x)>r->boxsize.x/2. || fabs(p.y)>r->boxsize.y/2. || fabs(p.z)>r->boxsize.z/2.){
+        if(fabs(p.x)>r->root_size*(double)r->N_root_x/2. || fabs(p.y)>r->root_size*(double)r->N_root_y/2. || fabs(p.z)>r->root_size*(double)r->N_root_z/2.){
             reb_simulation_error(r,"Particle is outside of simulation box. Cannot add to tree.");
             return;
         }
@@ -273,9 +277,9 @@ void reb_tree_construct(struct reb_simulation* const r){
  * @param node is a pointer to a node cell.
  */
 int reb_particles_get_rootbox_for_node(struct reb_simulation* const r, struct reb_treecell* node){
-    int i = ((int)floor((node->x + r->boxsize.x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
-    int j = ((int)floor((node->y + r->boxsize.y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
-    int k = ((int)floor((node->z + r->boxsize.z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
+    int i = ((int)floor((node->x + r->root_size*(double)r->N_root_x/2.)/r->root_size)+r->N_root_x)%r->N_root_x;
+    int j = ((int)floor((node->y + r->root_size*(double)r->N_root_y/2.)/r->root_size)+r->N_root_y)%r->N_root_y;
+    int k = ((int)floor((node->z + r->root_size*(double)r->N_root_z/2.)/r->root_size)+r->N_root_z)%r->N_root_z;
     int index = (k*r->N_root_y+j)*r->N_root_x+i;
     return index;
 }

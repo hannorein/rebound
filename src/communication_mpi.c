@@ -238,12 +238,12 @@ struct reb_aabb communication_boundingbox_for_root(struct reb_simulation* const 
     int j = ((index-i)/r->N_root_x)%r->N_root_y;
     int k = ((index-i)/r->N_root_x-j)/r->N_root_y;
     struct reb_aabb boundingbox;
-    boundingbox.xmin = -r->boxsize.x/2.+r->root_size*(double)i;
-    boundingbox.ymin = -r->boxsize.y/2.+r->root_size*(double)j;
-    boundingbox.zmin = -r->boxsize.z/2.+r->root_size*(double)k;
-    boundingbox.xmax = -r->boxsize.x/2.+r->root_size*(double)(i+1);
-    boundingbox.ymax = -r->boxsize.y/2.+r->root_size*(double)(j+1);
-    boundingbox.zmax = -r->boxsize.z/2.+r->root_size*(double)(k+1);
+    boundingbox.xmin = -r->root_size*(double)r->N_root_x/2.+r->root_size*(double)i;
+    boundingbox.ymin = -r->root_size*(double)r->N_root_y/2.+r->root_size*(double)j;
+    boundingbox.zmin = -r->root_size*(double)r->N_root_z/2.+r->root_size*(double)k;
+    boundingbox.xmax = -r->root_size*(double)r->N_root_x/2.+r->root_size*(double)(i+1);
+    boundingbox.ymax = -r->root_size*(double)r->N_root_y/2.+r->root_size*(double)(j+1);
+    boundingbox.zmax = -r->root_size*(double)r->N_root_z/2.+r->root_size*(double)(k+1);
     return boundingbox;
 }
 
