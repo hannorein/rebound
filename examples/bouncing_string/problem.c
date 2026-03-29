@@ -32,9 +32,14 @@ int main(int argc, char* argv[]){
     r->N_ghost_z = 0;
 
     // Initial conditions
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     for(int i=0;i<10;i++){
         struct reb_particle p = {0};
-        p.x  = -r->boxsize.x/2.+r->boxsize.x*(double)i/10.; p.y  = 0; p.z  = 0;
+        p.x  = -boxsize.x/2.+boxsize.x*(double)i/10.; p.y  = 0; p.z  = 0;
         p.m  = 1;
         p.r  = 1;
         reb_simulation_add(r, p);

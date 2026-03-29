@@ -128,7 +128,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve(struct reb_simulation* cons
     // Logging
     struct collisions_log* log = (struct collisions_log* )r->extras; 
     double xmid = (p1.x+p2.x)/2.;
-    int i = ((int)floor((xmid/r->boxsize.x+0.5)*log->Nslices))%log->Nslices;
+    int i = ((int)floor((xmid/(r->root_size*r->N_root_x)+0.5)*log->Nslices))%log->Nslices;
     double E1 = 0.5*(old1.vx*old1.vx + old1.vy*old1.vy  + old1.vz*old1.vz); 
     double E2 = 0.5*(old2.vx*old2.vx + old2.vy*old2.vy  + old2.vz*old2.vz); 
     double E1p = 0.5*(new1.vx*new1.vx + new1.vy*new1.vy  + new1.vz*new1.vz); 
@@ -159,7 +159,7 @@ double midplane_fillingfactor(const struct reb_simulation* const r){
             area += M_PI*R2;
         }
     }
-    return area/(r->boxsize.x*r->boxsize.y);
+    return area/(r->root_size*r->root_size*r->N_root_x*r->N_root_y);
 }
 
 struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r, double xmin, double xmax){
@@ -198,10 +198,15 @@ void heartbeat(struct reb_simulation* const r){
 
     // Calculate quantities for each slice
     int Nslices = log->Nslices;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     for (int i=0;i<Nslices;i++){
-        double xmin = -r->boxsize.x/2. + r->boxsize.x * i /Nslices; 
-        double xmax = xmin + r->boxsize.x /Nslices; 
-        double sigma = 1./((xmax - xmin) * r->boxsize.y);
+        double xmin = -boxsize.x/2. + boxsize.x * i /Nslices; 
+        double xmax = xmin + boxsize.x /Nslices; 
+        double sigma = 1./((xmax - xmin) * boxsize.y);
         struct reb_vec3d W = velocity_dispersion(r,xmin,xmax);
         double _T = 1./3.*(W.x*W.x+ W.y*W.y+ W.z*W.z)/(r->ri_sei.OMEGA*r->ri_sei.OMEGA);
         log->T[i] += _T;
@@ -314,11 +319,16 @@ int main(int argc, char* argv[]) {
     r->ri_sei.OMEGAZ      = OMEGA;
     r->dt                 = 1e-2*2.*M_PI/OMEGA;
     r->heartbeat          = heartbeat;
-    double boxsize        = 200; 
-    reb_simulation_configure_box(r, boxsize, 8, 1, 1);
+    double root_size        = 200; 
+    reb_simulation_configure_box(r, root_size, 8, 1, 1);
     r->N_ghost_x = 1;
     r->N_ghost_y = 1;
     r->N_ghost_z = 0;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     
     r->minimum_collision_velocity = OMEGA*0.001;  // small fraction of the shear across a particle
 
@@ -343,14 +353,14 @@ int main(int argc, char* argv[]) {
     
     // Add all ring particles
     double area = 0.;
-    while (log->tau> area/(r->boxsize.x*r->boxsize.y)){
+    while (log->tau> area/(boxsize.x*boxsize.y)){
         struct reb_particle pt = {0};
         double fac = 1;
-        pt.x     = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
+        pt.x     = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
         if (log->isHot && pt.x > 0){
             fac = 20;
         }
-        pt.y     = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.y     = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.vx    = fac*reb_random_normal(r, 1.)*OMEGA;
         pt.vy    = -1.5*pt.x*OMEGA+fac*reb_random_normal(r, 1.)*OMEGA;
         double a = fac*0.1*reb_random_normal(r, 1.)*OMEGA;

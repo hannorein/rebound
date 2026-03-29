@@ -28,9 +28,9 @@ int main(int argc, char* argv[]){
 
         while (r->N<50){
             struct reb_particle p = {0};
-            p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.x;
-            p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.y;
-            p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.z;
+            p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
             p.vy = -1.5*p.x*r->ri_sei.OMEGA;
             p.m  = 0.0001;
             p.r  = 0.1;

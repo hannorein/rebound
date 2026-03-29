@@ -47,11 +47,16 @@ int main(int argc, char* argv[]){
     r->N_ghost_x = 1;     r->N_ghost_y = 1;     r->N_ghost_z = 0;
 
     // Initial conditions
-    double _N = tau * r->boxsize.x * r->boxsize.y/(M_PI*particle_r *particle_r);
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
+    double _N = tau * boxsize.x * boxsize.y/(M_PI*particle_r *particle_r);
     while (r->N<_N){
         struct reb_particle p;
-        p.x     = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.x;
-        p.y     = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.y;
+        p.x     = ((double)rand()/(double)RAND_MAX-0.5)*boxsize.x;
+        p.y     = ((double)rand()/(double)RAND_MAX-0.5)*boxsize.y;
         p.z     = 10.0*((double)rand()/(double)RAND_MAX-0.5)*particle_r;
         p.vx    = 0;
         p.vy    = -1.5*p.x; // shear
