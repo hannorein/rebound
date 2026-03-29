@@ -56,10 +56,15 @@ int main(int argc, char* argv[]) {
     
     // Add all ring particles
     double mass = 0;
-    while(mass < 400*r->boxsize.x*r->boxsize.y){ // 400kg/m^2 surface density
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
+    while(mass < 400*boxsize.x*boxsize.y){ // 400kg/m^2 surface density
         struct reb_particle pt = {0};
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vy         = -1.5*pt.x*r->ri_sei.OMEGA;
         double radius     = reb_random_powerlaw(r, 1., 4.,-3);
