@@ -253,9 +253,10 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
             reb_integrator_mercurius_dh_to_inertial(r);
         }
-        if (r->integrator==REB_INTEGRATOR_TRACE){
+        if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode != REB_TRACE_MODE_FULL){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
+            // We should NOT do this in FULL mode, already in inertial frame
             if(r->N>r->ri_trace.N_allocated_additional_forces){
                 r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
                 r->ri_trace.N_allocated_additional_forces = r->N;
@@ -276,7 +277,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 particles[i].vz = backup[i].vz;
             }
         }
-        if (r->integrator==REB_INTEGRATOR_TRACE){
+        if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode != REB_TRACE_MODE_FULL){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
             for (unsigned int i=0;i<r->N;i++){
