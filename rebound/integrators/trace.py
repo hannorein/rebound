@@ -7,7 +7,7 @@ from ..particle import Particle
 from ..vectors import Vec3dBasic
 
 TRACE_PERI_MODES = {"FULL_BS": 1, "PARTIAL_BS": 0, "FULL_IAS15": 2}
-TRACE_COORDINATES = {"democraticheliocentric":0, "widebinary":1}
+TRACE_COORDINATES = {"democraticheliocentric":1, "widebinary":2}
 
 class IntegratorTRACE(ctypes.Structure):
     """
@@ -91,10 +91,8 @@ class IntegratorTRACE(ctypes.Structure):
 
         Available coordinate systems are:
 
-        - ``'jacobi'`` (default)
         - ``'democraticheliocentric'``
-        - ``'whds'``
-        - ``'barycentric'``
+        - ``'widebinary'``
         """
         i = self._coordinates
         for name, _i in TRACE_COORDINATES.items():

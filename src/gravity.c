@@ -986,7 +986,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                     break;
             }
             break;
-        case REB_GRAVITY_WB:
+        case REB_GRAVITY_WIDEBINARY:
             switch (r->ri_trace.mode){
                 case REB_TRACE_MODE_INTERACTION: // Interaction step
                 {

@@ -165,7 +165,7 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
         return 1;
     }else{
         // In WB coordinates, we also switch if we enter the binary's hill sphere
-        if (ri_trace->coordinates == REB_TRACE_COORDINATES_WB){
+        if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
           const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
           const int idxB = N_active-1; // star B assumed to be last active particle
           double bx = r->particles[idxB].x;
@@ -486,7 +486,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
 
     double px=0., py=0., pz=0.;
     for (int i=1;i<N;i++){
-        if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WB && i==idxB) continue; // skip star B
+        if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WIDEBINARY && i==idxB) continue; // skip star B
         px += r->particles[i].vx*r->particles[i].m; // in dh
         py += r->particles[i].vy*r->particles[i].m;
         pz += r->particles[i].vz*r->particles[i].m;
@@ -496,7 +496,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     pz *= dt/r->particles[0].m;
 
     for (int i=1;i<N_all;i++){
-        if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WB && i==idxB) continue; // skip star B
+        if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WIDEBINARY && i==idxB) continue; // skip star B
         particles[i].x += px;
         particles[i].y += py;
         particles[i].z += pz;
@@ -520,7 +520,7 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     double mB = p[idxB].m;
     double Mpl = 0.0;
     for (int i=1; i<N; ++i){
-        if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WB && i==idxB){
+        if (r->ri_trace.coordinates==REB_TRACE_COORDINATES_WIDEBINARY && i==idxB){
             // This is ONLY to integrate the wide binary in WB coordinates
             // Kepler parameter for relative coordinate X_B is G * m_tot
             const double GM = r->G * (mA + Mpl + mB);
@@ -789,7 +789,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // Check for pericenter CE
     for (int j = 1; j < Nactive; j++){
         // in WB coordinates this is checked against the WB itself
-        if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue;
+        if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) continue;
 
         if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
@@ -817,7 +817,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (int i = 0; i < Nactive; i++){ // Check central body, for collisions
         for (int j = i + 1; j < N; j++){
-            if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue; // in WB coordinates star B does not have close encounters, for now
+            if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 ri_trace->current_Ks[i*r->N+j] = 1;
                 if (ri_trace->encounter_map[i] == 0){
@@ -858,7 +858,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
         for (int j = 1; j < Nactive; j++){
 
             // in WB coordinates this is checked against the WB itself
-            if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue;
+            if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) continue;
 
             if (_switch_peri(r, j)){
                 ri_trace->current_C = 1;
@@ -888,7 +888,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (int i = 0; i < Nactive; i++){ // Do not check for central body anymore
         for (int j = i + 1; j < N; j++){
-            if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WB) continue; // in WB coordinates star B does not have close encounters, for now
+            if ((i == idxB || j == idxB) && ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 if (ri_trace->current_Ks[i*r->N+j] == 0){
                     new_close_encounter = 1;
@@ -945,7 +945,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
         r->ri_trace.mode = REB_TRACE_MODE_FULL; // for collision search
-        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WB) reb_integrator_trace_wb_to_inertial(r);
+        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
         else reb_integrator_trace_dh_to_inertial(r);
         switch (r->ri_trace.peri_mode){
             case REB_TRACE_PERI_FULL_IAS15:
@@ -1017,11 +1017,11 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                 reb_simulation_error(r,"Unsupported peri_mode encountered\n");
                 break;
         }
-        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WB) r->gravity = REB_GRAVITY_WB;
+        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY) r->gravity = REB_GRAVITY_WIDEBINARY;
         else r->gravity = REB_GRAVITY_TRACE;
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
-        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WB) reb_integrator_trace_inertial_to_wb(r);
+        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
         else reb_integrator_trace_inertial_to_dh(r);
     }
 }
@@ -1052,18 +1052,18 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     }
 
     // Calculate gravity with special function
-    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE && r->gravity != REB_GRAVITY_WB){
+    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE && r->gravity != REB_GRAVITY_WIDEBINARY){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
 
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WB) r->gravity = REB_GRAVITY_WB;
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) r->gravity = REB_GRAVITY_WIDEBINARY;
     else r->gravity = REB_GRAVITY_TRACE;
 
     ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
     reb_simulation_update_acceleration(r);
 
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WB) reb_integrator_trace_inertial_to_wb(r);
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
     else reb_integrator_trace_inertial_to_dh(r);
 
     // Create copy of all particles to allow for the step to be rejected.
@@ -1091,7 +1091,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
         }
     }
 
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WB) reb_integrator_trace_wb_to_inertial(r);
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     else reb_integrator_trace_dh_to_inertial(r);
 
     r->t+=r->dt;
@@ -1131,7 +1131,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.S_peri = NULL;
 
     r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
-    r->ri_trace.coordinates = REB_TRACE_COORDINATES_DHC;
+    r->ri_trace.coordinates = REB_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC;
 
     r->ri_trace.N_allocated = 0;
     r->ri_trace.N_allocated_additional_forces = 0;
