@@ -434,6 +434,35 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
     return dcrit;
 }
 
+static void reb_integrator_mercurius_update_acceleration(struct reb_simulation* r){
+    reb_simulation_update_acceleration_gravity(r);
+
+    if (r->additional_forces  && r->ri_mercurius.mode==0){
+        // Additional forces are only calculated in the kick step, not during close encounter
+        // shift pos and velocity so that external forces are calculated in inertial frame
+        // Note: Copying avoids degrading floating point performance
+        if(r->N>r->ri_mercurius.N_allocated_additional_forces){
+            r->ri_mercurius.particles_backup_additional_forces = realloc(r->ri_mercurius.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+            r->ri_mercurius.N_allocated_additional_forces = r->N;
+        }
+        memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
+        reb_integrator_mercurius_dh_to_inertial(r);
+
+        r->additional_forces(r);
+        
+        struct reb_particle* restrict const particles = r->particles;
+        struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additional_forces;
+        for (size_t i=0;i<r->N;i++){
+            particles[i].x = backup[i].x;
+            particles[i].y = backup[i].y;
+            particles[i].z = backup[i].z;
+            particles[i].vx = backup[i].vx;
+            particles[i].vy = backup[i].vy;
+            particles[i].vz = backup[i].vz;
+        }
+    }
+}
+
 
 void reb_integrator_mercurius_step(struct reb_simulation* r){
     if (r->N_var_config){
@@ -500,7 +529,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
         rim->L = reb_integrator_mercurius_L_mercury;
     }
 
-    reb_simulation_update_acceleration(r);
+    reb_integrator_mercurius_update_acceleration(r);
 
     if (rim->is_synchronized){
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
@@ -542,7 +571,7 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
             // Setting default switching function
             rim->L = reb_integrator_mercurius_L_mercury;
         }
-        reb_simulation_update_acceleration(r);
+        reb_integrator_mercurius_update_acceleration(r);
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
 
         reb_integrator_mercurius_dh_to_inertial(r);

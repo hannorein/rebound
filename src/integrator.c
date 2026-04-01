@@ -212,19 +212,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
     /***********************************************************
      * Additional forces
      **********************************************************/
-    if (r->additional_forces  && (r->integrator != REB_INTEGRATOR_MERCURIUS || r->ri_mercurius.mode==0) && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==REB_TRACE_MODE_INTERACTION || r->ri_trace.mode==REB_TRACE_MODE_FULL)){
-        // For Mercurius:
-        // Additional forces are only calculated in the kick step, not during close encounter
-        if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-            // shift pos and velocity so that external forces are calculated in inertial frame
-            // Note: Copying avoids degrading floating point performance
-            if(r->N>r->ri_mercurius.N_allocated_additional_forces){
-                r->ri_mercurius.particles_backup_additional_forces = realloc(r->ri_mercurius.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
-                r->ri_mercurius.N_allocated_additional_forces = r->N;
-            }
-            memcpy(r->ri_mercurius.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle)); 
-            reb_integrator_mercurius_dh_to_inertial(r);
-        }
+    if (r->additional_forces && (r->integrator != REB_INTEGRATOR_TRACE || r->ri_trace.mode==REB_TRACE_MODE_INTERACTION || r->ri_trace.mode==REB_TRACE_MODE_FULL)){
         if (r->integrator==REB_INTEGRATOR_TRACE){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
@@ -236,18 +224,6 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             reb_integrator_trace_dh_to_inertial(r);
         }
         r->additional_forces(r);
-        if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-            struct reb_particle* restrict const particles = r->particles;
-            struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additional_forces;
-            for (size_t i=0;i<r->N;i++){
-                particles[i].x = backup[i].x;
-                particles[i].y = backup[i].y;
-                particles[i].z = backup[i].z;
-                particles[i].vx = backup[i].vx;
-                particles[i].vy = backup[i].vy;
-                particles[i].vz = backup[i].vz;
-            }
-        }
         if (r->integrator==REB_INTEGRATOR_TRACE){
             struct reb_particle* restrict const particles = r->particles;
             struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
