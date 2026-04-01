@@ -172,7 +172,10 @@ struct reb_integrator_mercurius {
 
     // Internal use
     unsigned int is_synchronized;   
-    unsigned int mode;              // 0 if WH is operating, 1 if IAS15 is operating.
+    enum {
+        REB_MERCURIUS_MODE_WH = 0,
+        REB_MERCURIUS_MODE_ENCOUNTER = 1,
+    } mode;
     size_t encounter_N;             // Number of particles currently having an encounter
     size_t encounter_N_active;      // Number of active particles currently having an encounter
     unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles

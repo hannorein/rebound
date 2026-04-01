@@ -72,28 +72,31 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
 #endif // MPI
     if (r->integrator == REB_INTEGRATOR_MERCURIUS){
         struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
-        if (r->ri_mercurius.mode==0){ //WHFast part
-            rim->recalculate_r_crit_this_timestep       = 1;
-            rim->recalculate_coordinates_this_timestep = 1;
-        }else{  // IAS15 part
-            reb_integrator_ias15_reset(r);
-            if (rim->N_allocated_dcrit<r->N){
-                rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
-                rim->N_allocated_dcrit = r->N;
-            }
-            rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
-            if (rim->N_allocated<r->N){
-                rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
-                rim->encounter_map      = realloc(rim->encounter_map,sizeof(size_t)*r->N);
-                rim->N_allocated = r->N;
-            }
-            rim->encounter_map[rim->encounter_N] = r->N-1;
-            rim->encounter_N++;
-            if (r->N_active==SIZE_MAX){ 
-                // If global N_active is not set, then all particles are active, so the new one as well.
-                // Otherwise, assume we're adding non active particle. 
-                rim->encounter_N_active++;
-            }
+        switch (r->ri_mercurius.mode){
+            case REB_MERCURIUS_MODE_WH:
+                rim->recalculate_r_crit_this_timestep       = 1;
+                rim->recalculate_coordinates_this_timestep = 1;
+                break;
+            case REB_MERCURIUS_MODE_ENCOUNTER:
+                reb_integrator_ias15_reset(r);
+                if (rim->N_allocated_dcrit<r->N){
+                    rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
+                    rim->N_allocated_dcrit = r->N;
+                }
+                rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
+                if (rim->N_allocated<r->N){
+                    rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
+                    rim->encounter_map      = realloc(rim->encounter_map,sizeof(size_t)*r->N);
+                    rim->N_allocated = r->N;
+                }
+                rim->encounter_map[rim->encounter_N] = r->N-1;
+                rim->encounter_N++;
+                if (r->N_active==SIZE_MAX){ 
+                    // If global N_active is not set, then all particles are active, so the new one as well.
+                    // Otherwise, assume we're adding non active particle. 
+                    rim->encounter_N_active++;
+                }
+                break;
         }
     }
 
@@ -392,7 +395,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
             }
         }
         reb_integrator_ias15_reset(r);
-        if (r->ri_mercurius.mode==1){
+        if (r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
             struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
             int after_to_be_removed_particle = 0;
             size_t encounter_index = SIZE_MAX;

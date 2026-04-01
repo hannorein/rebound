@@ -333,7 +333,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         }
     }
 
-    rim->mode = 1;
+    rim->mode = REB_MERCURIUS_MODE_ENCOUNTER;
 
     // run
     const double old_dt = r->dt;
@@ -410,7 +410,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     // Reset constant for global particles
     r->t = old_t;
     r->dt = old_dt;
-    rim->mode = 0;
+    rim->mode = REB_MERCURIUS_MODE_WH;
 
 }
 
@@ -529,7 +529,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
         reb_simulation_warning(r,"Mercurius has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
     r->gravity = REB_GRAVITY_MERCURIUS;
-    rim->mode = 0;
+    rim->mode = REB_MERCURIUS_MODE_WH;
 
     if (rim->L == NULL){
         // Setting default switching function
@@ -573,7 +573,7 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
     struct reb_integrator_mercurius* const rim = &(r->ri_mercurius);
     if (rim->is_synchronized == 0){
         r->gravity = REB_GRAVITY_MERCURIUS; // needed here again for Simulationarchive
-        rim->mode = 0;
+        rim->mode = REB_MERCURIUS_MODE_WH;
         if (rim->L == NULL){
             // Setting default switching function
             rim->L = reb_integrator_mercurius_L_mercury;
@@ -590,7 +590,7 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
 
 void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.L = NULL;
-    r->ri_mercurius.mode = 0;
+    r->ri_mercurius.mode = REB_MERCURIUS_MODE_WH;
     r->ri_mercurius.encounter_N = 0;
     r->ri_mercurius.encounter_N_active = 0;
     r->ri_mercurius.r_crit_hill = 3;

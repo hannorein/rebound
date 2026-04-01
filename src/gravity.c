@@ -540,7 +540,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
             {
                 double (*_L) (const struct reb_simulation* const r, double d, double dcrit) = r->ri_mercurius.L;
                 switch (r->ri_mercurius.mode){
-                    case 0: // WHFAST part
+                    case REB_MERCURIUS_MODE_WH:
                         {
                             const double* const dcrit = r->ri_mercurius.dcrit;
 #ifndef OPENMP
@@ -634,7 +634,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 #endif // OPENMP
                         }
                         break;
-                    case 1: // IAS15 part
+                    case REB_MERCURIUS_MODE_ENCOUNTER:
                         {
                             const double m0 = r->particles[0].m;
                             const double* const dcrit = r->ri_mercurius.dcrit;
@@ -766,8 +766,6 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             }
 #endif // OPENMP
                         }
-                        break;
-                    case 2: // Skip WHFAST part because of synchronization
                         break;
                 }
             }

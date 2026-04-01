@@ -56,14 +56,17 @@ void reb_collision_search(struct reb_simulation* const r){
     size_t* map = NULL;
     switch (r->integrator){
         case REB_INTEGRATOR_MERCURIUS:
-            if (r->ri_mercurius.mode==0){
-                // After jump step, only collisions with star might occur.
-                // All other collisions in encounter step/
-                Ninner = 1;
-            }else{
-                N = r->ri_mercurius.encounter_N;
-                Ninner = N;
-                map = r->ri_mercurius.encounter_map;
+            switch (r->ri_mercurius.mode){
+                case REB_MERCURIUS_MODE_WH:
+                    // After jump step, only collisions with star might occur.
+                    // All other collisions in encounter step/
+                    Ninner = 1;
+                    break;
+                case REB_MERCURIUS_MODE_ENCOUNTER:
+                    N = r->ri_mercurius.encounter_N;
+                    Ninner = N;
+                    map = r->ri_mercurius.encounter_map;
+                    break;
             }
             break;
         case REB_INTEGRATOR_TRACE:
@@ -771,7 +774,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
             double vy = pi->vy;
             double vz = pi->vz;
             // Calculate energy difference in inertial frame
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
                 vx += r->ri_mercurius.com_vel.x;
                 vy += r->ri_mercurius.com_vel.y;
                 vz += r->ri_mercurius.com_vel.z;
@@ -789,7 +792,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
             double vx = pj->vx;
             double vy = pj->vy;
             double vz = pj->vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
                 vx += r->ri_mercurius.com_vel.x;
                 vy += r->ri_mercurius.com_vel.y;
                 vz += r->ri_mercurius.com_vel.z;
@@ -832,7 +835,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
             double vx = pi->vx;
             double vy = pi->vy;
             double vz = pi->vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==1){
+            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
                 vx += r->ri_mercurius.com_vel.x;
                 vy += r->ri_mercurius.com_vel.y;
                 vz += r->ri_mercurius.com_vel.z;
