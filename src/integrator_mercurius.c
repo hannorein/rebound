@@ -345,6 +345,11 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
 
     r->dt = 0.0001*_dt; // start with a small timestep.
 
+    // Backup additional forces
+    void (*additional_forces) (struct reb_simulation* const r) = r->additional_forces; 
+    // No additional forces during encounter
+    r->additional_forces = NULL;
+
     while(dtsign*r->t < dtsign*t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
         struct reb_particle star = r->particles[0]; // backup velocity
         r->particles[0].vx = 0; // star does not move in dh 
@@ -400,6 +405,8 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         }
     }
 
+    // Reset additional forces
+    r->additional_forces = additional_forces;
     // Reset constant for global particles
     r->t = old_t;
     r->dt = old_dt;
@@ -437,7 +444,7 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
 static void reb_integrator_mercurius_update_acceleration(struct reb_simulation* r){
     reb_simulation_update_acceleration_gravity(r);
 
-    if (r->additional_forces  && r->ri_mercurius.mode==0){
+    if (r->additional_forces){
         // Additional forces are only calculated in the kick step, not during close encounter
         // shift pos and velocity so that external forces are calculated in inertial frame
         // Note: Copying avoids degrading floating point performance
