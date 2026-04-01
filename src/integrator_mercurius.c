@@ -449,7 +449,7 @@ static void reb_integrator_mercurius_update_acceleration(struct reb_simulation* 
         reb_integrator_mercurius_dh_to_inertial(r);
 
         r->additional_forces(r);
-        
+
         struct reb_particle* restrict const particles = r->particles;
         struct reb_particle* restrict const backup = r->ri_mercurius.particles_backup_additional_forces;
         for (size_t i=0;i<r->N;i++){
