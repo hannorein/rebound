@@ -117,16 +117,6 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     reb_display_set_default_view(r, s);
 }
 
-void reb_simulation_add_display_settings(struct reb_simulation*r){
-    if (r->display_settings){
-        reb_simulation_error(r,"Simulation already has display settings.");
-        return;
-    }
-    r->display_settings = calloc(1,sizeof(struct reb_display_settings));
-    reb_display_settings_init(r, r->display_settings);
-}
-
-
 #ifdef OPENGL
 #include "simplefont.h"
 

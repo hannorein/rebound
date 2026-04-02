@@ -37,4 +37,14 @@ jobs:
       - name: Checking integrator_whfast512.o
         run: bash .github/function_prefix_checker.bash src/integrator_whfast512.o
       - name: Checking particle.o
-        run: bash .github/function_prefix_checker.bash src/integrator_particle.o
+        run: bash .github/function_prefix_checker.bash src/particle.o
+      - name: Checking binarydata.o
+        run: bash .github/function_prefix_checker.bash src/binarydata.o
+      - name: Checking boundary.o
+        run: bash .github/function_prefix_checker.bash src/boundary.o
+      - name: Checking collision.o
+        run: bash .github/function_prefix_checker.bash src/collision.o
+      #- name: Checking derivatives.o
+      #  run: bash .github/function_prefix_checker.bash src/derivatives.o
+      - name: Checking display.o
+        run: bash .github/function_prefix_checker.bash src/display.o

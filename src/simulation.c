@@ -1082,3 +1082,15 @@ void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, doubl
         }
     }
 }
+
+#ifdef OPENGL
+void reb_simulation_add_display_settings(struct reb_simulation*r){
+    if (r->display_settings){
+        reb_simulation_error(r,"Simulation already has display settings.");
+        return;
+    }
+    r->display_settings = calloc(1,sizeof(struct reb_display_settings));
+    reb_display_settings_init(r, r->display_settings);
+}
+#endif // OPENGL
+
