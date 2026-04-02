@@ -48,3 +48,9 @@ jobs:
       #  run: bash .github/function_prefix_checker.bash src/derivatives.o
       - name: Checking display.o
         run: bash .github/function_prefix_checker.bash src/display.o
+      - name: Checking fmemopen.o
+        run: bash .github/function_prefix_checker.bash src/fmemopen.o
+      - name: Checking frequency_analysis.o
+        run: bash .github/function_prefix_checker.bash src/frequency_analysis.o
+      #- name: Checking gravity.o
+      #  run: bash .github/function_prefix_checker.bash src/gravity.o

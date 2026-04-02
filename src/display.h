@@ -25,6 +25,9 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#include "rebound.h"
+void reb_display_settings_init(struct reb_simulation*r, struct reb_display_settings* s);
+
 #ifdef OPENGL
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
