@@ -35,7 +35,6 @@
 #include "tools.h"
 #include "gravity.h"
 #include "boundary.h"
-#include "integrator.h"
 #include "integrator_whfast.h"
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b

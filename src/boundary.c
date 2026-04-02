@@ -30,7 +30,6 @@
 #include "rebound_internal.h"
 #include <math.h>
 #include "particle.h"
-#include "integrator.h"
 #include "boundary.h"
 
 void reb_boundary_check(struct reb_simulation* const r){

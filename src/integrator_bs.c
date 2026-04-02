@@ -1,5 +1,5 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_bs.c
  * @brief 	BS integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @details	This file implements the Gragg-Bulirsch-Stoer integration scheme.
@@ -57,7 +57,6 @@
 #include <math.h>
 #include <float.h> // for DBL_MAX
 #include "gravity.h"
-#include "integrator.h"
 #include "integrator_bs.h"
 #include "integrator_trace.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

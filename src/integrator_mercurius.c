@@ -29,7 +29,6 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include <math.h>
-#include "integrator.h"
 #include "gravity.h"
 #include "integrator_mercurius.h"
 #include "integrator_ias15.h"

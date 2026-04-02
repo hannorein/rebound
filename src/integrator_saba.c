@@ -31,7 +31,6 @@
 #include "tools.h"
 #include "gravity.h"
 #include "transformations.h"
-#include "integrator.h"
 #include "integrator_whfast.h"
 #include "integrator_saba.h"
 

@@ -42,7 +42,6 @@
 #include "boundary.h"
 #include "display.h"
 #include "output.h"
-#include "integrator.h"
 #include "simulation.h"
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 

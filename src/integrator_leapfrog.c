@@ -1,5 +1,5 @@
 /**
- * @file 	integrator.c
+ * @file 	integrator_leapfrog.c
  * @brief 	Leap-frog integration scheme.
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  * @details	This file implements the leap-frog integration scheme.  
