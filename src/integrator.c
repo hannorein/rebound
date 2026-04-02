@@ -199,7 +199,7 @@ void reb_simulation_reset_integrator(struct reb_simulation* r){
 
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
-     // This first sets accelerations to zero even if REB_GRAVITY_NONE is used.
+    // This first sets accelerations to zero even if REB_GRAVITY_NONE is used.
     reb_simulation_update_acceleration_gravity(r);
     if (r->N_var){
         reb_simulation_update_acceleration_gravity_var(r);
