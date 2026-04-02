@@ -1094,7 +1094,7 @@ void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const 
                 p.vx = ri_whfast512->p_jh->vx[s*p_per_system+i-1];
                 p.vy = ri_whfast512->p_jh->vy[s*p_per_system+i-1];
                 p.vz = ri_whfast512->p_jh->vz[s*p_per_system+i-1];
-                reb_whfast_kepler_solver(&p, m0, dt/2.0, NULL);
+                reb_integrator_whfast_kepler_solver(&p, m0, dt/2.0, NULL);
                 ri_whfast512->p_jh->x[s*p_per_system+i-1]  = p.x;
                 ri_whfast512->p_jh->y[s*p_per_system+i-1]  = p.y;
                 ri_whfast512->p_jh->z[s*p_per_system+i-1]  = p.z;

@@ -331,7 +331,7 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     const size_t N = r->N;
     int timestep_too_large = 0;
     for (size_t i=1;i<N;i++){
-        timestep_too_large |= reb_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL);
+        timestep_too_large |= reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL);
     }
     if (timestep_too_large && r->ri_whfast.timestep_warning == 0){
         r->ri_whfast.timestep_warning++;

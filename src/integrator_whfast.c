@@ -159,7 +159,7 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
  * Keplerian motion for one planet                       *
  * Returns 0 on success. 1 if timestep is too large.     *
  * r only needed for variational particles. Can be NULL. */
-int reb_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
+int reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
     int timestep_too_large = 0;
 
@@ -526,13 +526,13 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
                     eta += p_jh[i].m;
                 }
 #endif // OPENMP
-                timestep_too_large |= reb_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
+                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
         case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
 #pragma omp parallel for 
             for (size_t i=1;i<N;i++){
-                timestep_too_large |= reb_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r); // eta = m0
+                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r); // eta = m0
             }
             break;
         case REB_WHFAST_COORDINATES_WHDS:
@@ -543,13 +543,13 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
                 }else{
                     eta = m0;
                 }
-                timestep_too_large |= reb_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
+                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
         case REB_WHFAST_COORDINATES_BARYCENTRIC:
             eta = p_jh[0].m;
             for (size_t i=1;i<N;i++){
-                timestep_too_large |= reb_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
+                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
     };
@@ -618,7 +618,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
     }
 }
 
-void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int order){
+static void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int order){
     const double dt = r->dt;
     if (order==3){
         // Third order corrector

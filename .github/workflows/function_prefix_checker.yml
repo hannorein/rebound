@@ -14,5 +14,25 @@ jobs:
         run: make -j 24 
       - name: Check simulation.o 
         run: bash .github/function_prefix_checker.bash src/simulation.o
+      #- name: Check integrator_bs.o 
+      #  run: bash .github/function_prefix_checker.bash src/integrator_bs.o
       - name: Check integrator_eos.o 
         run: bash .github/function_prefix_checker.bash src/integrator_eos.o
+      - name: Check integrator_ias15.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_ias15.o
+      - name: Check integrator_janus.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_janus.o
+      - name: Check integrator_leapfrog.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_leapfrog.o
+      - name: Check integrator_mercurius.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_mercurius.o
+      - name: Check integrator_saba.o
+        run: bash .github/function_prefix_checker.bash src/integrator_saba.o
+      - name: Check integrator_sei.o
+        run: bash .github/function_prefix_checker.bash src/integrator_sei.o
+      - name: Check integrator_trace.o
+        run: bash .github/function_prefix_checker.bash src/integrator_trace.o
+      - name: Check integrator_whfast.o
+        run: bash .github/function_prefix_checker.bash src/integrator_whfast.o
+      - name: Check integrator_whfast512.o
+        run: bash .github/function_prefix_checker.bash src/integrator_whfast512.o
