@@ -117,12 +117,6 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
-// Temporary fix for REBOUNDx. 
-void reb_clear_pre_post_pointers(struct reb_simulation* const r){
-    r->pre_timestep_modifications  = NULL;
-    r->post_timestep_modifications  = NULL;
-}
-
 // Heartbeat wrapper. Runs actual heartbeat and does exit checks.
 static void run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat
@@ -174,7 +168,7 @@ static int error_message_waiting(struct reb_simulation* const r){
 }
 
 
-int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
+static int reb_check_exit(struct reb_simulation* const r, const double tmax, double* last_full_dt){
     if(r->status <= REB_STATUS_SINGLE_STEP){
         if(r->status == REB_STATUS_SINGLE_STEP){
             r->status = REB_STATUS_PAUSED;
@@ -499,20 +493,6 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     return r->status;
 }
 
-static void reset_function_pointers(struct reb_simulation* const r){
-    r->coefficient_of_restitution   = NULL;
-    r->collision_resolve        = NULL;
-    r->additional_forces        = NULL;
-    r->heartbeat            = NULL;
-    r->pre_timestep_modifications  = NULL;
-    r->post_timestep_modifications  = NULL;
-    r->free_particle_ap = NULL;
-    r->ri_custom.step = NULL;
-    r->ri_custom.synchronize = NULL;
-    r->ri_custom.reset = NULL;
-    r->extras_cleanup = NULL;
-}
-
 void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
     run_heartbeat(r);
     for (unsigned int i=0;i<N_steps;i++){
@@ -776,7 +756,20 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
     r->rand_seed = reb_tools_get_rand_seed();
-    reset_function_pointers(r);
+    // Reset function pointers
+    r->coefficient_of_restitution   = NULL;
+    r->collision_resolve        = NULL;
+    r->additional_forces        = NULL;
+    r->heartbeat            = NULL;
+    r->pre_timestep_modifications  = NULL;
+    r->post_timestep_modifications  = NULL;
+    r->free_particle_ap = NULL;
+    r->ri_custom.step = NULL;
+    r->ri_custom.synchronize = NULL;
+    r->ri_custom.reset = NULL;
+    r->extras_cleanup = NULL;
+
+    // Reset values
     r->t        = 0; 
     r->G        = 1;
     r->softening    = 0;
