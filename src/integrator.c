@@ -205,7 +205,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
         reb_simulation_update_acceleration_gravity_var(r);
     }
 
-    if (r->additional_force){
+    if (r->additional_forces){
         r->additional_forces(r);
     }
 }
