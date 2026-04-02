@@ -380,11 +380,17 @@ int reb_simulation_reset_function_pointers(struct reb_simulation* const r){
 }
 
 struct reb_simulation* reb_simulation_create(){
-    struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
-    reb_simulation_init(r);
+    struct reb_simulation* r = reb_simulation_try_create();
+    if (r == NULL) reb_exit("Memory allocation failed.");
     return r;
 }
 
+struct reb_simulation* reb_simulation_try_create(){
+    struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
+    if (r == NULL) return NULL;
+    reb_simulation_init(r);
+    return r;
+}
 
 void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum reb_simulation_binary_error_codes* warnings){
     char* bufp;

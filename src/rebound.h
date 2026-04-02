@@ -701,8 +701,10 @@ struct reb_simulation {
 
 // Simulation life cycle
 
-// Allocates memory for reb_simulation and initializes it.
+// Allocates memory for reb_simulation and initializes it. Fatal on allocation failure.
 DLLEXPORT struct reb_simulation* reb_simulation_create(void);
+// Attempts to allocate memory for reb_simulation and initializes it. Returns NULL on allocation failure.
+DLLEXPORT struct reb_simulation* reb_simulation_try_create(void);
 // Create a simulation object from a file. Set snapshot=-1 to load last snapshot.
 DLLEXPORT struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot);
 // Create a simulation object from a simulationarchive. Set snapshot=-1 to load last snapshot.
