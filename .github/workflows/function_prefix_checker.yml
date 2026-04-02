@@ -12,27 +12,29 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build rebound
         run: make -j 24 
-      - name: Check simulation.o 
+      - name: Checking simulation.o 
         run: bash .github/function_prefix_checker.bash src/simulation.o
-      #- name: Check integrator_bs.o 
+      #- name: Checking integrator_bs.o 
       #  run: bash .github/function_prefix_checker.bash src/integrator_bs.o
-      - name: Check integrator_eos.o 
+      - name: Checking integrator_eos.o 
         run: bash .github/function_prefix_checker.bash src/integrator_eos.o
-      - name: Check integrator_ias15.o 
+      - name: Checking integrator_ias15.o 
         run: bash .github/function_prefix_checker.bash src/integrator_ias15.o
-      - name: Check integrator_janus.o 
+      - name: Checking integrator_janus.o 
         run: bash .github/function_prefix_checker.bash src/integrator_janus.o
-      - name: Check integrator_leapfrog.o 
+      - name: Checking integrator_leapfrog.o 
         run: bash .github/function_prefix_checker.bash src/integrator_leapfrog.o
-      - name: Check integrator_mercurius.o 
+      - name: Checking integrator_mercurius.o 
         run: bash .github/function_prefix_checker.bash src/integrator_mercurius.o
-      - name: Check integrator_saba.o
+      - name: Checking integrator_saba.o
         run: bash .github/function_prefix_checker.bash src/integrator_saba.o
-      - name: Check integrator_sei.o
+      - name: Checking integrator_sei.o
         run: bash .github/function_prefix_checker.bash src/integrator_sei.o
-      - name: Check integrator_trace.o
+      - name: Checking integrator_trace.o
         run: bash .github/function_prefix_checker.bash src/integrator_trace.o
-      - name: Check integrator_whfast.o
+      - name: Checking integrator_whfast.o
         run: bash .github/function_prefix_checker.bash src/integrator_whfast.o
-      - name: Check integrator_whfast512.o
+      - name: Checking integrator_whfast512.o
         run: bash .github/function_prefix_checker.bash src/integrator_whfast512.o
+      - name: Checking particle.o
+        run: bash .github/function_prefix_checker.bash src/integrator_particle.o

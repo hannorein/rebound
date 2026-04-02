@@ -212,24 +212,6 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
     *sizep += size;
 }
 
-// Compares two particles. Return 0 if identical.
-int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2){
-    int differ = 0;
-    differ = differ || (p1.x != p2.x);
-    differ = differ || (p1.y != p2.y);
-    differ = differ || (p1.z != p2.z);
-    differ = differ || (p1.vx != p2.vx);
-    differ = differ || (p1.vy != p2.vy);
-    differ = differ || (p1.vz != p2.vz);
-    differ = differ || (p1.ax != p2.ax);
-    differ = differ || (p1.ay != p2.ay);
-    differ = differ || (p1.az != p2.az);
-    differ = differ || (p1.m != p2.m);
-    differ = differ || (p1.r != p2.r);
-    differ = differ || (p1.name != p2.name);
-    return differ;
-}
-
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type){
     int i=-1;
     do{

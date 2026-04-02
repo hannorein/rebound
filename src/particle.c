@@ -143,6 +143,25 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
     }
 }
 
+// Compares two particles. Return 0 if identical.
+int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2){
+    int differ = 0;
+    differ = differ || (p1.x != p2.x);
+    differ = differ || (p1.y != p2.y);
+    differ = differ || (p1.z != p2.z);
+    differ = differ || (p1.vx != p2.vx);
+    differ = differ || (p1.vy != p2.vy);
+    differ = differ || (p1.vz != p2.vz);
+    differ = differ || (p1.ax != p2.ax);
+    differ = differ || (p1.ay != p2.ay);
+    differ = differ || (p1.az != p2.az);
+    differ = differ || (p1.m != p2.m);
+    differ = differ || (p1.r != p2.r);
+    differ = differ || (p1.name != p2.name);
+    return differ;
+}
+
+
 int reb_particle_check_testparticles(struct reb_simulation* const r){
     if (r->N_active == r->N || r->N_active == SIZE_MAX){
         return 0;

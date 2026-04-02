@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     double G = 1.0;     // Working in units where G=1, but you can choose other units if you prefer.
     double GM = G*1.0;  // The gravitational parameter (G*mass);
     double dt = M_PI;   // Time interval, here: half an orbital period
-    int timestep_too_large = reb_integator_whfast_kepler_solver(&p, GM, dt, NULL); // We pass NULL to indicate that particle p is not part of a REBOUND simulation.
+    int timestep_too_large = reb_integrator_whfast_kepler_solver(&p, GM, dt, NULL); // We pass NULL to indicate that particle p is not part of a REBOUND simulation.
     if (timestep_too_large){
         printf("Timestep is larger than orbital period.\n");
     }
