@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   build:
 
-    name: Checking function names in C files 
+    name: Checking if function names correspond to file names
     runs-on: ubuntu-latest
 
     steps:
