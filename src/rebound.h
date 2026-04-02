@@ -227,7 +227,7 @@ struct reb_integrator_trace {
         REB_TRACE_MODE_INTERACTION = 0, // Interaction step
         REB_TRACE_MODE_KEPLER = 1,      // Kepler step
         REB_TRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
-        REB_TRACE_MODE_FULL = 3,        // Doing everything in one step (only used for collision search)
+        REB_TRACE_MODE_FULL = 3,        // Doing everything in one step
     } mode;
     size_t encounter_N;                 // Number of particles currently having an encounter
     size_t encounter_N_active;          // Number of active particles currently having an encounter

@@ -247,11 +247,43 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
     particles[0].vz = r->ri_trace.com_vel.z - temp.vz;
 }
 
+static void reb_integrator_trace_update_acceleration(struct reb_simulation* r){
+    reb_simulation_update_acceleration_gravity(r);
+
+    if (r->additional_forces && (r->ri_trace.mode==REB_TRACE_MODE_INTERACTION || r->ri_trace.mode==REB_TRACE_MODE_FULL)){
+        if (r->ri_trace.mode == REB_TRACE_MODE_INTERACTION){
+            // shift pos and velocity so that external forces are calculated in inertial frame
+            // Note: Copying avoids degrading floating point performance
+            // We should NOT do this in FULL mode, already in inertial frame
+            if(r->N>r->ri_trace.N_allocated_additional_forces){
+                r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+                r->ri_trace.N_allocated_additional_forces = r->N;
+            }
+            memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
+            reb_integrator_trace_dh_to_inertial(r);
+        }
+        r->additional_forces(r);
+        if (r->ri_trace.mode == REB_TRACE_MODE_INTERACTION){
+            struct reb_particle* restrict const particles = r->particles;
+            struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
+            for (size_t i=0;i<r->N;i++){
+                particles[i].x = backup[i].x;
+                particles[i].y = backup[i].y;
+                particles[i].z = backup[i].z;
+                particles[i].vx = backup[i].vx;
+                particles[i].vy = backup[i].vy;
+                particles[i].vz = backup[i].vz;
+            }
+        }
+    }
+}
+
+
 void reb_integrator_trace_interaction_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     r->ri_trace.mode = REB_TRACE_MODE_INTERACTION;
-    reb_simulation_update_acceleration(r);
+    reb_integrator_trace_update_acceleration(r);
     for (size_t i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
@@ -329,7 +361,7 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     struct reb_simulation* const r = ode->r;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
     reb_integrator_trace_update_particles(r, y);
-    reb_simulation_update_acceleration(r);
+    reb_integrator_trace_update_acceleration(r);
 
     double px=0., py=0., pz=0.;
     size_t* map = r->ri_trace.encounter_map;
@@ -674,7 +706,7 @@ static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const dou
     (void)t; // Not timedependent.
     struct reb_simulation* const r = ode->r;
     reb_integrator_bs_update_particles(r, y);
-    reb_simulation_update_acceleration(r);
+    reb_integrator_trace_update_acceleration(r);
 
     for (size_t i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
@@ -701,7 +733,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         const double old_dt = r->dt;
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
-        r->ri_trace.mode = REB_TRACE_MODE_FULL; // for collision search
+        r->ri_trace.mode = REB_TRACE_MODE_FULL;
         reb_integrator_trace_dh_to_inertial(r);
         switch (r->ri_trace.peri_mode){
             case REB_TRACE_PERI_FULL_IAS15:
@@ -785,7 +817,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const size_t N = r->N;
 
-    if (r->N_var_config){
+    if (r->N_var){
         reb_simulation_warning(r,"TRACE does not work with variational equations.");
     }
 
@@ -812,7 +844,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
-    reb_simulation_update_acceleration(r);
+    reb_integrator_trace_update_acceleration(r);
 
     reb_integrator_trace_inertial_to_dh(r);
 
