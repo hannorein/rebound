@@ -66,3 +66,5 @@ jobs:
       #  run: bash .github/function_prefix_checker.bash src/tools.o
       - name: Checking transformations.o 
         run: bash .github/function_prefix_checker.bash src/transformations.o
+      - name: Checking tree.o 
+        run: bash .github/function_prefix_checker.bash src/tree.o
