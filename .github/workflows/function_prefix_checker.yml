@@ -14,3 +14,5 @@ jobs:
         run: make -j 24 
       - name: Check simulation.o 
         run: bash .github/function_prefix_checker.bash src/simulation.o
+      - name: Check integrator_eos.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_eos.o
