@@ -259,6 +259,7 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
 // Deallocate all dynamically allocated memory in simulation, but do
 // not free simulation itself.
 void reb_simulation_free_pointers(struct reb_simulation* const r){
+    reb_simulation_reset_integrator(r);
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
     }
@@ -299,7 +300,6 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #endif // SERVER
     free(r->gravity_cs);
     free(r->collisions);
-    reb_simulation_reset_integrator(r);
     free(r->tree_root);
     r->tree_root = NULL;
     if (r->ri_custom.reset){
@@ -753,6 +753,8 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
     r->rand_seed = reb_tools_get_rand_seed();
+
+    reb_simulation_reset_integrator(r);
     // Reset values
     r->t        = 0; 
     r->G        = 1;
