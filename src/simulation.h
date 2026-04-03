@@ -30,7 +30,7 @@ enum REB_BINARYDATA_ERROR_CODE; // Forward declaration.
 void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, size_t* p2);
 
 // Only free memory in pointers of a simulation, but not the simulation itself.
-DLLEXPORT void reb_simulation_free_pointers(struct reb_simulation* const r);
+DLLEXPORT void reb_simulation_reset(struct reb_simulation* const r);
 
 // Used internally and by python. Should not be called by the user.
 DLLEXPORT void reb_simulation_init(struct reb_simulation* r); 

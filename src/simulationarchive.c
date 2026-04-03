@@ -56,7 +56,7 @@ void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simul
     }
 
     // load original binary file
-    reb_simulation_free_pointers(r);
+    reb_simulation_reset(r);
     memset(r,0,sizeof(struct reb_simulation));
     reb_simulation_init(r);
 #ifdef MPI

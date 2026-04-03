@@ -113,7 +113,7 @@ struct reb_simulation* reb_simulation_create(){
 }
 
 void reb_simulation_free(struct reb_simulation* const r){
-    reb_simulation_free_pointers(r);
+    reb_simulation_reset(r);
     free(r);
 }
 
@@ -256,8 +256,10 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
 }
 
 
-
-void reb_simulation_free_pointers(struct reb_simulation* const r){
+// Free all dynamically allocated memory owned by the simulation
+// but not the simulation itself.
+void reb_simulation_reset(struct reb_simulation* const r){
+    reb_simulation_integrators_reset(r);
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
     }
@@ -298,7 +300,6 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #endif // SERVER
     free(r->gravity_cs);
     free(r->collisions);
-    reb_simulation_integrators_reset(r);
     free(r->tree_root);
     r->tree_root = NULL;
     if (r->ri_custom.reset){
@@ -640,7 +641,7 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     size_t sizep;
     reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
 
-    reb_simulation_free_pointers(r_copy);
+    reb_simulation_reset(r_copy);
     memset(r_copy, 0, sizeof(struct reb_simulation));
     reb_simulation_init(r_copy);
 
