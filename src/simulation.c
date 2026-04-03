@@ -256,7 +256,8 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
 }
 
 
-
+// Deallocate all dynamically allocated memory in simulation, but do
+// not free simulation itself.
 void reb_simulation_free_pointers(struct reb_simulation* const r){
     if (r->simulationarchive_filename){
         free(r->simulationarchive_filename);
@@ -298,11 +299,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #endif // SERVER
     free(r->gravity_cs);
     free(r->collisions);
-    reb_integrator_whfast_reset(r);
-    reb_integrator_ias15_reset(r);
-    reb_integrator_mercurius_reset(r);
-    reb_integrator_trace_reset(r);
-    reb_integrator_bs_reset(r);
+    reb_simulation_reset_integrator(r);
     free(r->tree_root);
     r->tree_root = NULL;
     if (r->ri_custom.reset){
@@ -643,7 +640,7 @@ void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct re
     size_t sizep;
     reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
 
-    reb_simulation_free_pointers(r_copy);
+    reb_simulation_free(r_copy);
     memset(r_copy, 0, sizeof(struct reb_simulation));
     reb_simulation_init(r_copy);
 
@@ -756,19 +753,6 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
     r->rand_seed = reb_tools_get_rand_seed();
-    // Reset function pointers
-    r->coefficient_of_restitution   = NULL;
-    r->collision_resolve        = NULL;
-    r->additional_forces        = NULL;
-    r->heartbeat            = NULL;
-    r->pre_timestep_modifications  = NULL;
-    r->post_timestep_modifications  = NULL;
-    r->free_particle_ap = NULL;
-    r->ri_custom.step = NULL;
-    r->ri_custom.synchronize = NULL;
-    r->ri_custom.reset = NULL;
-    r->extras_cleanup = NULL;
-
     // Reset values
     r->t        = 0; 
     r->G        = 1;
