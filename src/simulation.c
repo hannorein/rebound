@@ -298,11 +298,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #endif // SERVER
     free(r->gravity_cs);
     free(r->collisions);
-    reb_integrator_whfast_reset(r);
-    reb_integrator_ias15_reset(r);
-    reb_integrator_mercurius_reset(r);
-    reb_integrator_trace_reset(r);
-    reb_integrator_bs_reset(r);
+    reb_simulation_reset_integrator(r);
     free(r->tree_root);
     r->tree_root = NULL;
     if (r->ri_custom.reset){
