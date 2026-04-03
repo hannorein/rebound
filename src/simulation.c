@@ -759,88 +759,24 @@ void reb_simulation_init(struct reb_simulation* r){
     reb_simulation_integrators_reset(r);
     r->rand_seed = reb_tools_get_rand_seed();
 
-    // Reset values
-    r->t        = 0; 
-    r->G        = 1;
-    r->softening    = 0;
-    r->dt       = 0.001;
-    r->dt_last_done = 0.;
-    r->steps_done = 0;
-    r->root_size    = -1;
-    r->N_root_x  = 1;
-    r->N_root_y  = 1;
-    r->N_root_z  = 1;
-    r->N_ghost_x  = 0;
-    r->N_ghost_y  = 0;
-    r->N_ghost_z  = 0;
-    r->N        = 0;    
-    r->N_allocated   = 0;    
-    r->N_active     = SIZE_MAX; 
-    r->var_rescale_warning   = 0;   
-    r->name_list = NULL;
-    r->name_hash_table = NULL;
-    r->N_name_list = 0;
-    r->testparticle_type = 0;   
-    r->testparticle_hidewarnings = 0;
-    r->N_var    = 0;    
-    r->N_var_config = 0;    
-    r->var_config   = NULL;     
-    r->exit_min_distance    = 0;    
-    r->exit_max_distance    = 0;    
-    r->status       = REB_STATUS_SUCCESS;
+    // Reset values to default
+    // Note: Only need to set non-zero values because
+    //       we memset everything to zero above.
+    r->G                    = 1;
+    r->dt                   = 0.001;
+    r->gravity              = REB_GRAVITY_BASIC;
+    r->root_size            = -1;
+    r->opening_angle2       = 0.25;
+    r->N_root_x             = 1;
+    r->N_root_y             = 1;
+    r->N_root_z             = 1;
+    r->N_active             = SIZE_MAX; 
+    r->status               = REB_STATUS_SUCCESS;
     r->exact_finish_time    = 1;
-    r->force_is_velocity_dependent = 0;
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
-    r->calculate_megno  = 0;
     r->output_timing_last   = -1;
-    r->save_messages = 0;
-    r->track_energy_offset = 0;
-    r->server_data = NULL;
-    r->display_data = NULL;
-    r->display_settings = NULL;
-    r->walltime = 0;
+    r->simulationarchive_version = 3;
 
-    r->minimum_collision_velocity = 0;
-    r->collisions_plog  = 0;
-    r->collisions_log_n  = 0;    
-    r->collisions_N  = 0;    
-    r->collision_resolve_keep_sorted   = 0;    
-
-    r->simulationarchive_version       = 3;
-    r->simulationarchive_auto_interval = 0.;    
-    r->simulationarchive_auto_walltime = 0.;    
-    r->simulationarchive_auto_step     = 0;    
-    r->simulationarchive_next          = 0.;    
-    r->simulationarchive_next_step     = 0;    
-    r->simulationarchive_filename      = NULL;    
-
-    // Default modules
-    r->integrator   = REB_INTEGRATOR_IAS15;
-    r->boundary     = REB_BOUNDARY_NONE;
-    r->gravity      = REB_GRAVITY_BASIC;
-    r->collision    = REB_COLLISION_NONE;
-
-    // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
-    r->tree_root        = NULL;
-    r->opening_angle2   = 0.25;
-
-#ifdef MPI
-    r->mpi_id = 0;                            
-    r->mpi_num = 0;                           
-    r->particles_send = NULL;  
-    r->N_particles_send = 0;                  
-    r->N_particles_send_max = 0;               
-    r->particles_recv = NULL;     
-    r->N_particles_recv = 0;                  
-    r->N_particles_recv_max = 0;               
-
-    r->tree_essential_send = NULL;
-    r->N_tree_essential_send = 0;             
-    r->N_tree_essential_send_max = 0;          
-    r->tree_essential_recv = NULL;
-    r->N_tree_essential_recv = 0;             
-    r->N_tree_essential_recv_max = 0;          
-#endif // MPI
 #ifdef OPENMP
     char msg[1024];
     sprintf(msg, "Using OpenMP with %d threads per node.\n", omp_get_max_threads());
