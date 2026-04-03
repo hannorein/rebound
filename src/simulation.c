@@ -820,27 +820,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->gravity      = REB_GRAVITY_BASIC;
     r->collision    = REB_COLLISION_NONE;
 
-    // ********** SEI
-    r->ri_sei.OMEGA     = 1;
-    r->ri_sei.OMEGAZ    = -1;
-    r->ri_sei.lastdt    = 0;
-
-    // ********** CUSTOM
-    r->ri_custom.data = NULL;
-    r->ri_custom.data_size = 0;
-
-    // ********** LEAPFROG
-    r->ri_leapfrog.order = 2;
-
-    // ********** MERCURIUS
-    r->ri_mercurius.mode = REB_MERCURIUS_MODE_WH;
-    r->ri_mercurius.safe_mode = 1;
-    r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
-    r->ri_mercurius.recalculate_r_crit_this_timestep = 0;
-    r->ri_mercurius.is_synchronized = 1;
-    r->ri_mercurius.encounter_N = 0;
-    r->ri_mercurius.r_crit_hill = 3;
-
     // ********** JANUS
     r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
     r->ri_janus.order = 6;

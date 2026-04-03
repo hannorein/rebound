@@ -594,7 +594,10 @@ void reb_integrator_mercurius_reset(struct reb_simulation* r){
     r->ri_mercurius.encounter_N_active = 0;
     r->ri_mercurius.r_crit_hill = 3;
     r->ri_mercurius.tponly_encounter = 0;
+    r->ri_mercurius.safe_mode = 1;
+    r->ri_mercurius.is_synchronized = 1;
     r->ri_mercurius.recalculate_coordinates_this_timestep = 0;
+    r->ri_mercurius.recalculate_r_crit_this_timestep = 0;
     // Internal arrays (only used within one timestep)
     free(r->ri_mercurius.particles_backup);
     r->ri_mercurius.particles_backup = NULL;

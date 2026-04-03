@@ -87,7 +87,9 @@ void reb_integrator_sei_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_sei_reset(struct reb_simulation* r){
-    r->ri_sei.lastdt = 0;	
+    r->ri_sei.lastdt    = 0;	
+    r->ri_sei.OMEGA     = 1;
+    r->ri_sei.OMEGAZ    = -1;
 }
 
 /**
