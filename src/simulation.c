@@ -337,7 +337,7 @@ void reb_simulation_reset(struct reb_simulation* const r){
     free(r->odes);
 }
 
-// Free all dynamically allocated memory used by integrators.
+// Frees all dynamically allocated memory used by integrators.
 // Also resets all integrator configurations to default.
 void reb_simulation_integrators_reset(struct reb_simulation* r){
     r->integrator = REB_INTEGRATOR_IAS15;
