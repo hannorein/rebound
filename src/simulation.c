@@ -820,31 +820,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->gravity      = REB_GRAVITY_BASIC;
     r->collision    = REB_COLLISION_NONE;
 
-    // ********** JANUS
-    r->ri_janus.recalculate_integer_coordinates_this_timestep = 0;
-    r->ri_janus.order = 6;
-    r->ri_janus.scale_pos = 1e-16;
-    r->ri_janus.scale_vel = 1e-16;
-
-    // ********** TRACE
-    r->ri_trace.mode = REB_TRACE_MODE_NONE;
-    r->ri_trace.peri_mode = REB_TRACE_PERI_FULL_BS;
-    r->ri_trace.encounter_N = 0;
-    r->ri_trace.r_crit_hill = 3.;
-    r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.force_accept = 0;
-
-    // ********** EOS
-    r->ri_eos.n = 2;
-    r->ri_eos.phi0 = REB_EOS_LF;
-    r->ri_eos.phi1 = REB_EOS_LF;
-    r->ri_eos.safe_mode = 1;
-    r->ri_eos.is_synchronized = 1;
-
-
-    // ********** BS
-    reb_integrator_bs_reset(r);
-
     // Tree parameters. Will not be used unless gravity or collision search makes use of tree.
     r->tree_root        = NULL;
     r->opening_angle2   = 0.25;

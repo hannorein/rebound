@@ -230,7 +230,7 @@ void reb_integrator_janus_reset(struct reb_simulation* r){
     struct reb_integrator_janus* const ri_janus = &(r->ri_janus);
     ri_janus->N_allocated = 0;
     ri_janus->recalculate_integer_coordinates_this_timestep = 0;
-    ri_janus->order = 2;
+    ri_janus->order = 6;
     ri_janus->scale_pos = 1e-16;
     ri_janus->scale_vel = 1e-16;
     if (ri_janus->p_int){
