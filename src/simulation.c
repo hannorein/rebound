@@ -337,6 +337,8 @@ void reb_simulation_reset(struct reb_simulation* const r){
     free(r->odes);
 }
 
+// Free all dynamically allocated memory used by integrators.
+// Also resets all integrator configurations to default.
 void reb_simulation_integrators_reset(struct reb_simulation* r){
     r->integrator = REB_INTEGRATOR_IAS15;
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
@@ -753,6 +755,8 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
+    // Load all default integrator parameters
+    reb_simulation_integrators_reset(r);
     r->rand_seed = reb_tools_get_rand_seed();
 
     // Reset values
@@ -817,19 +821,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->collision    = REB_COLLISION_NONE;
 
 
-    // Integrators  
-    // ********** WHFAST
-    // the defaults below are chosen to safeguard the user against spurious results, but
-    // will be slower and less accurate
-    r->ri_whfast.corrector = 0;
-    r->ri_whfast.corrector2 = 0;
-    r->ri_whfast.kernel = 0;
-    r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_JACOBI;
-    r->ri_whfast.safe_mode = 1;
-    r->ri_whfast.recalculate_coordinates_this_timestep = 0;
-    r->ri_whfast.is_synchronized = 1;
-    r->ri_whfast.timestep_warning = 0;
-    r->ri_whfast.recalculate_coordinates_but_not_synchronized_warning = 0;
 
     // ********** WHFAST512
     r->ri_whfast512.is_synchronized = 1;
