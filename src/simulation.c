@@ -759,7 +759,7 @@ void reb_simulation_init(struct reb_simulation* r){
     reb_simulation_integrators_reset(r);
     r->rand_seed = reb_tools_get_rand_seed();
 
-    // Reset values to default
+    // Init/reset values to default
     // Note: Only need to set non-zero values because
     //       we memset everything to zero above.
     r->G                    = 1;
@@ -771,9 +771,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_root_y             = 1;
     r->N_root_z             = 1;
     r->N_active             = SIZE_MAX; 
-    r->status               = REB_STATUS_SUCCESS;
     r->exact_finish_time    = 1;
-    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     r->output_timing_last   = -1;
     r->simulationarchive_version = 3;
 
