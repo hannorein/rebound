@@ -833,6 +833,10 @@ void reb_integrator_ias15_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){
+    r->ri_ias15.epsilon = 1e-9;
+    r->ri_ias15.min_dt = 0.0;
+    r->ri_ias15.adaptive_mode = REB_IAS15_PRS23; // new default since January 2024
+    r->ri_ias15.iterations_max_exceeded = 0;    
     r->ri_ias15.N_allocated  = 0;
     r->ri_ias15.N_allocated_map  = 0;
     free_dp7(&(r->ri_ias15.g));

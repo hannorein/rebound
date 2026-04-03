@@ -1118,6 +1118,7 @@ void reb_integrator_whfast512_reset(struct reb_simulation* const r){
     }
     ri_whfast512->p_jh = NULL;
     ri_whfast512->N_allocated = 0;
+    ri_whfast512->N_systems = 1;
     ri_whfast512->gr_potential = 0;
     ri_whfast512->is_synchronized = 1;
     ri_whfast512->keep_unsynchronized = 0;

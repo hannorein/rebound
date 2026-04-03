@@ -820,26 +820,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->gravity      = REB_GRAVITY_BASIC;
     r->collision    = REB_COLLISION_NONE;
 
-
-
-    // ********** WHFAST512
-    r->ri_whfast512.is_synchronized = 1;
-    r->ri_whfast512.gr_potential = 0;
-    r->ri_whfast512.keep_unsynchronized = 0;
-    r->ri_whfast512.recalculate_constants = 1;
-    r->ri_whfast512.N_systems = 1;
-
-    // ********** SABA
-    r->ri_saba.type = REB_SABA_10_6_4;
-    r->ri_saba.safe_mode = 1;
-    r->ri_saba.is_synchronized = 1;
-
-    // ********** IAS15
-    r->ri_ias15.epsilon         = 1e-9;
-    r->ri_ias15.min_dt      = 0;
-    r->ri_ias15.adaptive_mode = REB_IAS15_PRS23; // new default since January 2024
-    r->ri_ias15.iterations_max_exceeded = 0;    
-
     // ********** SEI
     r->ri_sei.OMEGA     = 1;
     r->ri_sei.OMEGAZ    = -1;
