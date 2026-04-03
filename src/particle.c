@@ -382,6 +382,7 @@ void reb_particle_set_name(struct reb_particle* p, const char* const name){
 #else //  MPI
     (void)name; // not used
     reb_simulation_error(r, "Particle names are not supported with MPI. Use integer ids instead.\n");
+    __asm__ ("int3");
 #endif //  MPI
 }
 
