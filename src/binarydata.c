@@ -391,7 +391,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             if (strcmp(reb_binarydata_field_descriptor_for_type(field1.type).name, "particles")==0){
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
-                for (unsigned int i=0;i<field1.size/sizeof(struct reb_particle);i++){
+                for (size_t i=0;i<field1.size/sizeof(struct reb_particle);i++){
                     struct reb_particle p1;
                     struct reb_particle p2;
                     memcpy(&p1, pb1+i, sizeof(struct reb_particle)); // need copy because of 8 byte alignment requirement
@@ -663,10 +663,10 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             struct reb_binarydata_field field;
             memset(&field,0,sizeof(struct reb_binarydata_field));
             field.type = reb_binarydata_field_descriptor_list[i].type;
-            unsigned int N_list = *((unsigned int*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N));
+            size_t N_list = *((size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N));
             char*** list_p = (char***)((char*)r + reb_binarydata_field_descriptor_list[i].offset);
             size_t serialized_size = 0;
-            for (unsigned int i=0; i<N_list; i++){
+            for (size_t i=0; i<N_list; i++){
                 // character count + NULL character + original pointer
                 serialized_size += strlen((*list_p)[i])+1+sizeof(char*);
             }
@@ -675,7 +675,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             if (field.size){
                 // This pointer arithmetic will fail on 32 bit architectures.
                 write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                for (unsigned int i=0; i<N_list; i++){
+                for (size_t i=0; i<N_list; i++){
                     write_to_stream(bufp, &allocatedsize, sizep, (*list_p)[i], strlen((*list_p)[i])+1);
                     write_to_stream(bufp, &allocatedsize, sizep, &((*list_p)[i]), sizeof(char*));
                 }
@@ -686,7 +686,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             struct reb_binarydata_field field;
             memset(&field,0,sizeof(struct reb_binarydata_field));
             field.type = reb_binarydata_field_descriptor_list[i].type;
-            unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
+            size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
             field.size = (*pointer_N) * reb_binarydata_field_descriptor_list[i].element_size;
 
             if (field.size){
@@ -790,8 +790,8 @@ next_field:
                     }
                     fread(*(char**)pointer, field.size,1,inf);
 
-                    unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-                    *pointer_N = (unsigned int)field.size/reb_binarydata_field_descriptor_list[i].element_size;
+                    size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
+                    *pointer_N = (size_t)field.size/reb_binarydata_field_descriptor_list[i].element_size;
 
                     goto next_field;
                 }
@@ -811,7 +811,7 @@ next_field:
                     fread(serialized_strings, serialized_size,1,inf);
                     // Process strings back into a list
                     char*** pointer = (char***)((char*)r + reb_binarydata_field_descriptor_list[i].offset);
-                    unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
+                    size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
                     size_t current_pos = 0;
                     while (current_pos < serialized_size){
                         char* current_string = serialized_strings + current_pos;
@@ -850,8 +850,8 @@ next_field:
                     fread(dp7->p5, field.size/7, 1, inf);
                     fread(dp7->p6, field.size/7, 1, inf);
 
-                    unsigned int* pointer_N = (unsigned int*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-                    *pointer_N = (unsigned int)field.size/reb_binarydata_field_descriptor_list[i].element_size;
+                    size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
+                    *pointer_N = (size_t)field.size/reb_binarydata_field_descriptor_list[i].element_size;
 
                     goto next_field;
                 }
@@ -904,11 +904,11 @@ next_field:
 
 finish_fields:
     // Some final initialization
-    for (unsigned int l=0;l<r->N_var_config;l++){
+    for (size_t l=0;l<r->N_var_config;l++){
         r->var_config[l].sim = r;
     }
     r->N_allocated = r->N; // This used to be different. Now only saving N.
-    for (unsigned int l=0;l<r->N_allocated;l++){
+    for (size_t l=0;l<r->N_allocated;l++){
         r->particles[l].ap = NULL;
         r->particles[l].sim = r;
 #ifndef MPI
@@ -929,7 +929,7 @@ finish_fields:
         }
 #endif // MPI
     }
-    for (unsigned int l=0;l<r->N_var;l++){
+    for (size_t l=0;l<r->N_var;l++){
         r->particles_var[l].ap = NULL;
         r->particles_var[l].sim = r;
     }
