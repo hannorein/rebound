@@ -1381,7 +1381,7 @@ class Simulation(Structure):
         """
         Call this function to reset temporary integrator variables
         """
-        clibrebound.reb_simulation_reset_integrator(byref(self))
+        clibrebound.reb_simulation_integrators_reset(byref(self))
 
     def synchronize(self):
         """

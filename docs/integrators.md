@@ -833,8 +833,8 @@ To allow for the best performance, WHFast512 has certain limitations that WHFast
 - No variational or test particles are supported (although a particle can have mass 0). 
 - MEGNO and other chaos indicators are not supported.
 - WHFast512 always uses democratic heliocentric coordinates. Jacobi coordinates are not supported.
-- The timestep needs to be constant and the `exact_finish_time` flag needs to be set to 0. To change the timestep, first synchronize the simulation, then call `reb_simulation_reset_integrator()`.
-- The masses of all particles need to be constant. To change the masses, first synchronize the simulation, then call `reb_simulation_reset_integrator()`.
+- The timestep needs to be constant and the `exact_finish_time` flag needs to be set to 0. To change the timestep, first synchronize the simulation, then call `reb_simulation_integrators_reset()`.
+- The masses of all particles need to be constant. To change the masses, first synchronize the simulation, then call `reb_simulation_integrators_reset()`.
 - Additional forces (other than the GR potential) and REBOUNDx are not supported.
 
 

@@ -298,7 +298,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
 #endif // SERVER
     free(r->gravity_cs);
     free(r->collisions);
-    reb_simulation_reset_integrator(r);
+    reb_simulation_integrators_reset(r);
     free(r->tree_root);
     r->tree_root = NULL;
     if (r->ri_custom.reset){
@@ -336,7 +336,7 @@ void reb_simulation_free_pointers(struct reb_simulation* const r){
     free(r->odes);
 }
 
-void reb_simulation_reset_integrator(struct reb_simulation* r){
+void reb_simulation_integrators_reset(struct reb_simulation* r){
     r->integrator = REB_INTEGRATOR_IAS15;
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
