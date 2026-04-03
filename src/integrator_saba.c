@@ -126,7 +126,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
     struct reb_integrator_whfast* const ri_whfast = &(r->ri_whfast);
     struct reb_particle* const p_j = ri_whfast->p_jh;
     struct reb_particle* const particles = r->particles;
-    const unsigned int N = r->N;
+    const size_t N = r->N;
     switch (r->ri_saba.type/0x100){
         case 1: // modified kick
                 // Calculate normal kick
@@ -135,7 +135,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
             // Calculate jerk
             reb_integrator_whfast_calculate_jerk(r);
 
-            for (unsigned int i=0; i<N; i++){
+            for (size_t i=0; i<N; i++){
                 const double prefact = r->dt*r->dt;
                 particles[i].ax = prefact*p_j[i].ax; 
                 particles[i].ay = prefact*p_j[i].ay; 
@@ -162,7 +162,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
 
                 // WHT96 Eq 10.6
                 const double prefac1 = r->dt*r->dt/12.; 
-                for (unsigned int i=1;i<N;i++){
+                for (size_t i=1;i<N;i++){
                     p_j[i].x += prefac1 * p_temp[i].ax;
                     p_j[i].y += prefac1 * p_temp[i].ay;
                     p_j[i].z += prefac1 * p_temp[i].az;
@@ -174,7 +174,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, double cc){
                 reb_transformations_inertial_to_jacobi_acc(particles, p_j, particles, N, N);
 
                 const double prefact = cc*r->dt*12.;
-                for (unsigned int i=1;i<N;i++){
+                for (size_t i=1;i<N;i++){
                     // Lazy implementer's commutator
                     p_j[i].vx += prefact*(p_j[i].ax - p_temp[i].ax);
                     p_j[i].vy += prefact*(p_j[i].ay - p_temp[i].ay);
@@ -197,7 +197,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r){
     struct reb_particle* restrict const particles = r->particles;
     const int type = ri_saba->type;
     const int stages = reb_saba_stages(type);
-    const unsigned int N = r->N;
+    const size_t N = r->N;
     if (r->N_var_config>0){
         reb_simulation_error(r, "Variational particles are not supported in the SABA integrator.");
         return; 

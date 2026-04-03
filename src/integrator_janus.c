@@ -118,8 +118,8 @@ static double gg(struct reb_janus_scheme s, unsigned int stage){
 }
 
 
-static void to_int(struct reb_particle_int* psi, struct reb_particle* ps, unsigned int N, double scale_pos, double scale_vel){
-    for(unsigned int i=0; i<N; i++){ 
+static void to_int(struct reb_particle_int* psi, struct reb_particle* ps, size_t N, double scale_pos, double scale_vel){
+    for(size_t i=0; i<N; i++){ 
         psi[i].x = ps[i].x/scale_pos; 
         psi[i].y = ps[i].y/scale_pos; 
         psi[i].z = ps[i].z/scale_pos; 
@@ -128,8 +128,8 @@ static void to_int(struct reb_particle_int* psi, struct reb_particle* ps, unsign
         psi[i].vz = ps[i].vz/scale_vel; 
     }
 }
-static void to_double(struct reb_particle* ps, struct reb_particle_int* psi, unsigned int N, double scale_pos, double scale_vel){
-    for(unsigned int i=0; i<N; i++){ 
+static void to_double(struct reb_particle* ps, struct reb_particle_int* psi, size_t N, double scale_pos, double scale_vel){
+    for(size_t i=0; i<N; i++){ 
         ps[i].x = ((double)psi[i].x)*scale_pos; 
         ps[i].y = ((double)psi[i].y)*scale_pos; 
         ps[i].z = ((double)psi[i].z)*scale_pos; 
@@ -141,8 +141,8 @@ static void to_double(struct reb_particle* ps, struct reb_particle_int* psi, uns
 
 static void drift(struct reb_simulation* r, double dt, double scale_pos, double scale_vel){
     struct reb_integrator_janus* ri_janus = &(r->ri_janus);
-    const unsigned int N = r->N;
-    for(unsigned int i=0; i<N; i++){
+    const size_t N = r->N;
+    for(size_t i=0; i<N; i++){
         ri_janus->p_int[i].x += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vx*scale_vel/scale_pos) ;
         ri_janus->p_int[i].y += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vy*scale_vel/scale_pos) ;
         ri_janus->p_int[i].z += (REB_PARTICLE_INT_TYPE)(dt*(double)ri_janus->p_int[i].vz*scale_vel/scale_pos) ;
@@ -151,8 +151,8 @@ static void drift(struct reb_simulation* r, double dt, double scale_pos, double 
 
 static void kick(struct reb_simulation* r, double dt, double scale_vel){
     struct reb_integrator_janus* ri_janus = &(r->ri_janus);
-    const unsigned int N = r->N;
-    for(unsigned int i=0; i<N; i++){
+    const size_t N = r->N;
+    for(size_t i=0; i<N; i++){
         ri_janus->p_int[i].vx += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].ax/scale_vel) ;
         ri_janus->p_int[i].vy += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].ay/scale_vel) ;
         ri_janus->p_int[i].vz += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].az/scale_vel) ;
@@ -162,7 +162,7 @@ static void kick(struct reb_simulation* r, double dt, double scale_vel){
 void reb_integrator_janus_step(struct reb_simulation* r){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     struct reb_integrator_janus* ri_janus = &(r->ri_janus);
-    const unsigned int N = r->N;
+    const size_t N = r->N;
     const double dt = r->dt;
     const double scale_vel  = ri_janus->scale_vel;
     const double scale_pos  = ri_janus->scale_pos;

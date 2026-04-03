@@ -35,10 +35,10 @@ const double reb_integrator_leapfrog_lf6_a[5] = {0.1867, 0.5554970237124784, 0.1
 const double reb_integrator_leapfrog_lf8_a[9] = {0.128865979381443, 0.581514087105251, -0.410175371469850, 0.1851469357165877, -0.4095523434208514, 0.1444059410800120, 0.2783355003936797, 0.3149566839162949, -0.6269948254051343979}; 
 
 static void drift(struct reb_simulation* r, double dt){
-    const unsigned int N = r->N;
+    const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
 #pragma omp parallel for schedule(guided)
-    for (unsigned int i=0;i<N;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].x  += dt * particles[i].vx;
         particles[i].y  += dt * particles[i].vy;
         particles[i].z  += dt * particles[i].vz;
@@ -47,10 +47,10 @@ static void drift(struct reb_simulation* r, double dt){
 }
 
 static void kick(struct reb_simulation* r, double dt){
-    const unsigned int N = r->N;
+    const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
 #pragma omp parallel for schedule(guided)
-    for (unsigned int i=0;i<N;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].vx += dt * particles[i].ax;
         particles[i].vy += dt * particles[i].ay;
         particles[i].vz += dt * particles[i].az;
