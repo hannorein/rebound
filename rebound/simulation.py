@@ -1318,7 +1318,7 @@ class Simulation(Structure):
         """
         Perform exactly N_steps integration steps with REBOUND.
         """
-        clibrebound.reb_simulation_steps(byref(self),c_uint(N_steps))
+        clibrebound.reb_simulation_steps(byref(self),c_size_t(N_steps))
         self.process_messages()
 
     def integrate(self, tmax, exact_finish_time=1):

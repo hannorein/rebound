@@ -493,9 +493,9 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     return r->status;
 }
 
-void reb_simulation_steps(struct reb_simulation* const r, unsigned int N_steps){
+void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
     run_heartbeat(r);
-    for (unsigned int i=0;i<N_steps;i++){
+    for (size_t i=0;i<N_steps;i++){
         reb_simulation_step(r);
         run_heartbeat(r);
     }
