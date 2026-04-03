@@ -558,6 +558,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
             }else{
                 reb_simulation_error(r, "REB_INTEGRATOR_CUSTOM selected, but r->ri_custom.step not set.");
             }
+            break;
         default:
             reb_simulation_error(r, "REB_INTEGRATOR not found.");
             break;
@@ -756,18 +757,6 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
     r->rand_seed = reb_tools_get_rand_seed();
-    // Reset function pointers
-    r->coefficient_of_restitution   = NULL;
-    r->collision_resolve        = NULL;
-    r->additional_forces        = NULL;
-    r->heartbeat            = NULL;
-    r->pre_timestep_modifications  = NULL;
-    r->post_timestep_modifications  = NULL;
-    r->free_particle_ap = NULL;
-    r->ri_custom.step = NULL;
-    r->ri_custom.synchronize = NULL;
-    r->ri_custom.reset = NULL;
-    r->extras_cleanup = NULL;
 
     // Reset values
     r->t        = 0; 
