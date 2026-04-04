@@ -433,7 +433,7 @@ struct reb_simulation {
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
 
     // Collision routines and some integrators can operate on only some particles.
-    // This map defines which ones. Set to NULL to operate on all particles.
+    // This array r->map defines which ones. Set to NULL to operate on all particles.
     size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
     size_t* map;                    // Note: memory not owned and thus not freed by simulation.
 
@@ -445,7 +445,7 @@ struct reb_simulation {
     struct  reb_variational_configuration* var_config;   // Configuration structs. These contain details on variational particles. 
 
     int     var_rescale_warning;    
-    size_t  N_active;               // Number of active (i.e. not test-particle) particles. Default: -1 (all particles are active). 
+    size_t  N_active;               // Number of active (i.e. not test-particle) particles. Default: SIZE_MAX (all particles are active). 
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
     char**  name_list;              // List of names used to identify particles. Managed by REBOUND. Do not directly edit/access.
@@ -512,9 +512,10 @@ struct reb_simulation {
     int*   N_tree_essential_recv_max;           // Maximal length of cell receive buffer before realloc() is needed.
 #endif // MPI
 
+    // Collision related variables
     struct reb_collision* collisions;       // Array of current collisions. Do not change manually
     size_t N_allocated_collisions;
-    unsigned int collisions_N;              // Number of collisions found during last collision search.
+    unsigned int N_collisions;              // Number of collisions found during last collision search.
     double minimum_collision_velocity;      // Ensure relative velocity during collisions is at least this much (to avoid particles sinking into each other)
     double collisions_plog;                 // Keeping track of momentum transfer in collisions (for ring simulations)
     int64_t collisions_log_n;               // Cumulative number of collisions in entire simulation.

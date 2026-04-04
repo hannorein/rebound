@@ -722,7 +722,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             if (success){
                 // Only do a collision search for accepted steps.
                 reb_collision_search(r);
-                if (r->collisions_N) r->ri_trace.force_accept = 1;
+                if (r->N_collisions) r->ri_trace.force_accept = 1;
             }
 
             if (nbody_ode->length != ri_trace->encounter_N*3*2){
@@ -955,7 +955,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                         r->dt = t_needed-r->t;
                     }
                     reb_collision_search(r);
-                    if (r->collisions_N) r->ri_trace.force_accept = 1;
+                    if (r->N_collisions) r->ri_trace.force_accept = 1;
                 }
                 // Resetting IAS15 here reduces binary file size.
                 reb_integrator_ias15_reset(r);
@@ -1003,7 +1003,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                         if (success){
                             // Only do a collision search for accepted steps.
                             reb_collision_search(r);
-                            if (r->collisions_N) r->ri_trace.force_accept = 1;
+                            if (r->N_collisions) r->ri_trace.force_accept = 1;
                         }
                     }
                     reb_ode_free(nbody_ode);
