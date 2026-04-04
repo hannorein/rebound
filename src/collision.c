@@ -744,41 +744,17 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
             double vx = pi->vx;
             double vy = pi->vy;
             double vz = pi->vz;
-            // Calculate energy difference in inertial frame
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
             Ei += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
         }
         {
             double vx = pj->vx;
             double vy = pj->vy;
             double vz = pj->vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
             Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
         }
         const size_t N_active = ((r->N_active==SIZE_MAX)?r->N:r->N_active);
         // No potential energy between test particles
+        // TODO: Make work with map
         if (i<N_active || j<N_active){
             double x = pi->x - pj->x;
             double y = pi->y - pj->y;
@@ -806,18 +782,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
             double vx = pi->vx;
             double vy = pi->vy;
             double vz = pi->vz;
-            if (r->integrator == REB_INTEGRATOR_MERCURIUS && r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
-                vx += r->ri_mercurius.com_vel.x;
-                vy += r->ri_mercurius.com_vel.y;
-                vz += r->ri_mercurius.com_vel.z;
-            }
-
-            if (r->integrator == REB_INTEGRATOR_TRACE && r->ri_trace.mode==REB_TRACE_MODE_KEPLER){
-                vx += r->ri_trace.com_vel.x;
-                vy += r->ri_trace.com_vel.y;
-                vz += r->ri_trace.com_vel.z;
-            }
-
             Ef += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
         }
         r->energy_offset += Ei - Ef;
