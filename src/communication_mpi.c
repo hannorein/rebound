@@ -125,7 +125,7 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* r){
             r->particles_send[proc_id][send_N] = particles[i];
             r->N_particles_send[proc_id]++;
             // Remove particle locally
-            reb_simulation_remove_particle(r, i, 0); // Do not keep sorted
+            reb_simulation_remove_particle(r, i);
             i--; // still need to check the particle that replaced the removed one
         }else{
         }
