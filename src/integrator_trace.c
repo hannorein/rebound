@@ -246,43 +246,270 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
     particles[0].vz = r->ri_trace.com_vel.z - temp.vz;
 }
 
-static void reb_integrator_trace_update_acceleration(struct reb_simulation* r){
-    reb_simulation_update_acceleration_gravity(r);
-
-    if (r->additional_forces && (r->ri_trace.mode==REB_TRACE_MODE_INTERACTION || r->ri_trace.mode==REB_TRACE_MODE_FULL)){
-        if (r->ri_trace.mode == REB_TRACE_MODE_INTERACTION){
-            // shift pos and velocity so that external forces are calculated in inertial frame
-            // Note: Copying avoids degrading floating point performance
-            // We should NOT do this in FULL mode, already in inertial frame
-            if(r->N>r->ri_trace.N_allocated_additional_forces){
-                r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
-                r->ri_trace.N_allocated_additional_forces = r->N;
-            }
-            memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
-            reb_integrator_trace_dh_to_inertial(r);
+static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct reb_simulation* r){
+    struct reb_particle* const particles = r->particles;
+    const size_t N = r->N;
+    const double G = r->G;
+    const double softening2 = r->softening*r->softening;
+    const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
+    const int _testparticle_type   = r->testparticle_type;
+#ifndef OPENMP
+    for (size_t i=0; i<N; i++){
+        particles[i].ax = 0;
+        particles[i].ay = 0;
+        particles[i].az = 0;
+    }
+    for (size_t i=2; i<N_active; i++){
+        if (reb_sigint > 1) return;
+        for (size_t j=1; j<i; j++){
+            if (r->ri_trace.current_Ks[j*N+i]) continue;
+            const double dx = particles[i].x - particles[j].x;
+            const double dy = particles[i].y - particles[j].y;
+            const double dz = particles[i].z - particles[j].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+            const double prefact = G / (_r*_r*_r);
+            const double prefactj = -prefact*particles[j].m;
+            const double prefacti = prefact*particles[i].m;
+            particles[i].ax    += prefactj*dx;
+            particles[i].ay    += prefactj*dy;
+            particles[i].az    += prefactj*dz;
+            particles[j].ax    += prefacti*dx;
+            particles[j].ay    += prefacti*dy;
+            particles[j].az    += prefacti*dz;
         }
-        r->additional_forces(r);
-        if (r->ri_trace.mode == REB_TRACE_MODE_INTERACTION){
-            struct reb_particle* restrict const particles = r->particles;
-            struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
-            for (size_t i=0;i<r->N;i++){
-                particles[i].x = backup[i].x;
-                particles[i].y = backup[i].y;
-                particles[i].z = backup[i].z;
-                particles[i].vx = backup[i].vx;
-                particles[i].vy = backup[i].vy;
-                particles[i].vz = backup[i].vz;
+    }
+    const size_t startitestp = MAX(N_active,2);
+    for (size_t i=startitestp; i<N; i++){
+        if (reb_sigint > 1) return;
+        for (size_t j=1; j<N_active; j++){
+            if (r->ri_trace.current_Ks[j*N+i]) continue;
+            const double dx = particles[i].x - particles[j].x;
+            const double dy = particles[i].y - particles[j].y;
+            const double dz = particles[i].z - particles[j].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+            const double prefact = G / (_r*_r*_r);
+            const double prefactj = -prefact*particles[j].m;
+            particles[i].ax    += prefactj*dx;
+            particles[i].ay    += prefactj*dy;
+            particles[i].az    += prefactj*dz;
+            if (_testparticle_type){
+                const double prefacti = prefact*particles[i].m;
+                particles[j].ax    += prefacti*dx;
+                particles[j].ay    += prefacti*dy;
+                particles[j].az    += prefacti*dz;
             }
+        }
+    }
+
+#else // OPENMP
+    particles[0].ax = 0;
+    particles[0].ay = 0;
+    particles[0].az = 0;
+#pragma omp parallel for schedule(guided)
+    for (size_t i=1; i<N; i++){
+        particles[i].ax = 0;
+        particles[i].ay = 0;
+        particles[i].az = 0;
+        for (size_t j=1; j<N_active; j++){
+            if (i==j) continue;
+            if (r->ri_trace.current_Ks[j*N+i]) continue;
+            const double dx = particles[i].x - particles[j].x;
+            const double dy = particles[i].y - particles[j].y;
+            const double dz = particles[i].z - particles[j].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+            const double prefact = -G*particles[j].m/(_r*_r*_r);
+            particles[i].ax    += prefact*dx;
+            particles[i].ay    += prefact*dy;
+            particles[i].az    += prefact*dz;
+        }
+    }
+    if (_testparticle_type){
+        for (size_t i=1; i<N_active; i++){
+            for (size_t j=N_active; j<N; j++){
+                if (r->ri_trace.current_Ks[j*N+i]) continue;
+                const double dx = particles[i].x - particles[j].x;
+                const double dy = particles[i].y - particles[j].y;
+                const double dz = particles[i].z - particles[j].z;
+                const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                const double prefact = -G*particles[j].m/(_r*_r*_r);
+                particles[i].ax    += prefact*dx;
+                particles[i].ay    += prefact*dy;
+                particles[i].az    += prefact*dz;
+            }
+        }
+    }
+#endif // OPENMP
+
+    // Handle Additional forces
+    if (r->additional_forces){
+        // shift pos and velocity so that external forces are calculated in inertial frame
+        // Note: Copying avoids degrading floating point performance
+        // We should NOT do this in FULL mode, already in inertial frame
+        if(r->N>r->ri_trace.N_allocated_additional_forces){
+            r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+            r->ri_trace.N_allocated_additional_forces = r->N;
+        }
+        memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
+        reb_integrator_trace_dh_to_inertial(r);
+        r->additional_forces(r);
+        struct reb_particle* restrict const particles = r->particles;
+        struct reb_particle* restrict const backup = r->ri_trace.particles_backup_additional_forces;
+        for (size_t i=0;i<r->N;i++){
+            particles[i].x = backup[i].x;
+            particles[i].y = backup[i].y;
+            particles[i].z = backup[i].z;
+            particles[i].vx = backup[i].vx;
+            particles[i].vy = backup[i].vy;
+            particles[i].vz = backup[i].vz;
         }
     }
 }
 
+static void reb_integrator_trace_calculate_acceleration_mode_kepler(struct reb_simulation* r){
+    // Kepler Step
+    struct reb_particle* const particles = r->particles;
+    const size_t N = r->N;
+    const double G = r->G;
+    const double softening2 = r->softening*r->softening;
+    const int _testparticle_type   = r->testparticle_type;
+    const double m0 = r->particles[0].m;
+    const size_t encounter_N = r->ri_trace.encounter_N;
+    const size_t encounter_N_active = r->ri_trace.encounter_N_active;
+    size_t* map = r->ri_trace.encounter_map;
+#ifndef OPENMP
+    particles[0].ax = 0; // map[0] is always 0
+    particles[0].ay = 0;
+    particles[0].az = 0;
+
+    // Acceleration due to star
+    for (size_t i=1; i<encounter_N; i++){
+        size_t mi = map[i];
+        const double x = particles[mi].x;
+        const double y = particles[mi].y;
+        const double z = particles[mi].z;
+        const double _r = sqrt(x*x + y*y + z*z + softening2);
+        double prefact = -G * m0 / (_r*_r*_r);
+        particles[mi].ax    = prefact*x;
+        particles[mi].ay    = prefact*y;
+        particles[mi].az    = prefact*z;
+    }
+
+    // We're in a heliocentric coordinate system.
+    // The star feels no acceleration
+    // Interactions between active-active
+    if (encounter_N_active > 2){ // if two or less, no active-active planets
+        for (size_t i=2; i<encounter_N_active; i++){
+            size_t mi = map[i];
+            for (size_t j=1; j<i; j++){
+                size_t mj = map[j];
+                if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+                const double dx = particles[mi].x - particles[mj].x;
+                const double dy = particles[mi].y - particles[mj].y;
+                const double dz = particles[mi].z - particles[mj].z;
+                const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                double prefact = G/(_r*_r*_r);
+                double prefactj = -prefact*particles[mj].m;
+                double prefacti = prefact*particles[mi].m;
+
+                particles[mi].ax    += prefactj*dx;
+                particles[mi].ay    += prefactj*dy;
+                particles[mi].az    += prefactj*dz;
+                particles[mj].ax    += prefacti*dx;
+                particles[mj].ay    += prefacti*dy;
+                particles[mj].az    += prefacti*dz;
+            }
+        }
+    }
+
+    // Interactions between active-testparticle
+    const size_t startitestp = MAX(encounter_N_active,2);
+    for (size_t i=startitestp; i<encounter_N; i++){
+        size_t mi = map[i];
+        for (size_t j=1; j<encounter_N_active; j++){
+            size_t mj = map[j];
+            if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+            const double dx = particles[mi].x - particles[mj].x;
+            const double dy = particles[mi].y - particles[mj].y;
+            const double dz = particles[mi].z - particles[mj].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+            double prefact = G/(_r*_r*_r);
+            double prefactj = -prefact*particles[mj].m;
+            particles[mi].ax    += prefactj*dx;
+            particles[mi].ay    += prefactj*dy;
+            particles[mi].az    += prefactj*dz;
+
+            if (_testparticle_type){
+                double prefacti = prefact*particles[mi].m;
+                particles[mj].ax    += prefacti*dx;
+                particles[mj].ay    += prefacti*dy;
+                particles[mj].az    += prefacti*dz;
+            }
+        }
+    }
+#else // OPENMP
+    particles[0].ax = 0; // map[0] is always 0
+    particles[0].ay = 0;
+    particles[0].az = 0;
+    // We're in a heliocentric coordinate system.
+    // The star feels no acceleration
+#pragma omp parallel for schedule(guided)
+    for (size_t i=1; i<encounter_N; i++){
+        size_t mi = map[i];
+        particles[mi].ax = 0;
+        particles[mi].ay = 0;
+        particles[mi].az = 0;
+        // Acceleration due to star
+        const double x = particles[mi].x;
+        const double y = particles[mi].y;
+        const double z = particles[mi].z;
+        const double _r = sqrt(x*x + y*y + z*z + softening2);
+        double prefact = -G/(_r*_r*_r)*m0;
+        particles[mi].ax    += prefact*x;
+        particles[mi].ay    += prefact*y;
+        particles[mi].az    += prefact*z;
+        for (size_t j=1; j<encounter_N_active; j++){
+            if (i==j) continue;
+            size_t mj = map[j];
+            if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+            const double dx = x - particles[mj].x;
+            const double dy = y - particles[mj].y;
+            const double dz = z - particles[mj].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+            double prefact = -G*particles[mj].m/(_r*_r*_r);
+            particles[mi].ax    += prefact*dx;
+            particles[mi].ay    += prefact*dy;
+            particles[mi].az    += prefact*dz;
+        }
+    }
+    if (_testparticle_type){
+#pragma omp parallel for schedule(guided)
+        for (size_t i=1; i<encounter_N_active; i++){
+            size_t mi = map[i];
+            const double x = particles[mi].x;
+            const double y = particles[mi].y;
+            const double z = particles[mi].z;
+            for (size_t j=encounter_N_active; j<encounter_N; j++){
+                size_t mj = map[j];
+                if (!r->ri_trace.current_Ks[mj*N+mi]) continue;
+                const double dx = x - particles[mj].x;
+                const double dy = y - particles[mj].y;
+                const double dz = z - particles[mj].z;
+                const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                double prefact = -G*particles[mj].m/(_r*_r*_r);
+                particles[mi].ax    += prefact*dx;
+                particles[mi].ay    += prefact*dy;
+                particles[mi].az    += prefact*dz;
+            }
+        }
+    }
+#endif // OPENMP
+}
 
 void reb_integrator_trace_interaction_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     r->ri_trace.mode = REB_TRACE_MODE_INTERACTION;
-    reb_integrator_trace_update_acceleration(r);
+    reb_integrator_trace_calculate_acceleration_mode_interaction(r);
     for (size_t i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
@@ -360,7 +587,7 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     struct reb_simulation* const r = ode->r;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
     reb_integrator_trace_update_particles(r, y);
-    reb_integrator_trace_update_acceleration(r);
+    reb_integrator_trace_calculate_acceleration_mode_kepler(r);
 
     double px=0., py=0., pz=0.;
     size_t* map = r->ri_trace.encounter_map;
@@ -432,6 +659,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     }
 
     ri_trace->mode = REB_TRACE_MODE_KEPLER;
+    r->gravity = REB_GRAVITY_CUSTOM;
+    r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
 
     // Only Partial BS uses this step 
     if (ri_trace->peri_mode == REB_TRACE_PERI_PARTIAL_BS || !ri_trace->current_C){
@@ -700,24 +929,6 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     return new_close_encounter;
 }
 
-// TODO: Should be reused from BS
-static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
-    (void)t; // Not timedependent.
-    struct reb_simulation* const r = ode->r;
-    reb_integrator_bs_update_particles(r, y);
-    reb_integrator_trace_update_acceleration(r);
-
-    for (size_t i=0; i<r->N; i++){
-        const struct reb_particle p = r->particles[i];
-        yDot[i*6+0] = p.vx;
-        yDot[i*6+1] = p.vy;
-        yDot[i*6+2] = p.vz;
-        yDot[i*6+3] = p.ax;
-        yDot[i*6+4] = p.ay;
-        yDot[i*6+5] = p.az;
-    }
-}
-
 static void reb_integrator_trace_step_try(struct reb_simulation* const r){
     if (r->ri_trace.current_C == 0 || r->ri_trace.peri_mode == REB_TRACE_PERI_PARTIAL_BS){
         reb_integrator_trace_interaction_step(r, r->dt/2.);
@@ -762,7 +973,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                                 reb_ode_free(nbody_ode);
                             }
                             nbody_ode = reb_ode_create(r, 6*r->N);
-                            nbody_ode->derivatives = nbody_derivatives;
+                            nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
                             nbody_ode->needs_nbody = 0;
                             y = nbody_ode->y;
                             reb_integrator_bs_reset(r);
@@ -804,7 +1015,6 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                 reb_simulation_error(r,"Unsupported peri_mode encountered\n");
                 break;
         }
-        r->gravity = REB_GRAVITY_TRACE;
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
         reb_integrator_trace_inertial_to_dh(r);
@@ -837,13 +1047,13 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     }
 
     // Calculate gravity with special function
-    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
+    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_CUSTOM){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
-    r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
-    reb_integrator_trace_update_acceleration(r);
+    // Not sure why this was needed. HR 4 April 2026
+    // reb_integrator_trace_update_acceleration(r);
 
     reb_integrator_trace_inertial_to_dh(r);
 

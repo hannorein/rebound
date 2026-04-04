@@ -716,6 +716,14 @@ void reb_simulation_synchronize(struct reb_simulation* r){
 
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
+    if (r->gravity==REB_GRAVITY_CUSTOM){
+        if (!r->gravity_custom){
+            reb_simulation_error(r, "REB_GRAVITY_CUSTOM selected, but r->gravity_custom function pointer not provided.");
+        }
+        // Let the user provided routine do everything, then return.
+        r->gravity_custom(r);
+        return;
+    }
     switch (r->gravity){
         case REB_GRAVITY_NONE: // Do nothing.
             for (size_t j=0; j<r->N; j++){
@@ -736,14 +744,9 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
         case REB_GRAVITY_COMPENSATED:
             reb_gravity_compensated_calculate_acceleration(r);
             break;
-        case REB_GRAVITY_CUSTOM:
-            if (r->gravity_custom){
-                r->gravity_custom(r);
-            }
-            break;
         default:
-            reb_simulation_update_acceleration_gravity(r);
-            break;
+            reb_simulation_error(r, "Gravity module not found.");
+            return;
     }
     if (r->N_var){
         switch (r->gravity){
@@ -753,7 +756,8 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
             case REB_GRAVITY_NONE:
                 break;
             default:
-                reb_simulation_error(r, "Variational gravity calculation not implemented. Use REB_GRAVITY_BASIC");
+                reb_simulation_error(r, "Variational gravity calculation not implemented in selected gravity module. Please use REB_GRAVITY_BASIC.");
+                return;
         }
     }
 

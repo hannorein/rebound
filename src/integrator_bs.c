@@ -326,7 +326,7 @@ static void extrapolate(const struct reb_ode* ode, double * const coeff, const i
 }
 
 
-static void nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
+void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot, const double* const y, double const t){
     struct reb_simulation* const r = ode->r;
     const double t_backup = r->t;
     r->t = t; // Set correct time for time dependent additional forces
@@ -786,7 +786,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
     }
     if (ri_bs->nbody_ode == NULL){ 
         ri_bs->nbody_ode = reb_ode_create(r, nbody_length);
-        ri_bs->nbody_ode->derivatives = nbody_derivatives;
+        ri_bs->nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
         ri_bs->nbody_ode->needs_nbody = 0; // No need to update unless there's another ode
         ri_bs->first_or_last_step = 1;
     }

@@ -1,6 +1,6 @@
 /**
  * @file 	gravity.h
- * @brief 	Calculate gravitational forces. 
+ * @brief 	Default gravity modules. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
  * @section LICENSE
@@ -25,11 +25,6 @@
 #ifndef _GRAVITY_H
 #define _GRAVITY_H
 struct reb_simulation;
-
-/**
- * Calculate all the gravitational acceleration for all non-variational particles.
- */
-void reb_simulation_update_acceleration_gravity(struct reb_simulation* r);
 
 // Basic O(N^2) gravity routine
 void reb_gravity_basic_calculate_acceleration(struct reb_simulation* r);
