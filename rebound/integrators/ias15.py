@@ -87,8 +87,4 @@ class IntegratorIAS15(ctypes.Structure):
                 ("_e", reb_dp7),
                 ("_br", reb_dp7),
                 ("_er", reb_dp7),
-                ("_map", ctypes.POINTER(ctypes.c_size_t)),
-                ("_N_map", ctypes.c_size_t),
-                ("_map_identity", ctypes.POINTER(ctypes.c_size_t)),
-                ("_N_allocated_map_identity", ctypes.c_size_t),
                 ]

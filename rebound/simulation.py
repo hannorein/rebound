@@ -1429,6 +1429,8 @@ Simulation._fields_ = [
                 ("N", c_size_t),
                 ("N_allocated", c_size_t),
                 ("_particles", POINTER(Particle)),
+                ("_map", ctypes.POINTER(ctypes.c_size_t)),
+                ("_N_map", ctypes.c_size_t),
                 ("N_var", c_size_t),
                 ("_particles_var", POINTER(Particle)),
                 ("N_var_config", c_size_t),

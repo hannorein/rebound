@@ -163,17 +163,11 @@ static inline void add_cs(double* p, double* csp, double inp){
 }
 
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    size_t N = r->ri_ias15.N_map;
-    size_t* map = r->ri_ias15.map; // this map allow for integrating only a selection of particles 
-    if (!map){
+    size_t N;
+    if (r->map){
+        N = r->N_map;
+    }else{
         N = r->N + r->N_var;
-        if (N > r->ri_ias15.N_allocated_map_identity){
-            r->ri_ias15.map_identity = realloc(r->ri_ias15.map_identity,sizeof(size_t)*N);
-            for (size_t i=0;i<N;i++){
-                r->ri_ias15.map_identity[i] = i;
-            }
-            r->ri_ias15.N_allocated_map_identity = N;
-        }
     } 
     size_t N3 = 3*N;
     if (N3 > r->ri_ias15.N_allocated) {
@@ -210,15 +204,13 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
 
     struct reb_particle* const particles = r->particles;
     struct reb_particle* const particles_var = r->particles_var;
-    size_t N;           // Number of real particles
-    size_t N_var = 0;   // Number of variational particles
-    size_t* map;
-    if (ri_ias15->map){
-        // this map allow for integrating only a selection of particles 
-        map = ri_ias15->map;
-        N = ri_ias15->N_map;
+    size_t N;             // Number of real particles
+    size_t N_var;         // Number of variational particles
+    size_t* map = r->map; // this map allow for integrating only a selection of particles 
+    if (map){
+        N = r->N_map;
+        N_var = 0;
     }else{
-        map = ri_ias15->map_identity;
         N = r->N;
         N_var = r->N_var;
     }
@@ -241,7 +233,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
     const struct reb_dpconst7 er = dpcast(r->ri_ias15.er);
     const struct reb_dpconst7 br = dpcast(r->ri_ias15.br);
     for(size_t k=0;k<N;k++) {
-        size_t mk = map[k];
+        size_t mk = map ? map[k] : k;
         x0[3*k]   = particles[mk].x;
         x0[3*k+1] = particles[mk].y;
         x0[3*k+2] = particles[mk].z;
@@ -266,7 +258,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
     }
     if (r->gravity==REB_GRAVITY_COMPENSATED){
         for(size_t k=0;k<N+N_var;k++) {
-            size_t mk = map[k];
+            size_t mk = map ? map[k] : k;
             csa0[3*k]   = gravity_cs[mk].x;
             csa0[3*k+1] = gravity_cs[mk].y;  
             csa0[3*k+2] = gravity_cs[mk].z;
@@ -350,7 +342,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 xk1 = -csx[k1] + ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
                 xk2 = -csx[k2] + ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
                 if (i<N){
-                    size_t mi = map[i];
+                    size_t mi = map ? map[i] : i;
                     particles[mi].x = xk0 + x0[k0];
                     particles[mi].y = xk1 + x0[k1];
                     particles[mi].z = xk2 + x0[k2];
@@ -374,7 +366,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                     vk1 =  -csv[k1] + (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
                     vk2 =  -csv[k2] + (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
                     if (i<N){
-                        size_t mi = map[i];
+                        size_t mi = map ? map[i] : i;
                         particles[mi].vx = vk0 + v0[k0];
                         particles[mi].vy = vk1 + v0[k1];
                         particles[mi].vz = vk2 + v0[k2];
@@ -394,7 +386,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
             }
 
             for(size_t k=0;k<N;++k) {
-                size_t mk = map[k];
+                size_t mk = map ? map[k] : k;
                 at[3*k]   = particles[mk].ax;
                 at[3*k+1] = particles[mk].ay;  
                 at[3*k+2] = particles[mk].az;
@@ -558,7 +550,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
                 double maxa = 0.0;
                 double maxj = 0.0;
                 for(size_t i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
-                    size_t mi = map[i];
+                    size_t mi = map ? map[i] : i;
                     const double v2 = particles[mi].vx*particles[mi].vx+particles[mi].vy*particles[mi].vy+particles[mi].vz*particles[mi].vz;
                     const double x2 = particles[mi].x*particles[mi].x+particles[mi].y*particles[mi].y+particles[mi].z*particles[mi].z;
                     // Skip slowly varying accelerations
@@ -639,7 +631,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
         if (fabs(dt_new/dt_done) < safety_factor) { // New timestep is significantly smaller.
                                                     // Reset particles
             for(size_t k=0;k<N;++k) {
-                size_t mk = map[k];
+                size_t mk = map ? map[k] : k;
                 particles[mk].x = x0[3*k+0]; // Set initial position
                 particles[mk].y = x0[3*k+1];
                 particles[mk].z = x0[3*k+2];
@@ -715,7 +707,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
 
     // Swap particle buffers
     for(size_t k=0;k<N;++k) {
-        size_t mk = map[k];
+        size_t mk = map ? map[k] : k;
         particles[mk].x = x0[3*k+0]; // Set final position
         particles[mk].y = x0[3*k+1];
         particles[mk].z = x0[3*k+2];
@@ -826,7 +818,6 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.adaptive_mode = REB_IAS15_PRS23; // new default since January 2024
     r->ri_ias15.iterations_max_exceeded = 0;    
     r->ri_ias15.N_allocated  = 0;
-    r->ri_ias15.N_allocated_map_identity  = 0;
     free_dp7(&(r->ri_ias15.g));
     free_dp7(&(r->ri_ias15.e));
     free_dp7(&(r->ri_ias15.b));
@@ -847,32 +838,24 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.csv=  NULL;
     free(r->ri_ias15.csa0);
     r->ri_ias15.csa0 =  NULL;
-    free(r->ri_ias15.map_identity);
-    r->ri_ias15.map_identity =  NULL;
 }
 
 
 double reb_integrator_ias15_timescale(struct reb_simulation* r){
     // Returns a timescale according to Pham, Rein, Spiegel 2023 (PRS23)
     reb_simulation_update_acceleration(r);
-    size_t N = r->ri_ias15.N_map;
-    size_t* map = r->ri_ias15.map; // this map allow for integrating only a selection of particles 
-    if (!map){
+    size_t N;             // Number of real particles
+    size_t* map = r->map; // this map allow for integrating only a selection of particles 
+    if (map){
+        N = r->N_map;
+    }else{
         N = r->N;
-        if (N > r->ri_ias15.N_allocated_map_identity){
-            r->ri_ias15.map_identity = realloc(r->ri_ias15.map_identity,sizeof(size_t)*N);
-            for (size_t i=0;i<N;i++){
-                r->ri_ias15.map_identity[i] = i;
-            }
-            r->ri_ias15.N_allocated_map_identity = N;
-        }
-        map = r->ri_ias15.map_identity;
-    } 
+    }
 
     double min_timescale2 = INFINITY; 
 
     for (size_t i=0; i<N; i++) {
-        size_t mi = map[i];
+        size_t mi = map ? map[i] : i;
         struct reb_particle* p_i = &(r->particles[mi]);
         double y2 = p_i->ax*p_i->ax + p_i->ay*p_i->ay + p_i->az*p_i->az; 
         struct reb_vec3d vec_y3 = {0};
@@ -884,7 +867,7 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
             continue;
         }
         for (size_t j=0; j<N; j++) { // N^2 loop could be optimized to N^2/2
-            size_t mj = map[j];
+            size_t mj = map ? map[j] : j;
             if (mi==mj) continue;
 
             struct reb_particle* p_j = &(r->particles[mj]);

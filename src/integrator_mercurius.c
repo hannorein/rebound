@@ -343,6 +343,8 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     double t_needed = r->t + _dt; 
 
     reb_integrator_ias15_reset(r);
+    r->map = rim->encounter_map;
+    r->N_map = rim->encounter_N;
 
     r->dt = 0.0001*_dt; // start with a small timestep.
 
@@ -405,11 +407,11 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         }
     }
 
-    // Reset constant for global particles
     r->t = old_t;
     r->dt = old_dt;
     rim->mode = REB_MERCURIUS_MODE_WH;
-
+    r->map = NULL;
+    r->N_map = 0;
 }
 
 double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulation* r, size_t i){

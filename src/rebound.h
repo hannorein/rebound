@@ -158,10 +158,6 @@ struct reb_integrator_ias15 {
     struct reb_dp7 e;
     struct reb_dp7 br;              // Used for resetting the b coefficients if a timestep gets rejected
     struct reb_dp7 er;              // Same for e coefficients
-    size_t* map;                    // Set this to a map to only operate on a subset of paricles (memory not owned by IAS15)
-    size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
-    size_t* map_identity;           // Identity map. Used when map is NULL to operate on all particles
-    size_t N_allocated_map_identity;// allocated size for map
 };
 
 // Mercurius (Rein et al. 2019)
@@ -435,6 +431,11 @@ struct reb_simulation {
     size_t  N;                      // Number of particles (includes variational particles). Default: 0.
     size_t  N_allocated;            // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
+    
+    // Collision routines and some integrators can operate on only some particles.
+    // This map defines which ones. Set to NULL to operate on all particles.
+    size_t* map;                    // Note: memory not owned and thus not freed by simulation.
+    size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
 
     // Variational particles array
     size_t  N_var;                  // Number of variational particles. Default 0.
