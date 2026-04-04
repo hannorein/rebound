@@ -61,7 +61,7 @@ static inline void reb_integrator_eos_interaction_shell0(struct reb_simulation* 
     r->gravity = REB_GRAVITY_BASIC;
     reb_simulation_update_acceleration(r);
     if (v!=0.){
-        reb_calculate_and_apply_jerk(r,v);
+        reb_gravity_basic_calculate_and_apply_jerk(r,v);
     }
     // Apply acceleration (jerk already applied)
     struct reb_particle* restrict const particles = r->particles;

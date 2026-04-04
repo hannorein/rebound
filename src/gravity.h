@@ -31,15 +31,10 @@ struct reb_simulation;
  */
 void reb_simulation_update_acceleration_gravity(struct reb_simulation* r);
 
-/**
- * The function calculates the acceleration for the variational equations.
- */
-void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r);
+// The function calculates the acceleration for the variational equations.
+void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r);
 
-
-/**
- * The function calculates the jerk (derivative of the acceleration) and applies it to the particles' velocity.
- */
-void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v);
+// Calculates the jerk (derivative of the acceleration) and applies it to the particles' velocity.
+void reb_gravity_basic_calculate_and_apply_jerk(struct reb_simulation* r, const double v);
 
 #endif

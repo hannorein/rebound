@@ -55,6 +55,9 @@ struct reb_treecell {
     int remote; /**< 0 by default. Set to 1 if this cell is part of an essential tree (MPI).*/ 
 };
 
+// The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
+void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb);
+
 /**
  * @brief construct tree by adding all particles currently in simulation.
  */

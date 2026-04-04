@@ -719,7 +719,13 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
     // This first sets accelerations to zero even if REB_GRAVITY_NONE is used.
     reb_simulation_update_acceleration_gravity(r);
     if (r->N_var){
-        reb_simulation_update_acceleration_gravity_var(r);
+        switch (r->gravity){
+            case REB_GRAVITY_BASIC:
+                reb_gravity_basic_calculate_acceleration_var(r);
+                break;
+            default:
+                reb_simulation_error(r, "Variational gravity calculation not implemented. Use REB_GRAVITY_BASIC");
+        }
     }
 
     if (r->additional_forces){

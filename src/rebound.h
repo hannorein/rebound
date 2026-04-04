@@ -577,8 +577,10 @@ struct reb_simulation {
         REB_GRAVITY_MERCURIUS = 4,      // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,         // Special gravity routine which includes the Jacobi terms for WH integrators 
         REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
+        REB_GRAVITY_CUSTOM = 7,         // Custom, user or integrator provided gravity routine
     } gravity;
-
+    
+    void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
     struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
