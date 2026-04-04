@@ -810,6 +810,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->N_root_y             = 1;
     r->N_root_z             = 1;
     r->N_active             = SIZE_MAX; 
+    r->N_targets            = SIZE_MAX; 
     r->exact_finish_time    = 1;
     r->output_timing_last   = -1;
     r->simulationarchive_version = 3;

@@ -49,8 +49,8 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
 
 void reb_collision_search(struct reb_simulation* const r){
     r->N_collisions = 0;
-    size_t N = r->N;
-    size_t Ninner = N;  // Either check all pairs (default), or only check against 1 particle
+    size_t N_projectiles = r->N;    // Number of projectiles is always equal to r->N
+    size_t N_targets = r->N_targets != SIZE_MAX ? r->N_targets : r->N; // Targets can be less than N if set by user or one of the integrators to check collisions in O(N_projectiles * N_targets) rather than O(N^2)
     size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
 
     size_t* map = NULL;
@@ -60,11 +60,11 @@ void reb_collision_search(struct reb_simulation* const r){
                 case REB_MERCURIUS_MODE_WH:
                     // After jump step, only collisions with star might occur.
                     // All other collisions in encounter step/
-                    Ninner = 1;
+                    N_targets = 1;
                     break;
                 case REB_MERCURIUS_MODE_ENCOUNTER:
-                    N = r->ri_mercurius.encounter_N;
-                    Ninner = N;
+                    N_projectiles = r->ri_mercurius.encounter_N;
+                    N_targets = N_projectiles;
                     map = r->ri_mercurius.encounter_map;
                     break;
             }
@@ -75,11 +75,11 @@ void reb_collision_search(struct reb_simulation* const r){
                 case REB_TRACE_MODE_NONE:
                     // After jump step, only collisions with star might occur.
                     // All other collisions in encounter step/
-                    Ninner = 1;
+                    N_targets = 1;
                     break;
                 case REB_TRACE_MODE_KEPLER:
-                    N = r->ri_trace.encounter_N;
-                    Ninner = N;
+                    N_projectiles = r->ri_trace.encounter_N;
+                    N_targets = N_projectiles;
                     map = r->ri_trace.encounter_map;
                     break;
                 case REB_TRACE_MODE_FULL:
@@ -104,8 +104,8 @@ void reb_collision_search(struct reb_simulation* const r){
                 for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
                     for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
                         for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
-                            // Loop over all particles
-                            for (size_t i=0;i<N;i++){
+                            // Loop over all projectiles
+                            for (size_t i=0;i<N_projectiles;i++){
 #ifndef OPENMP
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
@@ -120,8 +120,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vx += p1.vx;
                                 gb.vy += p1.vy;
                                 gb.vz += p1.vz;
-                                // Loop over all particles again
-                                for (size_t j=0;j<Ninner;j++){
+                                // Loop over all targets
+                                for (size_t j=0;j<N_targets;j++){
                                     // Do not collide particle with itself.
                                     if (i==j) continue;
                                     size_t jp = map ? map[j]: j;
@@ -166,8 +166,8 @@ void reb_collision_search(struct reb_simulation* const r){
                 for (int gbx=-N_ghost_xcol; gbx<=N_ghost_xcol; gbx++){
                     for (int gby=-N_ghost_ycol; gby<=N_ghost_ycol; gby++){
                         for (int gbz=-N_ghost_zcol; gbz<=N_ghost_zcol; gbz++){
-                            // Loop over all particles
-                            for (size_t i=0;i<N;i++){
+                            // Loop over all projectiles
+                            for (size_t i=0;i<N_projectiles;i++){
 #ifndef OPENMP
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
@@ -182,8 +182,8 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vx += p1.vx;
                                 gb.vy += p1.vy;
                                 gb.vz += p1.vz;
-                                // Loop over all particles again
-                                for (size_t j=i+1;j<N;j++){
+                                // Loop over all projectiles // TODO: Make this work with N_targets
+                                for (size_t j=i+1;j<N_projectiles;j++){
                                     size_t jp = map ? map[j]: j;
                                     struct reb_particle p2 = particles[jp];
                                     const double dx1 = gb.x - p2.x; // distance at end
@@ -249,7 +249,6 @@ void reb_collision_search(struct reb_simulation* const r){
                 int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
                 int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
-                const size_t N = r->N;
                 // Find second largest radius
                 size_t l1 = SIZE_MAX;
                 size_t l2 = SIZE_MAX;
@@ -261,7 +260,7 @@ void reb_collision_search(struct reb_simulation* const r){
 
                 // Loop over all particles
 #pragma omp parallel for schedule(guided)
-                for (size_t i=0;i<N;i++){
+                for (size_t i=0;i<N_projectiles;i++){
 #ifndef OPENMP
                     if (reb_sigint > 1){
                         reb_tree_delete(r);
@@ -306,7 +305,7 @@ void reb_collision_search(struct reb_simulation* const r){
             {
                 // Calculate max drift (can also be stored in tree for further speedup)
                 double vmax2 = 0.;
-                for (size_t i=0;i<N;i++){
+                for (size_t i=0;i<N_projectiles;i++){
                     struct reb_particle p1 = particles[i];
                     vmax2 = MAX(vmax2, p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz);
                 }
@@ -319,10 +318,9 @@ void reb_collision_search(struct reb_simulation* const r){
                 int N_ghost_ycol = (r->N_ghost_y>1?1:r->N_ghost_y);
                 int N_ghost_zcol = (r->N_ghost_z>1?1:r->N_ghost_z);
                 const struct reb_particle* const particles = r->particles;
-                const size_t N = r->N;
                 // Loop over all particles
 #pragma omp parallel for schedule(guided)
-                for (size_t i=0;i<N;i++){
+                for (size_t i=0;i<N_projectiles;i++){
 #ifndef OPENMP
                     if (reb_sigint > 1){
                         reb_tree_delete(r);

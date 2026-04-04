@@ -1476,6 +1476,7 @@ Simulation._fields_ = [
                 ("collisions", c_void_p),
                 ("N_allocated_collisions", c_size_t),
                 ("N_collisions", c_size_t),
+                ("N_targets", c_size_t),
                 ("minimum_collision_velocity", c_double),
                 ("collisions_plog", c_double),
                 ("collisions_log_n", c_int64),
