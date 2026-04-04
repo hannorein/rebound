@@ -515,7 +515,7 @@ struct reb_simulation {
     // Collision related variables
     struct reb_collision* collisions;       // Array of current collisions. Do not change manually
     size_t N_allocated_collisions;
-    unsigned int N_collisions;              // Number of collisions found during last collision search.
+    size_t N_collisions;                    // Number of collisions found during last collision search.
     double minimum_collision_velocity;      // Ensure relative velocity during collisions is at least this much (to avoid particles sinking into each other)
     double collisions_plog;                 // Keeping track of momentum transfer in collisions (for ring simulations)
     int64_t collisions_log_n;               // Cumulative number of collisions in entire simulation.
