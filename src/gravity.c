@@ -32,7 +32,6 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <math.h>
-#include <stdio.h>
 #include "particle.h"
 #include "output.h"
 #include "tree.h"
@@ -1450,25 +1449,6 @@ void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v){
  * @param gb Ghostbox plus position of the particle (precalculated). 
  */
 static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* const r, const int pt, const struct reb_treecell *node, const struct reb_vec6d gb);
-
-// For debugging
-void reb_tree_print(const struct reb_treecell *node, int indent){
-    for (int o=0; o<8; o++) {
-        if (node->oct[o] != NULL) {
-            for (int i=0;i<indent;i++){
-                printf(" ");
-            }
-            printf("%d\n",o);
-            reb_tree_print(node->oct[o], indent+1);
-        }
-    }
-    if (node->pt >=0){
-        for (int i=0;i<indent;i++){
-            printf(" ");
-        }
-        printf("pt=%d\n",node->pt);
-    }
-}
 
 static void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
     size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;

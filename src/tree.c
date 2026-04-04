@@ -26,6 +26,7 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <math.h>
+#include <stdio.h>
 #include "particle.h"
 #include "boundary.h"
 #include "tree.h"
@@ -268,6 +269,26 @@ void reb_tree_construct(struct reb_simulation* const r){
         reb_tree_add_particle_to_tree(r, i);
     }
 }
+
+// Print the tree structure. Used only for debugging
+void reb_tree_print(const struct reb_treecell *node, int indent){
+    for (int o=0; o<8; o++) {
+        if (node->oct[o] != NULL) {
+            for (int i=0;i<indent;i++){
+                printf(" ");
+            }
+            printf("%d\n",o);
+            reb_tree_print(node->oct[o], indent+1);
+        }
+    }
+    if (node->pt >=0){
+        for (int i=0;i<indent;i++){
+            printf(" ");
+        }
+        printf("pt=%d\n",node->pt);
+    }
+}
+
 
 
 #ifdef MPI
