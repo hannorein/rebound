@@ -674,9 +674,6 @@ void reb_simulation_synchronize(struct reb_simulation* r){
         case REB_INTEGRATOR_IAS15:
             reb_integrator_ias15_synchronize(r);
             break;
-        case REB_INTEGRATOR_LEAPFROG:
-            reb_integrator_leapfrog_synchronize(r);
-            break;
         case REB_INTEGRATOR_SEI:
             reb_integrator_sei_synchronize(r);
             break;

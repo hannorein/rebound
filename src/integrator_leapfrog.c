@@ -34,6 +34,11 @@ const double reb_integrator_leapfrog_lf4_a = 0.675603595979828817023843904485;
 const double reb_integrator_leapfrog_lf6_a[5] = {0.1867, 0.5554970237124784, 0.1294669489134754, -0.843265623387734, 0.9432033015235604};
 const double reb_integrator_leapfrog_lf8_a[9] = {0.128865979381443, 0.581514087105251, -0.410175371469850, 0.1851469357165877, -0.4095523434208514, 0.1444059410800120, 0.2783355003936797, 0.3149566839162949, -0.6269948254051343979}; 
 
+struct reb_integrator reb_integrator_leapfrog = {
+    .step = reb_integrator_leapfrog_step,
+    .reset = reb_integrator_leapfrog_reset,
+};
+
 static void drift(struct reb_simulation* r, double dt){
     const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
@@ -182,11 +187,6 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r){
             return;
     }
     r->dt_last_done = dt;
-}
-
-void reb_integrator_leapfrog_synchronize(struct reb_simulation* r){
-    // Do nothing.
-    (void)r; // not used.
 }
 
 void reb_integrator_leapfrog_reset(struct reb_simulation* r){
