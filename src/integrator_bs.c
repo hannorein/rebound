@@ -116,9 +116,6 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     const double subStep  = step / n;
     double t = t0;
     int needs_nbody = ri_bs->user_ode_needs_nbody;
-    if (r->integrator == REB_INTEGRATOR_TRACE){
-        needs_nbody = 0; // TRACE does not allow for coupling of N-body and other ODEs
-    }
 
     // Modified Midpoint method
     // first substep
@@ -134,7 +131,9 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     }
 
     // other substeps
-    if (needs_nbody){
+    if (r->integrator == REB_INTEGRATOR_BS && needs_nbody){
+        // Particle do not get updated during bs integration if integrator for N-body is not BS.
+        // Also no need to update particles if user provided ode does not need particle data.
         reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
     }
     for (int s=0; s < Ns; s++){
@@ -163,7 +162,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
             }
         }
 
-        if (needs_nbody){
+        if (r->integrator == REB_INTEGRATOR_BS && needs_nbody){
             reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
         }
         for (int s=0; s < Ns; s++){
@@ -312,6 +311,12 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
     //        0 if rejected 
     //
     struct reb_integrator_bs* ri_bs = &r->ri_bs;
+
+    for (size_t s=0; s < r->N_odes; s++){
+        if (r->odes[s]->needs_nbody){
+            ri_bs->user_ode_needs_nbody = 1;
+        }
+    }
 
     if (ri_bs->sequence==NULL){
         allocate_sequence_arrays(ri_bs);
@@ -699,12 +704,6 @@ void reb_integrator_bs_step(struct reb_simulation* r){
         ri_bs->first_or_last_step = 1;
     }
 
-    for (size_t s=0; s < r->N_odes; s++){
-        if (r->odes[s]->needs_nbody){
-            ri_bs->user_ode_needs_nbody = 1;
-        }
-    }
-
     double* const y = ri_bs->nbody_ode->y;
     for (size_t i=0; i<r->N; i++){
         const struct reb_particle p = r->particles[i];
@@ -819,5 +818,6 @@ void reb_integrator_bs_reset(struct reb_simulation* r){
     ri_bs->first_or_last_step  = 1;
     ri_bs->previous_rejected = 0;
     ri_bs->target_iter       = 0;
+    ri_bs->user_ode_needs_nbody = 0;
 
 }

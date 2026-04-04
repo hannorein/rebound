@@ -72,7 +72,7 @@ class TestIntegratorTraceHarmonic(unittest.TestCase):
         self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
         self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
     
-    def test_trace_harmonic_with_nbody_coupledy(self):
+    def test_trace_harmonic_with_nbody_coupled(self):
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-3,a=1,e=0.123);
