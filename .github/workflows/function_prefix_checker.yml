@@ -50,8 +50,8 @@ jobs:
         run: bash .github/function_prefix_checker.bash src/fmemopen.o
       - name: Checking frequency_analysis.o
         run: bash .github/function_prefix_checker.bash src/frequency_analysis.o
-      #- name: Checking gravity.o
-      #  run: bash .github/function_prefix_checker.bash src/gravity.o
+      - name: Checking gravity.o
+        run: bash .github/function_prefix_checker.bash src/gravity.o
       #- name: Checking output.o
       #  run: bash .github/function_prefix_checker.bash src/output.o
       #- name: Checking rotations.o

@@ -66,11 +66,11 @@ void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r){
     // Update center of mass and quadrupole moments in tree in preparation of force calculation.
     // Also distributed essential tree if MPI is used.
     reb_tree_calculate_gravity_data(r); 
-    
-    
+
+
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
-            
+
 #pragma omp parallel for schedule(guided)
     for (size_t i=0; i<N; i++){
         particles[i].ax = 0; 

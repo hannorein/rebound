@@ -578,7 +578,7 @@ struct reb_simulation {
         REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
         REB_GRAVITY_CUSTOM = 7,         // Custom, user or integrator provided gravity routine
     } gravity;
-    
+
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators

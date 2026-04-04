@@ -438,7 +438,7 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
     dcrit = MAX(dcrit, 2.*r->particles[i].r);
     return dcrit;
 }
-        
+
 void reb_integrator_mercurius_calculate_acceleration_mode_encounter(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     const double G = r->G;
