@@ -1098,6 +1098,7 @@ void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t 
             ri_trace->encounter_N_active--;
         }
         ri_trace->encounter_N--;
+        r->N_map--;
     }
 }
 

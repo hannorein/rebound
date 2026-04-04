@@ -29,6 +29,7 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 #include "gravity.h"
 #include "integrator_mercurius.h"
 #include "integrator_ias15.h"
@@ -765,6 +766,7 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
             rim->encounter_N_active--;
         }
         rim->encounter_N--;
+        r->N_map--;
     }
 }
 
