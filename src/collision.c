@@ -740,18 +740,14 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
     //Scale out energy from collision - initial energy
     double Ei=0, Ef=0;
     if(r->track_energy_offset){
-        {
-            double vx = pi->vx;
-            double vy = pi->vy;
-            double vz = pi->vz;
-            Ei += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
-        }
-        {
-            double vx = pj->vx;
-            double vy = pj->vy;
-            double vz = pj->vz;
-            Ei += 0.5*pj->m*(vx*vx + vy*vy + vz*vz);
-        }
+        double vix = pi->vx;
+        double viy = pi->vy;
+        double viz = pi->vz;
+        Ei += 0.5*pi->m*(vix*vix + viy*viy + viz*viz);
+        double vjx = pj->vx;
+        double vjy = pj->vy;
+        double vjz = pj->vz;
+        Ei += 0.5*pj->m*(vjx*vjx + vjy*vjy + vjz*vjz);
         const size_t N_active = ((r->N_active==SIZE_MAX)?r->N:r->N_active);
         // No potential energy between test particles
         // TODO: Make work with map
@@ -778,12 +774,10 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
 
     // Keeping track of energy offset
     if(r->track_energy_offset){
-        {
-            double vx = pi->vx;
-            double vy = pi->vy;
-            double vz = pi->vz;
-            Ef += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
-        }
+        double vx = pi->vx;
+        double vy = pi->vy;
+        double vz = pi->vz;
+        Ef += 0.5*pi->m*(vx*vx + vy*vy + vz*vz);
         r->energy_offset += Ei - Ef;
     }
 
