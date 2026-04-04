@@ -272,7 +272,7 @@ void reb_tree_construct(struct reb_simulation* const r){
 
 // The function calls itself recursively using cell breaking criterion to check whether it can use center of mass (and mass quadrupole tensor) to calculate forces.
 // Calculate the acceleration for a particle from a given cell and all its daughter cells.
-static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* r, const int pt, const struct reb_treecell *node, const struct reb_vec6d gb) {
+static void reb_tree_calculate_acceleration_for_particle_from_cell(const struct reb_simulation* r, const int pt, const struct reb_treecell *node, const struct reb_vec6d gb) {
     const double G = r->G;
     const double softening2 = r->softening*r->softening;
     struct reb_particle* const particles = r->particles;
@@ -284,7 +284,7 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
         if ( node->w*node->w > r->opening_angle2*r2 ){
             for (int o=0; o<8; o++) {
                 if (node->oct[o] != NULL) {
-                    reb_calculate_acceleration_for_particle_from_cell(r, pt, node->oct[o], gb);
+                    reb_tree_calculate_acceleration_for_particle_from_cell(r, pt, node->oct[o], gb);
                 }
             }
         } else {
@@ -317,12 +317,12 @@ static void reb_calculate_acceleration_for_particle_from_cell(const struct reb_s
     }
 }
 
-void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
+void reb_tree_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb) {
     size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     for(size_t i=0;i<N_root;i++){
         struct reb_treecell* node = r->tree_root[i];
         if (node!=NULL){
-            reb_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
+            reb_tree_calculate_acceleration_for_particle_from_cell(r, pt, node, gb);
         }
     }
 }

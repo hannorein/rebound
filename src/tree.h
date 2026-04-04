@@ -56,7 +56,7 @@ struct reb_treecell {
 };
 
 // The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
-void reb_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb);
+void reb_tree_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb);
 
 /**
  * @brief construct tree by adding all particles currently in simulation.

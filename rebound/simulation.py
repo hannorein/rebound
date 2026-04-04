@@ -19,7 +19,7 @@ import types
         
 INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512": 21, "trace": 25, "custom": 26}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
-GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "trace": 6, "custon": 7}
+GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "custom": 7}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
@@ -662,14 +662,6 @@ class Simulation(Structure):
     def gravity(self):
         """
         Get or set the gravity module.
-
-        Available gravity modules are:
-
-        - ``'none'`` 
-        - ``'basic'`` (default)
-        - ``'compensated'``
-        - ``'tree'``
-        
         Check the online documentation for a full description of each of the modules. 
         """
         i = self._gravity

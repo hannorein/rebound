@@ -92,7 +92,7 @@ void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r){
                     gb.x += particles[i].x;
                     gb.y += particles[i].y;
                     gb.z += particles[i].z;
-                    reb_calculate_acceleration_for_particle(r, i, gb);
+                    reb_tree_calculate_acceleration_for_particle(r, i, gb);
                 }
             }
         }
