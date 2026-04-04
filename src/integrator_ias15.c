@@ -163,14 +163,19 @@ static inline void add_cs(double* p, double* csp, double inp){
 }
 
 void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    size_t N3;
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){
-        N3 = 3*r->ri_mercurius.encounter_N;// mercurius close encounter
-    }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){
-        N3 = 3*r->ri_trace.encounter_N;// trace close encounter
-    }else{ 
-        N3 = 3*(r->N+r->N_var);
-    }
+    size_t N = r->ri_ias15.N_map;
+    size_t* map = r->ri_ias15.map; // this map allow for integrating only a selection of particles 
+    if (!map){
+        N = r->N + r->N_var;
+        if (N > r->ri_ias15.N_allocated_map_identity){
+            r->ri_ias15.map_identity = realloc(r->ri_ias15.map_identity,sizeof(size_t)*N);
+            for (size_t i=0;i<N;i++){
+                r->ri_ias15.map_identity[i] = i;
+            }
+            r->ri_ias15.N_allocated_map_identity = N;
+        }
+    } 
+    size_t N3 = 3*N;
     if (N3 > r->ri_ias15.N_allocated) {
         realloc_dp7(&(r->ri_ias15.g),N3);
         realloc_dp7(&(r->ri_ias15.b),N3);
@@ -194,45 +199,28 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
         }
         r->ri_ias15.N_allocated = N3;
     }
-    if (r->N > r->ri_ias15.N_allocated_map){
-        r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(size_t)*r->N);
-        for (size_t i=0;i<r->N;i++){
-            r->ri_ias15.map[i] = i;
-        }
-        r->ri_ias15.N_allocated_map = r->N;
-    }
-
 }
 
 // Tries to do one actual timestep.
 //   Returns 1 if successful.
 //   Returns 0 if step is rejected.
 static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
+    struct reb_integrator_ias15* ri_ias15 = &r->ri_ias15;
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
     struct reb_particle* const particles_var = r->particles_var;
     size_t N;           // Number of real particles
-    size_t N_var = 0;  // Number of variational particles
-    size_t* map; // this map allow for integrating only a selection of particles 
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
-        N = r->ri_mercurius.encounter_N;
-        map = r->ri_mercurius.encounter_map;
-        if (map==NULL){
-            reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
-            return 0;
-        }
-    }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){// trace close encounter
-        N = r->ri_trace.encounter_N;
-        map = r->ri_trace.encounter_map;
-        if (map==NULL){
-            reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
-            return 0;
-        }
-    }else{ 
+    size_t N_var = 0;   // Number of variational particles
+    size_t* map;
+    if (ri_ias15->map){
+        // this map allow for integrating only a selection of particles 
+        map = ri_ias15->map;
+        N = ri_ias15->N_map;
+    }else{
+        map = ri_ias15->map_identity;
         N = r->N;
         N_var = r->N_var;
-        map = r->ri_ias15.map; // identity map
     }
     const size_t N3 = 3*(N+N_var);
 
@@ -838,7 +826,7 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.adaptive_mode = REB_IAS15_PRS23; // new default since January 2024
     r->ri_ias15.iterations_max_exceeded = 0;    
     r->ri_ias15.N_allocated  = 0;
-    r->ri_ias15.N_allocated_map  = 0;
+    r->ri_ias15.N_allocated_map_identity  = 0;
     free_dp7(&(r->ri_ias15.g));
     free_dp7(&(r->ri_ias15.e));
     free_dp7(&(r->ri_ias15.b));
@@ -859,41 +847,27 @@ void reb_integrator_ias15_reset(struct reb_simulation* r){
     r->ri_ias15.csv=  NULL;
     free(r->ri_ias15.csa0);
     r->ri_ias15.csa0 =  NULL;
-    free(r->ri_ias15.map);
-    r->ri_ias15.map =  NULL;
+    free(r->ri_ias15.map_identity);
+    r->ri_ias15.map_identity =  NULL;
 }
 
 
 double reb_integrator_ias15_timescale(struct reb_simulation* r){
     // Returns a timescale according to Pham, Rein, Spiegel 2023 (PRS23)
     reb_simulation_update_acceleration(r);
-    size_t N;
-    size_t* map; // this map allow for integrating only a selection of particles 
-    if (r->integrator==REB_INTEGRATOR_MERCURIUS){// mercurius close encounter
-        N = r->ri_mercurius.encounter_N;
-        map = r->ri_mercurius.encounter_map;
-        if (map==NULL){
-            reb_simulation_error(r, "Cannot access MERCURIUS map from IAS15.");
-            return 0;
-        }
-    }else if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode == REB_TRACE_MODE_KEPLER){// trace close encounter
-        N = r->ri_trace.encounter_N;
-        map = r->ri_trace.encounter_map;
-        if (map==NULL){
-            reb_simulation_error(r, "Cannot access TRACE map from IAS15.");
-            return 0;
-        }
-    }else{ 
+    size_t N = r->ri_ias15.N_map;
+    size_t* map = r->ri_ias15.map; // this map allow for integrating only a selection of particles 
+    if (!map){
         N = r->N;
-        if (N > r->ri_ias15.N_allocated_map){
-            r->ri_ias15.map = realloc(r->ri_ias15.map,sizeof(size_t)*N);
+        if (N > r->ri_ias15.N_allocated_map_identity){
+            r->ri_ias15.map_identity = realloc(r->ri_ias15.map_identity,sizeof(size_t)*N);
             for (size_t i=0;i<N;i++){
-                r->ri_ias15.map[i] = i;
+                r->ri_ias15.map_identity[i] = i;
             }
-            r->ri_ias15.N_allocated_map = N;
+            r->ri_ias15.N_allocated_map_identity = N;
         }
-        map = r->ri_ias15.map; // identity map
-    }
+        map = r->ri_ias15.map_identity;
+    } 
 
     double min_timescale2 = INFINITY; 
 

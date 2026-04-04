@@ -158,8 +158,10 @@ struct reb_integrator_ias15 {
     struct reb_dp7 e;
     struct reb_dp7 br;              // Used for resetting the b coefficients if a timestep gets rejected
     struct reb_dp7 er;              // Same for e coefficients
-    size_t* map;                    // internal map to particles (this is an identity map except when MERCURIUS is used
-    size_t N_allocated_map;         // allocated size for map
+    size_t* map;                    // Set this to a map to only operate on a subset of paricles (memory not owned by IAS15)
+    size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
+    size_t* map_identity;           // Identity map. Used when map is NULL to operate on all particles
+    size_t N_allocated_map_identity;// allocated size for map
 };
 
 // Mercurius (Rein et al. 2019)
