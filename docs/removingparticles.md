@@ -43,10 +43,8 @@ You can remove a particle using this index as shown in the following code:
     sim.add(a=2.) // planet 2, index=2
     sim.remove(1)
     ```
-    The `remove` function accepts an optional argument `keep_sorted`. 
-    It determines if you want to keep the particle array sorted.
-    In most cases you want to (set the argument to `True`, the default). 
-    For simulation with many particles (millions), this might be slow. In that case set this argument to `False`.
+    The order of the remaining particles will remain unchanged. 
+    (In previous versions of REBOUND this was the behaviour when `keep_sorted=1` was set. This is now the default.) 
 
 ## Remove particle by hash
 TODO: Update this with new names syntax. 

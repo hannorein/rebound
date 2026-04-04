@@ -239,9 +239,6 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c double energy_offset`      
 :   Energy offset due to collisions and ejections (only calculated if `track_energy_offset=1`).
 
-`#!c int collision_resolve_keep_sorted` 
-:   If set to 1, then particles are kept sorted when a particle is removed during a collision.
-
 `#!c double minimum_collision_velocity`  
 :   When collisions are resolved with the hard sphere collision resolve function, then the post impact velocity between the two particles will be at least as large as this value. Default 0. Setting this to a value larger than zero might prevent particles sinking into each other. 
 

@@ -42,18 +42,15 @@ int main(int argc, char* argv[]){
     print_names(r);
 
     int error;
-    int keep_sorted = 0;
-    printf("\nTry to remove index 3 (Planet 2)...\n");
-    error = reb_simulation_remove_particle(r, 3, keep_sorted);
+    printf("\nTry to remove index 3 (Planet 3)...\n");
+    error = reb_simulation_remove_particle(r, 3);
     if (!error){
         printf("Particle successfully removed\n");
     }
     print_names(r);
-    printf("Because keep_sorted = 0, last particle replaced the removed particle and indices got scrambled:\n\n");
 
-    keep_sorted = 1;
-    printf("Try to remove index 6 (Planet 7)  while preserving the order with keep_sorted=1...\n");
-    error = reb_simulation_remove_particle(r, 6, keep_sorted);
+    printf("Try to remove index 6 (currently Planet 7)...\n");
+    error = reb_simulation_remove_particle(r, 6);
     if (!error){
         printf("Particle successfully removed.\n");
     }
@@ -61,7 +58,7 @@ int main(int argc, char* argv[]){
     
     printf("\nWe can also remove particles by the names we assign them (this is robust to particles switching indices in the particles array during the simulation).\n");  
     printf("Try to remove Planet 9...\n");
-    error = reb_simulation_remove_particle_by_name(r, "Planet 9", keep_sorted);
+    error = reb_simulation_remove_particle_by_name(r, "Planet 9");
     if (!error){
         printf("Particle successfully removed.\n");
     }
@@ -69,7 +66,7 @@ int main(int argc, char* argv[]){
    
     printf("\nAlso, if we try to remove an index > N, we get an error and no particle is removed:\n");
     printf("Try to remove index 15...\n");
-    error = reb_simulation_remove_particle(r, 15, keep_sorted);
+    error = reb_simulation_remove_particle(r, 15);
     if (!error){
         printf("Particle successfully removed.\n");
     }else{

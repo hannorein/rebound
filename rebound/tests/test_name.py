@@ -33,8 +33,8 @@ class TestHash(unittest.TestCase):
         self.sim.add(a=30.)
         self.sim.remove(0)
         self.sim.remove(0)
-        self.sim.remove("earth", keep_sorted=0)
-        self.sim.remove("💫", keep_sorted=1)
+        self.sim.remove("earth")
+        self.sim.remove("💫")
         self.assertEqual(self.sim.particles["jupiter"].name, "jupiter")
         self.assertEqual(self.sim.N, 2)
         with self.assertRaises(rebound.ParticleNotFound):

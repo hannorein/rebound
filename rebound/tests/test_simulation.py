@@ -52,10 +52,6 @@ class TestSimulation(unittest.TestCase):
         self.sim.remove(1)
         self.assertEqual(self.sim.N,1)
     
-    def test_remove_keepsorted(self):
-        self.sim.remove(1,keep_sorted=0)
-        self.assertEqual(self.sim.N,1)
-    
     def test_remove_name(self):
         self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1)
         self.sim.particles[-1].name = "99"

@@ -55,7 +55,7 @@ class TestShearingSheet(unittest.TestCase):
         sim.integrate(2.*math.pi/OMEGA)
         self.assertGreater(sim.collisions_log_n,1000)
         Nbefore = sim.N
-        sim.remove(0,keep_sorted=0)
+        sim.remove(0)
         sim.steps(1)
         self.assertEqual(Nbefore-1,sim.N)
         self.assertNotEqual(sim.ri_sei._lastdt,0.0)
