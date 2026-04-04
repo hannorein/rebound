@@ -49,6 +49,12 @@ void integrator_generate_constants(void);
 #include "tools.h"
 #include "integrator_ias15.h"
 
+
+struct reb_integrator reb_integrator_ias15 = {
+    .step = reb_integrator_ias15_step,
+    .reset = reb_integrator_ias15_reset,
+};
+
 /**
  * @brief Struct containing pointers to intermediate values
  */
@@ -805,10 +811,6 @@ void reb_integrator_ias15_step(struct reb_simulation* r){
 #endif  // GENERATE_CONSTANTS
         // Try until a step was successful.
     while(!reb_integrator_ias15_step_try(r));
-}
-
-void reb_integrator_ias15_synchronize(struct reb_simulation* r){
-    (void)r; // Unused.
 }
 
 void reb_integrator_ias15_reset(struct reb_simulation* r){

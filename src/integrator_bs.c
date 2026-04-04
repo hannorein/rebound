@@ -79,6 +79,11 @@ static const double stabilityReduction = 0.5;
 static const int maxIter = 2; // maximal number of iterations for which checks are performed
 static const int maxChecks = 1; // maximal number of checks for each iteration
 
+struct reb_integrator reb_integrator_bs = {
+    .step = reb_integrator_bs_step,
+    .reset = reb_integrator_bs_reset,
+};
+
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){
         reb_simulation_error(r, "Update particles called without valid simulation pointer.");
@@ -733,11 +738,6 @@ void reb_integrator_bs_step(struct reb_simulation* r){
     r->dt = ri_bs->dt_proposed;
 
     reb_integrator_bs_update_particles(r, ri_bs->nbody_ode->y);
-}
-
-void reb_integrator_bs_synchronize(struct reb_simulation* r){
-    // Do nothing.
-    (void)r; // not used.
 }
 
 void reb_ode_free(struct reb_ode* ode){

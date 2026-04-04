@@ -35,6 +35,12 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 
+struct reb_integrator reb_integrator_eos = {
+    .step = reb_integrator_eos_step,
+    .reset = reb_integrator_eos_reset,
+    .synchronize = reb_integrator_eos_synchronize,
+};
+
 static const double lf4_2_a = 0.211324865405187117745425609749;
 
 static const double lf8_6_4_a[4] = {0.0711334264982231177779387300061549964174, 0.241153427956640098736487795326289649618, 0.521411761772814789212136078067994229991, -0.333698616227678005726562603400438876027};
