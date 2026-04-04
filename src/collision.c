@@ -109,10 +109,7 @@ void reb_collision_search(struct reb_simulation* const r){
 #ifndef OPENMP
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
-                                size_t ip = i;
-                                if (map){
-                                    ip = map[i];
-                                }
+                                size_t ip = map ? map[i]: i;
                                 struct reb_particle p1 = particles[ip];
                                 struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                                 struct reb_vec6d gb = gborig;
@@ -127,10 +124,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 for (size_t j=0;j<Ninner;j++){
                                     // Do not collide particle with itself.
                                     if (i==j) continue;
-                                    size_t jp = j;
-                                    if (map){
-                                        jp = map[j];
-                                    }
+                                    size_t jp = map ? map[j]: j;
                                     struct reb_particle p2 = particles[jp];
                                     double dx = gb.x - p2.x; 
                                     double dy = gb.y - p2.y; 
@@ -177,10 +171,7 @@ void reb_collision_search(struct reb_simulation* const r){
 #ifndef OPENMP
                                 if (reb_sigint > 1) return;
 #endif // OPENMP
-                                size_t ip = i;
-                                if (map){
-                                    ip = map[i];
-                                }
+                                size_t ip = map ? map[i]: i;
                                 struct reb_particle p1 = particles[ip];
                                 struct reb_vec6d gborig = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
                                 struct reb_vec6d gb = gborig;
@@ -193,10 +184,7 @@ void reb_collision_search(struct reb_simulation* const r){
                                 gb.vz += p1.vz;
                                 // Loop over all particles again
                                 for (size_t j=i+1;j<N;j++){
-                                    size_t jp = j;
-                                    if (map){
-                                        jp = map[j];
-                                    }
+                                    size_t jp = map ? map[j]: j;
                                     struct reb_particle p2 = particles[jp];
                                     const double dx1 = gb.x - p2.x; // distance at end
                                     const double dy1 = gb.y - p2.y;
