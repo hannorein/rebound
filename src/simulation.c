@@ -730,6 +730,12 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
         case REB_GRAVITY_JACOBI:
             reb_gravity_jacobi_calculate_acceleration(r);
             break;
+        case REB_GRAVITY_BASIC:
+            reb_gravity_basic_calculate_acceleration(r);
+            break;
+        case REB_GRAVITY_COMPENSATED:
+            reb_gravity_compensated_calculate_acceleration(r);
+            break;
         case REB_GRAVITY_CUSTOM:
             if (r->gravity_custom){
                 r->gravity_custom(r);
