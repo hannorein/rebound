@@ -136,9 +136,9 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
     }
 
     // other substeps
-    if (r->integrator == REB_INTEGRATOR_BS && needs_nbody){
-        // Particle do not get updated during bs integration if integrator for N-body is not BS.
-        // Also no need to update particles if user provided ode does not need particle data.
+    if (needs_nbody){
+        // Particle do not get updated if user provided ODE does not need N-body data.
+        // Also not getting updates if integrator for N-body ODEs is not BS.
         reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
     }
     for (int s=0; s < Ns; s++){
@@ -167,7 +167,7 @@ static int tryStep(struct reb_simulation* r, const int Ns, const int k, const in
             }
         }
 
-        if (r->integrator == REB_INTEGRATOR_BS && needs_nbody){
+        if (needs_nbody){
             reb_integrator_bs_update_particles(r, r->ri_bs.nbody_ode->y1);
         }
         for (int s=0; s < Ns; s++){
@@ -316,12 +316,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
     //        0 if rejected 
     //
     struct reb_integrator_bs* ri_bs = &r->ri_bs;
-
-    for (size_t s=0; s < r->N_odes; s++){
-        if (r->odes[s]->needs_nbody){
-            ri_bs->user_ode_needs_nbody = 1;
-        }
-    }
 
     if (ri_bs->sequence==NULL){
         allocate_sequence_arrays(ri_bs);
@@ -728,6 +722,13 @@ void reb_integrator_bs_step(struct reb_simulation* r){
         y[io+3] = p.vx;
         y[io+4] = p.vy;
         y[io+5] = p.vz;
+    }
+
+    ri_bs->user_ode_needs_nbody = 0;
+    for (size_t s=0; s < r->N_odes; s++){
+        if (r->odes[s]->needs_nbody){
+            ri_bs->user_ode_needs_nbody = 1;
+        }
     }
 
     int success = reb_integrator_bs_step_odes(r, r->dt);

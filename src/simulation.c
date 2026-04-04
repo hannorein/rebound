@@ -238,7 +238,7 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
             reb_simulation_warning(r,"No particles found. Will exit.");
             r->status = REB_STATUS_NO_PARTICLES; // Exit now.
         }else{
-            if (r->integrator != REB_INTEGRATOR_BS){
+            if (reb_integrator_cmp(r->integrator, reb_integrator_bs)!=0){
                 reb_simulation_warning(r,"No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
                 r->status = REB_STATUS_NO_PARTICLES; // Exit now.
             }
@@ -340,7 +340,7 @@ void reb_simulation_reset(struct reb_simulation* const r){
 // Frees all dynamically allocated memory used by integrators.
 // Also resets all integrator configurations to default.
 void reb_simulation_integrators_reset(struct reb_simulation* r){
-    r->integrator = REB_INTEGRATOR_IAS15;
+    r->integrator = reb_integrator_ias15;
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     reb_integrator_ias15_reset(r);
@@ -513,58 +513,12 @@ static void reb_simulation_step(struct reb_simulation* const r){
     }
 
     PROFILING_START();
-    switch(r->integrator){
-        case REB_INTEGRATOR_IAS15:
-            reb_integrator_ias15_step(r);
-            break;
-        case REB_INTEGRATOR_LEAPFROG:
-            reb_integrator_leapfrog_step(r);
-            break;
-        case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_step(r);
-            break;
-        case REB_INTEGRATOR_WHFAST:
-            reb_integrator_whfast_step(r);
-            break;
-        case REB_INTEGRATOR_WHFAST512:
-            reb_integrator_whfast512_step(r);
-            break;
-        case REB_INTEGRATOR_SABA:
-            reb_integrator_saba_step(r);
-            break;
-        case REB_INTEGRATOR_MERCURIUS:
-            reb_integrator_mercurius_step(r);
-            break;
-        case REB_INTEGRATOR_JANUS:
-            reb_integrator_janus_step(r);
-            break;
-        case REB_INTEGRATOR_EOS:
-            reb_integrator_eos_step(r);
-            break;
-        case REB_INTEGRATOR_BS:
-            reb_integrator_bs_step(r);
-            break;
-        case REB_INTEGRATOR_TRACE:
-            reb_integrator_trace_step(r);
-            break;
-        case REB_INTEGRATOR_NONE:
-            r->t += r->dt;
-            r->dt_last_done = r->dt;
-            break;
-        case REB_INTEGRATOR_CUSTOM:
-            if (r->ri_custom.step){
-                r->ri_custom.step(r);
-            }else{
-                reb_simulation_error(r, "REB_INTEGRATOR_CUSTOM selected, but r->ri_custom.step not set.");
-            }
-            break;
-        default:
-            reb_simulation_error(r, "REB_INTEGRATOR not found.");
-            break;
+    if (r->integrator.step){
+        r->integrator.step(r);
     }
 
     // Integrate other ODEs
-    if (r->integrator != REB_INTEGRATOR_BS && r->N_odes){
+    if (r->N_odes && reb_integrator_cmp(r->integrator, reb_integrator_bs)!=0){
         if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
             reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
             r->ode_warnings = 1;
@@ -670,32 +624,8 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
 }
 
 void reb_simulation_synchronize(struct reb_simulation* r){
-    switch(r->integrator){
-        case REB_INTEGRATOR_WHFAST:
-            reb_integrator_whfast_synchronize(r);
-            break;
-        case REB_INTEGRATOR_WHFAST512:
-            reb_integrator_whfast512_synchronize(r);
-            break;
-        case REB_INTEGRATOR_SABA:
-            reb_integrator_saba_synchronize(r);
-            break;
-        case REB_INTEGRATOR_MERCURIUS:
-            reb_integrator_mercurius_synchronize(r);
-            break;
-        case REB_INTEGRATOR_JANUS:
-            reb_integrator_janus_synchronize(r);
-            break;
-        case REB_INTEGRATOR_EOS:
-            reb_integrator_eos_synchronize(r);
-            break;
-        case REB_INTEGRATOR_CUSTOM:
-            if (r->ri_custom.synchronize){
-                r->ri_custom.synchronize(r);
-            }
-            break;
-        default:
-            break;
+    if (r->integrator.synchronize){
+        r->integrator.synchronize(r);
     }
 }
 

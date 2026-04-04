@@ -45,6 +45,14 @@
 #endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrator b){
+    int differ = 0;
+    differ = differ || (a.step != b.step);
+    differ = differ || (a.synchronize != b.synchronize);
+    differ = differ || (a.reset != b.reset);
+    return differ;
+}
+
 uint32_t reb_hash(const char *str) {
     // djb2 algorithm
     uint32_t hash = 5381;
@@ -1309,10 +1317,10 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
 
 
             int is_synchronized = 1;
-            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized == 0){
+            if (reb_integrator_cmp(r->integrator, reb_integrator_whfast)==0 && r->ri_whfast.is_synchronized == 0){
                 is_synchronized = 0;
             }
-            if (r->integrator == REB_INTEGRATOR_EOS && r->ri_eos.is_synchronized == 0){
+            if (reb_integrator_cmp(r->integrator, reb_integrator_eos)==0 && r->ri_eos.is_synchronized == 0){
                 is_synchronized = 0;
             }
             if (is_synchronized == 0){
@@ -1333,7 +1341,7 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
                 particles[i].vz /= scale;
             }
 
-            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.safe_mode == 0){
+            if (reb_integrator_cmp(r->integrator, reb_integrator_whfast)==0 && r->ri_whfast.safe_mode == 0){
                 r->ri_whfast.recalculate_coordinates_this_timestep = 1;
             }
         }

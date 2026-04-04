@@ -76,4 +76,7 @@ void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_parti
 
 // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
 DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p);
+
+// Returns 0 if two integrators have the same function pointers
+int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrator b);
 #endif 	// TOOLS_H
