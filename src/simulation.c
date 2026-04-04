@@ -724,8 +724,16 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 r->particles[j].az = 0;  
             }  
             break;
-        case REB_GRAVITY_TREE: // Do nothing.
+        case REB_GRAVITY_TREE:
             reb_gravity_tree_calculate_acceleration(r);
+            break;
+        case REB_GRAVITY_JACOBI:
+            reb_gravity_jacobi_calculate_acceleration(r);
+            break;
+        case REB_GRAVITY_CUSTOM:
+            if (r->gravity_custom){
+                r->gravity_custom(r);
+            }
             break;
         default:
             reb_simulation_update_acceleration_gravity(r);

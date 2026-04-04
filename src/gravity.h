@@ -34,6 +34,9 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r);
 // Tree based gravity routine
 void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r);
 
+// Gravity routine for WH-style integrators in Jacobi coordinates
+void reb_gravity_jacobi_calculate_acceleration(struct reb_simulation* r);
+
 // Calculates the acceleration for the variational equations.
 void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r);
 

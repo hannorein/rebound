@@ -102,6 +102,64 @@ void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r){
     PROFILING_STOP(PROFILING_CAT_GRAVITY);
 }
 
+void reb_gravity_jacobi_calculate_acceleration(struct reb_simulation* r){
+    PROFILING_START();
+    struct reb_particle* const particles = r->particles;
+    const size_t N = r->N;
+    const double G = r->G;
+    double Rjx = 0.;
+    double Rjy = 0.;
+    double Rjz = 0.;
+    double Mj = 0.;
+    for (size_t j=0; j<N; j++){
+        particles[j].ax = 0; 
+        particles[j].ay = 0; 
+        particles[j].az = 0; 
+        for (size_t i=0; i<j+1; i++){
+            if (j>1){
+                ////////////////
+                // Jacobi Term
+                // Note: ignoring j==1 term here and below as they cancel
+                const double Qjx = particles[j].x - Rjx/Mj; 
+                const double Qjy = particles[j].y - Rjy/Mj;
+                const double Qjz = particles[j].z - Rjz/Mj;
+                const double dr = sqrt(Qjx*Qjx + Qjy*Qjy + Qjz*Qjz);
+                double dQjdri = Mj; 
+                if (i<j){
+                    dQjdri = -particles[j].m; //rearranged such that m==0 does not diverge
+                }
+                const double prefact = G*dQjdri/(dr*dr*dr);
+                particles[i].ax    += prefact*Qjx;
+                particles[i].ay    += prefact*Qjy;
+                particles[i].az    += prefact*Qjz;
+            }
+            if (i!=j && (i!=0 || j!=1)){
+                ////////////////
+                // Direct Term
+                // Note: ignoring i==0 && j==1 term here and above as they cancel 
+                const double dx = particles[i].x - particles[j].x;
+                const double dy = particles[i].y - particles[j].y;
+                const double dz = particles[i].z - particles[j].z;
+                const double dr = sqrt(dx*dx + dy*dy + dz*dz);
+                const double prefact = G /(dr*dr*dr);
+                const double prefacti = prefact*particles[i].m;
+                const double prefactj = prefact*particles[j].m;
+
+                particles[i].ax    -= prefactj*dx;
+                particles[i].ay    -= prefactj*dy;
+                particles[i].az    -= prefactj*dz;
+                particles[j].ax    += prefacti*dx;
+                particles[j].ay    += prefacti*dy;
+                particles[j].az    += prefacti*dz;
+            }
+        }
+        Rjx += particles[j].m*particles[j].x;
+        Rjy += particles[j].m*particles[j].y;
+        Rjz += particles[j].m*particles[j].z;
+        Mj += particles[j].m;
+    }
+    PROFILING_STOP(PROFILING_CAT_GRAVITY);
+}
 
 void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     PROFILING_START();
@@ -113,64 +171,6 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     switch (r->gravity){
-        case REB_GRAVITY_JACOBI:
-            {
-                if (r->integrator != REB_INTEGRATOR_WHFAST && r->integrator != REB_INTEGRATOR_SABA ){
-                    reb_simulation_warning(r, "An integrator other than WHFast/SABA is being used with REB_GRAVITY_JACOBI. This is probably not correct. Use another gravity routine such as REB_GRAVITY_BASIC.");
-                }
-                double Rjx = 0.;
-                double Rjy = 0.;
-                double Rjz = 0.;
-                double Mj = 0.;
-                for (size_t j=0; j<N; j++){
-                    particles[j].ax = 0; 
-                    particles[j].ay = 0; 
-                    particles[j].az = 0; 
-                    for (size_t i=0; i<j+1; i++){
-                        if (j>1){
-                            ////////////////
-                            // Jacobi Term
-                            // Note: ignoring j==1 term here and below as they cancel
-                            const double Qjx = particles[j].x - Rjx/Mj; 
-                            const double Qjy = particles[j].y - Rjy/Mj;
-                            const double Qjz = particles[j].z - Rjz/Mj;
-                            const double dr = sqrt(Qjx*Qjx + Qjy*Qjy + Qjz*Qjz);
-                            double dQjdri = Mj; 
-                            if (i<j){
-                                dQjdri = -particles[j].m; //rearranged such that m==0 does not diverge
-                            }
-                            const double prefact = G*dQjdri/(dr*dr*dr);
-                            particles[i].ax    += prefact*Qjx;
-                            particles[i].ay    += prefact*Qjy;
-                            particles[i].az    += prefact*Qjz;
-                        }
-                        if (i!=j && (i!=0 || j!=1)){
-                            ////////////////
-                            // Direct Term
-                            // Note: ignoring i==0 && j==1 term here and above as they cancel 
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double dr = sqrt(dx*dx + dy*dy + dz*dz);
-                            const double prefact = G /(dr*dr*dr);
-                            const double prefacti = prefact*particles[i].m;
-                            const double prefactj = prefact*particles[j].m;
-
-                            particles[i].ax    -= prefactj*dx;
-                            particles[i].ay    -= prefactj*dy;
-                            particles[i].az    -= prefactj*dz;
-                            particles[j].ax    += prefacti*dx;
-                            particles[j].ay    += prefacti*dy;
-                            particles[j].az    += prefacti*dz;
-                        }
-                    }
-                    Rjx += particles[j].m*particles[j].x;
-                    Rjy += particles[j].m*particles[j].y;
-                    Rjz += particles[j].m*particles[j].z;
-                    Mj += particles[j].m;
-                }
-            }
-            break;
         case REB_GRAVITY_BASIC:
             {
                 const int N_ghost_x = r->N_ghost_x;
