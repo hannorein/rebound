@@ -134,6 +134,7 @@ struct reb_dp7 {
 
 // Generic custom integrator
 struct reb_integrator {
+    uint32_t id;                                    // Unique number used to identify integrator in binary files.
     void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
     void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
@@ -142,17 +143,24 @@ struct reb_integrator {
 };
 
 // Available integrators
-const struct reb_integrator reb_integrator_bs;
-const struct reb_integrator reb_integrator_eos;
-const struct reb_integrator reb_integrator_ias15;
-const struct reb_integrator reb_integrator_janus;
-const struct reb_integrator reb_integrator_leapfrog;
-const struct reb_integrator reb_integrator_mercurius;
-const struct reb_integrator reb_integrator_saba;
-const struct reb_integrator reb_integrator_sei;
-const struct reb_integrator reb_integrator_trace;
-const struct reb_integrator reb_integrator_whfast;
-const struct reb_integrator reb_integrator_whfast512;
+#define REB_AVAILABLE_INTEGRATORS \
+    X(none) \
+    X(bs) \
+    X(eos) \
+    X(ias15) \
+    X(janus) \
+    X(leapfrog) \
+    X(mercurius) \
+    X(saba) \
+    X(sei) \
+    X(trace) \
+    X(whfast) \
+    X(whfast512)
+
+// Forward declarations. Implementations are in corresponding integrator_*.c file.
+#define X(name) extern const struct reb_integrator reb_integrator_##name;
+    REB_AVAILABLE_INTEGRATORS
+#undef X
 
 // Integrator structures 
 // IAS15 (Rein & Spiegel 2015)
@@ -565,22 +573,6 @@ struct reb_simulation {
         REB_COLLISION_LINETREE = 5,     // Tree-based collision search O(N log(N)), looks for collisions by assuming a linear path over the last timestep
     } collision;
     struct reb_integrator integrator;
-//    enum {
-//        REB_INTEGRATOR_IAS15 = 0,       // IAS15 integrator, 15th order, non-symplectic (default)
-//        REB_INTEGRATOR_WHFAST = 1,      // WHFast integrator, symplectic, 2nd order, up to 11th order correctors
-//        REB_INTEGRATOR_SEI = 2,         // SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable
-//        REB_INTEGRATOR_LEAPFROG = 4,    // LEAPFROG integrator, simple, 2nd order, symplectic
-//        REB_INTEGRATOR_NONE = 7,        // Do not integrate anything
-//        REB_INTEGRATOR_JANUS = 8,       // Bit-wise reversible JANUS integrator.
-//        REB_INTEGRATOR_MERCURIUS = 9,   // MERCURIUS integrator 
-//        REB_INTEGRATOR_SABA = 10,       // SABA integrator family (Laskar and Robutel 2001)
-//        REB_INTEGRATOR_EOS = 11,        // Embedded Operator Splitting (EOS) integrator family (Rein 2019)
-//        REB_INTEGRATOR_BS = 12,         // Gragg-Bulirsch-Stoer 
-//                                        // REB_INTEGRATOR_TES = 20,     // Used to be Terrestrial Exoplanet Simulator (TES) -- Do not reuse.
-//        REB_INTEGRATOR_WHFAST512 = 21,  // WHFast integrator, optimized for AVX512
-//        REB_INTEGRATOR_TRACE = 25,      // TRACE integrator (Lu, Hernandez and Rein 2024)
-//        REB_INTEGRATOR_CUSTOM = 26,     // Custom, user-provided integrator.
-//    } integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
         REB_BOUNDARY_OPEN = 1,          // Open boundary conditions. Removes particles if they leave the box 
@@ -599,7 +591,7 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    const struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
+    struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
     struct reb_integrator_sei ri_sei;               // The SEI struct 
     struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 

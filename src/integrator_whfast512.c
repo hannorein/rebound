@@ -37,6 +37,7 @@
 #include "integrator_whfast512.h"
 
 const struct reb_integrator reb_integrator_whfast512 = {
+    .id = 21,
     .step = reb_integrator_whfast512_step,
     .reset = reb_integrator_whfast512_reset,
     .synchronize = reb_integrator_whfast512_synchronize,

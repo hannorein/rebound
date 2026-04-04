@@ -89,7 +89,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 102, REB_DOUBLE,      "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0},
     { 48, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0},
     { 50, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0},
-    { 51, REB_INT,          "integrator",                   offsetof(struct reb_simulation, integrator), 0, 0},
+    { 51, REB_INT,          "integrator",                   offsetof(struct reb_simulation, integrator), 0, 0}, // Note: first element in structure
     { 52, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0},
     { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0},
     { 54, REB_DOUBLE,       "ri_sei.OMEGA",                 offsetof(struct reb_simulation, ri_sei.OMEGA), 0, 0},
@@ -903,7 +903,25 @@ next_field:
     } 
 
 finish_fields:
-    // Some final initialization
+    // Some final initializations
+
+    // Find integrator
+    {
+        int integrator_found = 0;
+        for (size_t i = 0; i<reb_integrators_available_N;i++){
+            if (reb_integrators_available[i]->id == r->integrator.id){
+                r->integrator = *reb_integrators_available[i];
+                integrator_found = 1;
+                break;
+            }
+        }
+        if (!integrator_found){
+            reb_simulation_warning(r,"Unknown integrator encountered in Simulationarchive.");
+            r->integrator = reb_integrator_none;
+        }
+    }
+
+    // Update pointers to simulation
     for (size_t l=0;l<r->N_var_config;l++){
         r->var_config[l].sim = r;
     }

@@ -13,11 +13,23 @@ class allocated_c_char_p(c_char_p):
     pass
 
 import types
-      
+
+# Load all available integrators and identify by name
+class Integrator(Structure):
+    _fields_ = [("id", c_uint32),
+                ("step", c_void_p),
+                ("synchronize", c_void_p),
+                ("reset", c_void_p),
+                ("data", c_void_p),
+                ("data_size", c_size_t),
+                ]
+integrators_available_N = c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
+integrators_available = (POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
+integrators_available_names = (c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")
+INTEGRATORS = dict(zip([n.decode("utf-8") for n in integrators_available_names], [i.contents for i in integrators_available]))
+
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h
-        
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512": 21, "trace": 25, "custom": 26}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
 GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "custom": 7}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
@@ -35,6 +47,7 @@ BINARY_WARNINGS = [
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
     (True, 1024, "Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
 ]
+
 
 # Note: name conflict with exception "Collision"
 class CollisionS(Structure):
@@ -1498,7 +1511,7 @@ Simulation._fields_ = [
                 ("simulationarchive_next_step", c_uint64),
                 ("_simulationarchive_filename", c_char_p),
                 ("_collision", c_int),
-                ("_integrator", c_int),
+                ("_integrator", Integrator),
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),

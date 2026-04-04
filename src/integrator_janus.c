@@ -34,6 +34,7 @@
 #include "integrator_janus.h"
 
 const struct reb_integrator reb_integrator_janus = {
+    .id = 8,
     .step = reb_integrator_janus_step,
     .reset = reb_integrator_janus_reset,
     .synchronize = reb_integrator_janus_synchronize,

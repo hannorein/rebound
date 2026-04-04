@@ -38,6 +38,7 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
 const struct reb_integrator reb_integrator_saba = {
+    .id = 10,
     .step = reb_integrator_saba_step,
     .reset = reb_integrator_saba_reset,
     .synchronize = reb_integrator_saba_synchronize,

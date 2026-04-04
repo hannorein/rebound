@@ -38,6 +38,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 const struct reb_integrator reb_integrator_trace = {
+    .id = 25,
     .step = reb_integrator_trace_step,
     .reset = reb_integrator_trace_reset,
 };

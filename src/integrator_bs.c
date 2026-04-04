@@ -62,6 +62,12 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+const struct reb_integrator reb_integrator_bs = {
+    .id = 12,
+    .step = reb_integrator_bs_step,
+    .reset = reb_integrator_bs_reset,
+};
+
 //#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
 
 // Default configuration parameter. 
@@ -78,11 +84,6 @@ static const double orderControl2 = 0.9;
 static const double stabilityReduction = 0.5;
 static const int maxIter = 2; // maximal number of iterations for which checks are performed
 static const int maxChecks = 1; // maximal number of checks for each iteration
-
-const struct reb_integrator reb_integrator_bs = {
-    .step = reb_integrator_bs_step,
-    .reset = reb_integrator_bs_reset,
-};
 
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){

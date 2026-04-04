@@ -37,8 +37,8 @@
 #include "boundary.h"
 #include "integrator_sei.h"
 
-
 const struct reb_integrator reb_integrator_sei = {
+    .id = 2,
     .step = reb_integrator_sei_step,
     .reset = reb_integrator_sei_reset,
 };

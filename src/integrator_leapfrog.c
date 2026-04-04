@@ -31,6 +31,7 @@
 #include "integrator_leapfrog.h"
 
 const struct reb_integrator reb_integrator_leapfrog = {
+    .id = 4,
     .step = reb_integrator_leapfrog_step,
     .reset = reb_integrator_leapfrog_reset,
 };
