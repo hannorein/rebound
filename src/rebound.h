@@ -224,7 +224,6 @@ struct reb_integrator_trace {
     enum {
         REB_TRACE_MODE_INTERACTION = 0, // Interaction step
         REB_TRACE_MODE_KEPLER = 1,      // Kepler step
-        REB_TRACE_MODE_NONE = 2,        // In-between steps, to avoid calculate_accelerations
         REB_TRACE_MODE_FULL = 3,        // Doing everything in one step
     } mode;
     size_t encounter_N;                 // Number of particles currently having an encounter

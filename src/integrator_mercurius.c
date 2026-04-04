@@ -722,6 +722,7 @@ void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
             if (rim->N_allocated<r->N){
                 rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
                 rim->encounter_map      = realloc(rim->encounter_map,sizeof(size_t)*r->N);
+                r->map = rim->encounter_map;
                 rim->N_allocated = r->N;
             }
             rim->encounter_map[rim->encounter_N] = r->N-1;

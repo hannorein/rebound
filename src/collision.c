@@ -57,29 +57,6 @@ void reb_collision_search(struct reb_simulation* const r){
     // collisions in O(N_projectiles * N_targets) rather than O(N^2).
     size_t N_targets = r->N_targets != SIZE_MAX ? r->N_targets : N_projectiles; 
 
-    switch (r->integrator){
-        case REB_INTEGRATOR_TRACE:
-            switch (r->ri_trace.mode){
-                case REB_TRACE_MODE_INTERACTION:
-                case REB_TRACE_MODE_NONE:
-                    // After jump step, only collisions with star might occur.
-                    // All other collisions in encounter step/
-                    N_targets = 1;
-                    break;
-                case REB_TRACE_MODE_KEPLER:
-                    N_projectiles = r->ri_trace.encounter_N;
-                    N_targets = N_projectiles;
-                    map = r->ri_trace.encounter_map;
-                    break;
-                case REB_TRACE_MODE_FULL:
-                    // Do the default collision search
-                    break;
-            }
-            break;
-        default:
-            // map = NULL
-            break;
-    }
     const struct reb_particle* const particles = r->particles;
     switch (r->collision){
         case REB_COLLISION_NONE:

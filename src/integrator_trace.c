@@ -659,6 +659,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     }
 
     ri_trace->mode = REB_TRACE_MODE_KEPLER;
+    r->map = ri_trace->encounter_map; // for collision search
+    r->N_map = ri_trace->encounter_N;
     r->gravity = REB_GRAVITY_CUSTOM;
     r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
 
@@ -775,6 +777,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         // Resetting BS here reduces binary file size.
         reb_integrator_bs_reset(r);
     }
+    r->map = NULL; // for collision search
+    r->N_map = 0;
 }
 
 void reb_integrator_trace_kepler_step(struct reb_simulation* const r, const double _dt){
@@ -1032,6 +1036,7 @@ void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
             ri_trace->particles_backup_kepler = realloc(ri_trace->particles_backup_kepler, sizeof(struct reb_particle)*r->N);
             ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
             ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(size_t)*r->N);
+            r->map = ri_trace->encounter_map;
             ri_trace->encounter_map_backup = realloc(ri_trace->encounter_map_backup, sizeof(size_t)*r->N);
             ri_trace->N_allocated   = r->N;
         }
@@ -1128,12 +1133,12 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     if (r->collision != REB_COLLISION_NONE && (r->collision != REB_COLLISION_DIRECT && r->collision != REB_COLLISION_LINE)){
         reb_simulation_warning(r,"TRACE only works with a direct or line collision search.");
     }
+    r->N_targets = SIZE_MAX; // Search for collisions between all particles in encounter step or full steps.
 
     // Calculate gravity with special function
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_CUSTOM){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
-    ri_trace->mode = REB_TRACE_MODE_NONE; // Used for collision search maybe?? TODO 
     r->will_remove_particle = reb_integrator_trace_will_remove_particle;
     r->did_add_particle = reb_integrator_trace_did_add_particle;
 
@@ -1172,6 +1177,7 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     r->dt_last_done = r->dt;
     r->will_remove_particle = NULL;
     r->did_add_particle = NULL;
+    r->N_targets = 1; // Only serch for collisions with star after complete timestep.
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
@@ -1179,7 +1185,6 @@ void reb_integrator_trace_synchronize(struct reb_simulation* r){
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){
-    r->ri_trace.mode = REB_TRACE_MODE_NONE;
     r->ri_trace.encounter_N = 0;
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
