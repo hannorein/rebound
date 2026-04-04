@@ -345,6 +345,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     reb_integrator_ias15_reset(r);
     r->map = rim->encounter_map;
     r->N_map = rim->encounter_N;
+    r->N_targets = SIZE_MAX; // Search for any possible collisions between N_map particles.
 
     r->dt = 0.0001*_dt; // start with a small timestep.
 
@@ -866,6 +867,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
     r->dt_last_done = r->dt;
     r->did_add_particle = NULL;
     r->will_remove_particle = NULL;
+    r->N_targets = 1; // Only search for collisions with star in-between timesteps.
 }
 
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r){

@@ -49,26 +49,15 @@ static void reb_tree_check_for_overlapping_trajectories_in_cell(struct reb_simul
 
 void reb_collision_search(struct reb_simulation* const r){
     r->N_collisions = 0;
-    size_t N_projectiles = r->N;    // Number of projectiles is always equal to r->N
-    size_t N_targets = r->N_targets != SIZE_MAX ? r->N_targets : r->N; // Targets can be less than N if set by user or one of the integrators to check collisions in O(N_projectiles * N_targets) rather than O(N^2)
     size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
 
-    size_t* map = NULL;
+    size_t* map = r->map;                               // Only check a subset of particles?
+    size_t N_projectiles = map ? r->N_map : r->N;       // Number of projectiles = all particles operated on
+    // Number of targets can be less than N_projectiles if set by user or one of the integrators to check 
+    // collisions in O(N_projectiles * N_targets) rather than O(N^2).
+    size_t N_targets = r->N_targets != SIZE_MAX ? r->N_targets : N_projectiles; 
+
     switch (r->integrator){
-        case REB_INTEGRATOR_MERCURIUS:
-            switch (r->ri_mercurius.mode){
-                case REB_MERCURIUS_MODE_WH:
-                    // After jump step, only collisions with star might occur.
-                    // All other collisions in encounter step/
-                    N_targets = 1;
-                    break;
-                case REB_MERCURIUS_MODE_ENCOUNTER:
-                    N_projectiles = r->ri_mercurius.encounter_N;
-                    N_targets = N_projectiles;
-                    map = r->ri_mercurius.encounter_map;
-                    break;
-            }
-            break;
         case REB_INTEGRATOR_TRACE:
             switch (r->ri_trace.mode){
                 case REB_TRACE_MODE_INTERACTION:
