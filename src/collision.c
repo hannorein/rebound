@@ -53,6 +53,7 @@ void reb_collision_search(struct reb_simulation* const r){
 
     size_t* map = r->map;                               // Only check a subset of particles?
     size_t N_projectiles = map ? r->N_map : r->N;       // Number of projectiles = all particles operated on
+
     // Number of targets can be less than N_projectiles if set by user or one of the integrators to check 
     // collisions in O(N_projectiles * N_targets) rather than O(N^2).
     size_t N_targets = r->N_targets != SIZE_MAX ? r->N_targets : N_projectiles; 
