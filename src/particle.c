@@ -70,7 +70,7 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
         reb_particle_set_name(&r->particles[r->N-1], pt.name);
     }
 #endif // MPI
-       
+
     // Check if any integrators need to do extra work
     if (r->did_add_particle){
         r->did_add_particle(r);

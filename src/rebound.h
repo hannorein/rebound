@@ -431,7 +431,7 @@ struct reb_simulation {
     size_t  N;                      // Number of particles (includes variational particles). Default: 0.
     size_t  N_allocated;            // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
-    
+
     // Collision routines and some integrators can operate on only some particles.
     // This map defines which ones. Set to NULL to operate on all particles.
     size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
@@ -595,7 +595,7 @@ struct reb_simulation {
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
-    
+
     // Internal callback functions  
     void (*did_add_particle)(struct reb_simulation* r); // This callback function gets called after a particle was added. Used by some integrators to handle particle additions during timesteps.
     void (*will_remove_particle)(struct reb_simulation* r, size_t pt); // This callback function gets called before a particle will be removed. Used by some integrators to handle particle removals during timesteps.
