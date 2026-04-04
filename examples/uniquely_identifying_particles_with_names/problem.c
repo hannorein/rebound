@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
 
     printf("Initially, the particle with index 200 is: r->particles[200].name\"=%s\"\n", r->particles[200].name);
 
-    reb_simulation_remove_particle_by_name(r, "Sun", 0);
+    reb_simulation_remove_particle_by_name(r, "Sun");
 
     /* The remove function has moved particles[200] to index 0:*/
 
