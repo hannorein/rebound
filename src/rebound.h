@@ -434,8 +434,8 @@ struct reb_simulation {
     
     // Collision routines and some integrators can operate on only some particles.
     // This map defines which ones. Set to NULL to operate on all particles.
-    size_t* map;                    // Note: memory not owned and thus not freed by simulation.
     size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
+    size_t* map;                    // Note: memory not owned and thus not freed by simulation.
 
     // Variational particles array
     size_t  N_var;                  // Number of variational particles. Default 0.

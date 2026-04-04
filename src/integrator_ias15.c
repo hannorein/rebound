@@ -199,7 +199,6 @@ void reb_integrator_ias15_alloc(struct reb_simulation* r){
 //   Returns 1 if successful.
 //   Returns 0 if step is rejected.
 static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
-    struct reb_integrator_ias15* ri_ias15 = &r->ri_ias15;
     reb_integrator_ias15_alloc(r);
 
     struct reb_particle* const particles = r->particles;
