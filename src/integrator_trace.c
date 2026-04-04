@@ -1021,6 +1021,91 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
     }
 }
 
+void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
+    // TRACE can add particles mid-timestep now
+    struct reb_integrator_trace* ri_trace = &(r->ri_trace);
+    if (ri_trace->mode==REB_TRACE_MODE_KEPLER){
+        const size_t old_N = r->N-1;
+        if (ri_trace->N_allocated < r->N){
+            ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
+            ri_trace->particles_backup = realloc(ri_trace->particles_backup, sizeof(struct reb_particle)*r->N);
+            ri_trace->particles_backup_kepler = realloc(ri_trace->particles_backup_kepler, sizeof(struct reb_particle)*r->N);
+            ri_trace->current_Ks    = realloc(ri_trace->current_Ks, sizeof(int)*r->N*r->N);
+            ri_trace->encounter_map = realloc(ri_trace->encounter_map, sizeof(size_t)*r->N);
+            ri_trace->encounter_map_backup = realloc(ri_trace->encounter_map_backup, sizeof(size_t)*r->N);
+            ri_trace->N_allocated   = r->N;
+        }
+
+        // First reshuffle existing Ks
+        size_t i = old_N;
+        while (i --> 0){
+            size_t j = old_N;
+            while (j --> 0){
+                ri_trace->current_Ks[i*old_N+j+i] = ri_trace->current_Ks[i*old_N+j];
+            }
+        }
+
+        // add in new particle, we want it to interact with all currently interacting particles
+        // exclude star
+        for (size_t i = 1; i < ri_trace->encounter_N; i++){
+            ri_trace->current_Ks[ri_trace->encounter_map[i]*r->N+old_N] = 1;
+        }
+
+        ri_trace->encounter_map[ri_trace->encounter_N] = old_N;
+        ri_trace->encounter_N++;
+
+        if (r->N_active==SIZE_MAX){ 
+            // If global N_active is not set, then all particles are active, so the new one as well.
+            // Otherwise, assume we're adding non active particle. 
+            ri_trace->encounter_N_active++;
+        }
+
+    }
+}
+
+void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t pt, int keep_sorted){
+    if (keep_sorted==0){
+        reb_simulation_error(r,"Need to set keep_sorted=1 to remove particles with Trace.");
+        return;
+    }
+    struct reb_integrator_trace* ri_trace = &(r->ri_trace);
+    reb_integrator_bs_reset(r);
+    if (ri_trace->mode==REB_TRACE_MODE_KEPLER){
+        // Only removed mid-timestep if collision - BS Step!
+        int after_to_be_removed_particle = 0;
+        size_t encounter_index = SIZE_MAX;
+        for (size_t i=0;i<ri_trace->encounter_N;i++){
+            if (after_to_be_removed_particle == 1){
+                ri_trace->encounter_map[i-1] = ri_trace->encounter_map[i] - 1;
+            }
+            if (ri_trace->encounter_map[i]==index){
+                encounter_index = i;
+                after_to_be_removed_particle = 1;
+            }
+        }
+        if (encounter_index == SIZE_MAX){
+            reb_simulation_error(r,"Cannot find particle in encounter map. Did not remove particle.");
+            return 1;
+        }
+
+        // reshuffle current_Ks
+        size_t counter = 0;
+        const size_t new_N = r->N-1;
+        for (size_t i = 0; i < new_N; i++){
+            if (i == index) counter += r->N;
+            for (size_t j = 0; j < new_N; j++){
+                if (j == index) counter++;
+                ri_trace->current_Ks[i*new_N+j] = ri_trace->current_Ks[i*new_N+j+counter];
+            }
+        }
+        if (encounter_index<ri_trace->encounter_N_active){
+            ri_trace->encounter_N_active--;
+        }
+        ri_trace->encounter_N--;
+    }
+}
+
+
 void reb_integrator_trace_step(struct reb_simulation* r){
     // Do memory management and consistency checks
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
@@ -1050,7 +1135,9 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_CUSTOM){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
-    ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
+    ri_trace->mode = REB_TRACE_MODE_NONE; // Used for collision search maybe?? TODO 
+    r->will_remove_particle = reb_integrator_trace_will_remove_particle;
+    r->did_add_particle = reb_integrator_trace_did_add_particle;
 
     // Not sure why this was needed. HR 4 April 2026
     // reb_integrator_trace_update_acceleration(r);
@@ -1085,6 +1172,8 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
+    r->will_remove_particle = NULL;
+    r->did_add_particle = NULL;
 }
 
 void reb_integrator_trace_synchronize(struct reb_simulation* r){
