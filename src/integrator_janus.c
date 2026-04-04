@@ -33,6 +33,12 @@
 #include "boundary.h"
 #include "integrator_janus.h"
 
+const struct reb_integrator reb_integrator_janus = {
+    .step = reb_integrator_janus_step,
+    .reset = reb_integrator_janus_reset,
+    .synchronize = reb_integrator_janus_synchronize,
+};
+
 /**
  * Structure derscribing one specific JANUS scheme
  **/

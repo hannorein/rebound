@@ -38,6 +38,11 @@
 #include "integrator_sei.h"
 
 
+const struct reb_integrator reb_integrator_sei = {
+    .step = reb_integrator_sei_step,
+    .reset = reb_integrator_sei_reset,
+};
+
 static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p);
 static void operator_phi1(double dt, struct reb_particle* p);
 
@@ -79,11 +84,6 @@ void reb_integrator_sei_step(struct reb_simulation* const r){
     }
     r->t+=r->dt/2.;
     r->dt_last_done = r->dt;
-}
-
-void reb_integrator_sei_synchronize(struct reb_simulation* r){
-    // Do nothing.
-    (void)r; // not used.
 }
 
 void reb_integrator_sei_reset(struct reb_simulation* r){

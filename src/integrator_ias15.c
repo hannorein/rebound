@@ -50,7 +50,7 @@ void integrator_generate_constants(void);
 #include "integrator_ias15.h"
 
 
-struct reb_integrator reb_integrator_ias15 = {
+const struct reb_integrator reb_integrator_ias15 = {
     .step = reb_integrator_ias15_step,
     .reset = reb_integrator_ias15_reset,
 };

@@ -132,6 +132,28 @@ struct reb_dp7 {
     double* REB_RESTRICT p6;
 };
 
+// Generic custom integrator
+struct reb_integrator {
+    void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
+    void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
+    void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
+    void* data;                                     // Pointer to any internal data/memory required by the integrator. Optional.
+    size_t data_size;                               // Size of data in bytes. Set to 0 if data storage is not used.
+};
+
+// Available integrators
+const struct reb_integrator reb_integrator_bs;
+const struct reb_integrator reb_integrator_eos;
+const struct reb_integrator reb_integrator_ias15;
+const struct reb_integrator reb_integrator_janus;
+const struct reb_integrator reb_integrator_leapfrog;
+const struct reb_integrator reb_integrator_mercurius;
+const struct reb_integrator reb_integrator_saba;
+const struct reb_integrator reb_integrator_sei;
+const struct reb_integrator reb_integrator_trace;
+const struct reb_integrator reb_integrator_whfast;
+const struct reb_integrator reb_integrator_whfast512;
+
 // Integrator structures 
 // IAS15 (Rein & Spiegel 2015)
 struct reb_integrator_ias15 {
@@ -388,14 +410,6 @@ struct reb_integrator_janus {
     size_t N_allocated;
 };
 
-// Generic custom integrator
-struct reb_integrator {
-    void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
-    void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
-    void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
-    void* data;                                     // Pointer to any internal data/memory required by the integrator. Optional.
-    size_t data_size;                               // Size of data in bytes. Set to 0 if data storage is not used.
-};
 
 // Possible return values of rebound_integrate
 enum REB_STATUS {
@@ -584,7 +598,7 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
+    const struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
     struct reb_integrator_sei ri_sei;               // The SEI struct 
     struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 

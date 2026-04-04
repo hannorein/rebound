@@ -36,6 +36,12 @@
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 
+const struct reb_integrator reb_integrator_whfast512 = {
+    .step = reb_integrator_whfast512_step,
+    .reset = reb_integrator_whfast512_reset,
+    .synchronize = reb_integrator_whfast512_synchronize,
+};
+
 #ifdef PROF
 // Profiling counters
 double walltime_interaction=0;;

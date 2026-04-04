@@ -25,7 +25,6 @@
 #ifndef _INTEGRATOR_TRACE_H
 #define _INTEGRATOR_TRACE_H
 void reb_integrator_trace_step(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_trace_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
 void reb_integrator_trace_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
 void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Ionternal in-place coordinate transformation
 void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation

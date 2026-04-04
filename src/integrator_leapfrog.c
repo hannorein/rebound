@@ -30,7 +30,7 @@
 #include "rebound.h"
 #include "integrator_leapfrog.h"
 
-struct reb_integrator reb_integrator_leapfrog = {
+const struct reb_integrator reb_integrator_leapfrog = {
     .step = reb_integrator_leapfrog_step,
     .reset = reb_integrator_leapfrog_reset,
 };

@@ -37,6 +37,12 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
+const struct reb_integrator reb_integrator_saba = {
+    .step = reb_integrator_saba_step,
+    .reset = reb_integrator_saba_reset,
+    .synchronize = reb_integrator_saba_synchronize,
+};
+
 // Returns the number of stages for a given type of integrator (not including corrector)
 static int reb_saba_stages(const int type){
     switch(type){

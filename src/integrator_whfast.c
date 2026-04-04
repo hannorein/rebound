@@ -40,6 +40,12 @@
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
+const struct reb_integrator reb_integrator_whfast = {
+    .step = reb_integrator_whfast_step,
+    .reset = reb_integrator_whfast_reset,
+    .synchronize = reb_integrator_whfast_synchronize,
+};
+
 // Corrector coefficients
 static const double reb_whfast_corrector_a_1 = 0.41833001326703777398908601289259374469640768464934;
 static const double reb_whfast_corrector_a_2 = 0.83666002653407554797817202578518748939281536929867;

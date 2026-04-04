@@ -671,9 +671,6 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
 
 void reb_simulation_synchronize(struct reb_simulation* r){
     switch(r->integrator){
-        case REB_INTEGRATOR_SEI:
-            reb_integrator_sei_synchronize(r);
-            break;
         case REB_INTEGRATOR_WHFAST:
             reb_integrator_whfast_synchronize(r);
             break;
@@ -691,9 +688,6 @@ void reb_simulation_synchronize(struct reb_simulation* r){
             break;
         case REB_INTEGRATOR_EOS:
             reb_integrator_eos_synchronize(r);
-            break;
-        case REB_INTEGRATOR_TRACE:
-            reb_integrator_trace_synchronize(r);
             break;
         case REB_INTEGRATOR_CUSTOM:
             if (r->ri_custom.synchronize){

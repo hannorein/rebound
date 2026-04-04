@@ -38,6 +38,12 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+const struct reb_integrator reb_integrator_mercurius = {
+    .step = reb_integrator_mercurius_step,
+    .reset = reb_integrator_mercurius_reset,
+    .synchronize = reb_integrator_mercurius_synchronize,
+};
+
 void reb_integrator_mercurius_calculate_acceleration_mode_encounter(struct reb_simulation* r);
 
 double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit){

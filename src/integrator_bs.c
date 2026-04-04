@@ -79,7 +79,7 @@ static const double stabilityReduction = 0.5;
 static const int maxIter = 2; // maximal number of iterations for which checks are performed
 static const int maxChecks = 1; // maximal number of checks for each iteration
 
-struct reb_integrator reb_integrator_bs = {
+const struct reb_integrator reb_integrator_bs = {
     .step = reb_integrator_bs_step,
     .reset = reb_integrator_bs_reset,
 };

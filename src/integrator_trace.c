@@ -37,6 +37,11 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+const struct reb_integrator reb_integrator_trace = {
+    .step = reb_integrator_trace_step,
+    .reset = reb_integrator_trace_reset,
+};
+
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j){
     // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
@@ -1178,10 +1183,6 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     r->will_remove_particle = NULL;
     r->did_add_particle = NULL;
     r->N_targets = 1; // Only serch for collisions with star after complete timestep.
-}
-
-void reb_integrator_trace_synchronize(struct reb_simulation* r){
-    (void)r; // Not used.
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){

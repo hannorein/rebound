@@ -35,7 +35,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 
-struct reb_integrator reb_integrator_eos = {
+const struct reb_integrator reb_integrator_eos = {
     .step = reb_integrator_eos_step,
     .reset = reb_integrator_eos_reset,
     .synchronize = reb_integrator_eos_synchronize,
