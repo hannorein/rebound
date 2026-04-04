@@ -726,6 +726,7 @@ void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
             }
             rim->encounter_map[rim->encounter_N] = r->N-1;
             rim->encounter_N++;
+            r->N_map++;
             if (r->N_active==SIZE_MAX){ 
                 // If global N_active is not set, then all particles are active, so the new one as well.
                 // Otherwise, assume we're adding non active particle. 

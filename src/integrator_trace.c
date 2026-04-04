@@ -1053,6 +1053,7 @@ void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
 
         ri_trace->encounter_map[ri_trace->encounter_N] = old_N;
         ri_trace->encounter_N++;
+        r->N_map++;
 
         if (r->N_active==SIZE_MAX){ 
             // If global N_active is not set, then all particles are active, so the new one as well.
