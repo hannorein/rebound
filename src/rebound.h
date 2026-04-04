@@ -596,6 +596,10 @@ struct reb_simulation {
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
+    
+    // Internal callback functions  
+    void (*did_add_particle)(struct reb_simulation* r); // This callback function gets called after a particle was added. Used by some integrators to handle particle additions during timesteps.
+    void (*will_remove_particle)(struct reb_simulation* r, size_t pt, int keep_sorted); // This callback function gets called before a particle will be removed. Used by some integrators to handle particle removals during timesteps.
 
     // ODEs. Do not access these variables directly. Use functions provided instead.
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)

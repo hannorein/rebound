@@ -1517,6 +1517,8 @@ Simulation._fields_ = [
                 ("ri_janus", IntegratorJanus),
                 ("ri_eos", IntegratorEOS),
                 ("ri_bs", IntegratorBS),
+                ("_did_add_particle", c_void_p),
+                ("_will_remove_particle", c_void_p),
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_N_odes", c_size_t),
                 ("_N_allocated_odes", c_size_t),

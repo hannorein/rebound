@@ -703,6 +703,73 @@ static void reb_integrator_mercurius_calculate_acceleration_mode_wh(struct reb_s
     }
 }
 
+void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
+    struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+    switch (r->ri_mercurius.mode){
+        case REB_MERCURIUS_MODE_WH:
+            rim->recalculate_r_crit_this_timestep      = 1;
+            rim->recalculate_coordinates_this_timestep = 1;
+            break;
+        case REB_MERCURIUS_MODE_ENCOUNTER:
+            reb_integrator_ias15_reset(r);
+            if (rim->N_allocated_dcrit<r->N){
+                rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
+                rim->N_allocated_dcrit = r->N;
+            }
+            rim->dcrit[r->N-1] = reb_integrator_mercurius_calculate_dcrit_for_particle(r,r->N-1);
+            if (rim->N_allocated<r->N){
+                rim->particles_backup   = realloc(rim->particles_backup,sizeof(struct reb_particle)*r->N);
+                rim->encounter_map      = realloc(rim->encounter_map,sizeof(size_t)*r->N);
+                rim->N_allocated = r->N;
+            }
+            rim->encounter_map[rim->encounter_N] = r->N-1;
+            rim->encounter_N++;
+            if (r->N_active==SIZE_MAX){ 
+                // If global N_active is not set, then all particles are active, so the new one as well.
+                // Otherwise, assume we're adding non active particle. 
+                rim->encounter_N_active++;
+            }
+            break;
+    }
+}
+
+void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, size_t pt, int keep_sorted){
+    if (keep_sorted==0){
+        reb_simulation_error(r,"Need to set keep_sorted=1 to remove particles with Mercurius.");
+        return;
+    }
+    struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+    if (rim->N_allocated_dcrit>0 && index<rim->N_allocated_dcrit){
+        for (size_t i=0;i<r->N-1;i++){
+            if (i>=index){
+                rim->dcrit[i] = rim->dcrit[i+1];
+            }
+        }
+    }
+    reb_integrator_ias15_reset(r);
+    if (r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
+        struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
+        int after_to_be_removed_particle = 0;
+        size_t encounter_index = SIZE_MAX;
+        for (size_t i=0;i<rim->encounter_N;i++){
+            if (after_to_be_removed_particle == 1){
+                rim->encounter_map[i-1] = rim->encounter_map[i] - 1; 
+            }
+            if (rim->encounter_map[i]==index){
+                encounter_index = i;
+                after_to_be_removed_particle = 1;
+            }
+        }
+        if (encounter_index == SIZE_MAX){
+            reb_simulation_error(r,"Cannot find particle in encounter map.");
+            return;
+        }
+        if (encounter_index<rim->encounter_N_active){
+            rim->encounter_N_active--;
+        }
+        rim->encounter_N--;
+    }
+}
 
 void reb_integrator_mercurius_step(struct reb_simulation* r){
     if (r->N_var_config){
@@ -762,6 +829,8 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
         reb_simulation_warning(r,"Mercurius has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
     rim->mode = REB_MERCURIUS_MODE_WH;
+    r->did_add_particle = reb_integrator_mercurius_did_add_particle;
+    r->will_remove_particle = reb_integrator_mercurius_will_remove_particle;
 
     if (rim->L == NULL){
         // Setting default switching function
@@ -799,6 +868,8 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
+    r->did_add_particle = NULL;
+    r->will_remove_particle = NULL;
 }
 
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
