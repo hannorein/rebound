@@ -733,11 +733,7 @@ void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
     }
 }
 
-void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, size_t pt, int keep_sorted){
-    if (keep_sorted==0){
-        reb_simulation_error(r,"Need to set keep_sorted=1 to remove particles with Mercurius.");
-        return;
-    }
+void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, size_t index){
     struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
     if (rim->N_allocated_dcrit>0 && index<rim->N_allocated_dcrit){
         for (size_t i=0;i<r->N-1;i++){

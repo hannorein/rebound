@@ -72,7 +72,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 29, REB_INT,          "N_ghost_x",                    offsetof(struct reb_simulation, N_ghost_x), 0, 0},
     { 30, REB_INT,          "N_ghost_y",                    offsetof(struct reb_simulation, N_ghost_y), 0, 0},
     { 31, REB_INT,          "N_ghost_z",                    offsetof(struct reb_simulation, N_ghost_z), 0, 0},
-    { 32, REB_INT,          "collision_resolve_keep_sorted",offsetof(struct reb_simulation, collision_resolve_keep_sorted), 0, 0},
+    // 32 was collision_resolve_keep_sorted
     { 33, REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0},
     { 34, REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0},
     { 36, REB_INT64,        "collisions_log_n",             offsetof(struct reb_simulation, collisions_log_n), 0, 0},

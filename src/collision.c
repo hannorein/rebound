@@ -395,13 +395,8 @@ void reb_collision_search(struct reb_simulation* const r){
         // Default is to throw an exception
         resolve = reb_collision_resolve_halt;
     }
-    unsigned int collision_resolve_keep_sorted = r->collision_resolve_keep_sorted;
-    if (r->integrator == REB_INTEGRATOR_MERCURIUS || r->integrator == REB_INTEGRATOR_TRACE){
-        collision_resolve_keep_sorted = 1; // Force keep_sorted for hybrid integrator
-    }
 
     for (size_t i=0;i<r->collisions_N;i++){
-
         struct reb_collision c = r->collisions[i];
         if (c.p1 != SIZE_MAX && c.p2 != SIZE_MAX){
             // Resolve collision
@@ -410,16 +405,10 @@ void reb_collision_search(struct reb_simulation* const r){
             // Remove particles
             if (outcome & REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1){
                 // Remove p1
-                int removedp1 = !reb_simulation_remove_particle(r,c.p1,collision_resolve_keep_sorted);
+                int removedp1 = !reb_simulation_remove_particle(r,c.p1);
                 if (removedp1){
-                    if (collision_resolve_keep_sorted){
-                        if (c.p2 > c.p1 && c.p2!=SIZE_MAX){
-                            c.p2--;
-                        }
-                    }else{
-                        if (c.p2 == r->N){
-                            c.p2 = c.p1;
-                        }
+                    if (c.p2 > c.p1 && c.p2!=SIZE_MAX){
+                        c.p2--;
                     }
                     for (size_t j=i+1;j<r->collisions_N;j++){ // Update other collisions
                         struct reb_collision* cp = &(r->collisions[j]);
@@ -429,27 +418,18 @@ void reb_collision_search(struct reb_simulation* const r){
                             cp->p2 = SIZE_MAX;
                         }
                         // Adjust collisions
-                        if (collision_resolve_keep_sorted){
-                            if (cp->p1 > c.p1 && cp->p1!=SIZE_MAX){
-                                cp->p1--;
-                            }
-                            if (cp->p2 > c.p1 && cp->p2!=SIZE_MAX){
-                                cp->p2--;
-                            }
-                        }else{
-                            if (cp->p1 == r->N){
-                                cp->p1 = c.p1;
-                            }
-                            if (cp->p2 == r->N){
-                                cp->p2 = c.p1;
-                            }
+                        if (cp->p1 > c.p1 && cp->p1!=SIZE_MAX){
+                            cp->p1--;
+                        }
+                        if (cp->p2 > c.p1 && cp->p2!=SIZE_MAX){
+                            cp->p2--;
                         }
                     }
                 }
             }
             if (outcome & REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2){
                 // Remove p1
-                int removedp2 = !reb_simulation_remove_particle(r,c.p2,collision_resolve_keep_sorted);
+                int removedp2 = !reb_simulation_remove_particle(r,c.p2);
                 if (removedp2){ // Update other collisions
                     for (size_t j=i+1;j<r->collisions_N;j++){
                         struct reb_collision* cp = &(r->collisions[j]);
@@ -459,20 +439,11 @@ void reb_collision_search(struct reb_simulation* const r){
                             cp->p2 = SIZE_MAX;
                         }
                         // Adjust collisions
-                        if (collision_resolve_keep_sorted){
-                            if (cp->p1 > c.p2 && cp->p1!=SIZE_MAX){
-                                cp->p1--;
-                            }
-                            if (cp->p2 > c.p2 && cp->p2!=SIZE_MAX){
-                                cp->p2--;
-                            }
-                        }else{
-                            if (cp->p1 == r->N){
-                                cp->p1 = c.p2;
-                            }
-                            if (cp->p2 == r->N){
-                                cp->p2 = c.p2;
-                            }
+                        if (cp->p1 > c.p2 && cp->p1!=SIZE_MAX){
+                            cp->p1--;
+                        }
+                        if (cp->p2 > c.p2 && cp->p2!=SIZE_MAX){
+                            cp->p2--;
                         }
                     }
                 }

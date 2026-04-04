@@ -967,7 +967,7 @@ class Simulation(Structure):
         particles = Particles(self, var=True)
         return particles
 
-    def remove(self, identifier, keep_sorted=True):
+    def remove(self, identifier):
         """ 
         Removes a particle from the simulation.
 
@@ -975,15 +975,12 @@ class Simulation(Structure):
         ----------
         identifier : int or string
             Specify particle to remove by index or by name.
-        keep_sorted : bool, optional
-            By default, remove preserves the order of particles in the particles array. 
-            Might set it to zero in cases with many particles and many removals to speed things up.
         """
         if isinstance(identifier, int):
-            clibrebound.reb_simulation_remove_particle(byref(self), identifier, keep_sorted)
+            clibrebound.reb_simulation_remove_particle(byref(self), identifier)
         elif isinstance(identifier, str):
             s = identifier.encode("utf-8")
-            clibrebound.reb_simulation_remove_particle_by_name(byref(self), s, keep_sorted)
+            clibrebound.reb_simulation_remove_particle_by_name(byref(self), s)
         else:
             raise ValueError("Argument passed to remove() not supported.")
 
@@ -1476,7 +1473,6 @@ Simulation._fields_ = [
                 ("N_ghost_x", c_int),
                 ("N_ghost_y", c_int),
                 ("N_ghost_z", c_int),
-                ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
                 ("N_allocated_collisions", c_size_t),
                 ("collisions_N", c_size_t),

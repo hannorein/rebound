@@ -512,7 +512,6 @@ struct reb_simulation {
     int*   N_tree_essential_recv_max;           // Maximal length of cell receive buffer before realloc() is needed.
 #endif // MPI
 
-    int collision_resolve_keep_sorted;      // 0 (default): may reorder particles during collisions, 1: keep particles sorted.
     struct reb_collision* collisions;       // Array of current collisions. Do not change manually
     size_t N_allocated_collisions;
     unsigned int collisions_N;              // Number of collisions found during last collision search.
@@ -599,7 +598,7 @@ struct reb_simulation {
     
     // Internal callback functions  
     void (*did_add_particle)(struct reb_simulation* r); // This callback function gets called after a particle was added. Used by some integrators to handle particle additions during timesteps.
-    void (*will_remove_particle)(struct reb_simulation* r, size_t pt, int keep_sorted); // This callback function gets called before a particle will be removed. Used by some integrators to handle particle removals during timesteps.
+    void (*will_remove_particle)(struct reb_simulation* r, size_t pt); // This callback function gets called before a particle will be removed. Used by some integrators to handle particle removals during timesteps.
 
     // ODEs. Do not access these variables directly. Use functions provided instead.
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)
@@ -749,11 +748,10 @@ DLLEXPORT struct reb_particle reb_particle_nan(void);
 
 // Remove all particles
 DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const r);
-// Remove one particle. keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
-DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index, int keep_sorted);
-// Remove one particle by name. If multiple particles share the name, one particle will be remove. Which one is undetermined.
-// keep_sorted flag can be set to 1 to maintain order of remaining particles. Returns 0 if successful.
-DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted); 
+// Remove one particle. Remaining particle will keep order. Returns 0 if successful.
+DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index);
+// Remove one particle by name. If multiple particles share the name, one particle will be remove. Which one is undetermined. Returns 0 if successful.
+DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name); 
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
 DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
 // Returns a variational particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 

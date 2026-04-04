@@ -65,10 +65,10 @@ void reb_boundary_check(struct reb_simulation* const r){
                 if (removep==1){
                     if(r->track_energy_offset){
                         double Ei = reb_simulation_energy(r);
-                        reb_simulation_remove_particle(r, i,1);
+                        reb_simulation_remove_particle(r, i);
                         r->energy_offset += Ei - reb_simulation_energy(r);
                     } else {
-                        reb_simulation_remove_particle(r, i,0); // keep_sorted=0 by default in C version
+                        reb_simulation_remove_particle(r, i);
                     }
                     i--; // need to recheck the particle that replaced the removed one
                     N--; // This is the local loop N

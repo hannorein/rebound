@@ -286,14 +286,14 @@ struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r
 }
 #endif // MPI
 
-int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name, int keep_sorted){
+int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name){
     struct reb_particle* p = reb_simulation_get_particle_by_name(r, name);
     if (!p){
         reb_simulation_error(r, "Particle not found.");
         return 1; // Not found.
     }
     size_t index = p - r->particles;
-    return reb_simulation_remove_particle(r, index, keep_sorted);
+    return reb_simulation_remove_particle(r, index);
 }
 
 
@@ -332,14 +332,14 @@ void reb_simulation_remove_all_particles(struct reb_simulation* const r){
     r->particles_var = NULL;
 }
 
-int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index, int keep_sorted){
+int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index){
     if (r->N_var){
         reb_simulation_error(r, "Removing particles not supported when variational particles are in use. Did not remove particle.");
         return 1;
     }
     // Check if any integrators need to do work before removing particle
     if (r->will_remove_particle){
-        r->will_remove_particle(r, index, keep_sorted);
+        r->will_remove_particle(r, index);
     }
 
     if (r->N==1){
@@ -358,23 +358,15 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index,
         reb_simulation_error(r, warning);
         return 1;
     }
-    if(keep_sorted){
-        r->N--;
-        if(r->free_particle_ap){
-            r->free_particle_ap(&r->particles[index]);
-        }
-        if(index<r->N_active && r->N_active!=SIZE_MAX){
-            r->N_active--;
-        }
-        for(size_t j=index; j<r->N; j++){
-            r->particles[j] = r->particles[j+1];
-        }
-    }else{
-        r->N--;
-        if(r->free_particle_ap){
-            r->free_particle_ap(&r->particles[index]);
-        }
-        r->particles[index] = r->particles[r->N];
+    r->N--;
+    if(r->free_particle_ap){
+        r->free_particle_ap(&r->particles[index]);
+    }
+    if(index<r->N_active && r->N_active!=SIZE_MAX){
+        r->N_active--;
+    }
+    for(size_t j=index; j<r->N; j++){
+        r->particles[j] = r->particles[j+1];
     }
 
     return 0; // Success

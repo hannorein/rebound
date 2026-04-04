@@ -1063,11 +1063,7 @@ void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
     }
 }
 
-void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t pt, int keep_sorted){
-    if (keep_sorted==0){
-        reb_simulation_error(r,"Need to set keep_sorted=1 to remove particles with Trace.");
-        return;
-    }
+void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index){
     struct reb_integrator_trace* ri_trace = &(r->ri_trace);
     reb_integrator_bs_reset(r);
     if (ri_trace->mode==REB_TRACE_MODE_KEPLER){
@@ -1085,7 +1081,7 @@ void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t 
         }
         if (encounter_index == SIZE_MAX){
             reb_simulation_error(r,"Cannot find particle in encounter map. Did not remove particle.");
-            return 1;
+            return;
         }
 
         // reshuffle current_Ks
