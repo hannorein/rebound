@@ -23,6 +23,14 @@ class Integrator(Structure):
                 ("data", c_void_p),
                 ("data_size", c_size_t),
                 ]
+    def __eq__(self, other):
+        # This ignores the walltime parameter
+        if not isinstance(other,Integrator):
+            return NotImplemented
+        clibrebound.reb_integrator_cmp.restype = c_int
+        ret = clibrebound.reb_integrator_cmp(self, other)
+        return not ret
+
 integrators_available_N = c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
 integrators_available = (POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
 integrators_available_names = (c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")
@@ -578,27 +586,6 @@ class Simulation(Structure):
         """
         Get or set the integrator module.
 
-        Available integrators include:
-
-        - ``'IAS15'`` (default)
-        - ``'WHFast'``
-        - ``'SEI'``
-        - ``'LEAPFROG'``
-        - ``'JANUS'``
-        - ``'MERCURIUS'``
-        - ``'WHCKL'`` 
-        - ``'WHCKM'`` 
-        - ``'WHCKC'`` 
-        - ``'SABA4'`` 
-        - ``'SABACL4'`` 
-        - ``'SABACM4'`` 
-        - ``'SABA(10,6,4)'`` 
-        - ``'EOS'`` 
-        - ``'BS'`` 
-        - ``'WHFast512'``
-        - ``'TRACE'``
-        - ``'none'``
-        
         Check the online documentation for a full description of each of the integrators. 
         """
         i = self._integrator
@@ -608,8 +595,8 @@ class Simulation(Structure):
         return i
     @integrator.setter
     def integrator(self, value):
-        if isinstance(value, int):
-            self._integrator = c_int(value)
+        if isinstance(value, Integrator):
+            self._integrator = value # TODO: Write unit tests
         elif isinstance(value, str):
             value = value.lower()
             if value in INTEGRATORS: 

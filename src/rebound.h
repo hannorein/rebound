@@ -144,20 +144,20 @@ struct reb_integrator {
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
-    X(none) \
-    X(bs) \
-    X(eos) \
-    X(ias15) \
-    X(janus) \
-    X(leapfrog) \
-    X(mercurius) \
-    X(saba) \
-    X(sei) \
-    X(trace) \
-    X(whfast) \
-    X(whfast512)
+    X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
+    X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
+    X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
+    X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
+    X(none)          /* Do not integrate anything                                                          */ \
+    X(janus)         /* Bit-wise reversible JANUS integrator.                                              */ \
+    X(mercurius)     /* MERCURIUS integrator                                                               */ \
+    X(saba)          /* SABA integrator family (Laskar and Robutel 2001)                                   */ \
+    X(eos)           /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */ \
+    X(bs)            /* Gragg-Bulirsch-Stoer                                                               */ \
+    X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
+    X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
 
-// Forward declarations. Implementations are in corresponding integrator_*.c file.
+// Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
 #define X(name) extern const struct reb_integrator reb_integrator_##name;
     REB_AVAILABLE_INTEGRATORS
 #undef X

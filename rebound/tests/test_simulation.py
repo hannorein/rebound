@@ -179,8 +179,6 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.integrator, "ias15")
         self.sim.integrator = "whfast"
         self.assertEqual(self.sim.integrator, "whfast")
-        self.sim.integrator = 1
-        self.assertEqual(self.sim.integrator, "whfast")
         with self.assertRaises(ValueError):
             self.sim.integrator = "bogusintegrator"
 

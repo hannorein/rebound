@@ -1,8 +1,37 @@
 import rebound
+from rebound.simulation import Integrator
 import unittest
 import math
 import rebound.data
 import warnings
+from ctypes import c_size_t, sizeof, c_uint32, POINTER, c_char_p
+
+class TestUniqueIntegrator(unittest.TestCase):
+    def setUp(self):
+        clibrebound = rebound.clibrebound
+        integrators_available_N = c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
+        integrators_available = (POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
+        integrators_available_names = (c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")
+        self.INTEGRATORS = dict(zip([n.decode("utf-8") for n in integrators_available_names], [i.contents for i in integrators_available]))
+    def test_unique_integrator_names(self):
+        self.assertEqual(len(self.INTEGRATORS.keys()), len(set(self.INTEGRATORS.keys())))
+    def test_unique_integrator_ids(self):
+        self.assertEqual(len(self.INTEGRATORS.values()), len(set([i.id for i in self.INTEGRATORS.values()])))
+
+class TestUniqueEqual(unittest.TestCase):
+    def test_not_equal(self):
+        sim1 = rebound.Simulation()
+        sim1.integrator = "whfast"
+        sim2 = rebound.Simulation()
+        sim2.integrator = "ias15"
+        self.assertNotEqual(sim1.integrator, sim2.integrator)
+    def test_equal(self):
+        sim1 = rebound.Simulation()
+        sim1.integrator = "whfast"
+        sim2 = rebound.Simulation()
+        sim2.integrator = "WHFAST"
+        self.assertEqual(sim1.integrator, sim2.integrator)
+
 
 class TestIntegratorIAS15Timescale(unittest.TestCase):
     def test_ias15_timescale(self):
