@@ -44,33 +44,67 @@
 #include "communication_mpi.h"
 #endif
 
-/**
- * Main Gravity Routine
- */
-void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
-    PROFILING_START();
-    if (r->gravity == REB_GRAVITY_TREE){
-        // Construct tree first.
-        // Note the boundary_check and distribute_particles can change the number of particles on the current node. 
-        // This is not compatible with some integrators. Also the reason this is up here, rather than in 
-        // the switch statement below.
+// Main Gravity Routine
 
-        // Check if particles are in box 
-        PROFILING_START();
-        reb_boundary_check(r);     
-        PROFILING_STOP(PROFILING_CAT_BOUNDARY);
+void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r){
+    PROFILING_START();
+    // Construct tree first.
+    // Note the boundary_check and distribute_particles can change the number of particles on the current node. 
+    // This is not compatible with some integrators. Also the reason this is up here, rather than in 
+    // the switch statement below.
+
+    // Check if particles are in box 
+    PROFILING_START();
+    reb_boundary_check(r);     
+    PROFILING_STOP(PROFILING_CAT_BOUNDARY);
 #ifdef MPI
-        // Check if particles are in local rootbox, if not distribute 
-        reb_communication_mpi_distribute_particles(r);
+    // Check if particles are in local rootbox, if not distribute 
+    reb_communication_mpi_distribute_particles(r);
 #endif // MPI
 
-        reb_tree_construct(r);
-        // Update center of mass and quadrupole moments in tree in preparation of force calculation.
-        // Also distributed essential tree if MPI is used.
-        reb_tree_calculate_gravity_data(r); 
+    reb_tree_construct(r);
+    // Update center of mass and quadrupole moments in tree in preparation of force calculation.
+    // Also distributed essential tree if MPI is used.
+    reb_tree_calculate_gravity_data(r); 
+    
+    
+    struct reb_particle* const particles = r->particles;
+    const size_t N = r->N;
+            
+#pragma omp parallel for schedule(guided)
+    for (size_t i=0; i<N; i++){
+        particles[i].ax = 0; 
+        particles[i].ay = 0; 
+        particles[i].az = 0; 
     }
+    // Summing over all Ghost Boxes
+    for (int gbx=-r->N_ghost_x; gbx<=r->N_ghost_x; gbx++){
+        for (int gby=-r->N_ghost_y; gby<=r->N_ghost_y; gby++){
+            for (int gbz=-r->N_ghost_z; gbz<=r->N_ghost_z; gbz++){
+                // Summing over all particle pairs
+#pragma omp parallel for schedule(guided)
+                for (size_t i=0; i<N; i++){
+#ifndef OPENMP
+                    if (reb_sigint > 1) return;
+#endif // OPENMP
+                    struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
+                    // Precalculated shifted position
+                    gb.x += particles[i].x;
+                    gb.y += particles[i].y;
+                    gb.z += particles[i].z;
+                    reb_calculate_acceleration_for_particle(r, i, gb);
+                }
+            }
+        }
+    }
+    // Delete tree (if it exists)    
+    reb_tree_delete(r);
+    PROFILING_STOP(PROFILING_CAT_GRAVITY);
+}
 
 
+void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
+    PROFILING_START();
     struct reb_particle* const particles = r->particles;
     const size_t N = r->N;
     const double G = r->G;
@@ -79,13 +113,6 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
     const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const int _testparticle_type   = r->testparticle_type;
     switch (r->gravity){
-        case REB_GRAVITY_NONE: // Do nothing.
-            for (size_t j=0; j<N; j++){
-                particles[j].ax = 0;  
-                particles[j].ay = 0;  
-                particles[j].az = 0;  
-            }  
-            break;
         case REB_GRAVITY_JACOBI:
             {
                 if (r->integrator != REB_INTEGRATOR_WHFAST && r->integrator != REB_INTEGRATOR_SABA ){
@@ -492,38 +519,6 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                     }
                 }
 #endif // OPENMP
-            }
-            break;
-        case REB_GRAVITY_TREE:
-            {
-#pragma omp parallel for schedule(guided)
-                for (size_t i=0; i<N; i++){
-                    particles[i].ax = 0; 
-                    particles[i].ay = 0; 
-                    particles[i].az = 0; 
-                }
-                // Summing over all Ghost Boxes
-                for (int gbx=-r->N_ghost_x; gbx<=r->N_ghost_x; gbx++){
-                    for (int gby=-r->N_ghost_y; gby<=r->N_ghost_y; gby++){
-                        for (int gbz=-r->N_ghost_z; gbz<=r->N_ghost_z; gbz++){
-                            // Summing over all particle pairs
-#pragma omp parallel for schedule(guided)
-                            for (size_t i=0; i<N; i++){
-#ifndef OPENMP
-                                if (reb_sigint > 1) return;
-#endif // OPENMP
-                                struct reb_vec6d gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
-                                // Precalculated shifted position
-                                gb.x += particles[i].x;
-                                gb.y += particles[i].y;
-                                gb.z += particles[i].z;
-                                reb_calculate_acceleration_for_particle(r, i, gb);
-                            }
-                        }
-                    }
-                }
-                // Delete tree (if it exists)    
-                reb_tree_delete(r);
             }
             break;
         case REB_GRAVITY_MERCURIUS:
@@ -1013,332 +1008,312 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
     const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
     const size_t starti = gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_NONE?1:2;
     const size_t startj = gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0?1:0;
-    switch (r->gravity){
-        case REB_GRAVITY_NONE: // Do nothing.
-            break;
-        case REB_GRAVITY_COMPENSATED:
-            {
-                struct reb_vec3d* restrict const cs = r->gravity_cs;
-#pragma omp parallel for schedule(guided)
-                for (size_t i=N; i<N; i++){
-                    cs[i].x = 0.;
-                    cs[i].y = 0.;
-                    cs[i].z = 0.;
+    for (size_t v=0;v<r->N_var_config;v++){
+        struct reb_variational_configuration const vc = r->var_config[v];
+        if (vc.order==1){
+            //////////////////
+            /// 1st order  ///
+            //////////////////
+            struct reb_particle* const particles_var1 = particles_var + vc.index;
+            if (vc.testparticle<0){
+                for (size_t i=0; i<N; i++){
+                    particles_var1[i].ax = 0.; 
+                    particles_var1[i].ay = 0.; 
+                    particles_var1[i].az = 0.; 
                 }
-            }
-            /* fallthrough */
-        case REB_GRAVITY_BASIC:
-            for (size_t v=0;v<r->N_var_config;v++){
-                struct reb_variational_configuration const vc = r->var_config[v];
-                if (vc.order==1){
-                    //////////////////
-                    /// 1st order  ///
-                    //////////////////
-                    struct reb_particle* const particles_var1 = particles_var + vc.index;
-                    if (vc.testparticle<0){
-                        for (size_t i=0; i<N; i++){
-                            particles_var1[i].ax = 0.; 
-                            particles_var1[i].ay = 0.; 
-                            particles_var1[i].az = 0.; 
-                        }
-                        for (size_t i=starti; i<N_active; i++){
-                            for (size_t j=startj; j<i; j++){
-                                const double dx = particles[i].x - particles[j].x;
-                                const double dy = particles[i].y - particles[j].y;
-                                const double dz = particles[i].z - particles[j].z;
-                                const double r2 = dx*dx + dy*dy + dz*dz;
-                                const double _r  = sqrt(r2);
-                                const double r3inv = 1./(r2*_r);
-                                const double r5inv = 3.*r3inv/r2;
-                                const double ddx = particles_var1[i].x - particles_var1[j].x;
-                                const double ddy = particles_var1[i].y - particles_var1[j].y;
-                                const double ddz = particles_var1[i].z - particles_var1[j].z;
-                                const double Gmi = G * particles[i].m;
-                                const double Gmj = G * particles[j].m;
+                for (size_t i=starti; i<N_active; i++){
+                    for (size_t j=startj; j<i; j++){
+                        const double dx = particles[i].x - particles[j].x;
+                        const double dy = particles[i].y - particles[j].y;
+                        const double dz = particles[i].z - particles[j].z;
+                        const double r2 = dx*dx + dy*dy + dz*dz;
+                        const double _r  = sqrt(r2);
+                        const double r3inv = 1./(r2*_r);
+                        const double r5inv = 3.*r3inv/r2;
+                        const double ddx = particles_var1[i].x - particles_var1[j].x;
+                        const double ddy = particles_var1[i].y - particles_var1[j].y;
+                        const double ddz = particles_var1[i].z - particles_var1[j].z;
+                        const double Gmi = G * particles[i].m;
+                        const double Gmj = G * particles[j].m;
 
-                                // Variational equations
-                                const double dxdx = dx*dx*r5inv - r3inv;
-                                const double dydy = dy*dy*r5inv - r3inv;
-                                const double dzdz = dz*dz*r5inv - r3inv;
-                                const double dxdy = dx*dy*r5inv;
-                                const double dxdz = dx*dz*r5inv;
-                                const double dydz = dy*dz*r5inv;
-                                const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
-                                const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
-                                const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
+                        // Variational equations
+                        const double dxdx = dx*dx*r5inv - r3inv;
+                        const double dydy = dy*dy*r5inv - r3inv;
+                        const double dzdz = dz*dz*r5inv - r3inv;
+                        const double dxdy = dx*dy*r5inv;
+                        const double dxdz = dx*dz*r5inv;
+                        const double dydz = dy*dz*r5inv;
+                        const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
+                        const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
+                        const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
 
-                                // Variational mass contributions
-                                const double dGmi = G*particles_var1[i].m;
-                                const double dGmj = G*particles_var1[j].m;
+                        // Variational mass contributions
+                        const double dGmi = G*particles_var1[i].m;
+                        const double dGmj = G*particles_var1[j].m;
 
-                                particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
-                                particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
-                                particles_var1[i].az += Gmj * daz - dGmj*r3inv*dz;
+                        particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
+                        particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
+                        particles_var1[i].az += Gmj * daz - dGmj*r3inv*dz;
 
-                                particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
-                                particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
-                                particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
-                            }
-                        }
-                        for (size_t i=N_active; i<N; i++){
-                            for (size_t j=startj; j<N_active; j++){
-                                const double dx = particles[i].x - particles[j].x;
-                                const double dy = particles[i].y - particles[j].y;
-                                const double dz = particles[i].z - particles[j].z;
-                                const double r2 = dx*dx + dy*dy + dz*dz;
-                                const double _r  = sqrt(r2);
-                                const double r3inv = 1./(r2*_r);
-                                const double r5inv = 3.*r3inv/r2;
-                                const double ddx = particles_var1[i].x - particles_var1[j].x;
-                                const double ddy = particles_var1[i].y - particles_var1[j].y;
-                                const double ddz = particles_var1[i].z - particles_var1[j].z;
-                                const double Gmi = G * particles[i].m;
-                                const double Gmj = G * particles[j].m;
-
-                                // Variational equations
-                                const double dxdx = dx*dx*r5inv - r3inv;
-                                const double dydy = dy*dy*r5inv - r3inv;
-                                const double dzdz = dz*dz*r5inv - r3inv;
-                                const double dxdy = dx*dy*r5inv;
-                                const double dxdz = dx*dz*r5inv;
-                                const double dydz = dy*dz*r5inv;
-                                const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
-                                const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
-                                const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
-
-                                // Variational mass contributions
-                                const double dGmi = G*particles_var1[i].m;
-                                const double dGmj = G*particles_var1[j].m;
-
-                                particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
-                                particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
-                                particles_var1[i].az += Gmj * daz - dGmj*r3inv*dz;
-                                if (_testparticle_type){
-                                    // Warning! This does not make sense when the mass is varied!
-                                    particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
-                                    particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
-                                    particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
-                                }
-                            }
-                        }
-                    }else{ //testparticle
-                        size_t i = vc.testparticle;
-                        particles_var1[0].ax = 0.; 
-                        particles_var1[0].ay = 0.; 
-                        particles_var1[0].az = 0.; 
-                        for (size_t j=0; j<N; j++){
-                            if (i==j) continue;
-                            if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
-                            if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double r2 = dx*dx + dy*dy + dz*dz;
-                            const double _r  = sqrt(r2);
-                            const double r3inv = 1./(r2*_r);
-                            const double r5inv = 3.*r3inv/r2;
-                            const double ddx = particles_var1[0].x;
-                            const double ddy = particles_var1[0].y;
-                            const double ddz = particles_var1[0].z;
-                            const double Gmj = G * particles[j].m;
-
-                            // Variational equations
-                            const double dxdx = dx*dx*r5inv - r3inv;
-                            const double dydy = dy*dy*r5inv - r3inv;
-                            const double dzdz = dz*dz*r5inv - r3inv;
-                            const double dxdy = dx*dy*r5inv;
-                            const double dxdz = dx*dz*r5inv;
-                            const double dydz = dy*dz*r5inv;
-                            const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
-                            const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
-                            const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
-
-                            // No variational mass contributions for test particles!
-
-                            particles_var1[0].ax += Gmj * dax;
-                            particles_var1[0].ay += Gmj * day;
-                            particles_var1[0].az += Gmj * daz;
-
-                        }
+                        particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
+                        particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
+                        particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
                     }
-                }else if (vc.order==2){
-                    if (_testparticle_type){
-                        reb_simulation_error(r,"testparticletype=1 not implemented for second order variational equations.");
-                    }
-                    //////////////////
-                    /// 2nd order  ///
-                    //////////////////
-                    struct reb_particle* const particles_var2 = particles_var + vc.index;
-                    struct reb_particle* const particles_var1a = particles_var + vc.index_1st_order_a;
-                    struct reb_particle* const particles_var1b = particles_var + vc.index_1st_order_b;
-                    if (vc.testparticle<0){
-                        for (size_t i=0; i<N; i++){
-                            particles_var2[i].ax = 0.; 
-                            particles_var2[i].ay = 0.; 
-                            particles_var2[i].az = 0.; 
-                        }
-                        for (size_t i=0; i<N; i++){
-                            for (size_t j=i+1; j<N; j++){
-                                // TODO: Need to implement WH skipping
-                                //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
-                                //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
-                                const double dx = particles[i].x - particles[j].x;
-                                const double dy = particles[i].y - particles[j].y;
-                                const double dz = particles[i].z - particles[j].z;
-                                const double r2 = dx*dx + dy*dy + dz*dz;
-                                const double r  = sqrt(r2);
-                                const double r3inv = 1./(r2*r);
-                                const double r5inv = r3inv/r2;
-                                const double r7inv = r5inv/r2;
-                                const double ddx = particles_var2[i].x - particles_var2[j].x;
-                                const double ddy = particles_var2[i].y - particles_var2[j].y;
-                                const double ddz = particles_var2[i].z - particles_var2[j].z;
-                                const double Gmi = G * particles[i].m;
-                                const double Gmj = G * particles[j].m;
-                                const double ddGmi = G*particles_var2[i].m;
-                                const double ddGmj = G*particles_var2[j].m;
+                }
+                for (size_t i=N_active; i<N; i++){
+                    for (size_t j=startj; j<N_active; j++){
+                        const double dx = particles[i].x - particles[j].x;
+                        const double dy = particles[i].y - particles[j].y;
+                        const double dz = particles[i].z - particles[j].z;
+                        const double r2 = dx*dx + dy*dy + dz*dz;
+                        const double _r  = sqrt(r2);
+                        const double r3inv = 1./(r2*_r);
+                        const double r5inv = 3.*r3inv/r2;
+                        const double ddx = particles_var1[i].x - particles_var1[j].x;
+                        const double ddy = particles_var1[i].y - particles_var1[j].y;
+                        const double ddz = particles_var1[i].z - particles_var1[j].z;
+                        const double Gmi = G * particles[i].m;
+                        const double Gmj = G * particles[j].m;
 
-                                // Variational equations
-                                // delta^(2) terms
-                                double dax =         ddx * ( 3.*dx*dx*r5inv - r3inv )
-                                    + ddy * ( 3.*dx*dy*r5inv )
-                                    + ddz * ( 3.*dx*dz*r5inv );
-                                double day =         ddx * ( 3.*dy*dx*r5inv )
-                                    + ddy * ( 3.*dy*dy*r5inv - r3inv )
-                                    + ddz * ( 3.*dy*dz*r5inv );
-                                double daz =         ddx * ( 3.*dz*dx*r5inv )
-                                    + ddy * ( 3.*dz*dy*r5inv )
-                                    + ddz * ( 3.*dz*dz*r5inv - r3inv );
+                        // Variational equations
+                        const double dxdx = dx*dx*r5inv - r3inv;
+                        const double dydy = dy*dy*r5inv - r3inv;
+                        const double dzdz = dz*dz*r5inv - r3inv;
+                        const double dxdy = dx*dy*r5inv;
+                        const double dxdz = dx*dz*r5inv;
+                        const double dydz = dy*dz*r5inv;
+                        const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
+                        const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
+                        const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
 
-                                // delta^(1) delta^(1) terms
-                                const double dk1dx = particles_var1a[i].x - particles_var1a[j].x;
-                                const double dk1dy = particles_var1a[i].y - particles_var1a[j].y;
-                                const double dk1dz = particles_var1a[i].z - particles_var1a[j].z;
-                                const double dk2dx = particles_var1b[i].x - particles_var1b[j].x;
-                                const double dk2dy = particles_var1b[i].y - particles_var1b[j].y;
-                                const double dk2dz = particles_var1b[i].z - particles_var1b[j].z;
+                        // Variational mass contributions
+                        const double dGmi = G*particles_var1[i].m;
+                        const double dGmj = G*particles_var1[j].m;
 
-                                const double rdk1 =  dx*dk1dx + dy*dk1dy + dz*dk1dz;
-                                const double rdk2 =  dx*dk2dx + dy*dk2dy + dz*dk2dz;
-                                const double dk1dk2 =  dk1dx*dk2dx + dk1dy*dk2dy + dk1dz*dk2dz;
-                                dax     +=        3.* r5inv * dk2dx * rdk1
-                                    + 3.* r5inv * dk1dx * rdk2
-                                    + 3.* r5inv    * dx * dk1dk2  
-                                    - 15.      * dx * r7inv * rdk1 * rdk2;
-                                day     +=        3.* r5inv * dk2dy * rdk1
-                                    + 3.* r5inv * dk1dy * rdk2
-                                    + 3.* r5inv    * dy * dk1dk2  
-                                    - 15.      * dy * r7inv * rdk1 * rdk2;
-                                daz     +=        3.* r5inv * dk2dz * rdk1
-                                    + 3.* r5inv * dk1dz * rdk2
-                                    + 3.* r5inv    * dz * dk1dk2  
-                                    - 15.      * dz * r7inv * rdk1 * rdk2;
-
-                                const double dk1Gmi = G * particles_var1a[i].m;
-                                const double dk1Gmj = G * particles_var1a[j].m;
-                                const double dk2Gmi = G * particles_var1b[i].m;
-                                const double dk2Gmj = G * particles_var1b[j].m;
-
-                                particles_var2[i].ax += Gmj * dax 
-                                    - ddGmj*r3inv*dx 
-                                    - dk2Gmj*r3inv*dk1dx + 3.*dk2Gmj*r5inv*dx*rdk1
-                                    - dk1Gmj*r3inv*dk2dx + 3.*dk1Gmj*r5inv*dx*rdk2;
-                                particles_var2[i].ay += Gmj * day 
-                                    - ddGmj*r3inv*dy
-                                    - dk2Gmj*r3inv*dk1dy + 3.*dk2Gmj*r5inv*dy*rdk1
-                                    - dk1Gmj*r3inv*dk2dy + 3.*dk1Gmj*r5inv*dy*rdk2;
-                                particles_var2[i].az += Gmj * daz 
-                                    - ddGmj*r3inv*dz
-                                    - dk2Gmj*r3inv*dk1dz + 3.*dk2Gmj*r5inv*dz*rdk1
-                                    - dk1Gmj*r3inv*dk2dz + 3.*dk1Gmj*r5inv*dz*rdk2;
-
-                                particles_var2[j].ax -= Gmi * dax 
-                                    - ddGmi*r3inv*dx
-                                    - dk2Gmi*r3inv*dk1dx + 3.*dk2Gmi*r5inv*dx*rdk1
-                                    - dk1Gmi*r3inv*dk2dx + 3.*dk1Gmi*r5inv*dx*rdk2;
-                                particles_var2[j].ay -= Gmi * day 
-                                    - ddGmi*r3inv*dy
-                                    - dk2Gmi*r3inv*dk1dy + 3.*dk2Gmi*r5inv*dy*rdk1
-                                    - dk1Gmi*r3inv*dk2dy + 3.*dk1Gmi*r5inv*dy*rdk2;
-                                particles_var2[j].az -= Gmi * daz 
-                                    - ddGmi*r3inv*dz
-                                    - dk2Gmi*r3inv*dk1dz + 3.*dk2Gmi*r5inv*dz*rdk1
-                                    - dk1Gmi*r3inv*dk2dz + 3.*dk1Gmi*r5inv*dz*rdk2;
-                            }
-                        }
-                    }else{ //testparticle
-                        size_t i = vc.testparticle;
-                        particles_var2[0].ax = 0.; 
-                        particles_var2[0].ay = 0.; 
-                        particles_var2[0].az = 0.; 
-                        for (size_t j=0; j<N; j++){
-                            if (i==j) continue;
-                            // TODO: Need to implement WH skipping
-                            //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
-                            //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
-                            const double dx = particles[i].x - particles[j].x;
-                            const double dy = particles[i].y - particles[j].y;
-                            const double dz = particles[i].z - particles[j].z;
-                            const double r2 = dx*dx + dy*dy + dz*dz;
-                            const double r  = sqrt(r2);
-                            const double r3inv = 1./(r2*r);
-                            const double r5inv = r3inv/r2;
-                            const double r7inv = r5inv/r2;
-                            const double ddx = particles_var2[0].x;
-                            const double ddy = particles_var2[0].y;
-                            const double ddz = particles_var2[0].z;
-                            const double Gmj = G * particles[j].m;
-
-                            // Variational equations
-                            // delta^(2) terms
-                            double dax =         ddx * ( 3.*dx*dx*r5inv - r3inv )
-                                + ddy * ( 3.*dx*dy*r5inv )
-                                + ddz * ( 3.*dx*dz*r5inv );
-                            double day =         ddx * ( 3.*dy*dx*r5inv )
-                                + ddy * ( 3.*dy*dy*r5inv - r3inv )
-                                + ddz * ( 3.*dy*dz*r5inv );
-                            double daz =         ddx * ( 3.*dz*dx*r5inv )
-                                + ddy * ( 3.*dz*dy*r5inv )
-                                + ddz * ( 3.*dz*dz*r5inv - r3inv );
-
-                            // delta^(1) delta^(1) terms
-                            const double dk1dx = particles_var1a[0].x;
-                            const double dk1dy = particles_var1a[0].y;
-                            const double dk1dz = particles_var1a[0].z;
-                            const double dk2dx = particles_var1b[0].x;
-                            const double dk2dy = particles_var1b[0].y;
-                            const double dk2dz = particles_var1b[0].z;
-
-                            const double rdk1 =  dx*dk1dx + dy*dk1dy + dz*dk1dz;
-                            const double rdk2 =  dx*dk2dx + dy*dk2dy + dz*dk2dz;
-                            const double dk1dk2 =  dk1dx*dk2dx + dk1dy*dk2dy + dk1dz*dk2dz;
-                            dax     +=        3.* r5inv * dk2dx * rdk1
-                                + 3.* r5inv * dk1dx * rdk2
-                                + 3.* r5inv    * dx * dk1dk2  
-                                - 15.      * dx * r7inv * rdk1 * rdk2;
-                            day     +=        3.* r5inv * dk2dy * rdk1
-                                + 3.* r5inv * dk1dy * rdk2
-                                + 3.* r5inv    * dy * dk1dk2  
-                                - 15.      * dy * r7inv * rdk1 * rdk2;
-                            daz     +=        3.* r5inv * dk2dz * rdk1
-                                + 3.* r5inv * dk1dz * rdk2
-                                + 3.* r5inv    * dz * dk1dk2  
-                                - 15.      * dz * r7inv * rdk1 * rdk2;
-
-                            // No variational mass contributions for test particles!
-
-                            particles_var2[0].ax += Gmj * dax; 
-                            particles_var2[0].ay += Gmj * day;
-                            particles_var2[0].az += Gmj * daz;
+                        particles_var1[i].ax += Gmj * dax - dGmj*r3inv*dx;
+                        particles_var1[i].ay += Gmj * day - dGmj*r3inv*dy;
+                        particles_var1[i].az += Gmj * daz - dGmj*r3inv*dz;
+                        if (_testparticle_type){
+                            // Warning! This does not make sense when the mass is varied!
+                            particles_var1[j].ax -= Gmi * dax - dGmi*r3inv*dx;
+                            particles_var1[j].ay -= Gmi * day - dGmi*r3inv*dy;
+                            particles_var1[j].az -= Gmi * daz - dGmi*r3inv*dz; 
                         }
                     }
                 }
+            }else{ //testparticle
+                size_t i = vc.testparticle;
+                particles_var1[0].ax = 0.; 
+                particles_var1[0].ay = 0.; 
+                particles_var1[0].az = 0.; 
+                for (size_t j=0; j<N; j++){
+                    if (i==j) continue;
+                    if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                    if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
+                    const double dx = particles[i].x - particles[j].x;
+                    const double dy = particles[i].y - particles[j].y;
+                    const double dz = particles[i].z - particles[j].z;
+                    const double r2 = dx*dx + dy*dy + dz*dz;
+                    const double _r  = sqrt(r2);
+                    const double r3inv = 1./(r2*_r);
+                    const double r5inv = 3.*r3inv/r2;
+                    const double ddx = particles_var1[0].x;
+                    const double ddy = particles_var1[0].y;
+                    const double ddz = particles_var1[0].z;
+                    const double Gmj = G * particles[j].m;
+
+                    // Variational equations
+                    const double dxdx = dx*dx*r5inv - r3inv;
+                    const double dydy = dy*dy*r5inv - r3inv;
+                    const double dzdz = dz*dz*r5inv - r3inv;
+                    const double dxdy = dx*dy*r5inv;
+                    const double dxdz = dx*dz*r5inv;
+                    const double dydz = dy*dz*r5inv;
+                    const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
+                    const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
+                    const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
+
+                    // No variational mass contributions for test particles!
+
+                    particles_var1[0].ax += Gmj * dax;
+                    particles_var1[0].ay += Gmj * day;
+                    particles_var1[0].az += Gmj * daz;
+
+                }
             }
-            break;
-        default:
-            reb_exit("Variational gravity calculation not yet implemented.");
+        }else if (vc.order==2){
+            if (_testparticle_type){
+                reb_simulation_error(r,"testparticletype=1 not implemented for second order variational equations.");
+            }
+            //////////////////
+            /// 2nd order  ///
+            //////////////////
+            struct reb_particle* const particles_var2 = particles_var + vc.index;
+            struct reb_particle* const particles_var1a = particles_var + vc.index_1st_order_a;
+            struct reb_particle* const particles_var1b = particles_var + vc.index_1st_order_b;
+            if (vc.testparticle<0){
+                for (size_t i=0; i<N; i++){
+                    particles_var2[i].ax = 0.; 
+                    particles_var2[i].ay = 0.; 
+                    particles_var2[i].az = 0.; 
+                }
+                for (size_t i=0; i<N; i++){
+                    for (size_t j=i+1; j<N; j++){
+                        // TODO: Need to implement WH skipping
+                        //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                        //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
+                        const double dx = particles[i].x - particles[j].x;
+                        const double dy = particles[i].y - particles[j].y;
+                        const double dz = particles[i].z - particles[j].z;
+                        const double r2 = dx*dx + dy*dy + dz*dz;
+                        const double r  = sqrt(r2);
+                        const double r3inv = 1./(r2*r);
+                        const double r5inv = r3inv/r2;
+                        const double r7inv = r5inv/r2;
+                        const double ddx = particles_var2[i].x - particles_var2[j].x;
+                        const double ddy = particles_var2[i].y - particles_var2[j].y;
+                        const double ddz = particles_var2[i].z - particles_var2[j].z;
+                        const double Gmi = G * particles[i].m;
+                        const double Gmj = G * particles[j].m;
+                        const double ddGmi = G*particles_var2[i].m;
+                        const double ddGmj = G*particles_var2[j].m;
+
+                        // Variational equations
+                        // delta^(2) terms
+                        double dax =         ddx * ( 3.*dx*dx*r5inv - r3inv )
+                            + ddy * ( 3.*dx*dy*r5inv )
+                            + ddz * ( 3.*dx*dz*r5inv );
+                        double day =         ddx * ( 3.*dy*dx*r5inv )
+                            + ddy * ( 3.*dy*dy*r5inv - r3inv )
+                            + ddz * ( 3.*dy*dz*r5inv );
+                        double daz =         ddx * ( 3.*dz*dx*r5inv )
+                            + ddy * ( 3.*dz*dy*r5inv )
+                            + ddz * ( 3.*dz*dz*r5inv - r3inv );
+
+                        // delta^(1) delta^(1) terms
+                        const double dk1dx = particles_var1a[i].x - particles_var1a[j].x;
+                        const double dk1dy = particles_var1a[i].y - particles_var1a[j].y;
+                        const double dk1dz = particles_var1a[i].z - particles_var1a[j].z;
+                        const double dk2dx = particles_var1b[i].x - particles_var1b[j].x;
+                        const double dk2dy = particles_var1b[i].y - particles_var1b[j].y;
+                        const double dk2dz = particles_var1b[i].z - particles_var1b[j].z;
+
+                        const double rdk1 =  dx*dk1dx + dy*dk1dy + dz*dk1dz;
+                        const double rdk2 =  dx*dk2dx + dy*dk2dy + dz*dk2dz;
+                        const double dk1dk2 =  dk1dx*dk2dx + dk1dy*dk2dy + dk1dz*dk2dz;
+                        dax     +=        3.* r5inv * dk2dx * rdk1
+                            + 3.* r5inv * dk1dx * rdk2
+                            + 3.* r5inv    * dx * dk1dk2  
+                            - 15.      * dx * r7inv * rdk1 * rdk2;
+                        day     +=        3.* r5inv * dk2dy * rdk1
+                            + 3.* r5inv * dk1dy * rdk2
+                            + 3.* r5inv    * dy * dk1dk2  
+                            - 15.      * dy * r7inv * rdk1 * rdk2;
+                        daz     +=        3.* r5inv * dk2dz * rdk1
+                            + 3.* r5inv * dk1dz * rdk2
+                            + 3.* r5inv    * dz * dk1dk2  
+                            - 15.      * dz * r7inv * rdk1 * rdk2;
+
+                        const double dk1Gmi = G * particles_var1a[i].m;
+                        const double dk1Gmj = G * particles_var1a[j].m;
+                        const double dk2Gmi = G * particles_var1b[i].m;
+                        const double dk2Gmj = G * particles_var1b[j].m;
+
+                        particles_var2[i].ax += Gmj * dax 
+                            - ddGmj*r3inv*dx 
+                            - dk2Gmj*r3inv*dk1dx + 3.*dk2Gmj*r5inv*dx*rdk1
+                            - dk1Gmj*r3inv*dk2dx + 3.*dk1Gmj*r5inv*dx*rdk2;
+                        particles_var2[i].ay += Gmj * day 
+                            - ddGmj*r3inv*dy
+                            - dk2Gmj*r3inv*dk1dy + 3.*dk2Gmj*r5inv*dy*rdk1
+                            - dk1Gmj*r3inv*dk2dy + 3.*dk1Gmj*r5inv*dy*rdk2;
+                        particles_var2[i].az += Gmj * daz 
+                            - ddGmj*r3inv*dz
+                            - dk2Gmj*r3inv*dk1dz + 3.*dk2Gmj*r5inv*dz*rdk1
+                            - dk1Gmj*r3inv*dk2dz + 3.*dk1Gmj*r5inv*dz*rdk2;
+
+                        particles_var2[j].ax -= Gmi * dax 
+                            - ddGmi*r3inv*dx
+                            - dk2Gmi*r3inv*dk1dx + 3.*dk2Gmi*r5inv*dx*rdk1
+                            - dk1Gmi*r3inv*dk2dx + 3.*dk1Gmi*r5inv*dx*rdk2;
+                        particles_var2[j].ay -= Gmi * day 
+                            - ddGmi*r3inv*dy
+                            - dk2Gmi*r3inv*dk1dy + 3.*dk2Gmi*r5inv*dy*rdk1
+                            - dk1Gmi*r3inv*dk2dy + 3.*dk1Gmi*r5inv*dy*rdk2;
+                        particles_var2[j].az -= Gmi * daz 
+                            - ddGmi*r3inv*dz
+                            - dk2Gmi*r3inv*dk1dz + 3.*dk2Gmi*r5inv*dz*rdk1
+                            - dk1Gmi*r3inv*dk2dz + 3.*dk1Gmi*r5inv*dz*rdk2;
+                    }
+                }
+            }else{ //testparticle
+                size_t i = vc.testparticle;
+                particles_var2[0].ax = 0.; 
+                particles_var2[0].ay = 0.; 
+                particles_var2[0].az = 0.; 
+                for (size_t j=0; j<N; j++){
+                    if (i==j) continue;
+                    // TODO: Need to implement WH skipping
+                    //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
+                    //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
+                    const double dx = particles[i].x - particles[j].x;
+                    const double dy = particles[i].y - particles[j].y;
+                    const double dz = particles[i].z - particles[j].z;
+                    const double r2 = dx*dx + dy*dy + dz*dz;
+                    const double r  = sqrt(r2);
+                    const double r3inv = 1./(r2*r);
+                    const double r5inv = r3inv/r2;
+                    const double r7inv = r5inv/r2;
+                    const double ddx = particles_var2[0].x;
+                    const double ddy = particles_var2[0].y;
+                    const double ddz = particles_var2[0].z;
+                    const double Gmj = G * particles[j].m;
+
+                    // Variational equations
+                    // delta^(2) terms
+                    double dax =         ddx * ( 3.*dx*dx*r5inv - r3inv )
+                        + ddy * ( 3.*dx*dy*r5inv )
+                        + ddz * ( 3.*dx*dz*r5inv );
+                    double day =         ddx * ( 3.*dy*dx*r5inv )
+                        + ddy * ( 3.*dy*dy*r5inv - r3inv )
+                        + ddz * ( 3.*dy*dz*r5inv );
+                    double daz =         ddx * ( 3.*dz*dx*r5inv )
+                        + ddy * ( 3.*dz*dy*r5inv )
+                        + ddz * ( 3.*dz*dz*r5inv - r3inv );
+
+                    // delta^(1) delta^(1) terms
+                    const double dk1dx = particles_var1a[0].x;
+                    const double dk1dy = particles_var1a[0].y;
+                    const double dk1dz = particles_var1a[0].z;
+                    const double dk2dx = particles_var1b[0].x;
+                    const double dk2dy = particles_var1b[0].y;
+                    const double dk2dz = particles_var1b[0].z;
+
+                    const double rdk1 =  dx*dk1dx + dy*dk1dy + dz*dk1dz;
+                    const double rdk2 =  dx*dk2dx + dy*dk2dy + dz*dk2dz;
+                    const double dk1dk2 =  dk1dx*dk2dx + dk1dy*dk2dy + dk1dz*dk2dz;
+                    dax     +=        3.* r5inv * dk2dx * rdk1
+                        + 3.* r5inv * dk1dx * rdk2
+                        + 3.* r5inv    * dx * dk1dk2  
+                        - 15.      * dx * r7inv * rdk1 * rdk2;
+                    day     +=        3.* r5inv * dk2dy * rdk1
+                        + 3.* r5inv * dk1dy * rdk2
+                        + 3.* r5inv    * dy * dk1dk2  
+                        - 15.      * dy * r7inv * rdk1 * rdk2;
+                    daz     +=        3.* r5inv * dk2dz * rdk1
+                        + 3.* r5inv * dk1dz * rdk2
+                        + 3.* r5inv    * dz * dk1dk2  
+                        - 15.      * dz * r7inv * rdk1 * rdk2;
+
+                    // No variational mass contributions for test particles!
+
+                    particles_var2[0].ax += Gmj * dax; 
+                    particles_var2[0].ay += Gmj * day;
+                    particles_var2[0].az += Gmj * daz;
+                }
+            }
+        }
     }
-
     PROFILING_STOP(PROFILING_CAT_GRAVITY);
 }
 

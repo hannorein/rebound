@@ -716,12 +716,27 @@ void reb_simulation_synchronize(struct reb_simulation* r){
 
 
 void reb_simulation_update_acceleration(struct reb_simulation* r){
-    // This first sets accelerations to zero even if REB_GRAVITY_NONE is used.
-    reb_simulation_update_acceleration_gravity(r);
+    switch (r->gravity){
+        case REB_GRAVITY_NONE: // Do nothing.
+            for (size_t j=0; j<r->N; j++){
+                r->particles[j].ax = 0;  
+                r->particles[j].ay = 0;  
+                r->particles[j].az = 0;  
+            }  
+            break;
+        case REB_GRAVITY_TREE: // Do nothing.
+            reb_gravity_tree_calculate_acceleration(r);
+            break;
+        default:
+            reb_simulation_update_acceleration_gravity(r);
+            break;
+    }
     if (r->N_var){
         switch (r->gravity){
             case REB_GRAVITY_BASIC:
                 reb_gravity_basic_calculate_acceleration_var(r);
+                break;
+            case REB_GRAVITY_NONE:
                 break;
             default:
                 reb_simulation_error(r, "Variational gravity calculation not implemented. Use REB_GRAVITY_BASIC");
