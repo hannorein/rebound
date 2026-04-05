@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     // Setup constants
     r->dt             = 10;            // initial timestep (in days)
     //r->integrator    = IAS15;
-    r->integrator     = REB_INTEGRATOR_WHFAST;
+    r->integrator     = reb_integrator_whfast;
     const double k    = 0.01720209895; // Gaussian constant 
     r->G              = k*k;           // These are the same units that mercury6 uses
 

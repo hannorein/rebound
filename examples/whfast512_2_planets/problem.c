@@ -92,7 +92,7 @@ double run(int use_whfast512){
             }
             reb_simulation_free(r_single);
         }
-        r->integrator = REB_INTEGRATOR_WHFAST512;
+        r->integrator = reb_integrator_whfast512;
         int err = reb_simulation_integrate(r,  tmax);
         if (err>0){
             printf("An error occurred during the integration.\n");
@@ -109,7 +109,7 @@ double run(int use_whfast512){
             r->dt = 5.0/365.25*2*M_PI; // 5 days
             r->G = 1.;
             r->force_is_velocity_dependent = 0; 
-            r->integrator = REB_INTEGRATOR_WHFAST;
+            r->integrator = reb_integrator_whfast;
             r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
             r->particles[1].x += 1e-14*s; 
             int err = reb_simulation_integrate(r,  tmax);

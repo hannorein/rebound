@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
     // Run the simulation with the WHCKL method.
     {    
         struct reb_simulation* r = create_sim();
-        r->integrator           = REB_INTEGRATOR_WHFAST;
+        r->integrator           = reb_integrator_whfast;
         r->ri_whfast.safe_mode  = 0;        // Turn off safe mode (Need to call reb_simulation_synchronize() before outputs).
         r->ri_whfast.corrector  = 17;       // 17th order symplectic corrector
         r->ri_whfast.kernel     = REB_WHFAST_KERNEL_LAZY;   // Using the lazy implementers method which supports additional forces
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
     // quite a bit slower for a fixed timestep.
     {    
         struct reb_simulation* r = create_sim();
-        r->integrator           = REB_INTEGRATOR_SABA; 
+        r->integrator           = reb_integrator_saba; 
         r->ri_saba.type  = REB_SABA_10_6_4;    // Chooses the type of SABA integrator. 
         r->ri_saba.safe_mode  = 0;        // Turn off safe mode. 
         double e_init = reb_simulation_energy(r);
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
     // Run the same simulation with the standard WH method.
     {    
         struct reb_simulation* r = create_sim();
-        r->integrator           = REB_INTEGRATOR_WHFAST; // All WHFast settings default to the standard WH method
+        r->integrator           = reb_integrator_whfast; // All WHFast settings default to the standard WH method
         r->ri_whfast.safe_mode  = 0;        // Turn off safe mode. 
         double e_init = reb_simulation_energy(r);
         reb_simulation_integrate(r, tmax);

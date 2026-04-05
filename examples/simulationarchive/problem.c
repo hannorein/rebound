@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
         r->dt = 6./365.25*2.*M_PI;              // 6 days in units where G=1 
         r->ri_whfast.safe_mode = 0;             // The Simulationarchive works with both safe_mode on and off           
         r->ri_whfast.corrector = 5;    
-        r->integrator = REB_INTEGRATOR_WHFAST;
+        r->integrator = reb_integrator_whfast;
     }else{
         printf("Found simulationarchive. Loaded snapshot at t=%.16f.\n",r->t);
     }

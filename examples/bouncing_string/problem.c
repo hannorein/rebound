@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
    
     // Setup modules and constants
     r->dt                = 1e-3;
-    r->integrator        = REB_INTEGRATOR_LEAPFROG;
+    r->integrator        = reb_integrator_leapfrog;
     r->boundary          = REB_BOUNDARY_PERIODIC;
     r->collision         = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;

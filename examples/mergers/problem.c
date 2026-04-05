@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt                   = 0.01*2.*M_PI;                // initial timestep
-    r->integrator           = REB_INTEGRATOR_IAS15;
+    r->integrator           = reb_integrator_ias15;
     r->collision            = REB_COLLISION_DIRECT;
     r->collision_resolve    = reb_collision_resolve_merge; // Choose merger collision routine.
     r->heartbeat            = heartbeat;

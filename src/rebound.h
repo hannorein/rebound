@@ -594,7 +594,6 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    struct reb_integrator ri_custom;                // Function pointers and data for REB_INTEGRATOR_CUSTOM
     struct reb_integrator_sei ri_sei;               // The SEI struct 
     struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 

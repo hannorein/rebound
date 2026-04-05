@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
     {
         printf("Running simulation until t=1.\n");
         struct reb_simulation* r = reb_simulation_create();
-        r->integrator    = REB_INTEGRATOR_SEI;
+        r->integrator    = reb_integrator_sei;
         r->collision    = REB_COLLISION_DIRECT;
         r->collision_resolve = reb_collision_resolve_hardsphere;
         r->boundary     = REB_BOUNDARY_SHEAR;

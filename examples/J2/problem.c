@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator           = REB_INTEGRATOR_IAS15;
+    r->integrator           = reb_integrator_ias15;
     r->dt               = 1e-6;         // initial timestep
     r->N_active         = 2;            // only the star and the planet are massive.
 

@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
    
     // Setup constants
     r->dt           = M_PI*1e-2;     // initial timestep
-    r->integrator   = REB_INTEGRATOR_IAS15;
+    r->integrator   = reb_integrator_ias15;
     r->heartbeat    = heartbeat;
 
     // Initial conditions

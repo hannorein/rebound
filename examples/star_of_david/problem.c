@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
     // your web browser to http://localhost:1234
     reb_simulation_start_server(r, 1234);
 
-    r->integrator = REB_INTEGRATOR_IAS15;
+    r->integrator = reb_integrator_ias15;
     r->dt = -1;
     r->usleep = 10000;   // Slowing down integrator (for visualization only)
 

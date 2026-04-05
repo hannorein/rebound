@@ -187,7 +187,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 398, REB_UINT,        "ri_whfast512.N_systems",       offsetof(struct reb_simulation, ri_whfast512.N_systems), 0, 0},
     { 399, REB_PARTICLE4,   "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
     { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
-    { 401, REB_POINTER,     "ri_custom.data",               offsetof(struct reb_simulation, ri_custom.data), offsetof(struct reb_simulation, ri_custom.data_size), 1},
+    { 401, REB_POINTER,     "integrator.data",              offsetof(struct reb_simulation, integrator.data), offsetof(struct reb_simulation, integrator.data_size), 1},
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0},
     // 403  particles_var
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
@@ -916,8 +916,7 @@ finish_fields:
             }
         }
         if (!integrator_found){
-            reb_simulation_warning(r,"Unknown integrator encountered in Simulationarchive.");
-            r->integrator = reb_integrator_none;
+            reb_simulation_warning(r,"Unknown integrator encountered in Simulationarchive. Reset function pointers manually.");
         }
     }
 

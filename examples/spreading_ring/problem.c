@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator        = REB_INTEGRATOR_LEAPFROG;
+    r->integrator        = reb_integrator_leapfrog;
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->boundary          = REB_BOUNDARY_OPEN;

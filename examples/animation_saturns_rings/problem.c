@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     
     // Setup problem. For more details, see the shearing sheet example.
     r->opening_angle2    = .5;
-    r->integrator        = REB_INTEGRATOR_SEI;
+    r->integrator        = reb_integrator_sei;
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;

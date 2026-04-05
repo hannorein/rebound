@@ -310,7 +310,7 @@ int main(int argc, char* argv[]) {
 
     const double OMEGA    = 1;    
     r->opening_angle2     = .5;
-    r->integrator         = REB_INTEGRATOR_SEI;
+    r->integrator         = reb_integrator_sei;
     r->boundary           = REB_BOUNDARY_SHEAR;
     r->gravity            = REB_GRAVITY_NONE;
     r->collision          = REB_COLLISION_LINETREE;

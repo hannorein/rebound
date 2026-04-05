@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
     double particle_r       = 1;
     double tau              = 1.64;
     r->coefficient_of_restitution     = coefficient_of_restitution;
-    r->integrator           = REB_INTEGRATOR_SEI;
+    r->integrator           = reb_integrator_sei;
     r->collision            = REB_COLLISION_TREE;
     r->collision_resolve    = reb_collision_resolve_hardsphere;
     r->gravity              = REB_GRAVITY_NONE;

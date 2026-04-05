@@ -33,7 +33,7 @@ void heartbeat(struct reb_simulation* const r){
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->integrator = reb_integrator_whfast;
     r->heartbeat = heartbeat;
 
     // Initial conditions

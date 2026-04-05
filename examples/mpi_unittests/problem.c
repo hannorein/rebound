@@ -26,7 +26,7 @@ void print_N(struct reb_simulation* r){
 
 void test_twobody(){
     struct reb_simulation* const r = reb_simulation_create();
-    r->integrator       = REB_INTEGRATOR_LEAPFROG;
+    r->integrator       = reb_integrator_leapfrog;
     r->gravity          = REB_GRAVITY_TREE;
     r->boundary         = REB_BOUNDARY_OPEN;
     r->opening_angle2   = 1.5; 

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
 
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
-    r->integrator   = REB_INTEGRATOR_WHFAST;
+    r->integrator   = reb_integrator_whfast;
     r->ri_whfast.coordinates   = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->heartbeat    = heartbeat;
     r->N_active     = r->N;

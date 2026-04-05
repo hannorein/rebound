@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator       = REB_INTEGRATOR_LEAPFROG;
+    r->integrator       = reb_integrator_leapfrog;
     r->gravity          = REB_GRAVITY_TREE;
     r->boundary         = REB_BOUNDARY_OPEN;
     r->opening_angle2   = 1.5;          // This constant determines the accuracy of the tree code gravity estimate.

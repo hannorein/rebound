@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
     // Setup modules and constants
     r->dt                = 1e-1;    
     r->gravity           = REB_GRAVITY_NONE;
-    r->integrator        = REB_INTEGRATOR_LEAPFROG;
+    r->integrator        = reb_integrator_leapfrog;
     r->collision         = REB_COLLISION_TREE;
     r->boundary          = REB_BOUNDARY_PERIODIC;
     // Override default collision handling to account for border particles

@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt                = 0.1*2.*M_PI;            // initial timestep
-    r->integrator        = REB_INTEGRATOR_IAS15;
+    r->integrator        = reb_integrator_ias15;
     r->collision         = REB_COLLISION_DIRECT;
     r->collision_resolve = collision_record_only;  // Set function pointer for collision recording.
     r->heartbeat         = heartbeat;

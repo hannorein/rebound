@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
 
     // Setup constants
     r->G         = G;        
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
+    r->integrator    = reb_integrator_leapfrog;
     r->dt         = 2e-5*t0;     // timestep
     r->softening     = 0.01*r0;    // Softening parameter
     r->heartbeat    = heartbeat;

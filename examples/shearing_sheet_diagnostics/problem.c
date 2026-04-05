@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 
     // Setup constants
     r->opening_angle2     = .5;                 // This determines the precision of the tree code gravity calculation.
-    r->integrator         = REB_INTEGRATOR_SEI;
+    r->integrator         = reb_integrator_sei;
     r->boundary           = REB_BOUNDARY_SHEAR;
     r->gravity            = REB_GRAVITY_TREE;
     r->collision          = REB_COLLISION_TREE;

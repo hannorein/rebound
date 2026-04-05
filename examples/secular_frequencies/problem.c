@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     const double k = 0.01720209895; // Gaussian constant
     r->dt = 120;                    // Timestep is 120 days.
     r->G = k * k;                   // These are the same units as used by the mercury6 code.
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->integrator = reb_integrator_whfast;
 
     // Initial conditions
     for (int i = 0; i < 6; i++) {

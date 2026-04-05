@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
 
     
     // Simulation Setup
-    r->integrator    = REB_INTEGRATOR_MERCURIUS;
+    r->integrator    = reb_integrator_mercurius;
     r->heartbeat     = heartbeat;
     // Test particle type 1 allows massive particles to feel the gravity of testparticles.
     // However, test particles will not feel the gravity from other test particles.

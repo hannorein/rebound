@@ -26,7 +26,7 @@ However, you can also set it explicitly:
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_IAS15;
+    r->integrator = reb_integrator_ias15;
     ```
 
 === "Python"
@@ -87,7 +87,7 @@ Typically, this should be a small fraction (a few percent) of the smallest dynam
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->integrator = reb_integrator_whfast;
     r->dt = 0.1; 
     ```
 
@@ -225,7 +225,7 @@ The following code enables the BS integrator and sets both the relative and abso
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_BS;
+    r->integrator = reb_integrator_bs;
     r->ri_bs.eps_rel = 1e-4;
     r->ri_bs.eps_abs = 1e-4;
     ```
@@ -281,7 +281,7 @@ The following code sets up a REBOUND simulation in which a harmonic oscillator i
         reb_simulation_add_fmt(r, "m", 1.);
         reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1);
 
-        r->integrator = REB_INTEGRATOR_BS;
+        r->integrator = reb_integrator_bs;
 
         struct reb_ode* ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions
         ho->derivatives = derivatives;              // Right hand side of the ODE
@@ -326,7 +326,7 @@ The following code enables MERCURIUS and sets the critical radius to 4 Hill radi
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
+    r->integrator = reb_integrator_mercurius;
     r->ri_mercurius.r_crit_hill = 4.;
     ```
 
@@ -413,7 +413,7 @@ The following code enables TRACE and sets the critical radius to 4 Hill radii
 === "C"
     ```c
     struct reb_simulation* r = reb_create_simulation();
-    r->integrator = REB_INTEGRATOR_TRACE;
+    r->integrator = reb_integrator_trace;
     r->ri_trace.r_crit_hill = 4;
     ```
 
@@ -571,7 +571,7 @@ The `reb_integrator_saba` structure contains the configuration and data structur
     === "C"
         ```c
         struct reb_simulation* r = reb_simulation_create();
-        r->integrator = REB_INTEGRATOR_SABA;
+        r->integrator = reb_integrator_saba;
         r->ri_saba.type = REB_SABA_10_6_4;
         ```
 
@@ -604,7 +604,7 @@ The following code shows how to enable JANUS and set the length and velocity sca
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_JANUS;
+    r->integrator = reb_integrator_janus;
     r->ri_janus.scale_pos = 1e-10;
     r->ri_janus.scale_vel = 1e-10;
     ```
@@ -673,7 +673,7 @@ The following code shows how to enable EOS and set the embedded methods.
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_EOS;
+    r->integrator = reb_integrator_eos;
     r->ri_eos.phi0 = REB_EOS_LF4;
     r->ri_eos.phi1 = REB_EOS_LF4;
     r->ri_eos.n = 6;
@@ -689,7 +689,7 @@ The following code shows how to enable EOS and set the embedded methods.
     ```
 
 ## Leapfrog
-`REB_INTEGRATOR_LEAPFROG`     
+`reb_integrator_leapfrog`     
 
 This is the standard leap frog integrator. It is symplectic. By default it is second order with one force evaluation per step. Higher orders of 4, 6, and 8 can be selected as well. These correspond to the 4th order Yoshida integrator and the 8th order by Blanes & Casa (2016), p91. The higher order methods have more function evaluations and are therefore slower. Note that some substeps of the higher order methods move particles backwards. Therefore higher order methods might not give accurate results when a collision search is turned on.
 
@@ -698,7 +698,7 @@ This is the standard leap frog integrator. It is symplectic. By default it is se
     === "C"
         ```c
         struct reb_simulation* r = reb_simulation_create();
-        r->integrator = REB_INTEGRATOR_LEAPFROG;
+        r->integrator = reb_integrator_leapfrog;
         r->ri_leapfrog.order = 8; // 2, 4, 6, or 8
         ```
 
@@ -710,7 +710,7 @@ This is the standard leap frog integrator. It is symplectic. By default it is se
         ```
 
 ## Symplectic Epicycle Integrator (SEI)
-`REB_INTEGRATOR_SEI`          
+`reb_integrator_sei`          
 
 Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for the shearing sheet, second order, Rein & Tremaine 2011. The `reb_integrator_sei` structure contains the configuration and data structures used by the Symplectic Epicycle Integrator (SEI).
 
@@ -719,7 +719,7 @@ Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for t
     === "C"
         ```c
         struct reb_simulation* r = reb_simulation_create();
-        r->integrator = REB_INTEGRATOR_SEI;
+        r->integrator = reb_integrator_sei;
         r->ri_sei.OMEGA = 1.0;
         ```
 
@@ -743,7 +743,7 @@ Here is how to do that:
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_NONE;
+    r->integrator = reb_integrator_none;
     ```
 
 === "Python"
@@ -812,7 +812,7 @@ Once you have compiled REBOUND with AVX512 enabled, you can use WHFast512 like a
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_WHFAST512;
+    r->integrator = reb_integrator_whfast512;
     ```
 
 === "Python"
@@ -856,7 +856,7 @@ Starting with version 4.6.1, REBOUND has an API which allows users to easily add
 This is particularly helpful for developing new numerical methods: you have complete control over the integration step, but can fall back to many features of REBOUND such as setting up orbits, calculating orbital parameters, calculating energy errors, etc. 
 Furthermore, if your custom integrator needs to store any data, this is automatically saved in Simulationarchive snapshpts, allowing you to easily restart simulations. 
 
-To enable a custom integrator, you must select `REB_INTEGRATOR_CUSTOM` and then setup various function pointers in the `ri_custom` struct. 
+To enable a custom integrator, you must set `integrator` and setup various function pointers in the `ri_custom` struct. 
 This feature is intended to be used from C and we do currently not provide a python interface.
 There is one [basic C example](../c_examples/custom_integrator) and one more [advanced C example](../c_examples/custom_integrator_with_data) which show the usage.
 

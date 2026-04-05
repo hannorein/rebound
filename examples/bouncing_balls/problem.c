@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
     
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
+    r->integrator    = reb_integrator_leapfrog;
     r->gravity    = REB_GRAVITY_BASIC;
     r->collision    = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;

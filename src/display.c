@@ -876,7 +876,7 @@ void reb_render_frame(void* p){
     reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
     glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-    if (data->r_copy->integrator==REB_INTEGRATOR_SEI){
+    if (data->r_copy->integrator==reb_integrator_sei){
         sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->ri_sei.OMEGA/2./M_PI);
     }else{
         sprintf(str, "t = %f  ", data->r_copy->t);

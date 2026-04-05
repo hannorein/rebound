@@ -88,10 +88,10 @@ double run(int use_whfast512){
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
     if (use_whfast512){ 
-        r->integrator = REB_INTEGRATOR_WHFAST512;
+        r->integrator = reb_integrator_whfast512;
         r->ri_whfast512.gr_potential = 1;
     }else{
-        r->integrator = REB_INTEGRATOR_WHFAST;
+        r->integrator = reb_integrator_whfast;
         r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
         r->ri_whfast.safe_mode = 0;
         r->additional_forces = gr_force;

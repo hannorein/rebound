@@ -302,9 +302,6 @@ void reb_simulation_reset(struct reb_simulation* const r){
     free(r->collisions);
     free(r->tree_root);
     r->tree_root = NULL;
-    if (r->ri_custom.reset){
-        r->ri_custom.reset(r);
-    }
     if(r->free_particle_ap){
         for(size_t i=0; i<r->N; i++){
             r->free_particle_ap(&r->particles[i]);
@@ -343,19 +340,14 @@ void reb_simulation_integrators_reset(struct reb_simulation* r){
     r->integrator = reb_integrator_ias15;
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
-    reb_integrator_ias15_reset(r);
-    reb_integrator_mercurius_reset(r);
-    reb_integrator_sei_reset(r);
-    reb_integrator_whfast_reset(r);
-    reb_integrator_whfast512_reset(r);
-    reb_integrator_saba_reset(r);
-    reb_integrator_janus_reset(r);
-    reb_integrator_eos_reset(r);
-    reb_integrator_bs_reset(r);
-    reb_integrator_trace_reset(r);
-    reb_integrator_leapfrog_reset(r);
-    if (r->ri_custom.reset){
-        r->ri_custom.reset(r);
+    for (size_t i=0; i<reb_integrators_available_N;i++){
+        if (reb_integrators_available[i]->reset){
+            reb_integrators_available[i]->reset(r);
+        }
+    }
+    // Also call the selected one in case it is a custom integrator.    
+    if (r->integrator.reset){
+        r->integrator.reset(r);
     }
 }
 

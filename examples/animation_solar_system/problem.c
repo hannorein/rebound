@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
     }
     
     // We use the WHFast integrator and a fixed timestep of 2 days
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->integrator = reb_integrator_whfast;
     r->dt = 2./365.25 *2.0*M_PI;
 
    

@@ -100,9 +100,9 @@ int test_basic(){
     struct reb_simulation* r = setup_sim(9);
     struct reb_simulation* r512 = reb_simulation_copy(r);
      
-    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->integrator = reb_integrator_whfast512;
     r512->ri_whfast512.gr_potential = 0;
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->integrator = reb_integrator_whfast;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->ri_whfast.safe_mode = 0;
 
@@ -130,12 +130,12 @@ int test_number_of_planets(){
             struct reb_simulation* r = setup_sim(p);
             struct reb_simulation* r512 = reb_simulation_copy(r);
              
-            r512->integrator = REB_INTEGRATOR_WHFAST512;
+            r512->integrator = reb_integrator_whfast512;
             r512->ri_whfast512.gr_potential = gr;
             if (gr) {
                 r->additional_forces = gr_force;
             }
-            r->integrator = REB_INTEGRATOR_WHFAST;
+            r->integrator = reb_integrator_whfast;
             r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
             r->ri_whfast.safe_mode = 0;
 
@@ -162,7 +162,7 @@ int test_number_of_planets(){
 int test_N_systems(int N_systems, int planets){
     for (int gr=0; gr<=1; gr++){
         struct reb_simulation* r_single = setup_sim(planets+1);
-        r_single->integrator = REB_INTEGRATOR_WHFAST512;
+        r_single->integrator = reb_integrator_whfast512;
         r_single->ri_whfast512.gr_potential = gr;
         struct reb_simulation* r_many = reb_simulation_copy(r_single);
         r_many->ri_whfast512.N_systems = N_systems;
@@ -196,7 +196,7 @@ int test_N_systems(int N_systems, int planets){
 int test_com(){
     struct reb_simulation* r512 = setup_sim(9);
      
-    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->integrator = reb_integrator_whfast512;
     r512->ri_whfast512.gr_potential = 0;
 
     double tmax = 1e5;
@@ -213,7 +213,7 @@ int test_com(){
 int test_twobody(){
     struct reb_simulation* r512 = reb_simulation_create();
     r512->exact_finish_time = 0;
-    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->integrator = reb_integrator_whfast512;
     r512->ri_whfast512.gr_potential = 0;
     reb_simulation_add_fmt(r512, "m", 1.0);
     reb_simulation_add_fmt(r512, "a", 1.0);
@@ -233,9 +233,9 @@ int test_gr(){
     struct reb_simulation* r = setup_sim(9);
     struct reb_simulation* r512 = reb_simulation_copy(r);
      
-    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->integrator = reb_integrator_whfast512;
     r512->ri_whfast512.gr_potential = 1;
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    r->integrator = reb_integrator_whfast;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->ri_whfast.safe_mode = 0;
     r->additional_forces = gr_force;
@@ -259,7 +259,7 @@ int test_gr(){
 
 int test_restart(){
     struct reb_simulation* r512 = setup_sim(9);
-    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->integrator = reb_integrator_whfast512;
     r512->exact_finish_time = 0;
     r512->ri_whfast512.gr_potential = 1;
     r512->ri_whfast512.keep_unsynchronized = 1;
@@ -306,7 +306,7 @@ int test_synchronization_fallback(){
     remove("test.bin");
     struct reb_simulation* r512 = setup_sim(9);
      
-    r512->integrator = REB_INTEGRATOR_WHFAST512;
+    r512->integrator = reb_integrator_whfast512;
     r512->ri_whfast512.gr_potential = 1;
     reb_simulation_save_to_file_interval(r512, "test.bin", 1.0);
     if (reb_simulation_integrate(r512, 2.5)>0) return 0;

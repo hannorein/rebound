@@ -43,7 +43,7 @@ To keep the documentation concise, variables which are only intended for interna
     === "C"
         ```c
         struct reb_simulation* r = reb_simulation_create();
-        r->integrator = REB_INTEGRATOR_LEAPFROG; // uses fixed timestep
+        r->integrator = reb_integrator_leapfrog; // uses fixed timestep
         r->dt = 10;
         r->exact_finish_time = 0;
         reb_simulation_integrate(r, 15);

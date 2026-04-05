@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator   = REB_INTEGRATOR_WHFAST;
+    r->integrator   = reb_integrator_whfast;
     r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->boundary     = REB_BOUNDARY_OPEN;
     r->softening    = 1e-6;

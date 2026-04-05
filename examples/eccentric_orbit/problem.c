@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
    
     // Setup constants
     r->G            = 1;        // Gravitational constant
-    r->integrator   = REB_INTEGRATOR_IAS15;
+    r->integrator   = reb_integrator_ias15;
     r->heartbeat    = heartbeat;
     r->ri_ias15.adaptive_mode = 2;    // Improved timestep criterion
 

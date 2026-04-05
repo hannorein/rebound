@@ -33,8 +33,8 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator           = REB_INTEGRATOR_WHFAST;
-    //r->integrator         = REB_INTEGRATOR_IAS15;
+    r->integrator           = reb_integrator_whfast;
+    //r->integrator         = reb_integrator_ias15;
     r->dt                   = 1e-2*2.*M_PI;        // in year/(2*pi)
     r->additional_forces    = migration_forces;     //Set function pointer to add dissipative forces.
     r->heartbeat            = heartbeat;  

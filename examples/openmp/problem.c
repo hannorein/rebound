@@ -29,7 +29,7 @@
 void run_sim(){
     struct reb_simulation* const r = reb_simulation_create();
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
+    r->integrator    = reb_integrator_leapfrog;
     r->gravity    = REB_GRAVITY_BASIC;
     r->boundary    = REB_BOUNDARY_OPEN;
     r->opening_angle2    = 1.5;    // This constant determines the accuracy of the tree code gravity estimate.
