@@ -138,6 +138,9 @@ struct reb_integrator {
     void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
     void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
+    void (*did_add_particle)(struct reb_simulation* r);                     // Gets called after a particle was added.
+    void (*will_remove_particle)(struct reb_simulation* r, size_t index);   // Gets called before a particle will be removed.
+
     void* data;                                     // Pointer to any internal data/memory required by the integrator. Optional.
     size_t data_size;                               // Size of data in bytes. Set to 0 if data storage is not used.
 };
@@ -603,10 +606,6 @@ struct reb_simulation {
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
-
-    // Internal callback functions  
-    void (*did_add_particle)(struct reb_simulation* r); // This callback function gets called after a particle was added. Used by some integrators to handle particle additions during timesteps.
-    void (*will_remove_particle)(struct reb_simulation* r, size_t pt); // This callback function gets called before a particle will be removed. Used by some integrators to handle particle removals during timesteps.
 
     // ODEs. Do not access these variables directly. Use functions provided instead.
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)

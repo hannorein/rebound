@@ -41,6 +41,8 @@ const struct reb_integrator reb_integrator_trace = {
     .id = 25,
     .step = reb_integrator_trace_step,
     .reset = reb_integrator_trace_reset,
+    .will_remove_particle = reb_integrator_trace_will_remove_particle,
+    .did_add_particle = reb_integrator_trace_did_add_particle,
 };
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j){
@@ -1145,8 +1147,6 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_CUSTOM){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
-    r->will_remove_particle = reb_integrator_trace_will_remove_particle;
-    r->did_add_particle = reb_integrator_trace_did_add_particle;
 
     // Not sure why this was needed. HR 4 April 2026
     // reb_integrator_trace_update_acceleration(r);
@@ -1181,8 +1181,6 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-    r->will_remove_particle = NULL;
-    r->did_add_particle = NULL;
     r->N_targets = 1; // Only serch for collisions with star after complete timestep.
 }
 

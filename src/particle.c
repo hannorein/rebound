@@ -72,8 +72,8 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
 #endif // MPI
 
     // Check if any integrators need to do extra work
-    if (r->did_add_particle){
-        r->did_add_particle(r);
+    if (r->integrator.did_add_particle){
+        r->integrator.did_add_particle(r);
     }
 }
 
@@ -338,8 +338,8 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index)
         return 1;
     }
     // Check if any integrators need to do work before removing particle
-    if (r->will_remove_particle){
-        r->will_remove_particle(r, index);
+    if (r->integrator.will_remove_particle){
+        r->integrator.will_remove_particle(r, index);
     }
 
     if (r->N==1){

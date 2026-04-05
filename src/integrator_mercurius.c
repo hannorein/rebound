@@ -43,6 +43,8 @@ const struct reb_integrator reb_integrator_mercurius = {
     .step = reb_integrator_mercurius_step,
     .reset = reb_integrator_mercurius_reset,
     .synchronize = reb_integrator_mercurius_synchronize,
+    .did_add_particle = reb_integrator_mercurius_did_add_particle,
+    .will_remove_particle = reb_integrator_mercurius_will_remove_particle,
 };
 
 void reb_integrator_mercurius_calculate_acceleration_mode_encounter(struct reb_simulation* r);
@@ -837,8 +839,6 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
         reb_simulation_warning(r,"Mercurius has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
     rim->mode = REB_MERCURIUS_MODE_WH;
-    r->did_add_particle = reb_integrator_mercurius_did_add_particle;
-    r->will_remove_particle = reb_integrator_mercurius_will_remove_particle;
 
     if (rim->L == NULL){
         // Setting default switching function
@@ -876,8 +876,6 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-    r->did_add_particle = NULL;
-    r->will_remove_particle = NULL;
     r->N_targets = 1; // Only search for collisions with star in-between timesteps.
 }
 

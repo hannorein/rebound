@@ -20,6 +20,8 @@ class Integrator(Structure):
                 ("step", c_void_p),
                 ("synchronize", c_void_p),
                 ("reset", c_void_p),
+                ("did_add_particle", c_void_p),
+                ("will_remove_particle", c_void_p),
                 ("data", c_void_p),
                 ("data_size", c_size_t),
                 ]
@@ -1391,7 +1393,6 @@ from .integrators.bs import ODE, IntegratorBS
 from .integrators.whfast import IntegratorWHFast
 from .integrators.whfast512 import IntegratorWHFast512
 from .integrators.janus import IntegratorJanus
-from .integrators.custom import IntegratorCustom
 from .integrators.sei import IntegratorSEI
 from .integrators.leapfrog import IntegratorLeapfrog
 from .integrators.eos import IntegratorEOS
@@ -1502,7 +1503,7 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
-                ("ri_custom", IntegratorCustom), 
+                ("ri_custom", Integrator), 
                 ("ri_sei", IntegratorSEI), 
                 ("ri_leapfrog", IntegratorLeapfrog), 
                 ("ri_whfast", IntegratorWHFast),
@@ -1514,8 +1515,6 @@ Simulation._fields_ = [
                 ("ri_janus", IntegratorJanus),
                 ("ri_eos", IntegratorEOS),
                 ("ri_bs", IntegratorBS),
-                ("_did_add_particle", c_void_p),
-                ("_will_remove_particle", c_void_p),
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_N_odes", c_size_t),
                 ("_N_allocated_odes", c_size_t),
