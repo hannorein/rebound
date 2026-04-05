@@ -25,7 +25,7 @@ if sys.platform == "darwin":
 
 ##### Compile args
 if sys.platform == "win32":
-    extra_compile_args = [ghash_arg, "-DLIBREBOUND", "-D_GNU_SOURCE", "-DSERVER"]
+    extra_compile_args = [ghash_arg, "-DBUILDINGLIBREBOUND", "-D_GNU_SOURCE", "-DSERVER"]
 else:
     extra_compile_args = [ "-fstrict-aliasing", "-std=c99", "-Wno-unknown-pragmas", ghash_arg, "-D_GNU_SOURCE", "-DSERVER", "-fPIC"]
     if os.environ.get("COVERAGE"):
