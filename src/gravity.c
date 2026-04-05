@@ -36,8 +36,6 @@
 #include "output.h"
 #include "tree.h"
 #include "boundary.h"
-#include "integrator_mercurius.h"
-#include "integrator_trace.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 #ifdef MPI

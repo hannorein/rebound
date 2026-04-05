@@ -35,7 +35,6 @@
 #include "output.h"
 #include "tools.h"
 #include "output.h"
-#include "integrator_ias15.h"
 #include "simulationarchive.h"
 #include "simulation.h"
 #ifdef MPI

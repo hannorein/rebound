@@ -48,16 +48,6 @@
 #include "collision.h"
 #include "tools.h"
 #include "gravity.h"
-#include "integrator_whfast.h"
-#include "integrator_whfast512.h"
-#include "integrator_saba.h"
-#include "integrator_ias15.h"
-#include "integrator_mercurius.h"
-#include "integrator_trace.h"
-#include "integrator_leapfrog.h"
-#include "integrator_sei.h"
-#include "integrator_janus.h"
-#include "integrator_eos.h"
 #include "integrator_bs.h"
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b

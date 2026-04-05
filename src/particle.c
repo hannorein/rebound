@@ -31,10 +31,6 @@
 #include "tree.h"
 #include "boundary.h"
 #include "particle.h"
-#include "integrator_ias15.h"
-#include "integrator_bs.h"
-#include "integrator_mercurius.h"
-#include "integrator_trace.h"
 #include "collision.h"
 #ifdef OPENMP
 #include <omp.h>

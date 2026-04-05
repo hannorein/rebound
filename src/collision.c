@@ -37,7 +37,6 @@
 #include "collision.h"
 #include "boundary.h"
 #include "tree.h"
-#include "integrator_trace.h"
 #ifdef MPI
 #include "communication_mpi.h"
 #endif // MPI
