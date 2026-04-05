@@ -161,7 +161,7 @@ struct reb_integrator {
     X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
 
 // Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
-#define X(name) extern const struct reb_integrator reb_integrator_##name;
+#define X(name) DLLEXPORT extern const struct reb_integrator reb_integrator_##name;
 REB_AVAILABLE_INTEGRATORS
 #undef X
 
