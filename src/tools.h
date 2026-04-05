@@ -78,5 +78,5 @@ void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_parti
 DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p);
 
 // Returns 0 if two integrators have the same function pointers
-int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrator b);
+DLLEXPORT int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrator b);
 #endif 	// TOOLS_H
