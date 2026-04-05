@@ -159,7 +159,7 @@ struct reb_integrator {
 
 // Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
 #define X(name) extern const struct reb_integrator reb_integrator_##name;
-    REB_AVAILABLE_INTEGRATORS
+REB_AVAILABLE_INTEGRATORS
 #undef X
 
 // Integrator structures 

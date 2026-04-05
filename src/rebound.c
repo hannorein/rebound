@@ -44,7 +44,7 @@ const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build strin
 const char* reb_version_str = "5.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 const struct reb_integrator reb_integrator_none = {.id=7};
-   
+
 // Allow python to discover all available integrators
 const struct reb_integrator* reb_integrators_available[] = {
 #define X(name) &reb_integrator_##name,
