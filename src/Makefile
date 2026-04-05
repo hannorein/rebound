@@ -10,7 +10,7 @@ ifneq ($(OS),Windows_NT)
 # Linux, MacOS
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."
-	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) -o $@ $<
+	$(CC) -c /DBUILDINGLIBREBOUND $(OPT) $(OPTLIB) $(PREDEF) -o $@ $<
 
 $(LIBREBOUND): $(OBJECTS)
 	@echo ""        

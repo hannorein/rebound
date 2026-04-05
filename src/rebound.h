@@ -38,7 +38,12 @@
 #define _WINSOCKAPI_ //stops windows.h including winsock.h
 #include <windows.h>
 #define REB_RESTRICT
+// Windows needs different declarations depending on whether the library is built or used.
+#ifdef BUILDINGLIBREBOUND
 #define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT __declspec(dllimport)
+#endif
 #define __restrict__
 #ifdef _MSC_VER
 #pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
