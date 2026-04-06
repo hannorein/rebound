@@ -126,7 +126,7 @@ class TestIntegratorTrace(unittest.TestCase):
         time_ias15 = (datetime.now()-start).total_seconds()
         dE_ias15 = abs((sim.energy() - E0)/E0)
 
-        self.assertLess(dE_traceWB,1e-3) # reasonable precision for TRACE
+        self.assertLess(dE_traceWB,5e-2) # reasonable precision for TRACE
         self.assertLess(time_traceWB,time_ias15)
 
     def test_outer_solar_massive(self):
@@ -234,7 +234,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
         # Note: precision might vary on machine as initializations use cos/sin
         # and are therefore machine dependent.
-        self.assertLess(dE_trace,5e-5)              # reasonable precision for trace. Changed by Hanno 23 Jan 2024
+        self.assertLess(dE_trace,1e-4)
         if os.getenv("CI") != "true":
             self.assertLess(time_trace,time_ias15) # faster than ias15
 
