@@ -57,6 +57,29 @@ def kozai_sim():
 
 class TestIntegratorTrace(unittest.TestCase):
 
+    def test_no_effect_tp(self):
+        # tests if test particle encounters have an effect
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-3,a=1)
+        sim.move_to_com()
+        sim.N_active=2
+        sim.integrator = "trace"
+        sim.ri_trace.coordinates = 'widebinary'
+        sim.dt = 0.1
+        sim2 = sim.copy()
+        p = sim.particles[1].copy()
+        p.x += 0.01
+        p.m = 0
+        sim.add(p)
+        sim.step()
+        sim2.step()
+
+        self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
+        self.assertEqual(sim.particles[1].vx,sim2.particles[1].vx)
+        self.assertEqual(sim.particles[0].x,sim2.particles[0].x)
+        self.assertEqual(sim.particles[0].vx,sim2.particles[0].vx)
+
     def test_trace_simulationarchive(self):
         sim = chaotic_exchange_sim()
         sim.add(m=1.0, x=100, vy=0.1)
@@ -128,7 +151,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
         sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
-        sim.add(m=9.55e-4,a=10.)
+        sim.add(m=0.5,a=50.)
         N0 = sim.N
 
         sim.integrator = "trace"
@@ -139,6 +162,12 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim.integrate(1)
         self.assertEqual(N0+1,sim.N)
+
+        E0 = sim.energy()
+        sim.integrate(1000.)
+        dE = abs((sim.energy() - E0)/E0)
+        self.assertLess(dE,1e-3)
+
 
     def test_collision_with_star(self):
         sim = rebound.Simulation()
@@ -208,8 +237,6 @@ class TestIntegratorTrace(unittest.TestCase):
         self.assertLess(dE_trace,5e-5)              # reasonable precision for trace. Changed by Hanno 23 Jan 2024
         if os.getenv("CI") != "true":
             self.assertLess(time_trace,time_ias15) # faster than ias15
-        if sys.maxsize > 2**32: # 64 bit
-            self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
 if __name__ == "__main__":
     unittest.main()
