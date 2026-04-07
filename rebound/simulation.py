@@ -1500,6 +1500,7 @@ Simulation._fields_ = [
                 ("_simulationarchive_filename", c_char_p),
                 ("_collision", c_int),
                 ("_integrator", Integrator),
+                ("_integrator_data", c_void_p),
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),

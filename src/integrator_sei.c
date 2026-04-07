@@ -32,46 +32,67 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <math.h>
+#include <stddef.h>
+#include <assert.h>
 #include "particle.h"
 #include "gravity.h"
 #include "boundary.h"
 #include "integrator_sei.h"
+#include "binarydata.h"
+
+// Symplectic Epicycle Integrator SEI (Rein & Tremaine 2011)
+struct reb_integrator_sei_state {
+    double lastdt;      // Cached sin(), tan() for this value of dt.
+    double sindt;       // Cached sin() 
+    double tandt;       // Cached tan() 
+    double sindtz;      // Cached sin(), z axis
+    double tandtz;      // Cached tan(), z axis
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[] = {
+    { 56, REB_DOUBLE,       "sei: lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0},
+    { 57, REB_DOUBLE,       "sei: sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0},
+    { 58, REB_DOUBLE,       "sei: tandt",                 offsetof(struct reb_integrator_sei_state, tandt), 0, 0},
+    { 59, REB_DOUBLE,       "sei: sindtz",                offsetof(struct reb_integrator_sei_state, sindtz), 0, 0},
+    { 60, REB_DOUBLE,       "sei: tandtz",                offsetof(struct reb_integrator_sei_state, tandtz), 0, 0},
+    { 0 }, // Null terminated list
+};
 
 const struct reb_integrator reb_integrator_sei = {
     .id = 2,
     .step = reb_integrator_sei_step,
     .reset = reb_integrator_sei_reset,
+    .field_descriptor_list = reb_integrator_sei_field_descriptor_list,
 };
 
-static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p);
+static void operator_H012(double dt, const struct reb_integrator_sei_state sei, struct reb_particle* p, double OMEGA, double OMEGAZ);
 static void operator_phi1(double dt, struct reb_particle* p);
 
 
-static void reb_integrator_sei_init(struct reb_simulation* const r){
-    /**
-     * Pre-calculates sin() and tan() needed for SEI. 
-     */
-    if (r->ri_sei.OMEGAZ==-1){
-        r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
-    }
-    r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
-    r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
-    r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
-    r->ri_sei.tandtz = tan(r->ri_sei.OMEGAZ*(-r->dt/4.));
-    r->ri_sei.lastdt = r->dt;
+void reb_integrator_sei_alloc(struct reb_simulation* const r){
+    assert(!r->integrator_data);
+    r->integrator_data = calloc(sizeof(struct reb_integrator_sei_state),1);
 }
 
 void reb_integrator_sei_step(struct reb_simulation* const r){
+    struct reb_integrator_sei_state* sei = r->integrator_data;
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const int N = r->N;
     struct reb_particle* const particles = r->particles;
-    if (r->ri_sei.lastdt!=r->dt){
-        reb_integrator_sei_init(r);
+    if (sei->lastdt!=r->dt){
+        // Pre-calculates sin() and tan() needed for SEI. 
+        if (r->OMEGAZ==-1){
+            r->OMEGAZ=r->OMEGA;
+        }
+        sei->sindt = sin(r->OMEGA*(-r->dt/2.));
+        sei->tandt = tan(r->OMEGA*(-r->dt/4.));
+        sei->sindtz = sin(r->OMEGAZ*(-r->dt/2.));
+        sei->tandtz = tan(r->OMEGAZ*(-r->dt/4.));
+        sei->lastdt = r->dt;
     }
-    const struct reb_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
     for (int i=0;i<N;i++){
-        operator_H012(r->dt, ri_sei, &(particles[i]));
+        operator_H012(r->dt, *sei, &(particles[i]),r->OMEGA,r->OMEGAZ);
     }
     r->t+=r->dt/2.;
 
@@ -80,16 +101,15 @@ void reb_integrator_sei_step(struct reb_simulation* const r){
 #pragma omp parallel for schedule(guided)
     for (int i=0;i<N;i++){
         operator_phi1(r->dt, &(particles[i]));
-        operator_H012(r->dt, ri_sei, &(particles[i]));
+        operator_H012(r->dt, *sei, &(particles[i]),r->OMEGA,r->OMEGAZ);
     }
     r->t+=r->dt/2.;
     r->dt_last_done = r->dt;
 }
 
 void reb_integrator_sei_reset(struct reb_simulation* r){
-    r->ri_sei.lastdt    = 0;	
-    r->ri_sei.OMEGA     = 1;
-    r->ri_sei.OMEGAZ    = -1;
+    struct reb_integrator_sei_state* sei = r->integrator_data;
+    sei->lastdt    = 0;	
 }
 
 /**
@@ -99,10 +119,10 @@ void reb_integrator_sei_reset(struct reb_simulation* r){
  * @param dt Timestep
  * @param ri_sei Integrator struct
  */
-static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p){
+static void operator_H012(double dt, const struct reb_integrator_sei_state ri_sei, struct reb_particle* p, double OMEGA, double OMEGAZ){
 
     // Integrate vertical motion
-    const double zx = p->z * ri_sei.OMEGAZ;
+    const double zx = p->z * OMEGAZ;
     const double zy = p->vz;
 
     // Rotation implemented as 3 shear operators
@@ -110,15 +130,15 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
     const double zt1 =  zx - ri_sei.tandtz*zy;			
     const double zyt =  ri_sei.sindtz*zt1 + zy;
     const double zxt =  zt1 - ri_sei.tandtz*zyt;	
-    p->z  = zxt/ri_sei.OMEGAZ;
+    p->z  = zxt/OMEGAZ;
     p->vz = zyt;
 
     // Integrate motion in xy directions
-    const double aO = 2.*p->vy + 4.*p->x*ri_sei.OMEGA;	// Center of epicyclic motion
-    const double bO = p->y*ri_sei.OMEGA - 2.*p->vx;	
+    const double aO = 2.*p->vy + 4.*p->x*OMEGA;	// Center of epicyclic motion
+    const double bO = p->y*OMEGA - 2.*p->vx;	
 
-    const double ys = (p->y*ri_sei.OMEGA-bO)/2.; 		// Epicycle vector
-    const double xs = (p->x*ri_sei.OMEGA-aO); 
+    const double ys = (p->y*OMEGA-bO)/2.; 		// Epicycle vector
+    const double xs = (p->x*OMEGA-aO); 
 
     // Rotation implemented as 3 shear operators
     // to avoid round-off errors
@@ -126,8 +146,8 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
     const double yst  =  ri_sei.sindt*xst1 + ys;
     const double xst  =  xst1 - ri_sei.tandt*yst;	
 
-    p->x  = (xst+aO)    /ri_sei.OMEGA;			
-    p->y  = (yst*2.+bO) /ri_sei.OMEGA - 3./4.*aO*dt;	
+    p->x  = (xst+aO)    /OMEGA;			
+    p->y  = (yst*2.+bO) /OMEGA - 3./4.*aO*dt;	
     p->vx = yst;
     p->vy = -xst*2. -3./2.*aO;
 }

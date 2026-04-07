@@ -145,6 +145,7 @@ struct reb_integrator {
     void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
     void (*did_add_particle)(struct reb_simulation* r);                     // Gets called after a particle was added.
     void (*will_remove_particle)(struct reb_simulation* r, size_t index);   // Gets called before a particle will be removed.
+    const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load data from restart files for this integrator.
 
     void* data;                                     // Pointer to any internal data/memory required by the integrator. Optional.
     size_t data_size;                               // Size of data in bytes. Set to 0 if data storage is not used.
@@ -224,19 +225,6 @@ struct reb_integrator_mercurius {
     size_t* encounter_map;          // Map to represent which particles are integrated with ias15
     struct reb_vec3d com_pos;       // Used to keep track of the center of mass during the timestep
     struct reb_vec3d com_vel;
-};
-
-// Symplectic Epicycle Integrator SEI (Rein & Tremaine 2011)
-struct reb_integrator_sei {
-    double OMEGA;       // Epicyclic frequency
-    double OMEGAZ;      // Epicyclic frequency in z direction (if not set, use OMEGA)
-
-    // Internal use
-    double lastdt;      // Cached sin(), tan() for this value of dt.
-    double sindt;       // Cached sin() 
-    double tandt;       // Cached tan() 
-    double sindtz;      // Cached sin(), z axis
-    double tandtz;      // Cached tan(), z axis
 };
 
 // Leapfrog Integrator (TU splitting)
@@ -452,6 +440,8 @@ struct reb_simulation {
     double  t;                      // Current simulation time. Default: 0.
     double  G;                      // Gravitational constant. Default: 1.
     double  softening;              // Gravitational softening. Default: 0.
+    double  OMEGA;                  // Epicyclic frequency
+    double  OMEGAZ;                 // Epicyclic frequency in z direction (if not set, use OMEGA)
     double  dt;                     // Timestep. Default: 0.001.
     double  dt_last_done;           // Last successful timestep.
     uint64_t steps_done;            // Number of timesteps done.
@@ -581,6 +571,7 @@ struct reb_simulation {
         REB_COLLISION_LINETREE = 5,     // Tree-based collision search O(N log(N)), looks for collisions by assuming a linear path over the last timestep
     } collision;
     struct reb_integrator integrator;
+    void* integrator_data;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
         REB_BOUNDARY_OPEN = 1,          // Open boundary conditions. Removes particles if they leave the box 
@@ -599,7 +590,7 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    struct reb_integrator_sei ri_sei;               // The SEI struct 
+    //struct reb_integrator_sei ri_sei;               // The SEI struct 
     struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
