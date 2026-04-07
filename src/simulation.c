@@ -113,7 +113,7 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integra
     }
     r->integrator = integrator;
     if (r->integrator.create){
-        r->integrator_data = r->integrator.create(r);
+        r->integrator_data = r->integrator.create();
     }
 }
 
@@ -713,6 +713,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->gravity              = REB_GRAVITY_BASIC;
     r->root_size            = -1;
     r->opening_angle2       = 0.25;
+    r->OMEGAZ               = -1;
     r->N_root_x             = 1;
     r->N_root_y             = 1;
     r->N_root_z             = 1;

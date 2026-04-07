@@ -150,6 +150,8 @@ struct reb_integrator {
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load data from restart files for this integrator.
 };
 
+void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator);
+
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
     X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
@@ -1110,7 +1112,7 @@ struct reb_display_settings {
     int onscreenhelp;               // Shows/hides onscreen help.
     int multisample;                // Turn off/on multisampling.
     int ghostboxes;                 // Shows/hides ghost boxes.
-    int reference;                  // reb_particle used as a reference for centering.
+    size_t reference;                  // reb_particle used as a reference for centering.
 };
 
 // Display settings initialization. Overwrites user interactions.

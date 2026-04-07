@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     
     // Setup constants
     r->opening_angle2    = .5;                  // This determines the precision of the tree code gravity calculation.
-    r->integrator        = reb_integrator_sei;
+    reb_simulation_set_integrator(r, reb_integrator_sei);
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     double total_mass = surfacedensity*boxsize.x*boxsize.y;
     double mass = 0;
     while(mass<total_mass){
-        struct reb_particle pt;
+        struct reb_particle pt = {0};
         pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
         pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m

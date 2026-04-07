@@ -59,7 +59,7 @@ struct reb_display_data {
     void* screenshot; // Screenshot data to be sent to server
     struct reb_vec4df* particle_data;
     struct reb_orbit_opengl* orbit_data;
-    uint64_t N_allocated;
+    size_t N_allocated;
     double mouse_x;
     double mouse_y;
     double retina;

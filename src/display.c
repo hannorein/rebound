@@ -51,7 +51,7 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
     if (r->root_size==-1){  
         scale = 0.;
         const struct reb_particle* p = r->particles;
-        for (unsigned int i=0;i<r->N;i++){
+        for (size_t i=0;i<r->N;i++){
             const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
             scale = MAX(scale, _r);
         }
@@ -112,7 +112,7 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     s->breadcrumbs       = 0;
     s->onscreentext      = 1; 
     s->ghostboxes        = 0; 
-    s->reference         = -1;
+    s->reference         = SIZE_MAX;
     s->view.m[1]=1; // this will make set_default_view show the xy plane
     reb_display_set_default_view(r, s);
 }
@@ -298,10 +298,12 @@ static int loadShader(const char* vert_source, const char* frag_source){
 }
 
 static void reb_glfw_error_callback(int error, const char* description){
-    fprintf(stderr, "GLFW Error: %s\n", description);
+    fprintf(stderr, "GLFW Error (%d): %s\n", error, description);
 }
 
 static void reb_display_scroll(GLFWwindow* window, double xoffset, double yoffset){
+    (void) xoffset;
+    (void) yoffset;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_scroll\n");
@@ -311,6 +313,8 @@ static void reb_display_scroll(GLFWwindow* window, double xoffset, double yoffse
     data->s.view = reb_mat4df_scale(data->s.view, scale, scale, scale);
 }
 static void reb_display_mouse_button(GLFWwindow* window, int button, int action, int mods){
+    (void)button;
+    (void)mods;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_mouse_button\n");
@@ -320,6 +324,8 @@ static void reb_display_mouse_button(GLFWwindow* window, int button, int action,
 }
 
 static void reb_display_resize(GLFWwindow* window, int x, int y){
+    (void)x;
+    (void)y;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_resize\n");
@@ -405,6 +411,7 @@ static void reb_display_clear_particle_data(struct reb_display_data* data){
 }
 
 void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
+    (void)scancode;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_keyboard\n");
@@ -456,7 +463,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 }
                 break;
             case 'R':
-                data->s.reference     = -1;
+                data->s.reference     = SIZE_MAX;
                 reb_display_set_default_view(data->r, &data->s);
                 break;
             case 'D':
@@ -484,12 +491,15 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
             case 'X': 
                 if (mods!=GLFW_MOD_SHIFT){
                     data->s.reference++;
-                    if (data->s.reference>=data->r->N) data->s.reference = -1;
-                    printf("Reference particle: %d.\n",data->s.reference);
+                    if (data->s.reference>=data->r->N) data->s.reference = data->r->N-1;
                 }else{
                     data->s.reference--;
-                    if (data->s.reference<-1) data->s.reference = data->r->N-1;
-                    printf("Reference particle: %d.\n",data->s.reference);
+                    if (data->s.reference==SIZE_MAX-1) data->s.reference = SIZE_MAX;
+                }
+                if (data->s.reference == SIZE_MAX){
+                    printf("Reference particle: NONE.\n");
+                }else{
+                    printf("Reference particle: %zu.\n",data->s.reference);
                 }
                 break;
             case 264: // arrow down
@@ -572,7 +582,7 @@ void reb_render_frame(void* p){
     }
 
     // prepare data (incl orbit calculation)
-    const int N = r_copy->N;
+    size_t N = r_copy->N;
 
     if (N > data->N_allocated || data->s.breadcrumbs+1 != data->breadcrumb_N_allocated){
         data->N_allocated = N;
@@ -599,7 +609,7 @@ void reb_render_frame(void* p){
     reb_simulation_synchronize(r_copy);
 
     // Update data on GPU 
-    for (unsigned int i=0;i<N;i++){
+    for (size_t i=0;i<N;i++){
         struct reb_particle p = r_copy->particles[i];
         data->particle_data[i].x  = (float)p.x;
         data->particle_data[i].y  = (float)p.y;
@@ -618,7 +628,7 @@ void reb_render_frame(void* p){
 
     if (data->s.wire && N>1){
         struct reb_particle com = r_copy->particles[0];
-        for (unsigned int i=1;i<N;i++){
+        for (size_t i=1;i<N;i++){
             struct reb_particle p = r_copy->particles[i];
             data->orbit_data[i-1].x  = (float)com.x;
             data->orbit_data[i-1].y  = (float)com.y;
@@ -662,7 +672,7 @@ void reb_render_frame(void* p){
     // Precalculate matrices 
     struct reb_mat4df projection = reb_mat4df_ortho( -1.6*ratio, 1.6*ratio, -1.6,1.6, -2.5,2.5);
     struct reb_mat4df view = data->s.view;
-    if (data->s.reference>=0){
+    if (data->s.reference!=SIZE_MAX){
         struct reb_particle p = data->r_copy->particles[data->s.reference];
         view = reb_mat4df_translate(view, -p.x, -p.y, -p.z);
     }
@@ -820,7 +830,7 @@ void reb_render_frame(void* p){
     glUniform1f(data->shader_simplefont.aspect_location, 0.5);
     glUniform1i(data->shader_simplefont.rotation_location, 0);
     glUniform1f(data->shader_simplefont.scale_location, scale);
-    for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
+    for (size_t i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
         int j = convertLine(reb_logo[i],val);
         glUniform1f(data->shader_simplefont.ypos_location, (float)i);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
@@ -869,15 +879,15 @@ void reb_render_frame(void* p){
     reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
 
-    sprintf(str, "N = %d ",data->r_copy->N);
+    sprintf(str, "N = %zu ",data->r_copy->N);
     glUniform1f(data->shader_simplefont.ypos_location, ypos++);
     j = convertLine(str,val);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
     reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
     glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-    if (data->r_copy->integrator==reb_integrator_sei){
-        sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->ri_sei.OMEGA/2./M_PI);
+    if (data->r_copy->OMEGA){
+        sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->OMEGA/2./M_PI);
     }else{
         sprintf(str, "t = %f  ", data->r_copy->t);
     }
@@ -899,7 +909,7 @@ if (data->s.onscreenhelp){ // On screen help
     glUniform1f(data->shader_simplefont.scale_location, 0.035);
     glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
     float val[200] = {0.};
-    for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
+    for (size_t i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
         int j = convertLine(onscreenhelp[i],val);
         glUniform1f(data->shader_simplefont.ypos_location, (float)i);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
