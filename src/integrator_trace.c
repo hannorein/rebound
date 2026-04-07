@@ -711,16 +711,42 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
 
             if (r->particles[0].x !=0 || r->particles[0].y !=0 || r->particles[0].z !=0){
                 // Collision with star occurred
-                // Shift all particles back to heliocentric coordinates
+                // Shift all particles back to heliocentric/WB coordinates
                 // Ignore stars velocity:
                 //   - will not be used after this
                 //   - com velocity is unchanged. this velocity will be used
                 //     to reconstruct star's velocity later.
-                for (int i=r->N-1; i>=0; i--){
-                    r->particles[i].x -= r->particles[0].x;
-                    r->particles[i].y -= r->particles[0].y;
-                    r->particles[i].z -= r->particles[0].z;
+                const double dx = r->particles[0].x;
+                const double dy = r->particles[0].y;
+                const double dz = r->particles[0].z;
+
+                /* Looking into collision bug
+                if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
+                    // In WB coordinates X_B is defined relative to the inner-system COM,
+                    // not star A alone.  When star A moves by (dx,dy,dz) in WB space the
+                    // correct update to X_B is +dx (opposite sign to the planets).
+                    // Derivation: X_B_correct = X_B_stored + delta, where delta = particles[0] displacement.
+                    const int Nactive_local = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
+                    const int idxB_local = Nactive_local - 1;
+                    for (int i = r->N-1; i >= 0; i--){
+                        if (i == idxB_local){
+                            r->particles[i].x += dx;  // opposite sign for star B
+                            r->particles[i].y += dy;
+                            r->particles[i].z += dz;
+                        } else {
+                            r->particles[i].x -= dx;
+                            r->particles[i].y -= dy;
+                            r->particles[i].z -= dz;
+                        }
+                    }
+                } else {
+                    for (int i = r->N-1; i >= 0; i--){
+                        r->particles[i].x -= dx;
+                        r->particles[i].y -= dy;
+                        r->particles[i].z -= dz;
+                    }
                 }
+                */
             }
         }
 
@@ -1017,10 +1043,10 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                 reb_simulation_error(r,"Unsupported peri_mode encountered\n");
                 break;
         }
-        if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY) r->gravity = REB_GRAVITY_WIDEBINARY;
-        else r->gravity = REB_GRAVITY_TRACE;
+        r->gravity = REB_GRAVITY_TRACE;
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
+
         if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
         else reb_integrator_trace_inertial_to_dh(r);
     }
@@ -1052,13 +1078,11 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     }
 
     // Calculate gravity with special function
-    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE && r->gravity != REB_GRAVITY_WIDEBINARY){
+    if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_TRACE){
         reb_simulation_warning(r,"TRACE has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
 
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) r->gravity = REB_GRAVITY_WIDEBINARY;
-    else r->gravity = REB_GRAVITY_TRACE;
-
+    r->gravity = REB_GRAVITY_TRACE;
     ri_trace->mode = REB_TRACE_MODE_NONE; // Do not calculate gravity in-between timesteps. TRACE will call reb_update_acceleration itself.
 
     reb_simulation_update_acceleration(r);
@@ -1107,7 +1131,7 @@ void reb_integrator_trace_reset(struct reb_simulation* r){
     r->ri_trace.encounter_N_active = 0;
     r->ri_trace.r_crit_hill = 3;
     r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.r_crit_WB = 0.25;
+    r->ri_trace.r_crit_WB = 0.2;
     r->ri_trace.force_accept = 0;
 
     // Internal arrays (only used within one timestep)

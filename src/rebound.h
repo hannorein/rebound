@@ -664,7 +664,6 @@ struct reb_simulation {
         REB_GRAVITY_MERCURIUS = 4,      // Special gravity routine only for MERCURIUS
         REB_GRAVITY_JACOBI = 5,         // Special gravity routine which includes the Jacobi terms for WH integrators 
         REB_GRAVITY_TRACE = 6,          // Special gravity routine only for TRACE
-        REB_GRAVITY_WIDEBINARY = 7,     // Special gravity routine only for TRACE in WB coordinates
     } gravity;
 
 
