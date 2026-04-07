@@ -107,6 +107,16 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
+void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
+    if (r->integrator.free){
+        r->integrator.free(r);
+    }
+    r->integrator = integrator;
+    if (r->integrator.create){
+        r->integrator_data = r->integrator.create(r);
+    }
+}
+
 // Heartbeat wrapper. Runs actual heartbeat and does exit checks.
 static void run_heartbeat(struct reb_simulation* const r){
     if (r->heartbeat){ r->heartbeat(r); }               // Heartbeat

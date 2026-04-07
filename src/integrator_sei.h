@@ -24,6 +24,4 @@
  */
 #ifndef _INTEGRATOR_SEI_H
 #define _INTEGRATOR_SEI_H
-void reb_integrator_sei_step(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
-void reb_integrator_sei_reset(struct reb_simulation* r);       ///< Internal function used to call a specific integrator
 #endif

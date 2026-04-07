@@ -29,11 +29,10 @@ int main(int argc, char* argv[]) {
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
-    double OMEGA         = 0.00013143527;       // 1/s
-    r->ri_sei.OMEGA      = OMEGA;
+    r->OMEGA             = 0.00013143527;       // 1/s
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
-    r->dt                = 1e-3*2.*M_PI/OMEGA;  // s
+    r->dt                = 1e-3*2.*M_PI/r->OMEGA;  // s
     r->heartbeat         = heartbeat;           // function pointer for heartbeat
     // This example uses two root boxes in the x and y direction. 
     // Although not necessary in this case, it allows for the parallelization using MPI. 
@@ -60,12 +59,12 @@ int main(int argc, char* argv[]) {
     };
     
     // Initial conditions
-    printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
+    printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/r->OMEGA/r->OMEGA*r->G);
     // Use Bridges et al coefficient of restitution.
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
     // When two particles collide and the relative velocity is zero, the might sink into each other in the next time step.
     // By adding a small repulsive velocity to each collision, we prevent this from happening.
-    r->minimum_collision_velocity = particle_radius_min*OMEGA*0.001;  // small fraction of the shear across a particle
+    r->minimum_collision_velocity = particle_radius_min*r->OMEGA*0.001;  // small fraction of the shear across a particle
 
 
     // Add all ring particles
@@ -77,7 +76,7 @@ int main(int argc, char* argv[]) {
         pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vx         = 0;
-        pt.vy         = -1.5*pt.x*OMEGA;
+        pt.vy         = -1.5*pt.x*r->OMEGA;
         pt.vz         = 0;
         pt.ax         = 0;
         pt.ay         = 0;
@@ -104,11 +103,11 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1e-1*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-1*2.*M_PI/r->OMEGA)){
         reb_simulation_output_timing(r, 0);
         //reb_output_append_velocity_dispersion("veldisp.txt");
     }
-    if (reb_simulation_output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 2.*M_PI/r->OMEGA)){
         //reb_simulation_output_ascii("position.txt");
     }
 }

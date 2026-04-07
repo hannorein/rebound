@@ -142,13 +142,12 @@ struct reb_integrator {
     uint32_t id;                                    // Unique number used to identify integrator in binary files.
     void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
-    void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used.
+    void* (*create)();                              // Allocate memory for integrator and set default values. Return integrator_data pointer.
+    void (*free)(void* p);                          // Free all memory owned by integrator. p points to integrator_data.
+    void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used. TODO: REMOVE
     void (*did_add_particle)(struct reb_simulation* r);                     // Gets called after a particle was added.
     void (*will_remove_particle)(struct reb_simulation* r, size_t index);   // Gets called before a particle will be removed.
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load data from restart files for this integrator.
-
-    void* data;                                     // Pointer to any internal data/memory required by the integrator. Optional.
-    size_t data_size;                               // Size of data in bytes. Set to 0 if data storage is not used.
 };
 
 // Available integrators

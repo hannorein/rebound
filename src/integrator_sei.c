@@ -58,10 +58,16 @@ const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor
     { 0 }, // Null terminated list
 };
 
+void reb_integrator_sei_step(struct reb_simulation* r);
+void reb_integrator_sei_reset(struct reb_simulation* r);
+void* reb_integrator_sei_create();
+void reb_integrator_sei_free(void* p);
+
 const struct reb_integrator reb_integrator_sei = {
     .id = 2,
     .step = reb_integrator_sei_step,
-    .reset = reb_integrator_sei_reset,
+    .create = reb_integrator_sei_create,
+    .free = reb_integrator_sei_free,
     .field_descriptor_list = reb_integrator_sei_field_descriptor_list,
 };
 
@@ -69,9 +75,9 @@ static void operator_H012(double dt, const struct reb_integrator_sei_state sei, 
 static void operator_phi1(double dt, struct reb_particle* p);
 
 
-void reb_integrator_sei_alloc(struct reb_simulation* const r){
-    assert(!r->integrator_data);
-    r->integrator_data = calloc(sizeof(struct reb_integrator_sei_state),1);
+void* reb_integrator_sei_create(){
+    struct reb_integrator_sei_state* sei = calloc(sizeof(struct reb_integrator_sei_state),1);
+    return sei;
 }
 
 void reb_integrator_sei_step(struct reb_simulation* const r){
@@ -107,9 +113,9 @@ void reb_integrator_sei_step(struct reb_simulation* const r){
     r->dt_last_done = r->dt;
 }
 
-void reb_integrator_sei_reset(struct reb_simulation* r){
-    struct reb_integrator_sei_state* sei = r->integrator_data;
-    sei->lastdt    = 0;	
+void reb_integrator_sei_free(void* p){
+    struct reb_integrator_sei_state* sei = p;
+    free(sei);
 }
 
 /**
