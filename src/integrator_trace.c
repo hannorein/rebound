@@ -166,6 +166,7 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     }else{
         // In WB coordinates, we also switch if we enter the binary's hill sphere
         if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
+          reb_integrator_trace_wb_to_inertial(r);
           const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
           const int idxB = N_active-1; // star B assumed to be last active particle
           double bx = r->particles[idxB].x;
@@ -181,6 +182,7 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
           double dyb = r->particles[j].y - r->particles[idxB].y;
           double dzb = r->particles[j].z - r->particles[idxB].z;
           double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+          reb_integrator_trace_inertial_to_wb(r);
 
           if (d2b*d2b*d2b < rhillb6){
               return 1;
