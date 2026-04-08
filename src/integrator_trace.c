@@ -1087,9 +1087,6 @@ void reb_integrator_trace_step(struct reb_simulation* r){
 
     reb_simulation_update_acceleration(r);
 
-    // Check if there are any close encounters
-    reb_integrator_trace_pre_ts_check(r);
-
     if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
     else reb_integrator_trace_inertial_to_dh(r);
 
@@ -1099,11 +1096,11 @@ void reb_integrator_trace_step(struct reb_simulation* r){
     // This will be set to 1 if a collision occurred.
     ri_trace->force_accept = 0;
 
+    // Check if there are any close encounters
+    reb_integrator_trace_pre_ts_check(r);
+
     // Attempt one step. 
     reb_integrator_trace_step_try(r);
-
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
-    else reb_integrator_trace_dh_to_inertial(r);
 
     // We always accept the step if a collision occurred as it is impossible to undo the collision.
     if (!ri_trace->force_accept){
@@ -1111,15 +1108,15 @@ void reb_integrator_trace_step(struct reb_simulation* r){
         if (reb_integrator_trace_post_ts_check(r)){
             // New encounters were found. Will reject the step.
             // Revert particles to the beginning of the step.
-            // implicit transformation back to DHC/WB here
             memcpy(r->particles, ri_trace->particles_backup, N*sizeof(struct reb_particle));
 
             // Do step again
             reb_integrator_trace_step_try(r);
-            if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
-            else reb_integrator_trace_dh_to_inertial(r);
         }
     }
+
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+    else reb_integrator_trace_dh_to_inertial(r);
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
