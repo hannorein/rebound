@@ -186,7 +186,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     // 396, 397 used to be max_radius0 and max_radius1
     { 398, REB_UINT,        "ri_whfast512.N_systems",       offsetof(struct reb_simulation, ri_whfast512.N_systems), 0, 0},
     { 399, REB_PARTICLE4,   "ri_whfast512.pjh0",            offsetof(struct reb_simulation, ri_whfast512.p_jh0), 0, 0},
-    { 400, REB_UINT,        "ri_leapfrog.order",            offsetof(struct reb_simulation, ri_leapfrog.order), 0, 0},
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0},
     // 403  particles_var
     { 1329743186, REB_OTHER,"header", 0, 0, 0},

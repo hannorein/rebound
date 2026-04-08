@@ -59,7 +59,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor
 };
 
 void reb_integrator_sei_step(struct reb_simulation* r);
-void reb_integrator_sei_reset(struct reb_simulation* r);
 void* reb_integrator_sei_create();
 void reb_integrator_sei_free(void* p);
 
@@ -79,6 +78,11 @@ void* reb_integrator_sei_create(){
     struct reb_integrator_sei_state* sei = calloc(sizeof(struct reb_integrator_sei_state),1);
     return sei;
 }
+void reb_integrator_sei_free(void* p){
+    struct reb_integrator_sei_state* sei = p;
+    free(sei);
+}
+
 
 void reb_integrator_sei_step(struct reb_simulation* const r){
     struct reb_integrator_sei_state* sei = r->integrator_data;
@@ -111,11 +115,6 @@ void reb_integrator_sei_step(struct reb_simulation* const r){
     }
     r->t+=r->dt/2.;
     r->dt_last_done = r->dt;
-}
-
-void reb_integrator_sei_free(void* p){
-    struct reb_integrator_sei_state* sei = p;
-    free(sei);
 }
 
 /**

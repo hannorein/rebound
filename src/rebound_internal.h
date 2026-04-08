@@ -82,6 +82,9 @@ DLLEXPORT int reb_check_fp_contract();
 // Wrapper method to set number of OpenMP threads from python.
 DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 
+// Free memory associated with simulation but not simulation itself (used by python)
+DLLEXPORT void reb_simulation_free_contents(struct reb_simulation* const r);
+
 // Feature to let python and Simulationarchive see all available integrators.
 DLLEXPORT extern const struct reb_integrator* reb_integrators_available[];
 DLLEXPORT extern const char* reb_integrators_available_names[];

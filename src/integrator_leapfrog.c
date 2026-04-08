@@ -29,12 +29,41 @@
 
 #include "rebound.h"
 #include "integrator_leapfrog.h"
+#include "binarydata.h"
+#include <stddef.h>
 
+// Leapfrog Integrator (TU splitting)
+struct reb_integrator_leapfrog_state {
+    unsigned int order;
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_leapfrog_field_descriptor_list[] = {
+    { 400, REB_UINT,        "ri_leapfrog.order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0},
+    { 0 }, // Null terminated list
+};
+
+void reb_integrator_leapfrog_step(struct reb_simulation* r);
+void* reb_integrator_leapfrog_create();
+void reb_integrator_leapfrog_free(void* p);
 const struct reb_integrator reb_integrator_leapfrog = {
     .id = 4,
     .step = reb_integrator_leapfrog_step,
-    .reset = reb_integrator_leapfrog_reset,
+    .create = reb_integrator_leapfrog_create,
+    .free = reb_integrator_leapfrog_free,
+    .field_descriptor_list = reb_integrator_leapfrog_field_descriptor_list,
 };
+
+void* reb_integrator_leapfrog_create(){
+    struct reb_integrator_leapfrog_state* leapfrog = calloc(sizeof(struct reb_integrator_leapfrog_state),1);
+    leapfrog->order = 2;
+    return leapfrog;
+}
+
+void reb_integrator_leapfrog_free(void* p){
+    struct reb_integrator_leapfrog_state* leapfrog = p;
+    free(leapfrog);
+}
+
 
 const double reb_integrator_leapfrog_lf4_a = 0.675603595979828817023843904485;
 const double reb_integrator_leapfrog_lf6_a[5] = {0.1867, 0.5554970237124784, 0.1294669489134754, -0.843265623387734, 0.9432033015235604};
@@ -68,7 +97,8 @@ static void kick(struct reb_simulation* r, double dt){
 void reb_integrator_leapfrog_step(struct reb_simulation* r){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const double dt = r->dt;
-    switch (r->ri_leapfrog.order){
+    struct reb_integrator_leapfrog_state* leapfrog = r->integrator_data;
+    switch (leapfrog->order){
         case 2:
             drift(r, dt*0.5);
             break;
@@ -88,7 +118,7 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r){
 
     reb_simulation_update_acceleration(r);
 
-    switch (r->ri_leapfrog.order){
+    switch (leapfrog->order){
         case 2:
             kick(r, dt);
             drift(r, dt*0.5);
@@ -188,9 +218,5 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r){
             return;
     }
     r->dt_last_done = dt;
-}
-
-void reb_integrator_leapfrog_reset(struct reb_simulation* r){
-    r->ri_leapfrog.order = 2;
 }
 

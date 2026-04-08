@@ -150,7 +150,7 @@ struct reb_integrator {
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load data from restart files for this integrator.
 };
 
-void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator);
+DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator);
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
@@ -226,11 +226,6 @@ struct reb_integrator_mercurius {
     size_t* encounter_map;          // Map to represent which particles are integrated with ias15
     struct reb_vec3d com_pos;       // Used to keep track of the center of mass during the timestep
     struct reb_vec3d com_vel;
-};
-
-// Leapfrog Integrator (TU splitting)
-struct reb_integrator_leapfrog {
-    unsigned int order;
 };
 
 // TRACE (Lu Hernandez & Rein 2024)
@@ -591,8 +586,6 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    //struct reb_integrator_sei ri_sei;               // The SEI struct 
-    struct reb_integrator_leapfrog ri_leapfrog;     // The Leapfrog struct 
     struct reb_integrator_whfast ri_whfast;         // The WHFast struct 
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_saba ri_saba;             // The SABA struct 

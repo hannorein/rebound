@@ -300,7 +300,8 @@ class Simulation(Structure):
 
     def __del__(self):
         if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
-            clibrebound.reb_simulation_reset(byref(self))
+            print("TODO")
+            #clibrebound.reb_simulation_free_contents(byref(self))
 
     def __eq__(self, other):
         # This ignores the walltime parameter
@@ -603,7 +604,7 @@ class Simulation(Structure):
         elif isinstance(value, str):
             value = value.lower()
             if value in INTEGRATORS: 
-                self._integrator = INTEGRATORS[value]
+                clibrebound.reb_simulation_set_integrator(byref(self), INTEGRATORS[value])
             # Shortcuts
             elif value=="wh":
                 self.integrator = "whfast"
@@ -1501,7 +1502,6 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
-                ("ri_leapfrog", IntegratorLeapfrog), 
                 ("ri_whfast", IntegratorWHFast),
                 ("ri_whfast512", IntegratorWHFast512),
                 ("ri_saba", IntegratorSABA),

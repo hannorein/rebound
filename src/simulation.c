@@ -102,7 +102,9 @@ struct reb_simulation* reb_simulation_create(){
     return r;
 }
 
-void reb_simulation_free(struct reb_simulation* const r){
+void reb_simulation_free_contents(struct reb_simulation* const r){
+    // Free everything in the simulation, but not the simulation itself
+    // Used by python.
     if (r->integrator.free){
         r->integrator.free(r->integrator_data);
     }
@@ -172,6 +174,10 @@ void reb_simulation_free(struct reb_simulation* const r){
         free(r->var_config);
     }
     free(r->odes);
+}
+
+void reb_simulation_free(struct reb_simulation* const r){
+    reb_simulation_free_contents(r);
     free(r);
 }
 
