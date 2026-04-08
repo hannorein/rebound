@@ -297,7 +297,7 @@ struct reb_integrator_saba {
 };
 
 // WHFast Integrator (Rein & Tamayo 2015)
-struct reb_integrator_whfast {
+struct reb_integrator_whfast_state {
     unsigned int corrector;                                     // Order of first symplectic corrector: 0 (default - no corrector), 3, 5, 7, 11, 17.  
     unsigned int corrector2;                                    // 0: no second corrector, 1: use second corrector
     enum {
@@ -586,7 +586,6 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    struct reb_integrator_whfast ri_whfast;         // The WHFast struct 
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_saba ri_saba;             // The SABA struct 
     struct reb_integrator_ias15 ri_ias15;           // The IAS15 struct
