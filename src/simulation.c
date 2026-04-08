@@ -103,7 +103,75 @@ struct reb_simulation* reb_simulation_create(){
 }
 
 void reb_simulation_free(struct reb_simulation* const r){
-    reb_simulation_reset(r);
+    if (r->integrator.free){
+        r->integrator.free(r->integrator_data);
+    }
+    r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
+    if (r->simulationarchive_filename){
+        free(r->simulationarchive_filename);
+    }
+    if(r->display_settings){
+        free(r->display_settings);
+    }
+#ifdef OPENGL
+    if(r->display_data){
+        // Waiting for visualization to shut down.
+        if (r->display_data->window){ // Not needed under normal circumstances
+            usleep(100);
+        }
+        if (r->display_data->window){ // still running?
+            reb_simulation_info(NULL, "Waiting for OpenGL visualization to shut down...");
+            while(r->display_data->window){
+                usleep(100);
+            }
+        }
+        pthread_mutex_destroy(&(r->display_data->mutex));
+        if (r->display_data->r_copy){
+            reb_simulation_free(r->display_data->r_copy);
+        }
+        if (r->display_data->particle_data){
+            free(r->display_data->particle_data);
+        }
+        if (r->display_data->orbit_data){
+            free(r->display_data->orbit_data);
+        }
+        free(r->display_data);
+    }
+#endif //OPENGL
+#ifdef SERVER
+    reb_simulation_stop_server(r);
+#endif // SERVER
+    free(r->gravity_cs);
+    free(r->collisions);
+    free(r->tree_root);
+    if(r->free_particle_ap){
+        for(size_t i=0; i<r->N; i++){
+            r->free_particle_ap(&r->particles[i]);
+        }
+    }
+    free(r->particles);
+    free(r->particles_var);
+    for (size_t i=0;i<r->N_name_list;i++){
+        free(r->name_list[i]);
+    }
+    free(r->name_list);
+    free(r->name_hash_table);
+    if (r->messages){
+        for (size_t i=0;i<reb_messages_max_N;i++){
+            free(r->messages[i]);
+        }
+    }
+    if (r->messages){
+        free(r->messages);
+    }
+    if (r->extras_cleanup){
+        r->extras_cleanup(r);
+    }
+    if (r->var_config){
+        free(r->var_config);
+    }
+    free(r->odes);
     free(r);
 }
 
@@ -114,7 +182,10 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integra
     r->integrator = integrator;
     if (r->integrator.create){
         r->integrator_data = r->integrator.create();
+    }else{
+        r->integrator_data = NULL;
     }
+    return r->integrator_data; // for convenience, return pointer to data
 }
 
 // Heartbeat wrapper. Runs actual heartbeat and does exit checks.
@@ -253,102 +324,6 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
 
 #endif // MPI
     return r->status;
-}
-
-
-// Free all dynamically allocated memory owned by the simulation
-// but not the simulation itself.
-void reb_simulation_reset(struct reb_simulation* const r){
-    reb_simulation_integrators_reset(r);
-    if (r->simulationarchive_filename){
-        free(r->simulationarchive_filename);
-    }
-    if(r->display_settings){
-        free(r->display_settings);
-    }
-#ifdef OPENGL
-    if(r->display_data){
-        // Waiting for visualization to shut down.
-        if (r->display_data->window){ // Not needed under normal circumstances
-            usleep(100);
-        }
-        if (r->display_data->window){ // still running?
-            reb_simulation_info(NULL, "Waiting for OpenGL visualization to shut down...");
-            while(r->display_data->window){
-                usleep(100);
-            }
-        }
-        pthread_mutex_destroy(&(r->display_data->mutex));
-        if (r->display_data->r_copy){
-            reb_simulation_free(r->display_data->r_copy);
-            r->display_data->r_copy = NULL;
-        }
-        if (r->display_data->particle_data){
-            free(r->display_data->particle_data);
-            r->display_data->particle_data = NULL;
-        }
-        if (r->display_data->orbit_data){
-            free(r->display_data->orbit_data);
-            r->display_data->orbit_data = NULL;
-        }
-        free(r->display_data);
-        r->display_data = NULL;
-    }
-#endif //OPENGL
-#ifdef SERVER
-    reb_simulation_stop_server(r);
-#endif // SERVER
-    free(r->gravity_cs);
-    free(r->collisions);
-    free(r->tree_root);
-    r->tree_root = NULL;
-    if(r->free_particle_ap){
-        for(size_t i=0; i<r->N; i++){
-            r->free_particle_ap(&r->particles[i]);
-        }
-    }
-    free(r->particles);
-    free(r->particles_var);
-    for (size_t i=0;i<r->N_name_list;i++){
-        free(r->name_list[i]);
-    }
-    free(r->name_list);
-    free(r->name_hash_table);
-    if (r->messages){
-        for (size_t i=0;i<reb_messages_max_N;i++){
-            free(r->messages[i]);
-        }
-    }
-    if (r->messages){
-        free(r->messages);
-    }
-    if (r->extras_cleanup){
-        r->extras_cleanup(r);
-    }
-    if (r->var_config){
-        free(r->var_config);
-    }
-    for (size_t s=0; s<r->N_odes; s++){
-        r->odes[s]->r = NULL;
-    }
-    free(r->odes);
-}
-
-// Frees all dynamically allocated memory used by integrators.
-// Also resets all integrator configurations to default.
-void reb_simulation_integrators_reset(struct reb_simulation* r){
-    r->integrator = reb_integrator_ias15;
-    r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
-    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
-    for (size_t i=0; i<reb_integrators_available_N;i++){
-        if (reb_integrators_available[i]->reset){
-            reb_integrators_available[i]->reset(r);
-        }
-    }
-    // Also call the selected one in case it is a custom integrator.    
-    if (r->integrator.reset){
-        r->integrator.reset(r);
-    }
 }
 
 
@@ -585,13 +560,10 @@ static void reb_simulation_step(struct reb_simulation* const r){
 }
 
 void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE* warnings){
+    // Expect r_copy to be a newly created and initialized simulation.
     char* bufp;
     size_t sizep;
     reb_binarydata_simulation_to_stream(r, &bufp,&sizep);
-
-    reb_simulation_reset(r_copy);
-    memset(r_copy, 0, sizeof(struct reb_simulation));
-    reb_simulation_init(r_copy);
 
     FILE* fin = reb_fmemopen(bufp, sizep, "r");
     reb_binarydata_input_fields(r_copy, fin, warnings);
@@ -701,19 +673,16 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
 
 void reb_simulation_init(struct reb_simulation* r){
     memset(r, 0, sizeof(struct reb_simulation));
-    // Load all default integrator parameters
-    reb_simulation_integrators_reset(r);
-    r->rand_seed = reb_tools_get_rand_seed();
-
     // Init/reset values to default
     // Note: Only need to set non-zero values because
     //       we memset everything to zero above.
+    r->rand_seed = reb_tools_get_rand_seed();
     r->G                    = 1;
     r->dt                   = 0.001;
     r->gravity              = REB_GRAVITY_BASIC;
     r->root_size            = -1;
     r->opening_angle2       = 0.25;
-    r->OMEGAZ               = -1;
+    r->OMEGAZ               = -1.0;
     r->N_root_x             = 1;
     r->N_root_y             = 1;
     r->N_root_z             = 1;
@@ -722,6 +691,9 @@ void reb_simulation_init(struct reb_simulation* r){
     r->exact_finish_time    = 1;
     r->output_timing_last   = -1;
     r->simulationarchive_version = 3;
+    
+    // Set default integrator.
+    reb_simulation_set_integrator(r, reb_integrator_ias15);
 
 #ifdef OPENMP
     char msg[1024];

@@ -637,8 +637,6 @@ DLLEXPORT struct reb_simulation* reb_simulation_create_from_file(char* filename,
 DLLEXPORT struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_simulationarchive* sa, int64_t snapshot);
 // Free simulation and all associated memory.
 DLLEXPORT void reb_simulation_free(struct reb_simulation* const r);
-// Reset all integrator variables. Use this to clear any precalculated data, e.g. after changing the timestep.
-DLLEXPORT void reb_simulation_integrators_reset(struct reb_simulation* r);
 // Make a deep copy of simulation.
 DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
 // Compare r1 to r2. If exactly equal then 0 is returned, otherwise 1. If output_option=1, then difference is also printed on screen.

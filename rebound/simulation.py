@@ -1368,12 +1368,6 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_stop(byref(self))
 
-    def reset_integrator(self):
-        """
-        Call this function to reset temporary integrator variables
-        """
-        clibrebound.reb_simulation_integrators_reset(byref(self))
-
     def synchronize(self):
         """
         Call this function if safe-mode is disabled and you need to synchronize particle positions and velocities between timesteps.
