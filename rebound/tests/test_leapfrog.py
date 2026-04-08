@@ -14,7 +14,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_leapfrog_order_2(self):
         self.sim.integrator = "leapfrog"
-        self.sim.ri_leapfrog.order = 2
+        self.sim.integrator_data.order = 2
         self.sim.dt = 1
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
@@ -24,7 +24,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_leapfrog_order_4(self):
         self.sim.integrator = "leapfrog"
-        self.sim.ri_leapfrog.order = 4
+        self.sim.integrator_data.order = 4
         self.sim.dt = 1
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
@@ -35,7 +35,7 @@ class TestIntegrator(unittest.TestCase):
 
     def test_leapfrog_order_6(self):
         self.sim.integrator = "leapfrog"
-        self.sim.ri_leapfrog.order = 6
+        self.sim.integrator_data.order = 6
         self.sim.dt = 1
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
@@ -46,7 +46,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_leapfrog_order_8(self):
         self.sim.integrator = "leapfrog"
-        self.sim.ri_leapfrog.order = 8
+        self.sim.integrator_data.order = 8
         self.sim.dt = 1
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
@@ -57,7 +57,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_leapfrog_wrong_order(self):
         self.sim.integrator = "leapfrog"
-        self.sim.ri_leapfrog.order = 42
+        self.sim.integrator_data.order = 42
         with self.assertRaises(RuntimeError):
             self.sim.steps(1)
 

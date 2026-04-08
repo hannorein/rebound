@@ -55,6 +55,7 @@ class IntegratorData(ctypes.Structure):
             i += 1
     
     def __repr__(self):
+        # TODO: Print all integrator data
         return '<{0}.{1} object at {2}>'.format(self.__module__, type(self).__name__, hex(id(self)))
 
 
