@@ -38,7 +38,7 @@ struct reb_integrator_leapfrog_state {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_leapfrog_field_descriptor_list[] = {
-    { 400, REB_UINT,        "ri_leapfrog.order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0},
+    { 400, REB_UINT,        "order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0},
     { 0 }, // Null terminated list
 };
 

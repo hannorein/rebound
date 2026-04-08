@@ -1,6 +1,7 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof 
+from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof, cast 
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
 from .citations import cite
+from .binary_field_descriptor import IntegratorData
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .vectors import Vec3d, Vec3dBasic, Vec6d
 import os
@@ -585,6 +586,10 @@ class Simulation(Structure):
         self._free_particle_ap = self._fpa
 
 # Setter/getter of parameters and constants
+    @property
+    def integrator_data(self):
+        return IntegratorData(self)
+
     @property
     def integrator(self):
         """
