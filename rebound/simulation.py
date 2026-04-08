@@ -19,11 +19,12 @@ class Integrator(Structure):
     _fields_ = [("id", c_uint32),
                 ("step", c_void_p),
                 ("synchronize", c_void_p),
+                ("create", c_void_p),
+                ("free", c_void_p),
                 ("reset", c_void_p),
                 ("did_add_particle", c_void_p),
                 ("will_remove_particle", c_void_p),
-                ("data", c_void_p),
-                ("data_size", c_size_t),
+                ("field_descriptor_list", c_void_p),
                 ]
     def __eq__(self, other):
         # This ignores the walltime parameter
@@ -1415,6 +1416,8 @@ Simulation._fields_ = [
                 ("t", c_double),
                 ("G", c_double),
                 ("softening", c_double),
+                ("OMEGA", c_double),
+                ("OMEGAZ", c_double),
                 ("dt", c_double),
                 ("dt_last_done", c_double),
                 ("steps_done", c_uint64),
@@ -1498,7 +1501,6 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
-                ("ri_sei", IntegratorSEI), 
                 ("ri_leapfrog", IntegratorLeapfrog), 
                 ("ri_whfast", IntegratorWHFast),
                 ("ri_whfast512", IntegratorWHFast512),
