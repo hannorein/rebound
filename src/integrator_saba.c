@@ -54,6 +54,7 @@ void reb_integrator_saba_free(void* p);
 const struct reb_integrator reb_integrator_saba = {
     .id = 10,
     .step = reb_integrator_saba_step,
+    .create = reb_integrator_saba_create,
     .free = reb_integrator_saba_free,
     .field_descriptor_list = reb_integrator_saba_field_descriptor_list,
 };
