@@ -13,17 +13,14 @@ int main(int argc, char* argv[]) {
     reb_simulation_set_integrator(r, reb_integrator_whfast);
     reb_simulation_integrate(r,1.);
 
-    printf("r->particles   %zu\n", (r->particles));
 
     struct reb_simulation* r2 = reb_simulation_copy(r);
-    printf("r->particles   %zu\n", (r->particles));
-    printf("r2->particles  %zu\n", (r2->particles));
 
-    reb_simulation_integrate(r,2.);
+    reb_simulation_steps(r,10);
+    r->dt *= -1;
+    reb_simulation_steps(r,10);
     reb_simulation_integrate(r2,2.);
 
-    printf("r->particles   %zu\n", (r->particles));
-    printf("r2->particles  %zu\n", (r2->particles));
 
     reb_simulation_free(r);
     reb_simulation_free(r2);
