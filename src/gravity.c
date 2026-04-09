@@ -770,6 +770,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 particles[i].az = 0;
 
                                 if (i != idxA && i < _N_active){ // only loop over active planets
+                                    if (i==idxB) continue; // skip binary companion
                                     s.x += particles[i].m * particles[i].x;
                                     s.y += particles[i].m * particles[i].y;
                                     s.z += particles[i].m * particles[i].z;
