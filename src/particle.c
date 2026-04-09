@@ -283,6 +283,7 @@ int reb_get_rootbox_for_particle(const struct reb_simulation* const r, struct re
 }
 
 int reb_simulation_particle_index(struct reb_particle* p){
+    if (p == NULL) return -1;
     struct reb_simulation* r = p->sim;
     int i = 0;
     const int N = r->N;

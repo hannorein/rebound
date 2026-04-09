@@ -52,7 +52,7 @@ def kozai_sim():
     sun = rebound.Particle(m=1.)
     sim.add(sun)
     sim.add(primary=sun,m=9.55e-4,a=5.2)
-    sim.add(primary=sun,m=1,a=200,inc=math.pi/180.*75.)
+    sim.add(primary=sun,m=1,a=200,inc=math.pi/180.*75.,hash="widebinary")
     return sim
 
 class TestIntegratorTrace(unittest.TestCase):
@@ -61,7 +61,7 @@ class TestIntegratorTrace(unittest.TestCase):
         # tests if test particle encounters have an effect
         sim = rebound.Simulation()
         sim.add(m=1)
-        sim.add(m=1e-3,a=1)
+        sim.add(m=1e-3,a=1,hash="widebinary")
         sim.move_to_com()
         sim.N_active=2
         sim.integrator = "trace"
@@ -82,7 +82,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
     def test_trace_simulationarchive(self):
         sim = chaotic_exchange_sim()
-        sim.add(m=1.0, x=100, vy=0.1)
+        sim.add(m=1.0, x=100, vy=0.1, hash="widebinary")
         sim.integrator = "trace"
         sim.ri_trace.coordinates = 'widebinary'
         sim.dt = (8./365.)*2.*math.pi
@@ -96,7 +96,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
 
         sim = chaotic_exchange_sim()
-        sim.add(m=1.0, x=100, vy=0.1)
+        sim.add(m=1.0, x=100, vy=0.1,hash="widebinary")
         sim.integrator = "trace"
         sim.ri_trace.coordinates = 'widebinary'
         sim.dt = (8./365.)*2.*math.pi
@@ -134,7 +134,7 @@ class TestIntegratorTrace(unittest.TestCase):
         rebound.data.add_outer_solar_system(sim)
         for i in range(1,sim.N):
             sim.particles[i].m *=50.
-        sim.add(m=1.,a=200.)
+        sim.add(m=1.,a=200., hash="widebinary")
 
         sim.integrator = "trace"
         sim.ri_trace.coordinates = 'widebinary'
@@ -150,7 +150,7 @@ class TestIntegratorTrace(unittest.TestCase):
         def get_sim():
             sim = rebound.Simulation()
             rebound.data.add_outer_solar_system(sim)
-            sim.add(m=0.5,a=200.)
+            sim.add(m=0.5,a=200.,hash="widebinary")
             return sim
 
         sim = get_sim()
@@ -181,7 +181,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1)    #these params lead to collision on my machine
         sim.add(m=1e-8,r=4e-5,a=0.55,e=0.4,f=-0.94)
-        sim.add(m=0.5,a=50.)
+        sim.add(m=0.5,a=50.,hash="widebinary")
         N0 = sim.N
 
         sim.integrator = "trace"
@@ -205,7 +205,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1e-5,r=1.6e-4,a=0.5,e=0.1,f=2.3)
         sim.add(m=1e-4,r=1.4e-3,x=1.,vx=-0.4) # falling onto the star
         sim.add(m=1e-5,r=1.6e-4,a=1.5,e=0.1)
-        sim.add(m=0.5,a=100.)
+        sim.add(m=0.5,a=100.,hash="widebinary")
         mtot0 = sum([p.m for p in sim.particles])
         com0 = sim.com()
         N0 = sim.N
@@ -241,7 +241,7 @@ class TestIntegratorTrace(unittest.TestCase):
             sim.add(m=0.0001, x=0.57904, y=1.03836, vx=-0.69267, vy=0.75995)
             sim.add(m=0.0001, x=-0.41683, y=0.83128, vx=-1.03478, vy=-0.72482)
             sim.add(m=0.0001, x=1.83969, y=0.32938, vx=-0.55114, vy=0.51646)
-            sim.add(m=9.55e-4, a=5.2)
+            sim.add(m=9.55e-4, a=5.2, hash="widebinary")
             sim.move_to_com()
             sim.dt = 0.034
             return sim

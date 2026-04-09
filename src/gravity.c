@@ -756,11 +756,10 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                     case REB_TRACE_MODE_INTERACTION: // Interaction step
                     {
                             const int idxA = 0;
-                            const int idxB = _N_active-1; // binary companion is always last active particle
-                            const int first_planet_idx = 1;
-                            const int last_planet_idx = _N_active-2;
+                            const int idxB = reb_simulation_particle_index(reb_simulation_particle_by_hash(r, reb_hash("widebinary"))); // binary companion is always last active particle
+                            const int has_binary = (idxB != -1);
                             const double mA = particles[idxA].m;
-                            const double mB = particles[idxB].m;
+                            const double mB = has_binary ? particles[idxB].m : 0.0;
 
                             // little s, equation (13)
                             struct reb_vec3d s = {0};
@@ -770,7 +769,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 particles[i].ay = 0;
                                 particles[i].az = 0;
 
-                                if (i != idxA && i <= last_planet_idx){ // only loop over active planets
+                                if (i != idxA && i < _N_active){ // only loop over active planets
                                     s.x += particles[i].m * particles[i].x;
                                     s.y += particles[i].m * particles[i].y;
                                     s.z += particles[i].m * particles[i].z;
@@ -782,29 +781,36 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             s.y /= mtotA;
                             s.z /= mtotA;
 
-                            // XB + Sx
-                            const double dbx = particles[idxB].x + s.x;
-                            const double dby = particles[idxB].y + s.y;
-                            const double dbz = particles[idxB].z + s.z;
-                            const double _rb = sqrt(dbx*dbx + dby*dby + dbz*dbz); // |XB + Sx|
-                            const double _Rb = sqrt(particles[idxB].x*particles[idxB].x + particles[idxB].y*particles[idxB].y + particles[idxB].z*particles[idxB].z); // |XB| = Rb
-                            const double prefact1 = -G*mA*mB/mtotA / (_rb*_rb*_rb); // first term in equation (14), will be shared
+                            // Binary-related quantities (only if binary exists)
+                            double dbx = 0.0, dby = 0.0, dbz = 0.0;
+                            double _rb = 1.0, _Rb = 1.0;
+                            double prefact1 = 0.0;
 
-                            // Acceleration of the binary due to star A
-                            // First two terms of equation (15)
-                            const double prefactorb1 = G*mA / (_Rb*_Rb*_Rb);
-                            const double prefactorb2 = G*mA / (_rb*_rb*_rb);
-                            particles[idxB].ax += prefactorb1*particles[idxB].x - prefactorb2*dbx;
-                            particles[idxB].ay += prefactorb1*particles[idxB].y - prefactorb2*dby;
-                            particles[idxB].az += prefactorb1*particles[idxB].z - prefactorb2*dbz;
+                            if (has_binary){
+                                dbx = particles[idxB].x + s.x;
+                                dby = particles[idxB].y + s.y;
+                                dbz = particles[idxB].z + s.z;
+                                _rb = sqrt(dbx*dbx + dby*dby + dbz*dbz);
+                                _Rb = sqrt(particles[idxB].x*particles[idxB].x + particles[idxB].y*particles[idxB].y + particles[idxB].z*particles[idxB].z);
+                                prefact1 = -G*mA*mB/mtotA / (_rb*_rb*_rb);
+
+                                // Acceleration of the binary due to star A
+                                const double prefactorb1 = G*mA / (_Rb*_Rb*_Rb);
+                                const double prefactorb2 = G*mA / (_rb*_rb*_rb);
+                                particles[idxB].ax += prefactorb1*particles[idxB].x - prefactorb2*dbx;
+                                particles[idxB].ay += prefactorb1*particles[idxB].y - prefactorb2*dby;
+                                particles[idxB].az += prefactorb1*particles[idxB].z - prefactorb2*dbz;
+                            }
 
                             // Second term in Equation 14 compute C = sum_i m_i * (Xb - Xi + s)/|...|^3
                             struct reb_vec3d C = {0};
                             
                             // Active-active planet interactions
-                            for (int i=2; i<=last_planet_idx;i++){
+                            for (int i=2; i<_N_active;i++){
                                 if (reb_sigint > 1) return;
+                                if (i == idxB) continue;
                                 for (int j=1;j<i;j++){
+                                    if (j == idxB) continue;
                                     // Pairwise planet interactions
                                     if (r->ri_trace.current_Ks[j*r->N+i]) continue;
                                     const double dx = particles[i].x - particles[j].x;
@@ -827,45 +833,47 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 
                             // Repurposing this loop. Outer loop is used to add in the binary terms too.
                             const int startitestp = MAX(_N_active,2);
-                            for (int i=first_planet_idx; i<_N_real; i++){
+                            for (int i=1; i<_N_real; i++){
                                 if (reb_sigint > 1) return;
                                 if (i == idxB) continue; // to avoid double counting the binary
 
                                 // All the binary interactions
                                 // Xb - Xi + Sx
-                                const double dbix = dbx - particles[i].x;
-                                const double dbiy = dby - particles[i].y;
-                                const double dbiz = dbz - particles[i].z;
-                                const double _rbi = sqrt(dbix*dbix + dbiy*dbiy + dbiz*dbiz); // no softening here
+                                if (has_binary){
+                                    // Xb - Xi + Sx
+                                    const double dbix = dbx - particles[i].x;
+                                    const double dbiy = dby - particles[i].y;
+                                    const double dbiz = dbz - particles[i].z;
+                                    const double _rbi = sqrt(dbix*dbix + dbiy*dbiy + dbiz*dbiz);
 
-                                double rx = (particles[idxB].x + s.x) - particles[i].x;
-                                double ry = (particles[idxB].y + s.y) - particles[i].y;
-                                double rz = (particles[idxB].z + s.z) - particles[i].z;
-                                double _rs  = sqrt(rx*rx + ry*ry + rz*rz);
-                                double invr3 = 1.0/(_rs*_rs*_rs);
+                                    const double rx = (particles[idxB].x + s.x) - particles[i].x;
+                                    const double ry = (particles[idxB].y + s.y) - particles[i].y;
+                                    const double rz = (particles[idxB].z + s.z) - particles[i].z;
+                                    const double _rs  = sqrt(rx*rx + ry*ry + rz*rz);
+                                    const double invr3 = 1.0/(_rs*_rs*_rs);
 
-                                C.x += particles[i].m * rx * invr3;
-                                C.y += particles[i].m * ry * invr3;
-                                C.z += particles[i].m * rz * invr3;
+                                    C.x += particles[i].m * rx * invr3;
+                                    C.y += particles[i].m * ry * invr3;
+                                    C.z += particles[i].m * rz * invr3;
 
-                                // accelerations on particle i due to binary
-                                // first and third terms of equation (14)
-                                const double prefact3 = G*mB / (_rbi*_rbi*_rbi);
-                                particles[i].ax += prefact1*dbx + prefact3*dbix;
-                                particles[i].ay += prefact1*dby + prefact3*dbiy;
-                                particles[i].az += prefact1*dbz + prefact3*dbiz;
+                                    // accelerations on particle i due to binary
+                                    const double prefact3 = G*mB / (_rbi*_rbi*_rbi);
+                                    particles[i].ax += prefact1*dbx + prefact3*dbix;
+                                    particles[i].ay += prefact1*dby + prefact3*dbiy;
+                                    particles[i].az += prefact1*dbz + prefact3*dbiz;
 
-                                // acceleration on the binary due to i
-                                // Last two terms of equation (15)
-                                const double prefactorb1i = G*particles[i].m/(_Rb*_Rb*_Rb);
-                                const double prefactorb2i = G*particles[i].m/(_rbi*_rbi*_rbi);
-                                particles[idxB].ax += prefactorb1i*particles[idxB].x - prefactorb2i*dbix;
-                                particles[idxB].ay += prefactorb1i*particles[idxB].y - prefactorb2i*dbiy;
-                                particles[idxB].az += prefactorb1i*particles[idxB].z - prefactorb2i*dbiz;
+                                    // acceleration on the binary due to i
+                                    const double prefactorb1i = G*particles[i].m/(_Rb*_Rb*_Rb);
+                                    const double prefactorb2i = G*particles[i].m/(_rbi*_rbi*_rbi);
+                                    particles[idxB].ax += prefactorb1i*particles[idxB].x - prefactorb2i*dbix;
+                                    particles[idxB].ay += prefactorb1i*particles[idxB].y - prefactorb2i*dbiy;
+                                    particles[idxB].az += prefactorb1i*particles[idxB].z - prefactorb2i*dbiz;
+                                }
 
                                 // Inner loop for active-test particle interactions
                                 if (i >= startitestp){
-                                    for (int j=1; j<idxB; j++){
+                                    for (int j=1; j<_N_active; j++){
+                                        if (j == idxB) continue;
                                         if (r->ri_trace.current_Ks[j*r->N+i]) continue;
                                         const double dx = particles[i].x - particles[j].x;
                                         const double dy = particles[i].y - particles[j].y;
@@ -886,15 +894,14 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 }
                             }
 
-                            double common = -G * mB / mtotA;
-
-                            // now apply to every planet k (same vector for all)
-                            // Don't think we can avoid another loop, sadly...
-                            for (int k=first_planet_idx; k<_N_real; k++){
-                                if (k == idxB) continue; // skip binary companion
-                                particles[k].ax += common * C.x;
-                                particles[k].ay += common * C.y;
-                                particles[k].az += common * C.z;
+                            if (has_binary){
+                                const double common = -G * mB / mtotA;
+                                for (int k=1; k<_N_real; k++){
+                                    if (k == idxB) continue;
+                                    particles[k].ax += common * C.x;
+                                    particles[k].ay += common * C.y;
+                                    particles[k].az += common * C.z;
+                                }
                             }
                         }
                         break;

@@ -848,7 +848,7 @@ DLLEXPORT struct reb_particle* reb_simulation_particle_by_hash(struct reb_simula
 // Same as above but searches on all nodes if MPI is enabled. Returns copy instead of a pointer because particle might be on a different node.
 DLLEXPORT struct reb_particle reb_simulation_particle_by_hash_mpi(struct reb_simulation* const r, uint32_t hash);
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
-DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
+DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p);
 // Subtract particle p2 from p1
 DLLEXPORT void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2);
 // Add particle p2 to p1
