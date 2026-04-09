@@ -146,6 +146,36 @@ class TestIntegratorTrace(unittest.TestCase):
         dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,7e-8)
 
+    def test_outer_solar(self):
+        def get_sim():
+            sim = rebound.Simulation()
+            rebound.data.add_outer_solar_system(sim)
+            sim.add(m=0.5,a=200.)
+            return sim
+
+        sim = get_sim()
+        sim.integrator = "trace"
+        sim.ri_trace.coordinates = 'widebinary'
+        P = sim.particles[1].P
+        sim.dt = 1e-3*P
+        E0 = sim.energy()
+        start=datetime.now()
+        sim.integrate(2000)
+        time_trace = (datetime.now()-start).total_seconds()
+        dE_trace = abs((sim.energy() - E0)/E0)
+
+        sim = get_sim()
+        sim.integrator = "whfast"
+        P = sim.particles[1].P
+        sim.dt = 1e-3*P
+        start=datetime.now()
+        sim.integrate(2000)
+        time_whfast = (datetime.now()-start).total_seconds()
+        dE_whfast = abs((sim.energy() - E0)/E0)
+
+        self.assertLess(dE_trace/dE_whfast,2) # not much worse than whfast
+        self.assertLess(time_trace/time_whfast,2)
+
     def test_collision_add_particles(self):
         sim = rebound.Simulation()
         sim.add(m=1.)

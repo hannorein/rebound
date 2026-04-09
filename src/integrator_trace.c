@@ -164,9 +164,9 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     if (r->dt * r->dt > dt_prs2){
         return 1;
     }else{
-        // In WB coordinates, we also switch if we enter the binary's hill sphere
+        // In WB coordinates, we also switch if we enter the binary's hill sphere x r_crit_WB
         if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
-          reb_integrator_trace_wb_to_inertial(r);
+          // reb_integrator_trace_wb_to_inertial(r);
           const int N_active = (r->N_active==-1 || r->testparticle_type==1)?r->N:r->N_active;
           const int idxB = N_active-1; // star B assumed to be last active particle
           double bx = r->particles[idxB].x;
@@ -182,7 +182,7 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
           double dyb = r->particles[j].y - r->particles[idxB].y;
           double dzb = r->particles[j].z - r->particles[idxB].z;
           double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
-          reb_integrator_trace_inertial_to_wb(r);
+          //reb_integrator_trace_inertial_to_wb(r);
 
           if (d2b*d2b*d2b < rhillb6){
               return 1;
@@ -813,16 +813,18 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         ri_trace->tponly_encounter = 1;
     }
 
-    // Don't think this needs to change for WB
     // Check for pericenter CE
+    // in WB we do the pericenter checks in inertial
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     for (int j = 1; j < Nactive; j++){
-        // in WB coordinates this is checked against the WB itself
+        // The WB companion does not have close encounters with the central star
         if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) continue;
 
         if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
             if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
+                if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
                 return;
             }
             if (j < Nactive){ // Two massive particles have a close encounter
@@ -831,6 +833,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
 
     if (ri_trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -838,7 +841,6 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         for (int i = 1; i < N; i++){
             ri_trace->encounter_map[i] = 1; //  trigger encounter
         }
-
     }
 
     // Body-body
@@ -881,6 +883,8 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // Re-create old encounter_map. I don't think we need to reset encounter_N
     memcpy(ri_trace->encounter_map, ri_trace->encounter_map_backup, N*sizeof(int));
 
+    // in WB we do the pericenter checks in inertial
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     if (!ri_trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timestep.
         for (int j = 1; j < Nactive; j++){
@@ -893,6 +897,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
                 new_close_encounter = 1;
                 if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
                     // Everything will be integrated with BS/IAS15. No need to check any further.
+                    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
                     return new_close_encounter;
                 }
 
@@ -903,6 +908,8 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+
     if (ri_trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
         ri_trace->encounter_N = N;
