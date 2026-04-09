@@ -51,7 +51,11 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { 66, REB_UINT,         "timestep_warning",   offsetof(struct reb_integrator_whfast_state, timestep_warning), 0, 0},
     { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle)},
     { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle)},
-    { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0},
+    { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, 
+        (struct reb_binarydata_enum_descriptor[]){
+        {0, "jacobi"}, {1, "democraticheliocentric"}, {2, "whds"}, {3, "barycentric"}, {0} // Null terminated
+        }
+    },
     { 143, REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0},
     { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0},
     { 0 }, // Null terminated list

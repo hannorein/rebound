@@ -6,6 +6,11 @@ from .vectors import Vec3dBasic
 REB_BINARYDATA_DTYPE = {0: ctypes.c_double, 1: ctypes.c_int, 2: ctypes.c_uint, 3: ctypes.c_uint32, 4: ctypes.c_int64,
                         5: ctypes.c_uint64, 7: Vec3dBasic, 9: ctypes.c_void_p, 10: ctypes.c_void_p, 18: ctypes.c_size_t}
 
+class EnumDescriptor(ctypes.Structure):
+    _fields_ = [("value", ctypes.c_int), 
+                ("name", ctypes.c_char*256),
+                ]
+
 class BinaryFieldDescriptor(ctypes.Structure):
     """ 
     Describes the binary field in simulationarchives 
@@ -17,10 +22,11 @@ class BinaryFieldDescriptor(ctypes.Structure):
         return '<{0}.{1} object at {2}, type={3}, dtype={4}, name=\'{5}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.type, self.dtype, self.name.decode("ascii"))
     _fields_ = [("type", ctypes.c_uint),
                 ("dtype", ctypes.c_int),
-                ("name", ctypes.c_char*1024),
+                ("name", ctypes.c_char*256),
                 ("offset", ctypes.c_size_t),
                 ("offset_N", ctypes.c_size_t),
                 ("element_size", ctypes.c_size_t),
+                ("enum_descriptor_list", ctypes.POINTER(EnumDescriptor)),
                 ]
 
 class IntegratorData(ctypes.Structure):
@@ -50,6 +56,17 @@ class IntegratorData(ctypes.Structure):
                 if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
                     raise NotImplemented("Datatype of field '%s' in IntegratorData is currently not supported." % name)
                 pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.integrator_data + field_descriptor.offset)
+                if isinstance(value, str) and field_descriptor.enum_descriptor_list:
+                    value = value.lower()
+                    j=0
+                    while True:
+                        enum_descriptor = field_descriptor.enum_descriptor_list[j]
+                        if enum_descriptor.name == 0:
+                            raise AttributeError("Field '%s' can not be set to '%s'." % (name, value))
+                        if enum_descriptor.name.decode("utf-8") == value:
+                            pointer_to_field.value = enum_descriptor.value
+                            return
+                        j += 1
                 pointer_to_field.value = value
                 return
             i += 1
