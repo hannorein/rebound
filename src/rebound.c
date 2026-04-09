@@ -581,7 +581,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->ri_trace.encounter_N = 0;
     r->ri_trace.r_crit_hill = 3.;
     r->ri_trace.peri_crit_eta = 1.0;
-    r->ri_trace.r_crit_WB = 0.1;
+    r->ri_trace.r_crit_WB = 0.2;
     r->ri_trace.force_accept = 0;
 
     // ********** EOS
