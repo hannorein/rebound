@@ -303,22 +303,28 @@ struct reb_integrator_saba_state {
     size_t N_allocated_temp;
     struct reb_particle* REB_RESTRICT p_temp;
 };
+#define REB_AS_ENUM_MEMBER(prefix, value, name)  prefix ## _ ## name = value,
+#define REB_GENERATE_ENUM(LIST) LIST(REB_AS_ENUM_MEMBER,LIST)
 
 // WHFast Integrator (Rein & Tamayo 2015)
 struct reb_integrator_whfast_state {
     unsigned int corrector;                                     // Order of first symplectic corrector: 0 (default - no corrector), 3, 5, 7, 11, 17.  
     unsigned int corrector2;                                    // 0: no second corrector, 1: use second corrector
+#define REB_WHFAST_KERNEL(X,Y) \
+        X(Y, 0, DEFAULT) \
+        X(Y, 1, MODIFIEDKICK) \
+        X(Y, 2, COMPOSITION) \
+        X(Y, 3, LAZY)
     enum {
-        REB_WHFAST_KERNEL_DEFAULT = 0,
-        REB_WHFAST_KERNEL_MODIFIEDKICK = 1,
-        REB_WHFAST_KERNEL_COMPOSITION = 2,
-        REB_WHFAST_KERNEL_LAZY = 3,
-    } kernel;                                                   // Kernel type. See Rein, Tamayo & Brown 2019 for details.
+        REB_GENERATE_ENUM(REB_WHFAST_KERNEL)
+    } kernel;                                                   // Kernel type. See Rein, Tamayo & Brown 2019 for details.                            
+#define REB_WHFAST_COORDINATES(X,Y) \
+        X(Y, 0, JACOBI)                                         /* Jacobi coordinates (default)                   */ \
+        X(Y, 1, DEMOCRATICHELIOCENTRIC)                         /* Democratic Heliocentric coordinates            */ \
+        X(Y, 2, WHDS)                                           /* WHDS coordinates (Hernandez and Dehnen, 2017)  */ \
+        X(Y, 3, BARYCENTRIC)                                    /* Barycentric coordinates                        */ 
     enum {
-        REB_WHFAST_COORDINATES_JACOBI = 0,                      // Jacobi coordinates (default)
-        REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC = 1,      // Democratic Heliocentric coordinates
-        REB_WHFAST_COORDINATES_WHDS = 2,                        // WHDS coordinates (Hernandez and Dehnen, 2017)
-        REB_WHFAST_COORDINATES_BARYCENTRIC = 3,                 // Barycentric coordinates
+        REB_GENERATE_ENUM(REB_WHFAST_COORDINATES)
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting
     unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
     unsigned int safe_mode;                                     // 0: Drift Kick Drift scheme (default), 1: combine first and last sub-step.
@@ -335,6 +341,8 @@ struct reb_integrator_whfast_state {
     unsigned int timestep_warning;
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
+
+#undef REB_AS_ENUM_MEMBER
 
 // Special particle struct for WHFast512
 struct reb_particle_avx512; // Opaque pointer. Implemented in integrator_whfast.h

@@ -57,13 +57,12 @@ class IntegratorData(ctypes.Structure):
                     raise NotImplemented("Datatype of field '%s' in IntegratorData is currently not supported." % name)
                 pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.integrator_data + field_descriptor.offset)
                 if isinstance(value, str) and field_descriptor.enum_descriptor_list:
-                    value = value.lower()
                     j=0
                     while True:
                         enum_descriptor = field_descriptor.enum_descriptor_list[j]
-                        if enum_descriptor.name == 0:
+                        if enum_descriptor.name == b"": # reached end of list
                             raise AttributeError("Field '%s' can not be set to '%s'." % (name, value))
-                        if enum_descriptor.name.decode("utf-8") == value:
+                        if enum_descriptor.name.decode("utf-8") == value.upper():
                             pointer_to_field.value = enum_descriptor.value
                             return
                         j += 1

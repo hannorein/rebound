@@ -51,11 +51,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { 66, REB_UINT,         "timestep_warning",   offsetof(struct reb_integrator_whfast_state, timestep_warning), 0, 0},
     { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle)},
     { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle)},
-    { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, 
-        (struct reb_binarydata_enum_descriptor[]){
-        {0, "jacobi"}, {1, "democraticheliocentric"}, {2, "whds"}, {3, "barycentric"}, {0} // Null terminated
-        }
-    },
+    { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_COORDINATES) },
     { 143, REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0},
     { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0},
     { 0 }, // Null terminated list
@@ -63,10 +59,13 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
 
 void* reb_integrator_whfast_create();
 void reb_integrator_whfast_free(void* p);
+void reb_integrator_whfast_synchronize(struct reb_simulation* const r);
+void reb_integrator_whfast_step(struct reb_simulation* const r);
 
 const struct reb_integrator reb_integrator_whfast = {
     .id = 1,
     .step = reb_integrator_whfast_step,
+    .synchronize = reb_integrator_whfast_synchronize,
     .create = reb_integrator_whfast_create,
     .free = reb_integrator_whfast_free,
     .field_descriptor_list = reb_integrator_whfast_field_descriptor_list,

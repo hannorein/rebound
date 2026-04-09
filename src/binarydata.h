@@ -85,6 +85,13 @@ struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r,
 // Write the simulation to a memory buffer (simulationarchive format).
 DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 
+#define REB_AS_STRUCT_MEMBER(prefix, value, name) {value, #name}, 
+#define REB_GENERATE_ENUM_DESCRIPTORS(LIST) \
+    (struct reb_binarydata_enum_descriptor[]){ \
+        LIST(REB_AS_STRUCT_MEMBER, LIST)\
+        {0} /* Null terminated*/ \
+    }
+
 struct reb_binarydata_enum_descriptor{
     int value;
     char name[256];

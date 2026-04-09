@@ -76,7 +76,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=1.,e=.1)
         sim.add(m=1e-3, a=3.,e=0.1)
         sim.integrator = "whfast"
-        sim.integrator_data.coordinates = "democraticheliocentric"
+        sim.integrator_data.coordinates = "jacobi"
         sim.integrator_data.safe_mode = 0
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
