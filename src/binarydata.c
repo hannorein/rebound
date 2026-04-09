@@ -574,18 +574,20 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     /// Output all fields
     for (size_t fli=0; fli<2; fli++){
         const struct reb_binarydata_field_descriptor* current_fd_list;
+        char* base_address;
         switch (fli){
             case 0: // Main simulation
                 current_fd_list = reb_binarydata_field_descriptor_list;
+                base_address = (char*)r;
                 break;
             case 1: // Integrator
                 current_fd_list = r->integrator.field_descriptor_list;
+                base_address = (char*)r->integrator_data;
                 break;
         }
         int i=0;
         while (current_fd_list[i].type){
             int dtype = current_fd_list[i].dtype;
-            printf("Writing field %d\n", current_fd_list[i].type);
             // Simple data types:
             if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
                     || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
@@ -628,7 +630,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                         break;
                 }
                 write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                char* pointer = (char*)r + current_fd_list[i].offset;
+                char* pointer = base_address + current_fd_list[i].offset;
                 write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
             }
             // Pointer data types
@@ -636,18 +638,8 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
-                size_t* pointer_N;
-                char* pointer;
-                switch (fli){
-                    case 0: // Main simulation
-                        pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
-                        pointer = (char*)r + current_fd_list[i].offset;
-                        break;
-                    case 1: // Integrator
-                        pointer_N = (size_t*)((char*)(r->integrator_data) + current_fd_list[i].offset_N);
-                        pointer = (char*)r->integrator_data + current_fd_list[i].offset;
-                        break;
-                }
+                size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
+                char* pointer = base_address + current_fd_list[i].offset;
                 field.size = (*pointer_N) * current_fd_list[i].element_size;
 
                 if (field.size){
@@ -663,7 +655,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 field.type = current_fd_list[i].type;
                 field.size = current_fd_list[i].element_size;
 
-                char* pointer = (char*)r + current_fd_list[i].offset;
+                char* pointer = base_address + current_fd_list[i].offset;
                 pointer = *(char**)pointer;
                 if (pointer){
                     write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
@@ -674,8 +666,8 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
-                size_t N_list = *((size_t*)((char*)r + current_fd_list[i].offset_N));
-                char*** list_p = (char***)((char*)r + current_fd_list[i].offset);
+                size_t N_list = *((size_t*)(base_address + current_fd_list[i].offset_N));
+                char*** list_p = (char***)(base_address + current_fd_list[i].offset);
                 size_t serialized_size = 0;
                 for (size_t i=0; i<N_list; i++){
                     // character count + NULL character + original pointer
@@ -697,12 +689,12 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
-                size_t* pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
                 field.size = (*pointer_N) * current_fd_list[i].element_size;
 
                 if (field.size){
                     write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                    char* pointer = (char*)r + current_fd_list[i].offset;
+                    char* pointer = base_address + current_fd_list[i].offset;
                     struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
                     write_to_stream(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
                     write_to_stream(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
@@ -753,31 +745,30 @@ void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_B
     struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
     struct reb_binarydata_field_descriptor fd_functionpointers = reb_binarydata_field_descriptor_for_name("functionpointers");
-
 next_field:
-    printf("next field\n");
     // Loop over all fields
     while(1){
 
         int numread = (int)fread(&field,sizeof(struct reb_binarydata_field),1,inf);
         if (numread<1){
-            printf("reached end of file\n");
             goto finish_fields; // End of file
         }
         if (field.type==fd_end.type){
-            printf("saw end snapshot\n");
             goto finish_fields; // End of snapshot
         }
 
+        char* base_address;
         // Loop over all modules that might have their own field descriptors.
         for (size_t fli=0; fli<2; fli++){
             const struct reb_binarydata_field_descriptor* current_fd_list;
             switch (fli){
                 case 0: // Main simulation
                     current_fd_list = reb_binarydata_field_descriptor_list;
+                    base_address = (char*)r;
                     break;
                 case 1: // Integrator
                     current_fd_list = r->integrator.field_descriptor_list;
+                    base_address = (char*)r->integrator_data;
                     break;
             }
 
@@ -786,19 +777,18 @@ next_field:
             while (current_fd_list[i].type){
                 struct reb_binarydata_field_descriptor fd = current_fd_list[i];
                 if (fd.type==field.type){
-                    printf("reading fli=%d type=%d\n", fli, fd.type);
                     // Read simple data types
                     if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
                             || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
                             || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
                             || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
-                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        char* pointer = base_address + current_fd_list[i].offset;
                         fread(pointer, field.size, 1, inf);
                         goto next_field;
                     }
                     // Read ID, then do special initialization depending on type.
                     if (fd.dtype == REB_INT64_INIT){
-                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        char* pointer = base_address + current_fd_list[i].offset;
                         fread(pointer, field.size, 1, inf);
                         if (fd.type==51){ // Integrator
                             {
@@ -808,7 +798,6 @@ next_field:
                                     if (reb_integrators_available[i]->id == r->integrator.id){
                                         reb_simulation_set_integrator(r, *reb_integrators_available[i]);
                                         integrator_found = 1;
-                                        printf("integrator_found_and_set=%d\n", fli);
                                         break;
                                     }
                                 }
@@ -828,32 +817,20 @@ next_field:
                         if (field.size % current_fd_list[i].element_size){
                             reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
                         }
-                        char* pointer;
-                        size_t* pointer_N;
-                        switch (fli){
-                            case 0: // Main simulation
-                                pointer = (char*)r + current_fd_list[i].offset;
-                                pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
-                                break;
-                            case 1: // Integrator
-                                pointer = (char*)r->integrator_data + current_fd_list[i].offset;
-                                pointer_N = (size_t*)((char*)r->integrator_data + current_fd_list[i].offset_N);
-                                break;
-                        }
+                        char** pointer = base_address + current_fd_list[i].offset;
+                        size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
                         if (fd.dtype == REB_POINTER_ALIGNED){
-                            if (*(char**)pointer) free(*(char**)pointer);
+                            if (*pointer) free(*pointer);
 #if defined(_WIN32) || !defined(AVX512)
                             // WHFast512 not supported on Windows!
-                            *(char**)pointer = malloc(sizeof(struct reb_particle_avx512));
+                            *pointer = malloc(sizeof(struct reb_particle_avx512));
 #else 
-                            *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+                            *pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
 #endif // _WIN32
                         }else{ // normal malloc
-                            *(char**)pointer = realloc(*(char**)pointer, field.size);
+                            *pointer = realloc(*pointer, field.size);
                         }
-                        size_t rr = fread(*(char**)pointer, field.size,1,inf);
-                        printf("Read %zu     %zu %zu\n", rr, field.size, current_fd_list[i].element_size);
-                        printf("poarticle size %zu\n", sizeof(struct reb_particle));
+                        fread(*pointer, field.size,1,inf);
                         *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
 
                         goto next_field;
@@ -862,7 +839,7 @@ next_field:
                         if (field.size != current_fd_list[i].element_size){
                             reb_simulation_warning(r, "Inconsistent size encountered in binary field (fixed pointer size).");
                         }
-                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        char* pointer = base_address + current_fd_list[i].offset;
                         *(char**)pointer = realloc(*(char**)pointer, field.size);
                         fread(*(char**)pointer, field.size,1,inf);
 
@@ -873,8 +850,8 @@ next_field:
                         char* serialized_strings = malloc(serialized_size);
                         fread(serialized_strings, serialized_size,1,inf);
                         // Process strings back into a list
-                        char*** pointer = (char***)((char*)r + current_fd_list[i].offset);
-                        size_t* pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                        char*** pointer = (char***)(base_address + current_fd_list[i].offset);
+                        size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
                         size_t current_pos = 0;
                         while (current_pos < serialized_size){
                             char* current_string = serialized_strings + current_pos;
@@ -895,7 +872,7 @@ next_field:
                         if (field.size % current_fd_list[i].element_size){
                             reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
                         }
-                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        char* pointer = base_address + current_fd_list[i].offset;
                         struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
 
                         dp7->p0 = realloc(dp7->p0,field.size/7);
@@ -913,7 +890,7 @@ next_field:
                         fread(dp7->p5, field.size/7, 1, inf);
                         fread(dp7->p6, field.size/7, 1, inf);
 
-                        size_t* pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                        size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
                         *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
 
                         goto next_field;
@@ -967,7 +944,6 @@ next_field:
     }
 
 finish_fields:
-    printf("finisning fields\n");
     // Some final initializations
 
     // Update pointers to simulation
