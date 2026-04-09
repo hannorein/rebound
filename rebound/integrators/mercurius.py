@@ -29,6 +29,7 @@ class IntegratorMercurius(ctypes.Structure):
                 ("recalculate_coordinates_this_timestep", ctypes.c_uint),
                 ("recalculate_r_crit_this_timestep", ctypes.c_uint),
                 ("safe_mode", ctypes.c_uint),
+                ("timestep_warning", ctypes.c_uint),
                 ("is_synchronized", ctypes.c_uint),
                 ("mode", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_size_t),

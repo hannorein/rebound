@@ -481,8 +481,9 @@ static void reb_simulation_step(struct reb_simulation* const r){
     if (r->pre_timestep_modifications){
         reb_simulation_synchronize(r);
         r->pre_timestep_modifications(r);
-        r->ri_whfast.recalculate_coordinates_this_timestep = 1;
-        r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
+        // TODO: reimplement
+        //r->ri_whfast.recalculate_coordinates_this_timestep = 1;
+        //r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
 
     PROFILING_START();
@@ -492,10 +493,11 @@ static void reb_simulation_step(struct reb_simulation* const r){
 
     // Integrate other ODEs
     if (r->N_odes && reb_integrator_cmp(r->integrator, reb_integrator_bs)!=0){
-        if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
-            reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
-            r->ode_warnings = 1;
-        }
+        // TODO: Reimplement warning:
+        //if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
+        //    reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
+        //    r->ode_warnings = 1;
+        //}
 
         double dt = r->dt_last_done;
         double t = r->t - r->dt_last_done; // Note: floating point inaccuracy
@@ -527,8 +529,9 @@ static void reb_simulation_step(struct reb_simulation* const r){
     if (r->post_timestep_modifications){
         reb_simulation_synchronize(r);
         r->post_timestep_modifications(r);
-        r->ri_whfast.recalculate_coordinates_this_timestep = 1;
-        r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
+        // TODO: reimplement
+        //r->ri_whfast.recalculate_coordinates_this_timestep = 1;
+        //r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
 
     if (r->N_var){

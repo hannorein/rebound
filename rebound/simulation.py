@@ -1507,7 +1507,6 @@ Simulation._fields_ = [
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
                 ("ri_whfast512", IntegratorWHFast512),
-                ("ri_saba", IntegratorSABA),
                 ("ri_ias15", IntegratorIAS15),
                 ("ri_mercurius", IntegratorMercurius),
                 ("ri_trace", IntegratorTRACE),

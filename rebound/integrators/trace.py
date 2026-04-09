@@ -41,6 +41,7 @@ class IntegratorTRACE(ctypes.Structure):
                 ("r_crit_hill", ctypes.c_double),
                 ("peri_crit_eta", ctypes.c_double),
                 ("_mode", ctypes.c_uint),
+                ("timestep_warning", ctypes.c_uint),
                 ("_encounter_N", ctypes.c_size_t),
                 ("_encounter_N_active", ctypes.c_size_t),
                 ("_N_allocated", ctypes.c_size_t),

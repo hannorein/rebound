@@ -63,6 +63,7 @@ void reb_integrator_whfast_free(void* p);
 const struct reb_integrator reb_integrator_whfast = {
     .id = 1,
     .step = reb_integrator_whfast_step,
+    .create = reb_integrator_whfast_create,
     .free = reb_integrator_whfast_free,
     .field_descriptor_list = reb_integrator_whfast_field_descriptor_list,
 };
@@ -77,9 +78,6 @@ void* reb_integrator_whfast_create(){
     whfast->keep_unsynchronized = 0;
     whfast->safe_mode = 1;
     whfast->recalculate_coordinates_this_timestep = 0;
-    whfast->N_allocated = 0;
-    whfast->N_allocated_var = 0;
-    whfast->N_allocated_temp = 0;
     whfast->timestep_warning = 0;
     whfast->recalculate_coordinates_but_not_synchronized_warning = 0;
     return whfast;

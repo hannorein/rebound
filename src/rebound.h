@@ -207,6 +207,7 @@ struct reb_integrator_mercurius {
     unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
     unsigned int recalculate_r_crit_this_timestep;      // Set to 1 if to recalculate critical switching radii
     unsigned int safe_mode;                             // Combine Kick steps at beginning and end of timestep
+    unsigned int timestep_warning;
 
     // Internal use
     unsigned int is_synchronized;   
@@ -248,6 +249,7 @@ struct reb_integrator_trace {
         REB_TRACE_MODE_KEPLER = 1,      // Kepler step
         REB_TRACE_MODE_FULL = 3,        // Doing everything in one step
     } mode;
+    unsigned int timestep_warning;
     size_t encounter_N;                 // Number of particles currently having an encounter
     size_t encounter_N_active;          // Number of active particles currently having an encounter
 
@@ -270,7 +272,7 @@ struct reb_integrator_trace {
 };
 
 // SABA Integrator (Laskar & Robutel 2001)
-struct reb_integrator_saba {
+struct reb_integrator_saba_state {
     enum {
         REB_SABA_1 = 0x0, // WH
         REB_SABA_2 = 0x1, // SABA2
@@ -294,6 +296,12 @@ struct reb_integrator_saba {
     unsigned int safe_mode;             // Combine first and last sub-step
     unsigned int is_synchronized;       // 1: physical state, 0: needs synchronization
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization
+    unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
+    // Internal use
+    size_t N_allocated;
+    struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
+    size_t N_allocated_temp;
+    struct reb_particle* REB_RESTRICT p_temp;
 };
 
 // WHFast Integrator (Rein & Tamayo 2015)
@@ -587,7 +595,6 @@ struct reb_simulation {
 
     // Datastructures for integrators
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
-    struct reb_integrator_saba ri_saba;             // The SABA struct 
     struct reb_integrator_ias15 ri_ias15;           // The IAS15 struct
     struct reb_integrator_mercurius ri_mercurius;   // The MERCURIUS struct
     struct reb_integrator_trace ri_trace;           // The TRACE struct
