@@ -40,7 +40,7 @@
 // List of REBOUND parameters to be written to a file.
 // Modify this list if you wish to input/output additional fields in the reb_simulation structure.
 const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[]= {
-    { 0,  REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0},
+    { 6,  REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0}, // used to be id 0
     { 1,  REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0},
     { 2,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0},
     { 3,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0},
@@ -89,7 +89,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 102, REB_DOUBLE,      "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0},
     { 48, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0},
     { 50, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0},
-    { 51, REB_INT,          "integrator",                   offsetof(struct reb_simulation, integrator), 0, 0}, // Note: first element in structure
+    { 51, REB_INT64_INIT,   "integrator",                   offsetof(struct reb_simulation, integrator), 0, 0}, // Note: first element in structure
     { 52, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0},
     { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0},
     { 54, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0},
@@ -175,7 +175,8 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     // 403  particles_var
     { 1329743186, REB_OTHER,"header", 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0},
-    { 9999, REB_FIELD_END,  "end", 0, 0, 0}
+    { 9999, REB_FIELD_END,  "end", 0, 0, 0},
+    {0} // Null terminated.
 };
 
 // This is a custom implementation of a dynamic memory buffer stream. 
@@ -195,6 +196,7 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
     *sizep += size;
 }
 
+// TODO: Think about these functions with binaryfield in integrator
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type){
     int i=-1;
     do{
@@ -202,7 +204,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(
         if (reb_binarydata_field_descriptor_list[i].type==type){
             return reb_binarydata_field_descriptor_list[i];
         }
-    } while (reb_binarydata_field_descriptor_list[i].dtype!=REB_FIELD_END);
+    } while (reb_binarydata_field_descriptor_list[i].type);
     struct reb_binarydata_field_descriptor bfd = {0};
     bfd.dtype = REB_FIELD_NOT_FOUND;
     return bfd;
@@ -215,7 +217,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         if (strcmp(reb_binarydata_field_descriptor_list[i].name, name)==0){
             return reb_binarydata_field_descriptor_list[i];
         }
-    } while (reb_binarydata_field_descriptor_list[i].dtype!=REB_FIELD_END);
+    } while (reb_binarydata_field_descriptor_list[i].type);
     struct reb_binarydata_field_descriptor bfd = {0};
     bfd.dtype = REB_FIELD_NOT_FOUND;
     return bfd;
@@ -241,6 +243,9 @@ static void asprintf_reb_type(char** buf, enum REB_BINARYDATA_DTYPE dtype, char*
             asprintf(&newbuf,"%" PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
             break;
         case REB_INT64:
+            asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
+            break;
+        case REB_INT64_INIT:
             asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
             break;
         case REB_UINT64:
@@ -567,125 +572,149 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
         r->ri_ias15.N_allocated = 3*r->N;
     }
     /// Output all fields
-    int i=0;
-    while (reb_binarydata_field_descriptor_list[i].dtype!=REB_FIELD_END){
-        int dtype = reb_binarydata_field_descriptor_list[i].dtype;
-        // Simple data types:
-        if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
-                || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
-                || dtype == REB_PARTICLE4 || dtype == REB_VEC3D || dtype == REB_SIZE_T){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = reb_binarydata_field_descriptor_list[i].type;
-            switch (dtype){
-                case REB_DOUBLE: 
-                    field.size = sizeof(double);
-                    break;
-                case REB_INT: 
-                    field.size = sizeof(int);
-                    break;
-                case REB_SIZE_T: 
-                    field.size = sizeof(size_t);
-                    break;
-                case REB_UINT: 
-                    field.size = sizeof(unsigned int);
-                    break;
-                case REB_UINT32: 
-                    field.size = sizeof(uint32_t);
-                    break;
-                case REB_INT64:
-                    field.size = sizeof(int64_t);
-                    break;
-                case REB_UINT64:
-                    field.size = sizeof(uint64_t);
-                    break;
-                case REB_VEC3D:
-                    field.size = sizeof(struct reb_vec3d);
-                    break;
-                case REB_PARTICLE:
-                    field.size = sizeof(struct reb_particle);
-                    break;
-                case REB_PARTICLE4:
-                    field.size = 4*sizeof(struct reb_particle);
-                    break;
-            }
-            write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-            char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-            write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
+    for (size_t fli=0; fli<2; fli++){
+        const struct reb_binarydata_field_descriptor* current_fd_list;
+        switch (fli){
+            case 0: // Main simulation
+                current_fd_list = reb_binarydata_field_descriptor_list;
+                break;
+            case 1: // Integrator
+                current_fd_list = r->integrator.field_descriptor_list;
+                break;
         }
-        // Pointer data types
-        if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED ){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = reb_binarydata_field_descriptor_list[i].type;
-            size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-            field.size = (*pointer_N) * reb_binarydata_field_descriptor_list[i].element_size;
-
-            if (field.size){
+        int i=0;
+        while (current_fd_list[i].type){
+            int dtype = current_fd_list[i].dtype;
+            printf("Writing field %d\n", current_fd_list[i].type);
+            // Simple data types:
+            if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
+                    || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
+                    || dtype == REB_PARTICLE4 || dtype == REB_VEC3D || dtype == REB_SIZE_T
+                    || dtype == REB_INT64_INIT ){
+                struct reb_binarydata_field field;
+                memset(&field,0,sizeof(struct reb_binarydata_field));
+                field.type = current_fd_list[i].type;
+                switch (dtype){
+                    case REB_DOUBLE: 
+                        field.size = sizeof(double);
+                        break;
+                    case REB_INT: 
+                        field.size = sizeof(int);
+                        break;
+                    case REB_SIZE_T: 
+                        field.size = sizeof(size_t);
+                        break;
+                    case REB_UINT: 
+                        field.size = sizeof(unsigned int);
+                        break;
+                    case REB_UINT32: 
+                        field.size = sizeof(uint32_t);
+                        break;
+                    case REB_INT64:
+                    case REB_INT64_INIT: // Output is just a number.
+                        field.size = sizeof(int64_t);
+                        break;
+                    case REB_UINT64:
+                        field.size = sizeof(uint64_t);
+                        break;
+                    case REB_VEC3D:
+                        field.size = sizeof(struct reb_vec3d);
+                        break;
+                    case REB_PARTICLE:
+                        field.size = sizeof(struct reb_particle);
+                        break;
+                    case REB_PARTICLE4:
+                        field.size = 4*sizeof(struct reb_particle);
+                        break;
+                }
                 write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-                pointer = *(char**)pointer;
+                char* pointer = (char*)r + current_fd_list[i].offset;
                 write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
             }
-        }
-        // Pointer with a fixed size
-        if (dtype == REB_POINTER_FIXED_SIZE ){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = reb_binarydata_field_descriptor_list[i].type;
-            field.size = reb_binarydata_field_descriptor_list[i].element_size;
+            // Pointer data types
+            if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED ){
+                struct reb_binarydata_field field;
+                memset(&field,0,sizeof(struct reb_binarydata_field));
+                field.type = current_fd_list[i].type;
+                size_t* pointer_N;
+                char* pointer;
+                switch (fli){
+                    case 0: // Main simulation
+                        pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                        pointer = (char*)r + current_fd_list[i].offset;
+                        break;
+                    case 1: // Integrator
+                        pointer_N = (size_t*)((char*)(r->integrator_data) + current_fd_list[i].offset_N);
+                        pointer = (char*)r->integrator_data + current_fd_list[i].offset;
+                        break;
+                }
+                field.size = (*pointer_N) * current_fd_list[i].element_size;
 
-            char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-            pointer = *(char**)pointer;
-            if (pointer){
-                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
-            }
-        }
-        if (dtype == REB_CHARP_LIST ){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = reb_binarydata_field_descriptor_list[i].type;
-            size_t N_list = *((size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N));
-            char*** list_p = (char***)((char*)r + reb_binarydata_field_descriptor_list[i].offset);
-            size_t serialized_size = 0;
-            for (size_t i=0; i<N_list; i++){
-                // character count + NULL character + original pointer
-                serialized_size += strlen((*list_p)[i])+1+sizeof(char*);
-            }
-            field.size = sizeof(char)*serialized_size;
-
-            if (field.size){
-                // This pointer arithmetic will fail on 32 bit architectures.
-                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                for (size_t i=0; i<N_list; i++){
-                    write_to_stream(bufp, &allocatedsize, sizep, (*list_p)[i], strlen((*list_p)[i])+1);
-                    write_to_stream(bufp, &allocatedsize, sizep, &((*list_p)[i]), sizeof(char*));
+                if (field.size){
+                    write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
+                    pointer = *(char**)pointer;
+                    write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
                 }
             }
-        }
-        // Special datatype for IAS15. Similar to POINTER
-        if (dtype == REB_DP7 ){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = reb_binarydata_field_descriptor_list[i].type;
-            size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-            field.size = (*pointer_N) * reb_binarydata_field_descriptor_list[i].element_size;
+            // Pointer with a fixed size
+            if (dtype == REB_POINTER_FIXED_SIZE ){
+                struct reb_binarydata_field field;
+                memset(&field,0,sizeof(struct reb_binarydata_field));
+                field.type = current_fd_list[i].type;
+                field.size = current_fd_list[i].element_size;
 
-            if (field.size){
-                write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-                struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p2,field.size/7);
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p3,field.size/7);
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p4,field.size/7);
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p5,field.size/7);
-                write_to_stream(bufp, &allocatedsize, sizep, dp7->p6,field.size/7);
+                char* pointer = (char*)r + current_fd_list[i].offset;
+                pointer = *(char**)pointer;
+                if (pointer){
+                    write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
+                    write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
+                }
             }
+            if (dtype == REB_CHARP_LIST ){
+                struct reb_binarydata_field field;
+                memset(&field,0,sizeof(struct reb_binarydata_field));
+                field.type = current_fd_list[i].type;
+                size_t N_list = *((size_t*)((char*)r + current_fd_list[i].offset_N));
+                char*** list_p = (char***)((char*)r + current_fd_list[i].offset);
+                size_t serialized_size = 0;
+                for (size_t i=0; i<N_list; i++){
+                    // character count + NULL character + original pointer
+                    serialized_size += strlen((*list_p)[i])+1+sizeof(char*);
+                }
+                field.size = sizeof(char)*serialized_size;
+
+                if (field.size){
+                    // This pointer arithmetic will fail on 32 bit architectures.
+                    write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
+                    for (size_t i=0; i<N_list; i++){
+                        write_to_stream(bufp, &allocatedsize, sizep, (*list_p)[i], strlen((*list_p)[i])+1);
+                        write_to_stream(bufp, &allocatedsize, sizep, &((*list_p)[i]), sizeof(char*));
+                    }
+                }
+            }
+            // Special datatype for IAS15. Similar to POINTER
+            if (dtype == REB_DP7 ){
+                struct reb_binarydata_field field;
+                memset(&field,0,sizeof(struct reb_binarydata_field));
+                field.type = current_fd_list[i].type;
+                size_t* pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                field.size = (*pointer_N) * current_fd_list[i].element_size;
+
+                if (field.size){
+                    write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
+                    char* pointer = (char*)r + current_fd_list[i].offset;
+                    struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p2,field.size/7);
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p3,field.size/7);
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p4,field.size/7);
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p5,field.size/7);
+                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p6,field.size/7);
+                }
+            }
+            i++;
         }
-        i++;
     }
 
     // Write function pointer warning flag
@@ -726,155 +755,207 @@ void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_B
     struct reb_binarydata_field_descriptor fd_functionpointers = reb_binarydata_field_descriptor_for_name("functionpointers");
 
 next_field:
+    printf("next field\n");
     // Loop over all fields
     while(1){
 
         int numread = (int)fread(&field,sizeof(struct reb_binarydata_field),1,inf);
         if (numread<1){
+            printf("reached end of file\n");
             goto finish_fields; // End of file
         }
         if (field.type==fd_end.type){
+            printf("saw end snapshot\n");
             goto finish_fields; // End of snapshot
         }
-        int i=0;
 
-        // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
-        while (reb_binarydata_field_descriptor_list[i].dtype!=REB_FIELD_END){
-            struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_list[i];
-            if (fd.type==field.type){
-                // Read simple data types
-                if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
-                        || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
-                        || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
-                        || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
-                    char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-                    fread(pointer, field.size, 1, inf);
-                    goto next_field;
-                }
-                // Read a pointer data type. 
-                // 1) reallocate memory
-                // 2) read data into memory
-                // 3) set N_allocated variable
-                if (fd.dtype == REB_POINTER || fd.dtype == REB_POINTER_ALIGNED){
-                    if (field.size % reb_binarydata_field_descriptor_list[i].element_size){
-                        reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
+        // Loop over all modules that might have their own field descriptors.
+        for (size_t fli=0; fli<2; fli++){
+            const struct reb_binarydata_field_descriptor* current_fd_list;
+            switch (fli){
+                case 0: // Main simulation
+                    current_fd_list = reb_binarydata_field_descriptor_list;
+                    break;
+                case 1: // Integrator
+                    current_fd_list = r->integrator.field_descriptor_list;
+                    break;
+            }
+
+            // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
+            int i=0;
+            while (current_fd_list[i].type){
+                struct reb_binarydata_field_descriptor fd = current_fd_list[i];
+                if (fd.type==field.type){
+                    printf("reading fli=%d type=%d\n", fli, fd.type);
+                    // Read simple data types
+                    if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
+                            || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
+                            || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
+                            || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
+                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        fread(pointer, field.size, 1, inf);
+                        goto next_field;
                     }
-                    char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-                    if (fd.dtype == REB_POINTER_ALIGNED){
-                        if (*(char**)pointer) free(*(char**)pointer);
+                    // Read ID, then do special initialization depending on type.
+                    if (fd.dtype == REB_INT64_INIT){
+                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        fread(pointer, field.size, 1, inf);
+                        if (fd.type==51){ // Integrator
+                            {
+                                // Find buit-in integrator
+                                int integrator_found = 0;
+                                for (size_t i = 0; i<reb_integrators_available_N;i++){
+                                    if (reb_integrators_available[i]->id == r->integrator.id){
+                                        reb_simulation_set_integrator(r, *reb_integrators_available[i]);
+                                        integrator_found = 1;
+                                        printf("integrator_found_and_set=%d\n", fli);
+                                        break;
+                                    }
+                                }
+                                if (!integrator_found){
+                                    reb_simulation_warning(r,"Unknown integrator encountered in Simulationarchive. Reset function pointers in `integrator` and data in `integrator_data` manually.");
+                                }
+                            }
+                        }
+
+                        goto next_field;
+                    }
+                    // Read a pointer data type. 
+                    // 1) reallocate memory
+                    // 2) read data into memory
+                    // 3) set N_allocated variable
+                    if (fd.dtype == REB_POINTER || fd.dtype == REB_POINTER_ALIGNED){
+                        if (field.size % current_fd_list[i].element_size){
+                            reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
+                        }
+                        char* pointer;
+                        size_t* pointer_N;
+                        switch (fli){
+                            case 0: // Main simulation
+                                pointer = (char*)r + current_fd_list[i].offset;
+                                pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                                break;
+                            case 1: // Integrator
+                                pointer = (char*)r->integrator_data + current_fd_list[i].offset;
+                                pointer_N = (size_t*)((char*)r->integrator_data + current_fd_list[i].offset_N);
+                                break;
+                        }
+                        if (fd.dtype == REB_POINTER_ALIGNED){
+                            if (*(char**)pointer) free(*(char**)pointer);
 #if defined(_WIN32) || !defined(AVX512)
-                        // WHFast512 not supported on Windows!
-                        *(char**)pointer = malloc(sizeof(struct reb_particle_avx512));
+                            // WHFast512 not supported on Windows!
+                            *(char**)pointer = malloc(sizeof(struct reb_particle_avx512));
 #else 
-                        *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+                            *(char**)pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
 #endif // _WIN32
-                    }else{ // normal malloc
+                        }else{ // normal malloc
+                            *(char**)pointer = realloc(*(char**)pointer, field.size);
+                        }
+                        size_t rr = fread(*(char**)pointer, field.size,1,inf);
+                        printf("Read %zu     %zu %zu\n", rr, field.size, current_fd_list[i].element_size);
+                        printf("poarticle size %zu\n", sizeof(struct reb_particle));
+                        *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
+
+                        goto next_field;
+                    }
+                    if (fd.dtype == REB_POINTER_FIXED_SIZE){
+                        if (field.size != current_fd_list[i].element_size){
+                            reb_simulation_warning(r, "Inconsistent size encountered in binary field (fixed pointer size).");
+                        }
+                        char* pointer = (char*)r + current_fd_list[i].offset;
                         *(char**)pointer = realloc(*(char**)pointer, field.size);
+                        fread(*(char**)pointer, field.size,1,inf);
+
+                        goto next_field;
                     }
-                    fread(*(char**)pointer, field.size,1,inf);
-
-                    size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-                    *pointer_N = (size_t)field.size/reb_binarydata_field_descriptor_list[i].element_size;
-
-                    goto next_field;
-                }
-                if (fd.dtype == REB_POINTER_FIXED_SIZE){
-                    if (field.size != reb_binarydata_field_descriptor_list[i].element_size){
-                        reb_simulation_warning(r, "Inconsistent size encountered in binary field (fixed pointer size).");
+                    if (fd.dtype == REB_CHARP_LIST){
+                        size_t serialized_size = field.size;
+                        char* serialized_strings = malloc(serialized_size);
+                        fread(serialized_strings, serialized_size,1,inf);
+                        // Process strings back into a list
+                        char*** pointer = (char***)((char*)r + current_fd_list[i].offset);
+                        size_t* pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                        size_t current_pos = 0;
+                        while (current_pos < serialized_size){
+                            char* current_string = serialized_strings + current_pos;
+                            // character count + NULL character + original pointer address
+                            size_t current_string_len = strlen(current_string)+1+sizeof(char*);
+                            current_pos += current_string_len;
+                            // Add current_string to list
+                            (*pointer_N)++;
+                            *pointer = realloc(*pointer,sizeof(char*)*(*pointer_N));
+                            (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len));
+                            memcpy((*pointer)[(*pointer_N)-1], current_string, current_string_len);
+                        }
+                        free(serialized_strings);
+                        goto next_field;
                     }
-                    char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-                    *(char**)pointer = realloc(*(char**)pointer, field.size);
-                    fread(*(char**)pointer, field.size,1,inf);
+                    // Special datatype for ias15. Similar to REB_POINTER. 
+                    if (fd.dtype == REB_DP7){
+                        if (field.size % current_fd_list[i].element_size){
+                            reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
+                        }
+                        char* pointer = (char*)r + current_fd_list[i].offset;
+                        struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
 
-                    goto next_field;
-                }
-                if (fd.dtype == REB_CHARP_LIST){
-                    size_t serialized_size = field.size;
-                    char* serialized_strings = malloc(serialized_size);
-                    fread(serialized_strings, serialized_size,1,inf);
-                    // Process strings back into a list
-                    char*** pointer = (char***)((char*)r + reb_binarydata_field_descriptor_list[i].offset);
-                    size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-                    size_t current_pos = 0;
-                    while (current_pos < serialized_size){
-                        char* current_string = serialized_strings + current_pos;
-                        // character count + NULL character + original pointer address
-                        size_t current_string_len = strlen(current_string)+1+sizeof(char*);
-                        current_pos += current_string_len;
-                        // Add current_string to list
-                        (*pointer_N)++;
-                        *pointer = realloc(*pointer,sizeof(char*)*(*pointer_N));
-                        (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len));
-                        memcpy((*pointer)[(*pointer_N)-1], current_string, current_string_len);
+                        dp7->p0 = realloc(dp7->p0,field.size/7);
+                        dp7->p1 = realloc(dp7->p1,field.size/7);
+                        dp7->p2 = realloc(dp7->p2,field.size/7);
+                        dp7->p3 = realloc(dp7->p3,field.size/7);
+                        dp7->p4 = realloc(dp7->p4,field.size/7);
+                        dp7->p5 = realloc(dp7->p5,field.size/7);
+                        dp7->p6 = realloc(dp7->p6,field.size/7);
+                        fread(dp7->p0, field.size/7, 1, inf);
+                        fread(dp7->p1, field.size/7, 1, inf);
+                        fread(dp7->p2, field.size/7, 1, inf);
+                        fread(dp7->p3, field.size/7, 1, inf);
+                        fread(dp7->p4, field.size/7, 1, inf);
+                        fread(dp7->p5, field.size/7, 1, inf);
+                        fread(dp7->p6, field.size/7, 1, inf);
+
+                        size_t* pointer_N = (size_t*)((char*)r + current_fd_list[i].offset_N);
+                        *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
+
+                        goto next_field;
                     }
-                    free(serialized_strings);
-                    goto next_field;
+                    // If we're here then it was not a simple or pointer datatype. 
+                    // Can skip the iteration trough the descriptor list.
+                    break;
                 }
-                // Special datatype for ias15. Similar to REB_POINTER. 
-                if (fd.dtype == REB_DP7){
-                    if (field.size % reb_binarydata_field_descriptor_list[i].element_size){
-                        reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
-                    }
-                    char* pointer = (char*)r + reb_binarydata_field_descriptor_list[i].offset;
-                    struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
-
-                    dp7->p0 = realloc(dp7->p0,field.size/7);
-                    dp7->p1 = realloc(dp7->p1,field.size/7);
-                    dp7->p2 = realloc(dp7->p2,field.size/7);
-                    dp7->p3 = realloc(dp7->p3,field.size/7);
-                    dp7->p4 = realloc(dp7->p4,field.size/7);
-                    dp7->p5 = realloc(dp7->p5,field.size/7);
-                    dp7->p6 = realloc(dp7->p6,field.size/7);
-                    fread(dp7->p0, field.size/7, 1, inf);
-                    fread(dp7->p1, field.size/7, 1, inf);
-                    fread(dp7->p2, field.size/7, 1, inf);
-                    fread(dp7->p3, field.size/7, 1, inf);
-                    fread(dp7->p4, field.size/7, 1, inf);
-                    fread(dp7->p5, field.size/7, 1, inf);
-                    fread(dp7->p6, field.size/7, 1, inf);
-
-                    size_t* pointer_N = (size_t*)((char*)r + reb_binarydata_field_descriptor_list[i].offset_N);
-                    *pointer_N = (size_t)field.size/reb_binarydata_field_descriptor_list[i].element_size;
-
-                    goto next_field;
-                }
-                // If we're here then it was not a simple or pointer datatype. 
-                // Can skip the iteration trough the descriptor list.
-                break;
+                i++;
             }
-            i++;
-        }
-
-        // Fields with types that require special handling
-        if (field.type == fd_functionpointers.type){
-            // Warning for when function pointers were used. 
-            // No effect on simulation.
-            int fpwarn;
-            fread(&fpwarn, field.size,1,inf);
-            if (fpwarn && warnings){
-                *warnings |= REB_BINARYDATA_WARNING_POINTERS;
-            }
-            goto next_field;
-        }
-        if (field.type == fd_header.type){
-            // Check header.
-            int64_t objects = 0;
-            const size_t bufsize = 64 - sizeof(struct reb_binarydata_field);
-            char readbuf[64], curvbuf[64];
-            const char* header = "REBOUND Binary File. Version: ";
-            sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binarydata_field), reb_version_str);
-
-            objects += fread(readbuf,sizeof(char),bufsize,inf);
-            if (objects < 1){
-                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
-            }else{
-                // Note: following compares version, but ignores githash.
-                if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                    *warnings |= REB_BINARYDATA_WARNING_VERSION;
+        
+            // Fields with types that require special handling
+            if (field.type == fd_functionpointers.type){
+                // Warning for when function pointers were used. 
+                // No effect on simulation.
+                int fpwarn;
+                fread(&fpwarn, field.size,1,inf);
+                if (fpwarn && warnings){
+                    *warnings |= REB_BINARYDATA_WARNING_POINTERS;
                 }
+                goto next_field;
             }
-            goto next_field;
-        }
+            if (field.type == fd_header.type){
+                // Check header.
+                int64_t objects = 0;
+                const size_t bufsize = 64 - sizeof(struct reb_binarydata_field);
+                char readbuf[64], curvbuf[64];
+                const char* header = "REBOUND Binary File. Version: ";
+                sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binarydata_field), reb_version_str);
+
+                objects += fread(readbuf,sizeof(char),bufsize,inf);
+                if (objects < 1){
+                    *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+                }else{
+                    // Note: following compares version, but ignores githash.
+                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                        *warnings |= REB_BINARYDATA_WARNING_VERSION;
+                    }
+                }
+                goto next_field;
+            }
+        } 
 
         // We should never get here. If so, it's an unknown field type.
         *warnings |= REB_BINARYDATA_WARNING_FIELD_UNKNOWN;
@@ -883,25 +964,11 @@ next_field:
             // Even worse, can't seek to end of field.
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
         }
-    } 
+    }
 
 finish_fields:
+    printf("finisning fields\n");
     // Some final initializations
-
-    // Find integrator
-    {
-        int integrator_found = 0;
-        for (size_t i = 0; i<reb_integrators_available_N;i++){
-            if (reb_integrators_available[i]->id == r->integrator.id){
-                r->integrator = *reb_integrators_available[i];
-                integrator_found = 1;
-                break;
-            }
-        }
-        if (!integrator_found){
-            reb_simulation_warning(r,"Unknown integrator encountered in Simulationarchive. Reset function pointers manually.");
-        }
-    }
 
     // Update pointers to simulation
     for (size_t l=0;l<r->N_var_config;l++){

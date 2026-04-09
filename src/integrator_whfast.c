@@ -53,7 +53,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle)},
     { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_COORDINATES) },
     { 143, REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0},
-    { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0},
+    { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_KERNEL)},
     { 0 }, // Null terminated list
 };
 
