@@ -671,7 +671,7 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
     return ode;
 }
 
-void reb_integrator_bs_step(struct reb_simulation* r){
+void reb_integrator_bs_step(struct reb_simulation* r, void* state){
     if (r->calculate_megno){
         reb_simulation_error(r, "The BS integrator does currently not support MEGNO.");
     }
@@ -687,7 +687,7 @@ void reb_integrator_bs_step(struct reb_simulation* r){
         }
     }
 
-    struct reb_integrator_bs* ri_bs = &(r->ri_bs);
+    struct reb_integrator_bs* ri_bs = state;
 
     size_t nbody_length = (r->N+r->N_var)*3*2;
     // Check if particle numbers changed, if so delete and recreate ode.

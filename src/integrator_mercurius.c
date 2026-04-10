@@ -32,11 +32,17 @@
 #include <stdio.h>
 #include "gravity.h"
 #include "integrator_mercurius.h"
-#include "integrator_ias15.h"
 #include "integrator_whfast.h"
 #include "collision.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
+
+
+void reb_integrator_mercurius_step(struct reb_simulation* r, void* state);
+void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state);
+void reb_integrator_mercurius_reset(struct reb_simulation* r);
+void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r);
+void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, size_t index);
 
 const struct reb_integrator reb_integrator_mercurius = {
     .id = 9,
@@ -352,7 +358,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
     const double old_t = r->t;
     double t_needed = r->t + _dt; 
 
-    reb_integrator_ias15_reset(r);
+    struct reb_integrator_ias15_state* ias15 = reb_integrator_ias15.create();
     r->map = rim->encounter_map;
     r->N_map = rim->encounter_N;
     r->N_targets = SIZE_MAX; // Search for any possible collisions between N_map particles.
@@ -368,7 +374,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
         r->particles[0].vx = 0; // star does not move in dh 
         r->particles[0].vy = 0;
         r->particles[0].vz = 0;
-        reb_integrator_ias15_step(r);
+        reb_integrator_ias15.step(r, ias15);
         r->particles[0].vx = star.vx; // restore every timestep for collisions
         r->particles[0].vy = star.vy;
         r->particles[0].vz = star.vz;
@@ -417,6 +423,8 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, const d
             r->particles[mi] = rim->particles_backup[mi];
         }
     }
+
+    reb_integrator_ias15.free(ias15);
 
     r->t = old_t;
     r->dt = old_dt;
@@ -722,7 +730,6 @@ void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
             rim->recalculate_coordinates_this_timestep = 1;
             break;
         case REB_MERCURIUS_MODE_ENCOUNTER:
-            reb_integrator_ias15_reset(r);
             if (rim->N_allocated_dcrit<r->N){
                 rim->dcrit              = realloc(rim->dcrit, sizeof(double)*r->N);
                 rim->N_allocated_dcrit = r->N;
@@ -755,7 +762,6 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
             }
         }
     }
-    reb_integrator_ias15_reset(r);
     if (r->ri_mercurius.mode==REB_MERCURIUS_MODE_ENCOUNTER){
         struct reb_integrator_mercurius* rim = &(r->ri_mercurius);
         int after_to_be_removed_particle = 0;
@@ -781,7 +787,7 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
     }
 }
 
-void reb_integrator_mercurius_step(struct reb_simulation* r){
+void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
     if (r->N_var_config){
         reb_simulation_warning(r,"Mercurius does not work with variational equations.");
     }
@@ -808,7 +814,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
     }
     if (rim->safe_mode || rim->recalculate_coordinates_this_timestep){
         if (rim->is_synchronized==0){
-            reb_integrator_mercurius_synchronize(r);
+            reb_integrator_mercurius_synchronize(r, state);
             reb_simulation_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
         }
         reb_integrator_mercurius_inertial_to_dh(r);
@@ -818,7 +824,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
     if (rim->recalculate_r_crit_this_timestep){
         rim->recalculate_r_crit_this_timestep = 0;
         if (rim->is_synchronized==0){
-            reb_integrator_mercurius_synchronize(r);
+            reb_integrator_mercurius_synchronize(r, state);
             reb_integrator_mercurius_inertial_to_dh(r);
             rim->recalculate_coordinates_this_timestep = 0;
             reb_simulation_warning(r,"MERCURIUS: Recalculating dcrit but pos/vel were not synchronized before.");
@@ -871,7 +877,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
 
     rim->is_synchronized = 0;
     if (rim->safe_mode){
-        reb_integrator_mercurius_synchronize(r);
+        reb_integrator_mercurius_synchronize(r, state);
     }
 
     r->t+=r->dt;
@@ -879,7 +885,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r){
     r->N_targets = 1; // Only search for collisions with star in-between timesteps.
 }
 
-void reb_integrator_mercurius_synchronize(struct reb_simulation* r){
+void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state){
     struct reb_integrator_mercurius* const rim = &(r->ri_mercurius);
     if (rim->is_synchronized == 0){
         rim->mode = REB_MERCURIUS_MODE_WH;

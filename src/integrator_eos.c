@@ -34,6 +34,10 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+void reb_integrator_eos_step(struct reb_simulation* r, void* state);
+void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state);
+void reb_integrator_eos_reset(struct reb_simulation* r);
+
 const struct reb_integrator reb_integrator_eos = {
     .id = 11,
     .step = reb_integrator_eos_step,
@@ -458,7 +462,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
     reb_integrator_eos_postprocessor(r, dt, reos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
 }
 
-void reb_integrator_eos_step(struct reb_simulation* r){
+void reb_integrator_eos_step(struct reb_simulation* r, void* state){
     // TODO Variational equations no longer working.
     if (r->gravity != REB_GRAVITY_BASIC){
         reb_simulation_warning(r,"EOS only supports the BASIC gravity routine.");
@@ -592,14 +596,14 @@ void reb_integrator_eos_step(struct reb_simulation* r){
 
     reos->is_synchronized = 0;
     if (reos->safe_mode){
-        reb_integrator_eos_synchronize(r);
+        reb_integrator_eos_synchronize(r, state);
     }
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 }
 
-void reb_integrator_eos_synchronize(struct reb_simulation* r){
+void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state){
     struct reb_integrator_eos* const reos = &(r->ri_eos);
     const double dt = r->dt;
     if (reos->is_synchronized == 0){

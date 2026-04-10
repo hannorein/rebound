@@ -38,11 +38,11 @@ struct reb_integrator_leapfrog_state {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_leapfrog_field_descriptor_list[] = {
-    { 400, REB_UINT,        "order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0},
+    { 400, REB_UINT,        "order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
-void reb_integrator_leapfrog_step(struct reb_simulation* r);
+void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state);
 void* reb_integrator_leapfrog_create();
 void reb_integrator_leapfrog_free(void* p);
 const struct reb_integrator reb_integrator_leapfrog = {
@@ -94,10 +94,10 @@ static void kick(struct reb_simulation* r, double dt){
 
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
-void reb_integrator_leapfrog_step(struct reb_simulation* r){
+void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const double dt = r->dt;
-    struct reb_integrator_leapfrog_state* leapfrog = r->integrator_data;
+    struct reb_integrator_leapfrog_state* leapfrog = state;
     switch (leapfrog->order){
         case 2:
             drift(r, dt*0.5);

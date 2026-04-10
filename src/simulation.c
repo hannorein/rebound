@@ -183,7 +183,7 @@ void reb_simulation_free(struct reb_simulation* const r){
 
 void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
     if (r->integrator.free){
-        r->integrator.free(r);
+        r->integrator.free(r->integrator_data);
     }
     r->integrator = integrator;
     if (r->integrator.create){
@@ -488,7 +488,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
 
     PROFILING_START();
     if (r->integrator.step){
-        r->integrator.step(r);
+        r->integrator.step(r, r->integrator_data);
     }
 
     // Integrate other ODEs
@@ -598,7 +598,7 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
 
 void reb_simulation_synchronize(struct reb_simulation* r){
     if (r->integrator.synchronize){
-        r->integrator.synchronize(r);
+        r->integrator.synchronize(r, r->integrator_data);
     }
 }
 

@@ -33,6 +33,11 @@
 #include "boundary.h"
 #include "integrator_janus.h"
 
+void reb_integrator_janus_step(struct reb_simulation* r, void* state);
+void reb_integrator_janus_synchronize(struct reb_simulation* r, void* state);
+void reb_integrator_janus_reset(struct reb_simulation* r);
+
+
 const struct reb_integrator reb_integrator_janus = {
     .id = 8,
     .step = reb_integrator_janus_step,
@@ -166,7 +171,7 @@ static void kick(struct reb_simulation* r, double dt, double scale_vel){
     }
 }
 
-void reb_integrator_janus_step(struct reb_simulation* r){
+void reb_integrator_janus_step(struct reb_simulation* r, void* state){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     struct reb_integrator_janus* ri_janus = &(r->ri_janus);
     const size_t N = r->N;
@@ -222,12 +227,12 @@ void reb_integrator_janus_step(struct reb_simulation* r){
 
     // Small overhead here: Always get positions and velocities in floating point at 
     // the end of the timestep.
-    reb_integrator_janus_synchronize(r);
+    reb_integrator_janus_synchronize(r, state);
 
     r->t += r->dt;
 }
 
-void reb_integrator_janus_synchronize(struct reb_simulation* r){
+void reb_integrator_janus_synchronize(struct reb_simulation* r, void* state){
     if (r->ri_janus.N_allocated==r->N){
         to_double(r->particles, r->ri_janus.p_int, r->N, r->ri_janus.scale_pos, r->ri_janus.scale_vel); 
     }

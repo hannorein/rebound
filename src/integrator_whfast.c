@@ -43,24 +43,24 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
     
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
-    { 61, REB_UINT,         "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0},
-    { 62, REB_UINT,         "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_whfast_state, recalculate_coordinates_this_timestep), 0, 0},
-    { 63, REB_UINT,         "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0},
-    { 64, REB_UINT,         "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0},
-    { 65, REB_UINT,         "is_synchronized",    offsetof(struct reb_integrator_whfast_state, is_synchronized), 0, 0},
-    { 66, REB_UINT,         "timestep_warning",   offsetof(struct reb_integrator_whfast_state, timestep_warning), 0, 0},
-    { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle)},
-    { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle)},
+    { 61, REB_UINT,         "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
+    { 62, REB_UINT,         "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_whfast_state, recalculate_coordinates_this_timestep), 0, 0, 0},
+    { 63, REB_UINT,         "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
+    { 64, REB_UINT,         "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
+    { 65, REB_UINT,         "is_synchronized",    offsetof(struct reb_integrator_whfast_state, is_synchronized), 0, 0, 0},
+    { 66, REB_UINT,         "timestep_warning",   offsetof(struct reb_integrator_whfast_state, timestep_warning), 0, 0, 0},
+    { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle), 0},
+    { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle), 0},
     { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_COORDINATES) },
-    { 143, REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0},
+    { 143, REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0, 0},
     { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_KERNEL)},
     { 0 }, // Null terminated list
 };
 
 void* reb_integrator_whfast_create();
-void reb_integrator_whfast_free(void* p);
-void reb_integrator_whfast_synchronize(struct reb_simulation* const r);
-void reb_integrator_whfast_step(struct reb_simulation* const r);
+void reb_integrator_whfast_free(void* state);
+void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* state);
+void reb_integrator_whfast_step(struct reb_simulation* const r, void* state);
 
 const struct reb_integrator reb_integrator_whfast = {
     .id = 1,
@@ -1027,8 +1027,8 @@ void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* con
     reb_integrator_whfast_to_inertial(r);
 }
 
-void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* state){
+    struct reb_integrator_whfast_state* whfast = state;
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occurred.
         return;
@@ -1089,8 +1089,8 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r){
     }
 }
 
-void reb_integrator_whfast_step(struct reb_simulation* const r){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
+    struct reb_integrator_whfast_state* whfast = state;
     struct reb_particle* restrict const particles = r->particles;
     const double dt = r->dt;
     const size_t N = r->N;
@@ -1104,7 +1104,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
     // Only recalculate Jacobi coordinates if needed
     if (whfast->safe_mode || whfast->recalculate_coordinates_this_timestep){
         if (whfast->is_synchronized==0){
-            reb_integrator_whfast_synchronize(r);
+            reb_integrator_whfast_synchronize(r, whfast);
             if (whfast->recalculate_coordinates_but_not_synchronized_warning==0){
                 reb_simulation_warning(r,"Recalculating coordinates but pos/vel were not synchronized before.");
                 whfast->recalculate_coordinates_but_not_synchronized_warning++;
@@ -1240,7 +1240,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r){
 
     whfast->is_synchronized = 0;
     if (whfast->safe_mode){
-        reb_integrator_whfast_synchronize(r);
+        reb_integrator_whfast_synchronize(r, whfast);
     }
 
     r->t+=r->dt/2.;

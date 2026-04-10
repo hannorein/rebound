@@ -75,13 +75,12 @@ const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descript
 
 void* reb_integrator_ias15_create();
 void reb_integrator_ias15_free(void* p);
-void reb_integrator_ias15_step(struct reb_simulation* const r);
-static void free_dp7(struct reb_dp7* dp7);
+void reb_integrator_ias15_step(struct reb_simulation* const r, void* state);
+static void free_dp7(struct reb_dp7 dp7);
 
 const struct reb_integrator reb_integrator_ias15 = {
     .id = 0,
     .step = reb_integrator_ias15_step,
-    .reset = reb_integrator_ias15_reset,
     .create = reb_integrator_ias15_create,
     .free = reb_integrator_ias15_free,
     .field_descriptor_list = reb_integrator_ias15_field_descriptor_list,
@@ -97,12 +96,12 @@ void* reb_integrator_ias15_create(){
 
 void reb_integrator_ias15_free(void* p){
     struct reb_integrator_ias15_state* ias15 = p;
-    free_dp7(&(ias15->g));
-    free_dp7(&(ias15->e));
-    free_dp7(&(ias15->b));
-    free_dp7(&(ias15->csb));
-    free_dp7(&(ias15->er));
-    free_dp7(&(ias15->br));
+    free_dp7(ias15->g);
+    free_dp7(ias15->e);
+    free_dp7(ias15->b);
+    free_dp7(ias15->csb);
+    free_dp7(ias15->er);
+    free_dp7(ias15->br);
     free(ias15->at);
     free(ias15->x0);
     free(ias15->v0);
@@ -167,21 +166,14 @@ static double sqrt7(double a){
     return x*scale;
 }
 
-static void free_dp7(struct reb_dp7* dp7){
-    free(dp7->p0);
-    free(dp7->p1);
-    free(dp7->p2);
-    free(dp7->p3);
-    free(dp7->p4);
-    free(dp7->p5);
-    free(dp7->p6);
-    dp7->p0 = NULL;
-    dp7->p1 = NULL;
-    dp7->p2 = NULL;
-    dp7->p3 = NULL;
-    dp7->p4 = NULL;
-    dp7->p5 = NULL;
-    dp7->p6 = NULL;
+static void free_dp7(struct reb_dp7 dp7){
+    free(dp7.p0);
+    free(dp7.p1);
+    free(dp7.p2);
+    free(dp7.p3);
+    free(dp7.p4);
+    free(dp7.p5);
+    free(dp7.p6);
 }
 static void clear_dp7(struct reb_dp7* const dp7, const size_t N3){
     for (size_t k=0;k<N3;k++){
@@ -225,8 +217,7 @@ static inline void add_cs(double* p, double* csp, double inp){
     *p = t;
 }
 
-static void reb_integrator_ias15_alloc(struct reb_simulation* r){
-    struct reb_integrator_ias15_state* ias15 = r->integrator_data;
+static void reb_integrator_ias15_alloc(struct reb_simulation* r, struct reb_integrator_ias15_state* ias15){
     size_t N;
     if (r->map){
         N = r->N_map;
@@ -262,9 +253,8 @@ static void reb_integrator_ias15_alloc(struct reb_simulation* r){
 // Tries to do one actual timestep.
 //   Returns 1 if successful.
 //   Returns 0 if step is rejected.
-static int reb_integrator_ias15_step_try(struct reb_simulation* r) {
-    struct reb_integrator_ias15_state* ias15 = r->integrator_data;
-    reb_integrator_ias15_alloc(r);
+static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_integrator_ias15_state* ias15) {
+    reb_integrator_ias15_alloc(r, ias15);
 
     struct reb_particle* const particles = r->particles;
     struct reb_particle* const particles_var = r->particles_var;
@@ -863,13 +853,13 @@ static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 
 }
 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
-void reb_integrator_ias15_step(struct reb_simulation* r){
+void reb_integrator_ias15_step(struct reb_simulation* r, void* state){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
 #ifdef GENERATE_CONSTANTS
     integrator_generate_constants();
 #endif  // GENERATE_CONSTANTS
         // Try until a step was successful.
-    while(!reb_integrator_ias15_step_try(r));
+    while(!reb_integrator_ias15_step_try(r, state));
 }
 
 

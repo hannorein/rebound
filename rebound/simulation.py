@@ -1396,7 +1396,6 @@ from .integrators.janus import IntegratorJanus
 from .integrators.sei import IntegratorSEI
 from .integrators.leapfrog import IntegratorLeapfrog
 from .integrators.eos import IntegratorEOS
-from .integrators.ias15 import IntegratorIAS15
 from .integrators.saba import IntegratorSABA
 from .integrators.mercurius import IntegratorMercurius
 from .integrators.trace import IntegratorTRACE

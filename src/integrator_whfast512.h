@@ -62,9 +62,6 @@ struct reb_particle_avx512 {
 #endif // AVX512
 };
 
-void reb_integrator_whfast512_reset(struct reb_simulation* r);		
-void reb_integrator_whfast512_step(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast512_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
 void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r); // Internal function. 
 void reb_whfast512_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
 void reb_whfast512_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term

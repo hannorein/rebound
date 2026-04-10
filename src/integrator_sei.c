@@ -50,15 +50,15 @@ struct reb_integrator_sei_state {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[] = {
-    { 56, REB_DOUBLE,       "sei: lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0},
-    { 57, REB_DOUBLE,       "sei: sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0},
-    { 58, REB_DOUBLE,       "sei: tandt",                 offsetof(struct reb_integrator_sei_state, tandt), 0, 0},
-    { 59, REB_DOUBLE,       "sei: sindtz",                offsetof(struct reb_integrator_sei_state, sindtz), 0, 0},
-    { 60, REB_DOUBLE,       "sei: tandtz",                offsetof(struct reb_integrator_sei_state, tandtz), 0, 0},
+    { 56, REB_DOUBLE,       "lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0, 0},
+    { 57, REB_DOUBLE,       "sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0, 0},
+    { 58, REB_DOUBLE,       "tandt",                 offsetof(struct reb_integrator_sei_state, tandt), 0, 0, 0},
+    { 59, REB_DOUBLE,       "sindtz",                offsetof(struct reb_integrator_sei_state, sindtz), 0, 0, 0},
+    { 60, REB_DOUBLE,       "tandtz",                offsetof(struct reb_integrator_sei_state, tandtz), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
-void reb_integrator_sei_step(struct reb_simulation* r);
+void reb_integrator_sei_step(struct reb_simulation* r, void* state);
 void* reb_integrator_sei_create();
 void reb_integrator_sei_free(void* p);
 
@@ -84,8 +84,8 @@ void reb_integrator_sei_free(void* p){
 }
 
 
-void reb_integrator_sei_step(struct reb_simulation* const r){
-    struct reb_integrator_sei_state* sei = r->integrator_data;
+void reb_integrator_sei_step(struct reb_simulation* const r, void* state){
+    struct reb_integrator_sei_state* sei = state;
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const int N = r->N;
     struct reb_particle* const particles = r->particles;

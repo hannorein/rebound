@@ -34,9 +34,4 @@ struct reb_particle_int {
     REB_PARTICLE_INT_TYPE vy;
     REB_PARTICLE_INT_TYPE vz;
 };
-
-void reb_integrator_janus_step(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_janus_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
-void reb_integrator_janus_reset(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-
 #endif

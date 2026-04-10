@@ -10,8 +10,8 @@ class TestIntegratorWHFastTestParticle(unittest.TestCase):
 def create_whfast_testparticle(coordinates, N, N_active):
     def do_test(self):
         sim = rebound.Simulation()
-        sim.ri_whfast.coordinates = coordinates
         sim.integrator = "whfast"
+        sim.integrator_data.coordinates = coordinates
         sim.dt=1e-1
         sim.add(m=1)
         for i in range(N):
@@ -46,7 +46,7 @@ def create_whfast_testparticle_withplanet(coordinates, N, N_active):
         eps = 1e-13
         sim = rebound.Simulation()
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = coordinates
+        sim.integrator_data.coordinates = coordinates
         sim.dt=1e-3
         sim.add(m=1)
         sim.add(m=1e-3,P=0.4)
@@ -71,9 +71,9 @@ def create_whfast_testparticletype1(coordinates, N_active):
     def do_test(self):
         eps = 1e-16
         sim = rebound.Simulation()
-        sim.ri_whfast.coordinates = coordinates
         sim.testparticle_type = 1
         sim.integrator = "whfast"
+        sim.integrator_data.coordinates = coordinates
         sim.dt=1e-3
         sim.add(m=1)
         sim.add(m=1e-3,P=1,e=0.1)
@@ -95,7 +95,7 @@ def create_whfast_testparticletype1_withplanet(coordinates, N_active):
         eps = 1e-16
         sim = rebound.Simulation()
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = coordinates
+        sim.integrator_data.coordinates = coordinates
         sim.testparticle_type = 1
         sim.dt=1e-3
         sim.add(m=1)
@@ -121,8 +121,8 @@ def create_whfast_massivetestparticle(coordinates, N):
     def do_test(self):
         eps = 2e-13
         sim = rebound.Simulation()
-        sim.ri_whfast.coordinates = coordinates
         sim.integrator = "whfast"
+        sim.integrator_data.coordinates = coordinates
         sim.dt=1e-3
         sim.add(m=1)
         sim.add(m=1e-3,P=0.4)

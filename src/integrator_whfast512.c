@@ -36,6 +36,10 @@
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 
+void reb_integrator_whfast512_reset(struct reb_simulation* r);		
+void reb_integrator_whfast512_step(struct reb_simulation* r, void* step);		///< Internal function used to call a specific integrator
+void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* step);	///< Internal function used to call a specific integrator
+
 const struct reb_integrator reb_integrator_whfast512 = {
     .id = 21,
     .step = reb_integrator_whfast512_step,
@@ -918,7 +922,7 @@ void static recalculate_constants(struct reb_simulation* r){
 }
 
 // Main integration routine
-void reb_integrator_whfast512_step(struct reb_simulation* const r){
+void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     const double dt = r->dt;
 
@@ -1035,14 +1039,15 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r){
 
 #else // AVX512
       // Dummy function when AVX512 is not available
-void reb_integrator_whfast512_step(struct reb_simulation* const r){
+void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
+    (void)state;
     reb_simulation_error(r, "WHFast512 is not available. Please make sure your CPU supports AVX512 instructions, then recompile REBOUND with the AVX512 option turned on in the Makefile or set the AVX512 environment variable to 1 before running pip install.");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
 #endif // AVX512
 
 // Synchronization routine. Called every time an output is needed.
-void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
+void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* state){
 #ifdef AVX512
     struct reb_integrator_whfast512* const ri_whfast512 = &(r->ri_whfast512);
     if (ri_whfast512->is_synchronized == 0){
@@ -1074,6 +1079,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
         }
     }
 #else 
+    (void)state;
     reb_integrator_whfast512_synchronize_fallback(r);
 #endif // AVX512
 }

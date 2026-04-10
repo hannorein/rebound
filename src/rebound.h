@@ -143,8 +143,8 @@ struct reb_dp7 {
 // Generic custom integrator
 struct reb_integrator {
     uint32_t id;                                    // Unique number used to identify integrator in binary files.
-    void (*step)(struct reb_simulation* r);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
-    void (*synchronize)(struct reb_simulation* r);  // Synchronizes particle state. Optional. Set to NULL if not used.
+    void (*step)(struct reb_simulation* r, void* p);         // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
+    void (*synchronize)(struct reb_simulation* r, void* p);  // Synchronizes particle state. Optional. Set to NULL if not used.
     void* (*create)();                              // Allocate memory for integrator and set default values. Return integrator_data pointer.
     void (*free)(void* p);                          // Free all memory owned by integrator. p points to integrator_data.
     void (*reset)(struct reb_simulation* r);        // Reset intergrator state to default and free all memory. Optional. Set to NULL if not used. TODO: REMOVE

@@ -16,10 +16,10 @@ int main(int argc, char* argv[]) {
 
     struct reb_simulation* r2 = reb_simulation_copy(r);
 
-    reb_simulation_steps(r,10);
-    r->dt *= -1;
-    reb_simulation_steps(r,10);
-    reb_simulation_integrate(r2,2.);
+//    reb_simulation_steps(r,10);
+//    r->dt *= -1;
+//    reb_simulation_steps(r,10);
+//    reb_simulation_integrate(r2,2.);
 
 
     reb_simulation_free(r);

@@ -37,6 +37,11 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+void reb_integrator_trace_step(struct reb_simulation* r, void* state);
+void reb_integrator_trace_reset(struct reb_simulation* r);
+void reb_integrator_trace_did_add_particle(struct reb_simulation* r);
+void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index);
+
 const struct reb_integrator reb_integrator_trace = {
     .id = 25,
     .step = reb_integrator_trace_step,
@@ -959,18 +964,20 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         reb_integrator_trace_dh_to_inertial(r);
         switch (r->ri_trace.peri_mode){
             case REB_TRACE_PERI_FULL_IAS15:
-                // Run default IAS15 integration
-                reb_integrator_ias15_reset(r);
-                while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
-                    reb_integrator_ias15_step(r);
-                    if (r->t+r->dt >  t_needed){
-                        r->dt = t_needed-r->t;
+                {
+                    // Run default IAS15 integration
+                    struct reb_integrator_ias15_state* ias15 = reb_integrator_ias15.create();
+                    while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
+                        reb_integrator_ias15.step(r, ias15);
+                        if (r->t+r->dt >  t_needed){
+                            r->dt = t_needed-r->t;
+                        }
+                        reb_collision_search(r);
+                        if (r->N_collisions) r->ri_trace.force_accept = 1;
                     }
-                    reb_collision_search(r);
-                    if (r->N_collisions) r->ri_trace.force_accept = 1;
+                    // Resetting IAS15 here reduces binary file size.
+                    reb_integrator_ias15.free(ias15);
                 }
-                // Resetting IAS15 here reduces binary file size.
-                reb_integrator_ias15_reset(r);
                 break;
             case REB_TRACE_PERI_FULL_BS:
                 {
@@ -1117,7 +1124,7 @@ void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t 
 }
 
 
-void reb_integrator_trace_step(struct reb_simulation* r){
+void reb_integrator_trace_step(struct reb_simulation* r, void* state){
     // Do memory management and consistency checks
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const size_t N = r->N;
