@@ -1189,7 +1189,7 @@ void reb_integrator_trace_step(struct reb_simulation* r, void* state){
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
-    r->N_targets = 1; // Only serch for collisions with star after complete timestep.
+    r->N_targets = 1; // Only search for collisions with star after complete timestep.
 }
 
 void reb_integrator_trace_reset(struct reb_simulation* r){

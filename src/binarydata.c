@@ -763,7 +763,7 @@ next_field:
                         fread(pointer, field.size, 1, inf);
                         if (fd.type==51){ // Integrator
                             {
-                                // Find buit-in integrator
+                                // Find built-in integrator
                                 int integrator_found = 0;
                                 for (size_t i = 0; i<reb_integrators_available_N;i++){
                                     if (reb_integrators_available[i]->id == r->integrator.id){
