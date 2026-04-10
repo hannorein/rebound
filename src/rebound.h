@@ -206,7 +206,7 @@ struct reb_integrator_ias15_state {
 };
 
 // Mercurius (Rein et al. 2019)
-struct reb_integrator_mercurius {
+struct reb_integrator_mercurius_state {
     double (*L) (const struct reb_simulation* const r, double d, double dcrit); // Switching function (default same as Mercury) 
     double r_crit_hill;                                 // Critical switching distance in units of Hill radii
     unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
@@ -606,7 +606,6 @@ struct reb_simulation {
 
     // Datastructures for integrators
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
-    struct reb_integrator_mercurius ri_mercurius;   // The MERCURIUS struct
     struct reb_integrator_trace ri_trace;           // The TRACE struct
     struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 

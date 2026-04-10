@@ -1397,7 +1397,6 @@ from .integrators.sei import IntegratorSEI
 from .integrators.leapfrog import IntegratorLeapfrog
 from .integrators.eos import IntegratorEOS
 from .integrators.saba import IntegratorSABA
-from .integrators.mercurius import IntegratorMercurius
 from .integrators.trace import IntegratorTRACE
 
 from .variation import Variation
@@ -1506,7 +1505,6 @@ Simulation._fields_ = [
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
                 ("ri_whfast512", IntegratorWHFast512),
-                ("ri_mercurius", IntegratorMercurius),
                 ("ri_trace", IntegratorTRACE),
                 ("ri_janus", IntegratorJanus),
                 ("ri_eos", IntegratorEOS),
