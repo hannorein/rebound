@@ -351,7 +351,7 @@ struct reb_integrator_whfast_state {
 struct reb_particle_avx512; // Opaque pointer. Implemented in integrator_whfast.h
 
 // WHFast512 Integrator (Javaheri & Rein 2023)
-struct reb_integrator_whfast512 {
+struct reb_integrator_whfast512_state {
     unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
     unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
@@ -605,7 +605,6 @@ struct reb_simulation {
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
 
     // Datastructures for integrators
-    struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_trace ri_trace;           // The TRACE struct
     struct reb_integrator_bs ri_bs;                 // The BS struct
 

@@ -1390,13 +1390,6 @@ from .particles import Particles
 
 
 from .integrators.bs import ODE, IntegratorBS
-from .integrators.whfast import IntegratorWHFast
-from .integrators.whfast512 import IntegratorWHFast512
-from .integrators.janus import IntegratorJanus
-from .integrators.sei import IntegratorSEI
-from .integrators.leapfrog import IntegratorLeapfrog
-from .integrators.eos import IntegratorEOS
-from .integrators.saba import IntegratorSABA
 from .integrators.trace import IntegratorTRACE
 
 from .variation import Variation
@@ -1504,7 +1497,6 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
-                ("ri_whfast512", IntegratorWHFast512),
                 ("ri_trace", IntegratorTRACE),
                 ("ri_bs", IntegratorBS),
                 ("_odes", POINTER(POINTER(ODE))),
