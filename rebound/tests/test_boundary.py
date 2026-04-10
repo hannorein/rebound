@@ -43,7 +43,7 @@ class TestBoundary(unittest.TestCase):
     def test_shear_vertical(self):
         # Note: not physical
         sim = rebound.Simulation()
-        sim.ri_sei.OMEGA = 1
+        sim.OMEGA = 1
         sim.root_size = 1
         sim.N_ghost_x = 2
         sim.N_ghost_y = 2
