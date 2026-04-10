@@ -1389,7 +1389,7 @@ from .particle import Particle
 from .particles import Particles
 
 
-from .integrators.bs import ODE, IntegratorBS
+from .integrators.bs import ODE
 from .integrators.trace import IntegratorTRACE
 
 from .variation import Variation
@@ -1498,7 +1498,6 @@ Simulation._fields_ = [
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
                 ("ri_trace", IntegratorTRACE),
-                ("ri_bs", IntegratorBS),
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_N_odes", c_size_t),
                 ("_N_allocated_odes", c_size_t),

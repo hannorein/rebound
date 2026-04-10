@@ -684,7 +684,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         const double old_dt = r->dt;
         const double old_t = r->t;
         const double t_needed = r->t + dt;
-        reb_integrator_bs_reset(r);
+        struct reb_integrator_bs_state* bs = reb_integrator_bs.create();
 
         // Temporarily remove all odes for BS step
         struct reb_ode** odes_backup = r->odes;
@@ -728,7 +728,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
             if (success){
                 r->t += dt;
             }
-            dt = r->ri_bs.dt_proposed;
+            // TODO: Probably not working with BS anymore. Fix. 
+            dt = bs->dt_proposed;
             reb_integrator_trace_update_particles(r, nbody_ode->y);
 
             r->particles[0].vx = star.vx; // restore every timestep for collisions
@@ -747,7 +748,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 nbody_ode = reb_ode_create(r, ri_trace->encounter_N*3*2);
                 nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
                 nbody_ode->needs_nbody = 0;
-                r->ri_bs.first_or_last_step = 1;
+                // TODO Reimplement
+                //r->ri_bs.first_or_last_step = 1;
             }
 
             struct reb_particle p0 = r->particles[0];
@@ -789,7 +791,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         r->t = old_t;
 
         // Resetting BS here reduces binary file size.
-        reb_integrator_bs_reset(r);
+        reb_integrator_bs.free(bs);
     }
     r->map = NULL; // for collision search
     r->N_map = 0;
@@ -996,7 +998,8 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                             nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
                             nbody_ode->needs_nbody = 0;
                             y = nbody_ode->y;
-                            reb_integrator_bs_reset(r);
+                            // TODO Reimplement
+                            //reb_integrator_bs_reset(r);
                         }
 
                         for (size_t i=0; i<r->N; i++){
@@ -1009,16 +1012,20 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                             y[i*6+5] = p.vz;
                         }
 
-                        int success = reb_integrator_bs_step_odes(r, r->dt);
+                            // TODO Reimplement
+                            int success = 1;
+                        //int success = reb_integrator_bs_step_odes(r, r->dt);
                         if (success){
                             r->t += r->dt;
                         }
-                        r->dt = r->ri_bs.dt_proposed;
+                            // TODO Reimplement
+                        //r->dt = r->ri_bs.dt_proposed;
                         if (r->t+r->dt >  t_needed){
                             r->dt = t_needed-r->t;
                         }
 
-                        reb_integrator_bs_update_particles(r, nbody_ode->y);
+                        // TODO Reimplement
+                        //reb_integrator_bs_update_particles(r, nbody_ode->y);
 
                         if (success){
                             // Only do a collision search for accepted steps.
@@ -1028,7 +1035,8 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                     }
                     reb_ode_free(nbody_ode);
                     // Resetting BS here reduces binary file size
-                    reb_integrator_bs_reset(r);
+                        // TODO Reimplement
+                    //reb_integrator_bs_reset(r);
                 }
                 break;
             default:
@@ -1087,7 +1095,8 @@ void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
 
 void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index){
     struct reb_integrator_trace* ri_trace = &(r->ri_trace);
-    reb_integrator_bs_reset(r);
+    // TODO REImplement
+    //reb_integrator_bs_reset(r);
     if (ri_trace->mode==REB_TRACE_MODE_KEPLER){
         // Only removed mid-timestep if collision - BS Step!
         int after_to_be_removed_particle = 0;

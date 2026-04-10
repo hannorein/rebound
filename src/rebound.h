@@ -365,7 +365,7 @@ struct reb_integrator_whfast512_state {
 };
 
 // Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)
-struct reb_integrator_bs {
+struct reb_integrator_bs_state {
     double eps_abs; // Allowed absolute scalar error.
     double eps_rel; // Allowed relative scalar error.
     double min_dt;  // Minimum timestep
@@ -606,7 +606,6 @@ struct reb_simulation {
 
     // Datastructures for integrators
     struct reb_integrator_trace ri_trace;           // The TRACE struct
-    struct reb_integrator_bs ri_bs;                 // The BS struct
 
     // ODEs. Do not access these variables directly. Use functions provided instead.
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)

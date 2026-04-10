@@ -27,8 +27,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
     def test_bs_harmonic_only_low_eps(self):
         sim = rebound.Simulation()
         sim.integrator = "BS"
-        sim.ri_bs.eps_abs = 1e-5
-        sim.ri_bs.eps_rel = 1e-5
+        sim.integrator_data.eps_abs = 1e-5
+        sim.integrator_data.eps_rel = 1e-5
         ode_ho = sim.create_ode(length=2, needs_nbody=False)
         ode_ho.derivatives = derivatives_ho
 
@@ -42,8 +42,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
     def test_bs_harmonic_only_high_eps(self):
         sim = rebound.Simulation()
         sim.integrator = "BS"
-        sim.ri_bs.eps_abs = 1e-10
-        sim.ri_bs.eps_rel = 1e-10
+        sim.integrator_data.eps_abs = 1e-10
+        sim.integrator_data.eps_rel = 1e-10
         ode_ho = sim.create_ode(length=2, needs_nbody=False)
         ode_ho.derivatives = derivatives_ho
 
@@ -105,8 +105,8 @@ class TestIntegratorBS(unittest.TestCase):
         sim.additional_forces = af
         sim.integrator = "bs"
         eps = 1e-11
-        sim.ri_bs.eps_rel = eps
-        sim.ri_bs.eps_abs = eps
+        sim.integrator_data.eps_rel = eps
+        sim.integrator_data.eps_abs = eps
         sim.add(m=0,x=1,vy=1)
         sim.integrate(2.*math.pi)
         self.assertLess(math.fabs(sim.particles[0].x-1.),5*eps)
@@ -120,8 +120,8 @@ class TestIntegratorBS(unittest.TestCase):
             sim = rebound.Simulation()
             rebound.data.add_outer_solar_system(sim)
             sim.integrator = "bs"
-            sim.ri_bs.eps_rel = eps
-            sim.ri_bs.eps_abs = eps
+            sim.integrator_data.eps_rel = eps
+            sim.integrator_data.eps_abs = eps
             e0 = sim.energy()
             sim.integrate(1000)
             e1 = sim.energy()
@@ -134,8 +134,8 @@ class TestIntegratorBS(unittest.TestCase):
             sim.add(m=1e-3,a=1,e=0.9)
             sim.add(m=1e-3,a=6,e=0.9,f=0.5,omega=1.6)
             sim.integrator = "bs"
-            sim.ri_bs.eps_rel = eps
-            sim.ri_bs.eps_abs = eps
+            sim.integrator_data.eps_rel = eps
+            sim.integrator_data.eps_abs = eps
             e0 = sim.energy()
             sim.integrate(1000)
             e1 = sim.energy()
@@ -146,8 +146,8 @@ class TestIntegratorBS(unittest.TestCase):
         rebound.data.add_outer_solar_system(sim)
         eps = 1e-6
         sim.integrator = "bs"
-        sim.ri_bs.eps_rel = eps
-        sim.ri_bs.eps_abs = eps
+        sim.integrator_data.eps_rel = eps
+        sim.integrator_data.eps_abs = eps
         sim.save_to_file("sim0.bin")
         sim1 = rebound.Simulation("sim0.bin")
         sim.integrate(100)
@@ -228,8 +228,8 @@ class TestVariationalBS(unittest.TestCase):
                 param = dict(zip(self.paramkeys, params))
                 simvp = rebound.Simulation()
                 simvp.integrator = "BS"
-                simvp.ri_bs.eps_abs = 1e-15
-                simvp.ri_bs.eps_rel = 1e-15
+                simvp.integrator_data.eps_abs = 1e-15
+                simvp.integrator_data.eps_rel = 1e-15
                 simvp.add(m=1.)
                 simvp.add(**param)
                 simvp.add(primary=simvp.particles[0],a=1.76, m=1e-3)
@@ -239,8 +239,8 @@ class TestVariationalBS(unittest.TestCase):
 
                 simsp = rebound.Simulation()
                 simsp.integrator = "BS"
-                simsp.ri_bs.eps_abs = 1e-15
-                simsp.ri_bs.eps_rel = 1e-15
+                simsp.integrator_data.eps_abs = 1e-15
+                simsp.integrator_data.eps_rel = 1e-15
                 simsp.add(m=1.)
                 param[v] += Delta
                 simsp.add(**param)
@@ -270,8 +270,8 @@ class TestVariationalBS(unittest.TestCase):
                     param = dict(zip(self.paramkeys, params))
                     simvp = rebound.Simulation()
                     simvp.integrator = "BS"
-                    simvp.ri_bs.eps_abs = 1e-15
-                    simvp.ri_bs.eps_rel = 1e-15
+                    simvp.integrator_data.eps_abs = 1e-15
+                    simvp.integrator_data.eps_rel = 1e-15
                     simvp.add(m=1.)
                     simvp.add(**param)
                     simvp.add(primary=simvp.particles[0],a=1.76, m=1e-3)
@@ -290,8 +290,8 @@ class TestVariationalBS(unittest.TestCase):
                     param = dict(zip(self.paramkeys, params))
                     simpp = rebound.Simulation()
                     simpp.integrator = "BS"
-                    simpp.ri_bs.eps_abs = 1e-15
-                    simpp.ri_bs.eps_rel = 1e-15
+                    simpp.integrator_data.eps_abs = 1e-15
+                    simpp.integrator_data.eps_rel = 1e-15
                     simpp.add(m=1.)
                     param[v1] += Delta
                     param[v2] += Delta
@@ -304,8 +304,8 @@ class TestVariationalBS(unittest.TestCase):
                     param = dict(zip(self.paramkeys, params))
                     simpm = rebound.Simulation()
                     simpm.integrator = "BS"
-                    simpm.ri_bs.eps_abs = 1e-15
-                    simpm.ri_bs.eps_rel = 1e-15
+                    simpm.integrator_data.eps_abs = 1e-15
+                    simpm.integrator_data.eps_rel = 1e-15
                     simpm.add(m=1.)
                     param[v1] += Delta
                     param[v2] -= Delta
@@ -318,8 +318,8 @@ class TestVariationalBS(unittest.TestCase):
                     param = dict(zip(self.paramkeys, params))
                     simmp = rebound.Simulation()
                     simmp.integrator = "BS"
-                    simmp.ri_bs.eps_abs = 1e-15
-                    simmp.ri_bs.eps_rel = 1e-15
+                    simmp.integrator_data.eps_abs = 1e-15
+                    simmp.integrator_data.eps_rel = 1e-15
                     simmp.add(m=1.)
                     param[v1] -= Delta
                     param[v2] += Delta
@@ -332,8 +332,8 @@ class TestVariationalBS(unittest.TestCase):
                     param = dict(zip(self.paramkeys, params))
                     simmm = rebound.Simulation()
                     simmm.integrator = "BS"
-                    simmm.ri_bs.eps_abs = 1e-15
-                    simmm.ri_bs.eps_rel = 1e-15
+                    simmm.integrator_data.eps_abs = 1e-15
+                    simmm.integrator_data.eps_rel = 1e-15
                     simmm.add(m=1.)
                     param[v1] -= Delta
                     param[v2] -= Delta

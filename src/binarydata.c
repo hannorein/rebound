@@ -115,13 +115,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 145, REB_DOUBLE,      "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0},
     { 154, REB_UINT,        "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0},
     { 155, REB_INT,         "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0},
-    { 156, REB_DOUBLE,      "ri_bs.eps_abs",                offsetof(struct reb_simulation, ri_bs.eps_abs), 0, 0},
-    { 157, REB_DOUBLE,      "ri_bs.eps_rel",                offsetof(struct reb_simulation, ri_bs.eps_rel), 0, 0},
-    { 158, REB_DOUBLE,      "ri_bs.min_dt",                 offsetof(struct reb_simulation, ri_bs.min_dt), 0, 0},
-    { 159, REB_DOUBLE,      "ri_bs.max_dt",                 offsetof(struct reb_simulation, ri_bs.max_dt), 0, 0},
-    { 160, REB_INT,         "ri_bs.first_or_last_step",     offsetof(struct reb_simulation, ri_bs.first_or_last_step), 0, 0},
-    { 161, REB_INT,         "ri_bs.previous_rejected",      offsetof(struct reb_simulation, ri_bs.previous_rejected), 0, 0},
-    { 162, REB_INT,         "ri_bs.target_iter",            offsetof(struct reb_simulation, ri_bs.target_iter), 0, 0},
     { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
     { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
     // TRACE Pericenter conditions used to have ids 166 - 168. Do not reuse.
