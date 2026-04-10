@@ -158,17 +158,17 @@ DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, struct r
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
     X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
-    X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
-    X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
-    X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
-    X(none)          /* Do not integrate anything                                                          */ \
-    X(janus)         /* Bit-wise reversible JANUS integrator.                                              */ \
-    X(mercurius)     /* MERCURIUS integrator                                                               */ \
-    X(saba)          /* SABA integrator family (Laskar and Robutel 2001)                                   */ \
-    X(eos)           /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */ \
-    X(bs)            /* Gragg-Bulirsch-Stoer                                                               */ \
-    X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
-    X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
+X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
+X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
+X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
+X(none)          /* Do not integrate anything                                                          */ \
+X(janus)         /* Bit-wise reversible JANUS integrator.                                              */ \
+X(mercurius)     /* MERCURIUS integrator                                                               */ \
+X(saba)          /* SABA integrator family (Laskar and Robutel 2001)                                   */ \
+X(eos)           /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */ \
+X(bs)            /* Gragg-Bulirsch-Stoer                                                               */ \
+X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
+X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
 
 // Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
 #define X(name) DLLEXPORT extern const struct reb_integrator reb_integrator_##name;
@@ -181,10 +181,10 @@ struct reb_integrator_ias15_state {
     double epsilon;                 // Precision control parameter
     double min_dt;                  // Minimal timestep
 #define REB_IAS15_ADAPTIVEMODE(X,Y) \
-        X(Y, 0, INDIVIDUAL)     /* fractional error is calculated separately for each particle              */ \
-        X(Y, 1, GLOBAL)         /* fractional error is calculated globally (was default until 01/2024)      */ \
-        X(Y, 2, PRS23)          /* Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)   */ \
-        X(Y, 3, AARSETH85)       /* Aarseth (1985) timestep criterion                                        */
+    X(Y, 0, INDIVIDUAL)     /* fractional error is calculated separately for each particle              */ \
+    X(Y, 1, GLOBAL)         /* fractional error is calculated globally (was default until 01/2024)      */ \
+    X(Y, 2, PRS23)          /* Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)   */ \
+    X(Y, 3, AARSETH85)       /* Aarseth (1985) timestep criterion                                        */
     enum {
         REB_GENERATE_ENUM(REB_IAS15_ADAPTIVEMODE)
     } adaptive_mode;                    // Determines how the timestep is chosen
@@ -302,7 +302,7 @@ struct reb_integrator_saba_state {
     unsigned int is_synchronized;       // 1: physical state, 0: needs synchronization
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization
     unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
-    // Internal use
+                                                                // Internal use
     size_t N_allocated;
     struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
     size_t N_allocated_temp;
@@ -314,18 +314,18 @@ struct reb_integrator_whfast_state {
     unsigned int corrector;                                     // Order of first symplectic corrector: 0 (default - no corrector), 3, 5, 7, 11, 17.  
     unsigned int corrector2;                                    // 0: no second corrector, 1: use second corrector
 #define REB_WHFAST_KERNEL(X,Y) \
-        X(Y, 0, DEFAULT) \
-        X(Y, 1, MODIFIEDKICK) \
-        X(Y, 2, COMPOSITION) \
-        X(Y, 3, LAZY)
+    X(Y, 0, DEFAULT) \
+    X(Y, 1, MODIFIEDKICK) \
+    X(Y, 2, COMPOSITION) \
+    X(Y, 3, LAZY)
     enum {
         REB_GENERATE_ENUM(REB_WHFAST_KERNEL)
     } kernel;                                                   // Kernel type. See Rein, Tamayo & Brown 2019 for details.                            
 #define REB_WHFAST_COORDINATES(X,Y) \
-        X(Y, 0, JACOBI)                                         /* Jacobi coordinates (default)                   */ \
-        X(Y, 1, DEMOCRATICHELIOCENTRIC)                         /* Democratic Heliocentric coordinates            */ \
-        X(Y, 2, WHDS)                                           /* WHDS coordinates (Hernandez and Dehnen, 2017)  */ \
-        X(Y, 3, BARYCENTRIC)                                    /* Barycentric coordinates                        */ 
+    X(Y, 0, JACOBI)                                         /* Jacobi coordinates (default)                   */ \
+    X(Y, 1, DEMOCRATICHELIOCENTRIC)                         /* Democratic Heliocentric coordinates            */ \
+    X(Y, 2, WHDS)                                           /* WHDS coordinates (Hernandez and Dehnen, 2017)  */ \
+    X(Y, 3, BARYCENTRIC)                                    /* Barycentric coordinates                        */ 
     enum {
         REB_GENERATE_ENUM(REB_WHFAST_COORDINATES)
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting

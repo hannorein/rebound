@@ -325,7 +325,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
     } 
 
     if (saba->type>=0x100){ // correctors on
-                               // Always need to do drift step if correctors are turned on
+                            // Always need to do drift step if correctors are turned on
         reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);
         reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
     }

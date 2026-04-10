@@ -377,8 +377,8 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, struct 
                 mercurius->encounter_N_active++;
                 if (mercurius->tponly_encounter){
                     mercurius->particles_backup[i] = tmp;         // Make copy of particles after the kepler step.
-                                                            // used to restore the massive objects' states in the case
-                                                            // of only massless test-particle encounters
+                                                                  // used to restore the massive objects' states in the case
+                                                                  // of only massless test-particle encounters
                 }
             }
         }
@@ -887,7 +887,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
         reb_integrator_mercurius_interaction_step(r,r->dt);
     }
     reb_integrator_mercurius_jump_step(r,r->dt/2.);
-    
+
     // COM step
     mercurius->com_pos.x += r->dt*mercurius->com_vel.x;
     mercurius->com_pos.y += r->dt*mercurius->com_vel.y;

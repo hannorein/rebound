@@ -94,11 +94,11 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0},
     { 54, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0},
     { 55, REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0},
-//    { 56, REB_DOUBLE,       "ri_sei.lastdt",                offsetof(struct reb_simulation, ri_sei.lastdt), 0, 0},
-//    { 57, REB_DOUBLE,       "ri_sei.sindt",                 offsetof(struct reb_simulation, ri_sei.sindt), 0, 0},
-//    { 58, REB_DOUBLE,       "ri_sei.tandt",                 offsetof(struct reb_simulation, ri_sei.tandt), 0, 0},
-//    { 59, REB_DOUBLE,       "ri_sei.sindtz",                offsetof(struct reb_simulation, ri_sei.sindtz), 0, 0},
-//    { 60, REB_DOUBLE,       "ri_sei.tandtz",                offsetof(struct reb_simulation, ri_sei.tandtz), 0, 0},
+    //    { 56, REB_DOUBLE,       "ri_sei.lastdt",                offsetof(struct reb_simulation, ri_sei.lastdt), 0, 0},
+    //    { 57, REB_DOUBLE,       "ri_sei.sindt",                 offsetof(struct reb_simulation, ri_sei.sindt), 0, 0},
+    //    { 58, REB_DOUBLE,       "ri_sei.tandt",                 offsetof(struct reb_simulation, ri_sei.tandt), 0, 0},
+    //    { 59, REB_DOUBLE,       "ri_sei.sindtz",                offsetof(struct reb_simulation, ri_sei.sindtz), 0, 0},
+    //    { 60, REB_DOUBLE,       "ri_sei.tandtz",                offsetof(struct reb_simulation, ri_sei.tandtz), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 403, REB_POINTER,     "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration)},
@@ -872,7 +872,7 @@ next_field:
                 }
                 i++;
             }
-        
+
             // Fields with types that require special handling
             if (field.type == fd_functionpointers.type){
                 // Warning for when function pointers were used. 

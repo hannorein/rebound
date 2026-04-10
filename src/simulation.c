@@ -700,7 +700,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->exact_finish_time    = 1;
     r->output_timing_last   = -1;
     r->simulationarchive_version = 3;
-    
+
     // Set default integrator.
     reb_simulation_set_integrator(r, reb_integrator_ias15);
 

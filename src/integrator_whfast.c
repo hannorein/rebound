@@ -41,7 +41,7 @@
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
-    
+
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
     { 61, REB_UINT,         "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
     { 62, REB_UINT,         "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_whfast_state, recalculate_coordinates_this_timestep), 0, 0, 0},
