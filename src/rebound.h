@@ -418,7 +418,7 @@ struct reb_integrator_eos {
 };
 
 // Janus integrator (Rein & Tamayo 2018)
-struct reb_integrator_janus {
+struct reb_integrator_janus_state {
     double scale_pos;       // Scale of position grid. Default 1e-16
     double scale_vel;       // Scale of velocity grid. Default 1e-16
     unsigned int order;     // Order: 2 (default), 4, 6, 8, 10 
@@ -607,7 +607,6 @@ struct reb_simulation {
     // Datastructures for integrators
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_trace ri_trace;           // The TRACE struct
-    struct reb_integrator_janus ri_janus;           // The JANUS struct 
     struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
 

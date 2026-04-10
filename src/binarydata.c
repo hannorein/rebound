@@ -35,7 +35,6 @@
 #include "binarydata.h"
 #include "simulationarchive.h"
 #include "integrator_whfast512.h"
-#include "integrator_janus.h"
 
 // List of REBOUND parameters to be written to a file.
 // Modify this list if you wish to input/output additional fields in the reb_simulation structure.
@@ -104,11 +103,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration)},
     { 87, REB_OTHER,        "functionpointers", 0, 0, 0},
     //{ 107, REB_INT,         "visualization",                offsetof(struct reb_simulation, visualization), 0, 0},
-    { 112, REB_POINTER,     "ri_janus.p_int",               offsetof(struct reb_simulation, ri_janus.p_int), offsetof(struct reb_simulation, ri_janus.N_allocated), sizeof(struct reb_particle_int)},
-    { 113, REB_DOUBLE,      "ri_janus.scale_pos",           offsetof(struct reb_simulation, ri_janus.scale_pos), 0, 0},
-    { 114, REB_DOUBLE,      "ri_janus.scale_vel",           offsetof(struct reb_simulation, ri_janus.scale_vel), 0, 0},
-    { 115, REB_UINT,        "ri_janus.order",               offsetof(struct reb_simulation, ri_janus.order), 0, 0},
-    { 116, REB_UINT,        "ri_janus.recalculate_integer_coordinates_this_timestep", offsetof(struct reb_simulation, ri_janus.recalculate_integer_coordinates_this_timestep), 0, 0},
     { 125, REB_INT,         "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0},
     { 126, REB_DOUBLE,      "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0},
     { 127, REB_DOUBLE,      "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0},
