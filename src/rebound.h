@@ -61,6 +61,9 @@
 #include <stdlib.h> // for size_t
 #include <stdint.h> // for integer types
 
+// Macros to generate enums that can also be read by python
+#define REB_AS_ENUM_MEMBER(prefix, value, name)  prefix ## _ ## name = value,
+#define REB_GENERATE_ENUM(LIST) LIST(REB_AS_ENUM_MEMBER,LIST)
 
 // Forward declarations
 struct reb_simulationarchive;   // Opaque pointer. Implemented in simulationarchive.h
@@ -174,16 +177,18 @@ REB_AVAILABLE_INTEGRATORS
 
 // Integrator structures 
 // IAS15 (Rein & Spiegel 2015)
-struct reb_integrator_ias15 {
+struct reb_integrator_ias15_state {
     double epsilon;                 // Precision control parameter
     double min_dt;                  // Minimal timestep
+#define REB_IAS15_ADAPTIVEMODE(X,Y) \
+        X(Y, 0, INDIVIDUAL)     /* fractional error is calculated separately for each particle              */ \
+        X(Y, 1, GLOBAL)         /* fractional error is calculated globally (was default until 01/2024)      */ \
+        X(Y, 2, PRS23)          /* Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)   */ \
+        X(Y, 3, AARSETH85)       /* Aarseth (1985) timestep criterion                                        */
     enum {
-        REB_IAS15_INDIVIDUAL = 0,   // fractional error is calculated separately for each particle
-        REB_IAS15_GLOBAL = 1,       // fractional error is calculated globally (was default until 01/2024)
-        REB_IAS15_PRS23 = 2,        // Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)
-        REB_IAS15_AARSETH85 = 3,    // Aarseth (1985) timestep criterion
-    } adaptive_mode;
-    uint64_t iterations_max_exceeded; // Counter how many times the iteration did not converge. 
+        REB_GENERATE_ENUM(REB_IAS15_ADAPTIVEMODE)
+    } adaptive_mode;                    // Determines how the timestep is chosen
+    uint64_t iterations_max_exceeded;   // Counter how many times the iteration did not converge. 
     size_t N_allocated;          
     double* REB_RESTRICT at;
     double* REB_RESTRICT x0;
@@ -303,8 +308,6 @@ struct reb_integrator_saba_state {
     size_t N_allocated_temp;
     struct reb_particle* REB_RESTRICT p_temp;
 };
-#define REB_AS_ENUM_MEMBER(prefix, value, name)  prefix ## _ ## name = value,
-#define REB_GENERATE_ENUM(LIST) LIST(REB_AS_ENUM_MEMBER,LIST)
 
 // WHFast Integrator (Rein & Tamayo 2015)
 struct reb_integrator_whfast_state {
@@ -603,7 +606,6 @@ struct reb_simulation {
 
     // Datastructures for integrators
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
-    struct reb_integrator_ias15 ri_ias15;           // The IAS15 struct
     struct reb_integrator_mercurius ri_mercurius;   // The MERCURIUS struct
     struct reb_integrator_trace ri_trace;           // The TRACE struct
     struct reb_integrator_janus ri_janus;           // The JANUS struct 

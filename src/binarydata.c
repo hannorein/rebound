@@ -99,27 +99,10 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
 //    { 58, REB_DOUBLE,       "ri_sei.tandt",                 offsetof(struct reb_simulation, ri_sei.tandt), 0, 0},
 //    { 59, REB_DOUBLE,       "ri_sei.sindtz",                offsetof(struct reb_simulation, ri_sei.sindtz), 0, 0},
 //    { 60, REB_DOUBLE,       "ri_sei.tandtz",                offsetof(struct reb_simulation, ri_sei.tandtz), 0, 0},
-    { 69, REB_DOUBLE,       "ri_ias15.epsilon",             offsetof(struct reb_simulation, ri_ias15.epsilon), 0, 0},
-    { 70, REB_DOUBLE,       "ri_ias15.min_dt",              offsetof(struct reb_simulation, ri_ias15.min_dt), 0, 0},
-    { 71, REB_UINT,         "ri_ias15.adaptive_mode",       offsetof(struct reb_simulation, ri_ias15.adaptive_mode), 0, 0},
-    { 72, REB_UINT64,        "ri_ias15.iterations_max_exceeded", offsetof(struct reb_simulation, ri_ias15.iterations_max_exceeded), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)},
     { 403, REB_POINTER,     "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle)},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration)},
     { 87, REB_OTHER,        "functionpointers", 0, 0, 0},
-    { 89, REB_POINTER,      "ri_ias15.at",                  offsetof(struct reb_simulation, ri_ias15.at), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 90, REB_POINTER,      "ri_ias15.x0",                  offsetof(struct reb_simulation, ri_ias15.x0), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 91, REB_POINTER,      "ri_ias15.v0",                  offsetof(struct reb_simulation, ri_ias15.v0), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 92, REB_POINTER,      "ri_ias15.a0",                  offsetof(struct reb_simulation, ri_ias15.a0), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 93, REB_POINTER,      "ri_ias15.csx",                 offsetof(struct reb_simulation, ri_ias15.csx), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 94, REB_POINTER,      "ri_ias15.csv",                 offsetof(struct reb_simulation, ri_ias15.csv), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 95, REB_POINTER,      "ri_ias15.csa0",                offsetof(struct reb_simulation, ri_ias15.csa0), offsetof(struct reb_simulation, ri_ias15.N_allocated), sizeof(double)},
-    { 96, REB_DP7,          "ri_ias15.g",                   offsetof(struct reb_simulation, ri_ias15.g), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
-    { 97, REB_DP7,          "ri_ias15.b",                   offsetof(struct reb_simulation, ri_ias15.b), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
-    { 98, REB_DP7,          "ri_ias15.csb",                 offsetof(struct reb_simulation, ri_ias15.csb), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
-    { 99, REB_DP7,          "ri_ias15.e",                   offsetof(struct reb_simulation, ri_ias15.e), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
-    { 100, REB_DP7,         "ri_ias15.br",                  offsetof(struct reb_simulation, ri_ias15.br), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
-    { 101, REB_DP7,         "ri_ias15.er",                  offsetof(struct reb_simulation, ri_ias15.er), offsetof(struct reb_simulation, ri_ias15.N_allocated), 7*sizeof(double)},
     //{ 107, REB_INT,         "visualization",                offsetof(struct reb_simulation, visualization), 0, 0},
     { 112, REB_POINTER,     "ri_janus.p_int",               offsetof(struct reb_simulation, ri_janus.p_int), offsetof(struct reb_simulation, ri_janus.N_allocated), sizeof(struct reb_particle_int)},
     { 113, REB_DOUBLE,      "ri_janus.scale_pos",           offsetof(struct reb_simulation, ri_janus.scale_pos), 0, 0},
@@ -566,11 +549,6 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     snprintf(header+cwritten+1,64-cwritten-1,"%s",reb_githash_str);
     write_to_stream(bufp, &allocatedsize, sizep, header,sizeof(char)*64);
 
-    // Compress data if possible
-    // This does not affect future calculation, but might trigger a realloc.
-    if (r->ri_ias15.N_allocated > 3*r->N){
-        r->ri_ias15.N_allocated = 3*r->N;
-    }
     /// Output all fields
     for (size_t fli=0; fli<2; fli++){
         const struct reb_binarydata_field_descriptor* current_fd_list;
