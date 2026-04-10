@@ -407,7 +407,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME {
 };
 
 // Embedded Operator Splitting Integrator (Rein 2020)
-struct reb_integrator_eos {
+struct reb_integrator_eos_state {
     enum REB_EOS_TYPE phi0;         // Outer operator splitting method
     enum REB_EOS_TYPE phi1;         // Inner operator splitting method
     unsigned int n;                 // Number of inner splittings per outer splitting
@@ -607,7 +607,6 @@ struct reb_simulation {
     // Datastructures for integrators
     struct reb_integrator_whfast512 ri_whfast512;   // The WHFast512 struct 
     struct reb_integrator_trace ri_trace;           // The TRACE struct
-    struct reb_integrator_eos ri_eos;               // The EOS struct 
     struct reb_integrator_bs ri_bs;                 // The BS struct
 
     // ODEs. Do not access these variables directly. Use functions provided instead.

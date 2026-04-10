@@ -27,22 +27,44 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include <math.h>
+#include <stddef.h>
 #include "gravity.h"
 #include "integrator_eos.h"
 #include "integrator_leapfrog.h"
 #include "tools.h"
+#include "binarydata.h"
 #define MIN(a, b) ((a) > (b) ? (b) : (a))    ///< Returns the minimum of a and b
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 void reb_integrator_eos_step(struct reb_simulation* r, void* state);
 void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state);
-void reb_integrator_eos_reset(struct reb_simulation* r);
+
+const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor_list[] = {
+    { 148, REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, 0},
+    { 149, REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, 0},
+    { 150, REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
+    { 151, REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
+    { 152, REB_UINT,        "is_synchronized",       offsetof(struct reb_integrator_eos_state, is_synchronized), 0, 0, 0},
+    { 0 }, // Null terminated list
+};
+
+void* reb_integrator_eos_create(){
+    struct reb_integrator_eos_state* eos = calloc(sizeof(struct reb_integrator_eos_state),1);
+    eos->n = 2;
+    eos->phi0 = REB_EOS_LF;
+    eos->phi1 = REB_EOS_LF;
+    eos->safe_mode = 1;
+    eos->is_synchronized = 1;
+    return eos;
+}
+
 
 const struct reb_integrator reb_integrator_eos = {
     .id = 11,
     .step = reb_integrator_eos_step,
-    .reset = reb_integrator_eos_reset,
+    .create = reb_integrator_eos_create,
     .synchronize = reb_integrator_eos_synchronize,
+    .field_descriptor_list = reb_integrator_eos_field_descriptor_list,
 };
 
 static const double lf4_2_a = 0.211324865405187117745425609749;
@@ -289,11 +311,11 @@ static void reb_integrator_eos_drift_shell1(struct reb_simulation* const r, doub
 }
 
 static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, double _dt){
-    struct reb_integrator_eos* const reos = &(r->ri_eos);
-    const size_t n = reos->n;
+    struct reb_integrator_eos_state* const eos = r->integrator_data;
+    const size_t n = eos->n;
     const double dt = _dt/n;
-    reb_integrator_eos_preprocessor(r, dt, reos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
-    switch(reos->phi1){
+    reb_integrator_eos_preprocessor(r, dt, eos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
+    switch(eos->phi1){
         case REB_EOS_LF:
             reb_integrator_eos_drift_shell1(r, dt*0.5); 
             for (size_t i=0;i<n;i++){
@@ -459,7 +481,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             reb_integrator_eos_drift_shell1(r, dt*plf7_6_4_a[0]);   
             break;
     }
-    reb_integrator_eos_postprocessor(r, dt, reos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
+    reb_integrator_eos_postprocessor(r, dt, eos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
 }
 
 void reb_integrator_eos_step(struct reb_simulation* r, void* state){
@@ -472,16 +494,16 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
     }
     r->gravity = REB_GRAVITY_NONE;
 
-    struct reb_integrator_eos* const reos = &(r->ri_eos);
+    struct reb_integrator_eos_state* const eos = state;
     const double dt = r->dt;
 
     double dtfac = 1.;
-    if (reos->is_synchronized){
-        reb_integrator_eos_preprocessor(r, r->dt, reos->phi0, reb_integrator_eos_drift_shell0, reb_integrator_eos_interaction_shell0);
+    if (eos->is_synchronized){
+        reb_integrator_eos_preprocessor(r, r->dt, eos->phi0, reb_integrator_eos_drift_shell0, reb_integrator_eos_interaction_shell0);
     }else{
         dtfac = 2.;
     }
-    switch(reos->phi0){
+    switch(eos->phi0){
         case REB_EOS_LF:
             reb_integrator_eos_drift_shell0(r, dt*0.5*dtfac);
             reb_integrator_eos_interaction_shell0(r, dt, 0.);
@@ -594,8 +616,8 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             break;
     }
 
-    reos->is_synchronized = 0;
-    if (reos->safe_mode){
+    eos->is_synchronized = 0;
+    if (eos->safe_mode){
         reb_integrator_eos_synchronize(r, state);
     }
 
@@ -604,10 +626,10 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
 }
 
 void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state){
-    struct reb_integrator_eos* const reos = &(r->ri_eos);
+    struct reb_integrator_eos_state* const eos = state;
     const double dt = r->dt;
-    if (reos->is_synchronized == 0){
-        switch(reos->phi0){
+    if (eos->is_synchronized == 0){
+        switch(eos->phi0){
             case REB_EOS_PMLF4:
             case REB_EOS_LF:
                 reb_integrator_eos_drift_shell0(r, dt*0.5); 
@@ -634,16 +656,8 @@ void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state){
                 reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
                 break;
         }
-        reb_integrator_eos_postprocessor(r, r->dt, reos->phi0, reb_integrator_eos_drift_shell0, reb_integrator_eos_interaction_shell0);
-        reos->is_synchronized = 1;
+        reb_integrator_eos_postprocessor(r, r->dt, eos->phi0, reb_integrator_eos_drift_shell0, reb_integrator_eos_interaction_shell0);
+        eos->is_synchronized = 1;
     }
-}
-
-void reb_integrator_eos_reset(struct reb_simulation* r){
-    r->ri_eos.n = 2;
-    r->ri_eos.phi0 = REB_EOS_LF;
-    r->ri_eos.phi1 = REB_EOS_LF;
-    r->ri_eos.safe_mode = 1;
-    r->ri_eos.is_synchronized = 1;
 }
 
