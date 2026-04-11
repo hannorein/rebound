@@ -116,10 +116,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 154, REB_UINT,        "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0},
     { 155, REB_INT,         "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0},
     { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
-    { 165, REB_DOUBLE,      "ri_trace.r_crit_hill",         offsetof(struct reb_simulation, ri_trace.r_crit_hill), 0, 0},
-    // TRACE Pericenter conditions used to have ids 166 - 168. Do not reuse.
-    { 169, REB_DOUBLE,      "ri_trace.peri_crit_eta",       offsetof(struct reb_simulation, ri_trace.peri_crit_eta), 0, 0},
-    { 170, REB_INT, "ri_trace.peri_mode", offsetof(struct reb_simulation, ri_trace.peri_mode), 0, 0},
     //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0},
@@ -661,8 +657,6 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             r->collision_resolve ||
             r->additional_forces ||
             r->heartbeat ||
-            r->ri_trace.S ||
-            r->ri_trace.S_peri ||
             r->post_timestep_modifications ||
             r->free_particle_ap){
         functionpointersused = 1;

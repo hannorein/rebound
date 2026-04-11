@@ -235,14 +235,16 @@ struct reb_integrator_mercurius_state {
 };
 
 // TRACE (Lu Hernandez & Rein 2024)
-struct reb_integrator_trace {
+struct reb_integrator_trace_state {
     int (*S) (struct reb_simulation* const r, const size_t i, const size_t j);
     int (*S_peri) (struct reb_simulation* const r, const size_t j);
 
+#define REB_TRACE_PERIMODE(X,Y) \
+    X(Y, 0, PARTIAL_BS) \
+    X(Y, 1, FULL_BS) \
+    X(Y, 2, FULL_IAS15)
     enum {
-        REB_TRACE_PERI_PARTIAL_BS = 0,
-        REB_TRACE_PERI_FULL_BS = 1,
-        REB_TRACE_PERI_FULL_IAS15 = 2,
+        REB_GENERATE_ENUM(REB_TRACE_PERIMODE)
     } peri_mode;
 
     double r_crit_hill;
@@ -603,9 +605,6 @@ struct reb_simulation {
     } gravity;
 
     void (*gravity_custom) (struct reb_simulation* const r);  // Used with REB_GRAVITY_CUSTOM
-
-    // Datastructures for integrators
-    struct reb_integrator_trace ri_trace;           // The TRACE struct
 
     // ODEs. Do not access these variables directly. Use functions provided instead.
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)
