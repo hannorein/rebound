@@ -487,6 +487,11 @@ static void reb_simulation_step(struct reb_simulation* const r){
     }
 
     PROFILING_START();
+    if (!r->integrator.id){
+        // Use IAS15 as default integrator
+        reb_simulation_set_integrator(r, reb_integrator_ias15);
+    }
+
     if (r->integrator.step){
         r->integrator.step(r, r->integrator_data);
     }
@@ -700,9 +705,6 @@ void reb_simulation_init(struct reb_simulation* r){
     r->exact_finish_time    = 1;
     r->output_timing_last   = -1;
     r->simulationarchive_version = 3;
-
-    // Set default integrator.
-    reb_simulation_set_integrator(r, reb_integrator_ias15);
 
 #ifdef OPENMP
     char msg[1024];

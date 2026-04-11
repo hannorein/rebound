@@ -176,7 +176,7 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.N, 2)
     
     def test_integrator(self):
-        self.assertEqual(self.sim.integrator, "ias15")
+        self.assertEqual(self.sim.integrator, "none")
         self.sim.integrator = "whfast"
         self.assertEqual(self.sim.integrator, "whfast")
         with self.assertRaises(ValueError):

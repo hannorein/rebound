@@ -528,7 +528,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 break;
         }
         int i=0;
-        while (current_fd_list[i].type){
+        while (current_fd_list && current_fd_list[i].type){
             int dtype = current_fd_list[i].dtype;
             // Simple data types:
             if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
@@ -714,7 +714,7 @@ next_field:
 
             // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
             int i=0;
-            while (current_fd_list[i].type){
+            while (current_fd_list && current_fd_list[i].type){
                 struct reb_binarydata_field_descriptor fd = current_fd_list[i];
                 if (fd.type==field.type){
                     // Read simple data types

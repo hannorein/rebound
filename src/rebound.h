@@ -346,7 +346,6 @@ struct reb_integrator_whfast_state {
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
-#undef REB_AS_ENUM_MEMBER
 
 // Special particle struct for WHFast512
 struct reb_particle_avx512; // Opaque pointer. Implemented in integrator_whfast.h
@@ -386,19 +385,6 @@ struct reb_integrator_bs_state {
     int user_ode_needs_nbody;   // Do not set manually. Use needs_nbody in reb_ode instead.
 };
 
-// Available methods for EOS Integrator
-enum REB_EOS_TYPE {
-    REB_EOS_LF = 0x00, 
-    REB_EOS_LF4 = 0x01,
-    REB_EOS_LF6 = 0x02,
-    REB_EOS_LF8 = 0x03, 
-    REB_EOS_LF4_2 = 0x04,
-    REB_EOS_LF8_6_4= 0x05,
-    REB_EOS_PLF7_6_4= 0x06,
-    REB_EOS_PMLF4 = 0x07,
-    REB_EOS_PMLF6 = 0x08,
-};
-
 // Available return values for collision resolve functions
 enum REB_COLLISION_RESOLVE_OUTCOME {
     REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE = 0,
@@ -407,10 +393,25 @@ enum REB_COLLISION_RESOLVE_OUTCOME {
     REB_COLLISION_RESOLVE_OUTCOME_REMOVE_BOTH = 3,
 };
 
+// Available methods for EOS Integrator
+enum REB_INTEGRATOR_EOS_TYPE {
+#define REB_INTEGRATOR_EOS_TYPE(X,Y) \
+    X(Y, 0, LF)  \
+    X(Y, 1, LF4) \
+    X(Y, 2, LF6) \
+    X(Y, 3, LF8) \
+    X(Y, 4, LF4_2)   \
+    X(Y, 5, LF8_6_4) \
+    X(Y, 6, PLF7_6_4)\
+    X(Y, 7, PMLF4)   \
+    X(Y, 8, PMLF6)   
+    REB_GENERATE_ENUM(REB_INTEGRATOR_EOS_TYPE)
+};
+
 // Embedded Operator Splitting Integrator (Rein 2020)
 struct reb_integrator_eos_state {
-    enum REB_EOS_TYPE phi0;         // Outer operator splitting method
-    enum REB_EOS_TYPE phi1;         // Inner operator splitting method
+    enum REB_INTEGRATOR_EOS_TYPE phi0;         // Outer operator splitting method
+    enum REB_INTEGRATOR_EOS_TYPE phi1;         // Inner operator splitting method
     unsigned int n;                 // Number of inner splittings per outer splitting
     unsigned int safe_mode;         // Combine Kick steps at beginning and end of timestep
 
@@ -449,6 +450,9 @@ enum REB_STATUS {
     REB_STATUS_SIGINT = 6,        // SIGINT received. Simulation stopped.
     REB_STATUS_COLLISION = 7,     // The integration ends early because two particles collided. 
 };
+
+
+#undef REB_AS_ENUM_MEMBER
 
 // Main REBOUND Simulation structure
 // Note: only variables that should be accessed by users are documented here.

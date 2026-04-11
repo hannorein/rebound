@@ -40,8 +40,8 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state);
 void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state);
 
 const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor_list[] = {
-    { 148, REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, 0},
-    { 149, REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, 0},
+    { 148, REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
+    { 149, REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
     { 150, REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
     { 151, REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
     { 152, REB_UINT,        "is_synchronized",       offsetof(struct reb_integrator_eos_state, is_synchronized), 0, 0, 0},
@@ -51,8 +51,8 @@ const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor
 void* reb_integrator_eos_create(){
     struct reb_integrator_eos_state* eos = calloc(sizeof(struct reb_integrator_eos_state),1);
     eos->n = 2;
-    eos->phi0 = REB_EOS_LF;
-    eos->phi1 = REB_EOS_LF;
+    eos->phi0 = REB_INTEGRATOR_EOS_TYPE_LF;
+    eos->phi1 = REB_INTEGRATOR_EOS_TYPE_LF;
     eos->safe_mode = 1;
     eos->is_synchronized = 1;
     return eos;
@@ -251,21 +251,21 @@ static inline void reb_integrator_eos_interaction_shell1(struct reb_simulation* 
     }
 }
 
-static inline void reb_integrator_eos_preprocessor(struct reb_simulation* const r, double dt, enum REB_EOS_TYPE type, void (*drift_step)(struct reb_simulation* const r, double a), void (*interaction_step)(struct reb_simulation* const r, double y, double v)){
+static inline void reb_integrator_eos_preprocessor(struct reb_simulation* const r, double dt, enum REB_INTEGRATOR_EOS_TYPE type, void (*drift_step)(struct reb_simulation* const r, double a), void (*interaction_step)(struct reb_simulation* const r, double y, double v)){
     switch(type){
-        case REB_EOS_PMLF6:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF6:
             for (int i=0;i<6;i++){
                 drift_step(r, dt*pmlf6_z[i]);
                 interaction_step(r, dt*pmlf6_y[i], dt*dt*dt*pmlf6_v[i]);
             }
             break;
-        case REB_EOS_PMLF4:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF4:
             for (int i=0;i<3;i++){
                 interaction_step(r, dt*pmlf4_y[i], 0.);
                 drift_step(r, dt*pmlf4_z[i]);
             }
             break;
-        case REB_EOS_PLF7_6_4:
+        case REB_INTEGRATOR_EOS_TYPE_PLF7_6_4:
             for (int i=0;i<6;i++){
                 drift_step(r, dt*plf7_6_4_z[i]);
                 interaction_step(r, dt*plf7_6_4_y[i], 0.);
@@ -276,21 +276,21 @@ static inline void reb_integrator_eos_preprocessor(struct reb_simulation* const 
     }
 }
 
-static inline void reb_integrator_eos_postprocessor(struct reb_simulation* const r, double dt, enum REB_EOS_TYPE type, void (*drift_step)(struct reb_simulation* const r, double a), void (*interaction_step)(struct reb_simulation* const r, double y, double v)){
+static inline void reb_integrator_eos_postprocessor(struct reb_simulation* const r, double dt, enum REB_INTEGRATOR_EOS_TYPE type, void (*drift_step)(struct reb_simulation* const r, double a), void (*interaction_step)(struct reb_simulation* const r, double y, double v)){
     switch(type){
-        case REB_EOS_PMLF6:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF6:
             for (int i=5;i>=0;i--){
                 interaction_step(r, -dt*pmlf6_y[i], -dt*dt*dt*pmlf6_v[i]); 
                 drift_step(r, -dt*pmlf6_z[i]);
             }
             break;
-        case REB_EOS_PMLF4:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF4:
             for (int i=2;i>=0;i--){
                 drift_step(r, -dt*pmlf4_z[i]);
                 interaction_step(r, -dt*pmlf4_y[i], 0.); 
             }
             break;
-        case REB_EOS_PLF7_6_4:
+        case REB_INTEGRATOR_EOS_TYPE_PLF7_6_4:
             for (int i=5;i>=0;i--){
                 interaction_step(r, -dt*plf7_6_4_y[i], 0.);
                 drift_step(r, -dt*plf7_6_4_z[i]);
@@ -316,7 +316,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
     const double dt = _dt/n;
     reb_integrator_eos_preprocessor(r, dt, eos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
     switch(eos->phi1){
-        case REB_EOS_LF:
+        case REB_INTEGRATOR_EOS_TYPE_LF:
             reb_integrator_eos_drift_shell1(r, dt*0.5); 
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt, 0.);
@@ -326,7 +326,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*0.5);
             break;
-        case REB_EOS_LF4:
+        case REB_INTEGRATOR_EOS_TYPE_LF4:
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf4_a);
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*2.*reb_integrator_leapfrog_lf4_a, 0.);
@@ -340,7 +340,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf4_a);
             break;
-        case REB_EOS_LF6:
+        case REB_INTEGRATOR_EOS_TYPE_LF6:
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf6_a[0], 0.);
@@ -366,7 +366,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
             break; 
-        case REB_EOS_LF8: 
+        case REB_INTEGRATOR_EOS_TYPE_LF8: 
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*reb_integrator_leapfrog_lf8_a[0], 0.);
@@ -408,7 +408,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
             break;
-        case REB_EOS_LF4_2: 
+        case REB_INTEGRATOR_EOS_TYPE_LF4_2: 
             reb_integrator_eos_drift_shell1(r, dt*lf4_2_a); 
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*0.5, 0.); 
@@ -420,7 +420,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*lf4_2_a); 
             break;
-        case REB_EOS_LF8_6_4:
+        case REB_INTEGRATOR_EOS_TYPE_LF8_6_4:
             reb_integrator_eos_drift_shell1(r, dt*lf8_6_4_a[0]);   
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, lf8_6_4_b[0]*dt,0);
@@ -442,7 +442,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*lf8_6_4_a[0]);   
             break;
-        case REB_EOS_PMLF4:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF4:
             reb_integrator_eos_drift_shell1(r, dt*0.5); 
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt, dt*dt*dt/24.); 
@@ -452,7 +452,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*0.5);
             break;
-        case REB_EOS_PMLF6:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF6:
             reb_integrator_eos_drift_shell1(r, dt*pmlf6_a[0]); 
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, dt*pmlf6_b[0], dt*dt*dt*pmlf6_c[0]); 
@@ -466,7 +466,7 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
             }
             reb_integrator_eos_drift_shell1(r, dt*pmlf6_a[0]);
             break;
-        case REB_EOS_PLF7_6_4:
+        case REB_INTEGRATOR_EOS_TYPE_PLF7_6_4:
             reb_integrator_eos_drift_shell1(r, dt*plf7_6_4_a[0]);   
             for (size_t i=0;i<n;i++){
                 reb_integrator_eos_interaction_shell1(r, plf7_6_4_b[0]*dt,0);
@@ -504,11 +504,11 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
         dtfac = 2.;
     }
     switch(eos->phi0){
-        case REB_EOS_LF:
+        case REB_INTEGRATOR_EOS_TYPE_LF:
             reb_integrator_eos_drift_shell0(r, dt*0.5*dtfac);
             reb_integrator_eos_interaction_shell0(r, dt, 0.);
             break;
-        case REB_EOS_LF4:
+        case REB_INTEGRATOR_EOS_TYPE_LF4:
             reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf4_a*dtfac);
             reb_integrator_eos_interaction_shell0(r, dt*2.*reb_integrator_leapfrog_lf4_a, 0.);
             reb_integrator_eos_drift_shell0(r, dt*(0.5-reb_integrator_leapfrog_lf4_a));
@@ -516,7 +516,7 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             reb_integrator_eos_drift_shell0(r, dt*(0.5-reb_integrator_leapfrog_lf4_a));
             reb_integrator_eos_interaction_shell0(r, dt*2.*reb_integrator_leapfrog_lf4_a, 0.);
             break;
-        case REB_EOS_LF6:
+        case REB_INTEGRATOR_EOS_TYPE_LF6:
             reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5*dtfac);
             reb_integrator_eos_interaction_shell0(r, dt*reb_integrator_leapfrog_lf6_a[0], 0.);
             reb_integrator_eos_drift_shell0(r, dt*(reb_integrator_leapfrog_lf6_a[0]+reb_integrator_leapfrog_lf6_a[1])*0.5);
@@ -536,7 +536,7 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             reb_integrator_eos_drift_shell0(r, dt*(reb_integrator_leapfrog_lf6_a[0]+reb_integrator_leapfrog_lf6_a[1])*0.5);
             reb_integrator_eos_interaction_shell0(r, dt*reb_integrator_leapfrog_lf6_a[0], 0.);
             break; 
-        case REB_EOS_LF8: 
+        case REB_INTEGRATOR_EOS_TYPE_LF8: 
             reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5*dtfac);
             reb_integrator_eos_interaction_shell0(r, dt*reb_integrator_leapfrog_lf8_a[0], 0.);
             reb_integrator_eos_drift_shell0(r, dt*(reb_integrator_leapfrog_lf8_a[0]+reb_integrator_leapfrog_lf8_a[1])*0.5);
@@ -572,13 +572,13 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             reb_integrator_eos_drift_shell0(r, dt*(reb_integrator_leapfrog_lf8_a[0]+reb_integrator_leapfrog_lf8_a[1])*0.5);
             reb_integrator_eos_interaction_shell0(r, dt*reb_integrator_leapfrog_lf8_a[0], 0.);
             break;
-        case REB_EOS_LF4_2: 
+        case REB_INTEGRATOR_EOS_TYPE_LF4_2: 
             reb_integrator_eos_drift_shell0(r, dt*lf4_2_a*dtfac); 
             reb_integrator_eos_interaction_shell0(r, dt*0.5, 0.); 
             reb_integrator_eos_drift_shell0(r, dt*(1.-2.*lf4_2_a));
             reb_integrator_eos_interaction_shell0(r, dt*0.5, 0.); 
             break;
-        case REB_EOS_LF8_6_4:
+        case REB_INTEGRATOR_EOS_TYPE_LF8_6_4:
             reb_integrator_eos_drift_shell0(r, dt*lf8_6_4_a[0]*dtfac);   
             reb_integrator_eos_interaction_shell0(r, lf8_6_4_b[0]*dt,0);
             reb_integrator_eos_drift_shell0(r, lf8_6_4_a[1]*dt);   
@@ -594,11 +594,11 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             reb_integrator_eos_drift_shell0(r, lf8_6_4_a[1]*dt);   
             reb_integrator_eos_interaction_shell0(r, lf8_6_4_b[0]*dt,0);
             break;
-        case REB_EOS_PMLF4:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF4:
             reb_integrator_eos_drift_shell0(r, dt*0.5*dtfac); 
             reb_integrator_eos_interaction_shell0(r, dt, dt*dt*dt/24.); 
             break;
-        case REB_EOS_PMLF6:
+        case REB_INTEGRATOR_EOS_TYPE_PMLF6:
             reb_integrator_eos_drift_shell0(r, dt*pmlf6_a[0]*dtfac); 
             reb_integrator_eos_interaction_shell0(r, dt*pmlf6_b[0], dt*dt*dt*pmlf6_c[0]); 
             reb_integrator_eos_drift_shell0(r, dt*pmlf6_a[1]);
@@ -606,7 +606,7 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             reb_integrator_eos_drift_shell0(r, dt*pmlf6_a[1]);
             reb_integrator_eos_interaction_shell0(r, dt*pmlf6_b[0], dt*dt*dt*pmlf6_c[0]);
             break;
-        case REB_EOS_PLF7_6_4:
+        case REB_INTEGRATOR_EOS_TYPE_PLF7_6_4:
             reb_integrator_eos_drift_shell0(r, dt*plf7_6_4_a[0]*dtfac);   
             reb_integrator_eos_interaction_shell0(r, plf7_6_4_b[0]*dt,0);
             reb_integrator_eos_drift_shell0(r, plf7_6_4_a[1]*dt);   
@@ -630,29 +630,29 @@ void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state){
     const double dt = r->dt;
     if (eos->is_synchronized == 0){
         switch(eos->phi0){
-            case REB_EOS_PMLF4:
-            case REB_EOS_LF:
+            case REB_INTEGRATOR_EOS_TYPE_PMLF4:
+            case REB_INTEGRATOR_EOS_TYPE_LF:
                 reb_integrator_eos_drift_shell0(r, dt*0.5); 
                 break;
-            case REB_EOS_PMLF6:
+            case REB_INTEGRATOR_EOS_TYPE_PMLF6:
                 reb_integrator_eos_drift_shell0(r, dt*pmlf6_a[0]); 
                 break;
-            case REB_EOS_LF4:
+            case REB_INTEGRATOR_EOS_TYPE_LF4:
                 reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf4_a);
                 break;
-            case REB_EOS_LF4_2:
+            case REB_INTEGRATOR_EOS_TYPE_LF4_2:
                 reb_integrator_eos_drift_shell0(r, dt*lf4_2_a); 
                 break;
-            case REB_EOS_PLF7_6_4:
+            case REB_INTEGRATOR_EOS_TYPE_PLF7_6_4:
                 reb_integrator_eos_drift_shell0(r, dt*plf7_6_4_a[0]);   
                 break;
-            case REB_EOS_LF8_6_4:
+            case REB_INTEGRATOR_EOS_TYPE_LF8_6_4:
                 reb_integrator_eos_drift_shell0(r, dt*lf8_6_4_a[0]);   
                 break;
-            case REB_EOS_LF6:
+            case REB_INTEGRATOR_EOS_TYPE_LF6:
                 reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
                 break;
-            case REB_EOS_LF8: 
+            case REB_INTEGRATOR_EOS_TYPE_LF8: 
                 reb_integrator_eos_drift_shell0(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
                 break;
         }

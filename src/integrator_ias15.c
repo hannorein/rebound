@@ -79,7 +79,7 @@ void reb_integrator_ias15_step(struct reb_simulation* const r, void* state);
 static void free_dp7(struct reb_dp7 dp7);
 
 const struct reb_integrator reb_integrator_ias15 = {
-    .id = 0,
+    .id = 7,
     .step = reb_integrator_ias15_step,
     .create = reb_integrator_ias15_create,
     .free = reb_integrator_ias15_free,

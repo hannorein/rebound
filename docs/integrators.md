@@ -736,22 +736,6 @@ Symplectic Epicycle Integrator (SEI), mixed variable symplectic integrator for t
 All other members of this structure are only for internal use and should not be changed manually.
 
 
-## No integrator
-Sometimes it might make sense to simply not advance any particle positions or velocities. By selecting this integrator, one can still perform integration steps, but particles will not move.
-
-Here is how to do that:
-=== "C"
-    ```c
-    struct reb_simulation* r = reb_simulation_create();
-    r->integrator = reb_integrator_none;
-    ```
-
-=== "Python"
-    ```python
-    sim = rebound.Simulation()
-    sim.integrator = "none"
-    ```
-
 ## WHFast512
 
 WHFast512 is a symplectic Wisdom-Holman integrator. 
