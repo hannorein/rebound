@@ -64,10 +64,21 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-void reb_integrator_bs_step(struct reb_simulation* r, void* p);
-void* reb_integrator_bs_create();
-void reb_integrator_bs_free(void* state);
-    
+// Default configuration parameter. 
+// They are hard coded here because it
+// is unlikely that these need to be changed by the user.
+// static const int maxOrder = 18;
+static const int sequence_length = 9; // = maxOrder / 2; 
+static const double stepControl1 = 0.65;
+static const double stepControl2 = 0.94;
+static const double stepControl3 = 0.02;
+static const double stepControl4 = 4.0;
+static const double orderControl1 = 0.8;
+static const double orderControl2 = 0.9;
+static const double stabilityReduction = 0.5;
+static const int maxIter = 2; // maximal number of iterations for which checks are performed
+static const int maxChecks = 1; // maximal number of checks for each iteration
+
 const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_list[] = {
     { 156, REB_DOUBLE,      "eps_abs",                offsetof(struct reb_integrator_bs_state, eps_abs), 0, 0, 0},
     { 157, REB_DOUBLE,      "eps_rel",                offsetof(struct reb_integrator_bs_state, eps_rel), 0, 0, 0},
@@ -79,6 +90,10 @@ const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_
     { 0 }, // Null terminated list
 };
 
+void reb_integrator_bs_step(struct reb_simulation* r, void* p);
+void* reb_integrator_bs_create();
+void reb_integrator_bs_free(void* state);
+    
 const struct reb_integrator reb_integrator_bs = {
     .id = 12,
     .step = reb_integrator_bs_step,
@@ -99,6 +114,30 @@ void* reb_integrator_bs_create(){
     bs->previous_rejected = 0;
     bs->target_iter       = 0;
     bs->user_ode_needs_nbody = 0;
+
+    // Allocate and init sequence arrays (not: these are independent of number of particles/ODEs)
+    bs->sequence        = malloc(sizeof(int)*sequence_length);
+    bs->cost_per_step     = malloc(sizeof(int)*sequence_length);
+    bs->coeff           = malloc(sizeof(double)*sequence_length);
+    bs->cost_per_time_unit = malloc(sizeof(double)*sequence_length);
+    bs->optimal_step     = malloc(sizeof(double)*sequence_length);
+
+    for (int k = 0; k < sequence_length; ++k) {
+        // step size sequence: 2, 6, 10, 14, ... 
+        bs->sequence[k] = 4 * k + 2;
+        // initialize the extrapolation tables
+        double r = 1./((double) bs->sequence[k]);
+        bs->coeff[k] = r*r;
+    }
+
+    // initialize the order selection cost array
+    // (number of function calls for each column of the extrapolation table)
+    bs->cost_per_step[0] = bs->sequence[0] + 1;
+    for (int k = 1; k < sequence_length; ++k) {
+        bs->cost_per_step[k] = bs->cost_per_step[k - 1] + bs->sequence[k];
+    }
+    bs->cost_per_time_unit[0]       = 0;
+
     return bs;
 }
 
@@ -115,21 +154,6 @@ void reb_integrator_bs_free(void* state){
 }
 
 //#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
-
-// Default configuration parameter. 
-// They are hard coded here because it
-// is unlikely that these need to be changed by the user.
-// static const int maxOrder = 18;// was 18 
-static const int sequence_length = 9; // = maxOrder / 2; 
-static const double stepControl1 = 0.65;
-static const double stepControl2 = 0.94;
-static const double stepControl3 = 0.02;
-static const double stepControl4 = 4.0;
-static const double orderControl1 = 0.8;
-static const double orderControl2 = 0.9;
-static const double stabilityReduction = 0.5;
-static const int maxIter = 2; // maximal number of iterations for which checks are performed
-static const int maxChecks = 1; // maximal number of checks for each iteration
 
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){
@@ -314,38 +338,6 @@ void reb_integrator_bs_nbody_derivatives(struct reb_ode* ode, double* const yDot
 }
 
 
-static void allocate_sequence_arrays(struct reb_integrator_bs_state* bs){
-    bs->sequence        = malloc(sizeof(int)*sequence_length);
-    bs->cost_per_step     = malloc(sizeof(int)*sequence_length);
-    bs->coeff           = malloc(sizeof(double)*sequence_length);
-    bs->cost_per_time_unit = malloc(sizeof(double)*sequence_length);
-    bs->optimal_step     = malloc(sizeof(double)*sequence_length);
-
-    // step size sequence: 2, 6, 10, 14, ...  // only needed for dense output
-    for (int k = 0; k < sequence_length; ++k) {
-        bs->sequence[k] = 4 * k + 2;
-    }
-
-    // step size sequence: 1,2,3,4,5 ...
-    //for (int k = 0; k < sequence_length; ++k) {
-    //    bs->sequence[k] = 2*( k+1);
-    //}
-
-    // initialize the order selection cost array
-    // (number of function calls for each column of the extrapolation table)
-    bs->cost_per_step[0] = bs->sequence[0] + 1;
-    for (int k = 1; k < sequence_length; ++k) {
-        bs->cost_per_step[k] = bs->cost_per_step[k - 1] + bs->sequence[k];
-    }
-    bs->cost_per_time_unit[0]       = 0;
-
-    // initialize the extrapolation tables
-    for (int j = 0; j < sequence_length; ++j) {
-        double r = 1./((double) bs->sequence[j]);
-        bs->coeff[j] = r*r;
-    }
-}
-
 static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, double* y2, double relTol, double absTol){
     double* scale = ode->scale;
     int length = ode->length;
@@ -363,10 +355,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
  
     // TODO: Make this work with non-BS main integrators
     struct reb_integrator_bs_state * bs = r->integrator_data;
-
-    if (bs->sequence==NULL){
-        allocate_sequence_arrays(bs);
-    }
 
     double t = r->t;
     bs->dt_proposed = dt; // In case of early fail
