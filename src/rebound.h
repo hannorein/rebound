@@ -315,21 +315,21 @@ struct reb_integrator_saba_state {
 struct reb_integrator_whfast_state {
     unsigned int corrector;                                     // Order of first symplectic corrector: 0 (default - no corrector), 3, 5, 7, 11, 17.  
     unsigned int corrector2;                                    // 0: no second corrector, 1: use second corrector
-#define REB_WHFAST_KERNEL(X,Y) \
+#define REB_INTEGRATOR_WHFAST_KERNEL(X,Y) \
     X(Y, 0, DEFAULT) \
     X(Y, 1, MODIFIEDKICK) \
     X(Y, 2, COMPOSITION) \
     X(Y, 3, LAZY)
     enum {
-        REB_GENERATE_ENUM(REB_WHFAST_KERNEL)
+        REB_GENERATE_ENUM(REB_INTEGRATOR_WHFAST_KERNEL)
     } kernel;                                                   // Kernel type. See Rein, Tamayo & Brown 2019 for details.                            
-#define REB_WHFAST_COORDINATES(X,Y) \
+#define REB_INTEGRATOR_WHFAST_COORDINATES(X,Y) \
     X(Y, 0, JACOBI)                                         /* Jacobi coordinates (default)                   */ \
     X(Y, 1, DEMOCRATICHELIOCENTRIC)                         /* Democratic Heliocentric coordinates            */ \
     X(Y, 2, WHDS)                                           /* WHDS coordinates (Hernandez and Dehnen, 2017)  */ \
     X(Y, 3, BARYCENTRIC)                                    /* Barycentric coordinates                        */ 
     enum {
-        REB_GENERATE_ENUM(REB_WHFAST_COORDINATES)
+        REB_GENERATE_ENUM(REB_INTEGRATOR_WHFAST_COORDINATES)
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting
     unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
     unsigned int safe_mode;                                     // 0: Drift Kick Drift scheme (default), 1: combine first and last sub-step.

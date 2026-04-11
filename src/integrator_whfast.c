@@ -50,9 +50,9 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { 66, REB_UINT,         "timestep_warning",   offsetof(struct reb_integrator_whfast_state, timestep_warning), 0, 0, 0},
     { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle), 0},
     { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle), 0},
-    { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_COORDINATES) },
+    { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },
     { 143, REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0, 0},
-    { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_WHFAST_KERNEL)},
+    { 144, REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_KERNEL)},
     { 0 }, // Null terminated list
 };
 
@@ -75,7 +75,7 @@ void* reb_integrator_whfast_create(){
     whfast->corrector = 0;
     whfast->corrector2 = 0;
     whfast->kernel = 0;
-    whfast->coordinates = REB_WHFAST_COORDINATES_JACOBI;
+    whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI;
     whfast->keep_unsynchronized = 0;
     whfast->safe_mode = 1;
     whfast->recalculate_coordinates_this_timestep = 0;
@@ -411,7 +411,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
     struct reb_particle* const p_jh = whfast->p_jh;
     struct reb_particle* const p_jh_var = whfast->p_jh_var;
     switch (whfast->coordinates){
-        case REB_WHFAST_COORDINATES_JACOBI:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
             {
                 reb_transformations_inertial_to_jacobi_acc(particles, p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
@@ -460,7 +460,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
                 }
             }
             break;
-        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
 #pragma omp parallel for 
             for (size_t i=1;i<N;i++){
                 p_jh[i].vx += _dt*particles[i].ax;
@@ -468,7 +468,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
                 p_jh[i].vz += _dt*particles[i].az;
             }
             break;
-        case REB_WHFAST_COORDINATES_WHDS:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
 #pragma omp parallel for 
             for (size_t i=1;i<N_active;i++){
                 const double mi = particles[i].m;
@@ -483,7 +483,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
                 p_jh[i].vz += _dt*particles[i].az;
             }
             break;
-        case REB_WHFAST_COORDINATES_BARYCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
             for (size_t i=1;i<N;i++){
                 const double dr = sqrt(p_jh[i].x*p_jh[i].x + p_jh[i].y*p_jh[i].y + p_jh[i].z*p_jh[i].z);
                 const double prefac = G*p_jh[0].m/(dr*dr*dr);
@@ -501,10 +501,10 @@ void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N:r->N_active;
     const double m0 = r->particles[0].m;
     switch (whfast->coordinates){
-        case REB_WHFAST_COORDINATES_JACOBI:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
             // Nothing to be done.
             break;
-        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
             {
                 double px=0, py=0, pz=0;
 #pragma omp parallel for reduction (+:px), reduction (+:py), reduction (+:pz)
@@ -522,7 +522,7 @@ void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const
                 }
             }
             break;
-        case REB_WHFAST_COORDINATES_WHDS:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
             {
                 double px=0, py=0, pz=0;
 #pragma omp parallel for reduction (+:px), reduction (+:py), reduction (+:pz)
@@ -547,7 +547,7 @@ void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const
                 }
             }
             break;
-        case REB_WHFAST_COORDINATES_BARYCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
             // Nothing to be done.
             break;
     };
@@ -567,7 +567,7 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
     double eta = m0;
     int timestep_too_large = 0;
     switch (coordinates){
-        case REB_WHFAST_COORDINATES_JACOBI:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
 #pragma omp parallel for private(eta)
             for (size_t i=1;i<N;i++){
 #ifdef OPENMP
@@ -583,13 +583,13 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
                 timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
-        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
 #pragma omp parallel for 
             for (size_t i=1;i<N;i++){
                 timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r); // eta = m0
             }
             break;
-        case REB_WHFAST_COORDINATES_WHDS:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
 #pragma omp parallel for private(eta)
             for (size_t i=1;i<N;i++){
                 if (i<N_active){
@@ -600,7 +600,7 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
                 timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
-        case REB_WHFAST_COORDINATES_BARYCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
             eta = p_jh[0].m;
             for (size_t i=1;i<N;i++){
                 timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
@@ -636,7 +636,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
     switch (whfast->coordinates){
-        case REB_WHFAST_COORDINATES_JACOBI:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
             reb_integrator_whfast_kepler_step(r, a);
             reb_transformations_jacobi_to_inertial_pos(particles, whfast->p_jh, particles, N, N_active);
             for (size_t v=0;v<r->N_var_config;v++){
@@ -655,7 +655,7 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
             reb_integrator_whfast_interaction_step(r, b);
             reb_integrator_whfast_kepler_step(r, a);
             break;
-        case REB_WHFAST_COORDINATES_BARYCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
             reb_integrator_whfast_kepler_step(r, a);
             reb_transformations_barycentric_to_inertial_pos(particles, whfast->p_jh, N, N_active);
             reb_simulation_update_acceleration(r);
@@ -666,8 +666,8 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
             reb_integrator_whfast_interaction_step(r, b);
             reb_integrator_whfast_kepler_step(r, a);
             break;
-        case REB_WHFAST_COORDINATES_WHDS:
-        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
+        case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
             reb_simulation_error(r, "Coordinate system not supported.");
             break;
     }
@@ -855,11 +855,11 @@ void reb_integrator_whfast_calculate_jerk(struct reb_simulation* r, struct reb_p
 int reb_integrator_whfast_init(struct reb_simulation* const r){
     struct reb_integrator_whfast_state* whfast = r->integrator_data;
     if (r->N_var){
-        if (whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
+        if (whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI){
             reb_simulation_error(r, "Variational particles are only compatible with Jacobi coordinates.");
             return 1; // Error
         }
-        if (whfast->kernel != REB_WHFAST_KERNEL_DEFAULT){
+        if (whfast->kernel != REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT){
             reb_simulation_error(r, "Variational particles are only compatible with the standard kernel.");
             return 1; // Error
         }
@@ -887,7 +887,7 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
             }
         }
     }
-    if (whfast->kernel!= REB_WHFAST_KERNEL_DEFAULT && whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI){
+    if (whfast->kernel!= REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT && whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI){
         reb_simulation_error(r, "Non-standard kernel requires Jacobi coordinates.");
         return 1; // Error
     }
@@ -895,7 +895,7 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
         reb_simulation_error(r, "Kernel method must be 0 (default), 1 (exact modified kick), 2 (composition kernel), or 3 (lazy implementer's modified kick). ");
         return 1; // Error
     }
-    if (whfast->corrector!=0 && (whfast->coordinates!=REB_WHFAST_COORDINATES_JACOBI && whfast->coordinates!=REB_WHFAST_COORDINATES_BARYCENTRIC) ){
+    if (whfast->corrector!=0 && (whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI && whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC) ){
         reb_simulation_error(r, "Symplectic correctors are only compatible with Jacobi and Barycentric coordinates.");
         return 1; // Error
     }
@@ -906,12 +906,12 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
     if (whfast->keep_unsynchronized==1 && whfast->safe_mode==1){
         reb_simulation_error(r, "whfast->keep_unsynchronized == 1 is not compatible with safe_mode. Must set whfast->safe_mode = 0.");
     }
-    if (whfast->kernel == REB_WHFAST_KERNEL_MODIFIEDKICK || whfast->kernel == REB_WHFAST_KERNEL_LAZY){ 
+    if (whfast->kernel == REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK || whfast->kernel == REB_INTEGRATOR_WHFAST_KERNEL_LAZY){ 
         r->gravity = REB_GRAVITY_JACOBI;
     }else{
-        if (whfast->coordinates==REB_WHFAST_COORDINATES_JACOBI){
+        if (whfast->coordinates==REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI){
             r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1;
-        }else if (whfast->coordinates==REB_WHFAST_COORDINATES_BARYCENTRIC){
+        }else if (whfast->coordinates==REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC){
             r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
         }else{
             r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_INVOLVING_0;
@@ -926,28 +926,29 @@ int reb_integrator_whfast_init(struct reb_simulation* const r){
     return 0;
 }
 
-void reb_integrator_whfast_from_inertial(struct reb_simulation* const r){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+void reb_integrator_whfast_from_inertial(struct reb_simulation* const r, struct reb_particle* p_jh, int coordinates){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
 
-    switch (whfast->coordinates){
-        case REB_WHFAST_COORDINATES_JACOBI:
-            reb_transformations_inertial_to_jacobi_posvel(particles, whfast->p_jh, particles, N, N_active);
+    switch (coordinates){
+        case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
+            reb_transformations_inertial_to_jacobi_posvel(particles, p_jh, particles, N, N_active);
+            // Only WHFast supports variational equations
             for (size_t v=0;v<r->N_var_config;v++){
+                struct reb_integrator_whfast_state* whfast = r->integrator_data;
                 struct reb_variational_configuration const vc = r->var_config[v];
                 reb_transformations_inertial_to_jacobi_posvel(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
             }
             break;
-        case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
-            reb_transformations_inertial_to_democraticheliocentric_posvel(particles, whfast->p_jh, N, N_active);
+        case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            reb_transformations_inertial_to_democraticheliocentric_posvel(particles, p_jh, N, N_active);
             break;
-        case REB_WHFAST_COORDINATES_WHDS:
-            reb_transformations_inertial_to_whds_posvel(particles, whfast->p_jh, N, N_active);
+        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
+            reb_transformations_inertial_to_whds_posvel(particles, p_jh, N, N_active);
             break;
-        case REB_WHFAST_COORDINATES_BARYCENTRIC:
-            reb_transformations_inertial_to_barycentric_posvel(particles, whfast->p_jh, N, N_active);
+        case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
+            reb_transformations_inertial_to_barycentric_posvel(particles, p_jh, N, N_active);
             break;
     };
 }
@@ -961,39 +962,39 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r){
     // Prepare coordinates for KICK step
     if (r->force_is_velocity_dependent){
         switch (whfast->coordinates){
-            case REB_WHFAST_COORDINATES_JACOBI:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
                 reb_transformations_jacobi_to_inertial_posvel(particles, whfast->p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
                     struct reb_variational_configuration const vc = r->var_config[v];
                     reb_transformations_jacobi_to_inertial_posvel(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
                 }
                 break;
-            case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
                 reb_transformations_democraticheliocentric_to_inertial_posvel(particles, whfast->p_jh, N, N_active);
                 break;
-            case REB_WHFAST_COORDINATES_WHDS:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
                 reb_transformations_whds_to_inertial_posvel(particles, whfast->p_jh, N, N_active);
                 break;
-            case REB_WHFAST_COORDINATES_BARYCENTRIC:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
                 reb_transformations_barycentric_to_inertial_posvel(particles, whfast->p_jh, N, N_active);
                 break;
         };
     }else{
         switch (whfast->coordinates){
-            case REB_WHFAST_COORDINATES_JACOBI:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
                 reb_transformations_jacobi_to_inertial_posvel(particles, whfast->p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
                     struct reb_variational_configuration const vc = r->var_config[v];
                     reb_transformations_jacobi_to_inertial_pos(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
                 }
                 break;
-            case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
                 reb_transformations_democraticheliocentric_to_inertial_posvel(particles, whfast->p_jh, N, N_active);
                 break;
-            case REB_WHFAST_COORDINATES_WHDS:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
                 reb_transformations_whds_to_inertial_posvel(particles, whfast->p_jh, N, N_active);
                 break;
-            case REB_WHFAST_COORDINATES_BARYCENTRIC:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
                 reb_transformations_barycentric_to_inertial_posvel(particles, whfast->p_jh, N, N_active);
                 break;
         };
@@ -1006,18 +1007,19 @@ void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,
         // Non recoverable error occurred.
         return;
     }
-    reb_integrator_whfast_from_inertial(r);
+    reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
     reb_integrator_whfast_kepler_step(r, dt);    // half timestep
     reb_integrator_whfast_com_step(r, whfast->p_jh, dt);
     reb_integrator_whfast_to_inertial(r);
 }
 
 void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* const r,double dt){
+    struct reb_integrator_whfast_state* whfast = r->integrator_data;
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occurred.
         return;
     }
-    reb_integrator_whfast_from_inertial(r);
+    reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1;
     reb_simulation_update_acceleration(r);
     reb_integrator_whfast_interaction_step(r, dt);
@@ -1039,13 +1041,13 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* sta
             memcpy(sync_pj,whfast->p_jh,r->N*sizeof(struct reb_particle));
         }
         switch (whfast->kernel){
-            case REB_WHFAST_KERNEL_DEFAULT: 
-            case REB_WHFAST_KERNEL_MODIFIEDKICK: 
-            case REB_WHFAST_KERNEL_LAZY: 
+            case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
+            case REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK: 
+            case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
                 reb_integrator_whfast_kepler_step(r, r->dt/2.);    
                 reb_integrator_whfast_com_step(r, whfast->p_jh, r->dt/2.);
                 break;
-            case REB_WHFAST_KERNEL_COMPOSITION:
+            case REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION:
                 reb_integrator_whfast_kepler_step(r, 3.*r->dt/8.);   
                 reb_integrator_whfast_com_step(r, whfast->p_jh, 3.*r->dt/8.);
                 break;
@@ -1060,20 +1062,20 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* sta
             reb_whfast_apply_corrector(r, -1., whfast->corrector);
         }
         switch (whfast->coordinates){
-            case REB_WHFAST_COORDINATES_JACOBI:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
                 reb_transformations_jacobi_to_inertial_posvel(r->particles, whfast->p_jh, r->particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
                     struct reb_variational_configuration const vc = r->var_config[v];
                     reb_transformations_jacobi_to_inertial_posvel(r->particles_var+vc.index, whfast->p_jh_var+vc.index, r->particles, N, N_active);
                 }
                 break;
-            case REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
                 reb_transformations_democraticheliocentric_to_inertial_posvel(r->particles, whfast->p_jh, N, N_active);
                 break;
-            case REB_WHFAST_COORDINATES_WHDS:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
                 reb_transformations_whds_to_inertial_posvel(r->particles, whfast->p_jh, N, N_active);
                 break;
-            case REB_WHFAST_COORDINATES_BARYCENTRIC:
+            case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
                 reb_transformations_barycentric_to_inertial_posvel(r->particles, whfast->p_jh, N, N_active);
                 break;
         };
@@ -1107,7 +1109,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
                 whfast->recalculate_coordinates_but_not_synchronized_warning++;
             }
         }
-        reb_integrator_whfast_from_inertial(r);
+        reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
         whfast->recalculate_coordinates_this_timestep = 0;
     }
     if (r->is_synchronized){
@@ -1119,13 +1121,13 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
             reb_whfast_apply_corrector2(r, 1.);
         }
         switch (whfast->kernel){
-            case REB_WHFAST_KERNEL_DEFAULT: 
-            case REB_WHFAST_KERNEL_MODIFIEDKICK: 
-            case REB_WHFAST_KERNEL_LAZY: 
+            case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
+            case REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK: 
+            case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
                 reb_integrator_whfast_kepler_step(r, r->dt/2.);    
                 reb_integrator_whfast_com_step(r, whfast->p_jh, r->dt/2.);
                 break;
-            case REB_WHFAST_KERNEL_COMPOSITION:
+            case REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION:
                 reb_integrator_whfast_kepler_step(r, 5.*r->dt/8.);   
                 reb_integrator_whfast_com_step(r, whfast->p_jh, 5.*r->dt/8.);
                 break;
@@ -1147,12 +1149,12 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
     reb_simulation_update_acceleration(r);
 
     switch (whfast->kernel){
-        case REB_WHFAST_KERNEL_DEFAULT: 
+        case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
             reb_integrator_whfast_interaction_step(r, dt);
 
             reb_integrator_whfast_jump_step(r,dt/2.);
             break;
-        case REB_WHFAST_KERNEL_MODIFIEDKICK: 
+        case REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK: 
             // p_jh used as a temporary buffer for "jerk"
             reb_integrator_whfast_calculate_jerk(r, whfast->p_jh);
             for (size_t i=0; i<N; i++){
@@ -1163,7 +1165,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
             }
             reb_integrator_whfast_interaction_step(r, dt);
             break;
-        case REB_WHFAST_KERNEL_COMPOSITION:
+        case REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION:
             reb_integrator_whfast_interaction_step(r, -dt/6.);
 
             reb_integrator_whfast_kepler_step(r, -dt/4.);   
@@ -1194,7 +1196,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
             reb_simulation_update_acceleration(r);
             reb_integrator_whfast_interaction_step(r, dt/6.);
             break;
-        case REB_WHFAST_KERNEL_LAZY: 
+        case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
             {
                 // Need temporary array to store old positions
                 if (whfast->N_allocated_temp != N){

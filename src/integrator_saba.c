@@ -265,7 +265,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
 
     // Only recalculate Jacobi coordinates if needed
     if (saba->safe_mode || saba->recalculate_coordinates_this_timestep){
-        reb_integrator_whfast_from_inertial(r);
+        reb_integrator_whfast_from_inertial(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI);
         saba->recalculate_coordinates_this_timestep = 0;
     }
     if (type>=0x100){ // Correctors on
