@@ -42,7 +42,8 @@ class TestIntegratorSABA(unittest.TestCase):
         sim = rebound.Simulation()
         rebound.data.add_outer_solar_system(sim)
         sim.integrator = integrator
-        sim.ri_saba.safe_mode = False
+        if integrator == "saba":
+            sim.integrator_data.safe_mode = False
         sim.dt = 0.0123235235*sim.particles[1].P  
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)

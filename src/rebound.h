@@ -278,25 +278,28 @@ struct reb_integrator_trace_state {
 
 // SABA Integrator (Laskar & Robutel 2001)
 struct reb_integrator_saba_state {
+#define REB_INTEGRATOR_SABA_TYPE(X,Y) \
+    X(Y, 0, DEFAULT) \
+        X(Y, 0x0,    1)         /* WH                                 */ \
+        X(Y, 0x1,    2)         /* SABA2                              */ \
+        X(Y, 0x2,    3)         /* SABA3                              */ \
+        X(Y, 0x3,    4)         /* SABA4                              */ \
+        X(Y, 0x100,  CM_1)      /* SABACM1 (Modified kick corrector)  */ \
+        X(Y, 0x101,  CM_2)      /* SABACM2 (Modified kick corrector)  */ \
+        X(Y, 0x102,  CM_3)      /* SABACM3 (Modified kick corrector)  */ \
+        X(Y, 0x103,  CM_4)      /* SABACM4 (Modified kick corrector)  */ \
+        X(Y, 0x200,  CL_1)      /* SABACL1 (lazy corrector)           */ \
+        X(Y, 0x201,  CL_2)      /* SABACL2 (lazy corrector)           */ \
+        X(Y, 0x202,  CL_3)      /* SABACL3 (lazy corrector)           */ \
+        X(Y, 0x203,  CL_4)      /* SABACL4 (lazy corrector)           */ \
+        X(Y, 0x4,    10_4)      /* SABA(10,4), 7 stages               */ \
+        X(Y, 0x5,    8_6_4)     /* SABA(8,6,4), 7 stages              */ \
+        X(Y, 0x6,    10_6_4)    /*SABA(10,6,4), 8 stages, default     */ \
+        X(Y, 0x7,    H_8_4_4)   /*SABAH(8,4,4), 6 stages              */ \
+        X(Y, 0x8,    H_8_6_4)   /*SABAH(8,6,4), 8 stages              */ \
+        X(Y, 0x9,    H_10_6_4)  /*SABAH(10,6,4), 9 stages             */
     enum {
-        REB_SABA_1 = 0x0, // WH
-        REB_SABA_2 = 0x1, // SABA2
-        REB_SABA_3 = 0x2, // SABA3
-        REB_SABA_4 = 0x3, // SABA4
-        REB_SABA_CM_1 = 0x100, // SABACM1 (Modified kick corrector)
-        REB_SABA_CM_2 = 0x101, // SABACM2 (Modified kick corrector)
-        REB_SABA_CM_3 = 0x102, // SABACM3 (Modified kick corrector)
-        REB_SABA_CM_4 = 0x103, // SABACM4 (Modified kick corrector)
-        REB_SABA_CL_1 = 0x200, // SABACL1 (lazy corrector)
-        REB_SABA_CL_2 = 0x201, // SABACL2 (lazy corrector)
-        REB_SABA_CL_3 = 0x202, // SABACL3 (lazy corrector)
-        REB_SABA_CL_4 = 0x203, // SABACL4 (lazy corrector)
-        REB_SABA_10_4 = 0x4,   // SABA(10,4), 7 stages
-        REB_SABA_8_6_4 = 0x5,  // SABA(8,6,4), 7 stages
-        REB_SABA_10_6_4 = 0x6, // SABA(10,6,4), 8 stages, default
-        REB_SABA_H_8_4_4 = 0x7,// SABAH(8,4,4), 6 stages
-        REB_SABA_H_8_6_4 = 0x8,// SABAH(8,6,4), 8 stages
-        REB_SABA_H_10_6_4 = 0x9,// SABAH(10,6,4), 9 stages
+        REB_GENERATE_ENUM(REB_INTEGRATOR_SABA_TYPE)
     } type;                             // Type of integrator
     unsigned int safe_mode;             // Combine first and last sub-step
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization

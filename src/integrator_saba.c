@@ -45,7 +45,7 @@ void reb_integrator_saba_reset(struct reb_simulation* r);	///< Internal function
 
 const struct reb_binarydata_field_descriptor reb_integrator_saba_field_descriptor_list[] = {
     { 140, REB_UINT,        "safe_mode",            offsetof(struct reb_integrator_saba_state, safe_mode), 0, 0, 0},
-    { 146, REB_INT,         "type",                 offsetof(struct reb_integrator_saba_state, type), 0, 0, 0},
+    { 146, REB_INT,         "type",                 offsetof(struct reb_integrator_saba_state, type), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_SABA_TYPE)},
     { 147, REB_UINT,        "keep_unsynchronized",  offsetof(struct reb_integrator_saba_state, keep_unsynchronized), 0, 0, 0},
     // TODO need to add other field that used to be in whfast
     { 0 }, // Null terminated list
@@ -64,7 +64,7 @@ const struct reb_integrator reb_integrator_saba = {
 
 void* reb_integrator_saba_create(){
     struct reb_integrator_saba_state* saba = calloc(sizeof(struct reb_integrator_saba_state),1);
-    saba->type = REB_SABA_10_6_4;
+    saba->type = REB_INTEGRATOR_SABA_TYPE_10_6_4;
     saba->safe_mode = 1;
     saba->keep_unsynchronized = 0;
     return saba;
@@ -79,31 +79,31 @@ void reb_integrator_saba_free(void* p){
 // Returns the number of stages for a given type of integrator (not including corrector)
 static int reb_saba_stages(const int type){
     switch(type){
-        case REB_SABA_1:
-        case REB_SABA_CM_1:
-        case REB_SABA_CL_1:
+        case REB_INTEGRATOR_SABA_TYPE_1:
+        case REB_INTEGRATOR_SABA_TYPE_CM_1:
+        case REB_INTEGRATOR_SABA_TYPE_CL_1:
             return 1;
-        case REB_SABA_2:
-        case REB_SABA_CM_2:
-        case REB_SABA_CL_2:
+        case REB_INTEGRATOR_SABA_TYPE_2:
+        case REB_INTEGRATOR_SABA_TYPE_CM_2:
+        case REB_INTEGRATOR_SABA_TYPE_CL_2:
             return 2;
-        case REB_SABA_3:
-        case REB_SABA_CM_3:
-        case REB_SABA_CL_3:
+        case REB_INTEGRATOR_SABA_TYPE_3:
+        case REB_INTEGRATOR_SABA_TYPE_CM_3:
+        case REB_INTEGRATOR_SABA_TYPE_CL_3:
             return 3;
-        case REB_SABA_4:
-        case REB_SABA_CM_4:
-        case REB_SABA_CL_4:
+        case REB_INTEGRATOR_SABA_TYPE_4:
+        case REB_INTEGRATOR_SABA_TYPE_CM_4:
+        case REB_INTEGRATOR_SABA_TYPE_CL_4:
             return 4;
-        case REB_SABA_H_8_4_4:
+        case REB_INTEGRATOR_SABA_TYPE_H_8_4_4:
             return 6;
-        case REB_SABA_10_4:
-        case REB_SABA_8_6_4:
+        case REB_INTEGRATOR_SABA_TYPE_10_4:
+        case REB_INTEGRATOR_SABA_TYPE_8_6_4:
             return 7;
-        case REB_SABA_10_6_4:
-        case REB_SABA_H_8_6_4:
+        case REB_INTEGRATOR_SABA_TYPE_10_6_4:
+        case REB_INTEGRATOR_SABA_TYPE_H_8_6_4:
             return 8;
-        case REB_SABA_H_10_6_4:
+        case REB_INTEGRATOR_SABA_TYPE_H_10_6_4:
             return 9;
         default:
             return 0;

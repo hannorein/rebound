@@ -611,27 +611,27 @@ class Simulation(Structure):
             # Shortcuts
             elif value=="wh":
                 self.integrator = "whfast"
-                self.ri_whfast.corrector = 0
-                self.ri_whfast.kernel = "default"
+                self.integrator_data.corrector = 0
+                self.integrator_data.kernel = "default"
             elif value=="whc":
                 self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "default"
+                self.integrator_data.corrector = 17
+                self.integrator_data.kernel = "default"
             elif value=="whckl":
                 self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "lazy"
+                self.integrator_data.corrector = 17
+                self.integrator_data.kernel = "lazy"
             elif value=="whckm":
                 self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "modifiedkick"
+                self.integrator_data.corrector = 17
+                self.integrator_data.kernel = "modifiedkick"
             elif value=="whckc":
                 self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "composition"
+                self.integrator_data.corrector = 17
+                self.integrator_data.kernel = "composition"
             elif value[0:4]=="saba" and len(value)>4:
                 self.integrator = "saba"
-                self.ri_saba.type = value[4:]
+                self.integrator_data.type = value[4:]
             else:
                 raise ValueError("Integrator not found.")
     
