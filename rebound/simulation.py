@@ -1412,6 +1412,7 @@ Simulation._fields_ = [
                 ("dt", c_double),
                 ("dt_last_done", c_double),
                 ("steps_done", c_uint64),
+                ("is_synchronized", c_uint),
                 ("N", c_size_t),
                 ("N_allocated", c_size_t),
                 ("_particles", POINTER(Particle)),

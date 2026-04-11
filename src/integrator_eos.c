@@ -44,7 +44,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor
     { 149, REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
     { 150, REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
     { 151, REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
-    { 152, REB_UINT,        "is_synchronized",       offsetof(struct reb_integrator_eos_state, is_synchronized), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
@@ -54,7 +53,6 @@ void* reb_integrator_eos_create(){
     eos->phi0 = REB_INTEGRATOR_EOS_TYPE_LF;
     eos->phi1 = REB_INTEGRATOR_EOS_TYPE_LF;
     eos->safe_mode = 1;
-    eos->is_synchronized = 1;
     return eos;
 }
 
@@ -498,7 +496,7 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
     const double dt = r->dt;
 
     double dtfac = 1.;
-    if (eos->is_synchronized){
+    if (r->is_synchronized){
         reb_integrator_eos_preprocessor(r, r->dt, eos->phi0, reb_integrator_eos_drift_shell0, reb_integrator_eos_interaction_shell0);
     }else{
         dtfac = 2.;
@@ -616,7 +614,7 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
             break;
     }
 
-    eos->is_synchronized = 0;
+    r->is_synchronized = 0;
     if (eos->safe_mode){
         reb_integrator_eos_synchronize(r, state);
     }
@@ -628,7 +626,7 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state){
 void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state){
     struct reb_integrator_eos_state* const eos = state;
     const double dt = r->dt;
-    if (eos->is_synchronized == 0){
+    if (r->is_synchronized == 0){
         switch(eos->phi0){
             case REB_INTEGRATOR_EOS_TYPE_PMLF4:
             case REB_INTEGRATOR_EOS_TYPE_LF:
@@ -657,7 +655,7 @@ void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state){
                 break;
         }
         reb_integrator_eos_postprocessor(r, r->dt, eos->phi0, reb_integrator_eos_drift_shell0, reb_integrator_eos_interaction_shell0);
-        eos->is_synchronized = 1;
+        r->is_synchronized = 1;
     }
 }
 

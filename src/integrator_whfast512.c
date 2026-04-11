@@ -45,7 +45,6 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* step);
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[] = {
     { 390, REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_whfast512_state, keep_unsynchronized), 0, 0, 0},
-    { 391, REB_UINT,        "is_synchronized", offsetof(struct reb_integrator_whfast512_state, is_synchronized), 0, 0, 0},
     { 392, REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
     { 394, REB_POINTER_ALIGNED, "pjh",         offsetof(struct reb_integrator_whfast512_state, p_jh), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct reb_particle_avx512), 0},
     // 396, 397 used to be max_radius0 and max_radius1
@@ -68,7 +67,6 @@ void* reb_integrator_whfast512_create(){
     struct reb_integrator_whfast512_state* whfast512 = calloc(sizeof(struct reb_integrator_whfast512_state),1);
     whfast512->N_systems = 1;
     whfast512->gr_potential = 0;
-    whfast512->is_synchronized = 1;
     whfast512->keep_unsynchronized = 0;
     whfast512->recalculate_constants = 1;
     return whfast512;
@@ -1034,11 +1032,11 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         recalculate_constants(r);
     } 
 
-    if (whfast512->is_synchronized){
+    if (r->is_synchronized){
         inertial_to_democraticheliocentric_posvel(r);
     }
 
-    if (whfast512->is_synchronized){
+    if (r->is_synchronized){
         // First half DRIFT step
         reb_whfast512_kepler_step(r, dt/2.);    
         reb_whfast512_com_step(r, dt/2.);
@@ -1067,7 +1065,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         reb_whfast512_jump_step(r, dt/2.);
     }
 
-    whfast512->is_synchronized = 0;
+    r->is_synchronized = 0;
 
     r->t += dt;
     r->dt_last_done = dt;
@@ -1086,7 +1084,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
 void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* state){
 #ifdef AVX512
     struct reb_integrator_whfast512_state* whfast512 = r->integrator_data;
-    if (whfast512->is_synchronized == 0){
+    if (r->is_synchronized == 0){
         const unsigned int N_systems = whfast512->N_systems;
         struct reb_particle_avx512* sync_pj = NULL;
         struct reb_particle sync_pj0[4];
@@ -1111,7 +1109,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
             }
             free(sync_pj);
         }else{
-            whfast512->is_synchronized = 1;
+            r->is_synchronized = 1;
         }
     }
 #else 
@@ -1125,7 +1123,7 @@ void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const 
     // Using WHFast as a workaround.
     // Not bit-wise reproducible. 
     struct reb_integrator_whfast512_state* whfast512 = r->integrator_data;
-    if (whfast512->is_synchronized == 0){
+    if (r->is_synchronized == 0){
         reb_simulation_warning(r, "WHFast512 is not available. Synchronization is provided using WHFast and is not bit-compatible to WHFast512.");
         const unsigned int N_systems = whfast512->N_systems;
         const unsigned int p_per_system = 8/N_systems;
@@ -1154,6 +1152,6 @@ void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const 
         }
         reb_whfast512_com_step(r, dt/2.0); // does not use AVX512
         democraticheliocentric_to_inertial_posvel(r);
-        whfast512->is_synchronized = 1;
+        r->is_synchronized = 1;
     }
 }

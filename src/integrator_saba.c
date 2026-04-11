@@ -45,7 +45,6 @@ void reb_integrator_saba_reset(struct reb_simulation* r);	///< Internal function
 
 const struct reb_binarydata_field_descriptor reb_integrator_saba_field_descriptor_list[] = {
     { 140, REB_UINT,        "safe_mode",            offsetof(struct reb_integrator_saba_state, safe_mode), 0, 0, 0},
-    { 141, REB_UINT,        "is_synchronized",      offsetof(struct reb_integrator_saba_state, is_synchronized), 0, 0, 0},
     { 146, REB_INT,         "type",                 offsetof(struct reb_integrator_saba_state, type), 0, 0, 0},
     { 147, REB_UINT,        "keep_unsynchronized",  offsetof(struct reb_integrator_saba_state, keep_unsynchronized), 0, 0, 0},
     // TODO need to add other field that used to be in whfast
@@ -67,7 +66,6 @@ void* reb_integrator_saba_create(){
     struct reb_integrator_saba_state* saba = calloc(sizeof(struct reb_integrator_saba_state),1);
     saba->type = REB_SABA_10_6_4;
     saba->safe_mode = 1;
-    saba->is_synchronized = 1;
     saba->keep_unsynchronized = 0;
     return saba;
 }
@@ -271,7 +269,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
         saba->recalculate_coordinates_this_timestep = 0;
     }
     if (type>=0x100){ // Correctors on
-        if (saba->is_synchronized){
+        if (r->is_synchronized){
             reb_saba_corrector_step(r, saba, reb_saba_cc[type%0x100]);
         }else{
             reb_saba_corrector_step(r, saba, 2.*reb_saba_cc[type%0x100]);
@@ -280,7 +278,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
         reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);   
         reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
     }else{ // Correctors off
-        if (saba->is_synchronized){
+        if (r->is_synchronized){
             // First half DRIFT step
             reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);   
             reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
@@ -330,7 +328,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
         reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
     }
 
-    saba->is_synchronized = 0;
+    r->is_synchronized = 0;
     if (saba->safe_mode){
         reb_integrator_saba_synchronize(r, saba);
     }
@@ -348,7 +346,7 @@ void reb_integrator_saba_synchronize(struct reb_simulation* const r, void* state
         sync_pj = malloc(sizeof(struct reb_particle)*r->N);
         memcpy(sync_pj,saba->p_jh,r->N*sizeof(struct reb_particle));
     }
-    if (saba->is_synchronized == 0){
+    if (r->is_synchronized == 0){
         const int N = r->N;
         if (type>=0x100){ // correctors on
                           // Drift already done, just need corrector
@@ -362,7 +360,7 @@ void reb_integrator_saba_synchronize(struct reb_simulation* const r, void* state
             memcpy(saba->p_jh,sync_pj,r->N*sizeof(struct reb_particle));
             free(sync_pj);
         }else{
-            saba->is_synchronized = 1;
+            r->is_synchronized = 1;
         }
     }
 }

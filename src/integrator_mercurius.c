@@ -51,7 +51,6 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
 const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_descriptor_list[] = {
     { 118, REB_DOUBLE,      "r_crit_hill",     offsetof(struct reb_integrator_mercurius_state, r_crit_hill), 0, 0, 0},
     { 119, REB_UINT,        "safe_mode",       offsetof(struct reb_integrator_mercurius_state, safe_mode), 0, 0, 0},
-    { 120, REB_UINT,        "is_synchronized", offsetof(struct reb_integrator_mercurius_state, is_synchronized), 0, 0, 0},
     { 122, REB_POINTER,     "dcrit",           offsetof(struct reb_integrator_mercurius_state, dcrit), offsetof(struct reb_integrator_mercurius_state, N_allocated_dcrit), sizeof(double), 0},
     { 123, REB_UINT,        "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_mercurius_state, recalculate_coordinates_this_timestep), 0, 0, 0},
     { 133, REB_VEC3D,       "com_pos",         offsetof(struct reb_integrator_mercurius_state, com_pos), 0, 0, 0},
@@ -79,7 +78,6 @@ void* reb_integrator_mercurius_create(){
     mercurius->r_crit_hill = 3;
     mercurius->tponly_encounter = 0;
     mercurius->safe_mode = 1;
-    mercurius->is_synchronized = 1;
     mercurius->recalculate_coordinates_this_timestep = 0;
     mercurius->recalculate_r_crit_this_timestep = 0;
     mercurius->L = reb_integrator_mercurius_L_mercury;
@@ -846,7 +844,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
         mercurius->N_allocated = N;
     }
     if (mercurius->safe_mode || mercurius->recalculate_coordinates_this_timestep){
-        if (mercurius->is_synchronized==0){
+        if (r->is_synchronized==0){
             reb_integrator_mercurius_synchronize(r, state);
             reb_simulation_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
         }
@@ -856,7 +854,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
 
     if (mercurius->recalculate_r_crit_this_timestep){
         mercurius->recalculate_r_crit_this_timestep = 0;
-        if (mercurius->is_synchronized==0){
+        if (r->is_synchronized==0){
             reb_integrator_mercurius_synchronize(r, mercurius);
             reb_integrator_mercurius_inertial_to_dh(r, mercurius);
             mercurius->recalculate_coordinates_this_timestep = 0;
@@ -881,7 +879,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
 
     reb_integrator_mercurius_calculate_acceleration_mode_wh(r, mercurius);
 
-    if (mercurius->is_synchronized){
+    if (r->is_synchronized){
         reb_integrator_mercurius_interaction_step(r,r->dt/2.);
     }else{
         reb_integrator_mercurius_interaction_step(r,r->dt);
@@ -907,7 +905,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
 
     reb_integrator_mercurius_jump_step(r, r->dt/2.);
 
-    mercurius->is_synchronized = 0;
+    r->is_synchronized = 0;
     if (mercurius->safe_mode){
         reb_integrator_mercurius_synchronize(r, state);
     }
@@ -919,7 +917,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
 
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state){
     struct reb_integrator_mercurius_state* mercurius = state;
-    if (mercurius->is_synchronized == 0){
+    if (r->is_synchronized == 0){
         mercurius->mode = REB_MERCURIUS_MODE_WH;
         reb_integrator_mercurius_calculate_acceleration_mode_wh(r, mercurius);
         reb_integrator_mercurius_interaction_step(r, r->dt/2.);
@@ -927,7 +925,7 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state)
         reb_integrator_mercurius_dh_to_inertial(r, mercurius);
 
         mercurius->recalculate_coordinates_this_timestep = 1; 
-        mercurius->is_synchronized = 1;
+        r->is_synchronized = 1;
     }
 }
 

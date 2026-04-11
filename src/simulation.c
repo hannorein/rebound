@@ -182,6 +182,9 @@ void reb_simulation_free(struct reb_simulation* const r){
 }
 
 void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
+    if (!r->integrator.id && !r->is_synchronized){
+        reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
+    }
     if (r->integrator.free){
         r->integrator.free(r->integrator_data);
     }
@@ -705,6 +708,7 @@ void reb_simulation_init(struct reb_simulation* r){
     r->exact_finish_time    = 1;
     r->output_timing_last   = -1;
     r->simulationarchive_version = 3;
+    r->is_synchronized = 1;
 
 #ifdef OPENMP
     char msg[1024];

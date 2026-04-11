@@ -214,7 +214,6 @@ struct reb_integrator_mercurius_state {
     unsigned int timestep_warning;
 
     // Internal use
-    unsigned int is_synchronized;   
     enum {
         REB_MERCURIUS_MODE_WH = 0,
         REB_MERCURIUS_MODE_ENCOUNTER = 1,
@@ -300,7 +299,6 @@ struct reb_integrator_saba_state {
         REB_SABA_H_10_6_4 = 0x9,// SABAH(10,6,4), 9 stages
     } type;                             // Type of integrator
     unsigned int safe_mode;             // Combine first and last sub-step
-    unsigned int is_synchronized;       // 1: physical state, 0: needs synchronization
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization
     unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
                                                                 // Internal use
@@ -341,7 +339,6 @@ struct reb_integrator_whfast_state {
     struct reb_particle* REB_RESTRICT p_jh_var; // Jacobi coordinates for variational equations
     size_t N_allocated_temp;
     struct reb_particle* REB_RESTRICT p_temp;   // Used for lazy implementer's kernel 
-    unsigned int is_synchronized;
     unsigned int timestep_warning;
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
@@ -357,7 +354,6 @@ struct reb_integrator_whfast512_state {
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
 
     // Internal use
-    unsigned int is_synchronized;
     size_t N_allocated;
     unsigned int recalculate_constants;
     struct reb_particle_avx512* p_jh;
@@ -414,9 +410,6 @@ struct reb_integrator_eos_state {
     enum REB_INTEGRATOR_EOS_TYPE phi1;         // Inner operator splitting method
     unsigned int n;                 // Number of inner splittings per outer splitting
     unsigned int safe_mode;         // Combine Kick steps at beginning and end of timestep
-
-    // Internal use
-    unsigned int is_synchronized;
 };
 
 // Janus integrator (Rein & Tamayo 2018)
@@ -465,6 +458,8 @@ struct reb_simulation {
     double  dt;                     // Timestep. Default: 0.001.
     double  dt_last_done;           // Last successful timestep.
     uint64_t steps_done;            // Number of timesteps done.
+    unsigned int is_synchronized;   // If 1 then positions and velocities of particles are in inertial frame.
+                                    // If 0, call reb_simulation_synchronize() first.
 
     // Main particles array
     size_t  N;                      // Number of particles (includes variational particles). Default: 0.
