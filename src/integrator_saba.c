@@ -179,7 +179,7 @@ static void reb_saba_corrector_step(struct reb_simulation* r, struct reb_integra
                 particles[i].ay = prefact*p_j[i].ay; 
                 particles[i].az = prefact*p_j[i].az; 
             }
-            reb_integrator_whfast_interaction_step(r,cc*r->dt);
+            reb_integrator_whfast_interaction_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, cc*r->dt);
             break;
         case 2: // lazy corrector
             {
@@ -275,16 +275,16 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
             reb_saba_corrector_step(r, saba, 2.*reb_saba_cc[type%0x100]);
         }
         // First half DRIFT step
-        reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);   
+        reb_integrator_whfast_kepler_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_c[type%0x100][0]*r->dt);   
         reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
     }else{ // Correctors off
         if (r->is_synchronized){
             // First half DRIFT step
-            reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);   
+            reb_integrator_whfast_kepler_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_c[type%0x100][0]*r->dt);   
             reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
         }else{
             // Combined DRIFT step
-            reb_integrator_whfast_kepler_step(r, 2.*reb_saba_c[type%0x100][0]*r->dt);   
+            reb_integrator_whfast_kepler_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, 2.*reb_saba_c[type%0x100][0]*r->dt);   
             reb_integrator_whfast_com_step(r, saba->p_jh, 2.*reb_saba_c[type%0x100][0]*r->dt);
         }
     }
@@ -300,7 +300,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
         return;
     }
 
-    reb_integrator_whfast_interaction_step(r, reb_saba_d[type%0x100][0]*r->dt);
+    reb_integrator_whfast_interaction_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_d[type%0x100][0]*r->dt);
 
     for(int j=1;j<stages;j++){
         {
@@ -308,7 +308,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
             if (j>stages/2){
                 i = stages-j;
             }
-            reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][i]*r->dt);   
+            reb_integrator_whfast_kepler_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_c[type%0x100][i]*r->dt);   
             reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][i]*r->dt);
         }
         {
@@ -318,13 +318,13 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
             }
             reb_transformations_jacobi_to_inertial_pos(particles, saba->p_jh, particles, N, N);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, reb_saba_d[type%0x100][i]*r->dt);
+            reb_integrator_whfast_interaction_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_d[type%0x100][i]*r->dt);
         }
     } 
 
     if (saba->type>=0x100){ // correctors on
                             // Always need to do drift step if correctors are turned on
-        reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);
+        reb_integrator_whfast_kepler_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_c[type%0x100][0]*r->dt);
         reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
     }
 
@@ -352,7 +352,7 @@ void reb_integrator_saba_synchronize(struct reb_simulation* const r, void* state
                           // Drift already done, just need corrector
             reb_saba_corrector_step(r, saba, reb_saba_cc[type%0x100]);
         }else{
-            reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);
+            reb_integrator_whfast_kepler_step(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI, reb_saba_c[type%0x100][0]*r->dt);
             reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
         }
         reb_transformations_jacobi_to_inertial_posvel(r->particles, saba->p_jh, r->particles, N, N);

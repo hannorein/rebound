@@ -400,23 +400,22 @@ int reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, d
 
 /***************************** 
  * Interaction Hamiltonian  */
-void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, const double _dt){
+void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, struct reb_particle* p_jh, int coordinates, const double _dt){
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N:r->N_active;
     const double G = r->G;
     struct reb_particle* particles = r->particles;
     struct reb_particle* particles_var = r->particles_var;
     const double m0 = particles[0].m;
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
-    struct reb_particle* const p_jh = whfast->p_jh;
-    struct reb_particle* const p_jh_var = whfast->p_jh_var;
-    switch (whfast->coordinates){
+    switch (coordinates){
         case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
             {
                 reb_transformations_inertial_to_jacobi_acc(particles, p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
+                    // Only WHFast supports variational equations
+                    struct reb_integrator_whfast_state* whfast = r->integrator_data;
                     struct reb_variational_configuration const vc = r->var_config[v];
-                    reb_transformations_inertial_to_jacobi_acc(particles_var+vc.index, p_jh_var+vc.index, particles, N, N_active);
+                    reb_transformations_inertial_to_jacobi_acc(particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
                 }
                 double eta = m0;
                 for (size_t i=1;i<N;i++){
@@ -439,6 +438,8 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
                             p_jh[i].vy += prefac1*pji.y;
                             p_jh[i].vz += prefac1*pji.z;
                             for(size_t v=0;v<r->N_var_config;v++){
+                                struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                                struct reb_particle* const p_jh_var = whfast->p_jh_var;
                                 struct reb_variational_configuration const vc = r->var_config[v];
                                 const size_t index = vc.index;
                                 double rj5M = rj3iM*rj2i;
@@ -450,6 +451,8 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, cons
                             }
                         }
                         for(size_t v=0;v<r->N_var_config;v++){
+                            struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                            struct reb_particle* const p_jh_var = whfast->p_jh_var;
                             struct reb_variational_configuration const vc = r->var_config[v];
                             const size_t index = vc.index;
                             p_jh_var[i+index].vx += _dt * p_jh_var[i+index].ax;
@@ -556,14 +559,11 @@ void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const
 /***************************** 
  * DKD Scheme                */
 
-void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, const double _dt){
+void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, struct reb_particle* p_jh, int coordinates, const double _dt){
     const double m0 = r->particles[0].m;
     const double G = r->G;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N:r->N_active;
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
-    const int coordinates = whfast->coordinates;
-    struct reb_particle* const p_jh = whfast->p_jh;
     double eta = m0;
     int timestep_too_large = 0;
     switch (coordinates){
@@ -607,12 +607,13 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, con
             }
             break;
     };
-    if (timestep_too_large && whfast->timestep_warning == 0){
-        // Ignoring const qualifiers. This warning should not have any effect on
-        // other parts of the code, nor is it vital to show the warning.
-        whfast->timestep_warning++;
-        reb_simulation_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
-    }
+    // TODO Reimplement
+    //if (timestep_too_large && whfast->timestep_warning == 0){
+    //    // Ignoring const qualifiers. This warning should not have any effect on
+    //    // other parts of the code, nor is it vital to show the warning.
+    //    whfast->timestep_warning++;
+    //    reb_simulation_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
+    //}
 }
 
 void reb_integrator_whfast_com_step(const struct reb_simulation* const r, struct reb_particle* p_jh, const double _dt){
@@ -637,34 +638,34 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
     switch (whfast->coordinates){
         case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
-            reb_integrator_whfast_kepler_step(r, a);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
             reb_transformations_jacobi_to_inertial_pos(particles, whfast->p_jh, particles, N, N_active);
             for (size_t v=0;v<r->N_var_config;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
                 reb_transformations_jacobi_to_inertial_pos(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
             }
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, -b);
-            reb_integrator_whfast_kepler_step(r, -2.*a);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, -b);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -2.*a);
             reb_transformations_jacobi_to_inertial_pos(particles, whfast->p_jh, particles, N, N_active);
             for (size_t v=0;v<r->N_var_config;v++){
                 struct reb_variational_configuration const vc = r->var_config[v];
                 reb_transformations_jacobi_to_inertial_pos(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
             }
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, b);
-            reb_integrator_whfast_kepler_step(r, a);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, b);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
             break;
         case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
-            reb_integrator_whfast_kepler_step(r, a);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
             reb_transformations_barycentric_to_inertial_pos(particles, whfast->p_jh, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, -b);
-            reb_integrator_whfast_kepler_step(r, -2.*a);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, -b);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -2.*a);
             reb_transformations_barycentric_to_inertial_pos(particles, whfast->p_jh, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, b);
-            reb_integrator_whfast_kepler_step(r, a);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, b);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
             break;
         case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
         case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
@@ -731,18 +732,18 @@ static void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int
 }
 
 static void reb_whfast_operator_C(struct reb_simulation* const r, double a, double b){
-    reb_integrator_whfast_kepler_step(r, a);   
-
     struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);   
+
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
     reb_transformations_jacobi_to_inertial_pos(particles, whfast->p_jh, particles, N, N_active); 
     // Note: variational particles not implemented.
     reb_simulation_update_acceleration(r);
-    reb_integrator_whfast_interaction_step(r, b);
+    reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, b);
 
-    reb_integrator_whfast_kepler_step(r, -a);   
+    reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -a);   
 }
 
 static void reb_whfast_operator_Y(struct reb_simulation* const r, double a, double b){
@@ -750,10 +751,11 @@ static void reb_whfast_operator_Y(struct reb_simulation* const r, double a, doub
     reb_whfast_operator_C(r, -a, -b); 
 }
 static void reb_whfast_operator_U(struct reb_simulation* const r, double a, double b){
-    reb_integrator_whfast_kepler_step(r, a);   
+    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);   
     reb_whfast_operator_Y(r, a, b); 
     reb_whfast_operator_Y(r, a, -b); 
-    reb_integrator_whfast_kepler_step(r, -a);   
+    reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -a);   
 }
 static void reb_whfast_apply_corrector2(struct reb_simulation* r, double inv){
     double a = 0.5 * inv * r->dt;
@@ -1008,7 +1010,7 @@ void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,
         return;
     }
     reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
-    reb_integrator_whfast_kepler_step(r, dt);    // half timestep
+    reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, dt);    // half timestep
     reb_integrator_whfast_com_step(r, whfast->p_jh, dt);
     reb_integrator_whfast_to_inertial(r);
 }
@@ -1022,7 +1024,7 @@ void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* con
     reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1;
     reb_simulation_update_acceleration(r);
-    reb_integrator_whfast_interaction_step(r, dt);
+    reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
     reb_integrator_whfast_to_inertial(r);
 }
 
@@ -1044,11 +1046,11 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* sta
             case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
             case REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK: 
             case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
-                reb_integrator_whfast_kepler_step(r, r->dt/2.);    
+                reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, r->dt/2.);    
                 reb_integrator_whfast_com_step(r, whfast->p_jh, r->dt/2.);
                 break;
             case REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION:
-                reb_integrator_whfast_kepler_step(r, 3.*r->dt/8.);   
+                reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, 3.*r->dt/8.);   
                 reb_integrator_whfast_com_step(r, whfast->p_jh, 3.*r->dt/8.);
                 break;
             default:
@@ -1124,11 +1126,11 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
             case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
             case REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK: 
             case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
-                reb_integrator_whfast_kepler_step(r, r->dt/2.);    
+                reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, r->dt/2.);    
                 reb_integrator_whfast_com_step(r, whfast->p_jh, r->dt/2.);
                 break;
             case REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION:
-                reb_integrator_whfast_kepler_step(r, 5.*r->dt/8.);   
+                reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, 5.*r->dt/8.);   
                 reb_integrator_whfast_com_step(r, whfast->p_jh, 5.*r->dt/8.);
                 break;
             default:
@@ -1137,7 +1139,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
         };
     }else{
         // Combined DRIFT step
-        reb_integrator_whfast_kepler_step(r, r->dt);    // full timestep
+        reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, r->dt);    // full timestep
         reb_integrator_whfast_com_step(r, whfast->p_jh, r->dt);
     }
     reb_integrator_whfast_jump_step(r,r->dt/2.);
@@ -1150,7 +1152,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
 
     switch (whfast->kernel){
         case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
-            reb_integrator_whfast_interaction_step(r, dt);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
 
             reb_integrator_whfast_jump_step(r,dt/2.);
             break;
@@ -1163,38 +1165,38 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
                 particles[i].ay += prefact*p_jh[i].ay; 
                 particles[i].az += prefact*p_jh[i].az; 
             }
-            reb_integrator_whfast_interaction_step(r, dt);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
             break;
         case REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION:
-            reb_integrator_whfast_interaction_step(r, -dt/6.);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, -dt/6.);
 
-            reb_integrator_whfast_kepler_step(r, -dt/4.);   
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -dt/4.);   
             reb_integrator_whfast_com_step(r, whfast->p_jh, -dt/4.);
 
             reb_transformations_jacobi_to_inertial_pos(particles, p_jh, particles, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, dt/6.);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt/6.);
 
-            reb_integrator_whfast_kepler_step(r, dt/8.);   
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, dt/8.);   
             reb_integrator_whfast_com_step(r, whfast->p_jh, dt/8.);
 
             reb_transformations_jacobi_to_inertial_pos(particles, p_jh, particles, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, dt);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
 
-            reb_integrator_whfast_kepler_step(r, -dt/8.);   
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -dt/8.);   
             reb_integrator_whfast_com_step(r, whfast->p_jh, -dt/8.);
 
             reb_transformations_jacobi_to_inertial_pos(particles, p_jh, particles, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, -dt/6.);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, -dt/6.);
 
-            reb_integrator_whfast_kepler_step(r, dt/4.);   
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, dt/4.);   
             reb_integrator_whfast_com_step(r, whfast->p_jh, dt/4.);
 
             reb_transformations_jacobi_to_inertial_pos(particles, p_jh, particles, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, dt/6.);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt/6.);
             break;
         case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
             {
@@ -1223,7 +1225,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
                 // recalculate kick 
                 reb_transformations_jacobi_to_inertial_pos(particles, p_jh, particles, N, N_active);
                 reb_simulation_update_acceleration(r);
-                reb_integrator_whfast_interaction_step(r, dt);
+                reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
 
                 for (size_t i=1;i<N;i++){
                     // reset positions
