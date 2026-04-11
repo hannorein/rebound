@@ -3,8 +3,7 @@ import unittest
 
 mdot = 1e-6
 def ptm(sim):
-    if sim.contents.ri_mercurius.mode == 0:
-        sim.contents.particles[2].m -= sim.contents.dt_last_done*mdot
+    sim.contents.particles[2].m -= sim.contents.dt_last_done*mdot
 
 class TestPostTimestepModifications(unittest.TestCase):
 
@@ -35,7 +34,7 @@ class TestPostTimestepModifications(unittest.TestCase):
         sim = rebound.Simulation()
         sim.integrator = "mercurius"
         sim.dt = 0.01
-        sim.ri_mercurius.r_crit_hill = 100000 # make sure encounter happens
+        sim.integrator_data.r_crit_hill = 100000 # make sure encounter happens
         sim.add(m=1)
         sim.add(m=1e-3,a=1)
         sim.add(m=1e-3,a=5)
@@ -59,7 +58,7 @@ class TestPostTimestepModifications(unittest.TestCase):
     def test_ptm_whfastjac(self):
         sim = rebound.Simulation()
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "jacobi"
+        sim.integrator_data.coordinates = "jacobi"
         sim.dt = 0.01
         sim.add(m=1)
         sim.add(m=1e-3,a=1)

@@ -418,16 +418,6 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, struct 
         // Search and resolve collisions
         reb_collision_search(r);
 
-        // Do any additional post_timestep_modifications.
-        // Note: post_timestep_modifications is called here but also
-        // at the end of the full timestep. The function thus needs
-        // to be implemented with care as not to do the same 
-        // modification multiple times. To do that, check the value of
-        // r->ri_mercurius.mode
-        if (r->post_timestep_modifications){
-            r->post_timestep_modifications(r);
-        }
-
         struct reb_particle p0 = r->particles[0];
         star.vx = p0.vx; // keep track of changed star velocity for later collisions
         star.vy = p0.vy;
