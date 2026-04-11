@@ -22,7 +22,6 @@ class Integrator(Structure):
                 ("synchronize", c_void_p),
                 ("create", c_void_p),
                 ("free", c_void_p),
-                ("reset", c_void_p),
                 ("did_add_particle", c_void_p),
                 ("will_remove_particle", c_void_p),
                 ("field_descriptor_list", c_void_p),
@@ -1387,11 +1386,7 @@ class timeval(Structure):
 
 from .particle import Particle
 from .particles import Particles
-
-
 from .integrators.bs import ODE
-from .integrators.trace import IntegratorTRACE
-
 from .variation import Variation
 
 # Setting up fields after class definition (because of self-reference)
@@ -1497,7 +1492,6 @@ Simulation._fields_ = [
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
-                ("ri_trace", IntegratorTRACE),
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_N_odes", c_size_t),
                 ("_N_allocated_odes", c_size_t),
