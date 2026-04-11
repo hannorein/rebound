@@ -34,7 +34,7 @@ DLLEXPORT int reb_integrator_whfast_init(struct reb_simulation* const r);    // 
 DLLEXPORT void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, const double _dt);
 DLLEXPORT void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const double _dt);
 DLLEXPORT void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, const double _dt);
-DLLEXPORT void reb_integrator_whfast_com_step(const struct reb_simulation* const r, const double _dt);
-void reb_integrator_whfast_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term
+DLLEXPORT void reb_integrator_whfast_com_step(const struct reb_simulation* const r, struct reb_particle* p_jh, const double _dt);
+void reb_integrator_whfast_calculate_jerk(struct reb_simulation* r, struct reb_particle* jerk);
 
 #endif

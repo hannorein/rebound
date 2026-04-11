@@ -170,8 +170,8 @@ static void reb_saba_corrector_step(struct reb_simulation* r, struct reb_integra
                 // Calculate normal kick
             reb_transformations_jacobi_to_inertial_pos(particles, p_j, particles, N, N);
             reb_simulation_update_acceleration(r);
-            // Calculate jerk
-            reb_integrator_whfast_calculate_jerk(r);
+            // Calculate jerk. p_jh used as temporary buffer
+            reb_integrator_whfast_calculate_jerk(r, saba->p_jh);
 
             for (size_t i=0; i<N; i++){
                 const double prefact = r->dt*r->dt;
@@ -276,16 +276,16 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
         }
         // First half DRIFT step
         reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);   
-        reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
+        reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
     }else{ // Correctors off
         if (r->is_synchronized){
             // First half DRIFT step
             reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);   
-            reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
+            reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
         }else{
             // Combined DRIFT step
             reb_integrator_whfast_kepler_step(r, 2.*reb_saba_c[type%0x100][0]*r->dt);   
-            reb_integrator_whfast_com_step(r, 2.*reb_saba_c[type%0x100][0]*r->dt);
+            reb_integrator_whfast_com_step(r, saba->p_jh, 2.*reb_saba_c[type%0x100][0]*r->dt);
         }
     }
 
@@ -309,7 +309,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
                 i = stages-j;
             }
             reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][i]*r->dt);   
-            reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][i]*r->dt);
+            reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][i]*r->dt);
         }
         {
             int i = j;
@@ -325,7 +325,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
     if (saba->type>=0x100){ // correctors on
                             // Always need to do drift step if correctors are turned on
         reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);
-        reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
+        reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
     }
 
     r->is_synchronized = 0;
@@ -353,7 +353,7 @@ void reb_integrator_saba_synchronize(struct reb_simulation* const r, void* state
             reb_saba_corrector_step(r, saba, reb_saba_cc[type%0x100]);
         }else{
             reb_integrator_whfast_kepler_step(r, reb_saba_c[type%0x100][0]*r->dt);
-            reb_integrator_whfast_com_step(r, reb_saba_c[type%0x100][0]*r->dt);
+            reb_integrator_whfast_com_step(r, saba->p_jh, reb_saba_c[type%0x100][0]*r->dt);
         }
         reb_transformations_jacobi_to_inertial_posvel(r->particles, saba->p_jh, r->particles, N, N);
         if (saba->keep_unsynchronized){
