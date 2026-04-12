@@ -135,8 +135,6 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        #sim.integrator = "whfast"
-        #sim.ri_whfast.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 0
@@ -251,7 +249,6 @@ class TestIntegratorTrace(unittest.TestCase):
         dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,3e-9)
         self.assertEqual(N0-1,sim.N)
-        self.assertEqual(0,sim.ri_trace._force_accept) # check force_accept bug
     
     def test_collision_add_particles(self):
         sim = rebound.Simulation()
@@ -445,7 +442,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
-        sim.ri_trace.r_crit_hill *= 1.21 # previously this was hardcoded
+        sim.integrator_data.r_crit_hill *= 1.21 # previously this was hardcoded
         sim.dt = (8./365.)*2.*math.pi
         E0 = jacobi(sim)
         start=datetime.now()

@@ -756,11 +756,10 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 y[i*6+5] = p.vz;
             }
 
-            int success = reb_integrator_bs_step_odes(r, dt);
+            int success = reb_integrator_bs_step_odes(r, bs, dt);
             if (success){
                 r->t += dt;
             }
-            // TODO: Probably not working with BS anymore. Fix. 
             dt = bs->dt_proposed;
             reb_integrator_trace_update_particles(r, nbody_ode->y);
 
@@ -780,8 +779,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 nbody_ode = reb_ode_create(r, trace->encounter_N*3*2);
                 nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
                 nbody_ode->needs_nbody = 0;
-                // TODO Reimplement
-                //r->ri_bs.first_or_last_step = 1;
+                bs->first_or_last_step = 1;
             }
 
             struct reb_particle p0 = r->particles[0];
@@ -1017,6 +1015,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                 break;
             case REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS:
                 {
+                    struct reb_integrator_bs_state* bs = reb_integrator_bs.create();
                     // Run default BS integration
                     // TODO: Syntax should be similar to IAS
                     struct reb_ode* nbody_ode = NULL;
@@ -1031,8 +1030,6 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                             nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
                             nbody_ode->needs_nbody = 0;
                             y = nbody_ode->y;
-                            // TODO Reimplement
-                            //reb_integrator_bs_reset(r);
                         }
 
                         for (size_t i=0; i<r->N; i++){
@@ -1045,20 +1042,16 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                             y[i*6+5] = p.vz;
                         }
 
-                            // TODO Reimplement
-                            int success = 1;
-                        //int success = reb_integrator_bs_step_odes(r, r->dt);
+                        int success = reb_integrator_bs_step_odes(r, bs, r->dt);
                         if (success){
                             r->t += r->dt;
                         }
-                            // TODO Reimplement
-                        //r->dt = r->ri_bs.dt_proposed;
+                        r->dt = bs->dt_proposed;
                         if (r->t+r->dt >  t_needed){
                             r->dt = t_needed-r->t;
                         }
 
-                        // TODO Reimplement
-                        //reb_integrator_bs_update_particles(r, nbody_ode->y);
+                        reb_integrator_bs_update_particles(r, nbody_ode->y);
 
                         if (success){
                             // Only do a collision search for accepted steps.
@@ -1068,8 +1061,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                     }
                     reb_ode_free(nbody_ode);
                     // Resetting BS here reduces binary file size
-                        // TODO Reimplement
-                    //reb_integrator_bs_reset(r);
+                    reb_integrator_bs.free(bs);
                 }
                 break;
             default:

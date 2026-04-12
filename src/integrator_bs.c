@@ -349,13 +349,9 @@ static void reb_integrator_bs_default_scale(struct reb_ode* ode, double* y1, dou
 // Performs one step on all ODEs in r->odes. 
 // Gravity not included automatically. Is added
 // in reb_integrator_bs_step()
-int reb_integrator_bs_step_odes(struct reb_simulation* r, double dt){
+int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_bs_state* bs, double dt){
     // return 1 if step was successful
     //        0 if rejected 
- 
-    // TODO: Make this work with non-BS main integrators
-    struct reb_integrator_bs_state * bs = r->integrator_data;
-
     double t = r->t;
     bs->dt_proposed = dt; // In case of early fail
 
@@ -767,7 +763,7 @@ void reb_integrator_bs_step(struct reb_simulation* r, void* state){
         }
     }
 
-    int success = reb_integrator_bs_step_odes(r, r->dt);
+    int success = reb_integrator_bs_step_odes(r, bs, r->dt);
     if (success){
         r->t += r->dt;
         r->dt_last_done = r->dt;
