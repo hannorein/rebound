@@ -47,7 +47,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { 62, REB_UINT,         "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_whfast_state, recalculate_coordinates_this_timestep), 0, 0, 0},
     { 63, REB_UINT,         "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
     { 64, REB_UINT,         "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
-    { 66, REB_UINT,         "timestep_warning",   offsetof(struct reb_integrator_whfast_state, timestep_warning), 0, 0, 0},
     { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle), 0},
     { 105, REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle), 0},
     { 117, REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },
@@ -79,7 +78,6 @@ void* reb_integrator_whfast_create(){
     whfast->keep_unsynchronized = 0;
     whfast->safe_mode = 1;
     whfast->recalculate_coordinates_this_timestep = 0;
-    whfast->timestep_warning = 0;
     whfast->recalculate_coordinates_but_not_synchronized_warning = 0;
     return whfast;
 }
@@ -207,13 +205,10 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 
 #define WHFAST_NMAX_QUART 64    ///< Maximum number of iterations for quartic solver
 #define WHFAST_NMAX_NEWT  32    ///< Maximum number of iterations for Newton's method
-/********************************************************
- * Keplerian motion for one planet                       *
- * Returns 0 on success. 1 if timestep is too large.     *
- * r only needed for variational particles. Can be NULL. */
-int reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
+// Keplerian motion for one planet                       
+// r only needed for variational particles and warning. Can be NULL.
+void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
-    int timestep_too_large = 0;
 
     const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
     const double r0i = 1./r0;
@@ -232,7 +227,10 @@ int reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, d
         invperiod = sqrt_beta*beta/(2.*M_PI*mu);
         X_per_period = 2.*M_PI/sqrt_beta;
         if (fabs(dt)*invperiod>1.){
-            timestep_too_large = 1;
+            if (r && !(r->messages_timestep_warning & 1)){
+                ((struct reb_simulation*)r)->messages_timestep_warning |= 1; // casting away const qualifier is ok here.
+                reb_simulation_warning(((struct reb_simulation*)r), "Possible convergence issue. Timestep in Kepler solver is larger than one orbital period.");
+            }
         }
 
         //X = dt*invperiod*X_per_period; // first order guess 
@@ -395,7 +393,6 @@ int reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, d
         dp1p->vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
         dp1p->vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
     }
-    return timestep_too_large;
 }
 
 /***************************** 
@@ -565,7 +562,6 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, str
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N:r->N_active;
     double eta = m0;
-    int timestep_too_large = 0;
     switch (coordinates){
         case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
 #pragma omp parallel for private(eta)
@@ -580,13 +576,13 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, str
                     eta += p_jh[i].m;
                 }
 #endif // OPENMP
-                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
+                reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
         case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
 #pragma omp parallel for 
             for (size_t i=1;i<N;i++){
-                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r); // eta = m0
+                reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r); // eta = m0
             }
             break;
         case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
@@ -597,23 +593,16 @@ void reb_integrator_whfast_kepler_step(const struct reb_simulation* const r, str
                 }else{
                     eta = m0;
                 }
-                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
+                reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
         case REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC:
             eta = p_jh[0].m;
             for (size_t i=1;i<N;i++){
-                timestep_too_large |= reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
+                reb_integrator_whfast_kepler_solver(&p_jh[i], eta*G, _dt, r);
             }
             break;
     };
-    // TODO Reimplement
-    //if (timestep_too_large && whfast->timestep_warning == 0){
-    //    // Ignoring const qualifiers. This warning should not have any effect on
-    //    // other parts of the code, nor is it vital to show the warning.
-    //    whfast->timestep_warning++;
-    //    reb_simulation_warning((struct reb_simulation* const)r,"WHFast convergence issue. Timestep is larger than at least one orbital period.");
-    //}
 }
 
 void reb_integrator_whfast_com_step(const struct reb_simulation* const r, struct reb_particle* p_jh, const double _dt){

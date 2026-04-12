@@ -211,7 +211,6 @@ struct reb_integrator_mercurius_state {
     unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
     unsigned int recalculate_r_crit_this_timestep;      // Set to 1 if to recalculate critical switching radii
     unsigned int safe_mode;                             // Combine Kick steps at beginning and end of timestep
-    unsigned int timestep_warning;
 
     // Internal use
     enum {
@@ -254,7 +253,6 @@ struct reb_integrator_trace_state {
         REB_TRACE_MODE_KEPLER = 1,      // Kepler step
         REB_TRACE_MODE_FULL = 3,        // Doing everything in one step
     } mode;
-    unsigned int timestep_warning;
     size_t encounter_N;                 // Number of particles currently having an encounter
     size_t encounter_N_active;          // Number of active particles currently having an encounter
 
@@ -342,7 +340,6 @@ struct reb_integrator_whfast_state {
     struct reb_particle* REB_RESTRICT p_jh_var; // Jacobi coordinates for variational equations
     size_t N_allocated_temp;
     struct reb_particle* REB_RESTRICT p_temp;   // Used for lazy implementer's kernel 
-    unsigned int timestep_warning;
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
@@ -481,7 +478,6 @@ struct reb_simulation {
     size_t  N_var_config; 
     struct  reb_variational_configuration* var_config;   // Configuration structs. These contain details on variational particles. 
 
-    int     var_rescale_warning;    
     size_t  N_active;               // Number of active (i.e. not test-particle) particles. Default: SIZE_MAX (all particles are active). 
     int     testparticle_type;      // 0 (default): active particles do not feel test-particles, 1: active particles feel test-particles
     int     testparticle_hidewarnings;
@@ -502,8 +498,12 @@ struct reb_simulation {
         REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 = 2,       // Ignore all interactions with particle 0 in gravity calculations (used for WHFast)
     } gravity_ignore_terms;         // This flag determines which interactions are included in the gravity calculation.
     double output_timing_last;      // Time when reb_simulation_output_timing() was called the last time. 
+   
     int save_messages;              // 0 (default): print messages on screen, 1: ignore messages (used in python interface).
     char** messages;                // Array of strings containing last messages (only used if save_messages==1). 
+    int messages_var_rescale_warning;    
+    int messages_timestep_warning;    
+
     double exit_max_distance;       // Exit simulation if a particle is this far away from the origin.
     double exit_min_distance;       // Exit simulation if two particles come this close to each other.
     double usleep;                  // Artificially slow down simulations by this many microseconds each timestep.
@@ -771,8 +771,8 @@ DLLEXPORT void reb_particle_imul(struct reb_particle* p1, double value);
 DLLEXPORT double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
 // Compares two particles, ignoring pointers. Returns 1 if particles differ, 0 if they are exactly equal.
 DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
-// Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). Set r=NULL unless variational particles are used. Returns 0 on success, 1 if timestep is too large. 
-DLLEXPORT int reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
+// Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). r can be NULL unless variational particles are used or warnings are needed.
+DLLEXPORT void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
 // Sets a particle's name. This function should be used instead of directly setting the name in the particle's structure as it
 // registers the name, allowing for faster lookup and storing of name in binary files.
 DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);

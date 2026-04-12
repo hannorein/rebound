@@ -347,13 +347,8 @@ void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double d
 void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, struct reb_integrator_mercurius_state* mercurius, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
-    int timestep_too_large = 0;
     for (size_t i=1;i<N;i++){
-        timestep_too_large |= reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL); // in dh
-    }
-    if (timestep_too_large && mercurius->timestep_warning == 0){
-        mercurius->timestep_warning++;
-        reb_simulation_warning(r,"Kepler solver convergence issue. Timestep is larger than at least one orbital period.");
+        reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL); // in dh
     }
 }
 

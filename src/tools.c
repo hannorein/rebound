@@ -1301,15 +1301,15 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
                 for (size_t w=0;w<r->N_var_config;w++){
                     struct reb_variational_configuration* wc = &(r->var_config[w]);
                     if (wc->order == 2 && (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index)){
-                        if (!(r->var_rescale_warning & 4)){
-                            r->var_rescale_warning |= 4;
+                        if (!(r->messages_var_rescale_warning & 4)){
+                            r->messages_var_rescale_warning |= 4;
                             reb_simulation_warning(r, "Rescaling a set of variational equations of order 1 which are being used by a set of variational equations of order 2. Order 2 equations will no longer be valid.");
                         }
                     }
                 }
             }else{ // order 2
-                if (!(r->var_rescale_warning & 2)){
-                    r->var_rescale_warning |= 2;
+                if (!(r->messages_var_rescale_warning & 2)){
+                    r->messages_var_rescale_warning |= 2;
                     reb_simulation_warning(r, "Variational particles which are part of a second order variational equation have now large coordinates which might exceed range of floating point number range. REBOUND cannot rescale a second order variational equation as it is non-linear.");
                 }
                 return;
@@ -1325,8 +1325,8 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
             //    is_synchronized = 0;
             //}
             //if (is_synchronized == 0){
-            //    if (!(r->var_rescale_warning & 1)){
-            //        r->var_rescale_warning |= 1;
+            //    if (!(r->messages_var_rescale_warning & 1)){
+            //        r->messages_var_rescale_warning |= 1;
             //        reb_simulation_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize and rescale.");
             //    }
             //    return;
