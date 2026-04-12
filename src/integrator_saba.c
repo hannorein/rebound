@@ -289,7 +289,7 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
         }
     }
 
-    reb_integrator_whfast_to_inertial(r);
+    reb_integrator_whfast_to_inertial(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI);
 
     reb_simulation_update_acceleration(r);
 

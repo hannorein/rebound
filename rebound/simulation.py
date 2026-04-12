@@ -631,7 +631,7 @@ class Simulation(Structure):
                 self.integrator_data.kernel = "composition"
             elif value[0:4]=="saba" and len(value)>4:
                 self.integrator = "saba"
-                self.integrator_data.type = value[4:]
+                self.integrator_data.type = value[4:].replace(",","_")
             else:
                 raise ValueError("Integrator not found.")
     
