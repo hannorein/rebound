@@ -68,7 +68,7 @@ void* reb_integrator_trace_create(){
     trace->peri_crit_eta = 1.0;
     trace->S = NULL;
     trace->S_peri = NULL;
-    trace->peri_mode = REB_TRACE_PERIMODE_FULL_BS;
+    trace->peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS;
     return trace;
 }
 
@@ -557,7 +557,7 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
     struct reb_particle* restrict const particles = r->particles;
     struct reb_integrator_trace_state* const trace = r->integrator_data;
     const size_t N = r->N;
-    trace->mode = REB_TRACE_MODE_INTERACTION;
+    trace->mode = REB_INTEGRATOR_TRACE_MODE_INTERACTION;
     reb_integrator_trace_calculate_acceleration_mode_interaction(r);
     for (size_t i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
@@ -704,14 +704,14 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         }
     }
 
-    trace->mode = REB_TRACE_MODE_KEPLER;
+    trace->mode = REB_INTEGRATOR_TRACE_MODE_KEPLER;
     r->map = trace->encounter_map; // for collision search
     r->N_map = trace->encounter_N;
     r->gravity = REB_GRAVITY_CUSTOM;
     r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
 
     // Only Partial BS uses this step 
-    if (trace->peri_mode == REB_TRACE_PERIMODE_PARTIAL_BS || !trace->current_C){
+    if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS || !trace->current_C){
         // run
         const double old_dt = r->dt;
         const double old_t = r->t;
@@ -870,7 +870,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     for (size_t j = 1; j < Nactive; j++){
         if (_switch_peri(r, j)){
             trace->current_C = 1;
-            if (trace->peri_mode == REB_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_TRACE_PERIMODE_FULL_IAS15){
+            if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
                 return;
             }
@@ -932,7 +932,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
             if (_switch_peri(r, j)){
                 trace->current_C = 1;
                 new_close_encounter = 1;
-                if (trace->peri_mode == REB_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_TRACE_PERIMODE_FULL_IAS15){
+                if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15){
                     // Everything will be integrated with BS/IAS15. No need to check any further.
                     return new_close_encounter;
                 }
@@ -983,7 +983,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
 
 static void reb_integrator_trace_step_try(struct reb_simulation* const r){
     struct reb_integrator_trace_state* const trace = r->integrator_data;
-    if (trace->current_C == 0 || trace->peri_mode == REB_TRACE_PERIMODE_PARTIAL_BS){
+    if (trace->current_C == 0 || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS){
         reb_integrator_trace_interaction_step(r, r->dt/2.);
         reb_integrator_trace_jump_step(r, r->dt/2.);
         reb_integrator_trace_kepler_step(r, r->dt);
@@ -996,10 +996,10 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         const double old_dt = r->dt;
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
-        trace->mode = REB_TRACE_MODE_FULL;
+        trace->mode = REB_INTEGRATOR_TRACE_MODE_FULL;
         reb_integrator_trace_dh_to_inertial(r);
         switch (trace->peri_mode){
-            case REB_TRACE_PERIMODE_FULL_IAS15:
+            case REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15:
                 {
                     // Run default IAS15 integration
                     struct reb_integrator_ias15_state* ias15 = reb_integrator_ias15.create();
@@ -1015,7 +1015,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                     reb_integrator_ias15.free(ias15);
                 }
                 break;
-            case REB_TRACE_PERIMODE_FULL_BS:
+            case REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS:
                 {
                     // Run default BS integration
                     // TODO: Syntax should be similar to IAS
@@ -1085,7 +1085,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
 void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
     // TRACE can add particles mid-timestep now
     struct reb_integrator_trace_state* const trace = r->integrator_data;
-    if (trace->mode==REB_TRACE_MODE_KEPLER){
+    if (trace->mode==REB_INTEGRATOR_TRACE_MODE_KEPLER){
         const size_t old_N = r->N-1;
         if (trace->N_allocated < r->N){
             trace->current_Ks    = realloc(trace->current_Ks, sizeof(int)*r->N*r->N);
@@ -1130,7 +1130,7 @@ void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t 
     struct reb_integrator_trace_state* const trace = r->integrator_data;
     // TODO REImplement
     //reb_integrator_bs_reset(r);
-    if (trace->mode==REB_TRACE_MODE_KEPLER){
+    if (trace->mode==REB_INTEGRATOR_TRACE_MODE_KEPLER){
         // Only removed mid-timestep if collision - BS Step!
         int after_to_be_removed_particle = 0;
         size_t encounter_index = SIZE_MAX;

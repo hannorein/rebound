@@ -236,12 +236,12 @@ struct reb_integrator_trace_state {
     int (*S) (struct reb_simulation* const r, const size_t i, const size_t j);
     int (*S_peri) (struct reb_simulation* const r, const size_t j);
 
-#define REB_TRACE_PERIMODE(X,Y) \
+#define REB_INTEGRATOR_TRACE_PERIMODE(X,Y) \
     X(Y, 0, PARTIAL_BS) \
     X(Y, 1, FULL_BS) \
     X(Y, 2, FULL_IAS15)
     enum {
-        REB_GENERATE_ENUM(REB_TRACE_PERIMODE)
+        REB_GENERATE_ENUM(REB_INTEGRATOR_TRACE_PERIMODE)
     } peri_mode;
 
     double r_crit_hill;
@@ -249,9 +249,9 @@ struct reb_integrator_trace_state {
 
     // Internal use
     enum {
-        REB_TRACE_MODE_INTERACTION = 0, // Interaction step
-        REB_TRACE_MODE_KEPLER = 1,      // Kepler step
-        REB_TRACE_MODE_FULL = 3,        // Doing everything in one step
+        REB_INTEGRATOR_TRACE_MODE_INTERACTION = 0, // Interaction step
+        REB_INTEGRATOR_TRACE_MODE_KEPLER = 1,      // Kepler step
+        REB_INTEGRATOR_TRACE_MODE_FULL = 3,        // Doing everything in one step
     } mode;
     size_t encounter_N;                 // Number of particles currently having an encounter
     size_t encounter_N_active;          // Number of active particles currently having an encounter
