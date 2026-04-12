@@ -11,7 +11,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", step=10,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -27,7 +27,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -39,7 +39,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -55,7 +55,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -67,7 +67,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
         x1 = sim.particles[1].x
@@ -89,9 +89,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator_data.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -107,9 +107,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator_data.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -121,9 +121,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator_data.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(42.,exact_finish_time=0)
 
@@ -139,9 +139,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator_data.coordinates = "democraticheliocentric"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -153,9 +153,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "whds"
+        sim.integrator_data.coordinates = "whds"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -171,9 +171,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "whds"
+        sim.integrator_data.coordinates = "whds"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -185,9 +185,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "whds"
+        sim.integrator_data.coordinates = "whds"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(42.,exact_finish_time=0)
 
@@ -203,9 +203,9 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=1,e=0.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "whds"
+        sim.integrator_data.coordinates = "whds"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -219,7 +219,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -236,7 +236,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -249,7 +249,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(42.,exact_finish_time=0)
 
@@ -267,7 +267,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
         t0 = sim.t
@@ -289,7 +289,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -310,7 +310,7 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -331,8 +331,8 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
-        sim.ri_whfast.corrector = 5
+        sim.integrator_data.safe_mode = 0
+        sim.integrator_data.corrector = 5
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(42.,exact_finish_time=0)
 
@@ -349,8 +349,8 @@ class TestSimulationarchive(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "whfast"
         sim.dt = 0.1313
-        sim.ri_whfast.safe_mode = 0
-        sim.ri_whfast.corrector = 5
+        sim.integrator_data.safe_mode = 0
+        sim.integrator_data.corrector = 5
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -484,7 +484,7 @@ class TestSimulationarchiveMercurius(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "mercurius"
         sim.dt = 0.1313
-        sim.ri_mercurius.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(42.,exact_finish_time=0)
 
@@ -501,7 +501,7 @@ class TestSimulationarchiveMercurius(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "mercurius"
         sim.dt = 0.1313
-        sim.ri_mercurius.safe_mode = 0
+        sim.integrator_data.safe_mode = 0
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
@@ -514,7 +514,7 @@ class TestSimulationarchiveMercurius(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "mercurius"
         sim.dt = 0.1313
-        sim.ri_mercurius.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.save_to_file("test.bin", 10.,delete_file=True)
         sim.integrate(40.,exact_finish_time=0)
 
@@ -531,7 +531,7 @@ class TestSimulationarchiveMercurius(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "mercurius"
         sim.dt = 0.1313
-        sim.ri_mercurius.safe_mode = 1
+        sim.integrator_data.safe_mode = 1
         sim.integrate(80.,exact_finish_time=0)
         x0 = sim.particles[1].x
 

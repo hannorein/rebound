@@ -242,19 +242,21 @@ class Simulationarchive(Structure):
             self.setup(sim, *self.setup_args)
 
         if mode=='snapshot':
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
-                keep_unsynchronized = 0
-            sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            sim.ri_saba.keep_unsynchronized = keep_unsynchronized
+            # TODO: Reimplement
+            #if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
+            #    keep_unsynchronized = 0
+            #sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
+            #sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             sim.synchronize()
             return sim
         else:
             if mode=='exact':
                 keep_unsynchronized = 0
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
-                keep_unsynchronized = 0
-            sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            sim.ri_saba.keep_unsynchronized = keep_unsynchronized
+            # TODO: Reimplement
+            #if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
+            #    keep_unsynchronized = 0
+            #sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
+            #sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             exact_finish_time = 1 if mode=='exact' else 0
             sim.integrate(t,exact_finish_time=exact_finish_time)
                 
