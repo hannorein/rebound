@@ -71,10 +71,7 @@ const struct reb_integrator reb_integrator_mercurius = {
 
 void* reb_integrator_mercurius_create(){
     struct reb_integrator_mercurius_state* mercurius = calloc(sizeof(struct reb_integrator_mercurius_state),1);
-    mercurius->L = NULL;
     mercurius->mode = REB_MERCURIUS_MODE_WH;
-    mercurius->encounter_N = 0;
-    mercurius->encounter_N_active = 0;
     mercurius->r_crit_hill = 3;
     mercurius->tponly_encounter = 0;
     mercurius->safe_mode = 1;
