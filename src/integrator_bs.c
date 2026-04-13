@@ -93,7 +93,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_
 void reb_integrator_bs_step(struct reb_simulation* r, void* p);
 void* reb_integrator_bs_create();
 void reb_integrator_bs_free(void* state);
-    
+
 const struct reb_integrator reb_integrator_bs = {
     .id = 12,
     .step = reb_integrator_bs_step,

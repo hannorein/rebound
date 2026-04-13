@@ -44,7 +44,7 @@ void* reb_integrator_trace_create();
 void reb_integrator_trace_free(void* p);
 void reb_integrator_trace_did_add_particle(struct reb_simulation* r);
 void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index);
-    
+
 const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descriptor_list[] = {
     { 165, REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
     { 169, REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
@@ -697,8 +697,8 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 trace->encounter_N_active++;
                 if (trace->tponly_encounter){
                     trace->particles_backup_kepler[i] = tmp;         // Make copy of particles after the kepler step.
-                                                                        // used to restore the massive objects' states in the case
-                                                                        // of only massless test-particle encounters
+                                                                     // used to restore the massive objects' states in the case
+                                                                     // of only massless test-particle encounters
                 }
             }
         }

@@ -205,8 +205,8 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
 
 #define WHFAST_NMAX_QUART 64    ///< Maximum number of iterations for quartic solver
 #define WHFAST_NMAX_NEWT  32    ///< Maximum number of iterations for Newton's method
-// Keplerian motion for one planet                       
-// r only needed for variational particles and warning. Can be NULL.
+                                // Keplerian motion for one planet                       
+                                // r only needed for variational particles and warning. Can be NULL.
 void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
 

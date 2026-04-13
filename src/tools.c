@@ -49,7 +49,7 @@ int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrato
     int differ = 0;
     differ = differ || (a.step != b.step);
     differ = differ || (a.synchronize != b.synchronize);
-// TODO: Complete with other comparisons or remove
+    // TODO: Complete with other comparisons or remove
     return differ;
 }
 

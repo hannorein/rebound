@@ -278,24 +278,24 @@ struct reb_integrator_trace_state {
 struct reb_integrator_saba_state {
 #define REB_INTEGRATOR_SABA_TYPE(X,Y) \
     X(Y, 0, DEFAULT) \
-        X(Y, 0x0,    1)         /* WH                                 */ \
-        X(Y, 0x1,    2)         /* SABA2                              */ \
-        X(Y, 0x2,    3)         /* SABA3                              */ \
-        X(Y, 0x3,    4)         /* SABA4                              */ \
-        X(Y, 0x100,  CM_1)      /* SABACM1 (Modified kick corrector)  */ \
-        X(Y, 0x101,  CM_2)      /* SABACM2 (Modified kick corrector)  */ \
-        X(Y, 0x102,  CM_3)      /* SABACM3 (Modified kick corrector)  */ \
-        X(Y, 0x103,  CM_4)      /* SABACM4 (Modified kick corrector)  */ \
-        X(Y, 0x200,  CL_1)      /* SABACL1 (lazy corrector)           */ \
-        X(Y, 0x201,  CL_2)      /* SABACL2 (lazy corrector)           */ \
-        X(Y, 0x202,  CL_3)      /* SABACL3 (lazy corrector)           */ \
-        X(Y, 0x203,  CL_4)      /* SABACL4 (lazy corrector)           */ \
-        X(Y, 0x4,    10_4)      /* SABA(10,4), 7 stages               */ \
-        X(Y, 0x5,    8_6_4)     /* SABA(8,6,4), 7 stages              */ \
-        X(Y, 0x6,    10_6_4)    /*SABA(10,6,4), 8 stages, default     */ \
-        X(Y, 0x7,    H_8_4_4)   /*SABAH(8,4,4), 6 stages              */ \
-        X(Y, 0x8,    H_8_6_4)   /*SABAH(8,6,4), 8 stages              */ \
-        X(Y, 0x9,    H_10_6_4)  /*SABAH(10,6,4), 9 stages             */
+    X(Y, 0x0,    1)         /* WH                                 */ \
+    X(Y, 0x1,    2)         /* SABA2                              */ \
+    X(Y, 0x2,    3)         /* SABA3                              */ \
+    X(Y, 0x3,    4)         /* SABA4                              */ \
+    X(Y, 0x100,  CM_1)      /* SABACM1 (Modified kick corrector)  */ \
+    X(Y, 0x101,  CM_2)      /* SABACM2 (Modified kick corrector)  */ \
+    X(Y, 0x102,  CM_3)      /* SABACM3 (Modified kick corrector)  */ \
+    X(Y, 0x103,  CM_4)      /* SABACM4 (Modified kick corrector)  */ \
+    X(Y, 0x200,  CL_1)      /* SABACL1 (lazy corrector)           */ \
+    X(Y, 0x201,  CL_2)      /* SABACL2 (lazy corrector)           */ \
+    X(Y, 0x202,  CL_3)      /* SABACL3 (lazy corrector)           */ \
+    X(Y, 0x203,  CL_4)      /* SABACL4 (lazy corrector)           */ \
+    X(Y, 0x4,    10_4)      /* SABA(10,4), 7 stages               */ \
+    X(Y, 0x5,    8_6_4)     /* SABA(8,6,4), 7 stages              */ \
+    X(Y, 0x6,    10_6_4)    /*SABA(10,6,4), 8 stages, default     */ \
+    X(Y, 0x7,    H_8_4_4)   /*SABAH(8,4,4), 6 stages              */ \
+    X(Y, 0x8,    H_8_6_4)   /*SABAH(8,6,4), 8 stages              */ \
+    X(Y, 0x9,    H_10_6_4)  /*SABAH(10,6,4), 9 stages             */
     enum {
         REB_GENERATE_ENUM(REB_INTEGRATOR_SABA_TYPE)
     } type;                             // Type of integrator
@@ -461,7 +461,7 @@ struct reb_simulation {
     unsigned int is_synchronized;   // If 1 then positions and velocities of particles are in inertial frame.
                                     // If 0, call reb_simulation_synchronize() first.
 
-    // Main particles array
+                                    // Main particles array
     size_t  N;                      // Number of particles (includes variational particles). Default: 0.
     size_t  N_allocated;            // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
@@ -498,7 +498,7 @@ struct reb_simulation {
         REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 = 2,       // Ignore all interactions with particle 0 in gravity calculations (used for WHFast)
     } gravity_ignore_terms;         // This flag determines which interactions are included in the gravity calculation.
     double output_timing_last;      // Time when reb_simulation_output_timing() was called the last time. 
-   
+
     int save_messages;              // 0 (default): print messages on screen, 1: ignore messages (used in python interface).
     char** messages;                // Array of strings containing last messages (only used if save_messages==1). 
     int messages_var_rescale_warning;    
