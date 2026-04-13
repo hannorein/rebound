@@ -115,6 +115,10 @@ class Simulation(Structure):
     >>> sim = rebound.Simulation(open("archive.bin","rb").read())
 
     """
+
+    # Only allow attributes which are fields.
+    # Exceptions are listed here. Used to keep reference for function pointers.
+    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp"]
     def __new__(cls, *args, **kw):
         # Create a new simulation if no arguments given
         if len(args)==0:
