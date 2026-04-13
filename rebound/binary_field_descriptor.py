@@ -61,7 +61,15 @@ class IntegratorData(ctypes.Structure):
                     while True:
                         enum_descriptor = field_descriptor.enum_descriptor_list[j]
                         if enum_descriptor.name == b"": # reached end of list
-                            raise AttributeError("Field '%s' can not be set to '%s'." % (name, value))
+                            available_options = []
+                            k=0
+                            while True:
+                                enum_descriptor = field_descriptor.enum_descriptor_list[k]
+                                k += 1
+                                if enum_descriptor.name == b"": # reached end of list
+                                    raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join(available_options)))
+                                else:
+                                    available_options.append("'"+enum_descriptor.name.decode("utf-8").lower()+"'")
                         if enum_descriptor.name.decode("utf-8") == value.upper():
                             pointer_to_field.value = enum_descriptor.value
                             return
