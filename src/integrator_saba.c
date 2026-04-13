@@ -47,7 +47,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_saba_field_descripto
     { 140, REB_UINT,        "safe_mode",            offsetof(struct reb_integrator_saba_state, safe_mode), 0, 0, 0},
     { 146, REB_INT,         "type",                 offsetof(struct reb_integrator_saba_state, type), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_SABA_TYPE)},
     { 147, REB_UINT,        "keep_unsynchronized",  offsetof(struct reb_integrator_saba_state, keep_unsynchronized), 0, 0, 0},
-    // TODO need to add other field that used to be in whfast
+    { 148, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_saba_state, p_jh), offsetof(struct reb_integrator_saba_state, N_allocated), sizeof(struct reb_particle), 0},
     { 0 }, // Null terminated list
 };
 
@@ -73,6 +73,7 @@ void* reb_integrator_saba_create(){
 void reb_integrator_saba_free(void* p){
     struct reb_integrator_saba_state* saba = p;
     free(saba->p_jh);
+    free(saba->p_temp);
     free(saba);
 }
 

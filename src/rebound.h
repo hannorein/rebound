@@ -214,8 +214,8 @@ struct reb_integrator_mercurius_state {
 
     // Internal use
     enum {
-        REB_MERCURIUS_MODE_WH = 0,
-        REB_MERCURIUS_MODE_ENCOUNTER = 1,
+        REB_INTEGRATOR_MERCURIUS_MODE_WH = 0,
+        REB_INTEGRATOR_MERCURIUS_MODE_ENCOUNTER = 1,
     } mode;
     size_t encounter_N;             // Number of particles currently having an encounter
     size_t encounter_N_active;      // Number of active particles currently having an encounter

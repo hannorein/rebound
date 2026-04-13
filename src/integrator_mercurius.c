@@ -71,7 +71,7 @@ const struct reb_integrator reb_integrator_mercurius = {
 
 void* reb_integrator_mercurius_create(){
     struct reb_integrator_mercurius_state* mercurius = calloc(sizeof(struct reb_integrator_mercurius_state),1);
-    mercurius->mode = REB_MERCURIUS_MODE_WH;
+    mercurius->mode = REB_INTEGRATOR_MERCURIUS_MODE_WH;
     mercurius->r_crit_hill = 3;
     mercurius->tponly_encounter = 0;
     mercurius->safe_mode = 1;
@@ -374,7 +374,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, struct 
         }
     }
 
-    mercurius->mode = REB_MERCURIUS_MODE_ENCOUNTER;
+    mercurius->mode = REB_INTEGRATOR_MERCURIUS_MODE_ENCOUNTER;
 
     // run
     const double old_dt = r->dt;
@@ -442,7 +442,7 @@ static void reb_mercurius_encounter_step(struct reb_simulation* const r, struct 
 
     r->t = old_t;
     r->dt = old_dt;
-    mercurius->mode = REB_MERCURIUS_MODE_WH;
+    mercurius->mode = REB_INTEGRATOR_MERCURIUS_MODE_WH;
     r->map = NULL;
     r->N_map = 0;
 }
@@ -739,11 +739,11 @@ static void reb_integrator_mercurius_calculate_acceleration_mode_wh(struct reb_s
 void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
     struct reb_integrator_mercurius_state* mercurius = r->integrator_data;
     switch (mercurius->mode){
-        case REB_MERCURIUS_MODE_WH:
+        case REB_INTEGRATOR_MERCURIUS_MODE_WH:
             mercurius->recalculate_r_crit_this_timestep      = 1;
             mercurius->recalculate_coordinates_this_timestep = 1;
             break;
-        case REB_MERCURIUS_MODE_ENCOUNTER:
+        case REB_INTEGRATOR_MERCURIUS_MODE_ENCOUNTER:
             if (mercurius->N_allocated_dcrit<r->N){
                 mercurius->dcrit              = realloc(mercurius->dcrit, sizeof(double)*r->N);
                 mercurius->N_allocated_dcrit = r->N;
@@ -776,7 +776,7 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
             }
         }
     }
-    if (mercurius->mode==REB_MERCURIUS_MODE_ENCOUNTER){
+    if (mercurius->mode==REB_INTEGRATOR_MERCURIUS_MODE_ENCOUNTER){
         int after_to_be_removed_particle = 0;
         size_t encounter_index = SIZE_MAX;
         for (size_t i=0;i<mercurius->encounter_N;i++){
@@ -857,7 +857,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
     if (r->gravity != REB_GRAVITY_BASIC && r->gravity != REB_GRAVITY_CUSTOM){
         reb_simulation_warning(r,"Mercurius has its own gravity routine. Gravity routine set by the user will be ignored.");
     }
-    mercurius->mode = REB_MERCURIUS_MODE_WH;
+    mercurius->mode = REB_INTEGRATOR_MERCURIUS_MODE_WH;
 
     reb_integrator_mercurius_calculate_acceleration_mode_wh(r, mercurius);
 
@@ -900,7 +900,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state){
     struct reb_integrator_mercurius_state* mercurius = state;
     if (r->is_synchronized == 0){
-        mercurius->mode = REB_MERCURIUS_MODE_WH;
+        mercurius->mode = REB_INTEGRATOR_MERCURIUS_MODE_WH;
         reb_integrator_mercurius_calculate_acceleration_mode_wh(r, mercurius);
         reb_integrator_mercurius_interaction_step(r, r->dt/2.);
 
