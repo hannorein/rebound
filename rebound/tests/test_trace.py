@@ -486,7 +486,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
         sim.dt = (8./365.)*2.*math.pi
-        sim.hillfac = 5 # change rcrit
+        sim.integrator_data.r_crit_hill = 5 # change rcrit
         sim.save_to_file("test.bin", step=10,delete_file=True)
         sim.integrate(1000.,exact_finish_time=0)
 
@@ -499,7 +499,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
         sim.dt = (8./365.)*2.*math.pi
-        sim.hillfac = 5
+        sim.integrator_data.r_crit_hill = 5
         sim.integrate(2000.,exact_finish_time=0)
         x0 = sim.particles[1].x
 
