@@ -101,29 +101,13 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state){
     switch (leapfrog->order){
         case 2:
             drift(r, dt*0.5);
-            break;
-        case 4:
-            drift(r, dt*reb_integrator_leapfrog_lf4_a);
-            break;
-        case 6:
-            drift(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
-            break; 
-        case 8: 
-            drift(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
-            break;
-        default:
-            reb_simulation_error(r, "Leapfrog order not supported.");
-            return;
-    }
-
-    reb_simulation_update_acceleration(r);
-
-    switch (leapfrog->order){
-        case 2:
+            reb_simulation_update_acceleration(r);
             kick(r, dt);
             drift(r, dt*0.5);
             break;
         case 4:
+            drift(r, dt*reb_integrator_leapfrog_lf4_a);
+            reb_simulation_update_acceleration(r);
             kick(r, dt*2.*reb_integrator_leapfrog_lf4_a);
             drift(r, dt*(0.5-reb_integrator_leapfrog_lf4_a));
             reb_simulation_update_acceleration(r);
@@ -134,6 +118,8 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state){
             drift(r, dt*reb_integrator_leapfrog_lf4_a);
             break;
         case 6:
+            drift(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
+            reb_simulation_update_acceleration(r);
             kick(r, dt*reb_integrator_leapfrog_lf6_a[0]);
             drift(r, dt*(reb_integrator_leapfrog_lf6_a[0]+reb_integrator_leapfrog_lf6_a[1])*0.5);
             reb_simulation_update_acceleration(r);
@@ -162,6 +148,8 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state){
             drift(r, dt*reb_integrator_leapfrog_lf6_a[0]*0.5);
             break; 
         case 8: 
+            drift(r, dt*reb_integrator_leapfrog_lf8_a[0]*0.5);
+            reb_simulation_update_acceleration(r);
             kick(r, dt*reb_integrator_leapfrog_lf8_a[0]);
             drift(r, dt*(reb_integrator_leapfrog_lf8_a[0]+reb_integrator_leapfrog_lf8_a[1])*0.5);
             reb_simulation_update_acceleration(r);

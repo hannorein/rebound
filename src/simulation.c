@@ -182,6 +182,11 @@ void reb_simulation_free(struct reb_simulation* const r){
 }
 
 void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
+    for(size_t i=0; i<reb_integrators_available_N; i++){
+        if (reb_integrators_available[i]->id == integrator.id && reb_integrator_cmp(integrator, *reb_integrators_available[i])){
+            reb_simulation_error(r, "Integrator id already used by built-in integrator. Choose a different id.");
+        }
+    }
     if (!r->integrator.id && !r->is_synchronized){
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
     }

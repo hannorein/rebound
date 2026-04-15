@@ -46,11 +46,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrator b){
-    int differ = 0;
-    differ = differ || (a.step != b.step);
-    differ = differ || (a.synchronize != b.synchronize);
-    // TODO: Complete with other comparisons or remove
-    return differ;
+    return memcmp(&a, &b, sizeof(struct reb_integrator));
 }
 
 uint32_t reb_hash(const char *str) {

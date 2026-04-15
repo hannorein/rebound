@@ -39,17 +39,17 @@ int main(int argc, char* argv[]) {
     
     // Setup problem. For more details, see the shearing sheet example.
     r->opening_angle2    = .5;
-    r->integrator        = reb_integrator_sei;
+    reb_simulation_set_integrator(r, reb_integrator_sei);
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
-    r->ri_sei.OMEGA      = 0.00013143527;       // 1/s
-    r->minimum_collision_velocity = r->ri_sei.OMEGA*0.001;
+    r->OMEGA      = 0.00013143527;       // 1/s
+    r->minimum_collision_velocity = r->OMEGA*0.001;
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
-    r->dt                = 1e-3*2.*M_PI/r->ri_sei.OMEGA;  // s
+    r->dt                = 1e-3*2.*M_PI/r->OMEGA;  // s
    
     r->root_size = 100.0;
     r->N_root_x = 2; 
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
         pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
         pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
-        pt.vy         = -1.5*pt.x*r->ri_sei.OMEGA;
+        pt.vy         = -1.5*pt.x*r->OMEGA;
         double radius     = reb_random_powerlaw(r, 1., 4.,-3);
         pt.r         = radius;                        // m
         double        particle_mass = 400.0*4./3.*M_PI*radius*radius*radius; // 400kg/m^3 particle density

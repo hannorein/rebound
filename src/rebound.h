@@ -60,6 +60,7 @@
 
 #include <stdlib.h> // for size_t
 #include <stdint.h> // for integer types
+#include <stddef.h> // for offsetof
 
 // Macros to generate enums that can also be read by python
 #define REB_AS_ENUM_MEMBER(prefix, value, name)  prefix ## _ ## name = value,
@@ -102,6 +103,46 @@ struct reb_particle {
 #if !defined(_LP64)
     char pad4[4];               // Padding. sim is short by 4 bytes
 #endif
+};
+
+// Possible datatypes for reb_binarydata_field.
+enum REB_BINARYDATA_DTYPE {
+    REB_DOUBLE = 0,
+    REB_INT = 1,
+    REB_UINT = 2,                // Same as UINT32
+    REB_UINT32 = 3,
+    REB_INT64 = 4,
+    REB_UINT64 = 5,
+    // REB_ULONGLONG = 6,        // No longer used. Using explicit lengths instead.
+    REB_VEC3D = 7,
+    REB_PARTICLE = 8,
+    REB_POINTER = 9,
+    REB_POINTER_ALIGNED = 10,    // memory aligned to 64 bit boundary for AVX512
+    REB_DP7 = 11,                // Special datatype for IAS15
+    REB_OTHER = 12,              // Fields that need special treatment during input and/or output
+    REB_FIELD_END = 13,          // No longer used. Was special type to indicate end of blob
+    REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
+    REB_PARTICLE4 = 15,          // Used for WHFast512
+    REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
+    REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
+    REB_SIZE_T = 18,
+    REB_INT64_INIT = 19,         // A special field that stores an ID. Will require some special initialization.
+};
+
+struct reb_binarydata_enum_descriptor{
+    int value;
+    char name[256];
+};
+
+// Binary field descriptors are used to identify data blobs in simulationarchives.
+struct reb_binarydata_field_descriptor {
+    uint32_t type;              // Unique id for each field. Should not change between versions. Ids should not be reused.
+    enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
+    char name[256];            // Null terminated human readable name.
+    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
+    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
+    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
+    struct reb_binarydata_enum_descriptor* enum_descriptor;
 };
 
 // Generic 3d vector
