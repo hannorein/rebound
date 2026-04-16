@@ -1,7 +1,7 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof, cast 
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
 from .citations import cite
-from .binary_field_descriptor import Integrator
+from .binary_field_descriptor import Integrator, integrators_available, integrators_available_names
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .vectors import Vec3d, Vec3dBasic, Vec6d
 import os
@@ -12,13 +12,6 @@ import warnings
 # https://sourceforge.net/p/ctypes/mailman/message/8469497/
 class allocated_c_char_p(c_char_p):
     pass
-
-import types
-
-# Load all available integrators and identify by name
-integrators_available_N = c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
-integrators_available = (POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
-integrators_available_names = [n.decode("utf-8").lower() for n in (c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")]
 
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h

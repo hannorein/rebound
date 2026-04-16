@@ -41,11 +41,16 @@ class Integrator(ctypes.Structure):
                 ("state", ctypes.c_void_p),
                 ]
     def __eq__(self, other):
-        if not isinstance(other,Integrator):
-            return NotImplemented
-        clibrebound.reb_integrator_cmp.restype = ctypes.c_int
-        ret = clibrebound.reb_integrator_cmp(self, other)
-        return not ret
+        if isinstance(other,str):
+            other = other.lower()
+            if other in integrators_available_names:
+                other = integrators_available[integrators_available_names.index(other)].contents
+            else:
+                return False
+        if isinstance(other,Integrator):
+            clibrebound.reb_integrator_cmp.restype = ctypes.c_int
+            return not clibrebound.reb_integrator_cmp(self, other)
+        return NotImplemented
 
     def __getattr__(self, name):
         i=0
@@ -108,5 +113,11 @@ def binary_field_descriptor_list():
             break
         i += 1
     return l
+
+
+# Load all available integrators and identify by name
+integrators_available_N = ctypes.c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
+integrators_available = (ctypes.POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
+integrators_available_names = [n.decode("utf-8").lower() for n in (ctypes.c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")]
 
 
