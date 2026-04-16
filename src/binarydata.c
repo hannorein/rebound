@@ -743,7 +743,7 @@ next_field:
                                     }
                                 }
                                 if (!integrator_found){
-                                    reb_simulation_warning(r,"Unknown integrator encountered in Simulationarchive. Reset function pointers in `integrator` and data in `integrator_data` manually.");
+                                    *warnings |= REB_BINARYDATA_WARNING_CUSTOM_INTEGRATOR;
                                 }
                             }
                         }
@@ -951,6 +951,9 @@ struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r,
     }
     if (warnings & REB_BINARYDATA_WARNING_FIELD_UNKNOWN){
         reb_simulation_warning(r,"Unknown field found in binary file.");
+    }
+    if (warnings & REB_BINARYDATA_WARNING_CUSTOM_INTEGRATOR){
+        reb_simulation_warning(r,"Custom integrator encountered in Simulationarchive. Call reb_simulation_set_integrator after the simulation is loaded to reset function pointers and initialize data.");
     }
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         reb_simulation_error(r,"Cannot read binary file. Check filename and file contents.");

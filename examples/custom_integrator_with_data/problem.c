@@ -137,14 +137,13 @@ int main(int argc, char* argv[]) {
 
     // Load the simulation back from the file.
     r = reb_simulation_create_from_file("out.bin", -1);
-    // Need to set the function pointers manually. 
-    // Data is automatically restored.
     leapfrog = r->integrator_data;
     printf("number_of_steps = %d\n", leapfrog->number_of_steps);
     printf("number_of_synchronizations = %d\n", leapfrog->number_of_synchronizations);
 
-    // But function pointers need to be restored manually:
-    r->integrator = custom;
+    // Need to set custom integrator manually after loading file. 
+    // Integrator data is restored automatically if field_descriptor_list is provided.
+    reb_simulation_set_integrator(r, custom);
     
     // Synchronize manually
     reb_simulation_synchronize(r);
