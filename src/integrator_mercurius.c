@@ -474,7 +474,7 @@ double reb_integrator_mercurius_calculate_dcrit_for_particle(struct reb_simulati
 }
 
 void reb_integrator_mercurius_calculate_acceleration_mode_encounter(struct reb_simulation* r){
-    struct reb_integrator_mercurius_state* mercurius = r->integrator_data;
+    struct reb_integrator_mercurius_state* mercurius = r->integrator.state;
     struct reb_particle* const particles = r->particles;
     const double G = r->G;
     const double softening2 = r->softening*r->softening;
@@ -737,7 +737,7 @@ static void reb_integrator_mercurius_calculate_acceleration_mode_wh(struct reb_s
 }
 
 void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
-    struct reb_integrator_mercurius_state* mercurius = r->integrator_data;
+    struct reb_integrator_mercurius_state* mercurius = r->integrator.state;
     switch (mercurius->mode){
         case REB_INTEGRATOR_MERCURIUS_MODE_WH:
             mercurius->recalculate_r_crit_this_timestep      = 1;
@@ -768,7 +768,7 @@ void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
 }
 
 void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, size_t index){
-    struct reb_integrator_mercurius_state* mercurius = r->integrator_data;
+    struct reb_integrator_mercurius_state* mercurius = r->integrator.state;
     if (mercurius->N_allocated_dcrit>0 && index<mercurius->N_allocated_dcrit){
         for (size_t i=0;i<r->N-1;i++){
             if (i>=index){

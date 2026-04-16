@@ -29,21 +29,34 @@ class BinaryFieldDescriptor(ctypes.Structure):
                 ("enum_descriptor_list", ctypes.POINTER(EnumDescriptor)),
                 ]
 
-class IntegratorData(ctypes.Structure):
-    def __init__(self, sim):
-        super().__setattr__("integrator_data", sim._integrator_data)
-        super().__setattr__("field_descriptor_list", ctypes.cast(sim._integrator.field_descriptor_list, ctypes.POINTER(BinaryFieldDescriptor)))
+class Integrator(ctypes.Structure):
+    _fields_ = [("id", ctypes.c_uint32),
+                ("step", ctypes.c_void_p),
+                ("synchronize", ctypes.c_void_p),
+                ("create", ctypes.c_void_p),
+                ("free", ctypes.c_void_p),
+                ("did_add_particle", ctypes.c_void_p),
+                ("will_remove_particle", ctypes.c_void_p),
+                ("field_descriptor_list", ctypes.POINTER(BinaryFieldDescriptor)),
+                ("state", ctypes.c_void_p),
+                ]
+    def __eq__(self, other):
+        if not isinstance(other,Integrator):
+            return NotImplemented
+        clibrebound.reb_integrator_cmp.restype = ctypes.c_int
+        ret = clibrebound.reb_integrator_cmp(self, other)
+        return not ret
 
     def __getattr__(self, name):
         i=0
         while True:
             field_descriptor = self.field_descriptor_list[i]
             if field_descriptor.type == 0:
-                raise AttributeError("Field '%s' not found in IntegratorData." % name)
+                raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
                 if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
-                    raise NotImplemented("Datatype of field '%s' in IntegratorData is currently not supported." % name)
-                return REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.integrator_data + field_descriptor.offset).value
+                    raise NotImplemented("Datatype of field '%s' in IntegratorState is currently not supported." % name)
+                return REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
             i += 1
 
     def __setattr__(self, name, value):
@@ -51,11 +64,11 @@ class IntegratorData(ctypes.Structure):
         while True:
             field_descriptor = self.field_descriptor_list[i]
             if field_descriptor.type == 0:
-                raise AttributeError("Field '%s' not found in IntegratorData." % name)
+                raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
                 if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
-                    raise NotImplemented("Datatype of field '%s' in IntegratorData is currently not supported." % name)
-                pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.integrator_data + field_descriptor.offset)
+                    raise NotImplemented("Datatype of field '%s' in IntegratorState is currently not supported." % name)
+                pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset)
                 if isinstance(value, str) and field_descriptor.enum_descriptor_list:
                     j=0
                     while True:

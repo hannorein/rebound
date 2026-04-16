@@ -1,7 +1,7 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof, cast 
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
 from .citations import cite
-from .binary_field_descriptor import IntegratorData
+from .binary_field_descriptor import Integrator
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .vectors import Vec3d, Vec3dBasic, Vec6d
 import os
@@ -16,28 +16,9 @@ class allocated_c_char_p(c_char_p):
 import types
 
 # Load all available integrators and identify by name
-class Integrator(Structure):
-    _fields_ = [("id", c_uint32),
-                ("step", c_void_p),
-                ("synchronize", c_void_p),
-                ("create", c_void_p),
-                ("free", c_void_p),
-                ("did_add_particle", c_void_p),
-                ("will_remove_particle", c_void_p),
-                ("field_descriptor_list", c_void_p),
-                ]
-    def __eq__(self, other):
-        # This ignores the walltime parameter
-        if not isinstance(other,Integrator):
-            return NotImplemented
-        clibrebound.reb_integrator_cmp.restype = c_int
-        ret = clibrebound.reb_integrator_cmp(self, other)
-        return not ret
-
 integrators_available_N = c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
 integrators_available = (POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
-integrators_available_names = (c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")
-INTEGRATORS = dict(zip([n.decode("utf-8") for n in integrators_available_names], [i.contents for i in integrators_available]))
+integrators_available_names = [n.decode("utf-8").lower() for n in (c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")]
 
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h
@@ -589,29 +570,21 @@ class Simulation(Structure):
 
 # Setter/getter of parameters and constants
     @property
-    def integrator_data(self):
-        return IntegratorData(self)
-
-    @property
     def integrator(self):
         """
         Get or set the integrator module.
 
         Check the online documentation for a full description of each of the integrators. 
         """
-        i = self._integrator
-        for name, _i in INTEGRATORS.items():
-            if i==_i:
-                return name
-        return i
+        return self._integrator
     @integrator.setter
     def integrator(self, value):
         if isinstance(value, Integrator):
             self._integrator = value # TODO: Write unit tests
         elif isinstance(value, str):
             value = value.lower()
-            if value in INTEGRATORS: 
-                clibrebound.reb_simulation_set_integrator(byref(self), INTEGRATORS[value])
+            if value in integrators_available_names:
+                clibrebound.reb_simulation_set_integrator(byref(self), integrators_available[integrators_available_names.index(value)])
             # Shortcuts
             elif value=="wh":
                 self.integrator = "whfast"
@@ -1494,7 +1467,6 @@ Simulation._fields_ = [
                 ("_simulationarchive_filename", c_char_p),
                 ("_collision", c_int),
                 ("_integrator", Integrator),
-                ("_integrator_data", c_void_p),
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),

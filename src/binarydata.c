@@ -525,7 +525,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 break;
             case 1: // Integrator
                 current_fd_list = r->integrator.field_descriptor_list;
-                base_address = (char*)r->integrator_data;
+                base_address = (char*)r->integrator.state;
                 break;
         }
         int i=0;
@@ -709,7 +709,7 @@ next_field:
                     break;
                 case 1: // Integrator
                     current_fd_list = r->integrator.field_descriptor_list;
-                    base_address = (char*)r->integrator_data;
+                    base_address = (char*)r->integrator.state;
                     break;
             }
 

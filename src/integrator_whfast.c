@@ -361,7 +361,7 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     //Variations
     for (size_t v=0;r && v<r->N_var_config;v++){
         struct reb_variational_configuration const vc = r->var_config[v];
-        struct reb_integrator_whfast_state* whfast = r->integrator_data;
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
         const size_t pindex = p - whfast->p_jh;
         struct reb_particle* dp1p = whfast->p_jh_var + pindex + vc.index;
         struct reb_particle dp1 = *dp1p;
@@ -410,7 +410,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, stru
                 reb_transformations_inertial_to_jacobi_acc(particles, p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
                     // Only WHFast supports variational equations
-                    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                    struct reb_integrator_whfast_state* whfast = r->integrator.state;
                     struct reb_variational_configuration const vc = r->var_config[v];
                     reb_transformations_inertial_to_jacobi_acc(particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
                 }
@@ -435,7 +435,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, stru
                             p_jh[i].vy += prefac1*pji.y;
                             p_jh[i].vz += prefac1*pji.z;
                             for(size_t v=0;v<r->N_var_config;v++){
-                                struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                                struct reb_integrator_whfast_state* whfast = r->integrator.state;
                                 struct reb_particle* const p_jh_var = whfast->p_jh_var;
                                 struct reb_variational_configuration const vc = r->var_config[v];
                                 const size_t index = vc.index;
@@ -448,7 +448,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, stru
                             }
                         }
                         for(size_t v=0;v<r->N_var_config;v++){
-                            struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                            struct reb_integrator_whfast_state* whfast = r->integrator.state;
                             struct reb_particle* const p_jh_var = whfast->p_jh_var;
                             struct reb_variational_configuration const vc = r->var_config[v];
                             const size_t index = vc.index;
@@ -495,7 +495,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, stru
     };
 }
 void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const double _dt){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     struct reb_particle* const p_h = whfast->p_jh;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N:r->N_active;
@@ -611,7 +611,7 @@ void reb_integrator_whfast_com_step(const struct reb_simulation* const r, struct
     p_jh[0].z += _dt*p_jh[0].vz;
     // Only WHFast supports variational equations
     for (size_t v=0;v<r->N_var_config;v++){
-        struct reb_integrator_whfast_state* whfast = r->integrator_data;
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
         struct reb_variational_configuration const vc = r->var_config[v];
         struct reb_particle* p_jh_var = whfast->p_jh_var;
         p_jh_var[vc.index].x += _dt*p_jh_var[vc.index].vx;
@@ -621,7 +621,7 @@ void reb_integrator_whfast_com_step(const struct reb_simulation* const r, struct
 }
 
 static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, const double b){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
@@ -721,7 +721,7 @@ static void reb_whfast_apply_corrector(struct reb_simulation* r, double inv, int
 }
 
 static void reb_whfast_operator_C(struct reb_simulation* const r, double a, double b){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);   
 
     struct reb_particle* restrict const particles = r->particles;
@@ -740,7 +740,7 @@ static void reb_whfast_operator_Y(struct reb_simulation* const r, double a, doub
     reb_whfast_operator_C(r, -a, -b); 
 }
 static void reb_whfast_operator_U(struct reb_simulation* const r, double a, double b){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);   
     reb_whfast_operator_Y(r, a, b); 
     reb_whfast_operator_Y(r, a, -b); 
@@ -844,7 +844,7 @@ void reb_integrator_whfast_calculate_jerk(struct reb_simulation* r, struct reb_p
 
 
 int reb_integrator_whfast_init(struct reb_simulation* const r){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     if (r->N_var){
         if (whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI){
             reb_simulation_error(r, "Variational particles are only compatible with Jacobi coordinates.");
@@ -927,7 +927,7 @@ void reb_integrator_whfast_from_inertial(struct reb_simulation* const r, struct 
             reb_transformations_inertial_to_jacobi_posvel(particles, p_jh, particles, N, N_active);
             // Only WHFast supports variational equations
             for (size_t v=0;v<r->N_var_config;v++){
-                struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                struct reb_integrator_whfast_state* whfast = r->integrator.state;
                 struct reb_variational_configuration const vc = r->var_config[v];
                 reb_transformations_inertial_to_jacobi_posvel(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
             }
@@ -956,7 +956,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r, struct re
                 reb_transformations_jacobi_to_inertial_posvel(particles, p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
                     // Only WHFast supports variational equations
-                    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                    struct reb_integrator_whfast_state* whfast = r->integrator.state;
                     struct reb_variational_configuration const vc = r->var_config[v];
                     reb_transformations_jacobi_to_inertial_posvel(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
                 }
@@ -976,7 +976,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r, struct re
             case REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI:
                 reb_transformations_jacobi_to_inertial_posvel(particles, p_jh, particles, N, N_active);
                 for (size_t v=0;v<r->N_var_config;v++){
-                    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+                    struct reb_integrator_whfast_state* whfast = r->integrator.state;
                     struct reb_variational_configuration const vc = r->var_config[v];
                     reb_transformations_jacobi_to_inertial_pos(r->particles_var+vc.index, whfast->p_jh_var+vc.index, particles, N, N_active);
                 }
@@ -995,7 +995,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r, struct re
 }
 
 void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,double dt){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occurred.
         return;
@@ -1007,7 +1007,7 @@ void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,
 }
 
 void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* const r,double dt){
-    struct reb_integrator_whfast_state* whfast = r->integrator_data;
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
     if (reb_integrator_whfast_init(r)){
         // Non recoverable error occurred.
         return;

@@ -106,7 +106,7 @@ void reb_simulation_free_contents(struct reb_simulation* const r){
     // Free everything in the simulation, but not the simulation itself
     // Used by python.
     if (r->integrator.free){
-        r->integrator.free(r->integrator_data);
+        r->integrator.free(r->integrator.state);
     }
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
@@ -191,15 +191,15 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integra
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
     }
     if (r->integrator.free){
-        r->integrator.free(r->integrator_data);
+        r->integrator.free(r->integrator.state);
     }
     r->integrator = integrator;
     if (r->integrator.create){
-        r->integrator_data = r->integrator.create();
+        r->integrator.state = r->integrator.create();
     }else{
-        r->integrator_data = NULL;
+        r->integrator.state = NULL;
     }
-    return r->integrator_data; // for convenience, return pointer to data
+    return r->integrator.state; // for convenience, return pointer to data
 }
 
 // Heartbeat wrapper. Runs actual heartbeat and does exit checks.
@@ -501,7 +501,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
     }
 
     if (r->integrator.step){
-        r->integrator.step(r, r->integrator_data);
+        r->integrator.step(r, r->integrator.state);
     }
 
     // Integrate other ODEs
@@ -611,7 +611,7 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
 
 void reb_simulation_synchronize(struct reb_simulation* r){
     if (r->integrator.synchronize){
-        r->integrator.synchronize(r, r->integrator_data);
+        r->integrator.synchronize(r, r->integrator.state);
     }
 }
 

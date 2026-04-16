@@ -180,7 +180,7 @@ static void to_double(struct reb_particle* ps, struct reb_particle_int* psi, siz
 }
 
 static void drift(struct reb_simulation* r, double dt, double scale_pos, double scale_vel){
-    struct reb_integrator_janus_state* janus = r->integrator_data;
+    struct reb_integrator_janus_state* janus = r->integrator.state;
     const size_t N = r->N;
     for(size_t i=0; i<N; i++){
         janus->p_int[i].x += (REB_PARTICLE_INT_TYPE)(dt*(double)janus->p_int[i].vx*scale_vel/scale_pos) ;
@@ -190,7 +190,7 @@ static void drift(struct reb_simulation* r, double dt, double scale_pos, double 
 }
 
 static void kick(struct reb_simulation* r, double dt, double scale_vel){
-    struct reb_integrator_janus_state* janus = r->integrator_data;
+    struct reb_integrator_janus_state* janus = r->integrator.state;
     const size_t N = r->N;
     for(size_t i=0; i<N; i++){
         janus->p_int[i].vx += (REB_PARTICLE_INT_TYPE)(dt*r->particles[i].ax/scale_vel) ;

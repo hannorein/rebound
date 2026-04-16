@@ -309,7 +309,7 @@ static void reb_integrator_eos_drift_shell1(struct reb_simulation* const r, doub
 }
 
 static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, double _dt){
-    struct reb_integrator_eos_state* const eos = r->integrator_data;
+    struct reb_integrator_eos_state* const eos = r->integrator.state;
     const size_t n = eos->n;
     const double dt = _dt/n;
     reb_integrator_eos_preprocessor(r, dt, eos->phi1, reb_integrator_eos_drift_shell1, reb_integrator_eos_interaction_shell1);
