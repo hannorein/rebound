@@ -58,7 +58,7 @@ class TestShearingSheet(unittest.TestCase):
         sim.remove(0)
         sim.steps(1)
         self.assertEqual(Nbefore-1,sim.N)
-        self.assertNotEqual(sim.integrator_data.lastdt,0.0)
+        self.assertNotEqual(sim.integrator.lastdt,0.0)
 
 if __name__ == "__main__":
     unittest.main()

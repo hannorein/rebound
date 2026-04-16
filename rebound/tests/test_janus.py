@@ -13,9 +13,9 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.move_to_com()
             sim.dt = 0.25
             sim.integrator = "janus"
-            sim.integrator_data.order = o
-            sim.integrator_data.scale_pos = 1e-16
-            sim.integrator_data.scale_vel = 1e-16
+            sim.integrator.order = o
+            sim.integrator.scale_pos = 1e-16
+            sim.integrator.scale_vel = 1e-16
             e0 = sim.energy()
             sim.integrate(1e2)
             e1 = sim.energy()
@@ -30,9 +30,9 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.move_to_com()
             sim.dt = 0.25
             sim.integrator = "janus"
-            sim.integrator_data.order = o
-            sim.integrator_data.scale_pos = 1e-16
-            sim.integrator_data.scale_vel = 1e-16
+            sim.integrator.order = o
+            sim.integrator.scale_pos = 1e-16
+            sim.integrator.scale_vel = 1e-16
             sim.steps(1)
             t0 = sim.t
 
@@ -69,9 +69,9 @@ class TestIntegratorJanus(unittest.TestCase):
             sim.dt = 0.25
             sim.save_to_file("test.bin",interval=5,delete_file=True)
             sim.integrator = "janus"
-            sim.integrator_data.order = o
-            sim.integrator_data.scale_pos = 1e-16
-            sim.integrator_data.scale_vel = 1e-16
+            sim.integrator.order = o
+            sim.integrator.scale_pos = 1e-16
+            sim.integrator.scale_vel = 1e-16
             sim.integrate(1e2,exact_finish_time=0)
             
             sim2 = rebound.Simulation("test.bin")
@@ -87,9 +87,9 @@ class TestIntegratorJanus(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-3,a=1.12313)
         sim.integrator = "janus"
-        sim.integrator_data.order = 2 # valid order
+        sim.integrator.order = 2 # valid order
         sim.integrate(1e1,exact_finish_time=0)
-        sim.integrator_data.order = 12 #invalid order
+        sim.integrator.order = 12 #invalid order
         with self.assertRaises(RuntimeError):
             sim.integrate(1e2,exact_finish_time=0)
             

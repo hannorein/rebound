@@ -40,7 +40,7 @@ class TestAdditionalForces(unittest.TestCase):
     def test_af_mercurius_closeencounter(self):
         sim = rebound.Simulation()
         sim.integrator = "mercurius"
-        sim.integrator_data.r_crit_hill = 100000 # make sure encounter happens
+        sim.integrator.r_crit_hill = 100000 # make sure encounter happens
         sim.dt = 0.005
         sim.force_is_velocity_dependent = 1
         sim.add(m=1)
@@ -78,7 +78,7 @@ class TestAdditionalForces(unittest.TestCase):
     def test_af_whfastjac(self):
         sim = rebound.Simulation()
         sim.integrator = "whfast"
-        sim.integrator_data.coordinates = "jacobi"
+        sim.integrator.coordinates = "jacobi"
         sim.dt = 0.01
         sim.force_is_velocity_dependent = 1
         sim.add(m=1)

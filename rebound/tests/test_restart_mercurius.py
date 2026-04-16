@@ -9,7 +9,7 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "mercurius"
         sim.dt = 0.1313
-        sim.integrator_data.safe_mode = 0
+        sim.integrator.safe_mode = 0
         sim.integrate(40.,exact_finish_time=0)
         sim.save_to_file("test_mid.bin", delete_file=True)
         sim.integrate(80.,exact_finish_time=0)
@@ -28,7 +28,7 @@ class TestSimulationRestartMercurius(unittest.TestCase):
         sim.add(m=1e-3,a=-2,e=1.1,omega=0.1,M=0.1,inc=0.1,Omega=0.1)
         sim.integrator = "mercurius"
         sim.dt = 0.1313
-        sim.integrator_data.safe_mode = 1
+        sim.integrator.safe_mode = 1
         sim.integrate(40.,exact_finish_time=0)
         sim.save_to_file("test.bin", delete_file=True)
         sim.integrate(80.,exact_finish_time=0)

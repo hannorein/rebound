@@ -122,7 +122,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_ias15_globaloff(self):
         self.sim.integrator = "ias15"
-        self.sim.integrator_data.adaptive_mode = "individual"
+        self.sim.integrator.adaptive_mode = "individual"
         jupyr = 11.86*2.*math.pi
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
@@ -208,8 +208,8 @@ class TestIntegrator(unittest.TestCase):
     
     def test_whfast_nosafemode(self):
         self.sim.integrator = "whfast"
-        self.sim.integrator_data.safe_mode = 0
-        self.sim.integrator_data.corrector = 11
+        self.sim.integrator.safe_mode = 0
+        self.sim.integrator.corrector = 11
         jupyr = 11.86*2.*math.pi
         self.sim.dt = 0.0123*jupyr
         e0 = self.sim.energy()

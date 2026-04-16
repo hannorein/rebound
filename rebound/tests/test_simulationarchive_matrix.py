@@ -23,7 +23,7 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
         sim.simulationarchive_version = simulationarchive_version
         if safe_mode==False:
             try:
-                sim.integrator_data.safe_mode = 1
+                sim.integrator.safe_mode = 1
             except: 
                 pass # not all integrators have a safe mode
         if testparticle>0:
