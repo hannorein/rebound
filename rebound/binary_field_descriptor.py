@@ -40,6 +40,13 @@ class Integrator(ctypes.Structure):
                 ("field_descriptor_list", ctypes.POINTER(BinaryFieldDescriptor)),
                 ("state", ctypes.c_void_p),
                 ]
+    def __str__(self):
+        clibrebound.reb_integrator_cmp.restype = ctypes.c_int
+        for i, name in enumerate(integrators_available_names):
+            if not clibrebound.reb_integrator_cmp(self, integrators_available[i].contents):
+                return name
+        return "custom"
+
     def __eq__(self, other):
         if isinstance(other,str):
             other = other.lower()
