@@ -127,7 +127,7 @@ struct reb_simulationarchive_blob16 {
     int16_t offset_next;
 };
 
-static void read_simulationarchive_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
+void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Assumes sa->inf is set to an open stream
     const int debug = 0;
     if (sa->inf==NULL){
@@ -389,14 +389,7 @@ void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationa
 #endif // MPI
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
-    read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
-}
-
-void reb_simulationarchive_init_from_buffer_with_messages(struct reb_simulationarchive* sa, char* buf, size_t size, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
-    // Somewhat complicated calls for backwards compatibility.
-    sa->inf = reb_fmemopen(buf,size,"rb");
-    sa->filename = NULL;
-    read_simulationarchive_from_stream_with_messages(sa, sa_index, warnings);
+    reb_simulationarchive_read_from_stream_with_messages(sa, sa_index, warnings);
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename){

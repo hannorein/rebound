@@ -110,7 +110,11 @@ class Simulation(Structure):
             # So we can later access the contents of the archive to get the simulation.
             sa = Simulationarchive.__new__(Simulationarchive, None, None)
             w = c_int(0)
-            clibrebound.reb_simulationarchive_init_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
+            mode = b"rb"
+            clibrebound.reb_fmemopen.restype = c_void_p
+            sa._inf = clibrebound.reb_fmemopen(byref(buf), c_size_t(l), mode)
+            sa._filename = 0 
+            clibrebound.reb_simulationarchive_read_from_stream_with_messages(byref(sa), None, byref(w))
             sim = super(Simulation,cls).__new__(cls)
             clibrebound.reb_simulation_init(byref(sim))
             clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
