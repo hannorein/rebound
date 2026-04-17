@@ -57,7 +57,7 @@ class Simulationarchive(Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
-    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
+    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
         """
         Arguments
         ---------
@@ -71,23 +71,13 @@ class Simulationarchive(Structure):
             Arguments passed to setup function.
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
-        reuse_index : Simulationarchive
-            Useful when loading many large Simulationarchives. After loading the first 
-            Simulationarchive, pass it as this argument when opening other Simulationarchives with the 
-            same shape. Note: Simulationarchive shape must be exactly the same to avoid unexpected
-            behaviour.
 
         """
         self.setup = setup
         self.setup_args = setup_args
         self.process_warnings = process_warnings
         w = c_int(0)
-        if reuse_index:
-            # Optimized loading
-            clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
-
-        else:
-            clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
+        clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:

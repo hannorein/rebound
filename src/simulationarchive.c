@@ -101,7 +101,7 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
     struct reb_simulation* r = reb_simulation_create();
 
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
-    reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
+    reb_simulationarchive_create_from_file_with_messages(sa, filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
@@ -127,7 +127,7 @@ struct reb_simulationarchive_blob16 {
     int16_t offset_next;
 };
 
-void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationarchive* sa, struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
+void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationarchive* sa, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Assumes sa->inf is set to an open stream
     const int debug = 0;
     if (sa->inf==NULL){
@@ -239,137 +239,123 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
         // New version
         if (debug) printf("=============\n");
         if (debug) printf("SA Version: 2\n");
-        if (sa_index == NULL){ // Need to construct offset index from file.
-            int64_t nblobsmax = 1024;
-            sa->t = calloc(nblobsmax,sizeof(double));
-            sa->offset = calloc(nblobsmax,sizeof(uint64_t));
-            fseek(sa->inf, 0, SEEK_SET);  
-            sa->nblobs = 0;
-            int read_error = 0;
-            struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
-            struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
-            struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
-            for(int64_t i=0;i<nblobsmax;i++){
-                struct reb_binarydata_field field = {0};
-                sa->offset[i] = ftell(sa->inf);
-                int blob_finished = 0;
-                do{
-                    size_t r1 = fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
-                    if (r1==1){
-                        if (field.type == fd_header.type){
-                            if (debug) printf("SA Field. type=HEADER\n");
-                            int s1 = fseek(sa->inf,64 - sizeof(struct reb_binarydata_field),SEEK_CUR);
-                            if (s1){
-                                read_error = 1;
-                            }
-                        }else if (field.type == fd_t.type){
-                            size_t r2 = fread(&(sa->t[i]), field.size,1,sa->inf);
-                            if (debug) printf("SA Field. type=TIME      value=%.10f\n",sa->t[1]);
-                            if (r2!=1){
-                                read_error = 1;
-                            }
-                        }else if (field.type == fd_end.type){
-                            if (debug) printf("SA Field. type=END   =====\n");
-                            blob_finished = 1;
-                        }else{
-                            int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                            if (debug) printf("SA Field. type=%-6d    size=%" PRIu64 "\n",field.type,(uint64_t)field.size);
-                            if (s2){
-                                read_error = 1;
-                            }
+        int64_t nblobsmax = 1024;
+        sa->t = calloc(nblobsmax,sizeof(double));
+        sa->offset = calloc(nblobsmax,sizeof(uint64_t));
+        fseek(sa->inf, 0, SEEK_SET);  
+        sa->nblobs = 0;
+        int read_error = 0;
+        struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
+        struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
+        struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
+        for(int64_t i=0;i<nblobsmax;i++){
+            struct reb_binarydata_field field = {0};
+            sa->offset[i] = ftell(sa->inf);
+            int blob_finished = 0;
+            do{
+                size_t r1 = fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
+                if (r1==1){
+                    if (field.type == fd_header.type){
+                        if (debug) printf("SA Field. type=HEADER\n");
+                        int s1 = fseek(sa->inf,64 - sizeof(struct reb_binarydata_field),SEEK_CUR);
+                        if (s1){
+                            read_error = 1;
                         }
+                    }else if (field.type == fd_t.type){
+                        size_t r2 = fread(&(sa->t[i]), field.size,1,sa->inf);
+                        if (debug) printf("SA Field. type=TIME      value=%.10f\n",sa->t[1]);
+                        if (r2!=1){
+                            read_error = 1;
+                        }
+                    }else if (field.type == fd_end.type){
+                        if (debug) printf("SA Field. type=END   =====\n");
+                        blob_finished = 1;
                     }else{
-                        read_error = 1;
+                        int s2 = fseek(sa->inf,field.size,SEEK_CUR);
+                        if (debug) printf("SA Field. type=%-6d    size=%" PRIu64 "\n",field.type,(uint64_t)field.size);
+                        if (s2){
+                            read_error = 1;
+                        }
                     }
-                }while(blob_finished==0 && read_error==0);
-                if (read_error){
-                    if (debug) printf("SA Error. Error while reading current blob.\n");
-                    // Error during reading. Current snapshot is corrupt.
-                    break;
-                }
-                // Everything looks normal so far. Attempt to read next blob
-                struct reb_simulationarchive_blob blob = {0};
-                size_t r3;
-                if (uses32bitoffsets){
-                    r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
                 }else{
-                    // Workaround for versions < 3.18
-                    struct reb_simulationarchive_blob16 blob16 = {0};
-                    r3 = fread(&blob16, sizeof(struct reb_simulationarchive_blob16), 1, sa->inf);
-                    blob.index = blob16.index;
-                    blob.offset_prev = blob16.offset_prev;
-                    blob.offset_next = blob16.offset_next;
+                    read_error = 1;
                 }
-                int next_blob_is_corrupted = 0;
-                if (r3!=1){ // Next snapshot is definitely corrupted.
-                            // Assume we have reached the end of the file.
-                            // Won't be able to do checksum.
-                    if (debug) printf("SA Error. Error while reading next blob.\n");
-                    next_blob_is_corrupted = 1;
-                    *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
-                }
-                if (i>0){
-                    size_t blobsize;
-                    if (uses32bitoffsets){
-                        blobsize = sizeof(struct reb_simulationarchive_blob);
-                    }else{
-                        blobsize = sizeof(struct reb_simulationarchive_blob16);
-                    }
-                    // Checking the offsets. Acts like a checksum.
-                    if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
-                        // Offsets don't work. Next snapshot is definitely corrupted. Assume current one as well.
-                        if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
-                        read_error = 1;
-                        break;
-                    }
-                }
-                // All tests passed. Accept current snapshot. Increase blob count.
-                sa->nblobs = i+1;
-                if (blob.offset_next==0 || next_blob_is_corrupted){
-                    // Last blob. 
-                    if (debug) printf("SA Reached final blob.\n");
-                    break;
-                }
-                if (i==nblobsmax-1){ // Increase 
-                    nblobsmax += 1024;
-                    sa->t = realloc(sa->t,sizeof(double)*nblobsmax);
-                    sa->offset = realloc(sa->offset,sizeof(uint64_t)*nblobsmax);
-                }
-            }
+            }while(blob_finished==0 && read_error==0);
             if (read_error){
-                if (sa->nblobs>0){
-                    *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+                if (debug) printf("SA Error. Error while reading current blob.\n");
+                // Error during reading. Current snapshot is corrupt.
+                break;
+            }
+            // Everything looks normal so far. Attempt to read next blob
+            struct reb_simulationarchive_blob blob = {0};
+            size_t r3;
+            if (uses32bitoffsets){
+                r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
+            }else{
+                // Workaround for versions < 3.18
+                struct reb_simulationarchive_blob16 blob16 = {0};
+                r3 = fread(&blob16, sizeof(struct reb_simulationarchive_blob16), 1, sa->inf);
+                blob.index = blob16.index;
+                blob.offset_prev = blob16.offset_prev;
+                blob.offset_next = blob16.offset_next;
+            }
+            int next_blob_is_corrupted = 0;
+            if (r3!=1){ // Next snapshot is definitely corrupted.
+                        // Assume we have reached the end of the file.
+                        // Won't be able to do checksum.
+                if (debug) printf("SA Error. Error while reading next blob.\n");
+                next_blob_is_corrupted = 1;
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+            }
+            if (i>0){
+                size_t blobsize;
+                if (uses32bitoffsets){
+                    blobsize = sizeof(struct reb_simulationarchive_blob);
                 }else{
-                    fclose(sa->inf);
-                    sa->inf = NULL;
-                    free(sa->filename);
-                    sa->filename = NULL;
-                    free(sa->t);
-                    sa->t = NULL;
-                    free(sa->offset);
-                    sa->offset = NULL;
-                    free(sa);
-                    *warnings |= REB_BINARYDATA_ERROR_SEEK;
-                    return;
+                    blobsize = sizeof(struct reb_simulationarchive_blob16);
+                }
+                // Checking the offsets. Acts like a checksum.
+                if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
+                    // Offsets don't work. Next snapshot is definitely corrupted. Assume current one as well.
+                    if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
+                    read_error = 1;
+                    break;
                 }
             }
-
-        }else{ // reuse index from other SA
-               // This is an optimization for loading many large SAs.
-               // It assumes the structure of this SA is *exactly* the same as in sa_index.
-               // Unexpected behaviour if the shape is not the same.
-            sa->nblobs = sa_index->nblobs;
-            sa->t = malloc(sizeof(double)*sa->nblobs);
-            sa->offset = malloc(sizeof(uint64_t)*sa->nblobs);
-            fseek(sa->inf, 0, SEEK_SET);
-            // No need to read the large file, just copying the index.
-            memcpy(sa->offset, sa_index->offset, sizeof(uint64_t)*sa->nblobs);
-            memcpy(sa->t, sa_index->t, sizeof(double)*sa->nblobs);
+            // All tests passed. Accept current snapshot. Increase blob count.
+            sa->nblobs = i+1;
+            if (blob.offset_next==0 || next_blob_is_corrupted){
+                // Last blob. 
+                if (debug) printf("SA Reached final blob.\n");
+                break;
+            }
+            if (i==nblobsmax-1){ // Increase 
+                nblobsmax += 1024;
+                sa->t = realloc(sa->t,sizeof(double)*nblobsmax);
+                sa->offset = realloc(sa->offset,sizeof(uint64_t)*nblobsmax);
+            }
+        }
+        if (read_error){
+            if (sa->nblobs>0){
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+            }else{
+                fclose(sa->inf);
+                sa->inf = NULL;
+                free(sa->filename);
+                sa->filename = NULL;
+                free(sa->t);
+                sa->t = NULL;
+                free(sa->offset);
+                sa->offset = NULL;
+                free(sa);
+                *warnings |= REB_BINARYDATA_ERROR_SEEK;
+                return;
+            }
         }
     }
 }
 
-void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  struct reb_simulationarchive* sa_index, enum REB_BINARYDATA_ERROR_CODE* warnings){
+void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Somewhat complicated calls for backwards compatibility.
 #ifdef MPI
     int initialized;
@@ -389,13 +375,13 @@ void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationa
 #endif // MPI
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
-    reb_simulationarchive_read_from_stream_with_messages(sa, sa_index, warnings);
+    reb_simulationarchive_read_from_stream_with_messages(sa, warnings);
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename){
     struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
     enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
-    reb_simulationarchive_create_from_file_with_messages(sa, filename, NULL, &warnings);
+    reb_simulationarchive_create_from_file_with_messages(sa, filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
