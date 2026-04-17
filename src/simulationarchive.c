@@ -100,8 +100,7 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
     enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
     struct reb_simulation* r = reb_simulation_create();
 
-    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive)); 
-    reb_simulationarchive_create_from_file_with_messages(sa, filename, &warnings);
+    struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file_with_messages(filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);
@@ -119,7 +118,7 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
 
 
 
-
+// TODO: Remove support for old version
 // Old 16 bit offsets. Used only to read old files.
 struct reb_simulationarchive_blob16 {
     int32_t index;
@@ -355,7 +354,8 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     }
 }
 
-void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationarchive* sa, const char* filename,  enum REB_BINARYDATA_ERROR_CODE* warnings){
+struct reb_simulationarchive* reb_simulationarchive_create_from_file_with_messages(const char* filename,  enum REB_BINARYDATA_ERROR_CODE* warnings){
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
     // Somewhat complicated calls for backwards compatibility.
 #ifdef MPI
     int initialized;
@@ -376,12 +376,12 @@ void reb_simulationarchive_create_from_file_with_messages(struct reb_simulationa
     sa->filename = malloc(strlen(filename)+1);
     strcpy(sa->filename,filename);
     reb_simulationarchive_read_from_stream_with_messages(sa, warnings);
+    return sa;
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename){
-    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
     enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
-    reb_simulationarchive_create_from_file_with_messages(sa, filename, &warnings);
+    struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file_with_messages(filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
         free(sa);

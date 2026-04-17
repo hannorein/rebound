@@ -57,6 +57,30 @@ class Simulationarchive(Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
+    def __new__(cls, filename,setup=None, setup_args=(), process_warnings=True):
+        clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(Simulationarchive)
+        w = c_int(0)
+        ptr = clibrebound.reb_simulationarchive_create_from_file_with_messages(c_char_p(filename.encode("ascii")), byref(w))
+        obj = ptr.contents
+        for majorerror, value, message in BINARY_WARNINGS:
+            if w.value & value:
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    # Just a warning
+                    if value==2: # Version warning. Append version used to save SA to message
+                        sa_version = "%d.%d.%d" %(obj._reb_version_major, obj._reb_version_minor, obj._reb_version_patch)
+                        if sa_version != __version__ and sa_version != "0.0.0":
+                            message += " Binary file was saved with REBOUND Version " + sa_version + "."
+                            message += " You are currently using REBOUND Version " +  __version__ + "."
+                    if process_warnings:
+                        warnings.warn(message, RuntimeWarning)
+        return obj
+
+    def __del__(self):
+        clibrebound.reb_simulationarchive_free(byref(self))
+
+
     def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
         """
         Arguments
@@ -77,23 +101,6 @@ class Simulationarchive(Structure):
         self.setup_args = setup_args
         self.process_warnings = process_warnings
         w = c_int(0)
-        clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(w))
-        for majorerror, value, message in BINARY_WARNINGS:
-            if w.value & value:
-                if majorerror:
-                    raise RuntimeError(message)
-                else:  
-                    # Just a warning
-                    if value==2: # Version warning. Append version used to save SA to message
-                        sa_version = "%d.%d.%d" %(self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
-                        if sa_version != __version__ and sa_version != "0.0.0":
-                            message += " Binary file was saved with REBOUND Version " + sa_version + "."
-                            message += " You are currently using REBOUND Version " +  __version__ + "."
-                    if process_warnings:
-                        warnings.warn(message, RuntimeWarning)
-        if not process_warnings:
-            # Store for later
-            self.warnings = w
         if self.nblobs<1:
             RuntimeError("Something went wrong. Simulationarchive is empty.")
         self.tmin = self.t[0]
