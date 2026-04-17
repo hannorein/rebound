@@ -392,6 +392,14 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char*
     return sa;
 }
 
+struct reb_simulationarchive* reb_simulationarchive_create_from_buffer_with_messages(char* buffer, size_t size,  enum REB_BINARYDATA_ERROR_CODE* warnings){
+    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
+    sa->inf = reb_fmemopen(buffer, size, "rb");
+    sa->filename = NULL;
+    reb_simulationarchive_read_from_stream_with_messages(sa, warnings);
+    return sa;
+}
+
 void reb_simulationarchive_free(struct reb_simulationarchive* sa){
     reb_simulationarchive_free_pointers(sa);
     free(sa);

@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_int64, c_uint64, c_void_p, c_char_p, byref 
+from ctypes import Structure, c_double, POINTER, c_int, c_int64, c_uint64, c_void_p, c_char_p, byref, c_size_t
 import os
 import sys
 import math
@@ -58,9 +58,19 @@ class Simulationarchive(Structure):
         return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
     def __new__(cls, filename,setup=None, setup_args=(), process_warnings=True):
-        clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(Simulationarchive)
-        w = c_int(0)
-        ptr = clibrebound.reb_simulationarchive_create_from_file_with_messages(c_char_p(filename.encode("ascii")), byref(w))
+        if isinstance(filename, str):
+            clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(Simulationarchive)
+            w = c_int(0)
+            ptr = clibrebound.reb_simulationarchive_create_from_file_with_messages(c_char_p(filename.encode("ascii")), byref(w))
+        elif isinstance(filename, bytes):
+            clibrebound.reb_simulationarchive_create_from_buffer_with_messages.restype = POINTER(Simulationarchive)
+            w = c_int(0)
+            buf = c_char_p(filename)
+            size = c_size_t(len(filename))
+            ptr = clibrebound.reb_simulationarchive_create_from_buffer_with_messages(buf, size, byref(w))
+        else:
+            raise RuntimeError("Unable to create Simulationarchive from object of type "+type(filename))
+
         obj = ptr.contents
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
@@ -76,10 +86,6 @@ class Simulationarchive(Structure):
                     if process_warnings:
                         warnings.warn(message, RuntimeWarning)
         return obj
-
-    def __del__(self):
-        clibrebound.reb_simulationarchive_free(byref(self))
-
 
     def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
         """
@@ -109,6 +115,8 @@ class Simulationarchive(Structure):
     def __del__(self):
         if self._b_needsfree_ == 1: 
             clibrebound.reb_simulationarchive_free_pointers(byref(self))
+        else:
+            clibrebound.reb_simulationarchive_free(byref(self))
 
     def __str__(self):
         """
