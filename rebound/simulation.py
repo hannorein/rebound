@@ -154,8 +154,10 @@ class Simulation(Structure):
         raise RuntimeError("Can not create Simulation.")
 
     def __del__(self):
+        # _simulation_needsfree_ is not set if Simulation is created by ctypes as a simple view.
         if hasattr(self, "_simulation_needsfree_"):
-            clibrebound.reb_simulation_free(byref(self))
+            if self._simulation_needsfree_:
+                clibrebound.reb_simulation_free(byref(self))
 
     def __init__(self,filename=None,snapshot=None):
         self.save_messages = 1 # Warnings will be checked within python
