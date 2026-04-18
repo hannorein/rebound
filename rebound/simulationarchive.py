@@ -113,10 +113,7 @@ class Simulationarchive(Structure):
         self.tmax = self.t[self.nblobs-1]
 
     def __del__(self):
-        if self._b_needsfree_ == 1: 
-            clibrebound.reb_simulationarchive_free_pointers(byref(self))
-        else:
-            clibrebound.reb_simulationarchive_free(byref(self))
+        clibrebound.reb_simulationarchive_free(byref(self))
 
     def __str__(self):
         """

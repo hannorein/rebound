@@ -56,7 +56,6 @@ struct reb_simulationarchive_blob {
 DLLEXPORT void reb_simulation_init_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum REB_BINARYDATA_ERROR_CODE* warnings);
 DLLEXPORT struct reb_simulationarchive* reb_simulationarchive_create_from_file_with_messages(const char* filename, enum REB_BINARYDATA_ERROR_CODE* warnings);
 DLLEXPORT struct reb_simulationarchive* reb_simulationarchive_create_from_buffer_with_messages(char* buffer, size_t size,  enum REB_BINARYDATA_ERROR_CODE* warnings);
-DLLEXPORT void reb_simulationarchive_free_pointers(struct reb_simulationarchive* sa);
 DLLEXPORT void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationarchive* sa, enum REB_BINARYDATA_ERROR_CODE* warnings);
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r);  ///< Internal function to handle outputs for the Simulationarchive.

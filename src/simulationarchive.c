@@ -401,11 +401,6 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_buffer_with_mess
 }
 
 void reb_simulationarchive_free(struct reb_simulationarchive* sa){
-    reb_simulationarchive_free_pointers(sa);
-    free(sa);
-}
-
-void reb_simulationarchive_free_pointers(struct reb_simulationarchive* sa){
     if (sa==NULL) return;
     if (sa->inf){
         fclose(sa->inf);
@@ -413,6 +408,7 @@ void reb_simulationarchive_free_pointers(struct reb_simulationarchive* sa){
     free(sa->filename);
     free(sa->t);
     free(sa->offset);
+    free(sa);
 }
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
