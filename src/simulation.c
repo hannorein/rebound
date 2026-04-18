@@ -88,11 +88,6 @@ void reb_simulation_info(struct reb_simulation* const r, const char* const msg){
     reb_message(&r->messages, save_messages, REB_MESSAGE_TYPE_INFO, msg);
 }
 
-// Workaround for setting a python callback function. 
-void reb_simulation_set_collision_resolve(struct reb_simulation* r, enum REB_COLLISION_RESOLVE_OUTCOME (*resolve) (struct reb_simulation* const r, struct reb_collision c)){
-    r->collision_resolve = resolve;
-}
-
 // One bare timestep. Without heartbeat.
 static void reb_simulation_step(struct reb_simulation* const r);
 

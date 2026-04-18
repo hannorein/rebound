@@ -536,14 +536,11 @@ class Simulation(Structure):
     @collision_resolve.setter
     def collision_resolve(self, func):
         if func == "merge":
-            clibrebound.reb_simulation_set_collision_resolve.restype = None
-            clibrebound.reb_simulation_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_merge)
+            self._collision_resolve = COLRFF(clibrebound.reb_collision_resolve_merge)
         elif func == "hardsphere":
-            clibrebound.reb_simulation_set_collision_resolve.restype = None
-            clibrebound.reb_simulation_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_hardsphere)
+            self._collision_resolve = COLRFF(clibrebound.reb_collision_resolve_hardsphere)
         elif func == "halt":
-            clibrebound.reb_simulation_set_collision_resolve.restype = None
-            clibrebound.reb_simulation_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_halt)
+            self._collision_resolve = COLRFF(clibrebound.reb_collision_resolve_halt)
         else:
             self._colrfp = COLRFF(func)
             self._collision_resolve = self._colrfp
