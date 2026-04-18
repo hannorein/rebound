@@ -98,7 +98,26 @@ static void reb_simulation_step(struct reb_simulation* const r);
 
 struct reb_simulation* reb_simulation_create(){
     struct reb_simulation* r = calloc(1,sizeof(struct reb_simulation));
-    reb_simulation_init(r);
+    // Init/reset values to default
+    // Note: Only need to set non-zero values because
+    //       we memset everything to zero above.
+    r->rand_seed = reb_tools_get_rand_seed();
+    r->G                    = 1;
+    r->dt                   = 0.001;
+    r->gravity              = REB_GRAVITY_BASIC;
+    r->root_size            = -1;
+    r->opening_angle2       = 0.25;
+    r->OMEGAZ               = -1.0;
+    r->N_root_x             = 1;
+    r->N_root_y             = 1;
+    r->N_root_z             = 1;
+    r->N_active             = SIZE_MAX; 
+    r->N_targets            = SIZE_MAX; 
+    r->exact_finish_time    = 1;
+    r->output_timing_last   = -1;
+    r->simulationarchive_version = 3;
+    r->is_synchronized = 1;
+
     return r;
 }
 
@@ -691,35 +710,6 @@ struct reb_simulation* reb_simulation_copy(struct reb_simulation* r){
     reb_simulation_copy_with_messages(r_copy,r,&warnings);
     r = reb_binarydata_process_warnings(r, warnings);
     return r_copy;
-}
-
-void reb_simulation_init(struct reb_simulation* r){
-    memset(r, 0, sizeof(struct reb_simulation));
-    // Init/reset values to default
-    // Note: Only need to set non-zero values because
-    //       we memset everything to zero above.
-    r->rand_seed = reb_tools_get_rand_seed();
-    r->G                    = 1;
-    r->dt                   = 0.001;
-    r->gravity              = REB_GRAVITY_BASIC;
-    r->root_size            = -1;
-    r->opening_angle2       = 0.25;
-    r->OMEGAZ               = -1.0;
-    r->N_root_x             = 1;
-    r->N_root_y             = 1;
-    r->N_root_z             = 1;
-    r->N_active             = SIZE_MAX; 
-    r->N_targets            = SIZE_MAX; 
-    r->exact_finish_time    = 1;
-    r->output_timing_last   = -1;
-    r->simulationarchive_version = 3;
-    r->is_synchronized = 1;
-
-#ifdef OPENMP
-    char msg[1024];
-    sprintf(msg, "Using OpenMP with %d threads per node.\n", omp_get_max_threads());
-    reb_simulation_info(r, msg);
-#endif // OPENMP
 }
 
 // Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the particles.

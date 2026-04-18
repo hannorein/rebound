@@ -32,9 +32,6 @@ void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, 
 // Only free memory in pointers of a simulation, but not the simulation itself.
 DLLEXPORT void reb_simulation_reset(struct reb_simulation* const r);
 
-// Used internally and by python. Should not be called by the user.
-DLLEXPORT void reb_simulation_init(struct reb_simulation* r); 
-
 // Used from python and for display.
 DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE* warnings);
 

@@ -92,20 +92,21 @@ class Simulation(Structure):
 
     # Only allow attributes which are fields.
     # Exceptions are listed here. Used to keep reference for function pointers.
-    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp"]
+    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp", "_simulation_needsfree_"]
+
     def __new__(cls, *args, **kw):
+        clibrebound.reb_simulation_create.restype = POINTER(Simulation)
         # Create a new simulation if no arguments given
         if len(args)==0:
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
-            return sim
-        
+            sim = clibrebound.reb_simulation_create().contents
+            sim._simulation_needsfree_ = True
+            return sim 
         # If first argument is of type bytes, then unpickle a Simulation
         if isinstance(args[0], bytes):
             sa = Simulationarchive(args[0])
             w = c_int(0)
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
+            sim = clibrebound.reb_simulation_create().contents
+            sim._simulation_needsfree_ = True
             clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
                 if w.value & value:
@@ -134,8 +135,8 @@ class Simulation(Structure):
 
         if sa is not None:
             # Recreate existing simulation 
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
+            sim = clibrebound.reb_simulation_create().contents
+            sim._simulation_needsfree_ = True
             # TODO: Reimplement:
             #w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
             w = c_int(0)
@@ -151,6 +152,12 @@ class Simulation(Structure):
 
         # Still here? Then an error occurred.
         raise RuntimeError("Can not create Simulation.")
+
+    def __del__(self):
+        if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
+            clibrebound.reb_simulation_free_contents(byref(self))
+        elif hasattr(self, "_simulation_needsfree_"):
+            clibrebound.reb_simulation_free(byref(self))
 
     def __init__(self,filename=None,snapshot=None):
         self.save_messages = 1 # Warnings will be checked within python
@@ -270,10 +277,6 @@ class Simulation(Structure):
         return (Simulation, (s,))
 
 # Other operators
-
-    def __del__(self):
-        if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
-            clibrebound.reb_simulation_free_contents(byref(self))
 
     def __eq__(self, other):
         # This ignores the walltime parameter
