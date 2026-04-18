@@ -154,9 +154,7 @@ class Simulation(Structure):
         raise RuntimeError("Can not create Simulation.")
 
     def __del__(self):
-        if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
-            clibrebound.reb_simulation_free_contents(byref(self))
-        elif hasattr(self, "_simulation_needsfree_"):
+        if hasattr(self, "_simulation_needsfree_"):
             clibrebound.reb_simulation_free(byref(self))
 
     def __init__(self,filename=None,snapshot=None):
