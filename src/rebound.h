@@ -753,7 +753,7 @@ DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, 
 DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but subtract r2 from r component wise.
 DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
-// Updates the acceleration of all particles but does not perform a step. Used  by REBOUNDx.
+// Updates the acceleration of all particles but does not perform a step. Used by REBOUNDx.
 DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r);
 
 
@@ -771,6 +771,7 @@ DLLEXPORT struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, s
 DLLEXPORT struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t first, size_t last);
 // Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
 DLLEXPORT double reb_integrator_ias15_timescale(struct reb_simulation* r);
+
 
 // Functions to add and initialize particles
 
