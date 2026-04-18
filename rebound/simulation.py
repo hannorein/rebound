@@ -107,7 +107,7 @@ class Simulation(Structure):
             w = c_int(0)
             sim = clibrebound.reb_simulation_create().contents
             sim._simulation_needsfree_ = True
-            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
+            clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
                 if w.value & value:
                     if majorerror:
@@ -140,7 +140,7 @@ class Simulation(Structure):
             # TODO: Reimplement:
             #w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
             w = c_int(0)
-            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
+            clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
                 if w.value & value:
                     if majorerror:

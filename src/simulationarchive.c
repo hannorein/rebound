@@ -42,7 +42,7 @@
 #endif
 
 
-void reb_simulation_create_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum REB_BINARYDATA_ERROR_CODE* warnings){
+void reb_simulation_init_from_simulationarchive_with_messages(struct reb_simulation* r, struct reb_simulationarchive* sa, int64_t snapshot, enum REB_BINARYDATA_ERROR_CODE* warnings){
     FILE* inf = sa->inf;
     if (inf == NULL){
         *warnings |= REB_BINARYDATA_ERROR_FILENOTOPEN;
@@ -91,7 +91,7 @@ struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_s
     if (sa==NULL) return NULL;
     enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
+    reb_simulation_init_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
     r = reb_binarydata_process_warnings(r, warnings);
     return r; // might be null if error occurred
 }
@@ -108,7 +108,7 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
     }else{
         reb_binarydata_process_warnings(NULL, warnings);
     }
-    reb_simulation_create_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
+    reb_simulation_init_from_simulationarchive_with_messages(r, sa, snapshot, &warnings);
     if (sa){
         reb_simulationarchive_free(sa);
     }

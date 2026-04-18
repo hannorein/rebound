@@ -142,7 +142,7 @@ class Simulationarchive(Structure):
         
         w = c_int(0)
         sim = Simulation()
-        clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim), byref(self), c_int64(key), byref(w))
+        clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim), byref(self), c_int64(key), byref(w))
         if self.setup:
             self.setup(sim, *self.setup_args)
         for majorerror, value, message in BINARY_WARNINGS:
@@ -240,7 +240,7 @@ class Simulationarchive(Structure):
         bi, bt = self._getSnapshotIndex(t)
         sim = Simulation()
         w = c_int(0)
-        clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
+        clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
 
         # Restore function pointers and any additional setup required by the user provided functions
         if self.setup:
