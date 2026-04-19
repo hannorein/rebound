@@ -132,7 +132,6 @@ int main(int argc, char* argv[]) {
                     CASE(REB_PARTICLE);
                     CASE(REB_POINTER);
                     CASE(REB_POINTER_ALIGNED);
-                    CASE(REB_DP7);
                     CASE(REB_OTHER);
                     CASE(REB_PARTICLE4);
                     CASE(REB_POINTER_FIXED_SIZE);

@@ -118,7 +118,7 @@ enum REB_BINARYDATA_DTYPE {
     REB_PARTICLE = 8,
     REB_POINTER = 9,
     REB_POINTER_ALIGNED = 10,    // memory aligned to 64 bit boundary for AVX512
-    REB_DP7 = 11,                // Special datatype for IAS15
+    // REB_DP7 = 11,             // No longer used. Using REB_POINTER instead.
     REB_OTHER = 12,              // Fields that need special treatment during input and/or output
     REB_FIELD_END = 13,          // No longer used. Was special type to indicate end of blob
     REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
@@ -168,17 +168,6 @@ struct reb_collision{
     size_t p2;              // Index of second particle
     struct reb_vec6d gb;    // Offset due to boundary conditions
     size_t ri;              // Root cell index (MPI only)
-};
-
-// Generic pointer with 7 elements, for internal use only (IAS15).
-struct reb_dp7 {
-    double* REB_RESTRICT p0;
-    double* REB_RESTRICT p1;
-    double* REB_RESTRICT p2;
-    double* REB_RESTRICT p3;
-    double* REB_RESTRICT p4;
-    double* REB_RESTRICT p5;
-    double* REB_RESTRICT p6;
 };
 
 // Generic custom integrator
@@ -238,12 +227,13 @@ struct reb_integrator_ias15_state {
     double* REB_RESTRICT csx;
     double* REB_RESTRICT csv;
     double* REB_RESTRICT csa0;
-    struct reb_dp7 g;
-    struct reb_dp7 b;
-    struct reb_dp7 csb;             // Compensated summation storage for b
-    struct reb_dp7 e;
-    struct reb_dp7 br;              // Used for resetting the b coefficients if a timestep gets rejected
-    struct reb_dp7 er;              // Same for e coefficients
+    // The following are reb_dp7 pointers. See implementation for details.
+    double* REB_RESTRICT g;
+    double* REB_RESTRICT b;
+    double* REB_RESTRICT csb;             // Compensated summation storage for b
+    double* REB_RESTRICT e;
+    double* REB_RESTRICT br;              // Used for resetting the b coefficients if a timestep gets rejected
+    double* REB_RESTRICT er;              // Same for e coefficients
 };
 
 // Mercurius (Rein et al. 2019)

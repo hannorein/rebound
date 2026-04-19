@@ -64,19 +64,18 @@ const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descript
     { 93, REB_POINTER,      "csx",                 offsetof(struct reb_integrator_ias15_state, csx), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
     { 94, REB_POINTER,      "csv",                 offsetof(struct reb_integrator_ias15_state, csv), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
     { 95, REB_POINTER,      "csa0",                offsetof(struct reb_integrator_ias15_state, csa0), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
-    { 96, REB_DP7,          "g",                   offsetof(struct reb_integrator_ias15_state, g), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { 97, REB_DP7,          "b",                   offsetof(struct reb_integrator_ias15_state, b), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { 98, REB_DP7,          "csb",                 offsetof(struct reb_integrator_ias15_state, csb), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { 99, REB_DP7,          "e",                   offsetof(struct reb_integrator_ias15_state, e), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { 100, REB_DP7,         "br",                  offsetof(struct reb_integrator_ias15_state, br), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { 101, REB_DP7,         "er",                  offsetof(struct reb_integrator_ias15_state, er), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { 96, REB_POINTER,      "g",                   offsetof(struct reb_integrator_ias15_state, g), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { 97, REB_POINTER,      "b",                   offsetof(struct reb_integrator_ias15_state, b), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { 98, REB_POINTER,      "csb",                 offsetof(struct reb_integrator_ias15_state, csb), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { 99, REB_POINTER,      "e",                   offsetof(struct reb_integrator_ias15_state, e), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { 100, REB_POINTER,     "br",                  offsetof(struct reb_integrator_ias15_state, br), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { 101, REB_POINTER,     "er",                  offsetof(struct reb_integrator_ias15_state, er), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
     { 0 }, // Null terminated list
 };
 
 void* reb_integrator_ias15_create();
 void reb_integrator_ias15_free(void* p);
 void reb_integrator_ias15_step(struct reb_simulation* const r, void* state);
-static void free_dp7(struct reb_dp7 dp7);
 
 const struct reb_integrator reb_integrator_ias15 = {
     .id = 7,
@@ -96,12 +95,12 @@ void* reb_integrator_ias15_create(){
 
 void reb_integrator_ias15_free(void* p){
     struct reb_integrator_ias15_state* ias15 = p;
-    free_dp7(ias15->g);
-    free_dp7(ias15->e);
-    free_dp7(ias15->b);
-    free_dp7(ias15->csb);
-    free_dp7(ias15->er);
-    free_dp7(ias15->br);
+    free(ias15->g);
+    free(ias15->e);
+    free(ias15->b);
+    free(ias15->csb);
+    free(ias15->er);
+    free(ias15->br);
     free(ias15->at);
     free(ias15->x0);
     free(ias15->v0);
@@ -111,17 +110,25 @@ void reb_integrator_ias15_free(void* p){
     free(ias15->csa0);
 }
 
-/**
- * @brief Struct containing pointers to intermediate values
- */
+// Generic pointer with 7 elements, for internal use only (IAS15).
+struct reb_dp7 {
+    double* REB_RESTRICT p0;
+    double* REB_RESTRICT p1;
+    double* REB_RESTRICT p2;
+    double* REB_RESTRICT p3;
+    double* REB_RESTRICT p4;
+    double* REB_RESTRICT p5;
+    double* REB_RESTRICT p6;
+};
+
 struct reb_dpconst7 {
-    double* const restrict p0;  ///< Temporary values at intermediate step 0 
-    double* const restrict p1;  ///< Temporary values at intermediate step 1 
-    double* const restrict p2;  ///< Temporary values at intermediate step 2 
-    double* const restrict p3;  ///< Temporary values at intermediate step 3 
-    double* const restrict p4;  ///< Temporary values at intermediate step 4 
-    double* const restrict p5;  ///< Temporary values at intermediate step 5 
-    double* const restrict p6;  ///< Temporary values at intermediate step 6 
+    double* const REB_RESTRICT p0;
+    double* const REB_RESTRICT p1;
+    double* const REB_RESTRICT p2;
+    double* const REB_RESTRICT p3;
+    double* const REB_RESTRICT p4;
+    double* const REB_RESTRICT p5;
+    double* const REB_RESTRICT p6;
 };
 
 // Helper functions for resetting the b and e coefficients
@@ -166,48 +173,25 @@ static double sqrt7(double a){
     return x*scale;
 }
 
-static void free_dp7(struct reb_dp7 dp7){
-    free(dp7.p0);
-    free(dp7.p1);
-    free(dp7.p2);
-    free(dp7.p3);
-    free(dp7.p4);
-    free(dp7.p5);
-    free(dp7.p6);
-}
-static void clear_dp7(struct reb_dp7* const dp7, const size_t N3){
-    for (size_t k=0;k<N3;k++){
-        dp7->p0[k] = 0.;
-        dp7->p1[k] = 0.;
-        dp7->p2[k] = 0.;
-        dp7->p3[k] = 0.;
-        dp7->p4[k] = 0.;
-        dp7->p5[k] = 0.;
-        dp7->p6[k] = 0.;
-    }
-}
-static void realloc_dp7(struct reb_dp7* const dp7, const size_t N3){
-    dp7->p0 = realloc(dp7->p0,sizeof(double)*N3);
-    dp7->p1 = realloc(dp7->p1,sizeof(double)*N3);
-    dp7->p2 = realloc(dp7->p2,sizeof(double)*N3);
-    dp7->p3 = realloc(dp7->p3,sizeof(double)*N3);
-    dp7->p4 = realloc(dp7->p4,sizeof(double)*N3);
-    dp7->p5 = realloc(dp7->p5,sizeof(double)*N3);
-    dp7->p6 = realloc(dp7->p6,sizeof(double)*N3);
-    clear_dp7(dp7,N3);
-}
-
-static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
+// Casting to reb_dp7 datatype for more convenient access
+static struct reb_dpconst7 dpcast(double* dp, size_t N3){
     struct reb_dpconst7 dpc = {
-        .p0 = dp.p0, 
-        .p1 = dp.p1, 
-        .p2 = dp.p2, 
-        .p3 = dp.p3, 
-        .p4 = dp.p4, 
-        .p5 = dp.p5, 
-        .p6 = dp.p6, 
+        .p0 = dp, 
+        .p1 = dp+1*N3, 
+        .p2 = dp+2*N3, 
+        .p3 = dp+3*N3, 
+        .p4 = dp+4*N3, 
+        .p5 = dp+5*N3, 
+        .p6 = dp+6*N3, 
     };
     return dpc;
+}
+
+static void realloc_dp7(double* REB_RESTRICT * p, const size_t N3){
+    *p = realloc(*p, sizeof(double)*N3*7);
+    for (size_t i=0;i<N3*7;i++){
+        (*p)[i] = 0.0;
+    }
 }
 
 static inline void add_cs(double* p, double* csp, double inp){
@@ -226,21 +210,21 @@ static void reb_integrator_ias15_alloc(struct reb_simulation* r, struct reb_inte
     } 
     size_t N3 = 3*N;
     if (N3 > ias15->N_allocated) {
-        realloc_dp7(&(ias15->g),N3);
-        realloc_dp7(&(ias15->b),N3);
-        realloc_dp7(&(ias15->csb),N3);
-        realloc_dp7(&(ias15->e),N3);
-        realloc_dp7(&(ias15->br),N3);
-        realloc_dp7(&(ias15->er),N3);
-        ias15->at = realloc(ias15->at,sizeof(double)*N3);
-        ias15->x0 = realloc(ias15->x0,sizeof(double)*N3);
-        ias15->v0 = realloc(ias15->v0,sizeof(double)*N3);
-        ias15->a0 = realloc(ias15->a0,sizeof(double)*N3);
-        ias15->csx= realloc(ias15->csx,sizeof(double)*N3);
-        ias15->csv= realloc(ias15->csv,sizeof(double)*N3);
+        realloc_dp7(&ias15->g, N3);
+        realloc_dp7(&ias15->e, N3);
+        realloc_dp7(&ias15->b, N3);
+        realloc_dp7(&ias15->csb, N3);
+        realloc_dp7(&ias15->er, N3);
+        realloc_dp7(&ias15->br, N3);
+        ias15->at = realloc(ias15->at, sizeof(double)*N3);
+        ias15->x0 = realloc(ias15->x0, sizeof(double)*N3);
+        ias15->v0 = realloc(ias15->v0, sizeof(double)*N3);
+        ias15->a0 = realloc(ias15->a0, sizeof(double)*N3);
+        ias15->csx= realloc(ias15->csx, sizeof(double)*N3);
+        ias15->csv= realloc(ias15->csv, sizeof(double)*N3);
         ias15->csa0 = realloc(ias15->csa0,sizeof(double)*N3);
-        double* restrict const csx = ias15->csx; 
-        double* restrict const csv = ias15->csv; 
+        double* REB_RESTRICT const csx = ias15->csx; 
+        double* REB_RESTRICT const csv = ias15->csv; 
         for (size_t i=0;i<N3;i++){
             // Kill compensated summation coefficients
             csx[i] = 0;
@@ -272,20 +256,20 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
 
     reb_simulation_update_acceleration(r);
 
-    double* restrict const csx = ias15->csx; 
-    double* restrict const csv = ias15->csv; 
-    double* restrict const csa0 = ias15->csa0; 
-    double* restrict const at = ias15->at; 
-    double* restrict const x0 = ias15->x0; 
-    double* restrict const v0 = ias15->v0; 
-    double* restrict const a0 = ias15->a0; 
+    double* REB_RESTRICT const csx = ias15->csx; 
+    double* REB_RESTRICT const csv = ias15->csv; 
+    double* REB_RESTRICT const csa0 = ias15->csa0; 
+    double* REB_RESTRICT const at = ias15->at; 
+    double* REB_RESTRICT const x0 = ias15->x0; 
+    double* REB_RESTRICT const v0 = ias15->v0; 
+    double* REB_RESTRICT const a0 = ias15->a0; 
     struct reb_vec3d* gravity_cs = r->gravity_cs; 
-    const struct reb_dpconst7 g  = dpcast(ias15->g);
-    const struct reb_dpconst7 e  = dpcast(ias15->e);
-    const struct reb_dpconst7 b  = dpcast(ias15->b);
-    const struct reb_dpconst7 csb= dpcast(ias15->csb);
-    const struct reb_dpconst7 er = dpcast(ias15->er);
-    const struct reb_dpconst7 br = dpcast(ias15->br);
+    const struct reb_dpconst7 g  = dpcast(ias15->g, N3);
+    const struct reb_dpconst7 e  = dpcast(ias15->e, N3);
+    const struct reb_dpconst7 b  = dpcast(ias15->b, N3);
+    const struct reb_dpconst7 csb= dpcast(ias15->csb, N3);
+    const struct reb_dpconst7 er = dpcast(ias15->er, N3);
+    const struct reb_dpconst7 br = dpcast(ias15->br, N3);
     for(size_t k=0;k<N;k++) {
         size_t mk = map ? map[k] : k;
         x0[3*k]   = particles[mk].x;
@@ -837,14 +821,8 @@ static void predict_next_step(double ratio, size_t N3,  const struct reb_dpconst
 }
 
 static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 _b, size_t N3){
-    for (size_t i=0;i<N3;i++){ 
+    for (size_t i=0;i<N3*7;i++){ 
         _b.p0[i] = _a.p0[i];
-        _b.p1[i] = _a.p1[i];
-        _b.p2[i] = _a.p2[i];
-        _b.p3[i] = _a.p3[i];
-        _b.p4[i] = _a.p4[i];
-        _b.p5[i] = _a.p5[i];
-        _b.p6[i] = _a.p6[i];
     }
     // The above code seems faster than the code below, probably due to some compiler optimizations. 
     //  for (size_t i=0;i<7;i++){  

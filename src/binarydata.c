@@ -627,27 +627,6 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                     }
                 }
             }
-            // Special datatype for IAS15. Similar to POINTER
-            if (dtype == REB_DP7 ){
-                struct reb_binarydata_field field;
-                memset(&field,0,sizeof(struct reb_binarydata_field));
-                field.type = current_fd_list[i].type;
-                size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
-                field.size = (*pointer_N) * current_fd_list[i].element_size;
-
-                if (field.size){
-                    write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                    char* pointer = base_address + current_fd_list[i].offset;
-                    struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p0,field.size/7);
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p1,field.size/7);
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p2,field.size/7);
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p3,field.size/7);
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p4,field.size/7);
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p5,field.size/7);
-                    write_to_stream(bufp, &allocatedsize, sizep, dp7->p6,field.size/7);
-                }
-            }
             i++;
         }
     }
@@ -806,34 +785,6 @@ next_field:
                             memcpy((*pointer)[(*pointer_N)-1], current_string, current_string_len);
                         }
                         free(serialized_strings);
-                        goto next_field;
-                    }
-                    // Special datatype for ias15. Similar to REB_POINTER. 
-                    if (fd.dtype == REB_DP7){
-                        if (field.size % current_fd_list[i].element_size){
-                            reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
-                        }
-                        char* pointer = base_address + current_fd_list[i].offset;
-                        struct reb_dp7* dp7 = (struct reb_dp7*)pointer;
-
-                        dp7->p0 = realloc(dp7->p0,field.size/7);
-                        dp7->p1 = realloc(dp7->p1,field.size/7);
-                        dp7->p2 = realloc(dp7->p2,field.size/7);
-                        dp7->p3 = realloc(dp7->p3,field.size/7);
-                        dp7->p4 = realloc(dp7->p4,field.size/7);
-                        dp7->p5 = realloc(dp7->p5,field.size/7);
-                        dp7->p6 = realloc(dp7->p6,field.size/7);
-                        fread(dp7->p0, field.size/7, 1, inf);
-                        fread(dp7->p1, field.size/7, 1, inf);
-                        fread(dp7->p2, field.size/7, 1, inf);
-                        fread(dp7->p3, field.size/7, 1, inf);
-                        fread(dp7->p4, field.size/7, 1, inf);
-                        fread(dp7->p5, field.size/7, 1, inf);
-                        fread(dp7->p6, field.size/7, 1, inf);
-
-                        size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
-                        *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
-
                         goto next_field;
                     }
                     // If we're here then it was not a simple or pointer datatype. 
