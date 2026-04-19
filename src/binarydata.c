@@ -581,17 +581,20 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
-                size_t pointer_N = 1; // Default is one element.
+                size_t pointer_N = 0;
+                char** pointer = (char**)(base_address + current_fd_list[i].offset);
                 if (current_fd_list[i].offset_N!=SIZE_MAX){ // Dynamic N if offset_N is given
                     pointer_N = *(size_t*)(base_address + current_fd_list[i].offset_N);
+                }else{ // Fixed size pointer.
+                    if (*pointer){
+                        pointer_N = 1; // Pointer is not NULL, thus store one element.
+                    }
                 }
-                char* pointer = base_address + current_fd_list[i].offset;
                 field.size = pointer_N * current_fd_list[i].element_size;
 
                 if (field.size){
                     write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                    pointer = *(char**)pointer;
-                    write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
+                    write_to_stream(bufp, &allocatedsize, sizep, *pointer, field.size);
                 }
             }
             if (dtype == REB_CHARP_LIST ){
