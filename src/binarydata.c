@@ -123,7 +123,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     // 403  particles_var
     { 1329743186, REB_OTHER,"header", 0, 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0, 0},
-    { 9999, REB_FIELD_END,  "end", 0, 0, 0, 0},
+    { 9999, REB_OTHER,      "end", 0, 0, 0, 0},
     {0} // Null terminated.
 };
 
@@ -487,18 +487,6 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 }
 
 
-// Macro to write a single field to a binary file.
-// Memset forces padding to be set to 0 (not necessary but
-// helps when comparing binary files)
-#define WRITE_FIELD_TYPE(typen, value, length) {\
-    struct reb_binarydata_field field;\
-    memset(&field,0,sizeof(struct reb_binarydata_field));\
-    field.type = typen;\
-    field.size = (length);\
-    write_to_stream(bufp, &allocatedsize, sizep, &field,sizeof(struct reb_binarydata_field));\
-    write_to_stream(bufp, &allocatedsize, sizep, value,field.size);\
-}
-
 // Serializes a simulation to a buffer
 void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
     if (r->simulationarchive_version<5){
@@ -642,10 +630,11 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     write_to_stream(bufp, &allocatedsize, sizep, &field_functionp, sizeof(struct reb_binarydata_field));
     write_to_stream(bufp, &allocatedsize, sizep, &functionpointersused, field_functionp.size);
 
-    int end_null = 0;
-
+    // Write last field
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
-    WRITE_FIELD_TYPE(fd_end.type, &end_null, 0);
+    struct reb_binarydata_field end_field = {.type = fd_end.type, .size = 0};
+    write_to_stream(bufp, &allocatedsize, sizep, &end_field, sizeof(struct reb_binarydata_field));
+    
     struct reb_simulationarchive_blob blob = {0};
     write_to_stream(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
 }
