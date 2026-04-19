@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <inttypes.h>
 #include "rebound.h"
 #include "rebound_internal.h"
@@ -168,45 +169,53 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
     return bfd;
 }
 
+// Like asprintf, but append to bufp
+static void asprintf_append_to_bufp(char** bufp, const char* format, ...){
+    char* buf = NULL;
+    va_list args;
+    va_start(args, format);
+    vasprintf(&buf, format, args);
+    va_end(args);
+    if (bufp){
+        *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
+        strcat(*bufp,buf);
+    }else{
+        printf("%s",buf);
+    }
+    free(buf);
+}
+
 // Helper function to print out binary data in human readable form.
-static void asprintf_reb_type(char** buf, enum REB_BINARYDATA_DTYPE dtype, char* pointer, size_t dsize){
-    char* newbuf = NULL;
+static void asprintf_aooend_to_bufp_type(char** bufp, enum REB_BINARYDATA_DTYPE dtype, char* pointer, size_t dsize){
     switch (dtype){
         case REB_DOUBLE:
-            asprintf(&newbuf,"%e",*(double*)(pointer));
+            asprintf_append_to_bufp(bufp, "%e",*(double*)(pointer));
             break;
         case REB_INT:
-            asprintf(&newbuf,"%d",*(int*)(pointer));
+            asprintf_append_to_bufp(bufp, "%d",*(int*)(pointer));
             break;
         case REB_SIZE_T:
-            asprintf(&newbuf,"%zu",*(size_t*)(pointer));
+            asprintf_append_to_bufp(bufp, "%zu",*(size_t*)(pointer));
             break;
         case REB_UINT:
-            asprintf(&newbuf,"%u",*(unsigned int*)(pointer));
+            asprintf_append_to_bufp(bufp, "%u",*(unsigned int*)(pointer));
             break;
         case REB_UINT32:
-            asprintf(&newbuf,"%" PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
+            asprintf_append_to_bufp(bufp, "%" PRIu32,*(uint32_t*)(pointer)); // PRIu32 defined in inttypes.h
             break;
         case REB_INT64:
-            asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
+            asprintf_append_to_bufp(bufp, "%" PRId64,*(int64_t*)(pointer));
             break;
         case REB_INT64_INIT:
-            asprintf(&newbuf,"%" PRId64,*(int64_t*)(pointer));
+            asprintf_append_to_bufp(bufp, "%" PRId64,*(int64_t*)(pointer));
             break;
         case REB_UINT64:
-            asprintf(&newbuf,"%" PRIu64,*(uint64_t*)(pointer));
+            asprintf_append_to_bufp(bufp, "%" PRIu64,*(uint64_t*)(pointer));
             break;
         default:
-            asprintf(&newbuf,"(%zu bytes, values not printed)", dsize);
+            asprintf_append_to_bufp(bufp, "(%zu bytes, values not printed)", dsize);
             break;
     }
-    if (buf){
-        *buf = realloc(*buf, strlen(*buf) + strlen(newbuf) + sizeof(char));
-        strcat(*buf,newbuf);
-    }else{
-        printf("%s",newbuf);
-    }
-    free(newbuf);
 }
 
 // Compares two simulations in buffers.
@@ -285,32 +294,9 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                     write_to_stream(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binarydata_field));
                 }else if (output_option==1 || output_option==3){
                     const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
-                    char* buf;
-#ifndef _WIN32
-                    asprintf(&buf, "%s:\n\033[31m< ",fd.name);
-#else // _WIN32
-                    asprintf(&buf, "%s:\n< ",fd.name);
-#endif // _WIN32
-                    if (bufp){
-                        *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                        strcat(*bufp,buf);
-                    }else{
-                        printf("%s",buf);
-                    }
-                    free(buf);
-                    asprintf_reb_type(bufp, fd.dtype, buf1+pos1, field1.size);
-#ifndef _WIN32
-                    asprintf(&buf, "\033[0m\n");
-#else // _WIN32
-                    asprintf(&buf, "\n");
-#endif // _WIN32
-                    if (bufp){
-                        *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                        strcat(*bufp,buf);
-                    }else{
-                        printf("%s",buf);
-                    }
-                    free(buf);
+                    asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
+                    asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                    asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                 }
                 field1.size = 0;
                 continue;
@@ -350,45 +336,11 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
             }else if (output_option==1 || output_option==3){
                 const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
-                char* buf;
-#ifndef _WIN32
-                asprintf(&buf, "%s:\n\033[31m< ",fd.name);
-#else // _WIN32
-                asprintf(&buf, "%s:\n< ",fd.name);
-#endif // _WIN32
-                if (bufp){
-                    *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                    strcat(*bufp,buf);
-                }else{
-                    printf("%s",buf);
-                }
-                free(buf);
-                asprintf_reb_type(bufp, fd.dtype, buf1+pos1, field1.size);
-#ifndef _WIN32
-                asprintf(&buf, "\033[0m\n---\n\033[32m> ");
-#else // _WIN32
-                asprintf(&buf, "\n---\n> ");
-#endif // _WIN32
-                if (bufp){
-                    *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                    strcat(*bufp,buf);
-                }else{
-                    printf("%s",buf);
-                }
-                free(buf);
-                asprintf_reb_type(bufp, fd.dtype, buf2+pos2, field2.size);
-#ifndef _WIN32
-                asprintf(&buf, "\033[0m\n");
-#else // _WIN32
-                asprintf(&buf, "\n");
-#endif // _WIN32
-                if (bufp){
-                    *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                    strcat(*bufp,buf);
-                }else{
-                    printf("%s",buf);
-                }
-                free(buf);
+                asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
+                asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
+                asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+                asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
             }
         }
         pos1 += field1.size;
@@ -451,30 +403,9 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
         }else if (output_option==1 || output_option==3){
             const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field2.type);
-            char* buf;
-#ifndef _WIN32
-            asprintf(&buf, "%s:\n\033[32m> ",fd.name);
-#else // _WIN32
-            asprintf(&buf, "%s:\n> ",fd.name);
-#endif // _WIN32
-            if (bufp){
-                *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                strcat(*bufp,buf);
-            }else{
-                printf("%s",buf);
-            }
-            asprintf_reb_type(bufp, fd.dtype, buf2+pos2, field2.size);
-#ifndef _WIN32
-            asprintf(&buf, "\033[0m\n");
-#else // _WIN32
-            asprintf(&buf, "\n");
-#endif // _WIN32
-            if (bufp){
-                *bufp = realloc(*bufp, strlen(*bufp) + strlen(buf) + sizeof(char));
-                strcat(*bufp,buf);
-            }else{
-                printf("%s",buf);
-            }
+            asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
+            asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+            asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
         }
         pos1 = 64;
         pos2 += field2.size;

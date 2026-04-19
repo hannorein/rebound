@@ -37,11 +37,17 @@ int asprintf(char **strp, const char *fmt, ...);
 int rand_r (unsigned int *seed);
 void usleep(__int64 usec);
 #include <io.h>
+#define REB_STR_RED
+#define REB_STR_GREEN
+#define REB_STR_RESET
 #else // Linux and MacOS
 #define reb_timeval timeval
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
+#define REB_STR_RED "\033[31m"
+#define REB_STR_GREEN "\033[32m"
+#define REB_STR_RESET "\033[0m"
 #endif // _WIN32
 
 // Githash should be provided as a command line argument to the compiler. 
