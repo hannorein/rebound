@@ -110,7 +110,7 @@ struct reb_simulation* reb_simulation_create(){
     r->N_targets            = SIZE_MAX; 
     r->exact_finish_time    = 1;
     r->output_timing_last   = -1;
-    r->simulationarchive_version = 3;
+    r->simulationarchive_version = 5;
     r->is_synchronized = 1;
 
     return r;

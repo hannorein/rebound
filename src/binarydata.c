@@ -501,8 +501,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 
 // Serializes a simulation to a buffer
 void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep){
-    if (r->simulationarchive_version<3){
-        reb_simulation_error(r, "Simulationarchives with version < 3 are no longer supported.\n");
+    if (r->simulationarchive_version<5){
+        reb_simulation_error(r, "Simulationarchives with version < 5 are no longer supported.\n");
     }
     size_t allocatedsize = 0;
     *bufp = NULL;

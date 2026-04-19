@@ -59,10 +59,6 @@ void reb_simulation_init_from_simulationarchive_with_messages(struct reb_simulat
     reb_communication_mpi_init(r, 0, NULL);
 #endif //MPI
     r->simulationarchive_filename = NULL;
-    // reb_simulation_create sets simulationarchive_version to 3 by default.
-    // This will break reading in old version.
-    // Set to old version by default. Will be overwritten if new version was used.
-    r->simulationarchive_version = 0;
 
     fseek(inf, 0, SEEK_SET);
     reb_binarydata_input_fields(r, inf, warnings);
@@ -76,7 +72,7 @@ void reb_simulation_init_from_simulationarchive_with_messages(struct reb_simulat
         //reb_simulation_free(r);
         return;
     }
-    if (r->simulationarchive_version<2){ 
+    if (r->simulationarchive_version<5){ 
         *warnings |= REB_BINARYDATA_ERROR_OLD;
         //reb_simulation_free(r);
         return;
@@ -116,16 +112,6 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
     return r;
 }
 
-
-
-// TODO: Remove support for old version
-// Old 16 bit offsets. Used only to read old files.
-struct reb_simulationarchive_blob16 {
-    int32_t index;
-    int16_t offset_prev;
-    int16_t offset_next;
-};
-
 void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationarchive* sa, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Assumes sa->inf is set to an open stream
     const int debug = 0;
@@ -142,7 +128,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     sa->reb_version_major = 0;
     sa->reb_version_minor = 0;
     sa->reb_version_patch = 0;
-    int uses32bitoffsets = 1; 
     // Cache descriptors
     struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
     struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
@@ -197,9 +182,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 sa->reb_version_patch = atoi(cpatch);
                 sa->reb_version_minor = atoi(cminor);
                 sa->reb_version_major = atoi(cmajor);
-                if (sa->reb_version_major <= 3 && sa->reb_version_minor < 18){
-                    uses32bitoffsets = 0; // fallback to 16 bit 
-                }
             }
             if (objects < 1){
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
@@ -226,8 +208,8 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     }while(field.type!=fd_end.type);
 
     // Make index
-    if (sa->version<2){
-        // Version 1 no longer supported
+    if (sa->version<5){
+        // No longer supported
         free(sa->filename);
         sa->filename = NULL;
         fclose(sa->inf);
@@ -288,16 +270,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             // Everything looks normal so far. Attempt to read next blob
             struct reb_simulationarchive_blob blob = {0};
             size_t r3;
-            if (uses32bitoffsets){
-                r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
-            }else{
-                // Workaround for versions < 3.18
-                struct reb_simulationarchive_blob16 blob16 = {0};
-                r3 = fread(&blob16, sizeof(struct reb_simulationarchive_blob16), 1, sa->inf);
-                blob.index = blob16.index;
-                blob.offset_prev = blob16.offset_prev;
-                blob.offset_next = blob16.offset_next;
-            }
+            r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa->inf);
             int next_blob_is_corrupted = 0;
             if (r3!=1){ // Next snapshot is definitely corrupted.
                         // Assume we have reached the end of the file.
@@ -308,11 +281,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             }
             if (i>0){
                 size_t blobsize;
-                if (uses32bitoffsets){
-                    blobsize = sizeof(struct reb_simulationarchive_blob);
-                }else{
-                    blobsize = sizeof(struct reb_simulationarchive_blob16);
-                }
+                blobsize = sizeof(struct reb_simulationarchive_blob);
                 // Checking the offsets. Acts like a checksum.
                 if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
                     // Offsets don't work. Next snapshot is definitely corrupted. Assume current one as well.
@@ -446,8 +415,8 @@ void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
 }
 
 void reb_simulation_save_to_file(struct reb_simulation* const r, const char* filename){
-    if (r->simulationarchive_version<3){
-        reb_simulation_error(r, "Writing Simulationarchives with a version < 3 is no longer supported.\n");
+    if (r->simulationarchive_version<5){
+        reb_simulation_error(r, "Writing Simulationarchives with a version < 5 is no longer supported.\n");
         return;
     }
     if (filename==NULL) filename = r->simulationarchive_filename;
