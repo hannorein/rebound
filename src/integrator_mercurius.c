@@ -341,7 +341,7 @@ void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double d
     }
 }
 
-void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double dt){
+static void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     for (size_t i=1;i<N;i++){
