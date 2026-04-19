@@ -1161,7 +1161,7 @@ void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t 
 
 void reb_integrator_trace_step(struct reb_simulation* r, void* state){
     // Do memory management and consistency checks
-    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    struct reb_integrator_trace_state* const trace = state;
     const size_t N = r->N;
 
     if (r->N_var){

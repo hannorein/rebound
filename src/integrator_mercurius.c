@@ -341,11 +341,11 @@ void reb_integrator_mercurius_jump_step(struct reb_simulation* const r, double d
     }
 }
 
-void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, struct reb_integrator_mercurius_state* mercurius, double dt){
+void reb_integrator_mercurius_kepler_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
     const size_t N = r->N;
     for (size_t i=1;i<N;i++){
-        reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL); // in dh
+        reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt, r); // in dh
     }
 }
 
@@ -879,7 +879,7 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
     // Particles having a close encounter will be overwritten 
     // later by encounter step.
     memcpy(mercurius->particles_backup,r->particles,N*sizeof(struct reb_particle)); 
-    reb_integrator_mercurius_kepler_step(r, mercurius, r->dt);
+    reb_integrator_mercurius_kepler_step(r, r->dt);
 
     reb_mercurius_encounter_predict(r, mercurius);
 
