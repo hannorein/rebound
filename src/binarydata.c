@@ -45,7 +45,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 3,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0, 0},
     { 4,  REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0, 0},
     { 5,  REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0, 0},
-    // TODO: Add particles_var
     // 6 Used to be varconfig
     { 7,  REB_SIZE_T,       "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0, 0},
     { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0, 0},
@@ -94,11 +93,6 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 54, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
     { 55, REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0, 0},
     { 65, REB_UINT,         "is_synchronized",              offsetof(struct reb_simulation, is_synchronized), 0, 0, 0},
-    //    { 56, REB_DOUBLE,       "ri_sei.lastdt",                offsetof(struct reb_simulation, ri_sei.lastdt), 0, 0},
-    //    { 57, REB_DOUBLE,       "ri_sei.sindt",                 offsetof(struct reb_simulation, ri_sei.sindt), 0, 0},
-    //    { 58, REB_DOUBLE,       "ri_sei.tandt",                 offsetof(struct reb_simulation, ri_sei.tandt), 0, 0},
-    //    { 59, REB_DOUBLE,       "ri_sei.sindtz",                offsetof(struct reb_simulation, ri_sei.sindtz), 0, 0},
-    //    { 60, REB_DOUBLE,       "ri_sei.tandtz",                offsetof(struct reb_simulation, ri_sei.tandtz), 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
     { 403, REB_POINTER,     "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},
@@ -116,7 +110,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 145, REB_DOUBLE,      "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
     { 154, REB_UINT,        "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
     { 155, REB_INT,         "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
-    { 164, REB_POINTER,     "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX => 1 element
+    { 164, REB_POINTER,     "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
     //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
