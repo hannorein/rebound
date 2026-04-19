@@ -13,12 +13,8 @@ def simulation(par):
     k = 0.01720209895    
     Gfac = 1./k
     sim.dt = dt
-    if integrator == "whfast-nocor":
-        integrator = "whfast"
-    else:
-        sim.ri_whfast.corrector = 11
     sim.integrator = integrator 
-    sim.ri_whfast.safe_mode = 0
+    sim.integrator.safe_mode = 0
 
     massfac = 1.
     sim.add(m=1.00000597682, x=-4.06428567034226e-3, y=-6.08813756435987e-3, z=-1.66162304225834e-6,      vx=+6.69048890636161e-6*Gfac, vy=-6.33922479583593e-6*Gfac, vz=-3.13202145590767e-9*Gfac)   # Sun
@@ -51,16 +47,6 @@ def simulation(par):
         com_vx = 0.
         com_vy = 0.
         com_vz = 0.
-        if integrator=="mercury" or integrator[0:7]=="swifter":
-            mtot = 0.
-            for p in particles:
-                com_vx += p.vx*p.m 
-                com_vy += p.vy*p.m 
-                com_vz += p.vz*p.m 
-                mtot += p.m
-            com_vx /= mtot
-            com_vy /= mtot
-            com_vz /= mtot
         E_kin = 0.
         E_pot = 0.
         for i in range(N):
@@ -77,10 +63,7 @@ def simulation(par):
         return E_kin+E_pot
 
     times = np.logspace(np.log10(orbit),np.log10(tmax),Ngrid)
-    if integrator=="mercury" or integrator[0:7]=="swifter":
-        move_to_heliocentric()
-    else:
-        sim.move_to_com()
+    sim.move_to_com()
     ei = energy()
 
     es = []
@@ -107,16 +90,11 @@ Ngrid = 500
 orbit = 11.8618*1.*np.pi
 dt = orbit/3000.
 tmax = orbit*1e2        # Maximum integration time.
-integrators = ["whfast-nocor", "whfast"]
-#integrators = ["mercury","swifter-whm","whfast-nocor", "whfast"]
+integrators = ["whfast", "whc"]
 colors = {
-    'whfast-nocor': "#FF0000",
-    'whfast':       "#00AA00",
-    'mercury':      "#6E6E6E",
-    'swifter-whm':  "#444444",
-    'swifter-helio':"#AABBBB",
-    'swifter-tu4':  "#FFAAAA",
-    'ias15':        "g",
+    'whc':      "#FF0000",
+    'whfast':   "#00AA00",
+    'ias15':    "g",
 }
 trials = 4
     

@@ -598,7 +598,7 @@ class Simulation(Structure):
                 self.integrator = "saba"
                 self.integrator.type = value[4:].replace(",","_")
             else:
-                raise ValueError("Integrator not found.")
+                raise ValueError("Integrator '"+value+"' not found.")
     
     @property
     def boundary(self):

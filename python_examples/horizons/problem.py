@@ -24,7 +24,7 @@ else:
     sim.move_to_com()
     # Configure simulation
     sim.integrator = "whfast"
-    sim.set_dt = 0.01
+    sim.dt = 0.01
     # Let's save it for next time
     # Note: sim.save_to_file() only saves the particle data, not the integrator settings, etc.
     sim.save_to_file(filename)  

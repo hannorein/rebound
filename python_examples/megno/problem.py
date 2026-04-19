@@ -21,7 +21,6 @@ def simulation(par):
     saturn_a, saturn_e = par
     sim = rebound.Simulation() 
     sim.integrator = "whfast"
-    sim.min_dt = 5.
     sim.dt = 1.
     
     # These parameters are only approximately those of Jupiter and Saturn.
