@@ -111,8 +111,8 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 154, REB_UINT,        "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
     { 155, REB_INT,         "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
     { 164, REB_POINTER,     "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
-    //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
-    // TES Variables used to have ids 300 - 388. Do not reuse. 
+                                                                                                                                                            //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
+                                                                                                                                                            // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
     // 403  particles_var
     { 1329743186, REB_OTHER,"header", 0, 0, 0, 0},
@@ -627,7 +627,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
     struct reb_binarydata_field end_field = {.type = fd_end.type, .size = 0};
     write_to_stream(bufp, &allocatedsize, sizep, &end_field, sizeof(struct reb_binarydata_field));
-    
+
     struct reb_simulationarchive_blob blob = {0};
     write_to_stream(bufp, &allocatedsize, sizep, &blob, sizeof(struct reb_simulationarchive_blob));
 }
