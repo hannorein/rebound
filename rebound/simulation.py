@@ -572,7 +572,8 @@ class Simulation(Structure):
         elif isinstance(value, str):
             value = value.lower()
             if value in integrators_available_names:
-                clibrebound.reb_simulation_set_integrator(byref(self), integrators_available[integrators_available_names.index(value)])
+                clibrebound.reb_simulation_set_integrator.argtypes = [POINTER(Simulation), Integrator]
+                clibrebound.reb_simulation_set_integrator(byref(self), integrators_available[integrators_available_names.index(value)].contents)
             # Shortcuts
             elif value=="wh":
                 self.integrator = "whfast"
