@@ -516,8 +516,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             // Simple data types:
             if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
                     || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
-                    || dtype == REB_PARTICLE4 || dtype == REB_VEC3D || dtype == REB_SIZE_T
-                    || dtype == REB_INT64_INIT ){
+                    || dtype == REB_VEC3D || dtype == REB_SIZE_T || dtype == REB_INT64_INIT ){
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
@@ -549,9 +548,6 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                         break;
                     case REB_PARTICLE:
                         field.size = sizeof(struct reb_particle);
-                        break;
-                    case REB_PARTICLE4:
-                        field.size = 4*sizeof(struct reb_particle);
                         break;
                 }
                 write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
@@ -676,7 +672,7 @@ next_field:
                     if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
                             || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
                             || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
-                            || fd.dtype == REB_PARTICLE4 || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
+                            || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
                         char* pointer = base_address + current_fd_list[i].offset;
                         fread(pointer, field.size, 1, inf);
                         goto next_field;

@@ -133,7 +133,6 @@ int main(int argc, char* argv[]) {
                     CASE(REB_POINTER);
                     CASE(REB_POINTER_ALIGNED);
                     CASE(REB_OTHER);
-                    CASE(REB_PARTICLE4);
                     CASE(REB_CHARP_LIST);
                 default:
                     ifprintf("\tdtype:  <other>\n");

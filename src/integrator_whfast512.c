@@ -49,7 +49,10 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
     { 394, REB_POINTER_ALIGNED, "pjh",         offsetof(struct reb_integrator_whfast512_state, p_jh), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct reb_particle_avx512), 0},
     // 396, 397 used to be max_radius0 and max_radius1
     { 398, REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
-    { 399, REB_PARTICLE4,   "pjh0",            offsetof(struct reb_integrator_whfast512_state, p_jh0), 0, 0, 0},
+    { 399, REB_PARTICLE,    "pjh0_0",          offsetof(struct reb_integrator_whfast512_state, p_jh0[0]), 0, 0, 0},
+    { 400, REB_PARTICLE,    "pjh0_1",          offsetof(struct reb_integrator_whfast512_state, p_jh0[1]), 0, 0, 0},
+    { 401, REB_PARTICLE,    "pjh0_2",          offsetof(struct reb_integrator_whfast512_state, p_jh0[2]), 0, 0, 0},
+    { 402, REB_PARTICLE,    "pjh0_3",          offsetof(struct reb_integrator_whfast512_state, p_jh0[3]), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
