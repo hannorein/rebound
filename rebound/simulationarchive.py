@@ -71,21 +71,14 @@ class Simulationarchive(Structure):
         else:
             raise RuntimeError("Unable to create Simulationarchive from object of type "+type(filename))
 
-        obj = ptr.contents
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
                     raise RuntimeError(message)
                 else:  
-                    # Just a warning
-                    if value==2: # Version warning. Append version used to save SA to message
-                        sa_version = "%d.%d.%d" %(obj._reb_version_major, obj._reb_version_minor, obj._reb_version_patch)
-                        if sa_version != __version__ and sa_version != "0.0.0":
-                            message += " Binary file was saved with REBOUND Version " + sa_version + "."
-                            message += " You are currently using REBOUND Version " +  __version__ + "."
                     if process_warnings:
                         warnings.warn(message, RuntimeWarning)
-        return obj
+        return ptr.contents
 
     def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
         """
