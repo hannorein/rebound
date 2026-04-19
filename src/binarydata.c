@@ -138,7 +138,7 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
     *sizep += size;
 }
 
-// TODO: Think about these functions with binaryfield in integrator
+// This function is only used in simulation_diff. 
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type){
     int i=-1;
     do{
@@ -152,6 +152,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(
     return bfd;
 }
 
+// This function is only used to find a couple of special fields.  
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name){
     int i=-1;
     do{
@@ -160,6 +161,8 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
             return reb_binarydata_field_descriptor_list[i];
         }
     } while (reb_binarydata_field_descriptor_list[i].type);
+    // We should never arrive here.
+    reb_simulation_error(NULL, "Could not find field descriptor for name.");
     struct reb_binarydata_field_descriptor bfd = {0};
     bfd.dtype = REB_FIELD_NOT_FOUND;
     return bfd;

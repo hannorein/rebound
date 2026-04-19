@@ -118,12 +118,12 @@ enum REB_BINARYDATA_DTYPE {
     REB_PARTICLE = 8,
     REB_POINTER = 9,
     REB_POINTER_ALIGNED = 10,    // memory aligned to 64 bit boundary for AVX512
-    // REB_DP7 = 11,             // No longer used. Using REB_POINTER instead.
+                                 // REB_DP7 = 11,             // No longer used. Using REB_POINTER instead.
     REB_OTHER = 12,              // Fields that need special treatment during input and/or output
-    // REB_FIELD_END = 13,       // No longer used. Was special type to indicate end of blob
+                                 // REB_FIELD_END = 13,       // No longer used. Was special type to indicate end of blob
     REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
-    // REB_PARTICLE4 = 15,       // No longer used. Was used for WHFast512.
-    // REB_POINTER_FIXED_SIZE = 16, // No longer used. Now using REB_POINTER instead.
+                                 // REB_PARTICLE4 = 15,       // No longer used. Was used for WHFast512.
+                                 // REB_POINTER_FIXED_SIZE = 16, // No longer used. Now using REB_POINTER instead.
     REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
     REB_SIZE_T = 18,
     REB_INT64_INIT = 19,         // A special field that stores an ID. Will require some special initialization.
