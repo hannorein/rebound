@@ -192,7 +192,6 @@ int rand_r(unsigned int *seed) {
 
 
 // Source: https://stackoverflow.com/a/40160038/115102
-#include <stdarg.h>
 int vasprintf(char **strp, const char *fmt, va_list ap) {
     // _vscprintf tells you how big the buffer needs to be
     int len = _vscprintf(fmt, ap);
