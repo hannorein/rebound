@@ -116,7 +116,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 145, REB_DOUBLE,      "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0},
     { 154, REB_UINT,        "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0},
     { 155, REB_INT,         "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0},
-    { 164, REB_POINTER_FIXED_SIZE, "display_settings",      offsetof(struct reb_simulation, display_settings), 0, sizeof(struct reb_display_settings)},
+    { 164, REB_POINTER,     "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings)},  // Note: SIZE_MAX => 1 element
     //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
     // TES Variables used to have ids 300 - 388. Do not reuse. 
     { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0},
@@ -581,27 +581,16 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
-                size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
+                size_t pointer_N = 1; // Default is one element.
+                if (current_fd_list[i].offset_N!=SIZE_MAX){ // Dynamic N if offset_N is given
+                    pointer_N = *(size_t*)(base_address + current_fd_list[i].offset_N);
+                }
                 char* pointer = base_address + current_fd_list[i].offset;
-                field.size = (*pointer_N) * current_fd_list[i].element_size;
+                field.size = pointer_N * current_fd_list[i].element_size;
 
                 if (field.size){
                     write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
                     pointer = *(char**)pointer;
-                    write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
-                }
-            }
-            // Pointer with a fixed size
-            if (dtype == REB_POINTER_FIXED_SIZE ){
-                struct reb_binarydata_field field;
-                memset(&field,0,sizeof(struct reb_binarydata_field));
-                field.type = current_fd_list[i].type;
-                field.size = current_fd_list[i].element_size;
-
-                char* pointer = base_address + current_fd_list[i].offset;
-                pointer = *(char**)pointer;
-                if (pointer){
-                    write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
                     write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
                 }
             }
@@ -737,7 +726,7 @@ next_field:
                         if (field.size % current_fd_list[i].element_size){
                             reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
                         }
-                        char** pointer = base_address + current_fd_list[i].offset;
+                        char** pointer = (char**)(base_address + current_fd_list[i].offset);
                         size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
                         if (fd.dtype == REB_POINTER_ALIGNED){
                             if (*pointer) free(*pointer);
@@ -752,16 +741,6 @@ next_field:
                         }
                         fread(*pointer, field.size,1,inf);
                         *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
-
-                        goto next_field;
-                    }
-                    if (fd.dtype == REB_POINTER_FIXED_SIZE){
-                        if (field.size != current_fd_list[i].element_size){
-                            reb_simulation_warning(r, "Inconsistent size encountered in binary field (fixed pointer size).");
-                        }
-                        char* pointer = base_address + current_fd_list[i].offset;
-                        *(char**)pointer = realloc(*(char**)pointer, field.size);
-                        fread(*(char**)pointer, field.size,1,inf);
 
                         goto next_field;
                     }

@@ -123,7 +123,7 @@ enum REB_BINARYDATA_DTYPE {
     REB_FIELD_END = 13,          // No longer used. Was special type to indicate end of blob
     REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
     REB_PARTICLE4 = 15,          // Used for WHFast512
-    REB_POINTER_FIXED_SIZE = 16, // A pointer with a fixed size.
+    // REB_POINTER_FIXED_SIZE = 16, // No longer used. Now using REB_POINTER instead.
     REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
     REB_SIZE_T = 18,
     REB_INT64_INIT = 19,         // A special field that stores an ID. Will require some special initialization.
