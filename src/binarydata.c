@@ -186,7 +186,7 @@ static void asprintf_append_to_bufp(char** bufp, const char* format, ...){
 }
 
 // Helper function to print out binary data in human readable form.
-static void asprintf_aooend_to_bufp_type(char** bufp, enum REB_BINARYDATA_DTYPE dtype, char* pointer, size_t dsize){
+static void asprintf_append_to_bufp_type(char** bufp, enum REB_BINARYDATA_DTYPE dtype, char* pointer, size_t dsize){
     switch (dtype){
         case REB_DOUBLE:
             asprintf_append_to_bufp(bufp, "%e",*(double*)(pointer));
@@ -295,7 +295,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 }else if (output_option==1 || output_option==3){
                     const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
                     asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
-                    asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                    asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
                     asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                 }
                 field1.size = 0;
@@ -337,9 +337,9 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             }else if (output_option==1 || output_option==3){
                 const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
                 asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
-                asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
                 asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
-                asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+                asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
                 asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
             }
         }
@@ -404,7 +404,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         }else if (output_option==1 || output_option==3){
             const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field2.type);
             asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
-            asprintf_aooend_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+            asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
             asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
         }
         pos1 = 64;
