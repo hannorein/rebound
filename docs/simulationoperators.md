@@ -71,7 +71,7 @@ You can compare if simulations are equal to each other using the following synta
     struct reb_simulation* r1 = reb_simulation_create();
     struct reb_simulation* r2 = reb_simulation_create();
     // ... setup simulations ...
-    if (reb_simulation_diff(r1, r2, 2)){
+    if (reb_simulation_diff(r1, r2, 0)){
         // Simulations are NOT equal
     }
     ```
@@ -90,4 +90,7 @@ You can compare if simulations are equal to each other using the following synta
     # ... setup simulations ...
     if r1 == r2:
         print("Simulations are equal")
+    else:
+        # print out difference
+        r1.diff(r2)
     ```

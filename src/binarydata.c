@@ -221,7 +221,7 @@ static void asprintf_append_to_bufp_type(char** bufp, enum REB_BINARYDATA_DTYPE 
 // Compares two simulations in buffers.
 // Returns 0 if the buffers contain the same simulation data. 
 // Supports different output options.
-int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option){
+int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, enum REB_BINARYDATA_OUTPUT output_option){
     if (!buf1 || !buf2 || size1<64 || size2<64){
         printf("Cannot read input buffers.\n");
         return 0;
@@ -229,18 +229,18 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 
     int are_different = 0;
 
-    if (output_option==0){
+    if (output_option==REB_BINARYDATA_OUTPUT_STREAM){
         *bufp = NULL;
         *sizep = 0;
     }
-    if (output_option==3){
+    if (output_option==REB_BINARYDATA_OUTPUT_BUFFER){
         *bufp = malloc(sizeof(char));
         *bufp[0] = '\0';
     }
     size_t allocatedsize = 0;
 
     // Header.
-    if(memcmp(buf1,buf2,64)!=0 && output_option==1){
+    if(memcmp(buf1,buf2,64)!=0 && output_option==REB_BINARYDATA_OUTPUT_PRINT){
         printf("Header in binary files are different.\n");
     }
 
@@ -290,13 +290,21 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 pos2 = 64;           // For next search
                 field1.size = 0;     // Output field with size 0
                 are_different = 1.;
-                if (output_option==0){
-                    write_to_stream(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binarydata_field));
-                }else if (output_option==1 || output_option==3){
-                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
-                    asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
-                    asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
-                    asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
+                switch (output_option){
+                    case REB_BINARYDATA_OUTPUT_STREAM:
+                        write_to_stream(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binarydata_field));
+                        break;
+                    case REB_BINARYDATA_OUTPUT_PRINT:
+                    case REB_BINARYDATA_OUTPUT_BUFFER:
+                        {
+                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
+                            asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
+                            asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                            asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
+                        }
+                        break;
+                    case REB_BINARYDATA_OUTPUT_NONE:
+                        break;
                 }
                 field1.size = 0;
                 continue;
@@ -331,16 +339,24 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
             }
-            if (output_option==0){
-                write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
-            }else if (output_option==1 || output_option==3){
-                const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
-                asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
-                asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
-                asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
-                asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
-                asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
+            switch (output_option){
+                case REB_BINARYDATA_OUTPUT_STREAM:
+                    write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
+                    write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                    break;
+                case REB_BINARYDATA_OUTPUT_PRINT:
+                case REB_BINARYDATA_OUTPUT_BUFFER:
+                    {
+                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
+                        asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
+                        asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                        asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
+                        asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+                        asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
+                    }
+                    break;
+                case REB_BINARYDATA_OUTPUT_NONE:
+                    break;
             }
         }
         pos1 += field1.size;
@@ -398,14 +414,22 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         }
 
         are_different = 1.;
-        if (output_option==0){
-            write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
-            write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
-        }else if (output_option==1 || output_option==3){
-            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field2.type);
-            asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
-            asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
-            asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
+        switch (output_option){
+            case REB_BINARYDATA_OUTPUT_STREAM:
+                write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                break;
+            case REB_BINARYDATA_OUTPUT_PRINT:
+            case REB_BINARYDATA_OUTPUT_BUFFER:
+                {
+                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field2.type);
+                    asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
+                    asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+                    asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
+                }
+                break;
+            case REB_BINARYDATA_OUTPUT_NONE:
+                break;
         }
         pos1 = 64;
         pos2 += field2.size;

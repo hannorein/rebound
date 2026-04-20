@@ -283,7 +283,7 @@ class Simulation(Structure):
         if not isinstance(other,Simulation):
             return NotImplemented
         clibrebound.reb_simulation_diff.restype = c_int
-        ret = clibrebound.reb_simulation_diff(byref(self), byref(other),c_int(2))
+        ret = clibrebound.reb_simulation_diff(byref(self), byref(other),c_int(0))
         return not ret
             
     def diff(self, other):

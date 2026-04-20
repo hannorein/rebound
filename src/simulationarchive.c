@@ -483,7 +483,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         // Create buffer containing diff
         char* buf_diff;
         size_t size_diff;
-        reb_binarydata_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff, 0);
+        reb_binarydata_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff, REB_BINARYDATA_OUTPUT_STREAM);
 
         int file_corrupt = 0;
         int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);

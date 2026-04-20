@@ -674,7 +674,7 @@ DLLEXPORT struct reb_simulation* reb_simulation_create_from_simulationarchive(st
 DLLEXPORT void reb_simulation_free(struct reb_simulation* const r);
 // Make a deep copy of simulation.
 DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
-// Compare r1 to r2. If exactly equal then 0 is returned, otherwise 1. If output_option=1, then difference is also printed on screen.
+// Compare r1 to r2. If exactly equal then 0 is returned, otherwise 1. No output if output_options=0. If output_option=1, then difference is also printed on screen.
 DLLEXPORT int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
 
 // Start webserver for visualization. Returns 0 on success.

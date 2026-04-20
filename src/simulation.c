@@ -613,7 +613,7 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
     reb_binarydata_simulation_to_stream(r1, &bufp1,&sizep1);
     reb_binarydata_simulation_to_stream(r2, &bufp2,&sizep2);
 
-    reb_binarydata_diff(bufp1, sizep1, bufp2, sizep2, &bufp, &size, 3);
+    reb_binarydata_diff(bufp1, sizep1, bufp2, sizep2, &bufp, &size, REB_BINARYDATA_OUTPUT_BUFFER);
 
     free(bufp1);
     free(bufp2);
@@ -679,8 +679,8 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
 }
 
 int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option){
-    if (output_option!=1 && output_option!=2){
-        // Not implemented
+    if (output_option!=REB_BINARYDATA_OUTPUT_PRINT && output_option!=REB_BINARYDATA_OUTPUT_NONE){
+        reb_simulation_error(r1, "Invalid output_option in reb_simulation_diff().");
         return -1;
     }
     char* bufp1;

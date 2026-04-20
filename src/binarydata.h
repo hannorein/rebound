@@ -44,6 +44,13 @@ enum REB_BINARYDATA_ERROR_CODE {
     REB_BINARYDATA_WARNING_CUSTOM_INTEGRATOR = 2048,
 };
 
+enum REB_BINARYDATA_OUTPUT {
+    REB_BINARYDATA_OUTPUT_NONE = 0,
+    REB_BINARYDATA_OUTPUT_PRINT = 1,
+    REB_BINARYDATA_OUTPUT_STREAM = 2,
+    REB_BINARYDATA_OUTPUT_BUFFER = 3
+};
+
 // Compares two simulations, stores difference in buffer.
 //
 // output_option:
@@ -53,7 +60,7 @@ enum REB_BINARYDATA_ERROR_CODE {
 // - If set to 3, differences are written to bufp in a human readable form.
 //
 // returns value:  0 is returned if the simulations do not differ (are equal). 1 is return if they differ.
-int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, int output_option);
+int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char** bufp, size_t* sizep, enum REB_BINARYDATA_OUTPUT output_option);
 
 // Read all fields from inf stream into r. 
 void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_BINARYDATA_ERROR_CODE* warnings); 
