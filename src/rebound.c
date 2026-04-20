@@ -74,18 +74,18 @@ void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type
         fprintf(stderr,"\n");
         switch (type){
             case REB_MESSAGE_TYPE_INFO:
-                fprintf(stderr,"REBOUND Message!");
+                fprintf(stderr, REB_STR_BOLD "REBOUND Message!" REB_STR_RESET);
                 break;
             case REB_MESSAGE_TYPE_WARNING:
                 if (isatty(STDERR_FILENO)) { // Is stderr a terminal?
-                    fprintf(stderr, "\033[1;33mWarning!\033[0m");
+                    fprintf(stderr, REB_STR_YELLOW_BOLD "Warning!" REB_STR_RESET);
                 }else{
                     fprintf(stderr,"Warning!");
                 }
                 break;
             case REB_MESSAGE_TYPE_ERROR:
                 if (isatty(STDERR_FILENO)) { // Is stderr a terminal?
-                    fprintf(stderr, "\033[1;31mError!\033[0m");
+                    fprintf(stderr, REB_STR_RED_BOLD "Error!" REB_STR_RESET);
                 }else{
                     fprintf(stderr,"Error!");
                 }

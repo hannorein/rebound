@@ -40,6 +40,9 @@ int rand_r (unsigned int *seed);
 void usleep(__int64 usec);
 #include <io.h>
 #define REB_STR_RED
+#define REB_STR_RED_BOLD
+#define REB_STR_YELLOW_BOLD
+#define REB_STR_BOLD
 #define REB_STR_GREEN
 #define REB_STR_RESET
 #else // Linux and MacOS
@@ -48,6 +51,9 @@ void usleep(__int64 usec);
 #include <unistd.h>
 #include <pthread.h>
 #define REB_STR_RED "\033[31m"
+#define REB_STR_RED_BOLD "\033[1;31m"
+#define REB_STR_YELLOW_BOLD "\033[1;33m"
+#define REB_STR_BOLD "\033[1m"
 #define REB_STR_GREEN "\033[32m"
 #define REB_STR_RESET "\033[0m"
 #endif // _WIN32
