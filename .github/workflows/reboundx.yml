@@ -32,7 +32,7 @@ jobs:
       - name: Install pytest wheel and setuptools 
         run: pip install pytest wheel setuptools
       - name: Install REBOUND requirements
-        run: pip install -r rebound/requirements.txt
+        run: pip install numpy matplotlib
       - name: Install REBOUNDx requirements
         run: pip install -r reboundx/requirements.txt
       - name: Build REBOUND package

@@ -19,8 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest jupyter matplotlib scipy multiprocess
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest jupyter matplotlib scipy multiprocess numpy
       - name: Build package
         run: pip install -e .
       - name: Running jupyter notebooks

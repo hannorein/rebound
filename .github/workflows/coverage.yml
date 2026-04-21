@@ -22,9 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest coverage
-          pip install -r requirements.txt
-          pip install multiprocess
+          pip install pytest coverage multiprocess matplotlib numpy
       - name: Build package
         run: python setup.py build_ext --inplace
         env:
