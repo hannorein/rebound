@@ -127,6 +127,7 @@ enum REB_BINARYDATA_DTYPE {
     REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
     REB_SIZE_T = 18,
     REB_INT64_INIT = 19,         // A special field that stores an ID. Will require some special initialization.
+    REB_STRING = 20,             // NULL character terminated string
 };
 
 struct reb_binarydata_enum_descriptor{
@@ -172,7 +173,7 @@ struct reb_collision{
 
 // Generic custom integrator
 struct reb_integrator {
-    uint32_t id;                                            // Unique number used to identify integrator in binary files.
+    const char* name;                                       // Unique name
     void (*step)(struct reb_simulation* r, void* p);        // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r, void* p); // Synchronizes particle state. Optional. Set to NULL if not used.
     void* (*create)();                                      // Allocate memory for integrator and set default values. Return pointer to the new integrator state.
@@ -183,7 +184,7 @@ struct reb_integrator {
     void* state;                                                            // Pointer to integrator state.
 };
 
-DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator);
+DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \

@@ -61,7 +61,7 @@ void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* sta
 void reb_integrator_whfast_step(struct reb_simulation* const r, void* state);
 
 const struct reb_integrator reb_integrator_whfast = {
-    .id = 1,
+    .name = "whfast",
     .step = reb_integrator_whfast_step,
     .synchronize = reb_integrator_whfast_synchronize,
     .create = reb_integrator_whfast_create,

@@ -30,7 +30,7 @@ class BinaryFieldDescriptor(ctypes.Structure):
                 ]
 
 class Integrator(ctypes.Structure):
-    _fields_ = [("id", ctypes.c_uint32),
+    _fields_ = [("name", ctypes.c_char_p),
                 ("step", ctypes.c_void_p),
                 ("synchronize", ctypes.c_void_p),
                 ("create", ctypes.c_void_p),

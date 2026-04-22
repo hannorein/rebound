@@ -59,7 +59,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_desc
 };
 
 const struct reb_integrator reb_integrator_mercurius = {
-    .id = 9,
+    .name = "mercurius",
     .step = reb_integrator_mercurius_step,
     .create = reb_integrator_mercurius_create,
     .free = reb_integrator_mercurius_free,

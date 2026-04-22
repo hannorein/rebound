@@ -53,7 +53,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
 };
 
 const struct reb_integrator reb_integrator_trace = {
-    .id = 25,
+    .name = "trace",
     .step = reb_integrator_trace_step,
     .create = reb_integrator_trace_create,
     .free = reb_integrator_trace_free,

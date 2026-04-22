@@ -94,7 +94,7 @@ void* reb_integrator_bs_create();
 void reb_integrator_bs_free(void* state);
 
 const struct reb_integrator reb_integrator_bs = {
-    .id = 12,
+    .name = "bs",
     .step = reb_integrator_bs_step,
     .create = reb_integrator_bs_create,
     .free = reb_integrator_bs_free,

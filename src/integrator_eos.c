@@ -58,7 +58,7 @@ void* reb_integrator_eos_create(){
 
 
 const struct reb_integrator reb_integrator_eos = {
-    .id = 11,
+    .name = "eos",
     .step = reb_integrator_eos_step,
     .create = reb_integrator_eos_create,
     .synchronize = reb_integrator_eos_synchronize,

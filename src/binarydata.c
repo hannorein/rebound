@@ -88,7 +88,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 102, REB_DOUBLE,      "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
     { 48, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
     { 50, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
-    { 51, REB_INT64_INIT,   "integrator",                   offsetof(struct reb_simulation, integrator), 0, 0, 0}, // Note: first element in structure
+    { 51, REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
     { 52, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
     { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
     { 54, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
@@ -206,11 +206,15 @@ static void asprintf_append_to_bufp_type(char** bufp, enum REB_BINARYDATA_DTYPE 
         case REB_INT64:
             asprintf_append_to_bufp(bufp, "%" PRId64,*(int64_t*)(pointer));
             break;
-        case REB_INT64_INIT:
-            asprintf_append_to_bufp(bufp, "%" PRId64,*(int64_t*)(pointer));
-            break;
         case REB_UINT64:
             asprintf_append_to_bufp(bufp, "%" PRIu64,*(uint64_t*)(pointer));
+            break;
+        case REB_STRING:
+            if (*pointer){
+                asprintf_append_to_bufp(bufp, "\"%s\"",*(char**)(pointer));
+            }else{
+                asprintf_append_to_bufp(bufp, "NULL");
+            }
             break;
         default:
             asprintf_append_to_bufp(bufp, "(%zu bytes, values not printed)", dsize);
@@ -474,7 +478,8 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
             // Simple data types:
             if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
                     || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
-                    || dtype == REB_VEC3D || dtype == REB_SIZE_T || dtype == REB_INT64_INIT ){
+                    || dtype == REB_VEC3D || dtype == REB_SIZE_T || dtype == REB_STRING ){
+                char* pointer = base_address + current_fd_list[i].offset;
                 struct reb_binarydata_field field;
                 memset(&field,0,sizeof(struct reb_binarydata_field));
                 field.type = current_fd_list[i].type;
@@ -495,7 +500,6 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                         field.size = sizeof(uint32_t);
                         break;
                     case REB_INT64:
-                    case REB_INT64_INIT: // Output is just a number.
                         field.size = sizeof(int64_t);
                         break;
                     case REB_UINT64:
@@ -507,9 +511,16 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
                     case REB_PARTICLE:
                         field.size = sizeof(struct reb_particle);
                         break;
+                    case REB_STRING: 
+                        if (*pointer){
+                            field.size = strlen(*(char**)pointer)+1;
+                            pointer = *(char**)pointer;
+                        }else{
+                            field.size = 0;
+                        }
+                        break;
                 }
                 write_to_stream(bufp, &allocatedsize, sizep, &field, sizeof(struct reb_binarydata_field));
-                char* pointer = base_address + current_fd_list[i].offset;
                 write_to_stream(bufp, &allocatedsize, sizep, pointer, field.size);
             }
             // Pointer data types
@@ -635,29 +646,6 @@ next_field:
                         fread(pointer, field.size, 1, inf);
                         goto next_field;
                     }
-                    // Read ID, then do special initialization depending on type.
-                    if (fd.dtype == REB_INT64_INIT){
-                        char* pointer = base_address + current_fd_list[i].offset;
-                        fread(pointer, field.size, 1, inf);
-                        if (fd.type==51){ // Integrator
-                            {
-                                // Find built-in integrator
-                                int integrator_found = 0;
-                                for (size_t i = 0; i<reb_integrators_available_N;i++){
-                                    if (reb_integrators_available[i]->id == r->integrator.id){
-                                        reb_simulation_set_integrator(r, *reb_integrators_available[i]);
-                                        integrator_found = 1;
-                                        break;
-                                    }
-                                }
-                                if (!integrator_found){
-                                    *warnings |= REB_BINARYDATA_WARNING_CUSTOM_INTEGRATOR;
-                                }
-                            }
-                        }
-
-                        goto next_field;
-                    }
                     // Read a pointer data type. 
                     // 1) reallocate memory
                     // 2) read data into memory
@@ -681,6 +669,19 @@ next_field:
                         }
                         fread(*pointer, field.size,1,inf);
                         *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
+
+                        goto next_field;
+                    }
+                    if (fd.dtype == REB_STRING){
+                        char** pointer = (char**)(base_address + current_fd_list[i].offset);
+                        *pointer = realloc(*pointer, field.size); // TODO: memory needs to be freed somewhere else
+                        fread(*pointer, field.size,1,inf);
+                        
+                        // HACK
+                        
+                        reb_simulation_set_integrator(r, *(char**)pointer);
+
+                        // /HACK
 
                         goto next_field;
                     }

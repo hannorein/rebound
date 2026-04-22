@@ -192,25 +192,27 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
-void* reb_simulation_set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
-    for(size_t i=0; i<reb_integrators_available_N; i++){
-        if (reb_integrators_available[i]->id == integrator.id && reb_integrator_cmp(integrator, *reb_integrators_available[i])){
-            reb_simulation_error(r, "Integrator id already used by built-in integrator. Choose a different id.");
-        }
-    }
-    if (!r->integrator.id && !r->is_synchronized){
+void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
+    if (r->integrator.name && !r->is_synchronized){
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
     }
-    if (r->integrator.free){
-        r->integrator.free(r->integrator.state);
+    for(size_t i=0; i<reb_integrators_available_N; i++){
+        const struct reb_integrator* integrator = reb_integrators_available[i];
+        if (integrator->name && strcmp(integrator->name, name)==0){
+            if (r->integrator.free){
+                r->integrator.free(r->integrator.state);
+            }
+            r->integrator = *integrator;
+            if (r->integrator.create){
+                r->integrator.state = r->integrator.create();
+            }else{
+                r->integrator.state = NULL;
+            }
+            return r->integrator.state; // for convenience, return pointer to data
+        }
     }
-    r->integrator = integrator;
-    if (r->integrator.create){
-        r->integrator.state = r->integrator.create();
-    }else{
-        r->integrator.state = NULL;
-    }
-    return r->integrator.state; // for convenience, return pointer to data
+    reb_simulation_error(r, "Integrator not found.");
+    return NULL;
 }
 
 // Heartbeat wrapper. Runs actual heartbeat and does exit checks.
@@ -506,9 +508,9 @@ static void reb_simulation_step(struct reb_simulation* const r){
     }
 
     PROFILING_START();
-    if (!r->integrator.id){
+    if (!r->integrator.name){
         // Use IAS15 as default integrator
-        reb_simulation_set_integrator(r, reb_integrator_ias15);
+        reb_simulation_set_integrator(r, "ias15");
     }
 
     if (r->integrator.step){

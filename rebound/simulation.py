@@ -567,13 +567,11 @@ class Simulation(Structure):
         return self._integrator
     @integrator.setter
     def integrator(self, value):
-        if isinstance(value, Integrator):
-            self._integrator = value # TODO: Write unit tests
-        elif isinstance(value, str):
+        if isinstance(value, str):
             value = value.lower()
             if value in integrators_available_names:
-                clibrebound.reb_simulation_set_integrator.argtypes = [POINTER(Simulation), Integrator]
-                clibrebound.reb_simulation_set_integrator(byref(self), integrators_available[integrators_available_names.index(value)].contents)
+                clibrebound.reb_simulation_set_integrator.argtypes = [POINTER(Simulation), c_char_p]
+                clibrebound.reb_simulation_set_integrator(byref(self), c_char_p(value.encode("ascii")))
             # Shortcuts
             elif value=="wh":
                 self.integrator = "whfast"
@@ -600,6 +598,8 @@ class Simulation(Structure):
                 self.integrator.type = value[4:].replace(",","_")
             else:
                 raise ValueError("Integrator '"+value+"' not found.")
+        else:
+            raise ValueError("Expected string when setting integrator.")
     
     @property
     def boundary(self):
