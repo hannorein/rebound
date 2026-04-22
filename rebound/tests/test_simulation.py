@@ -176,10 +176,10 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(self.sim.N, 2)
     
     def test_integrator(self):
-        self.assertEqual(self.sim.integrator, "none")
+        self.assertEqual(self.sim.integrator.name, None)
         self.sim.integrator = "whfast"
         self.assertEqual(self.sim.integrator, "whfast")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.sim.integrator = "bogusintegrator"
 
     def test_boundaries(self):

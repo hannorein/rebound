@@ -41,23 +41,14 @@ class Integrator(ctypes.Structure):
                 ("state", ctypes.c_void_p),
                 ]
     def __str__(self):
-        clibrebound.reb_integrator_cmp.restype = ctypes.c_int
-        for i, name in enumerate(integrators_available_names):
-            if not clibrebound.reb_integrator_cmp(self, integrators_available[i].contents):
-                return name
-        return "custom"
+        if self.name:
+            return self.name.decode("utf-8")
+        else:
+            return "<no name provided>"
+        return None
 
     def __eq__(self, other):
-        if isinstance(other,str):
-            other = other.lower()
-            if other in integrators_available_names:
-                other = integrators_available[integrators_available_names.index(other)].contents
-            else:
-                return False
-        if isinstance(other,Integrator):
-            clibrebound.reb_integrator_cmp.restype = ctypes.c_int
-            return not clibrebound.reb_integrator_cmp(self, other)
-        return NotImplemented
+        return self.__str__() == other.__str__()
 
     def __getattr__(self, name):
         i=0
@@ -104,8 +95,10 @@ class Integrator(ctypes.Structure):
             i += 1
     
     def __repr__(self):
-        # TODO: Print all integrator data
-        return '<{0}.{1} object at {2}>'.format(self.__module__, type(self).__name__, hex(id(self)))
+        if self.name:
+            return '<{0}.{1} object at {2}, name=\'{3}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.name.decode("ascii"))
+        else:
+            return '<{0}.{1} object at {2}, name=None>'.format(self.__module__, type(self).__name__, hex(id(self)))
 
 
 def binary_field_descriptor_list():
@@ -122,9 +115,7 @@ def binary_field_descriptor_list():
     return l
 
 
-# Load all available integrators and identify by name
-integrators_available_N = ctypes.c_uint32.in_dll(clibrebound, "reb_integrators_available_N").value
-integrators_available = (ctypes.POINTER(Integrator) * integrators_available_N).in_dll(clibrebound, "reb_integrators_available")
-integrators_available_names = [n.decode("utf-8").lower() for n in (ctypes.c_char_p * integrators_available_N).in_dll(clibrebound, "reb_integrators_available_names")]
-
+# All available integrators
+#sym_address = ctypes.addressof(ctypes.c_void_p.in_dll(clibrebound, "reb_integrators_available"))
+#integrators_available = ctypes.cast(sym_address, ctypes.POINTER(ctypes.POINTER(Integrator)))
 

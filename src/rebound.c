@@ -43,23 +43,15 @@ const size_t reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "5.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
-const struct reb_integrator reb_integrator_none = {0};
+const struct reb_integrator reb_integrator_none = {.name="none"};
 
 // Allow python to discover all available integrators
 const struct reb_integrator* reb_integrators_available[] = {
 #define X(name) &reb_integrator_##name,
     REB_AVAILABLE_INTEGRATORS
 #undef X
+    NULL // Null terminated
 };
-const char* reb_integrators_available_names[] = {
-#define X(name) #name,
-    REB_AVAILABLE_INTEGRATORS
-#undef X
-};
-const size_t reb_integrators_available_N = sizeof(reb_integrators_available) / sizeof(reb_integrators_available[0]);
-
-
-
 
 void reb_exit(const char* const msg){
     // This function should also kill all children. 

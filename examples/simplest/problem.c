@@ -23,10 +23,6 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
     reb_simulation_add_fmt(r, "a e", 1.4, 0.1);        // Massless test particle 
 
-//    reb_simulation_set_integrator(r, "leapfrog");
-    struct reb_simulation* r2 = reb_simulation_copy(r);
-
-
     // First integrate for 100 time units. 
     reb_simulation_integrate(r,100.);
 

@@ -196,9 +196,10 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
     if (r->integrator.name && !r->is_synchronized){
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
     }
-    for(size_t i=0; i<reb_integrators_available_N; i++){
+    for(size_t i=0; ; i++){
         const struct reb_integrator* integrator = reb_integrators_available[i];
-        if (integrator->name && strcmp(integrator->name, name)==0){
+        if (!integrator) break;
+        if (strcmp(integrator->name, name)==0){
             if (r->integrator.free){
                 r->integrator.free(r->integrator.state);
             }
