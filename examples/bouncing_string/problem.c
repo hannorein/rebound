@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
    
     // Setup modules and constants
     r->dt                = 1e-3;
-    r->integrator        = reb_integrator_leapfrog;
+    reb_simulation_set_integrator(r,"leapfrog");
     r->boundary          = REB_BOUNDARY_PERIODIC;
     r->collision         = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
     
     // boxsize 10., three root boxes in x direction, one in y and z
     r->root_size = 10.0;
-    r->N_root_x = 2; 
+    r->N_root_x = 3; 
 
     r->N_ghost_x = 1; 
     r->N_ghost_y = 1; 

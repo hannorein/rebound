@@ -22,8 +22,8 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt = 0.0012*2.*M_PI;                
-    reb_simulation_set_integrator(r,reb_integrator_mercurius);
-    struct reb_integrator_mercurius_state* mercurius = r->integrator_data;
+    reb_simulation_set_integrator(r, "mercurius");
+    struct reb_integrator_mercurius_state* mercurius = r->integrator.state;
     mercurius->r_crit_hill = 3;            // By default the switching radius is three times the hill radius
     r->heartbeat = heartbeat;
 

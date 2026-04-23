@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt           = 0.01*2.*M_PI;     // initial timestep
-    reb_simulation_set_integrator(r,reb_integrator_ias15);
+    reb_simulation_set_integrator(r, "ias15");
     r->heartbeat    = heartbeat;
     r->usleep       = 10000;            // Slow down integration (for visualization only)
 

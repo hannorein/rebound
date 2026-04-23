@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     // Setup constants
-    reb_simulation_set_integrator(r,reb_integrator_ias15);
+    reb_simulation_set_integrator(r, "ias15");
     r->dt                   = 1e-4;      // Initial timestep.
     r->N_active             = 2;         // Only the star and the planet are massive.
     r->additional_forces    = force_radiation;
