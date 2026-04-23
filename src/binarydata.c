@@ -673,13 +673,15 @@ next_field:
                         goto next_field;
                     }
                     if (fd.dtype == REB_STRING){
-                        char** pointer = (char**)(base_address + current_fd_list[i].offset);
-                        *pointer = realloc(*pointer, field.size); // TODO: memory needs to be freed somewhere else
-                        fread(*pointer, field.size,1,inf);
+                        // char** pointer = (char**)(base_address + current_fd_list[i].offset);
+                        // *pointer = realloc(*pointer, field.size); // TODO: memory needs to be freed somewhere else
+                        char* string = malloc(field.size);
+                        fread(string, field.size,1,inf);
                         
                         // HACK
                         
-                        reb_simulation_set_integrator(r, *(char**)pointer);
+                        reb_simulation_set_integrator(r, string);
+                        free(string);
 
                         // /HACK
 
