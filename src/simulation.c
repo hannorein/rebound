@@ -112,6 +112,7 @@ struct reb_simulation* reb_simulation_create(){
     r->output_timing_last   = -1;
     r->simulationarchive_version = 5;
     r->is_synchronized = 1;
+    reb_simulation_set_integrator(r, "ias15");
 
     return r;
 }
@@ -509,10 +510,6 @@ static void reb_simulation_step(struct reb_simulation* const r){
     }
 
     PROFILING_START();
-    if (!r->integrator.name){
-        // Use IAS15 as default integrator
-        reb_simulation_set_integrator(r, "ias15");
-    }
 
     if (r->integrator.step){
         r->integrator.step(r, r->integrator.state);
