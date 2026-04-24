@@ -45,13 +45,16 @@ const char* reb_version_str = "5.0.0";         // **VERSIONLINE** This line gets
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 const struct reb_integrator reb_integrator_none = {.name="none"};
 
-// Allow python to discover all available integrators
+// All built-in integrators
 const struct reb_integrator* reb_integrators_available[] = {
 #define X(name) &reb_integrator_##name,
     REB_AVAILABLE_INTEGRATORS
 #undef X
     NULL // Null terminated
 };
+
+// NULL terminated list of custom registered integrators.
+struct reb_integrator* reb_integrators_available_custom = NULL;
 
 void reb_exit(const char* const msg){
     // This function should also kill all children. 

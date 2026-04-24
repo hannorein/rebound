@@ -193,6 +193,35 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
+void reb_integrator_register(struct reb_integrator integrator){
+    if (integrator.name == NULL || strnlen(integrator.name, 256) == 0 || strnlen(integrator.name, 256) == 256){
+        reb_simulation_error(NULL, "Must provide integrator name when registering.");
+        return;
+    }
+    int N = 0;
+    if (reb_integrators_available_custom){
+        while(reb_integrators_available_custom[N].name){ // {0} terminated array
+            N++;
+        }
+    }
+    reb_integrators_available_custom = realloc(reb_integrators_available_custom, sizeof(struct reb_integrator)*(N+2));
+    reb_integrators_available_custom[N] = integrator;
+    reb_integrators_available_custom[N+1] = (struct reb_integrator){0};
+}
+
+static void* set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
+    if (r->integrator.free){
+        r->integrator.free(r->integrator.state);
+    }
+    r->integrator = integrator;
+    if (r->integrator.create){
+        r->integrator.state = r->integrator.create();
+    }else{
+        r->integrator.state = NULL;
+    }
+    return r->integrator.state; // for convenience, return pointer to data
+}
+
 void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
     if (r->integrator.name && !r->is_synchronized){
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
@@ -201,18 +230,20 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
         const struct reb_integrator* integrator = reb_integrators_available[i];
         if (!integrator) break;
         if (strcmp(integrator->name, name)==0){
-            if (r->integrator.free){
-                r->integrator.free(r->integrator.state);
-            }
-            r->integrator = *integrator;
-            if (r->integrator.create){
-                r->integrator.state = r->integrator.create();
-            }else{
-                r->integrator.state = NULL;
-            }
-            return r->integrator.state; // for convenience, return pointer to data
+            return set_integrator(r, *integrator);
         }
     }
+    if (reb_integrators_available_custom){
+        int i=0;
+        while(reb_integrators_available_custom[i].name){ // {0} terminated array
+            const struct reb_integrator integrator = reb_integrators_available_custom[i];
+            if (strcmp(integrator.name, name)==0){
+                return set_integrator(r, integrator);
+            }
+            i++;
+        }
+    }
+
     reb_simulation_error(r, "Integrator not found.");
     return NULL;
 }

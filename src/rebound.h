@@ -185,6 +185,7 @@ struct reb_integrator {
 };
 
 DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
+DLLEXPORT void reb_integrator_register(struct reb_integrator integrator);
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \

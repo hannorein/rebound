@@ -44,14 +44,16 @@ int main(int argc, char* argv[]) {
     // Create a copy of the simulation and use the built-in leapfrog integrator
     // as a comparison.
     struct reb_simulation* r_copy= reb_simulation_copy(r);
-    reb_simulation_set_integrator(r_copy, reb_integrator_leapfrog);
+    reb_simulation_set_integrator(r, "leapfrog");
 
     // Create a custom integrator and setup function pointers.
     struct reb_integrator custom = {
-        .id = 42,
+        .name = "my_custom_leapfrog_integrator",
         .step = leapfrog_step,
     };
-    reb_simulation_set_integrator(r, custom);
+    reb_integrator_register(custom);
+
+    reb_simulation_set_integrator(r_copy, "my_custom_leapfrog_integrator");
     
     // Integrate both simulations
     reb_simulation_steps(r,10.);
