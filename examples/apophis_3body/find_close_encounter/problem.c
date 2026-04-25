@@ -9,7 +9,7 @@
 
 // Approximate Apophis mass in solar-mass units.
 // static const double apophis_mass = 1.358e-20;
-static const double apophis_mass = 3.0034896149156e-6;
+static const double apophis_mass = 3.0034896149156e-6 ;
 
 double ss_pos[3][3] =
     {
@@ -27,7 +27,7 @@ double ss_vel[3][3] =
 double ss_mass[3] =
     {
         1.0, // Sun
-        3.0034896149156e-6, // Earth
+        3.0034896149156e-6 , // Earth
         apophis_mass, // Apophis
     };
 
@@ -78,7 +78,10 @@ int main(int argc, char *argv[])
 
     // reb_simulation_integrate(r, 23009.9522-365.25); // Runs to 1 year before close encounter
 
-    reb_simulation_integrate(r, 54207.6304 - 365.25); // big astoid
+    // reb_simulation_integrate(r, 54207.6304 - 365.25); // big astoid
+
+
+    reb_simulation_integrate(r, 10); // test
 
     // Save a clean restart state without live server/runtime pointers attached.
     reb_simulation_save_to_file(r, "apophis_1yr_before.bin"); // save it
