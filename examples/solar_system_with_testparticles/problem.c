@@ -26,8 +26,9 @@ int main(int argc, char* argv[]){
 
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
-    r->integrator   = reb_integrator_whfast;
-    r->ri_whfast.coordinates   = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    reb_simulation_set_integrator(r, "whfast");
+    struct reb_integrator_whfast_state* whfast = r->integrator.state; 
+    whfast->coordinates   = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->heartbeat    = heartbeat;
     r->N_active     = r->N;
 

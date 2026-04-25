@@ -67,12 +67,13 @@ int main(int argc, char* argv[]){
     r->dt                   = 4;             // in days
     tmax                    = 7.3e10;        // 200 Myr
     r->G                    = 1.4880826e-34; // in AU^3 / kg / day^2.
-    r->ri_whfast.safe_mode  = 0;             // Turn off safe mode. Need to call reb_simulation_synchronize() before outputs. 
-    r->ri_whfast.corrector  = 11;            // 11th order symplectic corrector
-    r->integrator           = reb_integrator_whfast;
+    reb_simulation_set_integrator(r, "whfast");
+    // reb_simulation_set_integrator(r, "whfast");    // Alternative non-symplectic integrator
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
+    whfast->safe_mode  = 0;             // Turn off safe mode. Need to call reb_simulation_synchronize() before outputs. 
+    whfast->corrector  = 11;            // 11th order symplectic corrector
     r->heartbeat            = heartbeat;
     r->exact_finish_time    = 1;     // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
-    //r->integrator         = reb_integrator_ias15;        // Alternative non-symplectic integrator
 
     // Initial conditions
     for (int i=0;i<10;i++){

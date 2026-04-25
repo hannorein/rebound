@@ -36,13 +36,13 @@ int main(int argc, char* argv[]) {
 
     // Setup constants
     r->opening_angle2     = .5;                 // This determines the precision of the tree code gravity calculation.
-    r->integrator         = reb_integrator_sei;
+    reb_simulation_set_integrator(r, "sei");
     r->boundary           = REB_BOUNDARY_SHEAR;
     r->gravity            = REB_GRAVITY_TREE;
     r->collision          = REB_COLLISION_TREE;
     r->collision_resolve  = reb_collision_resolve_hardsphere;
     double OMEGA          = 0.00013143527;      // 1/s
-    r->ri_sei.OMEGA       = OMEGA;
+    r->OMEGA              = OMEGA;
     r->G                  = 6.67428e-11;        // N / (1e-5 kg)^2 m^2
     r->softening          = 0.1;                // m
     r->dt                 = 1e-3*2.*M_PI/OMEGA; // s
@@ -129,10 +129,10 @@ struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r){
         struct reb_vec3d Aim1 = A;
         struct reb_particle p = r->particles[i];
         A.x = A.x + (p.vx-A.x)/(double)(i+1);
-        A.y = A.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y)/(double)(i+1);
+        A.y = A.y + (p.vy+1.5*r->OMEGA*p.x-A.y)/(double)(i+1);
         A.z = A.z + (p.vz-A.z)/(double)(i+1);
         Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
-        Q.y = Q.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y);
+        Q.y = Q.y + (p.vy+1.5*r->OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->OMEGA*p.x-A.y);
         Q.z = Q.z + (p.vz-Aim1.z)*(p.vz-A.z);
     }
     Q.x = sqrt(Q.x/(double)r->N);
@@ -148,10 +148,10 @@ double translational_viscosity(const struct reb_simulation* const r){
     for (int i=0;i<r->N;i++){
         struct reb_particle p = r->particles[i];
         double vx = p.vx;
-        double vy = p.vy+1.5*r->ri_sei.OMEGA*p.x;
+        double vy = p.vy+1.5*r->OMEGA*p.x;
         Wxy += vx*vy;
     }
-    return 2./3.*Wxy/r->N/r->ri_sei.OMEGA;
+    return 2./3.*Wxy/r->N/r->OMEGA;
 }
 
 double collisional_viscosity(const struct reb_simulation* const r){
@@ -161,11 +161,11 @@ double collisional_viscosity(const struct reb_simulation* const r){
     for (int i=0;i<r->N;i++){
         Mtotal += r->particles[i].m;
     }
-    return 2./3./r->ri_sei.OMEGA/Mtotal/r->t* r->collisions_plog;
+    return 2./3./r->OMEGA/Mtotal/r->t* r->collisions_plog;
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->OMEGA)){
         printf("Midplane FF=  %5.3f\t",midplane_fillingfactor(r));
         printf("Mean normal tau=  %5.3f \t",mean_normal_geometric_optical_depth(r));
         struct reb_vec3d Q = velocity_dispersion(r);

@@ -120,10 +120,10 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve(struct reb_simulation* cons
 		
     struct reb_particle new1 = particles[c.p1];
     struct reb_particle new2 = particles[c.p2];
-    new1.vy += 1.5*r->ri_sei.OMEGA*new1.x;
-    new2.vy += 1.5*r->ri_sei.OMEGA*new2.x;
-    old1.vy += 1.5*r->ri_sei.OMEGA*old1.x;
-    old2.vy += 1.5*r->ri_sei.OMEGA*old2.x;
+    new1.vy += 1.5*r->OMEGA*new1.x;
+    new2.vy += 1.5*r->OMEGA*new2.x;
+    old1.vy += 1.5*r->OMEGA*old1.x;
+    old2.vy += 1.5*r->OMEGA*old2.x;
 
     // Logging
     struct collisions_log* log = (struct collisions_log* )r->extras; 
@@ -172,10 +172,10 @@ struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r, doubl
         struct reb_particle p = r->particles[i];
         if (p.x>xmin && p.x<xmax){
             A.x = A.x + (p.vx-A.x)/(double)(Ncounted+1);
-            A.y = A.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y)/(double)(Ncounted+1);
+            A.y = A.y + (p.vy+1.5*r->OMEGA*p.x-A.y)/(double)(Ncounted+1);
             A.z = A.z + (p.vz-A.z)/(double)(Ncounted+1);
             W.x = W.x + (p.vx-Aim1.x)*(p.vx-A.x);
-            W.y = W.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y);
+            W.y = W.y + (p.vy+1.5*r->OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->OMEGA*p.x-A.y);
             W.z = W.z + (p.vz-Aim1.z)*(p.vz-A.z);
             Ncounted++;
         }
@@ -189,7 +189,7 @@ struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r, doubl
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->OMEGA)){
         reb_simulation_output_timing(r, 0);
         //reb_output_append_velocity_dispersion("veldisp.txt");
     }
@@ -208,7 +208,7 @@ void heartbeat(struct reb_simulation* const r){
         double xmax = xmin + boxsize.x /Nslices; 
         double sigma = 1./((xmax - xmin) * boxsize.y);
         struct reb_vec3d W = velocity_dispersion(r,xmin,xmax);
-        double _T = 1./3.*(W.x*W.x+ W.y*W.y+ W.z*W.z)/(r->ri_sei.OMEGA*r->ri_sei.OMEGA);
+        double _T = 1./3.*(W.x*W.x+ W.y*W.y+ W.z*W.z)/(r->OMEGA*r->OMEGA);
         log->T[i] += _T;
 
         // qL
@@ -221,7 +221,7 @@ void heartbeat(struct reb_simulation* const r){
             struct reb_particle p = r->particles[j];
             if (p.x>xmin && p.x<xmax){
                 double vx = p.vx;
-                double vy = p.vy+1.5*r->ri_sei.OMEGA*p.x;
+                double vy = p.vy+1.5*r->OMEGA*p.x;
                 double vz = p.vz;
                 u_x += vx;
                 u_y += vy;
@@ -240,7 +240,7 @@ void heartbeat(struct reb_simulation* const r){
             struct reb_particle p = r->particles[j];
             if (p.x>xmin && p.x<xmax){
                 double cx = p.vx - u_x;
-                double cy = p.vy+1.5*r->ri_sei.OMEGA*p.x - u_y;
+                double cy = p.vy+1.5*r->OMEGA*p.x - u_y;
                 double cz = p.vz - u_z;
                 double c2 = cx*cx + cy*cy + cz*cz;
                 _qL += 0.5*c2*cx;
@@ -250,17 +250,17 @@ void heartbeat(struct reb_simulation* const r){
     
         // qNL
         double dt = r->t-log->lastsample;
-        if (dt>0.5e-4*2.*M_PI/r->ri_sei.OMEGA){
+        if (dt>0.5e-4*2.*M_PI/r->OMEGA){
             log->qNL[i] += sigma*log->Elog[i] /(dt*_N);
         }
         log->Elog[i] = 0;
 
         // nuT
-        log->nuT[i] += 2./3. * Wxy / r->ri_sei.OMEGA;
+        log->nuT[i] += 2./3. * Wxy / r->OMEGA;
 
         // nuC
-        if (dt>0.5e-4*2.*M_PI/r->ri_sei.OMEGA){
-            log->nuC[i] += 2.*log->plog[i] /(3.0*r->ri_sei.OMEGA*_N*dt);
+        if (dt>0.5e-4*2.*M_PI/r->OMEGA){
+            log->nuC[i] += 2.*log->plog[i] /(3.0*r->OMEGA*_N*dt);
         }
         log->plog[i] = 0;
 
@@ -269,11 +269,11 @@ void heartbeat(struct reb_simulation* const r){
     log->Nsamples ++;
 
     // Save output 10 times per orbit
-    if (reb_simulation_output_check(r,0.1*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r,0.1*2.*M_PI/r->OMEGA)){
         char buf[256];
         sprintf(buf,"out_tau%.1f_hot%d/out.txt",log->tau,log->isHot);
         FILE* f = fopen(buf,"a+");
-        fprintf(f, "%5.3f\t",r->t/(2.*M_PI/r->ri_sei.OMEGA));     // 0
+        fprintf(f, "%5.3f\t",r->t/(2.*M_PI/r->OMEGA));     // 0
         double FF = midplane_fillingfactor(r);
         fprintf(f, "%5.7f\t",FF);                                 // 1
         
@@ -295,8 +295,8 @@ void heartbeat(struct reb_simulation* const r){
     }
 
     // On screen update every 10 orbit
-    if (reb_simulation_output_check(r,10.*2.*M_PI/r->ri_sei.OMEGA)){
-        printf("tau = %.3f\t t = %.2f\n", log->tau, r->t/(2.*M_PI/r->ri_sei.OMEGA));
+    if (reb_simulation_output_check(r,10.*2.*M_PI/r->OMEGA)){
+        printf("tau = %.3f\t t = %.2f\n", log->tau, r->t/(2.*M_PI/r->OMEGA));
     }
 }
 
@@ -310,13 +310,13 @@ int main(int argc, char* argv[]) {
 
     const double OMEGA    = 1;    
     r->opening_angle2     = .5;
-    r->integrator         = reb_integrator_sei;
+    reb_simulation_set_integrator(r, "sei");
     r->boundary           = REB_BOUNDARY_SHEAR;
     r->gravity            = REB_GRAVITY_NONE;
     r->collision          = REB_COLLISION_LINETREE;
     r->collision_resolve  = collision_resolve;
-    r->ri_sei.OMEGA       = OMEGA;
-    r->ri_sei.OMEGAZ      = OMEGA;
+    r->OMEGA              = OMEGA;
+    r->OMEGAZ             = OMEGA;
     r->dt                 = 1e-2*2.*M_PI/OMEGA;
     r->heartbeat          = heartbeat;
     double root_size        = 200; 
