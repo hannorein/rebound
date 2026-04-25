@@ -1,5 +1,4 @@
 import rebound
-from rebound.simulation import Integrator
 import unittest
 import math
 import rebound.data
@@ -9,17 +8,17 @@ import ctypes
 class TestUniqueIntegrator(unittest.TestCase):
     def test_unique_integrator_names(self):
         clibrebound = rebound.clibrebound
-        sym_address = ctypes.addressof(ctypes.c_void_p.in_dll(clibrebound, "reb_integrators_available"))
-        integrators_available = ctypes.cast(sym_address, ctypes.POINTER(ctypes.POINTER(Integrator)))
-        names = []
+        clibrebound.reb_integrators_registered.restype = ctypes.POINTER(ctypes.c_char_p)
+        res = clibrebound.reb_integrators_registered()
         i = 0
+        names = []
         while True:
-            integrator = integrators_available[i]
-            if integrator:
-                names.append(str(integrator.contents))
-            else:
+            if res[i] == None:
                 break
-            i += 1
+            else:
+                names.append(res[i].decode("ascii"))
+            i = i+1
+        clibrebound.reb_free(res)
         self.assertEqual(len(names), len(set(names)))
 
 class TestUniqueEqual(unittest.TestCase):

@@ -44,10 +44,6 @@ const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build strin
 const char* reb_version_str = "5.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
-// NULL terminated list of custom registered integrators.
-struct reb_integrator_configuration* reb_integrators_available_custom = NULL;
-const struct reb_integrator reb_integrator_none = {0};
-
 void reb_exit(const char* const msg){
     // This function should also kill all children. 
     // Not implemented as pid is not easy to get to.
