@@ -29,15 +29,20 @@ class BinaryFieldDescriptor(ctypes.Structure):
                 ("enum_descriptor_list", ctypes.POINTER(EnumDescriptor)),
                 ]
 
+
 class Integrator(ctypes.Structure):
-    _fields_ = [("name", ctypes.c_char_p),
-                ("step", ctypes.c_void_p),
+    _fields_ = [("step", ctypes.c_void_p),
                 ("synchronize", ctypes.c_void_p),
                 ("create", ctypes.c_void_p),
                 ("free", ctypes.c_void_p),
                 ("did_add_particle", ctypes.c_void_p),
                 ("will_remove_particle", ctypes.c_void_p),
                 ("field_descriptor_list", ctypes.POINTER(BinaryFieldDescriptor)),
+                ]
+
+class IntegratorConfiguration(ctypes.Structure):
+    _fields_ = [("name", ctypes.c_char_p),
+                ("callbacks", Integrator),
                 ("state", ctypes.c_void_p),
                 ]
     def __str__(self):
@@ -53,7 +58,8 @@ class Integrator(ctypes.Structure):
     def __getattr__(self, name):
         i=0
         while True:
-            field_descriptor = self.field_descriptor_list[i]
+            # TODO make sure field_descriptor_list is not NULL
+            field_descriptor = self.callbacks.field_descriptor_list[i]
             if field_descriptor.type == 0:
                 raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
@@ -65,7 +71,8 @@ class Integrator(ctypes.Structure):
     def __setattr__(self, name, value):
         i=0
         while True:
-            field_descriptor = self.field_descriptor_list[i]
+            # TODO make sure field_descriptor_list is not NULL
+            field_descriptor = self.callbacks.field_descriptor_list[i]
             if field_descriptor.type == 0:
                 raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
@@ -99,7 +106,6 @@ class Integrator(ctypes.Structure):
             return '<{0}.{1} object at {2}, name=\'{3}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.name.decode("ascii"))
         else:
             return '<{0}.{1} object at {2}, name=None>'.format(self.__module__, type(self).__name__, hex(id(self)))
-
 
 def binary_field_descriptor_list():
     fd_pointer_t = ctypes.POINTER(BinaryFieldDescriptor)
