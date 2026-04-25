@@ -46,7 +46,6 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state);
 void* reb_integrator_leapfrog_create();
 void reb_integrator_leapfrog_free(void* p);
 const struct reb_integrator reb_integrator_leapfrog = {
-    .name = "leapfrog",
     .step = reb_integrator_leapfrog_step,
     .create = reb_integrator_leapfrog_create,
     .free = reb_integrator_leapfrog_free,

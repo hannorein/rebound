@@ -78,7 +78,6 @@ void reb_integrator_ias15_free(void* p);
 void reb_integrator_ias15_step(struct reb_simulation* const r, void* state);
 
 const struct reb_integrator reb_integrator_ias15 = {
-    .name = "ias15",
     .step = reb_integrator_ias15_step,
     .create = reb_integrator_ias15_create,
     .free = reb_integrator_ias15_free,

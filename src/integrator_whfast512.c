@@ -57,7 +57,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
 };
 
 const struct reb_integrator reb_integrator_whfast512 = {
-    .name = "whfast512",
     .step = reb_integrator_whfast512_step,
     .create = reb_integrator_whfast512_create,
     .free = reb_integrator_whfast512_free,

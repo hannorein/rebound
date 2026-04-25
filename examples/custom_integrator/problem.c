@@ -48,10 +48,9 @@ int main(int argc, char* argv[]) {
 
     // Create a custom integrator and setup function pointers.
     struct reb_integrator custom = {
-        .name = "my_custom_leapfrog_integrator",
         .step = leapfrog_step,
     };
-    reb_integrator_register(custom);
+    reb_integrator_register("my_custom_leapfrog_integrator", custom);
 
     reb_simulation_set_integrator(r_copy, "my_custom_leapfrog_integrator");
     

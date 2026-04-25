@@ -45,15 +45,6 @@
 #endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
-int reb_integrator_cmp(const struct reb_integrator a, const struct reb_integrator b){
-    struct reb_integrator _a = a;
-    struct reb_integrator _b = b;
-    // Ignore state.
-    _a.state = NULL;
-    _b.state = NULL;
-    return memcmp(&_a, &_b, sizeof(struct reb_integrator));
-}
-
 uint32_t reb_hash(const char *str) {
     // djb2 algorithm
     uint32_t hash = 5381;

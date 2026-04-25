@@ -171,9 +171,8 @@ struct reb_collision{
     size_t ri;              // Root cell index (MPI only)
 };
 
-// Generic custom integrator
+// Generic integrator callbacks.
 struct reb_integrator {
-    const char* name;                                       // Unique name
     void (*step)(struct reb_simulation* r, void* p);        // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r, void* p); // Synchronizes particle state. Optional. Set to NULL if not used.
     void* (*create)();                                      // Allocate memory for integrator and set default values. Return pointer to the new integrator state.
@@ -181,11 +180,19 @@ struct reb_integrator {
     void (*did_add_particle)(struct reb_simulation* r);                     // Gets called after a particle was added.
     void (*will_remove_particle)(struct reb_simulation* r, size_t index);   // Gets called before a particle will be removed.
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load the integrator state from restart files for this integrator.
-    void* state;                                                            // Pointer to integrator state.
 };
 
+// Internal use only
+struct reb_integrator_configuration {
+    const char* name;
+    struct reb_integrator callbacks;
+    void* state;
+};
+
+
+
 DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
-DLLEXPORT void reb_integrator_register(struct reb_integrator integrator);
+DLLEXPORT void reb_integrator_register(const char* name, struct reb_integrator integrator);
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
@@ -622,7 +629,7 @@ struct reb_simulation {
         REB_COLLISION_LINE = 4,         // Direct collision search O(N^2), looks for collisions by assuming a linear path over the last timestep
         REB_COLLISION_LINETREE = 5,     // Tree-based collision search O(N log(N)), looks for collisions by assuming a linear path over the last timestep
     } collision;
-    struct reb_integrator integrator;
+    struct reb_integrator_configuration integrator;
     enum {
         REB_BOUNDARY_NONE = 0,          // Do not check for anything (default)
         REB_BOUNDARY_OPEN = 1,          // Open boundary conditions. Removes particles if they leave the box 

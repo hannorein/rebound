@@ -104,7 +104,7 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     }
     s->pause             = 0; 
     s->multisample       = 1; 
-    if (reb_integrator_cmp(r->integrator, reb_integrator_whfast)==0){
+    if (strcmp(r->integrator.name, "whfast")==0){
         s->wire          = 1; 
     }else{
         s->wire          = 0; 

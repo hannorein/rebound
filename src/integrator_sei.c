@@ -63,7 +63,6 @@ void* reb_integrator_sei_create();
 void reb_integrator_sei_free(void* p);
 
 const struct reb_integrator reb_integrator_sei = {
-    .name = "sei",
     .step = reb_integrator_sei_step,
     .create = reb_integrator_sei_create,
     .free = reb_integrator_sei_free,

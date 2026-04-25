@@ -119,8 +119,8 @@ struct reb_simulation* reb_simulation_create(){
 
 void reb_simulation_free(struct reb_simulation* const r){
     // Free everything in the simulation first
-    if (r->integrator.free){
-        r->integrator.free(r->integrator.state);
+    if (r->integrator.callbacks.free){
+        r->integrator.callbacks.free(r->integrator.state);
     }
     r->gravity = REB_GRAVITY_BASIC; // Some integrators set their own gravity routine. Resetting.
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
@@ -193,8 +193,8 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
-void reb_integrator_register(struct reb_integrator integrator){
-    if (integrator.name == NULL || strnlen(integrator.name, 256) == 0 || strnlen(integrator.name, 256) == 256){
+void reb_integrator_register(const char* name, const struct reb_integrator integrator){
+    if (name == NULL || strnlen(name, 256) == 0 || strnlen(name, 256) == 256){
         reb_simulation_error(NULL, "Must provide integrator name when registering.");
         return;
     }
@@ -204,41 +204,43 @@ void reb_integrator_register(struct reb_integrator integrator){
             N++;
         }
     }
-    reb_integrators_available_custom = realloc(reb_integrators_available_custom, sizeof(struct reb_integrator)*(N+2));
-    reb_integrators_available_custom[N] = integrator;
-    reb_integrators_available_custom[N+1] = (struct reb_integrator){0};
+    reb_integrators_available_custom = realloc(reb_integrators_available_custom, sizeof(struct reb_integrator_configuration)*(N+2));
+    reb_integrators_available_custom[N].callbacks = integrator;
+    reb_integrators_available_custom[N].name = strdup(name);
+    reb_integrators_available_custom[N].state = NULL;
+    reb_integrators_available_custom[N+1] = (struct reb_integrator_configuration){0};
 }
 
-static void* set_integrator(struct reb_simulation* r, struct reb_integrator integrator){
-    if (r->integrator.free){
-        r->integrator.free(r->integrator.state);
+static void* set_integrator(struct reb_simulation* r, const char* name, struct reb_integrator integrator){
+    // Memory for name is constant. Does not need to be released.
+    if (r->integrator.callbacks.free){
+        r->integrator.callbacks.free(r->integrator.state);
     }
-    r->integrator = integrator;
-    if (r->integrator.create){
-        r->integrator.state = r->integrator.create();
+    r->integrator.callbacks = integrator;
+    r->integrator.name = name;
+    if (r->integrator.callbacks.create){
+        r->integrator.state = r->integrator.callbacks.create();
     }else{
         r->integrator.state = NULL;
     }
     return r->integrator.state; // for convenience, return pointer to data
 }
 
+
 void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
     if (r->integrator.name && !r->is_synchronized){
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
     }
-    for(size_t i=0; ; i++){
-        const struct reb_integrator* integrator = reb_integrators_available[i];
-        if (!integrator) break;
-        if (strcmp(integrator->name, name)==0){
-            return set_integrator(r, *integrator);
-        }
-    }
+    // All built-in integrators
+#define X(iname) if (strcmp(name, #iname)==0) { return set_integrator(r, #iname, reb_integrator_##iname); }
+        REB_AVAILABLE_INTEGRATORS
+#undef X
     if (reb_integrators_available_custom){
         int i=0;
         while(reb_integrators_available_custom[i].name){ // {0} terminated array
-            const struct reb_integrator integrator = reb_integrators_available_custom[i];
+            const struct reb_integrator_configuration integrator = reb_integrators_available_custom[i];
             if (strcmp(integrator.name, name)==0){
-                return set_integrator(r, integrator);
+                return set_integrator(r, name, integrator.callbacks);
             }
             i++;
         }
@@ -369,7 +371,7 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
             reb_simulation_warning(r,"No particles found. Will exit.");
             r->status = REB_STATUS_NO_PARTICLES; // Exit now.
         }else{
-            if (reb_integrator_cmp(r->integrator, reb_integrator_bs)!=0){
+            if (strcmp(r->integrator.name, "bs")!=0){
                 reb_simulation_warning(r,"No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
                 r->status = REB_STATUS_NO_PARTICLES; // Exit now.
             }
@@ -542,12 +544,12 @@ static void reb_simulation_step(struct reb_simulation* const r){
 
     PROFILING_START();
 
-    if (r->integrator.step){
-        r->integrator.step(r, r->integrator.state);
+    if (r->integrator.callbacks.step){
+        r->integrator.callbacks.step(r, r->integrator.state);
     }
 
     // Integrate other ODEs
-    if (r->N_odes && reb_integrator_cmp(r->integrator, reb_integrator_bs)!=0){
+    if (r->N_odes && strcmp(r->integrator.name, "bs")!=0){
         // TODO: Reimplement
         //if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
         //    reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
@@ -652,8 +654,8 @@ char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation*
 }
 
 void reb_simulation_synchronize(struct reb_simulation* r){
-    if (r->integrator.synchronize){
-        r->integrator.synchronize(r, r->integrator.state);
+    if (r->integrator.callbacks.synchronize){
+        r->integrator.callbacks.synchronize(r, r->integrator.state);
     }
 }
 

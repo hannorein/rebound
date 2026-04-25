@@ -50,7 +50,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_janus_field_descript
 };
 
 const struct reb_integrator reb_integrator_janus = {
-    .name = "janus",
     .step = reb_integrator_janus_step,
     .create = reb_integrator_janus_create,
     .free = reb_integrator_janus_free,
