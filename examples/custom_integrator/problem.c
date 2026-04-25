@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     struct reb_integrator custom = {
         .step = leapfrog_step,
     };
-    reb_integrator_register("my_custom_leapfrog_integrator", custom);
+    reb_integrator_register(custom, "my_custom_leapfrog_integrator");
 
     reb_simulation_set_integrator(r_copy, "my_custom_leapfrog_integrator");
     

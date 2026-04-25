@@ -230,7 +230,7 @@ char** reb_integrators_registered(){
     return names;
 }
 
-void reb_integrator_register(const char* name, const struct reb_integrator integrator){
+void reb_integrator_register(const struct reb_integrator integrator, const char* name){
     if (name == NULL || strnlen(name, 256) == 0 || strnlen(name, 256) == 256){
         reb_simulation_error(NULL, "Must provide integrator name when registering.");
         return;

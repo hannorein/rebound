@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
    
     // Setup constants
     r->dt             = 1e-4;        // initial timestep.
-    r->integrator     = reb_integrator_ias15;
+    reb_simulation_set_integrator(r, "ias15");
     r->gravity        = REB_GRAVITY_NONE;
 
     // Setup callback function for velocity dependent forces.

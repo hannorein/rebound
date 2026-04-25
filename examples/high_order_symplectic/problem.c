@@ -75,10 +75,11 @@ int main(int argc, char* argv[]){
     // Run the simulation with the WHCKL method.
     {    
         struct reb_simulation* r = create_sim();
-        r->integrator           = reb_integrator_whfast;
-        r->ri_whfast.safe_mode  = 0;        // Turn off safe mode (Need to call reb_simulation_synchronize() before outputs).
-        r->ri_whfast.corrector  = 17;       // 17th order symplectic corrector
-        r->ri_whfast.kernel     = REB_WHFAST_KERNEL_LAZY;   // Using the lazy implementers method which supports additional forces
+        reb_simulation_set_integrator(r, "whfast");
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
+        whfast->safe_mode  = 0;        // Turn off safe mode (Need to call reb_simulation_synchronize() before outputs).
+        whfast->corrector  = 17;       // 17th order symplectic corrector
+        whfast->kernel     = REB_INTEGRATOR_WHFAST_KERNEL_LAZY;   // Using the lazy implementers method which supports additional forces
         double e_init = reb_simulation_energy(r);
         reb_simulation_integrate(r, tmax);
         double e = reb_simulation_energy(r);
@@ -90,9 +91,10 @@ int main(int argc, char* argv[]){
     // quite a bit slower for a fixed timestep.
     {    
         struct reb_simulation* r = create_sim();
-        r->integrator           = reb_integrator_saba; 
-        r->ri_saba.type  = REB_SABA_10_6_4;    // Chooses the type of SABA integrator. 
-        r->ri_saba.safe_mode  = 0;        // Turn off safe mode. 
+        reb_simulation_set_integrator(r, "saba");
+        struct reb_integrator_saba_state* saba = r->integrator.state;
+        saba->type  = REB_INTEGRATOR_SABA_TYPE_10_6_4;    // Chooses the type of SABA integrator. 
+        saba->safe_mode  = 0;        // Turn off safe mode. 
         double e_init = reb_simulation_energy(r);
         reb_simulation_integrate(r, tmax);
         double e = reb_simulation_energy(r);
@@ -101,8 +103,9 @@ int main(int argc, char* argv[]){
     // Run the same simulation with the standard WH method.
     {    
         struct reb_simulation* r = create_sim();
-        r->integrator           = reb_integrator_whfast; // All WHFast settings default to the standard WH method
-        r->ri_whfast.safe_mode  = 0;        // Turn off safe mode. 
+        reb_simulation_set_integrator(r, "whfast");
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
+        whfast->safe_mode  = 0;        // Turn off safe mode. 
         double e_init = reb_simulation_energy(r);
         reb_simulation_integrate(r, tmax);
         double e = reb_simulation_energy(r);
