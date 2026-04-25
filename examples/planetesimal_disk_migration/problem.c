@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
 
     
     // Simulation Setup
-    r->integrator    = reb_integrator_mercurius;
+    reb_simulation_set_integrator(r, "mercurius");
     r->heartbeat     = heartbeat;
     // Test particle type 1 allows massive particles to feel the gravity of testparticles.
     // However, test particles will not feel the gravity from other test particles.
@@ -119,7 +119,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge_pass_through(stru
     // This function then outputs some information about the merger.
     enum REB_COLLISION_RESOLVE_OUTCOME result = reb_collision_resolve_merge(r, c);
     if (result!=REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE){
-        printf("A merger occurred! Particles involved: %d, %d.\n",c.p1,c.p2);
+        printf("A merger occurred! Particles involved: %zu, %zu.\n",c.p1,c.p2);
     }
     return result;
 }
@@ -135,6 +135,6 @@ void heartbeat(struct reb_simulation* r){
         struct reb_particle star = r->particles[0];
         struct reb_orbit o = reb_orbit_from_particle(r->G,p,star);
         
-        printf("a2=%f,dE=%e,N=%d\n",o.a,relE,r->N);
+        printf("a2=%f,dE=%e,N=%zu\n",o.a,relE,r->N);
     }
 }

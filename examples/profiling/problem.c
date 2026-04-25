@@ -21,13 +21,13 @@ int main(int argc, char* argv[]) {
 
     // Setup constants
     r->opening_angle2    = .5; // This determines the precision of the tree code gravity calculation.
-    r->integrator        = reb_integrator_sei;
+    reb_simulation_set_integrator(r, "sei");
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     double OMEGA         = 0.00013143527;            // 1/s
-    r->ri_sei.OMEGA      = OMEGA;
+    r->OMEGA             = OMEGA;
     r->G                 = 6.67428e-11;              // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                      // m
     r->dt                = 1e-3 * 2. * M_PI / OMEGA; // s
@@ -95,11 +95,11 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 }
 
 void heartbeat(struct reb_simulation* const r) {
-    if (reb_simulation_output_check(r, 1e-3 * 2. * M_PI / r->ri_sei.OMEGA)) {
+    if (reb_simulation_output_check(r, 1e-3 * 2. * M_PI / r->OMEGA)) {
         reb_simulation_output_timing(r, 0);
         //reb_output_append_velocity_dispersion("veldisp.txt");
     }
-    if (reb_simulation_output_check(r, 2. * M_PI / r->ri_sei.OMEGA)) {
+    if (reb_simulation_output_check(r, 2. * M_PI / r->OMEGA)) {
         //reb_simulation_output_ascii("position.txt");
     }
 }

@@ -41,9 +41,10 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
     reb_simulation_move_to_com(r);
 
-    r->integrator = reb_integrator_bs;  // Bulirsch-Stoer integrator
-    r->ri_bs.eps_rel = 1e-8;            // Relative tolerance
-    r->ri_bs.eps_abs = 1e-8;            // Absolute tolerance
+    reb_simulation_set_integrator(r, "bs"); // Bulirsch-Stoer integrator
+    struct reb_integrator_bs_state* bs = r->integrator.state;
+    bs->eps_rel = 1e-8;            // Relative tolerance
+    bs->eps_abs = 1e-8;            // Absolute tolerance
     r->dt = 1e-2;
 
     ho = reb_ode_create(r,2);   // Add an ODE with 2 dimensions

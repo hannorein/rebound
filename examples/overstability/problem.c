@@ -31,13 +31,13 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->ri_sei.OMEGA         = 1.;
-    r->ri_sei.OMEGAZ        = 3.6;
+    r->OMEGA                = 1.;
+    r->OMEGAZ               = 3.6;
     r->dt                   = 2e-3*2.*M_PI;
     double particle_r       = 1;
     double tau              = 1.64;
     r->coefficient_of_restitution     = coefficient_of_restitution;
-    r->integrator           = reb_integrator_sei;
+    reb_simulation_set_integrator(r, "sei");
     r->collision            = REB_COLLISION_TREE;
     r->collision_resolve    = reb_collision_resolve_hardsphere;
     r->gravity              = REB_GRAVITY_NONE;

@@ -26,8 +26,7 @@ int main(int argc, char* argv[]){
 
     // setup constants
     r->dt                           = 1e-3;             // initial timestep
-    r->integrator                   = reb_integrator_ias15;
-    r->ri_ias15.epsilon             = 1e-4;             // accuracy parameter
+    reb_simulation_set_integrator(r, "ias15");
     r->N_active                     = 1;                // the star is the only massive particle
     r->force_is_velocity_dependent  = 1;
     r->additional_forces            = radiation_forces; // setup callback function for velocity dependent forces

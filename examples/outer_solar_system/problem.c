@@ -1,19 +1,17 @@
 /**
  * Outer Solar System
  *
- * This example uses the IAS15 integrator
- * to integrate the outer planets of the solar system. The initial 
- * conditions are taken from Applegate et al 1986. Pluto is a test
- * particle. This example is a good starting point for any long term orbit
- * integrations.
+ * This example uses the WHFAST symplectic integrator to simulate
+ * the outer planets of the solar system/ We turn off safe-mode to 
+ * speed up the simulations with a symplectic corrector. Note that 
+ * if an output is required, you need to call 
+ * reb_simulation_synchronize() before accessing the particle 
+ * structure. The initial conditions in this examples are taken 
+ * from Applegate et al 1986. Pluto is a test particle. This 
+ * example is a good starting point for any long term orbit
+ * integrations. You probably want to turn off the visualization 
+ * for any production runs.
  *
- * You probably want to turn off the visualization for any serious runs.
- * Go to the makefile and set `OPENGL=0`. 
- *
- * The example also works with the WHFAST symplectic integrator. We turn
- * off safe-mode to allow fast and accurate simulations with the symplectic
- * corrector. If an output is required, you need to call reb_simulation_synchronize()
- * before accessing the particle structure.
  */
 #include "rebound.h"
 #include <stdio.h>
@@ -64,14 +62,16 @@ int main(int argc, char* argv[]) {
     const double k = 0.01720209895; // Gaussian constant
     r->dt = 40;                     // in days
     r->G = k * k;                   // These are the same units as used by the mercury6 code.
-    r->ri_whfast.safe_mode = 0;     // Turn of safe mode. Need to call reb_simulation_synchronize() before outputs.
-    r->ri_whfast.corrector = 11;    // Turn on symplectic correctors (11th order).
 
     // Setup callbacks:
     r->heartbeat = heartbeat;
     r->force_is_velocity_dependent = 0; // Force only depends on positions.
-    r->integrator = reb_integrator_whfast;
-    //r->integrator    = reb_integrator_ias15;
+    
+    // Integrator setup
+    reb_simulation_set_integrator(r, "whfast");
+    struct reb_integrator_whfast_state* whfast = r->integrator.state;
+    whfast->safe_mode = 0;     // Turn of safe mode. Need to call reb_simulation_synchronize() before outputs.
+    whfast->corrector = 11;    // Turn on symplectic correctors (11th order).
 
     // Initial conditions
     for (int i = 0; i < 6; i++) {
