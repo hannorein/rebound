@@ -98,5 +98,6 @@ DLLEXPORT void reb_omp_set_num_threads(int num_threads);
 
 // Lists to find available integrators
 DLLEXPORT char** reb_integrators_registered(); // only used by python
+extern struct reb_integrator_configuration* reb_integrator_configurations_custom;
 
 #endif // _REBOUND_INTERNAL_H

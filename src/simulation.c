@@ -52,17 +52,6 @@
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 
-// NULL terminated list of custom registered integrators.
-struct reb_integrator_configuration* reb_integrator_configurations_custom = NULL;
-
-// Dummy integrator
-static void reb_integrator_none_step(struct reb_simulation* const r, void* state){
-    (void) state; // Not used
-    r->t+=r->dt/2.;
-    r->dt_last_done = r->dt;
-}
-const struct reb_integrator reb_integrator_none = {.step=reb_integrator_none_step};
-
 // Used for visualization
 struct reb_thread_info {
     struct reb_simulation* r;
@@ -205,59 +194,6 @@ void reb_simulation_free(struct reb_simulation* const r){
     free(r);
 }
 
-char** reb_integrators_registered(){
-    // Returns a NULL terminated list of names. List must be freed but not names.
-    int N = 0;
-#define X(iname) N++;
-    REB_AVAILABLE_INTEGRATORS
-#undef X
-        int Nc = 0;
-    if (reb_integrator_configurations_custom){
-        while(reb_integrator_configurations_custom[Nc].name) Nc++;
-    }
-    char** names = malloc(sizeof(char*)*(N+Nc+1));
-    int i = 0;
-#define X(iname) names[i++] = #iname;
-    REB_AVAILABLE_INTEGRATORS
-#undef X
-        Nc = 0;
-    if (reb_integrator_configurations_custom){
-        while(reb_integrator_configurations_custom[Nc].name){
-            names[N+Nc] = (char*)reb_integrator_configurations_custom[Nc].name;
-            Nc++;
-        }
-    }
-    return names;
-}
-
-void reb_integrator_register(const struct reb_integrator integrator, const char* name){
-    if (name == NULL || strnlen(name, 256) == 0 || strnlen(name, 256) == 256){
-        reb_simulation_error(NULL, "Must provide integrator name when registering.");
-        return;
-    }
-    int name_exists = 0;
-#define X(iname) if (strcmp(name, #iname)==0) { name_exists = 1; }
-    REB_AVAILABLE_INTEGRATORS
-#undef X
-        int N = 0;
-    if (reb_integrator_configurations_custom){
-        while(reb_integrator_configurations_custom[N].name){ // {0} terminated array
-            N++;
-            if (strcmp(reb_integrator_configurations_custom[N].name, name)==0){
-                name_exists = 1;
-            }
-        }
-    }
-    if (name_exists){
-        reb_simulation_error(NULL, "Integrator name must be unique but name already exists.");
-        return;
-    }
-    reb_integrator_configurations_custom = realloc(reb_integrator_configurations_custom, sizeof(struct reb_integrator_configuration)*(N+2));
-    reb_integrator_configurations_custom[N].callbacks = integrator;
-    reb_integrator_configurations_custom[N].name = strdup(name);
-    reb_integrator_configurations_custom[N].state = NULL;
-    reb_integrator_configurations_custom[N+1] = (struct reb_integrator_configuration){0};
-}
 
 static void* set_integrator(struct reb_simulation* r, const char* name, struct reb_integrator integrator){
     // Memory for name is constant. Does not need to be released.
