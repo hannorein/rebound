@@ -677,9 +677,9 @@ next_field:
                         // *pointer = realloc(*pointer, field.size); // TODO: memory needs to be freed somewhere else
                         char* string = malloc(field.size);
                         fread(string, field.size,1,inf);
-                        
+
                         // HACK
-                        
+
                         reb_simulation_set_integrator(r, string);
                         free(string);
 

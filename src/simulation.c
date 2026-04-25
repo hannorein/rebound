@@ -211,7 +211,7 @@ char** reb_integrators_registered(){
 #define X(iname) N++;
     REB_AVAILABLE_INTEGRATORS
 #undef X
-    int Nc = 0;
+        int Nc = 0;
     if (reb_integrator_configurations_custom){
         while(reb_integrator_configurations_custom[Nc].name) Nc++;
     }
@@ -220,7 +220,7 @@ char** reb_integrators_registered(){
 #define X(iname) names[i++] = #iname;
     REB_AVAILABLE_INTEGRATORS
 #undef X
-    Nc = 0;
+        Nc = 0;
     if (reb_integrator_configurations_custom){
         while(reb_integrator_configurations_custom[Nc].name){
             names[N+Nc] = (char*)reb_integrator_configurations_custom[Nc].name;
@@ -239,7 +239,7 @@ void reb_integrator_register(const char* name, const struct reb_integrator integ
 #define X(iname) if (strcmp(name, #iname)==0) { name_exists = 1; }
     REB_AVAILABLE_INTEGRATORS
 #undef X
-    int N = 0;
+        int N = 0;
     if (reb_integrator_configurations_custom){
         while(reb_integrator_configurations_custom[N].name){ // {0} terminated array
             N++;
@@ -281,18 +281,18 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
     }
     // All built-in integrators
 #define X(iname) if (strcmp(name, #iname)==0) { return set_integrator(r, #iname, reb_integrator_##iname); }
-        REB_AVAILABLE_INTEGRATORS
+    REB_AVAILABLE_INTEGRATORS
 #undef X
-    if (reb_integrator_configurations_custom){
-        int i=0;
-        while(reb_integrator_configurations_custom[i].name){ // {0} terminated array
-            const struct reb_integrator_configuration integrator = reb_integrator_configurations_custom[i];
-            if (strcmp(integrator.name, name)==0){
-                return set_integrator(r, name, integrator.callbacks);
+        if (reb_integrator_configurations_custom){
+            int i=0;
+            while(reb_integrator_configurations_custom[i].name){ // {0} terminated array
+                const struct reb_integrator_configuration integrator = reb_integrator_configurations_custom[i];
+                if (strcmp(integrator.name, name)==0){
+                    return set_integrator(r, name, integrator.callbacks);
+                }
+                i++;
             }
-            i++;
         }
-    }
 
     reb_simulation_error(r, "Integrator not found.");
     return NULL;
