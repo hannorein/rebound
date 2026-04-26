@@ -59,11 +59,11 @@ class Simulationarchive(Structure):
 
     def __new__(cls, filename, process_warnings=True):
         if isinstance(filename, str):
-            clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(Simulationarchive)
+            clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(cls)
             w = c_int(0)
             ptr = clibrebound.reb_simulationarchive_create_from_file_with_messages(c_char_p(filename.encode("ascii")), byref(w))
         elif isinstance(filename, bytes):
-            clibrebound.reb_simulationarchive_create_from_buffer_with_messages.restype = POINTER(Simulationarchive)
+            clibrebound.reb_simulationarchive_create_from_buffer_with_messages.restype = POINTER(cls)
             w = c_int(0)
             buf = c_char_p(filename)
             size = c_size_t(len(filename))
