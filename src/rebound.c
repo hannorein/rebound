@@ -77,6 +77,7 @@ char** reb_integrators_registered(){
             Nc++;
         }
     }
+    names[N+NC] = NULL; // NULL terminated
     return names;
 }
 
