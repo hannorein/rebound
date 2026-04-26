@@ -148,8 +148,10 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(
             return reb_binarydata_field_descriptor_list[i];
         }
     } while (reb_binarydata_field_descriptor_list[i].type);
-    struct reb_binarydata_field_descriptor bfd = {0};
-    bfd.dtype = REB_FIELD_NOT_FOUND;
+    struct reb_binarydata_field_descriptor bfd = {
+        .dtype = REB_FIELD_NOT_FOUND,
+        .name = "field_not_found",
+    };
     return bfd;
 }
 
@@ -164,8 +166,12 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
     } while (reb_binarydata_field_descriptor_list[i].type);
     // We should never arrive here.
     reb_simulation_error(NULL, "Could not find field descriptor for name.");
-    struct reb_binarydata_field_descriptor bfd = {0};
-    bfd.dtype = REB_FIELD_NOT_FOUND;
+    // TODO Fix this for integrator values which are not found.
+    // TODO Causes issues in sim.status()
+    struct reb_binarydata_field_descriptor bfd = {
+        .dtype = REB_FIELD_NOT_FOUND,
+        .name = "field_not_found",
+    };
     return bfd;
 }
 
