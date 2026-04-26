@@ -210,8 +210,8 @@ static void asprintf_append_to_bufp_type(char** bufp, enum REB_BINARYDATA_DTYPE 
             asprintf_append_to_bufp(bufp, "%" PRIu64,*(uint64_t*)(pointer));
             break;
         case REB_STRING:
-            if (*pointer){
-                asprintf_append_to_bufp(bufp, "\"%s\"",*(char**)(pointer));
+            if (pointer && *pointer){
+                asprintf_append_to_bufp(bufp, "\"%s\"",pointer);
             }else{
                 asprintf_append_to_bufp(bufp, "NULL");
             }
