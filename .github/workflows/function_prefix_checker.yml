@@ -42,8 +42,8 @@ jobs:
         run: bash .github/function_prefix_checker.bash src/boundary.o
       - name: Checking collision.o
         run: bash .github/function_prefix_checker.bash src/collision.o
-      #- name: Checking derivatives.o
-      #  run: bash .github/function_prefix_checker.bash src/derivatives.o
+      - name: Checking derivatives.o
+        run: bash .github/function_prefix_checker.bash src/derivatives.o reb_particle_derivative
       - name: Checking display.o
         run: bash .github/function_prefix_checker.bash src/display.o
       - name: Checking fmemopen.o
@@ -52,8 +52,8 @@ jobs:
         run: bash .github/function_prefix_checker.bash src/frequency_analysis.o
       - name: Checking gravity.o
         run: bash .github/function_prefix_checker.bash src/gravity.o
-      #- name: Checking output.o
-      #  run: bash .github/function_prefix_checker.bash src/output.o
+      - name: Checking output.o
+        run: bash .github/function_prefix_checker.bash src/output.o reb_simulation_output
       #- name: Checking rotations.o
       #  run: bash .github/function_prefix_checker.bash src/rotations.o
       #- name: Checking server.o

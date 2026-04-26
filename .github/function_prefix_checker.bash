@@ -1,7 +1,11 @@
 #!/bin/bash
 OBJECT_FILE=$1
 FILENAME=$(basename "$OBJECT_FILE")
-EXPECTED_PREFIX="reb_${FILENAME%.*}"
+if [ -n "$2" ]; then
+    EXPECTED_PREFIX=$2
+else
+    EXPECTED_PREFIX="reb_${FILENAME%.*}"
+fi
 OS_TYPE=$(uname -s)
 EXIT_STATUS=0
 
