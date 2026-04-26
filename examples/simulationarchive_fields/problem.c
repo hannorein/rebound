@@ -59,7 +59,6 @@ int main(int argc, char* argv[]) {
     struct reb_simulationarchive_blob blob = {0};
     struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
     struct reb_binarydata_field_descriptor fd_particles = reb_binarydata_field_descriptor_for_name("particles");
-    struct reb_binarydata_field_descriptor fd_ri_whfast_p_jh = reb_binarydata_field_descriptor_for_name("ri_whfast.p_jh");
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
 
 
@@ -198,7 +197,7 @@ int main(int argc, char* argv[]) {
                         }
                         break;
                     case REB_POINTER:
-                        if (field.type == fd_particles.type || field.type == fd_ri_whfast_p_jh.type){
+                        if (field.type == fd_particles.type){
                             ifprintf("\tvalue:  \n");
                             int N = field.size/sizeof(struct reb_particle);
                             struct reb_particle* vp = malloc(field.size);
