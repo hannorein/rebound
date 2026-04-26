@@ -57,7 +57,7 @@ class Simulationarchive(Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
-    def __new__(cls, filename,setup=None, setup_args=(), process_warnings=True):
+    def __new__(cls, filename, process_warnings=True):
         if isinstance(filename, str):
             clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(Simulationarchive)
             w = c_int(0)
@@ -80,24 +80,17 @@ class Simulationarchive(Structure):
                         warnings.warn(message, RuntimeWarning)
         return ptr.contents
 
-    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True):
+    def __init__(self,filename, process_warnings=True):
         """
         Arguments
         ---------
         filename : str or bytes
             Filename of the Simulationarchive file to be opened.
             Can also be of type bytes to read from memory (uses fmemopen).
-        setup : function
-            Function to be called everytime a simulation object is created
-            In this function, the user can setup additional forces
-        setup_args : list
-            Arguments passed to setup function.
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
 
         """
-        self.setup = setup
-        self.setup_args = setup_args
         self.process_warnings = process_warnings
         w = c_int(0)
         if self.nblobs<1:
@@ -133,8 +126,6 @@ class Simulationarchive(Structure):
         w = c_int(0)
         sim = Simulation()
         clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim), byref(self), c_int64(key), byref(w))
-        if self.setup:
-            self.setup(sim, *self.setup_args)
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
@@ -231,10 +222,6 @@ class Simulationarchive(Structure):
         sim = Simulation()
         w = c_int(0)
         clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
-
-        # Restore function pointers and any additional setup required by the user provided functions
-        if self.setup:
-            self.setup(sim, *self.setup_args)
 
         if mode=='snapshot':
             # TODO: Reimplement
