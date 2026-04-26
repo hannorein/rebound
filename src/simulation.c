@@ -325,13 +325,13 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
                         r->status = REB_STATUS_SUCCESS;
                     }else{
                         // not there yet, do another step.
-                        reb_simulation_synchronize(r);
+                        reb_simulation_synchronize(r);  // Need to synchronize because step size changed.
                         r->dt = tmax-r->t;
                     }
                 }else{
-                    r->status = REB_STATUS_LAST_STEP; // Do one small step, then exit.
-                    reb_simulation_synchronize(r);
-                    if (r->dt_last_done!=0.){   // If first timestep is also last, do not use dt_last_done (which would be 0.)
+                    r->status = REB_STATUS_LAST_STEP;   // Do one small step, then exit.
+                    reb_simulation_synchronize(r);      // Need to synchronize because step size changed.
+                    if (r->dt_last_done!=0.){           // If first timestep is also last, do not use dt_last_done (which would be 0.)
                         *last_full_dt = r->dt_last_done; // store last full dt before decreasing the timestep to match finish time
                     }
                     r->dt = tmax-r->t;

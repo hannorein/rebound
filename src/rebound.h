@@ -337,7 +337,6 @@ struct reb_integrator_saba_state {
     X(Y, 0x7,    H_8_4_4)   /*SABAH(8,4,4), 6 stages              */ \
     X(Y, 0x8,    H_8_6_4)   /*SABAH(8,6,4), 8 stages              */ \
     X(Y, 0x9,    H_10_6_4)  /*SABAH(10,6,4), 9 stages             */
-    // TODO 10_6_4 not working in high_order_symplectic 
     enum {
         REB_GENERATE_ENUM(REB_INTEGRATOR_SABA_TYPE)
     } type;                             // Type of integrator
