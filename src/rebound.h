@@ -91,9 +91,9 @@ struct reb_particle {
     double r;                   // Physical radius in code units
     const char* name;           // Pointer to a NULL terminated string with the particle's name. Memory owned by simulation.
     REB_PAD(4)
-    void* ap;                   // This pointer allows REBOUNDx to add additional properties to the particle.
+        void* ap;                   // This pointer allows REBOUNDx to add additional properties to the particle.
     REB_PAD(4)
-    struct reb_simulation* sim; // Pointer to the parent simulation.
+        struct reb_simulation* sim; // Pointer to the parent simulation.
     REB_PAD(4)
 };
 
@@ -184,18 +184,18 @@ struct reb_integrator_configuration {
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
-    X(ias15)     /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
-X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
-X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
-X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
-X(none)          /* Do not integrate anything                                                          */ \
-X(janus)         /* Bit-wise reversible JANUS integrator.                                              */ \
-X(mercurius)     /* MERCURIUS integrator                                                               */ \
-X(saba)          /* SABA integrator family (Laskar and Robutel 2001)                                   */ \
-X(eos)           /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */ \
-X(bs)            /* Gragg-Bulirsch-Stoer                                                               */ \
-X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
-X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
+    X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
+    X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
+    X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
+    X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
+    X(none)          /* Do not integrate anything                                                          */ \
+    X(janus)         /* Bit-wise reversible JANUS integrator.                                              */ \
+    X(mercurius)     /* MERCURIUS integrator                                                               */ \
+    X(saba)          /* SABA integrator family (Laskar and Robutel 2001)                                   */ \
+    X(eos)           /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */ \
+    X(bs)            /* Gragg-Bulirsch-Stoer                                                               */ \
+    X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
+    X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
 
 // Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
 #define X(name) REB_API extern const struct reb_integrator reb_integrator_##name;
