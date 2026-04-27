@@ -108,17 +108,17 @@ void* reb_integrator_bs_create(){
     bs->eps_rel          = 1e-8;
     bs->max_dt           = 0;
     bs->min_dt           = 0; 
-    bs->first_or_last_step  = 1;
+    bs->first_or_last_step= 1;
     bs->previous_rejected = 0;
     bs->target_iter       = 0;
     bs->user_ode_needs_nbody = 0;
 
     // Allocate and init sequence arrays (not: these are independent of number of particles/ODEs)
-    bs->sequence        = malloc(sizeof(int)*sequence_length);
-    bs->cost_per_step     = malloc(sizeof(int)*sequence_length);
-    bs->coeff           = malloc(sizeof(double)*sequence_length);
-    bs->cost_per_time_unit = malloc(sizeof(double)*sequence_length);
-    bs->optimal_step     = malloc(sizeof(double)*sequence_length);
+    bs->sequence            = malloc(sizeof(int)*sequence_length);
+    bs->cost_per_step       = malloc(sizeof(int)*sequence_length);
+    bs->coeff               = malloc(sizeof(double)*sequence_length);
+    bs->cost_per_time_unit  = malloc(sizeof(double)*sequence_length);
+    bs->optimal_step        = malloc(sizeof(double)*sequence_length);
 
     for (int k = 0; k < sequence_length; ++k) {
         // step size sequence: 2, 6, 10, 14, ... 
