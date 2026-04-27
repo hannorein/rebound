@@ -26,6 +26,9 @@
 #ifndef _MAIN_H
 #define _MAIN_H
 
+#define REB_API     // Public REBOUND API definitions
+#define REB_RESTRICT restrict
+
 // Operating system specific options.
 // Windows requires special treatment.
 #ifdef _WIN64
@@ -43,12 +46,6 @@
 #ifdef _MSC_VER
 #pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
 #endif
-#elif __EMSCRIPTEN__
-#define REB_RESTRICT
-#define REB_API
-#else // Linux and MacOS
-#define REB_RESTRICT restrict
-#define REB_API
 #endif // _WIN32
 
 #include <stdlib.h> // for size_t
