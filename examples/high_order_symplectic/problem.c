@@ -70,6 +70,8 @@ struct reb_simulation* create_sim(){
 }
 
 int main(int argc, char* argv[]){
+    printf("%zu\n", sizeof(struct reb_particle));
+    printf("%zu\n", sizeof(struct reb_particle*));
     double tmax       = 1e5;              // 1e5 days ~ 273 years
 
     // Run the simulation with the WHCKL method.

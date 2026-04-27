@@ -28,6 +28,15 @@
 
 #define REB_API     // Public REBOUND API definitions
 
+// Helper macros for padding structures
+#if defined(_WIN64) || defined(_LP64)
+#define REB_PAD(s) // 64 bit pointers require no padding
+#else // 32 bit pointers
+#define REB_PAD_CONCAT(a, b) a ## b
+#define REB_PAD_EVAL(a, b) REB_PAD_CONCAT(a, b)
+#define REB_PAD(s) char REB_PAD_EVAL(_pad_, __LINE__)[s];
+#endif
+
 // The restrict keyword has different spellings in different compilers
 #if defined(_MSC_VER)
 #define REB_RESTRICT __restrict
@@ -39,13 +48,9 @@
 #endif
 
 // Windows requires special treatment.
-#ifdef _WIN64
-#define _LP64   // automatically defined on 64bit Linux and MacOS
-#endif // _WIN64
 #ifdef _WIN32
 #define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
-// Windows needs different declarations depending on whether the library is built or used.
-#ifdef BUILDINGLIBREBOUND
+#ifdef BUILDINGLIBREBOUND // Windows needs different declarations depending on whether the library is built or used.
 #define REB_API __declspec(dllexport)
 #else
 #define REB_API __declspec(dllimport)
@@ -56,7 +61,7 @@
 #include <stdint.h> // for integer types
 #include <stddef.h> // for offsetof
 
-// Macros to generate enums that can also be read by python
+// Macros to generate enums whose name can also be read by python
 #define REB_AS_ENUM_MEMBER(prefix, value, name)  prefix ## _ ## name = value,
 #define REB_GENERATE_ENUM(LIST) LIST(REB_AS_ENUM_MEMBER,LIST)
 
@@ -72,7 +77,6 @@ struct reb_display_settings;    // Implemented below.
 struct reb_variational_configuration;  // Implemented below.
 
 // Particle structure
-// Note: Size is 128 bytes, which corresponds to two L1 cache lines (one on Apple silicon).
 struct reb_particle {
     double x;                   // Cartesian coordinates
     double y;
@@ -86,17 +90,11 @@ struct reb_particle {
     double m;                   // Mass in code units
     double r;                   // Physical radius in code units
     const char* name;           // Pointer to a NULL terminated string with the particle's name. Memory owned by simulation.
-#if !defined(_LP64)
-    char pad2[4];               // Padding. ap is not padded to 8 bytes
-#endif
+    REB_PAD(4)
     void* ap;                   // This pointer allows REBOUNDx to add additional properties to the particle.
-#if !defined(_LP64)
-    char pad3[4];               // Padding. ap is short by 4 bytes
-#endif
+    REB_PAD(4)
     struct reb_simulation* sim; // Pointer to the parent simulation.
-#if !defined(_LP64)
-    char pad4[4];               // Padding. sim is short by 4 bytes
-#endif
+    REB_PAD(4)
 };
 
 // Possible datatypes for reb_binarydata_field.
@@ -166,6 +164,7 @@ struct reb_collision{
 };
 
 // Generic integrator callbacks.
+// This can be used to implement a user provided integrator.
 struct reb_integrator {
     void (*step)(struct reb_simulation* r, void* p);        // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r, void* p); // Synchronizes particle state. Optional. Set to NULL if not used.
@@ -176,21 +175,16 @@ struct reb_integrator {
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load the integrator state from restart files for this integrator.
 };
 
-// Internal use only
+// A current integrator configuation. Internal use only.
 struct reb_integrator_configuration {
     const char* name;
     struct reb_integrator callbacks;
     void* state;
 };
 
-
-
-REB_API void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
-REB_API void reb_integrator_register(const struct reb_integrator integrator, const char* name);
-
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
-    X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
+    X(ias15)     /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
 X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
 X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
 X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
@@ -480,8 +474,6 @@ enum REB_STATUS {
 };
 
 
-#undef REB_AS_ENUM_MEMBER
-
 // Main REBOUND Simulation structure
 // Note: only variables that should be accessed by users are documented here.
 struct reb_simulation {
@@ -684,6 +676,14 @@ REB_API int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation
 REB_API int reb_simulation_start_server(struct reb_simulation* r, int port);
 // Stop webserver.
 REB_API void reb_simulation_stop_server(struct reb_simulation* r);
+
+
+// Integrator selelection
+
+// This function sets the integrator of the simulation to the one with the matching name. 
+REB_API void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
+// This function registers a user provided integrator with a unique name. A user provided integrator must be called before the integrator is set.
+REB_API void reb_integrator_register(const struct reb_integrator integrator, const char* name);
 
 
 // Errors, warnings
