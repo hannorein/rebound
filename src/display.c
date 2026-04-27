@@ -121,6 +121,8 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
 #include "simplefont.h"
 
 #ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
 #include <emscripten/fetch.h>
 // Need to use emscripten_ version of these functions because types are wrong otherwise
 void emscripten_glVertexAttribDivisor(GLuint index, GLuint divisor);
