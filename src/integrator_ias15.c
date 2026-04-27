@@ -38,7 +38,6 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include <math.h>
-#include <stddef.h>
 // Uncomment the following line to generate numerical constants with extended precision.
 //#define GENERATE_CONSTANTS
 #ifdef GENERATE_CONSTANTS

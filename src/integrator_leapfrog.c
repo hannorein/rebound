@@ -30,7 +30,6 @@
 #include "rebound.h"
 #include "integrator_leapfrog.h"
 #include "binarydata.h"
-#include <stddef.h>
 
 // Leapfrog Integrator (TU splitting)
 struct reb_integrator_leapfrog_state {

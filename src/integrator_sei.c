@@ -32,7 +32,6 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <math.h>
-#include <stddef.h>
 #include <assert.h>
 #include "particle.h"
 #include "gravity.h"

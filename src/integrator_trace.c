@@ -28,7 +28,6 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#include <stddef.h>
 #include "gravity.h"
 #include "integrator_trace.h"
 #include "integrator_whfast.h"

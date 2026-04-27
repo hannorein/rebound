@@ -30,7 +30,6 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include <math.h>
-#include <stddef.h>
 #include "transformations.h"
 #include "particle.h"
 #include "tools.h"

@@ -27,7 +27,6 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include <math.h>
-#include <stddef.h>
 #include "gravity.h"
 #include "integrator_eos.h"
 #include "integrator_leapfrog.h"

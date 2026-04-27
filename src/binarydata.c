@@ -24,7 +24,6 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <stddef.h>
 #include <stdarg.h>
 #include <inttypes.h>
 #include "rebound.h"

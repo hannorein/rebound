@@ -27,7 +27,6 @@
  */
 
 #include <string.h>
-#include <stddef.h>
 #include "rebound.h"
 #include "rebound_internal.h"
 #include "particle.h"

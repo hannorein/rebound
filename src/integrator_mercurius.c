@@ -30,7 +30,6 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
-#include <stddef.h>
 #include "gravity.h"
 #include "integrator_mercurius.h"
 #include "integrator_whfast.h"
