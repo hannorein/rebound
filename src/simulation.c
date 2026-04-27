@@ -49,6 +49,10 @@
 #include "tools.h"
 #include "gravity.h"
 #include "integrator_bs.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif // __EMSCRIPTEN__
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 

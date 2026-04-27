@@ -44,8 +44,6 @@
 #pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
 #endif
 #elif __EMSCRIPTEN__
-#include <emscripten.h>
-#include <emscripten/html5.h>
 #define REB_RESTRICT
 #define REB_API
 #else // Linux and MacOS
