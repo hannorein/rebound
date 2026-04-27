@@ -75,6 +75,6 @@ void reb_tools_solve_kepler_pal(double h, double k, double lambda, double* p, do
 void reb_tools_particle_to_pal(double G, struct reb_particle p, struct reb_particle primary, double *a, double* lambda, double* k, double* h, double* ix, double* iy);
 
 // Returns the Jacobi center of mass for a given particle. Used by python. Particle needs to be in a simulation.
-DLLEXPORT struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p);
+REB_API struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p);
 
 #endif 	// TOOLS_H

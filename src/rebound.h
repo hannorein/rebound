@@ -36,9 +36,9 @@
 #define REB_RESTRICT
 // Windows needs different declarations depending on whether the library is built or used.
 #ifdef BUILDINGLIBREBOUND
-#define DLLEXPORT __declspec(dllexport)
+#define REB_API __declspec(dllexport)
 #else
-#define DLLEXPORT __declspec(dllimport)
+#define REB_API __declspec(dllimport)
 #endif
 #ifdef _MSC_VER
 #pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
@@ -47,10 +47,10 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #define REB_RESTRICT
-#define DLLEXPORT
+#define REB_API
 #else // Linux and MacOS
 #define REB_RESTRICT restrict
-#define DLLEXPORT
+#define REB_API
 #endif // _WIN32
 
 #include <stdlib.h> // for size_t
@@ -186,8 +186,8 @@ struct reb_integrator_configuration {
 
 
 
-DLLEXPORT void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
-DLLEXPORT void reb_integrator_register(const struct reb_integrator integrator, const char* name);
+REB_API void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
+REB_API void reb_integrator_register(const struct reb_integrator integrator, const char* name);
 
 // Available integrators
 #define REB_AVAILABLE_INTEGRATORS \
@@ -205,7 +205,7 @@ X(whfast512)     /* WHFast integrator, optimized for AVX512                     
 X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
 
 // Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
-#define X(name) DLLEXPORT extern const struct reb_integrator reb_integrator_##name;
+#define X(name) REB_API extern const struct reb_integrator reb_integrator_##name;
 REB_AVAILABLE_INTEGRATORS
 #undef X
 
@@ -669,156 +669,156 @@ struct reb_simulation {
 // Simulation life cycle
 
 // Allocates memory for reb_simulation and initializes it.
-DLLEXPORT struct reb_simulation* reb_simulation_create(void);
+REB_API struct reb_simulation* reb_simulation_create(void);
 // Create a simulation object from a file. Set snapshot=-1 to load last snapshot.
-DLLEXPORT struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot);
+REB_API struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t snapshot);
 // Create a simulation object from a simulationarchive. Set snapshot=-1 to load last snapshot.
-DLLEXPORT struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_simulationarchive* sa, int64_t snapshot);
+REB_API struct reb_simulation* reb_simulation_create_from_simulationarchive(struct reb_simulationarchive* sa, int64_t snapshot);
 // Free simulation and all associated memory.
-DLLEXPORT void reb_simulation_free(struct reb_simulation* const r);
+REB_API void reb_simulation_free(struct reb_simulation* const r);
 // Make a deep copy of simulation.
-DLLEXPORT struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
+REB_API struct reb_simulation* reb_simulation_copy(struct reb_simulation* r);
 // Compare r1 to r2. If exactly equal then 0 is returned, otherwise 1. No output if output_options=0. If output_option=1, then difference is also printed on screen.
-DLLEXPORT int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
+REB_API int reb_simulation_diff(struct reb_simulation* r1, struct reb_simulation* r2, int output_option);
 
 // Start webserver for visualization. Returns 0 on success.
-DLLEXPORT int reb_simulation_start_server(struct reb_simulation* r, int port);
+REB_API int reb_simulation_start_server(struct reb_simulation* r, int port);
 // Stop webserver.
-DLLEXPORT void reb_simulation_stop_server(struct reb_simulation* r);
+REB_API void reb_simulation_stop_server(struct reb_simulation* r);
 
 
 // Errors, warnings
 
 // For fatal errors only. Print out an error message, then exit immediately and kill the process. Does no clean up memory.
-DLLEXPORT void reb_exit(const char* const msg);
+REB_API void reb_exit(const char* const msg);
 // Stop current integration in a nice way. Can be called from within heartbeat function.
-DLLEXPORT void reb_simulation_stop(struct reb_simulation* const r);
+REB_API void reb_simulation_stop(struct reb_simulation* const r);
 // Print or store an info message, then continue.
-DLLEXPORT void reb_simulation_info(struct reb_simulation* const r, const char* const msg);
+REB_API void reb_simulation_info(struct reb_simulation* const r, const char* const msg);
 // Print or store a warning message, then continue.
-DLLEXPORT void reb_simulation_warning(struct reb_simulation* const r, const char* const msg);
+REB_API void reb_simulation_warning(struct reb_simulation* const r, const char* const msg);
 // Print or store an error message, then continue.
-DLLEXPORT void reb_simulation_error(struct reb_simulation* const r, const char* const msg);
+REB_API void reb_simulation_error(struct reb_simulation* const r, const char* const msg);
 
 
 // Output functions
 
 // Write the simulation to file (simulationarchive format). Appends a snapshot if file exists.
-DLLEXPORT void reb_simulation_save_to_file(struct reb_simulation* r, const char* filename);
+REB_API void reb_simulation_save_to_file(struct reb_simulation* r, const char* filename);
 // Schedule regular outputs to a file based on simulation time.
-DLLEXPORT void reb_simulation_save_to_file_interval(struct reb_simulation* const r, const char* filename, double interval);
+REB_API void reb_simulation_save_to_file_interval(struct reb_simulation* const r, const char* filename, double interval);
 // Schedule regular outputs to a file based on wall time.
-DLLEXPORT void reb_simulation_save_to_file_walltime(struct reb_simulation* const r, const char* filename, double walltime);
+REB_API void reb_simulation_save_to_file_walltime(struct reb_simulation* const r, const char* filename, double walltime);
 // Schedule regular outputs to a file based on number of steps taken.
-DLLEXPORT void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step);
+REB_API void reb_simulation_save_to_file_step(struct reb_simulation* const r, const char* filename, uint64_t step);
 // Output timing data to file. Appends file if it exists.
-DLLEXPORT void reb_simulation_output_timing(struct reb_simulation* r, const double tmax);
+REB_API void reb_simulation_output_timing(struct reb_simulation* r, const double tmax);
 // Output orbits to file. Appends file if it exists.
-DLLEXPORT void reb_simulation_output_orbits(struct reb_simulation* r, char* filename);
+REB_API void reb_simulation_output_orbits(struct reb_simulation* r, char* filename);
 // Output cartesian coordinates to file. Appends file if it exists.
-DLLEXPORT void reb_simulation_output_ascii(struct reb_simulation* r, char* filename);
+REB_API void reb_simulation_output_ascii(struct reb_simulation* r, char* filename);
 // Output velocity dispersion tensor to file. Used for ring simulations. Appends file if it exists.
-DLLEXPORT void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* filename);
+REB_API void reb_simulation_output_velocity_dispersion(struct reb_simulation* r, char* filename);
 // Function to allow for periodic outputs in heartbeat function. See examples on how to use it.
-DLLEXPORT int reb_simulation_output_check(struct reb_simulation* r, double interval);
+REB_API int reb_simulation_output_check(struct reb_simulation* r, double interval);
 // Write a screenshot of the current simulation to a file. Requires that a server was started with reb_simulation_start_server() and one client web browser is connected. Returns 0 if successful.
-DLLEXPORT int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filename);
+REB_API int reb_simulation_output_screenshot(struct reb_simulation* r, const char* filename);
 
 
 // Timestepping
 
 // Advance simulation by N_steps timesteps.
-DLLEXPORT void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps);
+REB_API void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps);
 // Integrate simulation to at least time tmax (see exact_finish_time).
-DLLEXPORT enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax);
+REB_API enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax);
 // Synchronize simulation if safe_mode is turned off by integrator to get physical coordinates.
-DLLEXPORT void reb_simulation_synchronize(struct reb_simulation* r);
+REB_API void reb_simulation_synchronize(struct reb_simulation* r);
 
 
 // Functions to operate on simulations
 
 // Move the simulation to the heliocentric frame (particle with index 0 will be at the origin and at rest after calling this function).
-DLLEXPORT void reb_simulation_move_to_hel(struct reb_simulation* const r);
+REB_API void reb_simulation_move_to_hel(struct reb_simulation* const r);
 // Move the simultion to the center of mass frame (the center of mass will be at the origin and at rest after calling this function).
-DLLEXPORT void reb_simulation_move_to_com(struct reb_simulation* const r);
+REB_API void reb_simulation_move_to_com(struct reb_simulation* const r);
 // Multiply x,y,z,vx,vy,vz of each particle in r with given scalars.
-DLLEXPORT void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel);
+REB_API void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel);
 // Add cartesian components of each particle of r2 to cartesian components in r. r2 and r must have same number of particles.
-DLLEXPORT int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
+REB_API int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2);
 // Same as above but subtract r2 from r component wise.
-DLLEXPORT int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
+REB_API int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2);
 // Updates the acceleration of all particles but does not perform a step. Used by REBOUNDx.
-DLLEXPORT void reb_simulation_update_acceleration(struct reb_simulation* r);
+REB_API void reb_simulation_update_acceleration(struct reb_simulation* r);
 
 
 // Diangnostic functions
 
 // Return the sum of potential and kinetic energy
-DLLEXPORT double reb_simulation_energy(struct reb_simulation* const r);
+REB_API double reb_simulation_energy(struct reb_simulation* const r);
 // Returns the angular momentum.
-DLLEXPORT struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* const r);
+REB_API struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* const r);
 // Returns the center of mass of a simulation.
-DLLEXPORT struct reb_particle reb_simulation_com(struct reb_simulation* r);
+REB_API struct reb_particle reb_simulation_com(struct reb_simulation* r);
 // Returns the center of mass of two particles.
-DLLEXPORT struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_particle p2);
+REB_API struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 // Returns the center of mass of particles in the simulation within a given range.
-DLLEXPORT struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t first, size_t last);
+REB_API struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t first, size_t last);
 // Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
-DLLEXPORT double reb_integrator_ias15_timescale(struct reb_simulation* r);
+REB_API double reb_integrator_ias15_timescale(struct reb_simulation* r);
 
 
 // Functions to add and initialize particles
 
 // Use this function to add particle pt to simulation r.
-DLLEXPORT void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt);
+REB_API void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt);
 // Use this function to add a particle to a simulation using orbital parameters or cartesian coordinates. See examples on usage.
-DLLEXPORT void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...);
+REB_API void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...);
 // This function sets up a Plummer sphere, N=number of particles, M=total mass, R=characteristic radius. Particles get added to simulation.
-DLLEXPORT void reb_simulation_add_plummer(struct reb_simulation* r, size_t _N, double M, double R); 
+REB_API void reb_simulation_add_plummer(struct reb_simulation* r, size_t _N, double M, double R); 
 // Returns a particle given a set of orbital parameters. Also sets err to error code if initialization failed.
-DLLEXPORT struct reb_particle reb_particle_from_orbit_err(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f, int* err);
+REB_API struct reb_particle reb_particle_from_orbit_err(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f, int* err);
 // Same as above but without error code.
-DLLEXPORT struct reb_particle reb_particle_from_orbit(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f);
+REB_API struct reb_particle reb_particle_from_orbit(double G, struct reb_particle primary, double m, double a, double e, double i, double Omega, double omega, double f);
 // Returns a particle given a set of Pal orbital parameters.
-DLLEXPORT struct reb_particle reb_particle_from_pal(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
+REB_API struct reb_particle reb_particle_from_pal(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
 // Returns a reb_particle structure with fields/name/ptrs initialized to nan/0/NULL. 
-DLLEXPORT struct reb_particle reb_particle_nan(void);
+REB_API struct reb_particle reb_particle_nan(void);
 
 
 // Functions to access, remove, and operate on particles
 
 // Remove all particles
-DLLEXPORT void reb_simulation_remove_all_particles(struct reb_simulation* const r);
+REB_API void reb_simulation_remove_all_particles(struct reb_simulation* const r);
 // Remove one particle. Remaining particle will keep order. Returns 0 if successful.
-DLLEXPORT int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index);
+REB_API int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index);
 // Remove one particle by name. If multiple particles share the name, one particle will be remove. Which one is undetermined. Returns 0 if successful.
-DLLEXPORT int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name); 
+REB_API int reb_simulation_remove_particle_by_name(struct reb_simulation* r, const char* const name); 
 // Returns a particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
-DLLEXPORT int reb_simulation_particle_index(struct reb_particle* p); 
+REB_API int reb_simulation_particle_index(struct reb_particle* p); 
 // Returns a variational particle's index in the simulation given a pointer to the particle. Returns -1 if not found. 
-DLLEXPORT int reb_simulation_particle_var_index(struct reb_particle* p); 
+REB_API int reb_simulation_particle_var_index(struct reb_particle* p); 
 // Subtract particle p2 from p1
-DLLEXPORT void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2);
+REB_API void reb_particle_isub(struct reb_particle* p1, struct reb_particle* p2);
 // Add particle p2 to p1
-DLLEXPORT void reb_particle_iadd(struct reb_particle* p1, struct reb_particle* p2);
+REB_API void reb_particle_iadd(struct reb_particle* p1, struct reb_particle* p2);
 // Multiply x,y,z,vx,vy,vz,m of p1 with given value.
-DLLEXPORT void reb_particle_imul(struct reb_particle* p1, double value);
+REB_API void reb_particle_imul(struct reb_particle* p1, double value);
 // Return the distance between particle p1 and p2
-DLLEXPORT double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
+REB_API double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
 // Compares two particles, ignoring pointers. Returns 1 if particles differ, 0 if they are exactly equal.
-DLLEXPORT int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
+REB_API int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
 // Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). r can be NULL unless variational particles are used or warnings are needed.
-DLLEXPORT void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
+REB_API void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
 // Sets a particle's name. This function should be used instead of directly setting the name in the particle's structure as it
 // registers the name, allowing for faster lookup and storing of name in binary files.
-DLLEXPORT void reb_particle_set_name(struct reb_particle* p, const char* const name);
+REB_API void reb_particle_set_name(struct reb_particle* p, const char* const name);
 /// Register a string. This copies the string, returns the new pointer. REBOUND will manage the memory of the copy. Used by REBOUNDx.
-DLLEXPORT const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
+REB_API const char* reb_simulation_register_name(struct reb_simulation* r, const char* const name);
 // Returns a pointer to a particle given its name. Returns NULL if not found.
-DLLEXPORT struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
+REB_API struct reb_particle* reb_simulation_get_particle_by_name(struct reb_simulation* r, const char* const name);
 #ifdef MPI
 // When MPI is used, particles cannot be accessed by name. Need to use id instead.
-DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, size_t id);
+REB_API struct reb_particle reb_simulation_particle_by_id(struct reb_simulation* const r, size_t id);
 #endif // MPI
 
 
@@ -826,62 +826,62 @@ DLLEXPORT struct reb_particle reb_simulation_particle_by_id(struct reb_simulatio
 // Chaos indicators
 
 // Turn on MEGNO/Lyapunov calculation. Uses random seen in simulation.
-DLLEXPORT void reb_simulation_init_megno(struct reb_simulation* const r);
+REB_API void reb_simulation_init_megno(struct reb_simulation* const r);
 // Same as above but used given random seed. Useful to reproduce same results every time.
-DLLEXPORT void reb_simulation_init_megno_seed(struct reb_simulation* const r, unsigned int seed);
+REB_API void reb_simulation_init_megno_seed(struct reb_simulation* const r, unsigned int seed);
 // Returns the current MEGNO value,
-DLLEXPORT double reb_simulation_megno(struct reb_simulation* r);
+REB_API double reb_simulation_megno(struct reb_simulation* r);
 // Returns the largest Lyapunov characteristic number (LCN).
-DLLEXPORT double reb_simulation_lyapunov(struct reb_simulation* r);
+REB_API double reb_simulation_lyapunov(struct reb_simulation* r);
 
 
 // Built in mercurius switching functions
 
-DLLEXPORT double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
-DLLEXPORT double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
-DLLEXPORT double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
-DLLEXPORT double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
+REB_API double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
+REB_API double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
+REB_API double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
+REB_API double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
 
 // Built in trace switching functions
 
-DLLEXPORT int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const size_t j);
-DLLEXPORT int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j);
-DLLEXPORT int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j);
+REB_API int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const size_t j);
+REB_API int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j);
+REB_API int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j);
 
 // Built in collision resolve functions
 
-DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c); // halts a simulation when a collision occurs
-DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
-DLLEXPORT enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
+REB_API enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_halt(struct reb_simulation* const r, struct reb_collision c); // halts a simulation when a collision occurs
+REB_API enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
+REB_API enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simulation* const r, struct reb_collision c);
 
 // Random sampling - These functions only use the simulation object for a seed. If r=NULL, time and PID are used as a seed.
 
-DLLEXPORT double reb_random_uniform(struct reb_simulation* r, double min, double max);
-DLLEXPORT double reb_random_powerlaw(struct reb_simulation* r, double min, double max, double slope);
-DLLEXPORT double reb_random_normal(struct reb_simulation* r, double variance);
-DLLEXPORT double reb_random_rayleigh(struct reb_simulation* r, double sigma);
+REB_API double reb_random_uniform(struct reb_simulation* r, double min, double max);
+REB_API double reb_random_powerlaw(struct reb_simulation* r, double min, double max, double slope);
+REB_API double reb_random_normal(struct reb_simulation* r, double variance);
+REB_API double reb_random_rayleigh(struct reb_simulation* r, double sigma);
 
 
 // Miscellaneous functions
 
 // Returns the angle f wrapped in the interval from 0 to 2*pi
-DLLEXPORT double reb_mod2pi(double f);
+REB_API double reb_mod2pi(double f);
 // True anomaly for a given eccentricity and mean anomaly
-DLLEXPORT double reb_M_to_f(double e, double M);
+REB_API double reb_M_to_f(double e, double M);
 // True anomaly for a given eccentricity and eccentric anomaly
-DLLEXPORT double reb_E_to_f(double e, double M);
+REB_API double reb_E_to_f(double e, double M);
 // Eccentric anomaly for a given eccentricity and mean anomaly
-DLLEXPORT double reb_M_to_E(double e, double M);
+REB_API double reb_M_to_E(double e, double M);
 // Returns the hash for a given string. 
-DLLEXPORT uint32_t reb_hash(const char* c);
+REB_API uint32_t reb_hash(const char* c);
 
 
 // Simulationarchive
 
 // Allocate memory for a simulationarchive and initialize it with a file.
-DLLEXPORT struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename);
+REB_API struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char* filename);
 // Free memory allocated by simulationarchive
-DLLEXPORT void reb_simulationarchive_free(struct reb_simulationarchive* sa);
+REB_API void reb_simulationarchive_free(struct reb_simulationarchive* sa);
 
 
 // Orbit calculation
@@ -913,9 +913,9 @@ struct reb_orbit {
     struct reb_vec3d evec;  // eccentricity vector (mag=ecc, points toward peri)
 };
 // Calculates all orbital elements of the particle p, assuming gravitational constant G and the given primary.
-DLLEXPORT struct reb_orbit reb_orbit_from_particle(double G, struct reb_particle p, struct reb_particle primary);
+REB_API struct reb_orbit reb_orbit_from_particle(double G, struct reb_particle p, struct reb_particle primary);
 // Same as above but returns sets an error code if not successful.
-DLLEXPORT struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err);
+REB_API struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, struct reb_particle primary, int* err);
 
 
 // ODE functions
@@ -943,9 +943,9 @@ struct reb_ode{
     struct reb_simulation* r;   // weak reference to main simulation 
 };
 // Allocate memory for an ODE struct, initialize it, and attach it to the simulation. See examples for details on usage.
-DLLEXPORT struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length);
+REB_API struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length);
 // Free an ODE struct.
-DLLEXPORT void reb_ode_free(struct reb_ode* ode);
+REB_API void reb_ode_free(struct reb_ode* ode);
 
 
 // Variational equations
@@ -971,7 +971,7 @@ struct reb_variational_configuration{
 // If testparticle is >= 0, then only one variational particle (the test particle) will be added.
 // If testparticle is -1, one variational particle for each real particle will be added.
 // Returns the index of the first variational particle added
-DLLEXPORT int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle);
+REB_API int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle);
 
 // Add and initialize a set of second order variational particles
 // Note: a set of second order variational particles requires two sets of first order variational equations.
@@ -980,7 +980,7 @@ DLLEXPORT int reb_simulation_add_variation_1st_order(struct reb_simulation* cons
 // index_1st_order_a is the index of the corresponding first variational particles.
 // index_1st_order_b is the index of the corresponding first variational particles.
 // Returns the index of the first variational particle added
-DLLEXPORT int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, size_t index_1st_order_a, size_t index_1st_order_b);
+REB_API int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, size_t index_1st_order_a, size_t index_1st_order_b);
 
 // Rescale all sets of variational particles if their size gets too large (>1e100).
 // This can prevent an overflow in floating point numbers. The logarithm of the rescaling
@@ -989,7 +989,7 @@ DLLEXPORT int reb_simulation_add_variation_2nd_order(struct reb_simulation* cons
 // set the reb_variational_configuration's lrescale variable to -1.
 // For this function to work, the positions and velocities needs to be synchronized. 
 // A warning is presented if the integrator is not synchronized. 
-DLLEXPORT void reb_simulation_rescale_var(struct reb_simulation* const r);
+REB_API void reb_simulation_rescale_var(struct reb_simulation* const r);
 
 // These functions calculates the first/second derivative of a Keplerian orbit. 
 //   Derivatives of Keplerian orbits are required for variational equations, in particular
@@ -1004,71 +1004,71 @@ DLLEXPORT void reb_simulation_rescale_var(struct reb_simulation* const r);
 //   The following variables are supported: a, e, inc, f, omega, Omega, h, k, ix, iy and m (mass). 
 // The functions return the derivative as a particle structure. Each structure element is a derivative.
 // The parameter po is the original particle for which the derivative is to be calculated.
-DLLEXPORT struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_h(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_k(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_k_k(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_h_h(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_lambda_lambda(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_k_lambda(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_h_lambda(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_k_h(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_a(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_ix_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_iy_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_k_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_h_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_lambda_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_lambda_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_h_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_k_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_ix_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_lambda(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_h(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_k(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_a(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_lambda(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_h(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_k(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_ix(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_iy(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_m(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_e(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_e_e(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_inc(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_inc_inc(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_Omega_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_omega_omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_f_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_e(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_inc(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_a_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_e_inc(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_e_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_e_omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_e_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_e(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_inc_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_inc_omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_inc_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_inc(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_omega_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_Omega_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_Omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_omega_f(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_omega(double G, struct reb_particle primary, struct reb_particle po);
-DLLEXPORT struct reb_particle reb_particle_derivative_m_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_lambda(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_h(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_k(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_k_k(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_h_h(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_lambda_lambda(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_k_lambda(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_h_lambda(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_k_h(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_a(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_ix_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_iy_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_k_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_h_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_lambda_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_lambda_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_h_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_k_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_ix_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_lambda(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_h(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_k(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_a(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_lambda(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_h(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_k(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_ix(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_iy(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_m(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_e(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_e_e(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_inc(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_inc_inc(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_Omega_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_omega_omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_f_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_e(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_inc(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_a_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_e_inc(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_e_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_e_omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_e_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_e(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_inc_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_inc_omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_inc_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_inc(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_omega_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_Omega_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_Omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_omega_f(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_omega(double G, struct reb_particle primary, struct reb_particle po);
+REB_API struct reb_particle reb_particle_derivative_m_f(double G, struct reb_particle primary, struct reb_particle po);
 
 // Functions for Frequency Analysis, MFT, FMFT
 enum REB_FREQUENCY_ANALYSIS_TYPE {
@@ -1077,7 +1077,7 @@ enum REB_FREQUENCY_ANALYSIS_TYPE {
     REB_FREQUENCY_ANALYSIS_FMFT2 = 2,
 };
 // Returns 0 on success
-DLLEXPORT int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, size_t ndata);
+REB_API int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double maxfreq, enum REB_FREQUENCY_ANALYSIS_TYPE type, double *input, size_t ndata);
 
 // Functions to convert between coordinate systems
 
@@ -1091,34 +1091,34 @@ struct reb_rotation {
     double r;
 };
 
-DLLEXPORT struct reb_rotation reb_rotation_inverse(const struct reb_rotation q);
-DLLEXPORT struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct reb_rotation q);
+REB_API struct reb_rotation reb_rotation_inverse(const struct reb_rotation q);
+REB_API struct reb_rotation reb_rotation_mul(const struct reb_rotation p, const struct reb_rotation q);
 
-DLLEXPORT struct reb_rotation reb_rotation_identity();
-DLLEXPORT struct reb_rotation reb_rotation_normalize(const struct reb_rotation q);
-DLLEXPORT struct reb_rotation reb_rotation_conjugate(const struct reb_rotation q);
-DLLEXPORT struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_vec3d axis);
-DLLEXPORT struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to);
-DLLEXPORT struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega);
-DLLEXPORT struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
-DLLEXPORT struct reb_rotation reb_rotation_slerp(struct reb_rotation q1, struct reb_rotation q2, double t);
+REB_API struct reb_rotation reb_rotation_identity();
+REB_API struct reb_rotation reb_rotation_normalize(const struct reb_rotation q);
+REB_API struct reb_rotation reb_rotation_conjugate(const struct reb_rotation q);
+REB_API struct reb_rotation reb_rotation_init_angle_axis(const double angle, struct reb_vec3d axis);
+REB_API struct reb_rotation reb_rotation_init_from_to(struct reb_vec3d from, struct reb_vec3d to);
+REB_API struct reb_rotation reb_rotation_init_orbit(const double Omega, const double inc, const double omega);
+REB_API struct reb_rotation reb_rotation_init_to_new_axes(struct reb_vec3d newz, struct reb_vec3d newx);
+REB_API struct reb_rotation reb_rotation_slerp(struct reb_rotation q1, struct reb_rotation q2, double t);
 
 // transformations to/from vec3d
-DLLEXPORT struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
-DLLEXPORT void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
+REB_API struct reb_vec3d reb_tools_spherical_to_xyz(const double mag, const double theta, const double phi);
+REB_API void reb_tools_xyz_to_spherical(struct reb_vec3d const xyz, double* mag, double* theta, double* phi);
 
-DLLEXPORT struct reb_vec3d reb_vec3d_mul(const struct reb_vec3d v, const double s);
-DLLEXPORT struct reb_vec3d reb_vec3d_add(const struct reb_vec3d v, const struct reb_vec3d w);
-DLLEXPORT double reb_vec3d_length_squared(const struct reb_vec3d v);
-DLLEXPORT double reb_vec3d_dot(const struct reb_vec3d a, const struct reb_vec3d b);
-DLLEXPORT struct reb_vec3d reb_vec3d_cross(const struct reb_vec3d a, const struct reb_vec3d b);
-DLLEXPORT struct reb_vec3d reb_vec3d_normalize(const struct reb_vec3d v);
-DLLEXPORT struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, const struct reb_rotation q);
-DLLEXPORT void reb_vec3d_irotate(struct reb_vec3d *v, const struct reb_rotation q);
-DLLEXPORT void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q);
-DLLEXPORT void reb_simulation_irotate(struct reb_simulation* const sim, const struct reb_rotation q);
+REB_API struct reb_vec3d reb_vec3d_mul(const struct reb_vec3d v, const double s);
+REB_API struct reb_vec3d reb_vec3d_add(const struct reb_vec3d v, const struct reb_vec3d w);
+REB_API double reb_vec3d_length_squared(const struct reb_vec3d v);
+REB_API double reb_vec3d_dot(const struct reb_vec3d a, const struct reb_vec3d b);
+REB_API struct reb_vec3d reb_vec3d_cross(const struct reb_vec3d a, const struct reb_vec3d b);
+REB_API struct reb_vec3d reb_vec3d_normalize(const struct reb_vec3d v);
+REB_API struct reb_vec3d reb_vec3d_rotate(struct reb_vec3d v, const struct reb_rotation q);
+REB_API void reb_vec3d_irotate(struct reb_vec3d *v, const struct reb_rotation q);
+REB_API void reb_particle_irotate(struct reb_particle* p, const struct reb_rotation q);
+REB_API void reb_simulation_irotate(struct reb_simulation* const sim, const struct reb_rotation q);
 
-DLLEXPORT void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega);
+REB_API void reb_rotation_to_orbital(struct reb_rotation q, double* Omega, double* inc, double* omega);
 
 #ifdef MPI
 void reb_mpi_init(struct reb_simulation* const r);
@@ -1154,18 +1154,18 @@ struct reb_display_settings {
 };
 
 // Display settings initialization. Overwrites user interactions.
-DLLEXPORT void reb_simulation_add_display_settings(struct reb_simulation* r);
+REB_API void reb_simulation_add_display_settings(struct reb_simulation* r);
 
 // Matrix/vector methods for single precision operations. Used for graphics only
-DLLEXPORT struct reb_mat4df reb_mat4df_identity();
-DLLEXPORT struct reb_mat4df reb_mat4df_scale(struct reb_mat4df m, float x, float y, float z);
-DLLEXPORT void reb_mat4df_print(struct reb_mat4df m);
-DLLEXPORT int reb_mat4df_eq(struct reb_mat4df A, struct reb_mat4df B);
-DLLEXPORT struct reb_vec3df reb_mat4df_get_scale(struct reb_mat4df m);
-DLLEXPORT struct reb_mat4df reb_mat4df_translate(struct reb_mat4df m, float x, float y, float z);
-DLLEXPORT struct reb_mat4df reb_mat4df_multiply(struct reb_mat4df A, struct reb_mat4df B);
-DLLEXPORT struct reb_mat4df reb_rotation_to_mat4df(struct reb_rotation A);
-DLLEXPORT struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t, float n, float f);
+REB_API struct reb_mat4df reb_mat4df_identity();
+REB_API struct reb_mat4df reb_mat4df_scale(struct reb_mat4df m, float x, float y, float z);
+REB_API void reb_mat4df_print(struct reb_mat4df m);
+REB_API int reb_mat4df_eq(struct reb_mat4df A, struct reb_mat4df B);
+REB_API struct reb_vec3df reb_mat4df_get_scale(struct reb_mat4df m);
+REB_API struct reb_mat4df reb_mat4df_translate(struct reb_mat4df m, float x, float y, float z);
+REB_API struct reb_mat4df reb_mat4df_multiply(struct reb_mat4df A, struct reb_mat4df B);
+REB_API struct reb_mat4df reb_rotation_to_mat4df(struct reb_rotation A);
+REB_API struct reb_mat4df reb_mat4df_ortho(float l, float r, float b, float t, float n, float f);
 
 
 #endif // _MAIN_H

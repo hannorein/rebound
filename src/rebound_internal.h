@@ -75,19 +75,19 @@ void reb_sigint_handler(int signum);
 
 
 // Global constants and variables
-DLLEXPORT extern const char* reb_build_str;   ///< Date and time build string.
-DLLEXPORT extern const char* reb_version_str; ///< Version string.
-DLLEXPORT extern const char* reb_githash_str; ///< Current git hash.
-DLLEXPORT extern const char* reb_logo[26];    ///< Logo of rebound. 
-DLLEXPORT extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
-DLLEXPORT extern const unsigned int reb_favicon_len;
-DLLEXPORT extern const size_t reb_messages_max_length;
-DLLEXPORT extern const size_t reb_messages_max_N;
+REB_API extern const char* reb_build_str;   ///< Date and time build string.
+REB_API extern const char* reb_version_str; ///< Version string.
+REB_API extern const char* reb_githash_str; ///< Current git hash.
+REB_API extern const char* reb_logo[26];    ///< Logo of rebound. 
+REB_API extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
+REB_API extern const unsigned int reb_favicon_len;
+REB_API extern const size_t reb_messages_max_length;
+REB_API extern const size_t reb_messages_max_N;
 
 // Free any pointer. Alias for free(). Used by python.
-DLLEXPORT void reb_free(void* p);
+REB_API void reb_free(void* p);
 // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
-DLLEXPORT int reb_pop_message(char** messages, char* const buf); 
+REB_API int reb_pop_message(char** messages, char* const buf); 
 // Print or save a message. 
 enum REB_MESSAGE_TYPE {
     REB_MESSAGE_TYPE_INFO = 'i',
@@ -96,12 +96,12 @@ enum REB_MESSAGE_TYPE {
 };
 void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg);
 // Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
-DLLEXPORT int reb_check_fp_contract(); 
+REB_API int reb_check_fp_contract(); 
 // Wrapper method to set number of OpenMP threads from python.
-DLLEXPORT void reb_omp_set_num_threads(int num_threads);
+REB_API void reb_omp_set_num_threads(int num_threads);
 
 // Lists to find available integrators
-DLLEXPORT char** reb_integrators_registered(); // only used by python
+REB_API char** reb_integrators_registered(); // only used by python
 extern struct reb_integrator_configuration* reb_integrator_configurations_custom;
 
 #endif // _REBOUND_INTERNAL_H

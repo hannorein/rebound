@@ -30,16 +30,16 @@ enum REB_BINARYDATA_ERROR_CODE; // Forward declaration.
 void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, size_t* p2);
 
 // Used from python and for display.
-DLLEXPORT void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE* warnings);
+REB_API void reb_simulation_copy_with_messages(struct reb_simulation* r_copy,  struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE* warnings);
 
 // Serialization functions. Caller is responsible for allocating memory. Null pointers will not be set/read. 
-DLLEXPORT void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
-DLLEXPORT void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
+REB_API void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
+REB_API void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]);
 
 // Used for unit testing only.
-DLLEXPORT size_t reb_simulation_struct_size();
+REB_API size_t reb_simulation_struct_size();
 
 // Return the difference between two simulations as a human readable string. Returned pointer needs to be freed by caller.
-DLLEXPORT char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2);
+REB_API char* reb_simulation_diff_char(struct reb_simulation* r1, struct reb_simulation* r2);
 
 #endif 	// SIMULATION_H

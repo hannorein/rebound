@@ -69,7 +69,7 @@ void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_B
 struct reb_simulation* reb_binarydata_process_warnings(struct reb_simulation* r, enum REB_BINARYDATA_ERROR_CODE warnings);
 
 // Write the simulation to a memory buffer (simulationarchive format).
-DLLEXPORT void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
+REB_API void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, size_t* sizep);
 
 #define REB_AS_STRUCT_MEMBER(prefix, value, name) {value, #name}, 
 #define REB_GENERATE_ENUM_DESCRIPTORS(LIST) \
@@ -85,9 +85,9 @@ struct reb_binarydata_field {
 };
 
 // List of all possible input/ouput fields
-DLLEXPORT extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[];
+REB_API extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[];
 // Helper functions to find descriptor data. Used by python.
-DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type);
-DLLEXPORT struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
+REB_API struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type);
+REB_API struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
 
 #endif // _BINARYDATA_H
