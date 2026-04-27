@@ -56,7 +56,6 @@
 #include <sys/stat.h>
 
 
-
 #define BUFSIZE 1024
 
 const char* reb_server_header =

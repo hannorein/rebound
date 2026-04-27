@@ -28,6 +28,11 @@
 
 // Definitions for functions that we need to implement ourselves on Windows.
 #ifdef _WIN32
+#define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
+#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
+#include <WinSock2.h>
+#define _WINSOCKAPI_ //stops windows.h including winsock.h
+#include <windows.h>
 typedef struct reb_timeval {
     int64_t tv_sec;
     int64_t tv_usec;

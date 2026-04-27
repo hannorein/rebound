@@ -32,11 +32,6 @@
 #define _LP64   // automatically defined on 64bit Linux and MacOS
 #endif // _WIN64
 #ifdef _WIN32
-#define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
-#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
-#include <WinSock2.h>
-#define _WINSOCKAPI_ //stops windows.h including winsock.h
-#include <windows.h>
 #define REB_RESTRICT
 // Windows needs different declarations depending on whether the library is built or used.
 #ifdef BUILDINGLIBREBOUND
@@ -44,7 +39,6 @@
 #else
 #define DLLEXPORT __declspec(dllimport)
 #endif
-#define __restrict__
 #ifdef _MSC_VER
 #pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
 #endif
