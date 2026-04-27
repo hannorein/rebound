@@ -32,6 +32,7 @@
 #define _LP64   // automatically defined on 64bit Linux and MacOS
 #endif // _WIN64
 #ifdef _WIN32
+#define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
 #define REB_RESTRICT
 // Windows needs different declarations depending on whether the library is built or used.
 #ifdef BUILDINGLIBREBOUND
