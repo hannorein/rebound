@@ -92,7 +92,7 @@ class Simulation(Structure):
 
     # Only allow attributes which are fields.
     # Exceptions are listed here. Used to keep reference for function pointers.
-    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp", "_simulation_needsfree_"]
+    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp", "_simulation_needsfree_", "_extras_ref"]
 
     def __new__(cls, *args, **kw):
         clibrebound.reb_simulation_create.restype = POINTER(Simulation)

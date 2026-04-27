@@ -492,8 +492,7 @@ void reb_integrator_whfast_interaction_step(struct reb_simulation* const r, stru
             break;
     };
 }
-void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, const double _dt){
-    struct reb_integrator_whfast_state* whfast = r->integrator.state;
+void reb_integrator_whfast_jump_step(const struct reb_simulation* const r, struct reb_integrator_whfast_state* whfast, const double _dt){
     struct reb_particle* const p_h = whfast->p_jh;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type ==1)?N:r->N_active;
@@ -841,8 +840,7 @@ void reb_integrator_whfast_calculate_jerk(struct reb_simulation* r, struct reb_p
 }
 
 
-int reb_integrator_whfast_init(struct reb_simulation* const r){
-    struct reb_integrator_whfast_state* whfast = r->integrator.state;
+int reb_integrator_whfast_init(struct reb_simulation* const r, struct reb_integrator_whfast_state* whfast){
     if (r->N_var){
         if (whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI){
             reb_simulation_error(r, "Variational particles are only compatible with Jacobi coordinates.");
@@ -994,7 +992,7 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r, struct re
 
 void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,double dt){
     struct reb_integrator_whfast_state* whfast = r->integrator.state;
-    if (reb_integrator_whfast_init(r)){
+    if (reb_integrator_whfast_init(r, whfast)){
         // Non recoverable error occurred.
         return;
     }
@@ -1006,7 +1004,7 @@ void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,
 
 void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* const r,double dt){
     struct reb_integrator_whfast_state* whfast = r->integrator.state;
-    if (reb_integrator_whfast_init(r)){
+    if (reb_integrator_whfast_init(r, whfast)){
         // Non recoverable error occurred.
         return;
     }
@@ -1019,7 +1017,7 @@ void reb_integrator_whfast_debug_operator_interaction(struct reb_simulation* con
 
 void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast_state* whfast = state;
-    if (reb_integrator_whfast_init(r)){
+    if (reb_integrator_whfast_init(r, whfast)){
         // Non recoverable error occurred.
         return;
     }
@@ -1085,7 +1083,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
     const double dt = r->dt;
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
-    if (reb_integrator_whfast_init(r)){
+    if (reb_integrator_whfast_init(r, whfast)){
         // Non recoverable error occurred.
         return;
     }
@@ -1131,7 +1129,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
         reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, r->dt);    // full timestep
         reb_integrator_whfast_com_step(r, whfast->p_jh, r->dt);
     }
-    reb_integrator_whfast_jump_step(r,r->dt/2.);
+    reb_integrator_whfast_jump_step(r, whfast, r->dt/2.);
 
     reb_integrator_whfast_to_inertial(r, whfast->p_jh, whfast->coordinates);
 
@@ -1143,7 +1141,7 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
         case REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT: 
             reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
 
-            reb_integrator_whfast_jump_step(r,dt/2.);
+            reb_integrator_whfast_jump_step(r, whfast, dt/2.);
             break;
         case REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK: 
             // p_jh used as a temporary buffer for "jerk"
