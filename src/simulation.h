@@ -24,7 +24,7 @@
  */
 #ifndef SIMULATION_H
 #define SIMULATION_H
-enum REB_BINARYDATA_ERROR_CODE; // Forward declaration.
+#include "binarydata.h" // for enum REB_BINARYDATA_ERROR_CODE;
 
 // Finds the two largest particles in the simulation. *p1 and *p2 will be set to the indices of the largest particles.
 void reb_simulation_two_largest_particles(struct reb_simulation* r, size_t* p1, size_t* p2);

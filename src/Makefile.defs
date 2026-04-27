@@ -43,12 +43,12 @@ endif
 endif
 # Removed -march=native for now
 ifeq ($(OS), Linux)
-	OPT+= -Wall -g 
+	OPT+= -Wall -Wpedantic -Wno-empty-translation-unit -Wno-strict-prototypes -g 
 	OPTLIB+= -Wextra
 	LIB+= -lm -lrt
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -I/usr/local/include -Wall -g
+	OPT+= -I/usr/local/include -Wall -Wpedantic -Wno-empty-translation-unit -Wno-strict-prototypes -g
 	OPTLIB+= -Wextra
 	PREDEF+= -D_APPLE
 	LIB+= -L/usr/local/lib

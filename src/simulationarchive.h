@@ -26,7 +26,7 @@
 #define SIMULATIONARCHIVE_H
 
 #include <stdint.h>
-enum REB_BINARYDATA_ERROR_CODE; // Forward declaration.
+#include "binarydata.h" // for enum REB_BINARYDATA_ERROR_CODE;
 
 // Simulationarchive structure
 struct reb_simulationarchive{
