@@ -37,6 +37,10 @@
 #include "mpi.h"
 #endif // MPI
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif // __EMSCRIPTEN__
 
 
 // Same as reb_simulation_output_check but with a phase argument
