@@ -27,24 +27,28 @@
 #define _MAIN_H
 
 #define REB_API     // Public REBOUND API definitions
-#define REB_RESTRICT restrict
 
-// Operating system specific options.
+// The restrict keyword has different spellings in different compilers
+#if defined(_MSC_VER)
+#define REB_RESTRICT __restrict
+#pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
+#elif defined(__GNUC__) || defined(__clang__)
+#define REB_RESTRICT __restrict__
+#else
+#define REB_RESTRICT restrict
+#endif
+
 // Windows requires special treatment.
 #ifdef _WIN64
 #define _LP64   // automatically defined on 64bit Linux and MacOS
 #endif // _WIN64
 #ifdef _WIN32
 #define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
-#define REB_RESTRICT
 // Windows needs different declarations depending on whether the library is built or used.
 #ifdef BUILDINGLIBREBOUND
 #define REB_API __declspec(dllexport)
 #else
 #define REB_API __declspec(dllimport)
-#endif
-#ifdef _MSC_VER
-#pragma comment(lib, "legacy_stdio_definitions.lib") // for printf, etc
 #endif
 #endif // _WIN32
 
@@ -81,7 +85,7 @@ struct reb_particle {
     double az;
     double m;                   // Mass in code units
     double r;                   // Physical radius in code units
-    const char* name;           // Pointer to a NULL terminated string with the particle's name.
+    const char* name;           // Pointer to a NULL terminated string with the particle's name. Memory owned by simulation.
 #if !defined(_LP64)
     char pad2[4];               // Padding. ap is not padded to 8 bytes
 #endif
