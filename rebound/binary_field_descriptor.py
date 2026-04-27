@@ -3,8 +3,8 @@ from . import clibrebound
 from .vectors import Vec3dBasic
 
 # Note: ignoring some types that are not supposed to be set by the user
-REB_BINARYDATA_DTYPE = {0: ctypes.c_double, 1: ctypes.c_int, 2: ctypes.c_uint, 3: ctypes.c_uint32, 4: ctypes.c_int64,
-                        5: ctypes.c_uint64, 7: Vec3dBasic, 9: ctypes.c_void_p, 10: ctypes.c_void_p, 18: ctypes.c_size_t}
+REB_BINARYDATA_DTYPE = {1: ctypes.c_double, 2: ctypes.c_int, 3: ctypes.c_uint, 4: ctypes.c_uint32, 5: ctypes.c_int64,
+                        6: ctypes.c_uint64, 7: ctypes.c_size_t, 8: Vec3dBasic, 10: ctypes.c_void_p, 11: ctypes.c_void_p}
 
 class EnumDescriptor(ctypes.Structure):
     _fields_ = [("value", ctypes.c_int), 

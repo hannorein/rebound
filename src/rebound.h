@@ -99,43 +99,21 @@ struct reb_particle {
 
 // Possible datatypes for reb_binarydata_field.
 enum REB_BINARYDATA_DTYPE {
-    REB_DOUBLE = 0,
-    REB_INT = 1,
-    REB_UINT = 2,                // Same as UINT32
-    REB_UINT32 = 3,
-    REB_INT64 = 4,
-    REB_UINT64 = 5,
-    // REB_ULONGLONG = 6,        // No longer used. Using explicit lengths instead.
-    REB_VEC3D = 7,
-    REB_PARTICLE = 8,
-    REB_POINTER = 9,
-    REB_POINTER_ALIGNED = 10,    // memory aligned to 64 bit boundary for AVX512
-                                 // REB_DP7 = 11,             // No longer used. Using REB_POINTER instead.
+    REB_FIELD_NOT_FOUND = 0,     // Special type used to throw error messages
+    REB_DOUBLE = 1,
+    REB_INT = 2,
+    REB_UINT = 3,                // Same as UINT32
+    REB_UINT32 = 4,
+    REB_INT64 = 5,
+    REB_UINT64 = 6,
+    REB_SIZE_T = 7,
+    REB_VEC3D = 8,
+    REB_PARTICLE = 9,
+    REB_POINTER = 10,
+    REB_POINTER_ALIGNED = 11,    // memory aligned to 64 bit boundary for AVX512
     REB_OTHER = 12,              // Fields that need special treatment during input and/or output
-                                 // REB_FIELD_END = 13,       // No longer used. Was special type to indicate end of blob
-    REB_FIELD_NOT_FOUND = 14,    // Special type used to throw error messages
-                                 // REB_PARTICLE4 = 15,       // No longer used. Was used for WHFast512.
-                                 // REB_POINTER_FIXED_SIZE = 16, // No longer used. Now using REB_POINTER instead.
-    REB_CHARP_LIST = 17,         // A list of NULL terminated strings (char**).
-    REB_SIZE_T = 18,
-    REB_INT64_INIT = 19,         // A special field that stores an ID. Will require some special initialization.
+    REB_CHARP_LIST = 13,         // A list of NULL terminated strings (char**).
     REB_STRING = 20,             // NULL character terminated string
-};
-
-struct reb_binarydata_enum_descriptor{
-    int value;
-    char name[256];
-};
-
-// Binary field descriptors are used to identify data blobs in simulationarchives.
-struct reb_binarydata_field_descriptor {
-    uint32_t type;              // Unique id for each field. Should not change between versions. Ids should not be reused.
-    enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
-    char name[256];            // Null terminated human readable name.
-    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
-    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
-    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
-    struct reb_binarydata_enum_descriptor* enum_descriptor;
 };
 
 // Generic 3d vector
@@ -163,6 +141,23 @@ struct reb_collision{
     size_t ri;              // Root cell index (MPI only)
 };
 
+// Dictionary element to provie human readable name for enums. Used by python.
+struct reb_binarydata_enum_descriptor{
+    int value;
+    char name[256];
+};
+
+// Binary field descriptors are used to identify data blobs in simulationarchives.
+struct reb_binarydata_field_descriptor {
+    uint32_t type;              // Unique id for each field. Should not change between versions. Ids should not be reused.
+    enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
+    char name[256];             // Null terminated human readable name.
+    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
+    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
+    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
+    struct reb_binarydata_enum_descriptor* enum_descriptor; // Null terminated list that allows enums to be set/read by string in python.
+};
+
 // Generic integrator callbacks.
 // This can be used to implement a user provided integrator.
 struct reb_integrator {
@@ -182,7 +177,7 @@ struct reb_integrator_configuration {
     void* state;
 };
 
-// Available integrators
+// Available built-in integrators
 #define REB_AVAILABLE_INTEGRATORS \
 X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
 X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
