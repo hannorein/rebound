@@ -354,16 +354,9 @@ static int reb_check_exit(struct reb_simulation* const r, const double tmax, dou
         }
     }
 #ifndef MPI
-    if (!r->N){
-        if (!r->N_odes){
-            reb_simulation_warning(r,"No particles found. Will exit.");
-            r->status = REB_STATUS_NO_PARTICLES; // Exit now.
-        }else{
-            if (strcmp(r->integrator.name, "bs")!=0){
-                reb_simulation_warning(r,"No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
-                r->status = REB_STATUS_NO_PARTICLES; // Exit now.
-            }
-        }
+    if (!r->N && !r->N_odes){
+        reb_simulation_warning(r,"No particles in simulation. Will exit.");
+        r->status = REB_STATUS_NO_PARTICLES; // Exit now.
     }
 #else
     int status_max = 0;
@@ -535,35 +528,30 @@ static void reb_simulation_step(struct reb_simulation* const r){
 
     // Integrate other ODEs
     if (r->N_odes && strcmp(r->integrator.name, "bs")!=0){
-        // TODO: Reimplement
-        //if (r->ode_warnings==0 && (!r->ri_whfast.safe_mode || !r->ri_saba.safe_mode || !r->ri_eos.safe_mode || !r->ri_mercurius.safe_mode)){
-        //    reb_simulation_warning(r, "Safe mode should be enabled when custom ODEs are being used.");
-        //    r->ode_warnings = 1;
-        //}
-
-        // double dt = r->dt_last_done;
-        // double t = r->t - r->dt_last_done; // Note: floating point inaccuracy
-        // double forward = (dt>0.) ? 1. : -1.;
-        // r->ri_bs.first_or_last_step = 1;
-        // while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
-        //     if (reb_sigint > 1){
-        //         r->status = REB_STATUS_SIGINT;
-        //         return;
-        //     }
-        //     if (r->ri_bs.dt_proposed !=0.){
-        //         double max_dt = fabs(r->t - t);
-        //         dt = fabs(r->ri_bs.dt_proposed);
-        //         if (dt > max_dt){ // Don't overshoot N-body timestep
-        //             dt = max_dt;
-        //             r->ri_bs.first_or_last_step = 1;
-        //         }
-        //         dt *= forward;
-        //     }
-        //     int success = reb_integrator_bs_step_odes(r, dt);
-        //     if (success){
-        //         t += dt;
-        //     }
-        // }
+         double dt = r->dt_last_done;
+         double t = r->t - r->dt_last_done; // Note: floating point inaccuracy
+         double forward = (dt>0.) ? 1. : -1.;
+         struct reb_integrator_bs_state* bs = reb_integrator_bs.create();
+         while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
+             if (reb_sigint > 1){
+                 r->status = REB_STATUS_SIGINT;
+                 return;
+             }
+             if (bs->dt_proposed !=0.){
+                 double max_dt = fabs(r->t - t);
+                 dt = fabs(bs->dt_proposed);
+                 if (dt > max_dt){ // Don't overshoot N-body timestep
+                     dt = max_dt;
+                     bs->first_or_last_step = 1;
+                 }
+                 dt *= forward;
+             }
+             int success = reb_integrator_bs_step_odes(r, bs, dt);
+             if (success){
+                 t += dt;
+             }
+         }
+         reb_integrator_bs.free(bs);
     }
 
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR);

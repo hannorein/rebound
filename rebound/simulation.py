@@ -1462,7 +1462,6 @@ Simulation._fields_ = [
                 ("_odes", POINTER(POINTER(ODE))),
                 ("_N_odes", c_size_t),
                 ("_N_allocated_odes", c_size_t),
-                ("_odes_warnings", c_int),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),

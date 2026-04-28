@@ -629,7 +629,6 @@ struct reb_simulation {
     struct reb_ode** odes;      // all ode sets (includes nbody if BS is set as integrator)
     size_t N_odes;                 // number of ode sets
     size_t N_allocated_odes;
-    int ode_warnings;
 
     // Callback functions
     void (*additional_forces) (struct reb_simulation* const r);             // Implement any additional (non-gravitational) forces here.
