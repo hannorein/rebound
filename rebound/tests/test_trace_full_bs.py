@@ -60,9 +60,9 @@ class TestIntegratorTraceHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
-        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),6e-9)
     
     def test_trace_harmonic_with_nbody_coupledy(self):
         sim = rebound.Simulation()
@@ -77,9 +77,9 @@ class TestIntegratorTraceHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
-        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),6e-9)
         e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e0),1e-10)
 

@@ -10,6 +10,41 @@ def derivatives_ho(ode, yDot, y, t):
     yDot[0] = y[1]
     yDot[1] = -k/m*y[0]
 
+class TestIntegratorNonBSHarmonic(unittest.TestCase):
+    # Test various integrators for N-body but BS for other ODEs
+    def test_harmonic_with_nbody(self):
+        for integrator in ["ias15", "leapfrog"]:
+            sim = rebound.Simulation()
+            sim.add(m=1)
+            sim.add(m=1e-3,a=1,e=0.123);
+            sim.add(m=1e-3,a=2.6,e=0.123);
+            sim.dt = 0.1 
+            sim.integrator = integrator
+            ode_ho = sim.create_ode(length=2, needs_nbody=False)
+            ode_ho.derivatives = derivatives_ho
+
+            ode_ho.y[0] = 1. 
+            ode_ho.y[1] = 0. # zero velocity
+
+            sim.integrate(20.5*math.pi)
+            self.assertLess(math.fabs(ode_ho.y[0]+1.),1.5e-9)
+            self.assertLess(math.fabs(ode_ho.y[1]),5e-9)
+   
+    def test_harmonic_only(self):
+        for integrator in ["ias15", "leapfrog"]:
+            sim = rebound.Simulation()
+            sim.dt = 0.1 
+            sim.integrator = integrator
+            ode_ho = sim.create_ode(length=2, needs_nbody=False)
+            ode_ho.derivatives = derivatives_ho
+
+            ode_ho.y[0] = 1. 
+            ode_ho.y[1] = 0. # zero velocity
+
+            sim.integrate(10.5*math.pi)
+            self.assertLess(math.fabs(ode_ho.y[0]+1.),1.5e-9)
+            self.assertLess(math.fabs(ode_ho.y[1]),5e-9)
+
 class TestIntegratorBSHarmonic(unittest.TestCase):
     def test_bs_harmonic_only(self):
         sim = rebound.Simulation()
