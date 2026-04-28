@@ -201,7 +201,7 @@ void reb_simulation_free(struct reb_simulation* const r){
 
 static void* set_integrator(struct reb_simulation* r, const char* name, struct reb_integrator integrator){
     // Memory for name is constant. Does not need to be released.
-    if (r->integrator.callbacks.free){
+    if (r->integrator.callbacks.free && r->integrator.state){
         r->integrator.callbacks.free(r->integrator.state);
     }
     r->integrator.callbacks = integrator;

@@ -199,10 +199,6 @@ The setting for WHFast are stored in the `reb_integrator_whfast` structure, whic
         sim.ri_whfast.coordinates = "barycentric"
         ```
 
-`unsigned int recalculate_coordinates_this_timestep`
-:   Setting this flag to one will recalculate the internal coordinates from the particle structure in the next timestep. 
-    After the timestep, the flag gets set back to 0. If you want to change particles after every timestep, you also need to set this flag to 1 before every timestep. Default is 0.
-
 `unsigned int safe_mode`
 :   If this flag is set (the default), WHFast will recalculate the internal coordinates (Jacobi/heliocentric/WHDS/barycentric) and synchronize every timestep, to avoid problems with outputs or particle modifications between timesteps. 
     Setting it to 0 will result in a speedup, but care must be taken to synchronize and recalculate the internal coordinates when needed. See also the AdvWHFast.ipynb tutorial.
@@ -392,12 +388,6 @@ The `reb_integrator_mercurius` structure contains the configuration and data str
 
 `double r_crit_hill`
 :   The critical switchover radii of particles are calculated automatically based on multiple criteria. One criterion calculates the Hill radius of particles and then multiplies it with the `r_crit_hill` parameter. The parameter is in units of the Hill radius. The default value is 3. 
-
-`unsigned int recalculate_coordinates_this_timestep`
-:   Setting this flag to one will recalculate heliocentric coordinates from the particle structure at the beginning of the next timestep. After a single timestep, the flag gets set back to 0. If one changes a particle manually after a timestep, then one needs to set this flag to 1 before the next timestep.
-
-`unsigned int recalculate_r_crit_this_timestep`
-:   Setting this flag to one will recalculate the critical switchover distances dcrit at the beginning of the next timestep. After one timestep, the flag gets set back to 0. If you want to recalculate `dcrit` at every timestep, you also need to set this flag to 1 before every timestep.
 
 `unsigned int safe_mode`
 :   If this flag is set to 1 (the default), the integrator will recalculate heliocentric coordinates and synchronize after every timestep to avoid problems with outputs or particle modifications between timesteps. Setting this flag to 0 will result in a speedup, but care must be taken to synchronize and recalculate coordinates manually if needed.
