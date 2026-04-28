@@ -537,3 +537,4 @@ void reb_communication_mpi_distribute_essential_tree_for_collisions(struct reb_s
 
 
 #endif // MPI
+typedef int reb_communication_mpi_ignore_empty_compilation_unit;

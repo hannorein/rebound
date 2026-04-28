@@ -106,6 +106,7 @@ void reb_integrator_ias15_free(void* p){
     free(ias15->csx);
     free(ias15->csv);
     free(ias15->csa0);
+    free(ias15);
 }
 
 // Generic pointer with 7 elements, for internal use only (IAS15).
