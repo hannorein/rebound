@@ -673,6 +673,9 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
             if (_testparticle_type){
                 reb_simulation_error(r,"testparticletype=1 not implemented for second order variational equations.");
             }
+            if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_NONE){
+                reb_simulation_error(r,"Second order variational equations do not support gravity_ignore_terms");
+            }
             //////////////////
             /// 2nd order  ///
             //////////////////
@@ -687,9 +690,6 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                 }
                 for (size_t i=0; i<N; i++){
                     for (size_t j=i+1; j<N; j++){
-                        // TODO: Need to implement WH skipping
-                        //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
-                        //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
                         const double dx = particles[i].x - particles[j].x;
                         const double dy = particles[i].y - particles[j].y;
                         const double dz = particles[i].z - particles[j].z;
@@ -781,9 +781,6 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                 particles_var2[0].az = 0.; 
                 for (size_t j=0; j<N; j++){
                     if (i==j) continue;
-                    // TODO: Need to implement WH skipping
-                    //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_BETWEEN_0_AND_1 && ((j==1 && i==0) || (i==1 && j==0))) continue;
-                    //if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_INVOLVING_0 && ((j==0 || i==0))) continue;
                     const double dx = particles[i].x - particles[j].x;
                     const double dy = particles[i].y - particles[j].y;
                     const double dz = particles[i].z - particles[j].z;
