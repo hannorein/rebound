@@ -6,6 +6,13 @@ This changelog only includes the most important changes in recent updates. For a
 
 ### Version 5.0.0
 * A lot of changes!
+* Custom integrators
+* integrators not woven into other parts
+* Particle are kept sorted
+* Names
+* Automatic python enum names
+* Python only allows setting defined attributes
+
 
 ## Version 4.x
 
