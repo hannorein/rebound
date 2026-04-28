@@ -77,6 +77,7 @@ void reb_integrator_trace_free(void* state){
     free(trace->particles_backup_additional_forces);
     free(trace->encounter_map);
     free(trace->encounter_map_backup);
+    free(trace);
 }
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j){

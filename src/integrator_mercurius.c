@@ -85,6 +85,7 @@ void reb_integrator_mercurius_free(void* p){
     free(mercurius->particles_backup_additional_forces);
     free(mercurius->encounter_map);
     free(mercurius->dcrit);
+    free(mercurius);
 }
 
 
