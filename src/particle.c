@@ -71,6 +71,8 @@ void reb_simulation_add(struct reb_simulation* const r, struct reb_particle pt){
     if (r->integrator.callbacks.did_add_particle){
         r->integrator.callbacks.did_add_particle(r);
     }
+
+    r->did_modify_particles = 1;
 }
 
 // Compares two particles. Return 0 if identical.
@@ -340,6 +342,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index)
 
     if (r->N==1){
         r->N = 0;
+        r->did_modify_particles = 1;
         if(r->free_particle_ap){
             r->free_particle_ap(&r->particles[index]);
         }
@@ -365,6 +368,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index)
         r->particles[j] = r->particles[j+1];
     }
 
+    r->did_modify_particles = 1;
     return 0; // Success
 }
 

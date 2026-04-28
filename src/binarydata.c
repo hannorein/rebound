@@ -93,6 +93,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 54, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
     { 55, REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0, 0},
     { 65, REB_UINT,         "is_synchronized",              offsetof(struct reb_simulation, is_synchronized), 0, 0, 0},
+    { 66, REB_UINT,         "did_modify_particles",         offsetof(struct reb_simulation, did_modify_particles), 0, 0, 0},
     { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
     { 403, REB_POINTER,     "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
     { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},

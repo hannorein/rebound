@@ -525,9 +525,6 @@ static void reb_simulation_step(struct reb_simulation* const r){
     if (r->pre_timestep_modifications){
         reb_simulation_synchronize(r);
         r->pre_timestep_modifications(r);
-        // TODO: reimplement
-        //r->ri_whfast.recalculate_coordinates_this_timestep = 1;
-        //r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
 
     PROFILING_START();
@@ -574,10 +571,11 @@ static void reb_simulation_step(struct reb_simulation* const r){
     if (r->post_timestep_modifications){
         reb_simulation_synchronize(r);
         r->post_timestep_modifications(r);
-        // TODO: reimplement
-        //r->ri_whfast.recalculate_coordinates_this_timestep = 1;
-        //r->ri_mercurius.recalculate_coordinates_this_timestep = 1;
     }
+    
+    // Reset tainted particle flag
+    r->did_modify_particles = 0;
+
 
     if (r->N_var){
         reb_simulation_rescale_var(r);
@@ -609,6 +607,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
         r->walltime_last_steps_N = 0;
     }
     r->walltime += r->walltime_last_step;
+
     // Update step counter
     r->steps_done++; // This also counts failed IAS15 steps
 }

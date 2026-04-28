@@ -232,8 +232,6 @@ struct reb_integrator_ias15_state {
 struct reb_integrator_mercurius_state {
     double (*L) (const struct reb_simulation* const r, double d, double dcrit); // Switching function (default same as Mercury) 
     double r_crit_hill;                                 // Critical switching distance in units of Hill radii
-    unsigned int recalculate_coordinates_this_timestep; // Set to 1 if particles have been modified
-    unsigned int recalculate_r_crit_this_timestep;      // Set to 1 if to recalculate critical switching radii
     unsigned int safe_mode;                             // Combine Kick steps at beginning and end of timestep
 
     // Internal use
@@ -325,8 +323,8 @@ struct reb_integrator_saba_state {
     } type;                             // Type of integrator
     unsigned int safe_mode;             // Combine first and last sub-step
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization
-    unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
-                                                                // Internal use
+                                        
+    // Internal use
     size_t N_allocated;
     struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
     size_t N_allocated_temp;
@@ -353,7 +351,6 @@ struct reb_integrator_whfast_state {
     enum {
         REB_GENERATE_ENUM(REB_INTEGRATOR_WHFAST_COORDINATES)
     } coordinates;                                              // Coordinate system used in Hamiltonian splitting
-    unsigned int recalculate_coordinates_this_timestep;         // 1: recalculate coordinates from inertial coordinates
     unsigned int safe_mode;                                     // 0: Drift Kick Drift scheme (default), 1: combine first and last sub-step.
     unsigned int keep_unsynchronized;                           // 1: continue from unsynchronized state after synchronization 
 
@@ -480,10 +477,10 @@ struct reb_simulation {
     double  dt;                     // Timestep. Default: 0.001.
     double  dt_last_done;           // Last successful timestep.
     uint64_t steps_done;            // Number of timesteps done.
-    unsigned int is_synchronized;   // If 1 then positions and velocities of particles are in inertial frame.
-                                    // If 0, call reb_simulation_synchronize() first.
+    unsigned int is_synchronized;   // Positions and velocities of particles are in inertial frame if 1. Otherwise call reb_simulation_synchronize().
+    unsigned int did_modify_particles; // Should be set to 1 if a particle got modified manually in-between timesteps.
 
-                                    // Main particles array
+    // Main particles array
     size_t  N;                      // Number of particles (includes variational particles). Default: 0.
     size_t  N_allocated;            // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.

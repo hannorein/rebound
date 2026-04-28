@@ -260,13 +260,12 @@ void reb_integrator_saba_step(struct reb_simulation* const r, void* state){
     if (saba->N_allocated != N){
         saba->N_allocated = N;
         saba->p_jh = realloc(saba->p_jh,sizeof(struct reb_particle)*N);
-        saba->recalculate_coordinates_this_timestep = 1;
+        r->did_modify_particles = 1;
     }
 
     // Only recalculate Jacobi coordinates if needed
-    if (saba->safe_mode || saba->recalculate_coordinates_this_timestep){
+    if (saba->safe_mode || r->did_modify_particles){
         reb_integrator_whfast_from_inertial(r, saba->p_jh, REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI);
-        saba->recalculate_coordinates_this_timestep = 0;
     }
     if (type>=0x100){ // Correctors on
         if (r->is_synchronized){

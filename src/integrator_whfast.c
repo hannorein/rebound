@@ -43,7 +43,6 @@
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
     { 61, REB_UINT,         "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
-    { 62, REB_UINT,         "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_whfast_state, recalculate_coordinates_this_timestep), 0, 0, 0},
     { 63, REB_UINT,         "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
     { 64, REB_UINT,         "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
     { 104, REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle), 0},
@@ -75,7 +74,6 @@ void* reb_integrator_whfast_create(){
     whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI;
     whfast->keep_unsynchronized = 0;
     whfast->safe_mode = 1;
-    whfast->recalculate_coordinates_this_timestep = 0;
     whfast->recalculate_coordinates_but_not_synchronized_warning = 0;
     return whfast;
 }
@@ -908,7 +906,7 @@ int reb_integrator_whfast_init(struct reb_simulation* const r, struct reb_integr
     if (whfast->N_allocated != N){
         whfast->N_allocated = N;
         whfast->p_jh = realloc(whfast->p_jh,sizeof(struct reb_particle)*N);
-        whfast->recalculate_coordinates_this_timestep = 1;
+        r->did_modify_particles = 1;
     }
     return 0;
 }
@@ -1090,16 +1088,15 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
     struct reb_particle* const p_jh = whfast->p_jh;
 
     // Only recalculate Jacobi coordinates if needed
-    if (whfast->safe_mode || whfast->recalculate_coordinates_this_timestep){
+    if (whfast->safe_mode || r->did_modify_particles){
         if (r->is_synchronized==0){
             reb_integrator_whfast_synchronize(r, whfast);
             if (whfast->recalculate_coordinates_but_not_synchronized_warning==0){
-                reb_simulation_warning(r,"Recalculating coordinates but pos/vel were not synchronized before.");
+                reb_simulation_warning(r,"Particles were modified while simulation was not synchronized.");
                 whfast->recalculate_coordinates_but_not_synchronized_warning++;
             }
         }
         reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
-        whfast->recalculate_coordinates_this_timestep = 0;
     }
     if (r->is_synchronized){
         // First half DRIFT step

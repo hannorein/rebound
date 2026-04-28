@@ -51,7 +51,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_desc
     { 118, REB_DOUBLE,      "r_crit_hill",     offsetof(struct reb_integrator_mercurius_state, r_crit_hill), 0, 0, 0},
     { 119, REB_UINT,        "safe_mode",       offsetof(struct reb_integrator_mercurius_state, safe_mode), 0, 0, 0},
     { 122, REB_POINTER,     "dcrit",           offsetof(struct reb_integrator_mercurius_state, dcrit), offsetof(struct reb_integrator_mercurius_state, N_allocated_dcrit), sizeof(double), 0},
-    { 123, REB_UINT,        "recalculate_coordinates_this_timestep", offsetof(struct reb_integrator_mercurius_state, recalculate_coordinates_this_timestep), 0, 0, 0},
     { 133, REB_VEC3D,       "com_pos",         offsetof(struct reb_integrator_mercurius_state, com_pos), 0, 0, 0},
     { 134, REB_VEC3D,       "com_vel",         offsetof(struct reb_integrator_mercurius_state, com_vel), 0, 0, 0},
     { 0 }, // Null terminated list
@@ -73,8 +72,6 @@ void* reb_integrator_mercurius_create(){
     mercurius->r_crit_hill = 3;
     mercurius->tponly_encounter = 0;
     mercurius->safe_mode = 1;
-    mercurius->recalculate_coordinates_this_timestep = 0;
-    mercurius->recalculate_r_crit_this_timestep = 0;
     mercurius->L = reb_integrator_mercurius_L_mercury;
     return mercurius;
 }
@@ -738,8 +735,7 @@ void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r){
     struct reb_integrator_mercurius_state* mercurius = r->integrator.state;
     switch (mercurius->mode){
         case REB_INTEGRATOR_MERCURIUS_MODE_WH:
-            mercurius->recalculate_r_crit_this_timestep      = 1;
-            mercurius->recalculate_coordinates_this_timestep = 1;
+            // Nothing to do here. r->did_modify_particles will get set automatically
             break;
         case REB_INTEGRATOR_MERCURIUS_MODE_ENCOUNTER:
             if (mercurius->N_allocated_dcrit<r->N){
@@ -810,11 +806,9 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
         // Need to safe these arrays in Simulationarchive
         mercurius->dcrit              = realloc(mercurius->dcrit, sizeof(double)*N);
         mercurius->N_allocated_dcrit = N;
-        // If particle number increased (or this is the first step), need to calculate critical radii
-        mercurius->recalculate_r_crit_this_timestep        = 1;
         // Heliocentric coordinates were never calculated.
         // This will get triggered on first step only (not when loaded from archive)
-        mercurius->recalculate_coordinates_this_timestep = 1;
+        r->did_modify_particles = 1;
     }
     if (mercurius->N_allocated<N){
         // These arrays are only used within one timestep. 
@@ -823,21 +817,18 @@ void reb_integrator_mercurius_step(struct reb_simulation* r, void* state){
         mercurius->encounter_map      = realloc(mercurius->encounter_map,sizeof(size_t)*N);
         mercurius->N_allocated = N;
     }
-    if (mercurius->safe_mode || mercurius->recalculate_coordinates_this_timestep){
+    if (mercurius->safe_mode || r->did_modify_particles){
         if (r->is_synchronized==0){
             reb_integrator_mercurius_synchronize(r, state);
-            reb_simulation_warning(r,"MERCURIUS: Recalculating heliocentric coordinates but coordinates were not synchronized before.");
+            reb_simulation_warning(r,"Particles were modified while simulation was not synchronized.");
         }
         reb_integrator_mercurius_inertial_to_dh(r, mercurius);
-        mercurius->recalculate_coordinates_this_timestep = 0;
     }
 
-    if (mercurius->recalculate_r_crit_this_timestep){
-        mercurius->recalculate_r_crit_this_timestep = 0;
+    if (r->did_modify_particles){
         if (r->is_synchronized==0){
             reb_integrator_mercurius_synchronize(r, mercurius);
             reb_integrator_mercurius_inertial_to_dh(r, mercurius);
-            mercurius->recalculate_coordinates_this_timestep = 0;
             reb_simulation_warning(r,"MERCURIUS: Recalculating dcrit but pos/vel were not synchronized before.");
         }
         mercurius->dcrit[0] = 2.*r->particles[0].r; // central object only uses physical radius
@@ -904,7 +895,6 @@ void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state)
 
         reb_integrator_mercurius_dh_to_inertial(r, mercurius);
 
-        mercurius->recalculate_coordinates_this_timestep = 1; 
         r->is_synchronized = 1;
     }
 }

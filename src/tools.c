@@ -1333,10 +1333,7 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
                 particles[i].vy /= scale;
                 particles[i].vz /= scale;
             }
-
-            //if (reb_integrator_cmp(r->integrator, reb_integrator_whfast)==0 && r->ri_whfast.safe_mode == 0){
-            //    r->ri_whfast.recalculate_coordinates_this_timestep = 1;
-            //}
+            r->did_modify_particles = 1;
         }
     }
 }
