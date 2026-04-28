@@ -323,7 +323,7 @@ struct reb_integrator_saba_state {
     } type;                             // Type of integrator
     unsigned int safe_mode;             // Combine first and last sub-step
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization
-                                        
+
     // Internal use
     size_t N_allocated;
     struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates

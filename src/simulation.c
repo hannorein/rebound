@@ -528,30 +528,30 @@ static void reb_simulation_step(struct reb_simulation* const r){
 
     // Integrate other ODEs
     if (r->N_odes && strcmp(r->integrator.name, "bs")!=0){
-         double dt = r->dt_last_done;
-         double t = r->t - r->dt_last_done; // Note: floating point inaccuracy
-         double forward = (dt>0.) ? 1. : -1.;
-         struct reb_integrator_bs_state* bs = reb_integrator_bs.create();
-         while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
-             if (reb_sigint > 1){
-                 r->status = REB_STATUS_SIGINT;
-                 return;
-             }
-             if (bs->dt_proposed !=0.){
-                 double max_dt = fabs(r->t - t);
-                 dt = fabs(bs->dt_proposed);
-                 if (dt > max_dt){ // Don't overshoot N-body timestep
-                     dt = max_dt;
-                     bs->first_or_last_step = 1;
-                 }
-                 dt *= forward;
-             }
-             int success = reb_integrator_bs_step_odes(r, bs, dt);
-             if (success){
-                 t += dt;
-             }
-         }
-         reb_integrator_bs.free(bs);
+        double dt = r->dt_last_done;
+        double t = r->t - r->dt_last_done; // Note: floating point inaccuracy
+        double forward = (dt>0.) ? 1. : -1.;
+        struct reb_integrator_bs_state* bs = reb_integrator_bs.create();
+        while(t*forward < r->t*forward && fabs((r->t - t)/(fabs(r->t)+1e-16))>1e-15){
+            if (reb_sigint > 1){
+                r->status = REB_STATUS_SIGINT;
+                return;
+            }
+            if (bs->dt_proposed !=0.){
+                double max_dt = fabs(r->t - t);
+                dt = fabs(bs->dt_proposed);
+                if (dt > max_dt){ // Don't overshoot N-body timestep
+                    dt = max_dt;
+                    bs->first_or_last_step = 1;
+                }
+                dt *= forward;
+            }
+            int success = reb_integrator_bs_step_odes(r, bs, dt);
+            if (success){
+                t += dt;
+            }
+        }
+        reb_integrator_bs.free(bs);
     }
 
     PROFILING_STOP(PROFILING_CAT_INTEGRATOR);
@@ -560,7 +560,7 @@ static void reb_simulation_step(struct reb_simulation* const r){
         reb_simulation_synchronize(r);
         r->post_timestep_modifications(r);
     }
-    
+
     // Reset tainted particle flag
     r->did_modify_particles = 0;
 
