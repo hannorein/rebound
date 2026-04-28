@@ -673,7 +673,7 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
             if (_testparticle_type){
                 reb_simulation_error(r,"testparticletype=1 not implemented for second order variational equations.");
             }
-            if (gravity_ignore_terms==REB_GRAVITY_IGNORE_TERMS_NONE){
+            if (gravity_ignore_terms!=REB_GRAVITY_IGNORE_TERMS_NONE){
                 reb_simulation_error(r,"Second order variational equations do not support gravity_ignore_terms");
             }
             //////////////////

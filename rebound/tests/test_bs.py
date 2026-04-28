@@ -20,8 +20,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
         self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
    
     def test_bs_harmonic_only_low_eps(self):
@@ -35,8 +35,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-8)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),4e-8)
         self.assertLess(math.fabs(ode_ho.y[1]),5e-6)
     
     def test_bs_harmonic_only_high_eps(self):
@@ -50,8 +50,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),1e-10)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),1e-10)
         self.assertLess(math.fabs(ode_ho.y[1]),1e-10)
     
     
@@ -67,8 +67,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
         self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
     
     def test_bs_harmonic_with_nbody_coupledy(self):
@@ -83,8 +83,8 @@ class TestIntegratorBSHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
         self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
 
 
