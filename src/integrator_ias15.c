@@ -40,10 +40,6 @@
 #include <math.h>
 // Uncomment the following line to generate numerical constants with extended precision.
 //#define GENERATE_CONSTANTS
-#ifdef GENERATE_CONSTANTS
-#include <gmp.h>
-void integrator_generate_constants(void);
-#endif // GENERATE_CONSTANTS
 #include "particle.h"
 #include "gravity.h"
 #include "tools.h"
@@ -832,11 +828,13 @@ static void copybuffers(const struct reb_dpconst7 _a, const struct reb_dpconst7 
 // Do nothing here. This is only used in a leapfrog-like DKD integrator. IAS15 performs one complete timestep.
 void reb_integrator_ias15_step(struct reb_simulation* r, void* state){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
-#ifdef GENERATE_CONSTANTS
-    integrator_generate_constants();
-#endif  // GENERATE_CONSTANTS
+    if (r->N){
         // Try until a step was successful.
-    while(!reb_integrator_ias15_step_try(r, state));
+        while(!reb_integrator_ias15_step_try(r, state));
+    }else{
+        r->t += r->dt;
+        r->dt_last_done = r->dt;
+    }
 }
 
 
@@ -937,6 +935,7 @@ double reb_integrator_ias15_timescale(struct reb_simulation* r){
 }
 
 #ifdef GENERATE_CONSTANTS
+#include <gmp.h>
 void integrator_generate_constants(void){
     printf("Generating constants.\n\n");
     mpf_set_default_prec(512);
