@@ -754,7 +754,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
             if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
                 switch (r->ri_trace.mode){
                     case REB_TRACE_MODE_INTERACTION: // Interaction step
-                    {
+                        {
                             const int idxA = 0;
                             const int idxB = reb_simulation_particle_index(reb_simulation_particle_by_hash(r, reb_hash("widebinary"))); // binary companion is always last active particle
                             const int has_binary = (idxB != -1);
@@ -805,7 +805,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
 
                             // Second term in Equation 14 compute C = sum_i m_i * (Xb - Xi + s)/|...|^3
                             struct reb_vec3d C = {0};
-                            
+
                             // Active-active planet interactions
                             for (int i=2; i<_N_active;i++){
                                 if (reb_sigint > 1) return;
@@ -995,7 +995,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                 switch (r->ri_trace.mode){
                     case REB_TRACE_MODE_INTERACTION: // Interaction step
                         {
-    #ifndef OPENMP
+#ifndef OPENMP
                             for (int i=0; i<_N_real; i++){
                                 particles[i].ax = 0;
                                 particles[i].ay = 0;
@@ -1044,11 +1044,11 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 }
                             }
 
-    #else // OPENMP
+#else // OPENMP
                             particles[0].ax = 0;
                             particles[0].ay = 0;
                             particles[0].az = 0;
-    #pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(guided)
                             for (int i=1; i<_N_real; i++){
                                 particles[i].ax = 0;
                                 particles[i].ay = 0;
@@ -1081,7 +1081,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                     }
                                 }
                             }
-    #endif // OPENMP
+#endif // OPENMP
                         }
                         break;
                     case REB_TRACE_MODE_KEPLER: // BS part
@@ -1091,7 +1091,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                             const int encounter_N = r->ri_trace.encounter_N;
                             const int encounter_N_active = r->ri_trace.encounter_N_active;
                             int* map = r->ri_trace.encounter_map;
-    #ifndef OPENMP
+#ifndef OPENMP
                             particles[0].ax = 0; // map[0] is always 0
                             particles[0].ay = 0;
                             particles[0].az = 0;
@@ -1161,13 +1161,13 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                     }
                                 }
                             }
-    #else // OPENMP
+#else // OPENMP
                             particles[0].ax = 0; // map[0] is always 0
                             particles[0].ay = 0;
                             particles[0].az = 0;
                             // We're in a heliocentric coordinate system.
                             // The star feels no acceleration
-    #pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(guided)
                             for (int i=1; i<encounter_N; i++){
                                 int mi = map[i];
                                 particles[mi].ax = 0;
@@ -1197,7 +1197,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                 }
                             }
                             if (_testparticle_type){
-    #pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(guided)
                                 for (int i=1; i<encounter_N_active; i++){
                                     int mi = map[i];
                                     const double x = particles[mi].x;
@@ -1217,7 +1217,7 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                                     }
                                 }
                             }
-    #endif // OPENMP
+#endif // OPENMP
                         }
                         break;
                     case REB_TRACE_MODE_NONE: // In-between steps. Do not calculate anything. 
@@ -1226,8 +1226,8 @@ void reb_simulation_update_acceleration_gravity(struct reb_simulation* r){
                         reb_simulation_error(r, "TRACE mode not supported in gravity.c");
                         break;
                 }
-        }
-        break;
+            }
+            break;
         default:
             reb_exit("Gravity calculation not yet implemented.");
     }
