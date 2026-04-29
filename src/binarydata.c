@@ -36,10 +36,14 @@
 #include "simulationarchive.h"
 #include "integrator_whfast512.h"
 
-// List of REBOUND parameters to be written to a file.
+// Masks to identify module for fields. Currently only module is integrator.
+// Note: header has some high bits set to 1.
+const uint32_t reb_binarydata_mask_simulation = 0x0;
+const uint32_t reb_binarydata_mask_integrator = 0x80000000;
+
+// Null terminated list of REBOUND parameters to be written to a file.
 // Modify this list if you wish to input/output additional fields in the reb_simulation structure.
 const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[]= {
-    { 1329743186, REB_OTHER,"header", 0, 0, 0, 0},
     { 1,  REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0}, // used to be id 0
     { 2,  REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0, 0},
     { 3,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0, 0},
@@ -93,29 +97,26 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 51, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
     { 52, REB_POINTER,      "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
     { 53, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},
-    { 54, REB_OTHER,        "functionpointers", 0, 0, 0, 0},
-    { 55, REB_INT,          "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0, 0},
-    { 56, REB_DOUBLE,       "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0, 0},
-    { 57, REB_DOUBLE,       "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0, 0},
-    { 58, REB_UINT32,       "python_unit_l",                offsetof(struct reb_simulation, python_unit_l), 0, 0, 0},
-    { 59, REB_UINT32,       "python_unit_m",                offsetof(struct reb_simulation, python_unit_m), 0, 0, 0},
-    { 60, REB_UINT32,       "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0, 0},
-    { 61, REB_UINT64,       "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0, 0},
-    { 62, REB_UINT64,       "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0, 0},
-    { 63, REB_UINT64,       "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0, 0},
-    { 64, REB_DOUBLE,       "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
-    { 65, REB_UINT,         "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
-    { 66, REB_INT,          "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
-    { 67, REB_POINTER,      "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
-    { 68, REB_CHARP_LIST,   "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
+    { 54, REB_INT,          "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0, 0},
+    { 55, REB_DOUBLE,       "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0, 0},
+    { 56, REB_DOUBLE,       "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0, 0},
+    { 57, REB_UINT32,       "python_unit_l",                offsetof(struct reb_simulation, python_unit_l), 0, 0, 0},
+    { 58, REB_UINT32,       "python_unit_m",                offsetof(struct reb_simulation, python_unit_m), 0, 0, 0},
+    { 59, REB_UINT32,       "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0, 0},
+    { 60, REB_UINT64,       "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0, 0},
+    { 61, REB_UINT64,       "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0, 0},
+    { 62, REB_UINT64,       "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0, 0},
+    { 63, REB_DOUBLE,       "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
+    { 64, REB_UINT,         "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
+    { 65, REB_INT,          "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
+    { 66, REB_POINTER,      "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
+    { 67, REB_CHARP_LIST,   "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
+    { 9997, REB_OTHER,      "functionpointers", 0, 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0, 0},
     { 9999, REB_OTHER,      "end", 0, 0, 0, 0},
+    { 0x4F424552, REB_OTHER,"header", 0, 0, 0, 0},
     {0} // Null terminated.
 };
-
-
-const uint32_t reb_binarydata_mask_simulation = 0x0;
-const uint32_t reb_binarydata_mask_integrator = 0x10000000;
 
 
 // This is a custom implementation of a dynamic memory buffer stream. 
@@ -626,6 +627,7 @@ next_field:
         char* base_address = (char*)r;
         const struct reb_binarydata_field_descriptor* current_fd_list = reb_binarydata_field_descriptor_list;
 
+        // Fields that correspond to an integrator are bit masked.
         if (field.type & reb_binarydata_mask_integrator){
             field.type ^= reb_binarydata_mask_integrator;
             current_fd_list = r->integrator.callbacks.field_descriptor_list;
