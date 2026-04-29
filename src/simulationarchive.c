@@ -144,7 +144,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             break;
         }
-        if (field.type == fd_header.type){
+        if (field.id == fd_header.id){
             int64_t objects = 0;
             // Input header.
             const int64_t bufsize = 64 - sizeof(struct reb_binarydata_field);
@@ -192,20 +192,20 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 }
             }
 
-        }else if (field.type == fd_t.type){
+        }else if (field.id == fd_t.id){
             fread(&t0, field.size, 1, sa->inf);
-        }else if (field.type == fd_sa_version.type){
+        }else if (field.id == fd_sa_version.id){
             fread(&(sa->version), field.size, 1, sa->inf);
-        }else if (field.type == fd_sa_auto_walltime.type){
+        }else if (field.id == fd_sa_auto_walltime.id){
             fread(&(sa->auto_walltime), field.size, 1, sa->inf);
-        }else if (field.type == fd_sa_auto_interval.type){
+        }else if (field.id == fd_sa_auto_interval.id){
             fread(&(sa->auto_interval), field.size, 1, sa->inf);
-        }else if (field.type == fd_sa_auto_step.type){
+        }else if (field.id == fd_sa_auto_step.id){
             fread(&(sa->auto_step), field.size, 1, sa->inf);
         }else{
             fseek(sa->inf,field.size,SEEK_CUR);
         }
-    }while(field.type!=fd_end.type);
+    }while(field.id!=fd_end.id);
 
     // Make index
     if (sa->version<5){
@@ -236,24 +236,24 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             do{
                 size_t r1 = fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
                 if (r1==1){
-                    if (field.type == fd_header.type){
-                        if (debug) printf("SA Field. type=HEADER\n");
+                    if (field.id == fd_header.id){
+                        if (debug) printf("SA Field. id=HEADER\n");
                         int s1 = fseek(sa->inf,64 - sizeof(struct reb_binarydata_field),SEEK_CUR);
                         if (s1){
                             read_error = 1;
                         }
-                    }else if (field.type == fd_t.type){
+                    }else if (field.id == fd_t.id){
                         size_t r2 = fread(&(sa->t[i]), field.size,1,sa->inf);
-                        if (debug) printf("SA Field. type=TIME      value=%.10f\n",sa->t[1]);
+                        if (debug) printf("SA Field. id=TIME      value=%.10f\n",sa->t[1]);
                         if (r2!=1){
                             read_error = 1;
                         }
-                    }else if (field.type == fd_end.type){
-                        if (debug) printf("SA Field. type=END   =====\n");
+                    }else if (field.id == fd_end.id){
+                        if (debug) printf("SA Field. id=END   =====\n");
                         blob_finished = 1;
                     }else{
                         int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                        if (debug) printf("SA Field. type=%-6d    size=%" PRIu64 "\n",field.type,(uint64_t)field.size);
+                        if (debug) printf("SA Field. id=%-6d    size=%" PRIu64 "\n",field.id,(uint64_t)field.size);
                         if (s2){
                             read_error = 1;
                         }
@@ -453,7 +453,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         do{
             bytesread = (int)fread(&field,sizeof(struct reb_binarydata_field),1,of);
             fseek(of, field.size, SEEK_CUR);
-        }while(field.type!=fd_end.type && bytesread);
+        }while(field.id!=fd_end.id && bytesread);
         int64_t size_old = ftell(of);
         if (bytesread!=1){
             reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
@@ -501,7 +501,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
             if (seek_ok!=0 || bytesread!=1){
                 file_corrupt = 1;
             }
-            if (field.type != fd_end.type || field.size !=0){
+            if (field.id != fd_end.id || field.size !=0){
                 // expected an END field
                 file_corrupt = 1;
             }
@@ -526,7 +526,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
                     break;
                 }
                 bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
-                if (bytesread != 1 || field.type != fd_end.type){ // could be EOF or corrupt snapshot
+                if (bytesread != 1 || field.id != fd_end.id){ // could be EOF or corrupt snapshot
                     break;
                 }
                 bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
@@ -558,7 +558,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 
-        field.type = fd_end.type;
+        field.id = fd_end.id;
         field.size = 0;
         fwrite(&field,sizeof(struct reb_binarydata_field), 1, of);
         blob.index++;

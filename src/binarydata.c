@@ -137,14 +137,14 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
 }
 
 // This function is only used in simulation_diff. 
-struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type){
+struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_id(uint32_t id){
     int i=-1;
     do{
         i++;
-        if (reb_binarydata_field_descriptor_list[i].type==type){
+        if (reb_binarydata_field_descriptor_list[i].id==id){
             return reb_binarydata_field_descriptor_list[i];
         }
-    } while (reb_binarydata_field_descriptor_list[i].type);
+    } while (reb_binarydata_field_descriptor_list[i].id);
     struct reb_binarydata_field_descriptor bfd = {
         .dtype = REB_FIELD_NOT_FOUND,
         .name = "field_not_found",
@@ -160,7 +160,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         if (strcmp(reb_binarydata_field_descriptor_list[i].name, name)==0){
             return reb_binarydata_field_descriptor_list[i];
         }
-    } while (reb_binarydata_field_descriptor_list[i].type);
+    } while (reb_binarydata_field_descriptor_list[i].id);
     // We should never arrive here.
     reb_simulation_error(NULL, "Could not find field descriptor for name.");
     // TODO Fix this for integrator values which are not found.
@@ -261,7 +261,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         struct reb_binarydata_field field1;
         memcpy(&field1, buf1+pos1, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos1 += sizeof(struct reb_binarydata_field);
-        if (field1.type==fd_end.type){
+        if (field1.id==fd_end.id){
             break;
         }
         if (pos2+sizeof(struct reb_binarydata_field)>size2) pos2 = 64;
@@ -270,7 +270,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         pos2 += sizeof(struct reb_binarydata_field);
 
         // Fields might not be in the same order.
-        if (field1.type!=field2.type){
+        if (field1.id!=field2.id){
             // Will search for element in buf2, starting at beginning just past header
             // Note that we ignore all ADDITIONAL fields in buf2 that were not present in buf1 
             pos2 = 64;
@@ -282,11 +282,11 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 }
                 memcpy(&field2, buf2+pos2, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
                 pos2 += sizeof(struct reb_binarydata_field);
-                if(field2.type==fd_end.type){
+                if(field2.id==fd_end.id){
                     notfound = 1;
                     break;
                 }
-                if (field2.type==field1.type){
+                if (field2.id==field1.id){
                     break; // found!!
                 }else{
                     pos2 += field2.size; //skip
@@ -304,7 +304,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                     case REB_BINARYDATA_OUTPUT_PRINT:
                     case REB_BINARYDATA_OUTPUT_BUFFER:
                         {
-                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
+                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_id(field1.id);
                             asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
                             asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
                             asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
@@ -317,12 +317,12 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 continue;
             }
         }
-        // Can assume field1.type == field2.type from here on
+        // Can assume field1.id == field2.id from here on
         if (pos1+field1.size>size1) printf("Corrupt binary file buf1.\n");
         if (pos2+field2.size>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size==field2.size){
-            if (strcmp(reb_binarydata_field_descriptor_for_type(field1.type).name, "particles")==0){
+            if (strcmp(reb_binarydata_field_descriptor_for_id(field1.id).name, "particles")==0){
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (size_t i=0;i<field1.size/sizeof(struct reb_particle);i++){
@@ -341,7 +341,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             fields_differ = 1;
         }
         if(fields_differ){
-            if (strncmp(reb_binarydata_field_descriptor_for_type(field1.type).name, "walltime",8)!=0){
+            if (strncmp(reb_binarydata_field_descriptor_for_id(field1.id).name, "walltime",8)!=0){
                 // Ignore the walltime fields, but only for the return value (print it out)
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
@@ -354,7 +354,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 case REB_BINARYDATA_OUTPUT_PRINT:
                 case REB_BINARYDATA_OUTPUT_BUFFER:
                     {
-                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field1.type);
+                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_id(field1.id);
                         asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
                         asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
                         asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
@@ -377,7 +377,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         struct reb_binarydata_field field2;
         memcpy(&field2, buf2+pos2, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos2 += sizeof(struct reb_binarydata_field);
-        if (field2.type==fd_end.type){
+        if (field2.id==fd_end.id){
             break;
         }
         if (pos1+sizeof(struct reb_binarydata_field)>size1) pos1 = 64;
@@ -385,7 +385,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         memcpy(&field1, buf1+pos1, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos1 += sizeof(struct reb_binarydata_field);
 
-        if (field1.type==field2.type){
+        if (field1.id==field2.id){
             // Not a new field. Skip.
             pos1 += field1.size;
             pos2 += field2.size;
@@ -402,11 +402,11 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             }
             memcpy(&field1, buf1+pos1, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
             pos1 += sizeof(struct reb_binarydata_field);
-            if(field1.type==fd_end.type){
+            if(field1.id==fd_end.id){
                 notfound = 1;
                 break;
             }
-            if (field2.type==field1.type){
+            if (field2.id==field1.id){
                 break; // found it, not new
             }else{
                 // not found, try next
@@ -429,7 +429,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             case REB_BINARYDATA_OUTPUT_PRINT:
             case REB_BINARYDATA_OUTPUT_BUFFER:
                 {
-                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field2.type);
+                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_id(field2.id);
                     asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
                     asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
                     asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
@@ -448,9 +448,9 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 // Output all fields from one field_descriptor list
 static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address, uint32_t mask){
     if (!fd_list) return; 
-    for (size_t i=0; fd_list[i].type; i++){
+    for (size_t i=0; fd_list[i].id; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
-        struct reb_binarydata_field field = {.type = fd.type ^ mask};
+        struct reb_binarydata_field field = {.id = fd.id ^ mask};
         char** pointer_to_value = (char**)(base_address + fd.offset);
         switch (fd.dtype){
             case REB_DOUBLE: 
@@ -591,14 +591,14 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     struct reb_binarydata_field_descriptor fd_fp = reb_binarydata_field_descriptor_for_name("functionpointers");
     struct reb_binarydata_field field_functionp;
     memset(&field_functionp,0,sizeof(struct reb_binarydata_field));
-    field_functionp.type = fd_fp.type; 
+    field_functionp.id = fd_fp.id; 
     field_functionp.size = sizeof(int);
     write_to_stream(bufp, &allocatedsize, current_pos, &field_functionp, sizeof(struct reb_binarydata_field));
     write_to_stream(bufp, &allocatedsize, current_pos, &functionpointersused, field_functionp.size);
 
     // Write last field
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
-    struct reb_binarydata_field end_field = {.type = fd_end.type, .size = 0};
+    struct reb_binarydata_field end_field = {.id = fd_end.id, .size = 0};
     write_to_stream(bufp, &allocatedsize, current_pos, &end_field, sizeof(struct reb_binarydata_field));
 
     struct reb_simulationarchive_blob blob = {0};
@@ -620,7 +620,7 @@ next_field:
         if (numread<1){
             goto finish_fields; // End of file
         }
-        if (field.type==fd_end.type){
+        if (field.id==fd_end.id){
             goto finish_fields; // End of snapshot
         }
 
@@ -628,17 +628,17 @@ next_field:
         const struct reb_binarydata_field_descriptor* current_fd_list = reb_binarydata_field_descriptor_list;
 
         // Fields that correspond to an integrator are bit masked.
-        if (field.type & reb_binarydata_mask_integrator){
-            field.type ^= reb_binarydata_mask_integrator;
+        if (field.id & reb_binarydata_mask_integrator){
+            field.id ^= reb_binarydata_mask_integrator;
             current_fd_list = r->integrator.callbacks.field_descriptor_list;
             base_address = (char*)r->integrator.state;
         }
 
         // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
         int i=0;
-        while (current_fd_list && current_fd_list[i].type){
+        while (current_fd_list && current_fd_list[i].id){
             struct reb_binarydata_field_descriptor fd = current_fd_list[i];
-            if (fd.type==field.type){
+            if (fd.id==field.id){
                 // Read simple data types
                 if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
                         || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
@@ -719,7 +719,7 @@ next_field:
         }
 
         // Fields with types that require special handling
-        if (field.type == fd_functionpointers.type){
+        if (field.id == fd_functionpointers.id){
             // Warning for when function pointers were used. 
             // No effect on simulation.
             int fpwarn;
@@ -729,7 +729,7 @@ next_field:
             }
             goto next_field;
         }
-        if (field.type == fd_header.type){
+        if (field.id == fd_header.id){
             // Check header.
             int64_t objects = 0;
             const size_t bufsize = 64 - sizeof(struct reb_binarydata_field);
@@ -750,7 +750,7 @@ next_field:
         }
 
 
-        // We should never get here. If so, it's an unknown field type.
+        // We should never get here. If so, it's an unknown field id.
         *warnings |= REB_BINARYDATA_WARNING_FIELD_UNKNOWN;
         int err = fseek(inf, field.size, SEEK_CUR);
         if (err){

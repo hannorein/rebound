@@ -80,14 +80,14 @@ REB_API void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char*
 
 // This structure is written/read to files. Precedes the actual data. 
 struct reb_binarydata_field { 
-    uint32_t type;  // type as given by reb_binarydata_field_descriptor
+    uint32_t id;    // id as given by reb_binarydata_field_descriptor
     uint64_t size;  // Size in bytes of field (only counting what follows, not including reb_binarydata_field itself).
 };
 
 // List of all possible input/ouput fields
 REB_API extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[];
 // Helper functions to find descriptor data. Used by python.
-REB_API struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_type(uint32_t type);
+REB_API struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_id(uint32_t type);
 REB_API struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
 
 #endif // _BINARYDATA_H
