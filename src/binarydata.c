@@ -453,97 +453,108 @@ static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* al
     if (!fd_list) return; 
     for (size_t i=0; fd_list[i].type; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
-        int dtype = fd.dtype;
-        // Simple data types:
-        if (dtype == REB_DOUBLE || dtype == REB_INT || dtype == REB_UINT || dtype == REB_UINT32
-                || dtype == REB_INT64 || dtype == REB_UINT64 || dtype == REB_PARTICLE 
-                || dtype == REB_VEC3D || dtype == REB_SIZE_T || dtype == REB_STRING ){
-            char* pointer = base_address + fd.offset;
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = fd.type;
-            switch (dtype){
-                case REB_DOUBLE: 
-                    field.size = sizeof(double);
-                    break;
-                case REB_INT: 
-                    field.size = sizeof(int);
-                    break;
-                case REB_SIZE_T: 
-                    field.size = sizeof(size_t);
-                    break;
-                case REB_UINT: 
-                    field.size = sizeof(unsigned int);
-                    break;
-                case REB_UINT32: 
-                    field.size = sizeof(uint32_t);
-                    break;
-                case REB_INT64:
-                    field.size = sizeof(int64_t);
-                    break;
-                case REB_UINT64:
-                    field.size = sizeof(uint64_t);
-                    break;
-                case REB_VEC3D:
-                    field.size = sizeof(struct reb_vec3d);
-                    break;
-                case REB_PARTICLE:
-                    field.size = sizeof(struct reb_particle);
-                    break;
-                case REB_STRING: 
-                    if (*pointer){
-                        field.size = strlen(*(char**)pointer)+1;
-                        pointer = *(char**)pointer;
-                    }else{
-                        field.size = 0;
+        struct reb_binarydata_field field = {.type = fd.type};
+        char** pointer_to_value = (char**)(base_address + fd.offset);
+        switch (fd.dtype){
+            case REB_DOUBLE: 
+                field.size = sizeof(double);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_INT: 
+                field.size = sizeof(int);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_SIZE_T: 
+                field.size = sizeof(size_t);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_UINT: 
+                field.size = sizeof(unsigned int);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_UINT32: 
+                field.size = sizeof(uint32_t);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_INT64:
+                field.size = sizeof(int64_t);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_UINT64:
+                field.size = sizeof(uint64_t);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_VEC3D:
+                field.size = sizeof(struct reb_vec3d);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_PARTICLE:
+                field.size = sizeof(struct reb_particle);
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_STRING: 
+                if (*pointer_to_value){
+                    field.size = strlen(*pointer_to_value)+1;
+                    pointer_to_value = (char**)(*pointer_to_value);
+                }else{
+                    field.size = 0;
+                }
+                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                break;
+            case REB_POINTER:
+            case REB_POINTER_ALIGNED:
+                {
+                    size_t pointer_N = 0;
+                    if (fd.offset_N!=SIZE_MAX){ // Dynamic N if offset_N is given
+                        pointer_N = *(size_t*)(base_address + fd.offset_N);
+                    }else{ // Fixed size pointer_to_value.
+                        if (*pointer_to_value){
+                            pointer_N = 1; // Pointer is not NULL, thus store one element.
+                        }
                     }
-                    break;
-            }
-            write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-            write_to_stream(bufp, allocatedsize, current_pos, pointer, field.size);
-        }
-        // Pointer data types
-        if (dtype == REB_POINTER || dtype == REB_POINTER_ALIGNED ){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = fd.type;
-            size_t pointer_N = 0;
-            char** pointer = (char**)(base_address + fd.offset);
-            if (fd.offset_N!=SIZE_MAX){ // Dynamic N if offset_N is given
-                pointer_N = *(size_t*)(base_address + fd.offset_N);
-            }else{ // Fixed size pointer.
-                if (*pointer){
-                    pointer_N = 1; // Pointer is not NULL, thus store one element.
-                }
-            }
-            field.size = pointer_N * fd.element_size;
+                    field.size = pointer_N * fd.element_size;
 
-            if (field.size){
-                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, *pointer, field.size);
-            }
-        }
-        if (dtype == REB_CHARP_LIST ){
-            struct reb_binarydata_field field;
-            memset(&field,0,sizeof(struct reb_binarydata_field));
-            field.type = fd.type;
-            size_t N_list = *((size_t*)(base_address + fd.offset_N));
-            char*** list_p = (char***)(base_address + fd.offset);
-            size_t serialized_size = 0;
-            for (size_t i=0; i<N_list; i++){
-                // character count + NULL character + original pointer
-                serialized_size += strlen((*list_p)[i])+1+sizeof(char*);
-            }
-            field.size = sizeof(char)*serialized_size;
-
-            if (field.size){
-                // This pointer arithmetic will fail on 32 bit architectures.
-                write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                for (size_t i=0; i<N_list; i++){
-                    write_to_stream(bufp, allocatedsize, current_pos, (*list_p)[i], strlen((*list_p)[i])+1);
-                    write_to_stream(bufp, allocatedsize, current_pos, &((*list_p)[i]), sizeof(char*));
+                    if (field.size){
+                        write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                        write_to_stream(bufp, allocatedsize, current_pos, *pointer_to_value, field.size);
+                    }
                 }
-            }
+                break;
+            case REB_CHARP_LIST:
+                {
+                    size_t N_list = *((size_t*)(base_address + fd.offset_N));
+                    char*** list_p = (char***)pointer_to_value; // pointer to a list of strings
+                    size_t serialized_size = 0;
+                    for (size_t i=0; i<N_list; i++){
+                        // character count + NULL character + original pointer
+                        serialized_size += strlen((*list_p)[i])+1+sizeof(char*);
+                    }
+                    field.size = sizeof(char)*serialized_size;
+
+                    if (field.size){
+                        // This pointer arithmetic will fail on 32 bit architectures.
+                        write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                        for (size_t i=0; i<N_list; i++){
+                            write_to_stream(bufp, allocatedsize, current_pos, (*list_p)[i], strlen((*list_p)[i])+1);
+                            write_to_stream(bufp, allocatedsize, current_pos, &((*list_p)[i]), sizeof(char*));
+                        }
+                    }
+                }
+                break;
+            case REB_OTHER:
+            case REB_FIELD_NOT_FOUND:
+                // Special fields are not written to output.
+                break;
         }
     }
 }
