@@ -262,7 +262,11 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
                 r->ri_trace.N_allocated_additional_forces = r->N;
             }
             memcpy(r->ri_trace.particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
-            reb_integrator_trace_dh_to_inertial(r);
+            if (r->ri_trace.coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
+                reb_integrator_trace_wb_to_inertial(r);
+            } else{
+                reb_integrator_trace_dh_to_inertial(r);
+            }
         }
         r->additional_forces(r);
         if (r->integrator==REB_INTEGRATOR_MERCURIUS){
