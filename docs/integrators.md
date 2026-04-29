@@ -426,6 +426,40 @@ The following code enables TRACE and sets the critical radius to 4 Hill radii
 
 The `reb_integrator_trace` structure contains the configuration and data structures used by the hybrid symplectic TRACE integrator.
 
+`unsigned int coordinates`
+:   TRACE supports different coordinate systems. 
+    Default are democratic heliocentric coordinates, but wide binary coordinates ([Chambers et al 2002](https://ui.adsabs.harvard.edu/abs/2002AJ....123.2884C/abstract)) may also be used.
+    The syntax to use them is 
+    
+    === "C"
+        ```c
+        r->ri_trace.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;  // or
+        r->ri_trace.coordinates = REB_WHFAST_COORDINATES_WIDEBINARY;
+        ```
+
+    === "Python"
+        ```python
+        sim.ri_trace.coordinates = "democraticheliocentric" # or
+        sim.ri_whfast.coordinates = "widebinary"
+        ```
+    
+    Note that if wide binary coordinates are used, the companion must be identified with the hash "widebinary"
+
+    === "C"
+        ```c
+        struct reb_particle wb = {.x=100.};
+        wb.hash = reb_hash("widebinary");
+
+        // or, for instance,
+
+        reb_simulation_add_fmt(r, "m a hash", 1., 100., "reb_hash("widebinary"));
+        ```
+
+    === "Python"
+        ```python
+        reb_simulation_add(m=1., x=100., hash='widebinary')
+        ```
+
 `int (*S) (const struct reb_simulation* const r, const unsigned int i, const unsigned int j)`
 :   This is a function pointer to the switching function for close encounters between non-central bodies.
     If NULL (the default), the default switching function will be used.

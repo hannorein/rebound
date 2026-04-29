@@ -61,7 +61,8 @@ class TestIntegratorTrace(unittest.TestCase):
         # tests if test particle encounters have an effect
         sim = rebound.Simulation()
         sim.add(m=1)
-        sim.add(m=1e-3,a=1,hash="widebinary")
+        sim.add(m=1e-3,a=1)
+        sim.add(m=0.8,a=100.,hash="widebinary")
         sim.move_to_com()
         sim.N_active=2
         sim.integrator = "trace"

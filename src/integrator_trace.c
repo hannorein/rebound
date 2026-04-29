@@ -821,29 +821,10 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
         ri_trace->tponly_encounter = 1;
     }
 
-    
-    // close encounters with the wide binary companion if WB
-    /*
-    if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY && idxB != -1){
-        reb_integrator_trace_wb_to_inertial(r);
-        for (int j = 1; j < Nactive; j++){
-            if (j == idxB) continue; // double counting
-            if (reb_integrator_trace_switch_WB_default(r, j)){
-                ri_trace->current_C = 1;
-                return;
-            }
-        }
-        reb_integrator_trace_inertial_to_wb(r);
-    }
-    */
-
     // Check for pericenter CE
     // in WB we do the pericenter checks in inertial
     if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     for (int j = 1; j < Nactive; j++){
-        // The WB companion does not have close encounters with the central star
-        if (j == idxB && ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY) continue;
-
         if (_switch_peri(r, j)){
             ri_trace->current_C = 1;
             if (ri_trace->peri_mode == REB_TRACE_PERI_FULL_BS || ri_trace->peri_mode == REB_TRACE_PERI_FULL_IAS15){
