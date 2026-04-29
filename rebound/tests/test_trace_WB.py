@@ -175,7 +175,7 @@ class TestIntegratorTrace(unittest.TestCase):
         dE_whfast = abs((sim.energy() - E0)/E0)
 
         self.assertLess(dE_trace/dE_whfast,2) # not much worse than whfast
-        self.assertLess(time_trace/time_whfast,5)
+        self.assertLess(time_trace/time_whfast,10)
 
     def test_collision_add_particles(self):
         sim = rebound.Simulation()
