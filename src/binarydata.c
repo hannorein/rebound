@@ -623,139 +623,130 @@ next_field:
             goto finish_fields; // End of snapshot
         }
 
-        char* base_address;
-        // Loop over all modules that might have their own field descriptors.
-        for (size_t fli=0; fli<2; fli++){
-            const struct reb_binarydata_field_descriptor* current_fd_list;
-            switch (fli){
-                case 0: // Main simulation
-                    current_fd_list = reb_binarydata_field_descriptor_list;
-                    base_address = (char*)r;
-                    break;
-                case 1: // Integrator
-                    current_fd_list = r->integrator.callbacks.field_descriptor_list;
-                    base_address = (char*)r->integrator.state;
-                    break;
-            }
+        char* base_address = (char*)r;
+        const struct reb_binarydata_field_descriptor* current_fd_list = reb_binarydata_field_descriptor_list;
 
-            // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
-            int i=0;
-            while (current_fd_list && current_fd_list[i].type){
-                struct reb_binarydata_field_descriptor fd = current_fd_list[i];
-                if (fli==1){
-                    fd.type ^= reb_binarydata_mask_integrator; //hack
+        if (field.type & reb_binarydata_mask_integrator){
+            field.type ^= reb_binarydata_mask_integrator;
+            current_fd_list = r->integrator.callbacks.field_descriptor_list;
+            base_address = (char*)r->integrator.state;
+        }
+
+        // Loop over field descriptor list. Simple datatypes and pointers will be read in this loop.
+        int i=0;
+        while (current_fd_list && current_fd_list[i].type){
+            struct reb_binarydata_field_descriptor fd = current_fd_list[i];
+            if (fd.type==field.type){
+                // Read simple data types
+                if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
+                        || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
+                        || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
+                        || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
+                    char* pointer = base_address + current_fd_list[i].offset;
+                    fread(pointer, field.size, 1, inf);
+                    goto next_field;
                 }
-                if (fd.type==field.type){
-                    // Read simple data types
-                    if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
-                            || fd.dtype == REB_UINT32 || fd.dtype == REB_INT64 
-                            || fd.dtype == REB_UINT64 || fd.dtype == REB_PARTICLE 
-                            || fd.dtype == REB_VEC3D || fd.dtype == REB_SIZE_T ){
-                        char* pointer = base_address + current_fd_list[i].offset;
-                        fread(pointer, field.size, 1, inf);
-                        goto next_field;
+                // Read a pointer data type. 
+                // 1) reallocate memory
+                // 2) read data into memory
+                // 3) set N_allocated variable
+                if (fd.dtype == REB_POINTER || fd.dtype == REB_POINTER_ALIGNED){
+                    if (field.size % current_fd_list[i].element_size){
+                        reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
                     }
-                    // Read a pointer data type. 
-                    // 1) reallocate memory
-                    // 2) read data into memory
-                    // 3) set N_allocated variable
-                    if (fd.dtype == REB_POINTER || fd.dtype == REB_POINTER_ALIGNED){
-                        if (field.size % current_fd_list[i].element_size){
-                            reb_simulation_warning(r, "Inconsistent size encountered in binary field.");
-                        }
-                        char** pointer = (char**)(base_address + current_fd_list[i].offset);
-                        size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
-                        if (fd.dtype == REB_POINTER_ALIGNED){
-                            if (*pointer) free(*pointer);
+                    char** pointer = (char**)(base_address + current_fd_list[i].offset);
+                    size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
+                    if (fd.dtype == REB_POINTER_ALIGNED){
+                        if (*pointer) free(*pointer);
 #if defined(_WIN32) || !defined(AVX512)
-                            // WHFast512 not supported on Windows!
-                            *pointer = malloc(sizeof(struct reb_particle_avx512));
+                        // WHFast512 not supported on Windows!
+                        *pointer = malloc(sizeof(struct reb_particle_avx512));
 #else 
-                            *pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+                        *pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
 #endif // _WIN32
-                        }else{ // normal malloc
-                            *pointer = realloc(*pointer, field.size);
-                        }
-                        fread(*pointer, field.size,1,inf);
-                        *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
-
-                        goto next_field;
+                    }else{ // normal malloc
+                        *pointer = realloc(*pointer, field.size);
                     }
-                    if (fd.dtype == REB_STRING){
-                        // char** pointer = (char**)(base_address + current_fd_list[i].offset);
-                        // *pointer = realloc(*pointer, field.size); // TODO: memory needs to be freed somewhere else
-                        char* string = malloc(field.size);
-                        fread(string, field.size,1,inf);
+                    fread(*pointer, field.size,1,inf);
+                    *pointer_N = (size_t)field.size/current_fd_list[i].element_size;
 
-                        // HACK
-
-                        reb_simulation_set_integrator(r, string);
-                        free(string);
-
-                        // /HACK
-
-                        goto next_field;
-                    }
-                    if (fd.dtype == REB_CHARP_LIST){
-                        size_t serialized_size = field.size;
-                        char* serialized_strings = malloc(serialized_size);
-                        fread(serialized_strings, serialized_size,1,inf);
-                        // Process strings back into a list
-                        char*** pointer = (char***)(base_address + current_fd_list[i].offset);
-                        size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
-                        size_t current_pos = 0;
-                        while (current_pos < serialized_size){
-                            char* current_string = serialized_strings + current_pos;
-                            // character count + NULL character + original pointer address
-                            size_t current_string_len = strlen(current_string)+1+sizeof(char*);
-                            current_pos += current_string_len;
-                            // Add current_string to list
-                            (*pointer_N)++;
-                            *pointer = realloc(*pointer,sizeof(char*)*(*pointer_N));
-                            (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len));
-                            memcpy((*pointer)[(*pointer_N)-1], current_string, current_string_len);
-                        }
-                        free(serialized_strings);
-                        goto next_field;
-                    }
-                    // If we're here then it was not a simple or pointer datatype. 
-                    // Can skip the iteration trough the descriptor list.
-                    break;
+                    goto next_field;
                 }
-                i++;
-            }
+                if (fd.dtype == REB_STRING){
+                    // char** pointer = (char**)(base_address + current_fd_list[i].offset);
+                    // *pointer = realloc(*pointer, field.size); // TODO: memory needs to be freed somewhere else
+                    char* string = malloc(field.size);
+                    fread(string, field.size,1,inf);
 
-            // Fields with types that require special handling
-            if (field.type == fd_functionpointers.type){
-                // Warning for when function pointers were used. 
-                // No effect on simulation.
-                int fpwarn;
-                fread(&fpwarn, field.size,1,inf);
-                if (fpwarn && warnings){
-                    *warnings |= REB_BINARYDATA_WARNING_POINTERS;
+                    // HACK
+
+                    reb_simulation_set_integrator(r, string);
+                    free(string);
+
+                    // /HACK
+
+                    goto next_field;
                 }
-                goto next_field;
-            }
-            if (field.type == fd_header.type){
-                // Check header.
-                int64_t objects = 0;
-                const size_t bufsize = 64 - sizeof(struct reb_binarydata_field);
-                char readbuf[64], curvbuf[64];
-                const char* header = "REBOUND Binary File. Version: ";
-                sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binarydata_field), reb_version_str);
-
-                objects += fread(readbuf,sizeof(char),bufsize,inf);
-                if (objects < 1){
-                    *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
-                }else{
-                    // Note: following compares version, but ignores githash.
-                    if(strncmp(readbuf,curvbuf,bufsize)!=0){
-                        *warnings |= REB_BINARYDATA_WARNING_VERSION;
+                if (fd.dtype == REB_CHARP_LIST){
+                    size_t serialized_size = field.size;
+                    char* serialized_strings = malloc(serialized_size);
+                    fread(serialized_strings, serialized_size,1,inf);
+                    // Process strings back into a list
+                    char*** pointer = (char***)(base_address + current_fd_list[i].offset);
+                    size_t* pointer_N = (size_t*)(base_address + current_fd_list[i].offset_N);
+                    size_t current_pos = 0;
+                    while (current_pos < serialized_size){
+                        char* current_string = serialized_strings + current_pos;
+                        // character count + NULL character + original pointer address
+                        size_t current_string_len = strlen(current_string)+1+sizeof(char*);
+                        current_pos += current_string_len;
+                        // Add current_string to list
+                        (*pointer_N)++;
+                        *pointer = realloc(*pointer,sizeof(char*)*(*pointer_N));
+                        (*pointer)[(*pointer_N)-1] = malloc(sizeof(char)*(current_string_len));
+                        memcpy((*pointer)[(*pointer_N)-1], current_string, current_string_len);
                     }
+                    free(serialized_strings);
+                    goto next_field;
                 }
-                goto next_field;
+                // If we're here then it was not a simple or pointer datatype. 
+                // Can skip the iteration trough the descriptor list.
+                break;
             }
-        } 
+            i++;
+        }
+
+        // Fields with types that require special handling
+        if (field.type == fd_functionpointers.type){
+            // Warning for when function pointers were used. 
+            // No effect on simulation.
+            int fpwarn;
+            fread(&fpwarn, field.size,1,inf);
+            if (fpwarn && warnings){
+                *warnings |= REB_BINARYDATA_WARNING_POINTERS;
+            }
+            goto next_field;
+        }
+        if (field.type == fd_header.type){
+            // Check header.
+            int64_t objects = 0;
+            const size_t bufsize = 64 - sizeof(struct reb_binarydata_field);
+            char readbuf[64], curvbuf[64];
+            const char* header = "REBOUND Binary File. Version: ";
+            sprintf(curvbuf,"%s%s",header+sizeof(struct reb_binarydata_field), reb_version_str);
+
+            objects += fread(readbuf,sizeof(char),bufsize,inf);
+            if (objects < 1){
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+            }else{
+                // Note: following compares version, but ignores githash.
+                if(strncmp(readbuf,curvbuf,bufsize)!=0){
+                    *warnings |= REB_BINARYDATA_WARNING_VERSION;
+                }
+            }
+            goto next_field;
+        }
+
 
         // We should never get here. If so, it's an unknown field type.
         *warnings |= REB_BINARYDATA_WARNING_FIELD_UNKNOWN;
