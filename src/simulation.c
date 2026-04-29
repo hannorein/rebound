@@ -38,7 +38,6 @@
 #include "particle.h"
 #include "simulation.h"
 #include "simulationarchive.h"
-#include "binarydata.h"
 #include "output.h"
 #include "server.h"
 #include "display.h"

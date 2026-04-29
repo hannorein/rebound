@@ -39,88 +39,84 @@
 // List of REBOUND parameters to be written to a file.
 // Modify this list if you wish to input/output additional fields in the reb_simulation structure.
 const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[]= {
-    { 6,  REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0}, // used to be id 0
-    { 1,  REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0, 0},
-    { 2,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0, 0},
-    { 3,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0, 0},
-    { 4,  REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0, 0},
-    { 5,  REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0, 0},
-    // 6 Used to be varconfig
+    { 1329743186, REB_OTHER,"header", 0, 0, 0, 0},
+    { 1,  REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0}, // used to be id 0
+    { 2,  REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0, 0},
+    { 3,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0, 0},
+    { 4,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0, 0},
+    { 5,  REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0, 0},
+    { 6,  REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0, 0},
     { 7,  REB_SIZE_T,       "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0, 0},
     { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0, 0},
-    { 10, REB_DOUBLE,       "opening_angle2",               offsetof(struct reb_simulation, opening_angle2), 0, 0, 0},
-    { 11, REB_INT,          "status",                       offsetof(struct reb_simulation, status), 0, 0, 0},
-    { 12, REB_INT,          "exact_finish_time",            offsetof(struct reb_simulation, exact_finish_time), 0, 0, 0},
-    { 13, REB_UINT,         "force_is_velocity_dependent",  offsetof(struct reb_simulation, force_is_velocity_dependent), 0, 0, 0},
-    { 14, REB_UINT,         "gravity_ignore_terms",         offsetof(struct reb_simulation, gravity_ignore_terms), 0, 0, 0},
-    { 15, REB_DOUBLE,       "output_timing_last",           offsetof(struct reb_simulation, output_timing_last), 0, 0, 0},
-    { 16, REB_INT,          "save_messages",                offsetof(struct reb_simulation, save_messages), 0, 0, 0},
-    { 17, REB_DOUBLE,       "exit_max_distance",            offsetof(struct reb_simulation, exit_max_distance), 0, 0, 0},
-    { 18, REB_DOUBLE,       "exit_min_distance",            offsetof(struct reb_simulation, exit_min_distance), 0, 0, 0},
-    { 19, REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0, 0},
-    { 20, REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0, 0},
-    { 21, REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0, 0},
-    // 22 was boxsize
-    // 23 was boxsize_max
-    { 24, REB_DOUBLE,       "root_size",                    offsetof(struct reb_simulation, root_size), 0, 0, 0},
-    // 25 was N_root
-    { 26, REB_SIZE_T,       "N_root_x",                     offsetof(struct reb_simulation, N_root_x), 0, 0, 0},
-    { 27, REB_SIZE_T,       "N_root_y",                     offsetof(struct reb_simulation, N_root_y), 0, 0, 0},
-    { 28, REB_SIZE_T,       "N_root_z",                     offsetof(struct reb_simulation, N_root_z), 0, 0, 0},
-    { 29, REB_INT,          "N_ghost_x",                    offsetof(struct reb_simulation, N_ghost_x), 0, 0, 0},
-    { 30, REB_INT,          "N_ghost_y",                    offsetof(struct reb_simulation, N_ghost_y), 0, 0, 0},
-    { 31, REB_INT,          "N_ghost_z",                    offsetof(struct reb_simulation, N_ghost_z), 0, 0, 0},
-    // 32 was collision_resolve_keep_sorted
-    { 33, REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0, 0},
-    { 34, REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0, 0},
-    { 36, REB_INT64,        "collisions_log_n",             offsetof(struct reb_simulation, collisions_log_n), 0, 0, 0},
-    { 37, REB_INT,          "calculate_megno",              offsetof(struct reb_simulation, calculate_megno), 0, 0, 0},
-    { 38, REB_DOUBLE,       "megno_Ys",                     offsetof(struct reb_simulation, megno_Ys), 0, 0, 0},
-    { 39, REB_DOUBLE,       "megno_Yss",                    offsetof(struct reb_simulation, megno_Yss), 0, 0, 0},
-    { 40, REB_DOUBLE,       "megno_cov_Yt",                 offsetof(struct reb_simulation, megno_cov_Yt), 0, 0, 0},
-    { 41, REB_DOUBLE,       "megno_var_t",                  offsetof(struct reb_simulation, megno_var_t), 0, 0, 0},
-    { 42, REB_DOUBLE,       "megno_mean_t",                 offsetof(struct reb_simulation, megno_mean_t), 0, 0, 0},
-    { 43, REB_DOUBLE,       "megno_mean_Y",                 offsetof(struct reb_simulation, megno_mean_Y), 0, 0, 0},
-    { 49, REB_DOUBLE,       "megno_initial_t",              offsetof(struct reb_simulation, megno_initial_t), 0, 0, 0},
-    { 44, REB_INT64,        "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0, 0},
-    { 47, REB_DOUBLE,       "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval), 0, 0, 0},
-    { 102, REB_DOUBLE,      "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
-    { 48, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
-    { 50, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
-    { 51, REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
-    { 52, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
-    { 53, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
-    { 54, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
-    { 55, REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0, 0},
-    { 65, REB_UINT,         "is_synchronized",              offsetof(struct reb_simulation, is_synchronized), 0, 0, 0},
-    { 66, REB_UINT,         "did_modify_particles",         offsetof(struct reb_simulation, did_modify_particles), 0, 0, 0},
-    { 85, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
-    { 403, REB_POINTER,     "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
-    { 86, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},
-    { 87, REB_OTHER,        "functionpointers", 0, 0, 0, 0},
-    //{ 107, REB_INT,         "visualization",                offsetof(struct reb_simulation, visualization), 0, 0},
-    { 125, REB_INT,         "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0, 0},
-    { 126, REB_DOUBLE,      "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0, 0},
-    { 127, REB_DOUBLE,      "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0, 0},
-    { 130, REB_UINT32,      "python_unit_l",                offsetof(struct reb_simulation, python_unit_l), 0, 0, 0},
-    { 131, REB_UINT32,      "python_unit_m",                offsetof(struct reb_simulation, python_unit_m), 0, 0, 0},
-    { 132, REB_UINT32,      "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0, 0},
-    { 135, REB_UINT64,      "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0, 0},
-    { 136, REB_UINT64,      "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0, 0},
-    { 137, REB_UINT64,      "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0, 0},
-    { 145, REB_DOUBLE,      "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
-    { 154, REB_UINT,        "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
-    { 155, REB_INT,         "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
-    { 164, REB_POINTER,     "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
-                                                                                                                                                            //    { 163, REB_INT,         "var_rescale_warning", offsetof(struct reb_simulation, var_rescale_warning), 0, 0},
-                                                                                                                                                            // TES Variables used to have ids 300 - 388. Do not reuse. 
-    { 402, REB_CHARP_LIST,  "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
-    // 403  particles_var
-    { 1329743186, REB_OTHER,"header", 0, 0, 0, 0},
+    { 9,  REB_DOUBLE,       "opening_angle2",               offsetof(struct reb_simulation, opening_angle2), 0, 0, 0},
+    { 10, REB_INT,          "status",                       offsetof(struct reb_simulation, status), 0, 0, 0},
+    { 11, REB_INT,          "exact_finish_time",            offsetof(struct reb_simulation, exact_finish_time), 0, 0, 0},
+    { 12, REB_UINT,         "force_is_velocity_dependent",  offsetof(struct reb_simulation, force_is_velocity_dependent), 0, 0, 0},
+    { 13, REB_UINT,         "gravity_ignore_terms",         offsetof(struct reb_simulation, gravity_ignore_terms), 0, 0, 0},
+    { 14, REB_DOUBLE,       "output_timing_last",           offsetof(struct reb_simulation, output_timing_last), 0, 0, 0},
+    { 15, REB_INT,          "save_messages",                offsetof(struct reb_simulation, save_messages), 0, 0, 0},
+    { 16, REB_DOUBLE,       "exit_max_distance",            offsetof(struct reb_simulation, exit_max_distance), 0, 0, 0},
+    { 17, REB_DOUBLE,       "exit_min_distance",            offsetof(struct reb_simulation, exit_min_distance), 0, 0, 0},
+    { 18, REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0, 0},
+    { 19, REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0, 0},
+    { 20, REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0, 0},
+    { 21, REB_DOUBLE,       "root_size",                    offsetof(struct reb_simulation, root_size), 0, 0, 0},
+    { 22, REB_SIZE_T,       "N_root_x",                     offsetof(struct reb_simulation, N_root_x), 0, 0, 0},
+    { 23, REB_SIZE_T,       "N_root_y",                     offsetof(struct reb_simulation, N_root_y), 0, 0, 0},
+    { 24, REB_SIZE_T,       "N_root_z",                     offsetof(struct reb_simulation, N_root_z), 0, 0, 0},
+    { 25, REB_INT,          "N_ghost_x",                    offsetof(struct reb_simulation, N_ghost_x), 0, 0, 0},
+    { 26, REB_INT,          "N_ghost_y",                    offsetof(struct reb_simulation, N_ghost_y), 0, 0, 0},
+    { 27, REB_INT,          "N_ghost_z",                    offsetof(struct reb_simulation, N_ghost_z), 0, 0, 0},
+    { 28, REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0, 0},
+    { 29, REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0, 0},
+    { 30, REB_INT64,        "collisions_log_n",             offsetof(struct reb_simulation, collisions_log_n), 0, 0, 0},
+    { 31, REB_INT,          "calculate_megno",              offsetof(struct reb_simulation, calculate_megno), 0, 0, 0},
+    { 32, REB_DOUBLE,       "megno_Ys",                     offsetof(struct reb_simulation, megno_Ys), 0, 0, 0},
+    { 33, REB_DOUBLE,       "megno_Yss",                    offsetof(struct reb_simulation, megno_Yss), 0, 0, 0},
+    { 34, REB_DOUBLE,       "megno_cov_Yt",                 offsetof(struct reb_simulation, megno_cov_Yt), 0, 0, 0},
+    { 35, REB_DOUBLE,       "megno_var_t",                  offsetof(struct reb_simulation, megno_var_t), 0, 0, 0},
+    { 36, REB_DOUBLE,       "megno_mean_t",                 offsetof(struct reb_simulation, megno_mean_t), 0, 0, 0},
+    { 37, REB_DOUBLE,       "megno_mean_Y",                 offsetof(struct reb_simulation, megno_mean_Y), 0, 0, 0},
+    { 38, REB_DOUBLE,       "megno_initial_t",              offsetof(struct reb_simulation, megno_initial_t), 0, 0, 0},
+    { 39, REB_INT64,        "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0, 0},
+    { 40, REB_DOUBLE,       "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval), 0, 0, 0},
+    { 41, REB_DOUBLE,       "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
+    { 42, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
+    { 43, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
+    { 44, REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
+    { 45, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
+    { 46, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
+    { 47, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
+    { 48, REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0, 0},
+    { 49, REB_UINT,         "is_synchronized",              offsetof(struct reb_simulation, is_synchronized), 0, 0, 0},
+    { 50, REB_UINT,         "did_modify_particles",         offsetof(struct reb_simulation, did_modify_particles), 0, 0, 0},
+    { 51, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
+    { 52, REB_POINTER,      "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
+    { 53, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},
+    { 54, REB_OTHER,        "functionpointers", 0, 0, 0, 0},
+    { 55, REB_INT,          "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0, 0},
+    { 56, REB_DOUBLE,       "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0, 0},
+    { 57, REB_DOUBLE,       "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0, 0},
+    { 58, REB_UINT32,       "python_unit_l",                offsetof(struct reb_simulation, python_unit_l), 0, 0, 0},
+    { 59, REB_UINT32,       "python_unit_m",                offsetof(struct reb_simulation, python_unit_m), 0, 0, 0},
+    { 60, REB_UINT32,       "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0, 0},
+    { 61, REB_UINT64,       "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0, 0},
+    { 62, REB_UINT64,       "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0, 0},
+    { 63, REB_UINT64,       "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0, 0},
+    { 64, REB_DOUBLE,       "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
+    { 65, REB_UINT,         "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
+    { 66, REB_INT,          "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
+    { 67, REB_POINTER,      "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
+    { 68, REB_CHARP_LIST,   "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0, 0},
     { 9999, REB_OTHER,      "end", 0, 0, 0, 0},
     {0} // Null terminated.
 };
+
+
+const uint32_t reb_binarydata_mask_simulation = 0x0;
+const uint32_t reb_binarydata_mask_integrator = 0x10000000;
+
 
 // This is a custom implementation of a dynamic memory buffer stream. 
 // This is used as a replacement for open_memstream which is not portable.
@@ -449,11 +445,11 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 }
 
 // Output all fields from one field_descriptor list
-static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address){
+static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address, uint32_t mask){
     if (!fd_list) return; 
     for (size_t i=0; fd_list[i].type; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
-        struct reb_binarydata_field field = {.type = fd.type};
+        struct reb_binarydata_field field = {.type = fd.type ^ mask};
         char** pointer_to_value = (char**)(base_address + fd.offset);
         switch (fd.dtype){
             case REB_DOUBLE: 
@@ -576,9 +572,9 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
 
     /// Output all fields
     // Main simulation
-    output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r);
+    output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, reb_binarydata_mask_simulation);
     // Integrator
-    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state);
+    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, reb_binarydata_mask_integrator);
 
     // Write function pointer warning flag
     int functionpointersused = 0;
@@ -646,6 +642,9 @@ next_field:
             int i=0;
             while (current_fd_list && current_fd_list[i].type){
                 struct reb_binarydata_field_descriptor fd = current_fd_list[i];
+                if (fli==1){
+                    fd.type ^= reb_binarydata_mask_integrator; //hack
+                }
                 if (fd.type==field.type){
                     // Read simple data types
                     if (fd.dtype == REB_DOUBLE || fd.dtype == REB_INT || fd.dtype == REB_UINT 
