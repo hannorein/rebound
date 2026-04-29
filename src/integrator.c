@@ -256,7 +256,7 @@ void reb_simulation_update_acceleration(struct reb_simulation* r){
         if (r->integrator==REB_INTEGRATOR_TRACE && r->ri_trace.mode != REB_TRACE_MODE_FULL){
             // shift pos and velocity so that external forces are calculated in inertial frame
             // Note: Copying avoids degrading floating point performance
-            // Don't do this in FULL mode -- we are already in inertial
+            // We should NOT do this in FULL mode, already in inertial frame
             if(r->N>r->ri_trace.N_allocated_additional_forces){
                 r->ri_trace.particles_backup_additional_forces = realloc(r->ri_trace.particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
                 r->ri_trace.N_allocated_additional_forces = r->N;

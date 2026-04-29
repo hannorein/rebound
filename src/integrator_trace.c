@@ -41,7 +41,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
 int reb_integrator_trace_switch_default(struct reb_simulation* const r, const unsigned int i, const unsigned int j){
-    
+
     // Returns 1 for close encounter between i and j, 0 otherwise
     struct reb_integrator_trace* const ri_trace = &(r->ri_trace);
     const double h2 = r->dt/2.;
@@ -167,34 +167,34 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
         return 1;
     }else{
         // In WB coordinates, we also switch if we enter the binary's hill sphere x r_crit_WB
-        
+
         if (ri_trace->coordinates == REB_TRACE_COORDINATES_WIDEBINARY){
-          // reb_integrator_trace_wb_to_inertial(r);
-          const int idxB = reb_simulation_particle_index(reb_simulation_particle_by_hash(r, reb_hash("widebinary"))); // star B assumed to be last active particle
-          const int has_binary = (idxB != -1);
-          if (has_binary){
-            double bx = r->particles[idxB].x;
-            double by = r->particles[idxB].y;
-            double bz = r->particles[idxB].z;
-            double br2 = bx*bx + by*by + bz*bz;
-            double mr = r->particles[idxB].m/(3.*r->particles[0].m);
+            // reb_integrator_trace_wb_to_inertial(r);
+            const int idxB = reb_simulation_particle_index(reb_simulation_particle_by_hash(r, reb_hash("widebinary"))); // star B assumed to be last active particle
+            const int has_binary = (idxB != -1);
+            if (has_binary){
+                double bx = r->particles[idxB].x;
+                double by = r->particles[idxB].y;
+                double bz = r->particles[idxB].z;
+                double br2 = bx*bx + by*by + bz*bz;
+                double mr = r->particles[idxB].m/(3.*r->particles[0].m);
 
-            double factor2 = ri_trace->r_crit_WB*ri_trace->r_crit_WB;
-            const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+                double factor2 = ri_trace->r_crit_WB*ri_trace->r_crit_WB;
+                const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
 
-            double dxb = r->particles[j].x - r->particles[idxB].x;
-            double dyb = r->particles[j].y - r->particles[idxB].y;
-            double dzb = r->particles[j].z - r->particles[idxB].z;
-            double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+                double dxb = r->particles[j].x - r->particles[idxB].x;
+                double dyb = r->particles[j].y - r->particles[idxB].y;
+                double dzb = r->particles[j].z - r->particles[idxB].z;
+                double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
 
-            //printf("this happening??? %f %d %d %f %f\n", r->t, j, idxB, sqrt(d2b), pow(rhillb6,1./6.));
-            //    exit(1);
+                //printf("this happening??? %f %d %d %f %f\n", r->t, j, idxB, sqrt(d2b), pow(rhillb6,1./6.));
+                //    exit(1);
 
-            if (d2b*d2b*d2b < rhillb6){
-                return 1;
+                if (d2b*d2b*d2b < rhillb6){
+                    return 1;
+                }
             }
-          }
-            
+
         }
         return 0;
     }
@@ -368,7 +368,7 @@ void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
 
     const int idxA = 0; // star A assumed to be first particle
     const int idxB = reb_simulation_particle_index(reb_simulation_particle_by_hash(r, reb_hash("widebinary")));
-    
+
     if (idxB == -1){
         // no binary companion, just shift to DH coordinates
         reb_integrator_trace_dh_to_inertial(r);

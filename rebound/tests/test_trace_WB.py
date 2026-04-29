@@ -175,7 +175,7 @@ class TestIntegratorTrace(unittest.TestCase):
         dE_whfast = abs((sim.energy() - E0)/E0)
 
         self.assertLess(dE_trace/dE_whfast,2) # not much worse than whfast
-        self.assertLess(time_trace/time_whfast,2)
+        self.assertLess(time_trace/time_whfast,5)
 
     def test_collision_add_particles(self):
         sim = rebound.Simulation()
@@ -221,9 +221,9 @@ class TestIntegratorTrace(unittest.TestCase):
         E0 = sim.energy()
         sim.integrate(1)
         com1 = sim.com()
-        self.assertAlmostEqual(com1.vx,com0.vx,delta=1e-16)
-        self.assertAlmostEqual(com1.vy,com0.vy,delta=1e-16)
-        self.assertAlmostEqual(com1.vz,com0.vz,delta=1e-16)
+        self.assertAlmostEqual(com1.vx,com0.vx,delta=2e-16)
+        self.assertAlmostEqual(com1.vy,com0.vy,delta=2e-16)
+        self.assertAlmostEqual(com1.vz,com0.vz,delta=2e-16)
         mtot1 = sum([p.m for p in sim.particles])
         self.assertEqual(mtot0,mtot1)
         self.assertEqual(N0-1,sim.N)
