@@ -141,13 +141,11 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
 
 // This function is only used to find a couple of special fields.  
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name){
-    int i=-1;
-    do{
-        i++;
+    for(size_t i=0; reb_binarydata_field_descriptor_list[i].name[0]; i++){
         if (strcmp(reb_binarydata_field_descriptor_list[i].name, name)==0){
             return reb_binarydata_field_descriptor_list[i];
         }
-    } while (reb_binarydata_field_descriptor_list[i].name[0]);
+    }
     // We should never arrive here.
     reb_simulation_error(NULL, "Could not find field descriptor for name.");
     // TODO Fix this for integrator values which are not found.
@@ -447,9 +445,13 @@ static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* al
     char name[1024];
     for (size_t i=0; fd_list[i].name[0]; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
-        strcpy(name, prefix);
-        strcat(name, ".");
-        strcat(name, fd.name);
+        if (prefix && prefix[0]){
+            strcpy(name, prefix);
+            strcat(name, ".");
+            strcat(name, fd.name);
+        }else{
+            strcpy(name, fd.name);
+        }
         size_t size_name = strlen(name)+1;
         struct reb_binarydata_field field = {.size_name = size_name};
 
@@ -587,7 +589,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
 
     /// Output all fields
     // Main simulation
-    output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, "");
+    output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, NULL);
     // Integrator
     output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, r->integrator.name);
 
