@@ -129,7 +129,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     sa->reb_version_minor = 0;
     sa->reb_version_patch = 0;
 
-    char name[1024];
+    char name[1024] = "";
     do{
         int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
         if (!didReadField){
