@@ -128,23 +128,21 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     sa->reb_version_major = 0;
     sa->reb_version_minor = 0;
     sa->reb_version_patch = 0;
-    // Cache descriptors
-    struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
-    struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
-    struct reb_binarydata_field_descriptor fd_sa_version = reb_binarydata_field_descriptor_for_name("simulationarchive_version");
-    struct reb_binarydata_field_descriptor fd_sa_auto_walltime = reb_binarydata_field_descriptor_for_name("simulationarchive_auto_walltime");
-    struct reb_binarydata_field_descriptor fd_sa_auto_interval = reb_binarydata_field_descriptor_for_name("simulationarchive_auto_interval");
-    struct reb_binarydata_field_descriptor fd_sa_auto_step = reb_binarydata_field_descriptor_for_name("simulationarchive_auto_step");
-    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
 
-
+    char name[1024];
     do{
         int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
         if (!didReadField){
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             break;
         }
-        if (field.id == fd_header.id){
+        didReadField = (int)fread(name,field.size_name,1,sa->inf);
+        if (!didReadField){
+            *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+            break;
+        }
+
+        if (field.size_name == reb_binarydata_mask_header){
             int64_t objects = 0;
             // Input header.
             const int64_t bufsize = 64 - sizeof(struct reb_binarydata_field);
@@ -192,20 +190,20 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 }
             }
 
-        }else if (field.id == fd_t.id){
-            fread(&t0, field.size, 1, sa->inf);
-        }else if (field.id == fd_sa_version.id){
-            fread(&(sa->version), field.size, 1, sa->inf);
-        }else if (field.id == fd_sa_auto_walltime.id){
-            fread(&(sa->auto_walltime), field.size, 1, sa->inf);
-        }else if (field.id == fd_sa_auto_interval.id){
-            fread(&(sa->auto_interval), field.size, 1, sa->inf);
-        }else if (field.id == fd_sa_auto_step.id){
-            fread(&(sa->auto_step), field.size, 1, sa->inf);
+        }else if (strcmp(name, "t")==0){
+            fread(&t0, field.size_data, 1, sa->inf);
+        }else if (strcmp(name, "simulationarchive_version")==0){
+            fread(&(sa->version), field.size_data, 1, sa->inf);
+        }else if (strcmp(name, "simulationarchive_auto_walltime")==0){
+            fread(&(sa->auto_walltime), field.size_data, 1, sa->inf);
+        }else if (strcmp(name, "simulationarchive_auto_interval")==0){
+            fread(&(sa->auto_interval), field.size_data, 1, sa->inf);
+        }else if (strcmp(name, "simulationarchive_auto_step")==0){
+            fread(&(sa->auto_step), field.size_data, 1, sa->inf);
         }else{
-            fseek(sa->inf,field.size,SEEK_CUR);
+            fseek(sa->inf,field.size_data,SEEK_CUR);
         }
-    }while(field.id!=fd_end.id);
+    }while(strcmp(name, "end"));
 
     // Make index
     if (sa->version<5){
@@ -226,34 +224,33 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
         fseek(sa->inf, 0, SEEK_SET);  
         sa->nblobs = 0;
         int read_error = 0;
-        struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
-        struct reb_binarydata_field_descriptor fd_t = reb_binarydata_field_descriptor_for_name("t");
-        struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
         for(int64_t i=0;i<nblobsmax;i++){
             struct reb_binarydata_field field = {0};
             sa->offset[i] = ftell(sa->inf);
             int blob_finished = 0;
             do{
                 size_t r1 = fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
+                if (field.size_name == reb_binarydata_mask_header){
+                    if (debug) printf("SA Field. id=HEADER\n");
+                    int s1 = fseek(sa->inf,64 - sizeof(struct reb_binarydata_field),SEEK_CUR);
+                    if (s1){
+                        read_error = 1;
+                    }
+                }
+                r1 &= (int)fread(name,field.size_name,1,sa->inf);
                 if (r1==1){
-                    if (field.id == fd_header.id){
-                        if (debug) printf("SA Field. id=HEADER\n");
-                        int s1 = fseek(sa->inf,64 - sizeof(struct reb_binarydata_field),SEEK_CUR);
-                        if (s1){
-                            read_error = 1;
-                        }
-                    }else if (field.id == fd_t.id){
-                        size_t r2 = fread(&(sa->t[i]), field.size,1,sa->inf);
+                    if (strcmp(name, "t")==0){
+                        size_t r2 = fread(&(sa->t[i]), field.size_data,1,sa->inf);
                         if (debug) printf("SA Field. id=TIME      value=%.10f\n",sa->t[1]);
                         if (r2!=1){
                             read_error = 1;
                         }
-                    }else if (field.id == fd_end.id){
+                    }else if (strcmp(name, "end")==0){
                         if (debug) printf("SA Field. id=END   =====\n");
                         blob_finished = 1;
                     }else{
-                        int s2 = fseek(sa->inf,field.size,SEEK_CUR);
-                        if (debug) printf("SA Field. id=%-6d    size=%" PRIu64 "\n",field.id,(uint64_t)field.size);
+                        int s2 = fseek(sa->inf,field.size_data,SEEK_CUR);
+                        if (debug) printf("SA Field. name='%s'    size_data=%" PRIu64 "\n",name,(uint64_t)field.size_data);
                         if (s2){
                             read_error = 1;
                         }
@@ -443,17 +440,18 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         fclose(of);
     }else{
         // File exists, append snapshot.
-        struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
         // Create buffer containing original binary file
         FILE* of = fopen(filename_combined,"r+b");
         fseek(of, 64, SEEK_SET); // Header
         struct reb_binarydata_field field = {0};
+        char name[1024];
         struct reb_simulationarchive_blob blob = {0};
         int bytesread;
         do{
             bytesread = (int)fread(&field,sizeof(struct reb_binarydata_field),1,of);
-            fseek(of, field.size, SEEK_CUR);
-        }while(field.id!=fd_end.id && bytesread);
+            bytesread &= (int)fread(name,field.size_name,1,of);
+            fseek(of, field.size_data, SEEK_CUR);
+        }while(strcmp(name, "end") && bytesread);
         int64_t size_old = ftell(of);
         if (bytesread!=1){
             reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
@@ -498,10 +496,11 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
             // Check if last two blobs are consistent.
             seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binarydata_field), SEEK_CUR);  
             bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
+            bytesread = (int)fread(name, field.size_name, 1, of);
             if (seek_ok!=0 || bytesread!=1){
                 file_corrupt = 1;
             }
-            if (field.id != fd_end.id || field.size !=0){
+            if (strcmp(name, "end") || field.size_data !=0){
                 // expected an END field
                 file_corrupt = 1;
             }
@@ -526,7 +525,8 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
                     break;
                 }
                 bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
-                if (bytesread != 1 || field.id != fd_end.id){ // could be EOF or corrupt snapshot
+                bytesread = (int)fread(name, field.size_name, 1, of);
+                if (bytesread != 1 || strcmp(name, "end")){ // could be EOF or corrupt snapshot
                     break;
                 }
                 bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
@@ -558,9 +558,10 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 
-        field.id = fd_end.id;
-        field.size = 0;
+        field.size_name = strlen("end")+1;
+        field.size_data = 0;
         fwrite(&field,sizeof(struct reb_binarydata_field), 1, of);
+        fwrite("end",field.size_name, 1, of);
         blob.index++;
         blob.offset_prev = blob.offset_next;
         blob.offset_next = 0;

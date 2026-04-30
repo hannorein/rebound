@@ -89,5 +89,6 @@ struct reb_binarydata_field {
 REB_API extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[];
 // Helper functions to find descriptor data. Used by python.
 REB_API struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name);
+extern const uint32_t reb_binarydata_mask_header;
 
 #endif // _BINARYDATA_H
