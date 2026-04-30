@@ -109,7 +109,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { 63, REB_DOUBLE,       "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
     { 64, REB_UINT,         "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
     { 65, REB_INT,          "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
-    { 66, REB_POINTER,      "display_settings",      offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
+    { 66, REB_POINTER,      "display_settings",             offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
     { 67, REB_CHARP_LIST,   "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
     { 9997, REB_OTHER,      "functionpointers", 0, 0, 0, 0},
     { 9998, REB_OTHER,      "sablob", 0, 0, 0, 0},
