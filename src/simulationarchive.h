@@ -45,11 +45,11 @@ struct reb_simulationarchive{
 };
 
 // Used in the binary file to identify data blobs (snapshots)
+// Note: 32 bit enough here as only relative offsets stored.
 struct reb_simulationarchive_blob {  
-    // TODO: Bump this to 64 bit
-    int64_t index;                   // Index of previous blob (binary file is 0, first blob is 1)
-    int64_t offset_prev;             // Offset to beginning of previous blob (size of previous blob).
-    int64_t offset_next;             // Offset to end of following blob (size of following blob).
+    int32_t index;                   // Index of previous blob (binary file is 0, first blob is 1)
+    int32_t offset_prev;             // Offset to beginning of previous blob (size of previous blob).
+    int32_t offset_next;             // Offset to end of following blob (size of following blob).
 };
 
 
