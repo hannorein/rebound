@@ -39,10 +39,10 @@ void reb_integrator_eos_step(struct reb_simulation* r, void* state);
 void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state);
 
 const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor_list[] = {
-    { 148, REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
-    { 149, REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
-    { 150, REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
-    { 151, REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
+    { REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
+    { REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
+    { REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
+    { REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 

@@ -40,11 +40,11 @@ void* reb_integrator_janus_create();
 void reb_integrator_janus_free(void* p);
 
 const struct reb_binarydata_field_descriptor reb_integrator_janus_field_descriptor_list[] = {
-    { 112, REB_POINTER,     "p_int",               offsetof(struct reb_integrator_janus_state, p_int), offsetof(struct reb_integrator_janus_state, N_allocated), sizeof(struct reb_particle_int), 0},
-    { 113, REB_DOUBLE,      "scale_pos",           offsetof(struct reb_integrator_janus_state, scale_pos), 0, 0, 0},
-    { 114, REB_DOUBLE,      "scale_vel",           offsetof(struct reb_integrator_janus_state, scale_vel), 0, 0, 0},
-    { 115, REB_UINT,        "order",               offsetof(struct reb_integrator_janus_state, order), 0, 0, 0},
-    { 116, REB_UINT,        "recalculate_integer_coordinates_this_timestep", offsetof(struct reb_integrator_janus_state, recalculate_integer_coordinates_this_timestep), 0, 0, 0},
+    { REB_POINTER,     "p_int",               offsetof(struct reb_integrator_janus_state, p_int), offsetof(struct reb_integrator_janus_state, N_allocated), sizeof(struct reb_particle_int), 0},
+    { REB_DOUBLE,      "scale_pos",           offsetof(struct reb_integrator_janus_state, scale_pos), 0, 0, 0},
+    { REB_DOUBLE,      "scale_vel",           offsetof(struct reb_integrator_janus_state, scale_vel), 0, 0, 0},
+    { REB_UINT,        "order",               offsetof(struct reb_integrator_janus_state, order), 0, 0, 0},
+    { REB_UINT,        "recalculate_integer_coordinates_this_timestep", offsetof(struct reb_integrator_janus_state, recalculate_integer_coordinates_this_timestep), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 

@@ -49,11 +49,11 @@ struct reb_integrator_sei_state {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[] = {
-    { 56, REB_DOUBLE,       "lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0, 0},
-    { 57, REB_DOUBLE,       "sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0, 0},
-    { 58, REB_DOUBLE,       "tandt",                 offsetof(struct reb_integrator_sei_state, tandt), 0, 0, 0},
-    { 59, REB_DOUBLE,       "sindtz",                offsetof(struct reb_integrator_sei_state, sindtz), 0, 0, 0},
-    { 60, REB_DOUBLE,       "tandtz",                offsetof(struct reb_integrator_sei_state, tandtz), 0, 0, 0},
+    { REB_DOUBLE,       "lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0, 0},
+    { REB_DOUBLE,       "sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0, 0},
+    { REB_DOUBLE,       "tandt",                 offsetof(struct reb_integrator_sei_state, tandt), 0, 0, 0},
+    { REB_DOUBLE,       "sindtz",                offsetof(struct reb_integrator_sei_state, sindtz), 0, 0, 0},
+    { REB_DOUBLE,       "tandtz",                offsetof(struct reb_integrator_sei_state, tandtz), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 

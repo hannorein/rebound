@@ -48,11 +48,11 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
 
 
 const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_descriptor_list[] = {
-    { 118, REB_DOUBLE,      "r_crit_hill",     offsetof(struct reb_integrator_mercurius_state, r_crit_hill), 0, 0, 0},
-    { 119, REB_UINT,        "safe_mode",       offsetof(struct reb_integrator_mercurius_state, safe_mode), 0, 0, 0},
-    { 122, REB_POINTER,     "dcrit",           offsetof(struct reb_integrator_mercurius_state, dcrit), offsetof(struct reb_integrator_mercurius_state, N_allocated_dcrit), sizeof(double), 0},
-    { 133, REB_VEC3D,       "com_pos",         offsetof(struct reb_integrator_mercurius_state, com_pos), 0, 0, 0},
-    { 134, REB_VEC3D,       "com_vel",         offsetof(struct reb_integrator_mercurius_state, com_vel), 0, 0, 0},
+    { REB_DOUBLE,      "r_crit_hill",     offsetof(struct reb_integrator_mercurius_state, r_crit_hill), 0, 0, 0},
+    { REB_UINT,        "safe_mode",       offsetof(struct reb_integrator_mercurius_state, safe_mode), 0, 0, 0},
+    { REB_POINTER,     "dcrit",           offsetof(struct reb_integrator_mercurius_state, dcrit), offsetof(struct reb_integrator_mercurius_state, N_allocated_dcrit), sizeof(double), 0},
+    { REB_VEC3D,       "com_pos",         offsetof(struct reb_integrator_mercurius_state, com_pos), 0, 0, 0},
+    { REB_VEC3D,       "com_vel",         offsetof(struct reb_integrator_mercurius_state, com_vel), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 

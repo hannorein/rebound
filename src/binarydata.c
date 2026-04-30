@@ -47,77 +47,77 @@ const uint32_t reb_binarydata_mask_functionpointers = 9997;
 // Null terminated list of REBOUND parameters to be written to a file.
 // Modify this list if you wish to input/output additional fields in the reb_simulation structure.
 const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[]= {
-    { 1,  REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0}, // used to be id 0
-    { 2,  REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0, 0},
-    { 3,  REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0, 0},
-    { 4,  REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0, 0},
-    { 5,  REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0, 0},
-    { 6,  REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0, 0},
-    { 7,  REB_SIZE_T,       "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0, 0},
-    { 8,  REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0, 0},
-    { 9,  REB_DOUBLE,       "opening_angle2",               offsetof(struct reb_simulation, opening_angle2), 0, 0, 0},
-    { 10, REB_INT,          "status",                       offsetof(struct reb_simulation, status), 0, 0, 0},
-    { 11, REB_INT,          "exact_finish_time",            offsetof(struct reb_simulation, exact_finish_time), 0, 0, 0},
-    { 12, REB_UINT,         "force_is_velocity_dependent",  offsetof(struct reb_simulation, force_is_velocity_dependent), 0, 0, 0},
-    { 13, REB_UINT,         "gravity_ignore_terms",         offsetof(struct reb_simulation, gravity_ignore_terms), 0, 0, 0},
-    { 14, REB_DOUBLE,       "output_timing_last",           offsetof(struct reb_simulation, output_timing_last), 0, 0, 0},
-    { 15, REB_INT,          "save_messages",                offsetof(struct reb_simulation, save_messages), 0, 0, 0},
-    { 16, REB_DOUBLE,       "exit_max_distance",            offsetof(struct reb_simulation, exit_max_distance), 0, 0, 0},
-    { 17, REB_DOUBLE,       "exit_min_distance",            offsetof(struct reb_simulation, exit_min_distance), 0, 0, 0},
-    { 18, REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0, 0},
-    { 19, REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0, 0},
-    { 20, REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0, 0},
-    { 21, REB_DOUBLE,       "root_size",                    offsetof(struct reb_simulation, root_size), 0, 0, 0},
-    { 22, REB_SIZE_T,       "N_root_x",                     offsetof(struct reb_simulation, N_root_x), 0, 0, 0},
-    { 23, REB_SIZE_T,       "N_root_y",                     offsetof(struct reb_simulation, N_root_y), 0, 0, 0},
-    { 24, REB_SIZE_T,       "N_root_z",                     offsetof(struct reb_simulation, N_root_z), 0, 0, 0},
-    { 25, REB_INT,          "N_ghost_x",                    offsetof(struct reb_simulation, N_ghost_x), 0, 0, 0},
-    { 26, REB_INT,          "N_ghost_y",                    offsetof(struct reb_simulation, N_ghost_y), 0, 0, 0},
-    { 27, REB_INT,          "N_ghost_z",                    offsetof(struct reb_simulation, N_ghost_z), 0, 0, 0},
-    { 28, REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0, 0},
-    { 29, REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0, 0},
-    { 30, REB_INT64,        "collisions_log_n",             offsetof(struct reb_simulation, collisions_log_n), 0, 0, 0},
-    { 31, REB_INT,          "calculate_megno",              offsetof(struct reb_simulation, calculate_megno), 0, 0, 0},
-    { 32, REB_DOUBLE,       "megno_Ys",                     offsetof(struct reb_simulation, megno_Ys), 0, 0, 0},
-    { 33, REB_DOUBLE,       "megno_Yss",                    offsetof(struct reb_simulation, megno_Yss), 0, 0, 0},
-    { 34, REB_DOUBLE,       "megno_cov_Yt",                 offsetof(struct reb_simulation, megno_cov_Yt), 0, 0, 0},
-    { 35, REB_DOUBLE,       "megno_var_t",                  offsetof(struct reb_simulation, megno_var_t), 0, 0, 0},
-    { 36, REB_DOUBLE,       "megno_mean_t",                 offsetof(struct reb_simulation, megno_mean_t), 0, 0, 0},
-    { 37, REB_DOUBLE,       "megno_mean_Y",                 offsetof(struct reb_simulation, megno_mean_Y), 0, 0, 0},
-    { 38, REB_DOUBLE,       "megno_initial_t",              offsetof(struct reb_simulation, megno_initial_t), 0, 0, 0},
-    { 39, REB_INT64,        "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0, 0},
-    { 40, REB_DOUBLE,       "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval), 0, 0, 0},
-    { 41, REB_DOUBLE,       "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
-    { 42, REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
-    { 43, REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
-    { 44, REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
-    { 45, REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
-    { 46, REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
-    { 47, REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
-    { 48, REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0, 0},
-    { 49, REB_UINT,         "is_synchronized",              offsetof(struct reb_simulation, is_synchronized), 0, 0, 0},
-    { 50, REB_UINT,         "did_modify_particles",         offsetof(struct reb_simulation, did_modify_particles), 0, 0, 0},
-    { 51, REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
-    { 52, REB_POINTER,      "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
-    { 53, REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},
-    { 54, REB_INT,          "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0, 0},
-    { 55, REB_DOUBLE,       "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0, 0},
-    { 56, REB_DOUBLE,       "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0, 0},
-    { 57, REB_UINT32,       "python_unit_l",                offsetof(struct reb_simulation, python_unit_l), 0, 0, 0},
-    { 58, REB_UINT32,       "python_unit_m",                offsetof(struct reb_simulation, python_unit_m), 0, 0, 0},
-    { 59, REB_UINT32,       "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0, 0},
-    { 60, REB_UINT64,       "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0, 0},
-    { 61, REB_UINT64,       "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0, 0},
-    { 62, REB_UINT64,       "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0, 0},
-    { 63, REB_DOUBLE,       "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
-    { 64, REB_UINT,         "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
-    { 65, REB_INT,          "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
-    { 66, REB_POINTER,      "display_settings",             offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
-    { 67, REB_CHARP_LIST,   "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
-    { reb_binarydata_mask_functionpointers, REB_OTHER,      "functionpointers", 0, 0, 0, 0},
-    { 9998, REB_OTHER,      "sablob", 0, 0, 0, 0},
-    { reb_binarydata_mask_end, REB_OTHER,      "end", 0, 0, 0, 0},
-    { reb_binarydata_mask_header, REB_OTHER,"header", 0, 0, 0, 0},
+    { REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0}, // used to be id 0
+    { REB_DOUBLE,       "G",                            offsetof(struct reb_simulation, G), 0, 0, 0},
+    { REB_DOUBLE,       "softening",                    offsetof(struct reb_simulation, softening), 0, 0, 0},
+    { REB_DOUBLE,       "dt",                           offsetof(struct reb_simulation, dt), 0, 0, 0},
+    { REB_SIZE_T,       "N",                            offsetof(struct reb_simulation, N), 0, 0, 0},
+    { REB_SIZE_T,       "N_var",                        offsetof(struct reb_simulation, N_var), 0, 0, 0},
+    { REB_SIZE_T,       "N_active",                     offsetof(struct reb_simulation, N_active), 0, 0, 0},
+    { REB_INT,          "testparticle_type",            offsetof(struct reb_simulation, testparticle_type), 0, 0, 0},
+    { REB_DOUBLE,       "opening_angle2",               offsetof(struct reb_simulation, opening_angle2), 0, 0, 0},
+    { REB_INT,          "status",                       offsetof(struct reb_simulation, status), 0, 0, 0},
+    { REB_INT,          "exact_finish_time",            offsetof(struct reb_simulation, exact_finish_time), 0, 0, 0},
+    { REB_UINT,         "force_is_velocity_dependent",  offsetof(struct reb_simulation, force_is_velocity_dependent), 0, 0, 0},
+    { REB_UINT,         "gravity_ignore_terms",         offsetof(struct reb_simulation, gravity_ignore_terms), 0, 0, 0},
+    { REB_DOUBLE,       "output_timing_last",           offsetof(struct reb_simulation, output_timing_last), 0, 0, 0},
+    { REB_INT,          "save_messages",                offsetof(struct reb_simulation, save_messages), 0, 0, 0},
+    { REB_DOUBLE,       "exit_max_distance",            offsetof(struct reb_simulation, exit_max_distance), 0, 0, 0},
+    { REB_DOUBLE,       "exit_min_distance",            offsetof(struct reb_simulation, exit_min_distance), 0, 0, 0},
+    { REB_DOUBLE,       "usleep",                       offsetof(struct reb_simulation, usleep), 0, 0, 0},
+    { REB_INT,          "track_energy_offset",          offsetof(struct reb_simulation, track_energy_offset), 0, 0, 0},
+    { REB_DOUBLE,       "energy_offset",                offsetof(struct reb_simulation, energy_offset), 0, 0, 0},
+    { REB_DOUBLE,       "root_size",                    offsetof(struct reb_simulation, root_size), 0, 0, 0},
+    { REB_SIZE_T,       "N_root_x",                     offsetof(struct reb_simulation, N_root_x), 0, 0, 0},
+    { REB_SIZE_T,       "N_root_y",                     offsetof(struct reb_simulation, N_root_y), 0, 0, 0},
+    { REB_SIZE_T,       "N_root_z",                     offsetof(struct reb_simulation, N_root_z), 0, 0, 0},
+    { REB_INT,          "N_ghost_x",                    offsetof(struct reb_simulation, N_ghost_x), 0, 0, 0},
+    { REB_INT,          "N_ghost_y",                    offsetof(struct reb_simulation, N_ghost_y), 0, 0, 0},
+    { REB_INT,          "N_ghost_z",                    offsetof(struct reb_simulation, N_ghost_z), 0, 0, 0},
+    { REB_DOUBLE,       "minimum_collision_velocity",   offsetof(struct reb_simulation, minimum_collision_velocity), 0, 0, 0},
+    { REB_DOUBLE,       "collisions_plog",              offsetof(struct reb_simulation, collisions_plog), 0, 0, 0},
+    { REB_INT64,        "collisions_log_n",             offsetof(struct reb_simulation, collisions_log_n), 0, 0, 0},
+    { REB_INT,          "calculate_megno",              offsetof(struct reb_simulation, calculate_megno), 0, 0, 0},
+    { REB_DOUBLE,       "megno_Ys",                     offsetof(struct reb_simulation, megno_Ys), 0, 0, 0},
+    { REB_DOUBLE,       "megno_Yss",                    offsetof(struct reb_simulation, megno_Yss), 0, 0, 0},
+    { REB_DOUBLE,       "megno_cov_Yt",                 offsetof(struct reb_simulation, megno_cov_Yt), 0, 0, 0},
+    { REB_DOUBLE,       "megno_var_t",                  offsetof(struct reb_simulation, megno_var_t), 0, 0, 0},
+    { REB_DOUBLE,       "megno_mean_t",                 offsetof(struct reb_simulation, megno_mean_t), 0, 0, 0},
+    { REB_DOUBLE,       "megno_mean_Y",                 offsetof(struct reb_simulation, megno_mean_Y), 0, 0, 0},
+    { REB_DOUBLE,       "megno_initial_t",              offsetof(struct reb_simulation, megno_initial_t), 0, 0, 0},
+    { REB_INT64,        "megno_n",                      offsetof(struct reb_simulation, megno_n), 0, 0, 0},
+    { REB_DOUBLE,       "simulationarchive_auto_interval", offsetof(struct reb_simulation, simulationarchive_auto_interval), 0, 0, 0},
+    { REB_DOUBLE,       "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
+    { REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
+    { REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
+    { REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
+    { REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
+    { REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
+    { REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
+    { REB_DOUBLE,       "OMEGAZ",                       offsetof(struct reb_simulation, OMEGAZ), 0, 0, 0},
+    { REB_UINT,         "is_synchronized",              offsetof(struct reb_simulation, is_synchronized), 0, 0, 0},
+    { REB_UINT,         "did_modify_particles",         offsetof(struct reb_simulation, did_modify_particles), 0, 0, 0},
+    { REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0},
+    { REB_POINTER,      "particles_var",                offsetof(struct reb_simulation, particles_var), offsetof(struct reb_simulation, N_var), sizeof(struct reb_particle), 0},
+    { REB_POINTER,      "var_config",                   offsetof(struct reb_simulation, var_config), offsetof(struct reb_simulation, N_var_config), sizeof(struct reb_variational_configuration), 0},
+    { REB_INT,          "simulationarchive_version",    offsetof(struct reb_simulation, simulationarchive_version), 0, 0, 0},
+    { REB_DOUBLE,       "walltime",                     offsetof(struct reb_simulation, walltime), 0, 0, 0},
+    { REB_DOUBLE,       "walltime_last_steps",          offsetof(struct reb_simulation, walltime_last_steps), 0, 0, 0},
+    { REB_UINT32,       "python_unit_l",                offsetof(struct reb_simulation, python_unit_l), 0, 0, 0},
+    { REB_UINT32,       "python_unit_m",                offsetof(struct reb_simulation, python_unit_m), 0, 0, 0},
+    { REB_UINT32,       "python_unit_t",                offsetof(struct reb_simulation, python_unit_t), 0, 0, 0},
+    { REB_UINT64,       "simulationarchive_auto_step",  offsetof(struct reb_simulation, simulationarchive_auto_step), 0, 0, 0},
+    { REB_UINT64,       "simulationarchive_next_step",  offsetof(struct reb_simulation, simulationarchive_next_step), 0, 0, 0},
+    { REB_UINT64,       "steps_done",                   offsetof(struct reb_simulation, steps_done), 0, 0, 0},
+    { REB_DOUBLE,       "dt_last_done",                 offsetof(struct reb_simulation, dt_last_done), 0, 0, 0},
+    { REB_UINT,         "rand_seed",                    offsetof(struct reb_simulation, rand_seed), 0, 0, 0},
+    { REB_INT,          "testparticle_hidewarnings",    offsetof(struct reb_simulation, testparticle_hidewarnings), 0, 0, 0},
+    { REB_POINTER,      "display_settings",             offsetof(struct reb_simulation, display_settings), SIZE_MAX, sizeof(struct reb_display_settings), 0},  // Note: SIZE_MAX means 1 element if pointer not NULL
+    { REB_CHARP_LIST,   "name_list",                    offsetof(struct reb_simulation, name_list), offsetof(struct reb_simulation, N_name_list), 0, 0},
+    { REB_OTHER,        "functionpointers", 0, 0, 0, 0},
+    { REB_OTHER,        "sablob", 0, 0, 0, 0},
+    { REB_OTHER,        "end", 0, 0, 0, 0},
+    { REB_OTHER,        "header", 0, 0, 0, 0},
     {0} // Null terminated.
 };
 
@@ -139,22 +139,6 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
     *sizep += size;
 }
 
-// This function is only used in simulation_diff. 
-struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_id(uint32_t id){
-    int i=-1;
-    do{
-        i++;
-        if (reb_binarydata_field_descriptor_list[i].id==id){
-            return reb_binarydata_field_descriptor_list[i];
-        }
-    } while (reb_binarydata_field_descriptor_list[i].id);
-    struct reb_binarydata_field_descriptor bfd = {
-        .dtype = REB_FIELD_NOT_FOUND,
-        .name = "field_not_found",
-    };
-    return bfd;
-}
-
 // This function is only used to find a couple of special fields.  
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name){
     int i=-1;
@@ -163,7 +147,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         if (strcmp(reb_binarydata_field_descriptor_list[i].name, name)==0){
             return reb_binarydata_field_descriptor_list[i];
         }
-    } while (reb_binarydata_field_descriptor_list[i].id);
+    } while (reb_binarydata_field_descriptor_list[i].name[0]);
     // We should never arrive here.
     reb_simulation_error(NULL, "Could not find field descriptor for name.");
     // TODO Fix this for integrator values which are not found.
@@ -256,24 +240,28 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 
     size_t pos1 = 64;
     size_t pos2 = 64;
-
-    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
+    struct reb_binarydata_field field1;
+    struct reb_binarydata_field field2;
+    char* name1;
+    char* name2;
 
     while(1){
         if (pos1+sizeof(struct reb_binarydata_field)>size1) break;
-        struct reb_binarydata_field field1;
         memcpy(&field1, buf1+pos1, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos1 += sizeof(struct reb_binarydata_field);
-        if (field1.id==fd_end.id){
+        name1 = buf1+pos1;
+        pos1 += field1.size_name;
+        if (strcmp(name1, "end")==0){
             break;
         }
         if (pos2+sizeof(struct reb_binarydata_field)>size2) pos2 = 64;
-        struct reb_binarydata_field field2;
         memcpy(&field2, buf2+pos2, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos2 += sizeof(struct reb_binarydata_field);
+        name2 = buf2+pos2;
+        pos2 += field2.size_name;
 
         // Fields might not be in the same order.
-        if (field1.id!=field2.id){
+        if (strcmp(name1, name2)){
             // Will search for element in buf2, starting at beginning just past header
             // Note that we ignore all ADDITIONAL fields in buf2 that were not present in buf1 
             pos2 = 64;
@@ -285,20 +273,22 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 }
                 memcpy(&field2, buf2+pos2, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
                 pos2 += sizeof(struct reb_binarydata_field);
-                if(field2.id==fd_end.id){
+                name2 = buf2+pos2;
+                pos2 += field2.size_name;
+                if(strcmp(name2, "end")==0){
                     notfound = 1;
                     break;
                 }
-                if (field2.id==field1.id){
+                if (strcmp(name1, name2)==0){
                     break; // found!!
                 }else{
-                    pos2 += field2.size; //skip
+                    pos2 += field2.size_data; //skip
                 }
             };
             if (notfound == 1){
-                pos1 += field1.size; // For next search
+                pos1 += field1.size_data; // For next search
                 pos2 = 64;           // For next search
-                field1.size = 0;     // Output field with size 0
+                field1.size_data = 0;  // Output field with size 0
                 are_different = 1.;
                 switch (output_option){
                     case REB_BINARYDATA_OUTPUT_STREAM:
@@ -307,28 +297,27 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                     case REB_BINARYDATA_OUTPUT_PRINT:
                     case REB_BINARYDATA_OUTPUT_BUFFER:
                         {
-                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_id(field1.id);
+                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name1);
                             asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
-                            asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                            asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size_data);
                             asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                         }
                         break;
                     case REB_BINARYDATA_OUTPUT_NONE:
                         break;
                 }
-                field1.size = 0;
                 continue;
             }
         }
-        // Can assume field1.id == field2.id from here on
-        if (pos1+field1.size>size1) printf("Corrupt binary file buf1.\n");
-        if (pos2+field2.size>size2) printf("Corrupt binary file buf2.\n");
+        // Can assume field1 and field2 have the same name from here on
+        if (pos1+field1.size_data>size1) printf("Corrupt binary file buf1.\n");
+        if (pos2+field2.size_data>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
-        if (field1.size==field2.size){
-            if (strcmp(reb_binarydata_field_descriptor_for_id(field1.id).name, "particles")==0){
+        if (field1.size_data==field2.size_data){
+            if (strcmp(name1, "particles")==0){
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
-                for (size_t i=0;i<field1.size/sizeof(struct reb_particle);i++){
+                for (size_t i=0;i<field1.size_data/sizeof(struct reb_particle);i++){
                     struct reb_particle p1;
                     struct reb_particle p2;
                     memcpy(&p1, pb1+i, sizeof(struct reb_particle)); // need copy because of 8 byte alignment requirement
@@ -336,7 +325,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                     fields_differ |= reb_particle_cmp(p1,p2);
                 }
             }else{
-                if (memcmp(buf1+pos1,buf2+pos2,field1.size)!=0){
+                if (memcmp(buf1+pos1,buf2+pos2,field1.size_data)!=0){
                     fields_differ = 1;
                 }
             }
@@ -344,7 +333,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             fields_differ = 1;
         }
         if(fields_differ){
-            if (strncmp(reb_binarydata_field_descriptor_for_id(field1.id).name, "walltime",8)!=0){
+            if (strcmp(name1, "walltime")!=0){
                 // Ignore the walltime fields, but only for the return value (print it out)
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
@@ -352,16 +341,16 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             switch (output_option){
                 case REB_BINARYDATA_OUTPUT_STREAM:
                     write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
-                    write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                    write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size_data);
                     break;
                 case REB_BINARYDATA_OUTPUT_PRINT:
                 case REB_BINARYDATA_OUTPUT_BUFFER:
                     {
-                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_id(field1.id);
+                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name1);
                         asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
-                        asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size);
+                        asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size_data);
                         asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
-                        asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+                        asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size_data);
                         asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                     }
                     break;
@@ -369,29 +358,31 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                     break;
             }
         }
-        pos1 += field1.size;
-        pos2 += field2.size;
+        pos1 += field1.size_data;
+        pos2 += field2.size_data;
     }
     // Search for fields which are present in buf2 but not in buf1
     pos1 = 64;
     pos2 = 64;
     while(1){
         if (pos2+sizeof(struct reb_binarydata_field)>size2) break;
-        struct reb_binarydata_field field2;
         memcpy(&field2, buf2+pos2, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos2 += sizeof(struct reb_binarydata_field);
-        if (field2.id==fd_end.id){
+        name2 = buf2+pos2;
+        pos2 += field2.size_name;
+        if (strcmp(name2, "end")==0){
             break;
         }
         if (pos1+sizeof(struct reb_binarydata_field)>size1) pos1 = 64;
-        struct reb_binarydata_field field1;
         memcpy(&field1, buf1+pos1, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
         pos1 += sizeof(struct reb_binarydata_field);
+        name1 = buf1+pos1;
+        pos1 += field1.size_name;
 
-        if (field1.id==field2.id){
+        if (strcmp(name1, name2)==0){
             // Not a new field. Skip.
-            pos1 += field1.size;
-            pos2 += field2.size;
+            pos1 += field1.size_data;
+            pos2 += field2.size_data;
             continue;
         }
         // Fields might not be in the same order.
@@ -405,21 +396,23 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             }
             memcpy(&field1, buf1+pos1, sizeof(struct reb_binarydata_field)); // need copy because of 8 byte alignment requirement
             pos1 += sizeof(struct reb_binarydata_field);
-            if(field1.id==fd_end.id){
+            name1 = buf1+pos1;
+            pos1 += field1.size_name;
+            if(strcmp(name1, "end")==0){
                 notfound = 1;
                 break;
             }
-            if (field2.id==field1.id){
+            if (strcmp(name1, name2)){
                 break; // found it, not new
             }else{
                 // not found, try next
-                pos1 += field1.size;
+                pos1 += field1.size_data;
             }
         };
         if (notfound == 0){
             // Not a new field. Skip.
             pos1 = 64;
-            pos2 += field2.size;
+            pos2 += field2.size_data;
             continue;
         }
 
@@ -427,14 +420,14 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         switch (output_option){
             case REB_BINARYDATA_OUTPUT_STREAM:
                 write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size);
+                write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size_data);
                 break;
             case REB_BINARYDATA_OUTPUT_PRINT:
             case REB_BINARYDATA_OUTPUT_BUFFER:
                 {
-                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_id(field2.id);
+                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name2);
                     asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
-                    asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size);
+                    asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size_data);
                     asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                 }
                 break;
@@ -442,74 +435,90 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 break;
         }
         pos1 = 64;
-        pos2 += field2.size;
+        pos2 += field2.size_data;
     }
 
     return are_different;
 }
 
 // Output all fields from one field_descriptor list
-static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address, uint32_t mask){
+static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address, const char* prefix){
     if (!fd_list) return; 
-    for (size_t i=0; fd_list[i].id; i++){
+    char name[1024];
+    for (size_t i=0; fd_list[i].name[0]; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
-        struct reb_binarydata_field field = {.id = fd.id ^ mask};
+        strcpy(name, prefix);
+        strcat(name, ".");
+        strcat(name, fd.name);
+        size_t size_name = strlen(name)+1;
+        struct reb_binarydata_field field = {.size_name = size_name};
+
         char** pointer_to_value = (char**)(base_address + fd.offset);
         switch (fd.dtype){
             case REB_DOUBLE: 
-                field.size = sizeof(double);
+                field.size_data = sizeof(double);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_INT: 
-                field.size = sizeof(int);
+                field.size_data = sizeof(int);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_SIZE_T: 
-                field.size = sizeof(size_t);
+                field.size_data = sizeof(size_t);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_UINT: 
-                field.size = sizeof(unsigned int);
+                field.size_data = sizeof(unsigned int);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_UINT32: 
-                field.size = sizeof(uint32_t);
+                field.size_data = sizeof(uint32_t);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_INT64:
-                field.size = sizeof(int64_t);
+                field.size_data = sizeof(int64_t);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_UINT64:
-                field.size = sizeof(uint64_t);
+                field.size_data = sizeof(uint64_t);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_VEC3D:
-                field.size = sizeof(struct reb_vec3d);
+                field.size_data = sizeof(struct reb_vec3d);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_PARTICLE:
-                field.size = sizeof(struct reb_particle);
+                field.size_data = sizeof(struct reb_particle);
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_STRING: 
                 if (*pointer_to_value){
-                    field.size = strlen(*pointer_to_value)+1;
+                    field.size_data = strlen(*pointer_to_value)+1;
                     pointer_to_value = (char**)(*pointer_to_value);
                 }else{
-                    field.size = 0;
+                    field.size_data = 0;
                 }
                 write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size);
+                write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                write_to_stream(bufp, allocatedsize, current_pos, pointer_to_value, field.size_data);
                 break;
             case REB_POINTER:
             case REB_POINTER_ALIGNED:
@@ -517,16 +526,17 @@ static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* al
                     size_t pointer_N = 0;
                     if (fd.offset_N!=SIZE_MAX){ // Dynamic N if offset_N is given
                         pointer_N = *(size_t*)(base_address + fd.offset_N);
-                    }else{ // Fixed size pointer_to_value.
+                    }else{ // Fixed size_data pointer_to_value.
                         if (*pointer_to_value){
                             pointer_N = 1; // Pointer is not NULL, thus store one element.
                         }
                     }
-                    field.size = pointer_N * fd.element_size;
+                    field.size_data = pointer_N * fd.element_size;
 
-                    if (field.size){
+                    if (field.size_data){
                         write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
-                        write_to_stream(bufp, allocatedsize, current_pos, *pointer_to_value, field.size);
+                        write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
+                        write_to_stream(bufp, allocatedsize, current_pos, *pointer_to_value, field.size_data);
                     }
                 }
                 break;
@@ -539,11 +549,12 @@ static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* al
                         // character count + NULL character + original pointer
                         serialized_size += strlen((*list_p)[i])+1+sizeof(char*);
                     }
-                    field.size = sizeof(char)*serialized_size;
+                    field.size_data = sizeof(char)*serialized_size;
 
-                    if (field.size){
+                    if (field.size_data){
                         // This pointer arithmetic will fail on 32 bit architectures.
                         write_to_stream(bufp, allocatedsize, current_pos, &field, sizeof(struct reb_binarydata_field));
+                        write_to_stream(bufp, allocatedsize, current_pos, name, field.size_name);
                         for (size_t i=0; i<N_list; i++){
                             write_to_stream(bufp, allocatedsize, current_pos, (*list_p)[i], strlen((*list_p)[i])+1);
                             write_to_stream(bufp, allocatedsize, current_pos, &((*list_p)[i]), sizeof(char*));
@@ -576,9 +587,9 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
 
     /// Output all fields
     // Main simulation
-    output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, reb_binarydata_mask_simulation);
+    output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, "");
     // Integrator
-    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, reb_binarydata_mask_integrator);
+    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, r->integrator.name);
 
     // Write function pointer warning flag
     int functionpointersused = 0;
@@ -594,15 +605,17 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     struct reb_binarydata_field_descriptor fd_fp = reb_binarydata_field_descriptor_for_name("functionpointers");
     struct reb_binarydata_field field_functionp;
     memset(&field_functionp,0,sizeof(struct reb_binarydata_field));
-    field_functionp.id = fd_fp.id; 
-    field_functionp.size = sizeof(int);
+    field_functionp.size_name = strlen(fd_fp.name)+1;
+    field_functionp.size_data = sizeof(int);
     write_to_stream(bufp, &allocatedsize, current_pos, &field_functionp, sizeof(struct reb_binarydata_field));
-    write_to_stream(bufp, &allocatedsize, current_pos, &functionpointersused, field_functionp.size);
+    write_to_stream(bufp, &allocatedsize, current_pos, fd_fp.name, field_functionp.size_name);
+    write_to_stream(bufp, &allocatedsize, current_pos, &functionpointersused, field_functionp.size_data);
 
     // Write last field
     struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
-    struct reb_binarydata_field end_field = {.id = fd_end.id, .size = 0};
+    struct reb_binarydata_field end_field = {.size_name = strlen(fd_end.name)+1, .size_data = 0};
     write_to_stream(bufp, &allocatedsize, current_pos, &end_field, sizeof(struct reb_binarydata_field));
+    write_to_stream(bufp, &allocatedsize, current_pos, fd_end.name, end_field.size_name);
 
     struct reb_simulationarchive_blob blob = {0};
     write_to_stream(bufp, &allocatedsize, current_pos, &blob, sizeof(struct reb_simulationarchive_blob));

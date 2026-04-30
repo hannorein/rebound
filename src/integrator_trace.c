@@ -45,9 +45,9 @@ void reb_integrator_trace_did_add_particle(struct reb_simulation* r);
 void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index);
 
 const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descriptor_list[] = {
-    { 165, REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
-    { 169, REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
-    { 170, REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
+    { REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
+    { REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
+    { REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
     { 0 }, // Null terminated list
 };
 
