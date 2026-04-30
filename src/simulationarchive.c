@@ -286,7 +286,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 // Checking the offsets. Acts like a checksum.
                 if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
                     // Offsets don't work. Next snapshot is definitely corrupted. Assume current one as well.
-                    if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
+                    if (debug) printf("SA Error. Offset mismatch: %llu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
                     read_error = 1;
                     break;
                 }
@@ -559,7 +559,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         // Update blob info and Write diff to binary file
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-        blob.offset_next = (int32_t)size_diff+sizeof(struct reb_binarydata_field)+strlen("end")+1;
+        blob.offset_next = (uint64_t)(size_diff+sizeof(struct reb_binarydata_field)+strlen("end")+1);
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 
