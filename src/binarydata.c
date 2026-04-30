@@ -36,13 +36,7 @@
 #include "simulationarchive.h"
 #include "integrator_whfast512.h"
 
-// Masks to identify module for fields. Currently only module is integrator.
-// Note: header has some high bits set to 1.
-const uint32_t reb_binarydata_mask_simulation = 0x0;
-const uint32_t reb_binarydata_mask_integrator = 0x80000000;
-const uint32_t reb_binarydata_mask_header = 0x4F424552; // Corresponds to the first few ASCII characters in binary file
-const uint32_t reb_binarydata_mask_end = 0x0000FFFF;
-const uint32_t reb_binarydata_mask_functionpointers = 9997;
+const uint64_t reb_binarydata_header = 0x20444E554F424552; // Corresponds to the first few ASCII characters in binary file
 
 // Null terminated list of REBOUND parameters to be written to a file.
 // Modify this list if you wish to input/output additional fields in the reb_simulation structure.
@@ -323,6 +317,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 switch (output_option){
                     case REB_BINARYDATA_OUTPUT_STREAM:
                         write_to_stream(bufp, &allocatedsize, sizep, &field1,sizeof(struct reb_binarydata_field));
+                        write_to_stream(bufp, &allocatedsize, sizep, name1,field1.size_name);
                         break;
                     case REB_BINARYDATA_OUTPUT_PRINT:
                     case REB_BINARYDATA_OUTPUT_BUFFER:
@@ -374,6 +369,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             switch (output_option){
                 case REB_BINARYDATA_OUTPUT_STREAM:
                     write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
+                    write_to_stream(bufp, &allocatedsize, sizep, name2,field2.size_name);
                     write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size_data);
                     break;
                 case REB_BINARYDATA_OUTPUT_PRINT:
@@ -453,6 +449,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         switch (output_option){
             case REB_BINARYDATA_OUTPUT_STREAM:
                 write_to_stream(bufp, &allocatedsize, sizep, &field2,sizeof(struct reb_binarydata_field));
+                write_to_stream(bufp, &allocatedsize, sizep, name2,field2.size_name);
                 write_to_stream(bufp, &allocatedsize, sizep, buf2+pos2,field2.size_data);
                 break;
             case REB_BINARYDATA_OUTPUT_PRINT:
@@ -672,7 +669,7 @@ next_field:
             goto finish_fields; // End of file
         }
         // Is this a real field or the header?
-        if (field.size_name == reb_binarydata_mask_header) {
+        if (field.size_name == reb_binarydata_header) {
             int64_t objects = 0;
             const size_t bufsize = 64 - sizeof(struct reb_binarydata_field);
             char readbuf[64], curvbuf[64];
@@ -681,7 +678,6 @@ next_field:
 
             objects += fread(readbuf,sizeof(char),bufsize,inf);
             if (objects < 1){
-                __builtin_trap();
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 // Note: following compares version, but ignores githash.
@@ -694,7 +690,6 @@ next_field:
         // Try to get name of field
         numread = (int)fread(name,field.size_name,1,inf);
         if (numread<1){
-                __builtin_trap();
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             goto finish_fields; // End of file
         }
@@ -805,7 +800,6 @@ next_field:
                     int err = fseek(inf, field.size_data, SEEK_CUR);
                     if (err){
                         // Even worse, can't seek to end of field.
-                __builtin_trap();
                         *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
                     }
                 }
@@ -814,6 +808,7 @@ next_field:
         }
         // If we're here then it was not a simple or pointer datatype. 
         // Can skip the iteration trough the descriptor list.
+        // TODO:
         printf("shouldn't be hereeeee\n");
         break;
     }

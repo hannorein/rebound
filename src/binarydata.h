@@ -87,6 +87,6 @@ struct reb_binarydata_field {
 
 // List of all possible input/ouput fields of reb_simulation
 REB_API extern const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_list[];
-extern const uint32_t reb_binarydata_mask_header;
+extern const uint64_t reb_binarydata_header;
 
 #endif // _BINARYDATA_H
