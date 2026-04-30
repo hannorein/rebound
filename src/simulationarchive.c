@@ -133,11 +133,13 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     do{
         int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
         if (!didReadField){
+                __builtin_trap();
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             break;
         }
         didReadField = (int)fread(name,field.size_name,1,sa->inf);
         if (!didReadField){
+                __builtin_trap();
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             break;
         }
@@ -166,6 +168,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             }
             if (c1==0 || c2==0 || c3==0){
                 if (debug) printf("SA Error. Cannot determine version.\n");
+                __builtin_trap();
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 char cpatch[64];
@@ -182,6 +185,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 sa->reb_version_major = atoi(cmajor);
             }
             if (objects < 1){
+                __builtin_trap();
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 // Note: following compares version, but ignores githash.
@@ -274,6 +278,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                         // Won't be able to do checksum.
                 if (debug) printf("SA Error. Error while reading next blob.\n");
                 next_blob_is_corrupted = 1;
+                __builtin_trap();
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }
             if (i>0){
@@ -302,6 +307,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
         }
         if (read_error){
             if (sa->nblobs>0){
+                __builtin_trap();
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 fclose(sa->inf);
@@ -487,27 +493,33 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
         int blobs_read = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         if (seek_ok !=0 || blobs_read != 1){ // cannot read blob
+                __builtin_trap();
             file_corrupt = 1;
         }
         if ( (archive_contains_more_than_one_blob && blob.offset_prev <=0) || blob.offset_next != 0){ // blob contains unexpected data. Note: First blob is all zeros.
+                __builtin_trap();
             file_corrupt = 1;
         }
         if (file_corrupt==0 && archive_contains_more_than_one_blob ){
             // Check if last two blobs are consistent.
-            seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binarydata_field), SEEK_CUR);  
+            size_t end_len = strlen("end")+1;
+            seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binarydata_field) - end_len, SEEK_CUR);  
             bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
             bytesread = (int)fread(name, field.size_name, 1, of);
             if (seek_ok!=0 || bytesread!=1){
+                __builtin_trap();
                 file_corrupt = 1;
             }
             if (strcmp(name, "end") || field.size_data !=0){
                 // expected an END field
+                __builtin_trap();
                 file_corrupt = 1;
             }
             seek_ok = fseek(of, -blob.offset_prev - sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
             struct reb_simulationarchive_blob blob2 = {0};
             blobs_read = (int)fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
             if (seek_ok!=0 || blobs_read!=1 || blob2.offset_next != blob.offset_prev){
+                __builtin_trap();
                 file_corrupt = 1;
             }
         }
@@ -554,7 +566,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         // Update blob info and Write diff to binary file
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-        blob.offset_next = (int32_t)size_diff+sizeof(struct reb_binarydata_field);
+        blob.offset_next = (int32_t)size_diff+sizeof(struct reb_binarydata_field)+strlen("end")+1;
         fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
         fwrite(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
         fwrite(buf_diff, size_diff, 1, of); 

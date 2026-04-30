@@ -151,7 +151,7 @@ static const struct reb_binarydata_field_descriptor* reb_binarydata_field_descri
 
 // Returns a field descriptor with matching name
 // Modifies field descriptor so that name is full qualifying name including prefix.
-// Modifies field descriptor so that offset is actual memory address. 
+// Modifies field descriptor so that offset is actual memory address if r is given. 
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name){
     const struct reb_binarydata_field_descriptor* fd = NULL;
     if (strncmp("integrator.", name, 11)==0){
@@ -159,10 +159,11 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         if (r && r->integrator.callbacks.field_descriptor_list){
             fd = reb_binarydata_field_descriptor_for_name_in_list(r->integrator.callbacks.field_descriptor_list, name+11);
         }else{
-
+            // Look through all built-in integrators
 #define X(iname) if (!fd) {fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_##iname.field_descriptor_list, name+11);}
             REB_AVAILABLE_INTEGRATORS
 #undef X
+            // TODO Add search in custom integrators
         }
         if (fd){
             struct reb_binarydata_field_descriptor fd_integrator = *fd;
@@ -177,13 +178,12 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
     fd = reb_binarydata_field_descriptor_for_name_in_list(reb_binarydata_field_descriptor_list, name); 
     if (fd){
         struct reb_binarydata_field_descriptor fd_simulation = *fd;
-        if (r && r->integrator.state){
+        if (r){
             fd_simulation.offset += (size_t)r;
             fd_simulation.offset_N += (size_t)r;
         }
         return fd_simulation;
     }
-    // TODO Add search in custom integrators
     reb_simulation_error(NULL, "Could not find field descriptor for name.");
     struct reb_binarydata_field_descriptor bfd = {
         .dtype = REB_FIELD_NOT_FOUND,
@@ -681,6 +681,7 @@ next_field:
 
             objects += fread(readbuf,sizeof(char),bufsize,inf);
             if (objects < 1){
+                __builtin_trap();
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 // Note: following compares version, but ignores githash.
@@ -693,6 +694,7 @@ next_field:
         // Try to get name of field
         numread = (int)fread(name,field.size_name,1,inf);
         if (numread<1){
+                __builtin_trap();
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             goto finish_fields; // End of file
         }
@@ -803,6 +805,7 @@ next_field:
                     int err = fseek(inf, field.size_data, SEEK_CUR);
                     if (err){
                         // Even worse, can't seek to end of field.
+                __builtin_trap();
                         *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
                     }
                 }
