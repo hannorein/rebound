@@ -19,9 +19,8 @@ class BinaryFieldDescriptor(ctypes.Structure):
     """
 
     def __repr__(self):
-        return '<{0}.{1} object at {2}, type={3}, dtype={4}, name=\'{5}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.type, self.dtype, self.name.decode("ascii"))
-    _fields_ = [("type", ctypes.c_uint),
-                ("dtype", ctypes.c_int),
+        return '<{0}.{1} object at {2}, dtype={3}, name=\'{4}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.dtype, self.name.decode("ascii"))
+    _fields_ = [("dtype", ctypes.c_int),
                 ("name", ctypes.c_char*256),
                 ("offset", ctypes.c_size_t),
                 ("offset_N", ctypes.c_size_t),
@@ -60,7 +59,7 @@ class IntegratorConfiguration(ctypes.Structure):
         while True:
             # TODO make sure field_descriptor_list is not NULL
             field_descriptor = self.callbacks.field_descriptor_list[i]
-            if field_descriptor.type == 0:
+            if field_descriptor.name == b'':
                 raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
                 if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
@@ -73,7 +72,7 @@ class IntegratorConfiguration(ctypes.Structure):
         while True:
             # TODO make sure field_descriptor_list is not NULL
             field_descriptor = self.callbacks.field_descriptor_list[i]
-            if field_descriptor.type == 0:
+            if field_descriptor.name == b'':
                 raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
                 if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
@@ -115,7 +114,7 @@ def binary_field_descriptor_list():
     i=0
     while True:
         l.append(fd_pointer[i])
-        if fd_pointer[i].name == b'end':
+        if fd_pointer[i].name == b'':
             break
         i += 1
     return l
