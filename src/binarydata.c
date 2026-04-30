@@ -139,17 +139,52 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
     *sizep += size;
 }
 
-// This function is only used to find a couple of special fields.  
-struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const char* name){
-    for(size_t i=0; reb_binarydata_field_descriptor_list[i].name[0]; i++){
-        if (strcmp(reb_binarydata_field_descriptor_list[i].name, name)==0){
-            return reb_binarydata_field_descriptor_list[i];
+static const struct reb_binarydata_field_descriptor* reb_binarydata_field_descriptor_for_name_in_list(const struct reb_binarydata_field_descriptor* list, const char* name){
+    if (!list) return NULL;
+    for(size_t i=0; list[i].name[0]; i++){
+        if (strcmp(list[i].name, name)==0){
+            return &list[i];
         }
     }
-    // We should never arrive here.
+    return NULL;
+}
+
+// Returns a field descriptor with matching name
+// Modifies field descriptor so that name is full qualifying name including prefix.
+// Modifies field descriptor so that offset is actual memory address. 
+struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name){
+    const struct reb_binarydata_field_descriptor* fd = NULL;
+    if (strncmp("integrator.", name, 11)==0){
+        // This is an integrator field
+        if (r && r->integrator.callbacks.field_descriptor_list){
+            fd = reb_binarydata_field_descriptor_for_name_in_list(r->integrator.callbacks.field_descriptor_list, name+11);
+        }else{
+
+#define X(iname) if (!fd) {fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_##iname.field_descriptor_list, name+11);}
+            REB_AVAILABLE_INTEGRATORS
+#undef X
+        }
+        if (fd){
+            struct reb_binarydata_field_descriptor fd_integrator = *fd;
+            if (r && r->integrator.state){
+                fd_integrator.offset += (size_t)r->integrator.state;
+                fd_integrator.offset_N += (size_t)r->integrator.state;
+            }
+            strcpy(fd_integrator.name, name);
+            return fd_integrator;
+        } 
+    }
+    fd = reb_binarydata_field_descriptor_for_name_in_list(reb_binarydata_field_descriptor_list, name); 
+    if (fd){
+        struct reb_binarydata_field_descriptor fd_simulation = *fd;
+        if (r && r->integrator.state){
+            fd_simulation.offset += (size_t)r;
+            fd_simulation.offset_N += (size_t)r;
+        }
+        return fd_simulation;
+    }
+    // TODO Add search in custom integrators
     reb_simulation_error(NULL, "Could not find field descriptor for name.");
-    // TODO Fix this for integrator values which are not found.
-    // TODO Causes issues in sim.status()
     struct reb_binarydata_field_descriptor bfd = {
         .dtype = REB_FIELD_NOT_FOUND,
         .name = "field_not_found",
@@ -284,9 +319,6 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 }
             };
             if (notfound == 1){
-                pos1 += field1.size_data; // For next search
-                pos2 = 64;           // For next search
-                field1.size_data = 0;  // Output field with size 0
                 are_different = 1.;
                 switch (output_option){
                     case REB_BINARYDATA_OUTPUT_STREAM:
@@ -295,15 +327,18 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                     case REB_BINARYDATA_OUTPUT_PRINT:
                     case REB_BINARYDATA_OUTPUT_BUFFER:
                         {
-                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name1);
-                            asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
+                            const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(NULL, name1);
+                            asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",name1);
                             asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size_data);
                             asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                         }
                         break;
                     case REB_BINARYDATA_OUTPUT_NONE:
                         break;
-                }
+                }           
+                // Set offsets for next search
+                pos2 = 64;
+                pos1 += field1.size_data;
                 continue;
             }
         }
@@ -312,7 +347,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         if (pos2+field2.size_data>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size_data==field2.size_data){
-            if (strcmp(name1, "particles")==0){
+            if (strcmp(name1, "particles")==0){ // TODO Should be dtype== REB_PARTICLE so it works for all particle arrays
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (size_t i=0;i<field1.size_data/sizeof(struct reb_particle);i++){
@@ -344,8 +379,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 case REB_BINARYDATA_OUTPUT_PRINT:
                 case REB_BINARYDATA_OUTPUT_BUFFER:
                     {
-                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name1);
-                        asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",fd.name);
+                        const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(NULL, name1);
+                        asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_RED "< ",name1);
                         asprintf_append_to_bufp_type(bufp, fd.dtype, buf1+pos1, field1.size_data);
                         asprintf_append_to_bufp(bufp, REB_STR_RESET "\n---\n" REB_STR_GREEN "> ");
                         asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size_data);
@@ -423,8 +458,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
             case REB_BINARYDATA_OUTPUT_PRINT:
             case REB_BINARYDATA_OUTPUT_BUFFER:
                 {
-                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name2);
-                    asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",fd.name);
+                    const struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(NULL, name2);
+                    asprintf_append_to_bufp(bufp, "%s:\n" REB_STR_GREEN "> ",name2);
                     asprintf_append_to_bufp_type(bufp, fd.dtype, buf2+pos2, field2.size_data);
                     asprintf_append_to_bufp(bufp, REB_STR_RESET "\n");
                 }
@@ -443,6 +478,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address, const char* prefix){
     if (!fd_list) return; 
     char name[1024];
+
     for (size_t i=0; fd_list[i].name[0]; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
         if (prefix && prefix[0]){
@@ -591,7 +627,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     // Main simulation
     output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, NULL);
     // Integrator
-    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, r->integrator.name);
+    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, "integrator");
 
     // Write function pointer warning flag
     int functionpointersused = 0;
@@ -604,7 +640,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
         functionpointersused = 1;
     }
 
-    struct reb_binarydata_field_descriptor fd_fp = reb_binarydata_field_descriptor_for_name("functionpointers");
+    struct reb_binarydata_field_descriptor fd_fp = reb_binarydata_field_descriptor_for_name(NULL, "functionpointers");
     struct reb_binarydata_field field_functionp;
     memset(&field_functionp,0,sizeof(struct reb_binarydata_field));
     field_functionp.size_name = strlen(fd_fp.name)+1;
@@ -614,7 +650,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     write_to_stream(bufp, &allocatedsize, current_pos, &functionpointersused, field_functionp.size_data);
 
     // Write last field
-    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
+    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name(NULL, "end");
     struct reb_binarydata_field end_field = {.size_name = strlen(fd_end.name)+1, .size_data = 0};
     write_to_stream(bufp, &allocatedsize, current_pos, &end_field, sizeof(struct reb_binarydata_field));
     write_to_stream(bufp, &allocatedsize, current_pos, fd_end.name, end_field.size_name);
@@ -676,11 +712,8 @@ next_field:
         }
 
 
-        char* base_address = (char*)r;
-
-        // TODO: Fix base_address for integrator data
-        struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(name) ;
-        char** pointer = (char**)(base_address + fd.offset);
+        struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(r, name) ;
+        char** pointer = (char**)fd.offset;
         switch(fd.dtype){
             case REB_DOUBLE:
             case REB_INT:
@@ -705,7 +738,7 @@ next_field:
                     if (field.size_data % fd.element_size){
                         reb_simulation_warning(r, "Inconsistent size_data encountered in binary field.");
                     }
-                    size_t* pointer_N = (size_t*)(base_address + fd.offset_N);
+                    size_t* pointer_N = (size_t*)fd.offset_N;
                     if (fd.dtype == REB_POINTER_ALIGNED){
                         if (*pointer) free(*pointer);
 #if defined(_WIN32) || !defined(AVX512)
@@ -742,7 +775,7 @@ next_field:
                     char* serialized_strings = malloc(serialized_size);
                     fread(serialized_strings, serialized_size,1,inf);
                     // Process strings back into a list
-                    size_t* pointer_N = (size_t*)(base_address + fd.offset_N);
+                    size_t* pointer_N = (size_t*)fd.offset_N;
                     size_t current_pos = 0;
                     while (current_pos < serialized_size){
                         char* current_string = serialized_strings + current_pos;

@@ -42,9 +42,9 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
-    { REB_UINT,         "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
-    { REB_UINT,         "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
-    { REB_UINT,         "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
+    { REB_UINT,        "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
+    { REB_UINT,        "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
+    { REB_UINT,        "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
     { REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle), 0},
     { REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle), 0},
     { REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },

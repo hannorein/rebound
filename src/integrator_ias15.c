@@ -63,8 +63,8 @@ const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descript
     { REB_POINTER,      "b",                   offsetof(struct reb_integrator_ias15_state, b), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
     { REB_POINTER,      "csb",                 offsetof(struct reb_integrator_ias15_state, csb), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
     { REB_POINTER,      "e",                   offsetof(struct reb_integrator_ias15_state, e), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { REB_POINTER,     "br",                  offsetof(struct reb_integrator_ias15_state, br), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
-    { REB_POINTER,     "er",                  offsetof(struct reb_integrator_ias15_state, er), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { REB_POINTER,      "br",                  offsetof(struct reb_integrator_ias15_state, br), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
+    { REB_POINTER,      "er",                  offsetof(struct reb_integrator_ias15_state, er), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
     { 0 }, // Null terminated list
 };
 
