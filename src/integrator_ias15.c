@@ -157,9 +157,8 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 }
 
 static inline void add_cs(double* p, double* csp, double inp){
-    const double y = inp - *csp;
-    const double t = *p + y;
-    *csp = (t - *p) - y;
+    const double t = *p + (inp - *csp);
+    *csp += (t - *p) - inp;
     *p = t;
 }
 
