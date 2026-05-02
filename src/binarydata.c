@@ -431,7 +431,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
                 notfound = 1;
                 break;
             }
-            if (strcmp(name1, name2)){
+            if (strcmp(name1, name2)==0){
                 break; // found it, not new
             }else{
                 // not found, try next
