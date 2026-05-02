@@ -597,8 +597,7 @@ static int check_and_set_simulationarchive_filename(struct reb_simulation* const
         reb_simulation_warning(r, "File in use for Simulationarchive already exists. Snapshots will be appended.");
     }
     free(r->simulationarchive_filename);
-    r->simulationarchive_filename = malloc((strlen(filename)+1)*sizeof(char));
-    strcpy(r->simulationarchive_filename, filename);
+    r->simulationarchive_filename = strdup(filename);
     return 0;
 }
 
