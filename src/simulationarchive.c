@@ -529,9 +529,16 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
                 if (seek_ok != 0){
                     break;
                 }
+                seek_ok = fseek(of, -sizeof(char)*4, SEEK_CUR); // strlen("end")
+                if (seek_ok != 0){
+                    break;
+                }
                 bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
-                bytesread = (int)fread(name, field.size_name, 1, of);
-                if (bytesread != 1 || strcmp(name, "end")){ // could be EOF or corrupt snapshot
+                if (field.size_name != 4){ // string can't be "end"
+                    break;
+                }
+                bytesread += (int)fread(name, field.size_name, 1, of);
+                if (bytesread != 2 || strncmp(name, "end", 4)){ // could be EOF or corrupt snapshot
                     break;
                 }
                 bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
