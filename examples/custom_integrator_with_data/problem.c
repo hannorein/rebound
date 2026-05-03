@@ -24,8 +24,8 @@ struct custom_integrator_state {
 // By defining the layout of the state in the form of a reb_binary_data_field_descriptor,
 // REBOUND can automatically safe and restore integrator state to a Simulationarchive file.
 const struct reb_binarydata_field_descriptor leapfrog_field_descriptor_list[] = {
-    { 11042, REB_INT, "number_of_steps",            offsetof(struct custom_integrator_state, number_of_steps), 0, 0, 0},
-    { 11043, REB_INT, "number_of_synchronizations", offsetof(struct custom_integrator_state, number_of_synchronizations), 0, 0, 0},
+    { REB_INT, "number_of_steps",            offsetof(struct custom_integrator_state, number_of_steps), 0, 0, 0},
+    { REB_INT, "number_of_synchronizations", offsetof(struct custom_integrator_state, number_of_synchronizations), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
