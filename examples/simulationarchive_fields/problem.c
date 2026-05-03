@@ -21,8 +21,8 @@
     break;\
 }
 
-extern struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name);
-extern const uint64_t reb_binarydata_header;
+REB_API extern struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name);
+REB_API extern const uint64_t reb_binarydata_header;
 
 // Old 16 bit offsets. Used only to read old files.
 struct reb_simulationarchive_blob16 {
