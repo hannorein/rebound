@@ -157,7 +157,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
 #define X(iname) if (!fd) {fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_##iname.field_descriptor_list, name+11);}
             REB_AVAILABLE_INTEGRATORS
 #undef X
-            // TODO Add search in custom integrators
+                // TODO Add search in custom integrators
         }
         if (fd){
             struct reb_binarydata_field_descriptor fd_integrator = *fd;

@@ -186,7 +186,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             }
             continue;
         }
-        
+
         didReadField = (int)fread(name,field.size_name,1,sa->inf);
         if (!didReadField){
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
