@@ -21,6 +21,9 @@
     break;\
 }
 
+extern struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name);
+extern const uint64_t reb_binarydata_header;
+
 // Old 16 bit offsets. Used only to read old files.
 struct reb_simulationarchive_blob16 {
     int32_t index;
@@ -57,9 +60,7 @@ int main(int argc, char* argv[]) {
     int uses32bitoffsets = 1; 
     struct reb_binarydata_field field = {0};
     struct reb_simulationarchive_blob blob = {0};
-    struct reb_binarydata_field_descriptor fd_header = reb_binarydata_field_descriptor_for_name("header");
-    struct reb_binarydata_field_descriptor fd_particles = reb_binarydata_field_descriptor_for_name("particles");
-    struct reb_binarydata_field_descriptor fd_end = reb_binarydata_field_descriptor_for_name("end");
+    char name[2048] = "";
 
 
     printf("==== START OF FILE ====\n");
@@ -67,17 +68,11 @@ int main(int argc, char* argv[]) {
         ifprintf("==== START OF BLOB[%d] ====\n", blob_index);
         do{
             int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa);
-            if (!didReadField){
-                printf("ERROR. Unable to read from file.\n");
+            if (!didReadField || field.size_name == 0 || (field.size_name > 2048 && field.size_name != reb_binarydata_header)){
+                printf("ERROR. Unable to read field from file.\n");
                 return 1;
             }
-            struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_type(field.type);
-            if (field.type == fd_end.type){
-                ifprintf("FIELD\n");
-                ifprintf("\tname:   %s\n", fd.name);
-                ifprintf("\ttype:   %d\n", fd.type);
-                ifprintf("\tsize:   %llu bytes\n", field.size);
-            }else if (field.type == fd_header.type){
+            if (field.size_name == reb_binarydata_header){
                 // Input header.
                 const int64_t bufsize = 64 - sizeof(struct reb_binarydata_field);
                 char readbuf[64];
@@ -116,125 +111,132 @@ int main(int argc, char* argv[]) {
                     printf("\toffsets: 16 bit (legacy)\n");
                 }
             }else{
-                ifprintf("FIELD\n");
-                ifprintf("\tname:   %s\n", fd.name);
-                ifprintf("\ttype:   %d\n", fd.type);
-                ifprintf("\tsize:   %llu bytes\n", field.size);
-                switch (fd.dtype){
-                    CASE(REB_DOUBLE);
-                    CASE(REB_INT);
-                    CASE(REB_UINT);
-                    CASE(REB_UINT32);
-                    CASE(REB_INT64);
-                    CASE(REB_UINT64);
-                    CASE(REB_VEC3D);
-                    CASE(REB_PARTICLE);
-                    CASE(REB_POINTER);
-                    CASE(REB_POINTER_ALIGNED);
-                    CASE(REB_OTHER);
-                    CASE(REB_CHARP_LIST);
-                default:
-                    ifprintf("\tdtype:  <other>\n");
-                    break;
+                int didReadName = (int)fread(&name,field.size_name,1,sa);
+                if (!didReadName){
+                    printf("ERROR. Unable to read name for field from file.\n");
+                    return 1;
                 }
+                struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(NULL,name);
+                if (strcmp("end", name)==0){
+                    ifprintf("FIELD\n");
+                    ifprintf("\tname:   %s\n", name);
+                    ifprintf("\ttype:   %d\n", fd.dtype);
+                    ifprintf("\tdata_size:   %llu bytes\n", field.size_data);
+                }else{
+                    ifprintf("FIELD\n");
+                    ifprintf("\tname:   %s\n", fd.name);
+                    ifprintf("\ttype:   %d\n", fd.dtype);
+                    ifprintf("\tsize:   %llu bytes\n", field.size_data);
+                    switch (fd.dtype){
+                        CASE(REB_DOUBLE);
+                        CASE(REB_INT);
+                        CASE(REB_UINT);
+                        CASE(REB_UINT32);
+                        CASE(REB_INT64);
+                        CASE(REB_UINT64);
+                        CASE(REB_VEC3D);
+                        CASE(REB_PARTICLE);
+                        CASE(REB_POINTER);
+                        CASE(REB_POINTER_ALIGNED);
+                        CASE(REB_OTHER);
+                        CASE(REB_CHARP_LIST);
+                    default:
+                        ifprintf("\tdtype:  <other>\n");
+                        break;
+                    }
 
-                switch (fd.dtype){
-                    case REB_DOUBLE:
-                        {
-                            double v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  %.16g\n",v);
-                        }
-                        break;
-                    case REB_INT:
-                        {
-                            int v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  %d\n",v);
-                        }
-                        break;
-                    case REB_UINT:
-                        {
-                            unsigned int v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  %d\n",v);
-                        }
-                        break;
-                    case REB_UINT32:
-                        {
-                            uint32_t v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  %d\n",v);
-                        }
-                        break;
-                    case REB_INT64:
-                        {
-                            int64_t v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  %lld\n",v);
-                        }
-                        break;
-                    case REB_UINT64:
-                        {
-                            uint64_t v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  %llu\n",v);
-                        }
-                        break;
-                    case REB_VEC3D:
-                        {
-                            struct reb_vec3d v;
-                            fread(&v,field.size,1,sa);
-                            ifprintf("\tvalue:  x=%.16g y=%.16g z=%.16g\n",v.x, v.y, v.z);
-                        }
-                        break;
-                    case REB_PARTICLE:
-                        {
-                            struct reb_particle v;
-                            fread(&v,field.size,1,sa);
-                            print_particle(v, "value:\t");
-                            print_particle(v, "\t\t");
-                        }
-                        break;
-                    case REB_POINTER:
-                        if (field.type == fd_particles.type){
-                            ifprintf("\tvalue:  \n");
-                            int N = field.size/sizeof(struct reb_particle);
-                            struct reb_particle* vp = malloc(field.size);
-                            if (blob_index==blob_requested || blob_requested == -1) {
-                                fread(vp,field.size,1,sa);
-                                for (int i=0; i<N; i++){
-                                    printf("\t\tPARTICLE[%d]\n", i);
-                                    print_particle(vp[i],"\t\t\t");
-                                }
-                                free(vp);
-                            }else{
-                                fseek(sa,field.size,SEEK_CUR);
+                    switch (fd.dtype){
+                        case REB_DOUBLE:
+                            {
+                                double v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  %.16g\n",v);
                             }
                             break;
-                        }else{
+                        case REB_INT:
+                            {
+                                int v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  %d\n",v);
+                            }
+                            break;
+                        case REB_UINT:
+                            {
+                                unsigned int v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  %d\n",v);
+                            }
+                            break;
+                        case REB_UINT32:
+                            {
+                                uint32_t v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  %d\n",v);
+                            }
+                            break;
+                        case REB_INT64:
+                            {
+                                int64_t v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  %lld\n",v);
+                            }
+                            break;
+                        case REB_UINT64:
+                            {
+                                uint64_t v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  %llu\n",v);
+                            }
+                            break;
+                        case REB_VEC3D:
+                            {
+                                struct reb_vec3d v;
+                                fread(&v,field.size_data,1,sa);
+                                ifprintf("\tvalue:  x=%.16g y=%.16g z=%.16g\n",v.x, v.y, v.z);
+                            }
+                            break;
+                        case REB_PARTICLE:
+                            {
+                                struct reb_particle v;
+                                fread(&v,field.size_data,1,sa);
+                                print_particle(v, "value:\t");
+                                print_particle(v, "\t\t");
+                            }
+                            break;
+                        case REB_POINTER:
+                            if (strcmp(name, "particles")==0){
+                                ifprintf("\tvalue:  \n");
+                                int N = field.size_data/sizeof(struct reb_particle);
+                                struct reb_particle* vp = malloc(field.size_data);
+                                if (blob_index==blob_requested || blob_requested == -1) {
+                                    fread(vp,field.size_data,1,sa);
+                                    for (int i=0; i<N; i++){
+                                        printf("\t\tPARTICLE[%d]\n", i);
+                                        print_particle(vp[i],"\t\t\t");
+                                    }
+                                    free(vp);
+                                }else{
+                                    fseek(sa,field.size_data,SEEK_CUR);
+                                }
+                                break;
+                            }else{
+                                ifprintf("\tvalue:  <not shown>\n");
+                                fseek(sa,field.size_data,SEEK_CUR);
+                            }
+                            break;
+                        default:
                             ifprintf("\tvalue:  <not shown>\n");
-                            fseek(sa,field.size,SEEK_CUR);
-                        }
-                        break;
-                    default:
-                        ifprintf("\tvalue:  <not shown>\n");
-                        fseek(sa,field.size,SEEK_CUR);
-                        break;
-                }
+                            fseek(sa,field.size_data,SEEK_CUR);
+                            break;
+                    }
 
+                }
             }
-        }while(field.type!=fd_end.type);
+        }while(strcmp(name,"end"));
+        
         int r3=0;
         if (uses32bitoffsets){
             r3 = fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, sa);
-        }else{
-            // Workaround for versions < 3.18
-            struct reb_simulationarchive_blob16 blob16 = {0};
-            r3 = fread(&blob16, sizeof(struct reb_simulationarchive_blob16), 1, sa);
-            blob.index = blob16.index;
-            blob.offset_prev = blob16.offset_prev;
-            blob.offset_next = blob16.offset_next;
         }
         if (!r3){
             printf("ERROR. Unable to read next blob from file.\n");
