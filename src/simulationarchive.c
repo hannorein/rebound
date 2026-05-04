@@ -458,14 +458,26 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         int bytesread;
         do{
             bytesread = (int)fread(&field,sizeof(struct reb_binarydata_field),1,of);
-            bytesread &= (int)fread(name,field.size_name,1,of);
-            fseek(of, field.size_data, SEEK_CUR);
-        }while(strcmp(name, "end") && bytesread);
+            if (!bytesread){
+                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
+                return;
+            }
+            if (field.size_name != reb_binarydata_header && (field.size_name==0 || field.size_name>1024)){
+                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
+                return;
+            }
+            bytesread = (int)fread(name,field.size_name,1,of);
+            if (!bytesread){
+                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
+                return;
+            }
+            int seekfailed = fseek(of, field.size_data, SEEK_CUR);
+            if (seekfailed){
+                reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
+                return;
+            }
+        }while(strcmp(name, "end"));
         int64_t size_old = ftell(of);
-        if (bytesread!=1){
-            reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
-            return;
-        }
 
         bytesread = (int)fread(&blob,sizeof(struct reb_simulationarchive_blob),1,of);
         if (bytesread!=1){
@@ -492,71 +504,94 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         size_t size_diff;
         reb_binarydata_diff(buf_old, size_old, buf_new, size_new, &buf_diff, &size_diff, REB_BINARYDATA_OUTPUT_STREAM);
 
+        // Check if file is valid.
         int file_corrupt = 0;
-        int seek_ok = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
-        int blobs_read = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-        if (seek_ok !=0 || blobs_read != 1){ // cannot read blob
+        int seekfailed = fseek(of, -sizeof(struct reb_simulationarchive_blob), SEEK_END);
+        if (seekfailed){
             file_corrupt = 1;
+            goto recovery_attempt;
+        }
+        bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
+        if (!bytesread){
+            file_corrupt = 1;
+            goto recovery_attempt;
         }
         if ( (archive_contains_more_than_one_blob && blob.offset_prev <=0) || blob.offset_next != 0){ // blob contains unexpected data. Note: First blob is all zeros.
             file_corrupt = 1;
+            goto recovery_attempt;
         }
         if (file_corrupt==0 && archive_contains_more_than_one_blob ){
             // Check if last two blobs are consistent.
             size_t end_len = strlen("end")+1;
-            seek_ok = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binarydata_field) - end_len, SEEK_CUR);  
-            bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
-            bytesread = (int)fread(name, field.size_name, 1, of);
-            if (seek_ok!=0 || bytesread!=1){
+            int seekfailed = fseek(of, - sizeof(struct reb_simulationarchive_blob) - sizeof(struct reb_binarydata_field) - end_len, SEEK_CUR);  
+            if (seekfailed){
                 file_corrupt = 1;
+                goto recovery_attempt;
+            }
+            bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
+            if (!bytesread || field.size_name == 0 || field.size_name > 1024){
+                file_corrupt = 1;
+                goto recovery_attempt;
+            }
+            bytesread = (int)fread(name, field.size_name, 1, of);
+            if (!bytesread){
+                file_corrupt = 1;
+                goto recovery_attempt;
             }
             if (strcmp(name, "end") || field.size_data !=0){
                 // expected an END field
                 file_corrupt = 1;
+                goto recovery_attempt;
             }
-            seek_ok = fseek(of, -blob.offset_prev - sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+            seekfailed = fseek(of, -blob.offset_prev - sizeof(struct reb_simulationarchive_blob), SEEK_CUR);  
+            if (seekfailed){
+                file_corrupt = 1;
+                goto recovery_attempt;
+            }
             struct reb_simulationarchive_blob blob2 = {0};
-            blobs_read = (int)fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
-            if (seek_ok!=0 || blobs_read!=1 || blob2.offset_next != blob.offset_prev){
+            bytesread = (int)fread(&blob2, sizeof(struct reb_simulationarchive_blob), 1, of);
+            if (!bytesread){
                 file_corrupt = 1;
             }
         }
 
+recovery_attempt:
         if (file_corrupt){
             // Find last valid snapshot to allow for restarting and appending to archives where last snapshot was cut off
             reb_simulation_warning(r, "Simulationarchive appears to be corrupted. REBOUND will attempt to fix it before appending more snapshots.\n");
-            int seek_ok;
-            seek_ok = fseek(of, size_old, SEEK_SET);
+            seekfailed = fseek(of, size_old, SEEK_SET);
             int64_t last_blob = size_old + sizeof(struct reb_simulationarchive_blob);
             do
             {
-                seek_ok = fseek(of, -sizeof(struct reb_binarydata_field), SEEK_CUR);
-                if (seek_ok != 0){
+                seekfailed = fseek(of, -sizeof(struct reb_binarydata_field), SEEK_CUR);
+                if (seekfailed){
                     break;
                 }
-                seek_ok = fseek(of, -sizeof(char)*4, SEEK_CUR); // strlen("end")
-                if (seek_ok != 0){
+                seekfailed = fseek(of, -sizeof(char)*4, SEEK_CUR); // strlen("end")
+                if (seekfailed){
                     break;
                 }
                 bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
                 if (field.size_name != 4){ // string can't be "end"
                     break;
                 }
-                bytesread += (int)fread(name, field.size_name, 1, of);
-                if (bytesread != 2 || strncmp(name, "end", 4)){ // could be EOF or corrupt snapshot
+                if (!bytesread || field.size_name == 0 || (field.size_name > 1024 && field.size_name != reb_binarydata_header)){
+                    break;
+                }
+                bytesread = (int)fread(name, field.size_name, 1, of);
+                if (!bytesread || strncmp(name, "end", 4)){ // EOF or corrupt snapshot
                     break;
                 }
                 bytesread = (int)fread(&blob, sizeof(struct reb_simulationarchive_blob), 1, of);
-                if (bytesread != 1){
+                if (!bytesread){
                     break;
                 }
                 last_blob = ftell(of);
-                if (blob.offset_next>0){
-                    seek_ok = fseek(of, blob.offset_next, SEEK_CUR);
-                }else{
+                if (blob.offset_next==0){
                     break;
                 }
-                if (seek_ok != 0){
+                seekfailed = fseek(of, blob.offset_next, SEEK_CUR);
+                if (seekfailed){
                     break;
                 }
             } while(1);
