@@ -117,12 +117,10 @@ int main(int argc, char* argv[]) {
                 if (strcmp("end", name)==0){
                     ifprintf("FIELD\n");
                     ifprintf("\tname:   %s\n", name);
-                    ifprintf("\ttype:   %d\n", fd.dtype);
-                    ifprintf("\tdata_size:   %llu bytes\n", field.size_data);
+                    ifprintf("\tsize:   %llu bytes\n", field.size_data);
                 }else{
                     ifprintf("FIELD\n");
                     ifprintf("\tname:   %s\n", fd.name);
-                    ifprintf("\ttype:   %d\n", fd.dtype);
                     ifprintf("\tsize:   %llu bytes\n", field.size_data);
                     switch (fd.dtype){
                         CASE(REB_DOUBLE);
