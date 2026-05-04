@@ -42,26 +42,6 @@
 #endif // AVX512
 
 
-struct reb_particle_avx512 {
-#ifdef AVX512
-    __m512d m REB_ALIGNED_64;
-    __m512d x REB_ALIGNED_64;
-    __m512d y REB_ALIGNED_64;
-    __m512d z REB_ALIGNED_64;
-    __m512d vx REB_ALIGNED_64;
-    __m512d vy REB_ALIGNED_64;
-    __m512d vz REB_ALIGNED_64;
-#else // AVX512
-    double m[8]; // dummy for when AVX512 is not available
-    double x[8];
-    double y[8];
-    double z[8];
-    double vx[8];
-    double vy[8];
-    double vz[8];
-#endif // AVX512
-};
-
 void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r); // Internal function. 
 void reb_whfast512_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
 void reb_whfast512_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term

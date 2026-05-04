@@ -34,7 +34,6 @@
 #include "output.h"
 #include "binarydata.h"
 #include "simulationarchive.h"
-#include "integrator_whfast512.h"
 
 const uint64_t reb_binarydata_header = 0x20444E554F424552; // Corresponds to the first few ASCII characters in binary file
 
@@ -740,10 +739,9 @@ next_field:
                         if (*pointer) free(*pointer);
 #if defined(_WIN32) || !defined(AVX512)
                         // WHFast512 not supported on Windows!
-                        *pointer = malloc(sizeof(struct reb_particle_avx512));
+                        *pointer = malloc(field.size_data);
 #else 
-                        // TODO: Do not hardcode size_data of reb_particle_avx512
-                        *pointer = aligned_alloc(64,sizeof(struct reb_particle_avx512));
+                        *pointer = aligned_alloc(64, field.size_data);
 #endif // _WIN32
                     }else{ // normal malloc
                         *pointer = realloc(*pointer, field.size_data);

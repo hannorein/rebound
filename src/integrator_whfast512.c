@@ -42,6 +42,27 @@ void* reb_integrator_whfast512_create();
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* step);		///< Internal function used to call a specific integrator
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* step);	///< Internal function used to call a specific integrator
 
+struct reb_particle_avx512 {
+#ifdef AVX512
+    __m512d m REB_ALIGNED_64;
+    __m512d x REB_ALIGNED_64;
+    __m512d y REB_ALIGNED_64;
+    __m512d z REB_ALIGNED_64;
+    __m512d vx REB_ALIGNED_64;
+    __m512d vy REB_ALIGNED_64;
+    __m512d vz REB_ALIGNED_64;
+#else // AVX512
+    double m[8]; // dummy for when AVX512 is not available
+    double x[8];
+    double y[8];
+    double z[8];
+    double vx[8];
+    double vy[8];
+    double vz[8];
+#endif // AVX512
+};
+
+
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[] = {
     { REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_whfast512_state, keep_unsynchronized), 0, 0, 0},
     { REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},

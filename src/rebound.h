@@ -365,7 +365,7 @@ struct reb_integrator_whfast_state {
 
 
 // Special particle struct for WHFast512
-struct reb_particle_avx512; // Opaque pointer. Implemented in integrator_whfast.h
+struct reb_particle_avx512; // Opaque pointer. Implemented in integrator_whfast.c
 
 // WHFast512 Integrator (Javaheri & Rein 2023)
 struct reb_integrator_whfast512_state {
