@@ -148,9 +148,9 @@ static const struct reb_binarydata_field_descriptor* reb_binarydata_field_descri
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name){
     const struct reb_binarydata_field_descriptor* fd = NULL;
     char* name_sub;
-    // Check if this is an integrator field.
+    // Check if this is an integrator field (other than "integrator.name")
     if (strncmp("integrator.", name, 11)==0 && (name_sub = strchr(name+11,'.'))){
-        // First, check current integrator.
+        // Search field in current integrator
         if (r && r->integrator.callbacks.field_descriptor_list){
             fd = reb_binarydata_field_descriptor_for_name_in_list(r->integrator.callbacks.field_descriptor_list, name_sub+1);
         }else{
@@ -160,13 +160,13 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
 #undef X
                 // Look through all custom integrators
                 size_t Nc = 0;
-                if (reb_integrator_configurations_custom){
-                    while(reb_integrator_configurations_custom[Nc].name){
-                        fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_configurations_custom[Nc].callbacks.field_descriptor_list, name_sub+1);
-                        if (fd) break; // found field
-                        Nc++;
-                    }
+            if (reb_integrator_configurations_custom){
+                while(reb_integrator_configurations_custom[Nc].name){
+                    fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_configurations_custom[Nc].callbacks.field_descriptor_list, name_sub+1);
+                    if (fd) break; // found field
+                    Nc++;
                 }
+            }
         }
         if (fd){
             struct reb_binarydata_field_descriptor fd_integrator = *fd;
@@ -353,7 +353,8 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         if (pos2+field2.size_data>size2) printf("Corrupt binary file buf2.\n");
         int fields_differ = 0;
         if (field1.size_data==field2.size_data){
-            if (strcmp(name1, "particles")==0){ // TODO Should be dtype== REB_PARTICLE so it works for all particle arrays
+            if (strcmp(name1,"particles")==0){
+                // Compare particles array differently because of pointers.
                 struct reb_particle* pb1 = (struct reb_particle*)(buf1+pos1);
                 struct reb_particle* pb2 = (struct reb_particle*)(buf2+pos2);
                 for (size_t i=0;i<field1.size_data/sizeof(struct reb_particle);i++){
