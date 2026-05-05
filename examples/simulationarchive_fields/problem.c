@@ -135,6 +135,7 @@ int main(int argc, char* argv[]) {
                         CASE(REB_POINTER_ALIGNED);
                         CASE(REB_OTHER);
                         CASE(REB_CHARP_LIST);
+                        CASE(REB_STRING);
                     default:
                         ifprintf("\tdtype:  <other>\n");
                         break;
@@ -188,6 +189,14 @@ int main(int argc, char* argv[]) {
                                 struct reb_vec3d v;
                                 fread(&v,field.size_data,1,sa);
                                 ifprintf("\tvalue:  x=%.16g y=%.16g z=%.16g\n",v.x, v.y, v.z);
+                            }
+                            break;
+                        case REB_STRING:
+                            {
+                                char* str = malloc(field.size_data);
+                                fread(str,field.size_data,1,sa);
+                                ifprintf("\tvalue:  \"%s\"\n", str);
+                                free(str);
                             }
                             break;
                         case REB_PARTICLE:

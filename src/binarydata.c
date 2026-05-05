@@ -147,16 +147,26 @@ static const struct reb_binarydata_field_descriptor* reb_binarydata_field_descri
 // Modifies field descriptor so that offset is actual memory address if r is given. 
 struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(const struct reb_simulation * const r, const char* name){
     const struct reb_binarydata_field_descriptor* fd = NULL;
-    if (strncmp("integrator.", name, 11)==0){
-        // This is an integrator field
+    char* name_sub;
+    // Check if this is an integrator field.
+    if (strncmp("integrator.", name, 11)==0 && (name_sub = strchr(name+11,'.'))){
+        // First, check current integrator.
         if (r && r->integrator.callbacks.field_descriptor_list){
-            fd = reb_binarydata_field_descriptor_for_name_in_list(r->integrator.callbacks.field_descriptor_list, name+11);
+            fd = reb_binarydata_field_descriptor_for_name_in_list(r->integrator.callbacks.field_descriptor_list, name_sub+1);
         }else{
             // Look through all built-in integrators
-#define X(iname) if (!fd) {fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_##iname.field_descriptor_list, name+11);}
+#define X(iname) if (!fd) {fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_##iname.field_descriptor_list, name_sub+1);}
             REB_AVAILABLE_INTEGRATORS
 #undef X
-                // TODO Add search in custom integrators
+                // Look through all custom integrators
+                size_t Nc = 0;
+                if (reb_integrator_configurations_custom){
+                    while(reb_integrator_configurations_custom[Nc].name){
+                        fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_configurations_custom[Nc].callbacks.field_descriptor_list, name_sub+1);
+                        if (fd) break; // found field
+                        Nc++;
+                    }
+                }
         }
         if (fd){
             struct reb_binarydata_field_descriptor fd_integrator = *fd;
@@ -168,6 +178,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
             return fd_integrator;
         } 
     }
+    
     fd = reb_binarydata_field_descriptor_for_name_in_list(reb_binarydata_field_descriptor_list, name); 
     if (fd){
         struct reb_binarydata_field_descriptor fd_simulation = *fd;
@@ -177,7 +188,8 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         }
         return fd_simulation;
     }
-    reb_simulation_error(NULL, "Could not find field descriptor for name.");
+            printf("here 2\n");
+    reb_simulation_error((struct reb_simulation*)r, "Could not find field descriptor for name.");
     struct reb_binarydata_field_descriptor bfd = {
         .dtype = REB_FIELD_NOT_FOUND,
         .name = "field_not_found",
@@ -623,7 +635,11 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     // Main simulation
     output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, NULL);
     // Integrator
-    output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, "integrator");
+    if (r->integrator.name[0]){
+        char prefix[256] = "integrator.";
+        strlcat(prefix, r->integrator.name, sizeof(prefix));
+        output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, prefix);
+    }
 
     // Write function pointer warning flag
     int functionpointersused = 0;
