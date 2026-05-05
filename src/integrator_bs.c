@@ -151,8 +151,6 @@ void reb_integrator_bs_free(void* state){
     free(bs);
 }
 
-//#define DEBUG 0 // set to 1 to print out debug information (reason for step rejection)
-
 void reb_integrator_bs_update_particles(struct reb_simulation* r, const double* y){
     if (r==NULL){
         reb_simulation_error(r, "Update particles called without valid simulation pointer.");
@@ -407,9 +405,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_
         if ( ! tryStep(r, bs, Ns, k, bs->sequence[k], t, dt)) {
 
             // the stability check failed, we reduce the global step
-#if DEBUG
-            printf("S");
-#endif
             dt  = fabs(dt * stabilityReduction);
             reject = 1;
             loop   = 0;
@@ -461,9 +456,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_
 
                 if ((error > 1.0e25)){ // TODO: Think about what to do when error increases: || ((k > 1) && (error > maxError))) 
                                        // error is too big, we reduce the global step
-#if DEBUG
-                    printf("R (error= %.5e)",error);
-#endif
                     dt  = fabs(dt * stabilityReduction);
                     reject = 1;
                     loop   = 0;
@@ -507,9 +499,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_
                                             bs->target_iter -= 1;
                                         }
                                         dt = bs->optimal_step[bs->target_iter];
-#if DEBUG
-                                        printf("O");
-#endif
                                     }
                                 }
                             }
@@ -527,9 +516,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_
                                 if (error > ratio * ratio) {
                                     // we don't expect to converge on next iteration
                                     // we reject the step immediately
-#if DEBUG
-                                    printf("o");
-#endif
                                     reject = 1;
                                     loop = 0;
                                     if ((bs->target_iter > 1) &&
@@ -544,9 +530,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_
 
                         case 1 : // one past target
                             if (error > 1.0) {
-#if DEBUG
-                                printf("e");
-#endif
                                 reject = 1;
                                 if ((bs->target_iter > 1) &&
                                         (bs->cost_per_time_unit[bs->target_iter - 1] <
@@ -572,9 +555,6 @@ int reb_integrator_bs_step_odes(struct reb_simulation* r, struct reb_integrator_
 
 
     if (! reject) {
-#if DEBUG
-        printf("."); 
-#endif
         // Swap arrays
         for (size_t s=0; s < Ns; s++){
             double* y_tmp = odes[s]->y;
