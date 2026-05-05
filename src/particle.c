@@ -352,7 +352,7 @@ int reb_simulation_remove_particle(struct reb_simulation* const r, size_t index)
         return 0;
     }
     if (index >= r->N){
-        char warning[1024];
+        char warning[REB_STRING_SIZE_MAX];
         sprintf(warning, "Index %zu passed to particles_remove was out of range (N=%zu).  Did not remove particle.", index, r->N);
         reb_simulation_error(r, warning);
         return 1;

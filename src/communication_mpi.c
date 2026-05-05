@@ -52,13 +52,13 @@ void reb_mpi_init(struct reb_simulation* const r){
     size_t N_root = r->N_root_x*r->N_root_y*r->N_root_z;
     if ((N_root/r->mpi_num)*r->mpi_num != N_root){
         if (r->mpi_id==0){
-            char msg[1024];
+            char msg[REB_STRING_SIZE_MAX];
             sprintf(msg, "Number of root boxes (%zu) not a multiple of mpi nodes (%d).\n",N_root,r->mpi_num);
             reb_simulation_error(r,msg);
         }
         exit(-1);
     }
-    char msg[1024];
+    char msg[REB_STRING_SIZE_MAX];
     sprintf(msg,"MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
     reb_simulation_info(r,msg);
 }

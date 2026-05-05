@@ -81,8 +81,8 @@ REB_API extern const char* reb_githash_str; ///< Current git hash.
 REB_API extern const char* reb_logo[26];    ///< Logo of rebound. 
 REB_API extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
 REB_API extern const unsigned int reb_favicon_len;
-REB_API extern const size_t reb_messages_max_length;
 REB_API extern const size_t reb_messages_max_N;
+REB_API extern const uint32_t reb_string_size_max; // defined in rebound.c
 
 // Free any pointer. Alias for free(). Used by python.
 REB_API void reb_free(void* p);

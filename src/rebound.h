@@ -28,10 +28,6 @@
 
 #define REB_API     // Public REBOUND API definitions
 
-// Maximum length string for most strings used by REBOUND,
-// including names of binary fields.
-#define REB_STRING_SIZE_MAX 512
-
 // Helper macros for padding structures
 #if defined(_WIN64) || defined(_LP64)
 #define REB_PAD(s) // 64 bit pointers require no padding
@@ -64,6 +60,10 @@
 #include <stdlib.h> // for size_t
 #include <stdint.h> // for integer types
 #include <stddef.h> // for offsetof
+
+// Maximum length string for most strings used by REBOUND,
+// including names of binary fields.
+#define REB_STRING_SIZE_MAX 256
 
 // Macros to generate enums whose name can also be read by python
 #define REB_AS_ENUM_MEMBER(prefix, value, name)  prefix ## _ ## name = value,
@@ -148,16 +148,16 @@ struct reb_collision{
 // Dictionary element to provie human readable name for enums. Used by python.
 struct reb_binarydata_enum_descriptor{
     int value;
-    char name[256];
+    char name[REB_STRING_SIZE_MAX];
 };
 
 // Binary field descriptors are used to identify data blobs in simulationarchives.
 struct reb_binarydata_field_descriptor {
     enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
-    char name[256];             // Null terminated, unique, human readable name.
-    size_t offset;              // Offset of the storage location relative to the beginning of reb_simulation
-    size_t offset_N;            // Offset of the storage location for the size relative to the beginning of reb_simulation
-    size_t element_size;        // Size in bytes of each element (only used for pointers, dp7, etc).
+    char name[REB_STRING_SIZE_MAX];  // Null terminated, unique, human readable name.
+    size_t offset;                   // Offset of the storage location relative to the beginning of reb_simulation
+    size_t offset_N;                 // Offset of the storage location for the size relative to the beginning of reb_simulation
+    size_t element_size;             // Size in bytes of each element (only used for pointers, dp7, etc).
     struct reb_binarydata_enum_descriptor* enum_descriptor; // Null terminated list that allows enums to be set/read by string in python.
 };
 

@@ -129,7 +129,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
     sa->reb_version_minor = 0;
     sa->reb_version_patch = 0;
 
-    char name[1024] = "";
+    char name[REB_STRING_SIZE_MAX] = "";
     do{
         int didReadField = (int)fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
         if (!didReadField){
@@ -187,7 +187,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             continue;
         }
 
-        if (field.size_name==0 || field.size_name>1024){
+        if (field.size_name==0 || field.size_name>REB_STRING_SIZE_MAX){
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             break;
         }
@@ -342,7 +342,7 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_file_with_messag
     }
     int mpi_id=0;
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
-    char filename_mpi[1024];
+    char filename_mpi[REB_STRING_SIZE_MAX];
     sprintf(filename_mpi,"%s_%d",filename,mpi_id);
     sa->inf = fopen(filename_mpi,"rb");
 #else // MPI
@@ -429,7 +429,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
     struct stat buffer;
 #ifdef MPI
 #define filename_combined filename_mpi
-    char filename_mpi[1024];
+    char filename_mpi[REB_STRING_SIZE_MAX];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 #else // MPI
 #define filename_combined filename
@@ -453,7 +453,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
         FILE* of = fopen(filename_combined,"r+b");
         fseek(of, 64, SEEK_SET); // Header
         struct reb_binarydata_field field = {0};
-        char name[1024];
+        char name[REB_STRING_SIZE_MAX];
         struct reb_simulationarchive_blob blob = {0};
         int bytesread;
         do{
@@ -462,7 +462,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
                 reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
                 return;
             }
-            if (field.size_name != reb_binarydata_header && (field.size_name==0 || field.size_name>1024)){
+            if (field.size_name != reb_binarydata_header && (field.size_name==0 || field.size_name>REB_STRING_SIZE_MAX)){
                 reb_simulation_warning(r, "Simulationarchive appears to be corrupted. A recovery attempt has failed. No snapshot has been saved.\n");
                 return;
             }
@@ -529,7 +529,7 @@ void reb_simulation_save_to_file(struct reb_simulation* const r, const char* fil
                 goto recovery_attempt;
             }
             bytesread = (int)fread(&field, sizeof(struct reb_binarydata_field), 1, of);
-            if (!bytesread || field.size_name == 0 || field.size_name > 1024){
+            if (!bytesread || field.size_name == 0 || field.size_name > REB_STRING_SIZE_MAX){
                 file_corrupt = 1;
                 goto recovery_attempt;
             }
@@ -575,7 +575,7 @@ recovery_attempt:
                 if (field.size_name != 4){ // string can't be "end"
                     break;
                 }
-                if (!bytesread || field.size_name == 0 || (field.size_name > 1024 && field.size_name != reb_binarydata_header)){
+                if (!bytesread || field.size_name == 0 || (field.size_name > REB_STRING_SIZE_MAX && field.size_name != reb_binarydata_header)){
                     break;
                 }
                 bytesread = (int)fread(name, field.size_name, 1, of);
@@ -635,7 +635,7 @@ static int check_and_set_simulationarchive_filename(struct reb_simulation* const
     struct stat buffer;
 #ifdef MPI
 #define filename_combined filename_mpi
-    char filename_mpi[1024];
+    char filename_mpi[REB_STRING_SIZE_MAX];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
 #else // MPI
 #define filename_combined filename

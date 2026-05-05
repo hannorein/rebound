@@ -1,5 +1,5 @@
 import ctypes
-from . import clibrebound
+from . import clibrebound, string_size_max
 from .vectors import Vec3dBasic
 
 # Note: ignoring some types that are not supposed to be set by the user
@@ -8,7 +8,7 @@ REB_BINARYDATA_DTYPE = {1: ctypes.c_double, 2: ctypes.c_int, 3: ctypes.c_uint, 4
 
 class EnumDescriptor(ctypes.Structure):
     _fields_ = [("value", ctypes.c_int), 
-                ("name", ctypes.c_char*256),
+                ("name", ctypes.c_char*string_size_max),
                 ]
 
 class BinaryFieldDescriptor(ctypes.Structure):
@@ -21,7 +21,7 @@ class BinaryFieldDescriptor(ctypes.Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, dtype={3}, name=\'{4}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.dtype, self.name.decode("ascii"))
     _fields_ = [("dtype", ctypes.c_int),
-                ("name", ctypes.c_char*256),
+                ("name", ctypes.c_char*string_size_max),
                 ("offset", ctypes.c_size_t),
                 ("offset_N", ctypes.c_size_t),
                 ("element_size", ctypes.c_size_t),

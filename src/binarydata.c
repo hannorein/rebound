@@ -489,7 +489,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
 // Output all fields from one field_descriptor list
 static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* allocatedsize, const struct reb_binarydata_field_descriptor* fd_list, char* base_address, const char* prefix){
     if (!fd_list) return; 
-    char name[1024];
+    char name[REB_STRING_SIZE_MAX];
 
     for (size_t i=0; fd_list[i].name[0]; i++){
         struct reb_binarydata_field_descriptor fd = fd_list[i];
@@ -640,7 +640,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     output_fields_from_list(bufp, current_pos, &allocatedsize, reb_binarydata_field_descriptor_list, (char*)r, NULL);
     // Integrator
     if (r->integrator.name[0]){
-        char prefix[256] = "integrator.";
+        char prefix[REB_STRING_SIZE_MAX] = "integrator.";
         strcat(prefix, r->integrator.name);
         output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, prefix);
     }
@@ -678,7 +678,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
 // Read field data into simulation from file or memory buffer.
 void reb_binarydata_input_fields(struct reb_simulation* r, FILE* inf, enum REB_BINARYDATA_ERROR_CODE* warnings){
     struct reb_binarydata_field field;
-    char name[1024];
+    char name[REB_STRING_SIZE_MAX];
 next_field:
     // Loop over all fields
     while(1){
@@ -707,7 +707,7 @@ next_field:
             goto next_field;
         }
         // Try to get name of field
-        if (field.size_name>1024){
+        if (field.size_name>REB_STRING_SIZE_MAX){
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             goto finish_fields;
         }

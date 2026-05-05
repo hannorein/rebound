@@ -5,7 +5,7 @@ import sys
 import os
 import warnings
 import platform
-from ctypes import cdll, c_char_p, c_int
+from ctypes import cdll, c_char_p, c_int, c_uint32
 
 # Find suffix
 if platform.system()=="Windows" and sys.version_info.major<=3 and sys.version_info.minor<8:
@@ -48,6 +48,9 @@ moduleversion = sys.modules["rebound"].__version__
 libreboundversion = __version__
 if moduleversion != libreboundversion:
     warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
+        
+# Max string size for error messages, field descriptors, etc.
+string_size_max = c_uint32.in_dll(clibrebound, "reb_string_size_max").value
         
 # Exceptions
 class GenericError(Exception):

@@ -38,7 +38,7 @@
 #endif
 #define STRINGIFY(s) str(s)
 #define str(s) #s
-const size_t reb_messages_max_length = 1024;   // needs to be constant expression for array size
+const uint32_t reb_string_size_max = REB_STRING_SIZE_MAX; // defined in rebound.h
 const size_t reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "5.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
@@ -163,11 +163,11 @@ void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type
             (*messages)[reb_messages_max_N-1] = NULL;
             n= reb_messages_max_N-1;
         }
-        (*messages)[n] = malloc(sizeof(char*)*reb_messages_max_length);
+        (*messages)[n] = malloc(sizeof(char*)*reb_string_size_max);
         // First character indicates type for python.
         (*messages)[n][0] = (char)type;
-        strncpy((*messages)[n]+1, msg, reb_messages_max_length-2);
-        (*messages)[n][reb_messages_max_length-1] = '\0';
+        strncpy((*messages)[n]+1, msg, reb_string_size_max-2);
+        (*messages)[n][reb_string_size_max-1] = '\0';
     }
 }
 

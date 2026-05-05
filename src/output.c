@@ -251,7 +251,7 @@ void reb_simulation_output_timing(struct reb_simulation* r, const double tmax){
 void reb_simulation_output_ascii(struct reb_simulation* r, char* filename){
     const int N = r->N;
 #ifdef MPI
-    char filename_mpi[1024];
+    char filename_mpi[REB_STRING_SIZE_MAX];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
     FILE* of = fopen(filename_mpi,"ab"); 
 #else // MPI
@@ -271,7 +271,7 @@ void reb_simulation_output_ascii(struct reb_simulation* r, char* filename){
 void reb_simulation_output_orbits(struct reb_simulation* r, char* filename){
     const int N = r->N;
 #ifdef MPI
-    char filename_mpi[1024];
+    char filename_mpi[REB_STRING_SIZE_MAX];
     sprintf(filename_mpi,"%s_%d",filename,r->mpi_id);
     FILE* of = fopen(filename_mpi,"ab"); 
 #else // MPI
