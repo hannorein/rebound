@@ -726,12 +726,19 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
         r->N_odes = 0;
 
         // Temporarily add new nbody ode for BS step
-        struct reb_ode* nbody_ode = reb_ode_create(r, trace->encounter_N*3*2);
-        nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
-        nbody_ode->needs_nbody = 0;
+        struct reb_ode* nbody_ode = NULL;
 
         // TODO: Support backwards integrations
         while(r->t < t_needed && fabs(dt/old_dt)>1e-14 && r->status<=0){
+            if (!nbody_ode || nbody_ode->length != trace->encounter_N*3*2){
+                // (re)create the ODE
+                reb_ode_free(nbody_ode);
+                nbody_ode = reb_ode_create(r, trace->encounter_N*3*2);
+                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
+                nbody_ode->needs_nbody = 0;
+                bs->first_or_last_step = 1;
+            }
+
             double* y = nbody_ode->y;
 
             // In case of overshoot
@@ -770,15 +777,6 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
                 // Only do a collision search for accepted steps.
                 reb_collision_search(r);
                 if (r->N_collisions) trace->force_accept = 1;
-            }
-
-            if (nbody_ode->length != trace->encounter_N*3*2){
-                // Just re-create the ODE
-                reb_ode_free(nbody_ode);
-                nbody_ode = reb_ode_create(r, trace->encounter_N*3*2);
-                nbody_ode->derivatives = reb_integrator_trace_nbody_derivatives;
-                nbody_ode->needs_nbody = 0;
-                bs->first_or_last_step = 1;
             }
 
             struct reb_particle p0 = r->particles[0];
