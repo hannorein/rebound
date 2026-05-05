@@ -996,7 +996,6 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         switch (trace->peri_mode){
             case REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15:
                 {
-                    // Run default IAS15 integration
                     struct reb_integrator_ias15_state* ias15 = reb_integrator_ias15.create();
                     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
                         reb_integrator_ias15.step(r, ias15);
@@ -1006,15 +1005,12 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                         reb_collision_search(r);
                         if (r->N_collisions) trace->force_accept = 1;
                     }
-                    // Resetting IAS15 here reduces binary file size.
                     reb_integrator_ias15.free(ias15);
                 }
                 break;
             case REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS:
                 {
                     struct reb_integrator_bs_state* bs = reb_integrator_bs.create();
-                    // Run default BS integration
-                    // TODO: Syntax should be similar to IAS
                     struct reb_ode* nbody_ode = NULL;
 
                     double* y;
@@ -1057,7 +1053,6 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                         }
                     }
                     reb_ode_free(nbody_ode);
-                    // Resetting BS here reduces binary file size
                     reb_integrator_bs.free(bs);
                 }
                 break;
