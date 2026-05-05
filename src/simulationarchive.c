@@ -114,7 +114,6 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
 
 void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationarchive* sa, enum REB_BINARYDATA_ERROR_CODE* warnings){
     // Assumes sa->inf is set to an open stream
-    const int debug = 0;
     if (sa->inf==NULL){
         *warnings |= REB_BINARYDATA_ERROR_NOFILE;
         return;
@@ -160,7 +159,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 }
             }
             if (c1==0 || c2==0 || c3==0){
-                if (debug) printf("SA Error. Cannot determine version.\n");
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }else{
                 char cpatch[64];
@@ -224,8 +222,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
         return;
     }else{
         // New version
-        if (debug) printf("=============\n");
-        if (debug) printf("SA Version: 2\n");
         int64_t nblobsmax = 1024;
         sa->t = calloc(nblobsmax,sizeof(double));
         sa->offset = calloc(nblobsmax,sizeof(uint64_t));
@@ -239,7 +235,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             do{
                 size_t r1 = fread(&field,sizeof(struct reb_binarydata_field),1,sa->inf);
                 if (field.size_name == reb_binarydata_header){
-                    if (debug) printf("SA Field. id=HEADER\n");
                     int s1 = fseek(sa->inf,64 - sizeof(struct reb_binarydata_field),SEEK_CUR);
                     if (s1){
                         read_error = 1;
@@ -250,16 +245,13 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 if (r1==1){
                     if (strcmp(name, "t")==0){
                         size_t r2 = fread(&(sa->t[i]), field.size_data,1,sa->inf);
-                        if (debug) printf("SA Field. id=TIME      value=%.10f\n",sa->t[1]);
                         if (r2!=1){
                             read_error = 1;
                         }
                     }else if (strcmp(name, "end")==0){
-                        if (debug) printf("SA Field. id=END   =====\n");
                         blob_finished = 1;
                     }else{
                         int s2 = fseek(sa->inf,field.size_data,SEEK_CUR);
-                        if (debug) printf("SA Field. name='%s'    size_data=%" PRIu64 "\n",name,(uint64_t)field.size_data);
                         if (s2){
                             read_error = 1;
                         }
@@ -269,7 +261,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 }
             }while(blob_finished==0 && read_error==0);
             if (read_error){
-                if (debug) printf("SA Error. Error while reading current blob.\n");
                 // Error during reading. Current snapshot is corrupt.
                 break;
             }
@@ -281,7 +272,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             if (r3!=1){ // Next snapshot is definitely corrupted.
                         // Assume we have reached the end of the file.
                         // Won't be able to do checksum.
-                if (debug) printf("SA Error. Error while reading next blob.\n");
                 next_blob_is_corrupted = 1;
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             }
@@ -291,7 +281,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 // Checking the offsets. Acts like a checksum.
                 if (((int64_t)blob.offset_prev )+ ((int64_t)blobsize) != ftell(sa->inf) - ((int64_t)sa->offset[i]) ){
                     // Offsets don't work. Next snapshot is definitely corrupted. Assume current one as well.
-                    if (debug) printf("SA Error. Offset mismatch: %lu != %" PRIu64 ".\n",blob.offset_prev + blobsize, (uint64_t)(ftell(sa->inf) - sa->offset[i]) );
                     read_error = 1;
                     break;
                 }
@@ -300,7 +289,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
             sa->nblobs = i+1;
             if (blob.offset_next==0 || next_blob_is_corrupted){
                 // Last blob. 
-                if (debug) printf("SA Reached final blob.\n");
                 break;
             }
             if (i==nblobsmax-1){ // Increase 
