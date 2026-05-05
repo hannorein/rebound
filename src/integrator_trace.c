@@ -1020,12 +1020,12 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
                     double* y;
                     while(r->t < t_needed && fabs(r->dt/old_dt)>1e-14 && r->status<=0){
                         if (!nbody_ode || nbody_ode->length != 6*r->N){
-                            if (nbody_ode){
-                                reb_ode_free(nbody_ode);
-                            }
+                            // (re)create the ODE
+                            reb_ode_free(nbody_ode);
                             nbody_ode = reb_ode_create(r, 6*r->N);
                             nbody_ode->derivatives = reb_integrator_bs_nbody_derivatives;
                             nbody_ode->needs_nbody = 0;
+                            bs->first_or_last_step = 1;
                             y = nbody_ode->y;
                         }
 
