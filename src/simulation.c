@@ -504,9 +504,12 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
 void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
     run_heartbeat(r);
     for (size_t i=0;i<N_steps;i++){
+        if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_simulation_step(r);
         run_heartbeat(r);
     }
+    reb_simulation_synchronize(r);
+    if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
 }
 static void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime
