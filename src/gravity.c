@@ -61,6 +61,11 @@ void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r){
 #endif // MPI
 
     reb_tree_construct(r);
+    if (!r->tree_root){
+        reb_simulation_error(r,"Tree does not exist. Cannot calculate accelerations.");
+        return;
+    }
+
     // Update center of mass and quadrupole moments in tree in preparation of force calculation.
     // Also distributed essential tree if MPI is used.
     reb_tree_calculate_gravity_data(r); 
