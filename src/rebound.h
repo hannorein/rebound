@@ -523,6 +523,8 @@ struct reb_simulation {
 
     int save_messages;              // 0 (default): print messages on screen, 1: ignore messages (used in python interface).
     char** messages;                // Array of strings containing last messages (only used if save_messages==1). 
+
+    // Flags to avoid repeated warning messages
     int messages_var_rescale_warning;    
     int messages_timestep_warning;    
 

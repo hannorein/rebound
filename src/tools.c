@@ -1307,22 +1307,13 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
                 return;
             }
 
-
-            // TODO: reimplement:
-            //int is_synchronized = 1;
-            //if (reb_integrator_cmp(r->integrator, reb_integrator_whfast)==0 && r->ri_whfast.is_synchronized == 0){
-            //    is_synchronized = 0;
-            //}
-            //if (reb_integrator_cmp(r->integrator, reb_integrator_eos)==0 && r->ri_eos.is_synchronized == 0){
-            //    is_synchronized = 0;
-            //}
-            //if (is_synchronized == 0){
-            //    if (!(r->messages_var_rescale_warning & 1)){
-            //        r->messages_var_rescale_warning |= 1;
-            //        reb_simulation_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize and rescale.");
-            //    }
-            //    return;
-            //}
+            if (!r->is_synchronized){
+                if (!(r->messages_var_rescale_warning & 1)){
+                    r->messages_var_rescale_warning |= 1;
+                    reb_simulation_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize. Then rescale.");
+                }
+                return;
+            }
 
             vc->lrescale += log(scale);
             for (size_t i=0; i<N; i++){
