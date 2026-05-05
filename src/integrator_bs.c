@@ -674,8 +674,10 @@ struct reb_ode* reb_ode_create(struct reb_simulation* r, unsigned int length){
 
     ode->scale = malloc(sizeof(double)*length);
 
-    // TODO: Reimplement:
-    // bs->first_or_last_step = 1;
+    if (strcmp(r->integrator.name, "bs")==0){
+        struct reb_integrator_bs_state* bs = r->integrator.state;
+        bs->first_or_last_step = 1;
+    }
 
     return ode;
 }
@@ -781,10 +783,6 @@ void reb_ode_free(struct reb_ode* ode){
                 r->odes[s] = r->odes[s+1];
             }
         }
-        // TODO: Reimplement this
-        //if (ri_bs->nbody_ode == ode){
-        //    ri_bs->nbody_ode = NULL;
-        //}
     }
     free(ode);
 }
