@@ -1112,7 +1112,7 @@ void reb_integrator_trace_did_add_particle(struct reb_simulation* r){
 
 void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index){
     struct reb_integrator_trace_state* const trace = r->integrator.state;
-    // TODO REImplement
+    // TODO: Logic unclear here. A BS reset might still need to be reimplemented here.
     //reb_integrator_bs_reset(r);
     if (trace->mode==REB_INTEGRATOR_TRACE_MODE_KEPLER){
         // Only removed mid-timestep if collision - BS Step!

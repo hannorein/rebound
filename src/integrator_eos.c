@@ -481,11 +481,11 @@ static void reb_integrator_eos_drift_shell0(struct reb_simulation* const r, doub
 }
 
 void reb_integrator_eos_step(struct reb_simulation* r, void* state){
-    // TODO Variational equations no longer working.
     if (r->gravity != REB_GRAVITY_BASIC){
         reb_simulation_warning(r,"EOS only supports the BASIC gravity routine.");
     }
     if (r->N_var){
+        // TODO Variational equations no longer working.
         reb_simulation_warning(r, "Variational particles/MEGNO in EOS no longer supported since REBOUND version 5.");
     }
     r->gravity = REB_GRAVITY_NONE;
