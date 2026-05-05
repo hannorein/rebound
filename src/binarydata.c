@@ -153,13 +153,16 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         // Search field in current integrator
         if (r && r->integrator.callbacks.field_descriptor_list){
             fd = reb_binarydata_field_descriptor_for_name_in_list(r->integrator.callbacks.field_descriptor_list, name_sub+1);
-        }else{
-            // Look through all built-in integrators
+        }
+        // Look through all built-in integrators
+        if (!fd){
 #define X(iname) if (!fd) {fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_##iname.field_descriptor_list, name_sub+1);}
             REB_AVAILABLE_INTEGRATORS
 #undef X
-                // Look through all custom integrators
-                size_t Nc = 0;
+        }
+        // Look through all custom integrators
+        if (!fd){
+            size_t Nc = 0;
             if (reb_integrator_configurations_custom){
                 while(reb_integrator_configurations_custom[Nc].name){
                     fd = reb_binarydata_field_descriptor_for_name_in_list(reb_integrator_configurations_custom[Nc].callbacks.field_descriptor_list, name_sub+1);
@@ -168,6 +171,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
                 }
             }
         }
+        // Shift pointers
         if (fd){
             struct reb_binarydata_field_descriptor fd_integrator = *fd;
             if (r && r->integrator.state){
@@ -188,7 +192,6 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         }
         return fd_simulation;
     }
-            printf("here 2\n");
     reb_simulation_error((struct reb_simulation*)r, "Could not find field descriptor for name.");
     struct reb_binarydata_field_descriptor bfd = {
         .dtype = REB_FIELD_NOT_FOUND,

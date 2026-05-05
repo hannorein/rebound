@@ -11,6 +11,7 @@
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 struct custom_integrator_state {
@@ -19,6 +20,8 @@ struct custom_integrator_state {
     // as required by the integrator.
     int number_of_steps;
     int number_of_synchronizations;
+    // We can for example use a string
+    char* best_nbody_package;
 };
 
 // By defining the layout of the state in the form of a reb_binary_data_field_descriptor,
@@ -26,6 +29,7 @@ struct custom_integrator_state {
 const struct reb_binarydata_field_descriptor leapfrog_field_descriptor_list[] = {
     { REB_INT, "number_of_steps",            offsetof(struct custom_integrator_state, number_of_steps), 0, 0, 0},
     { REB_INT, "number_of_synchronizations", offsetof(struct custom_integrator_state, number_of_synchronizations), 0, 0, 0},
+    { REB_STRING, "best_nbody_package",      offsetof(struct custom_integrator_state, best_nbody_package), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
@@ -34,13 +38,15 @@ void* leapfrog_create(){
     // Default values 
     leapfrog->number_of_steps = 0;  
     leapfrog->number_of_synchronizations = 0;
+    leapfrog->best_nbody_package = strdup("REBOUND, of course."); // Note: strdup allocate memory.
     return leapfrog;
 }
 
 void leapfrog_free(void* p){
     struct custom_integrator_state* leapfrog = p;
     // Free any data allocated by integrator
-    // Here, it is just the state itself.
+    free(leapfrog->best_nbody_package);
+    // Then, free the state itself.
     free(leapfrog);
 }
 
@@ -110,8 +116,8 @@ int main(int argc, char* argv[]) {
         .free = leapfrog_free,
         .field_descriptor_list = leapfrog_field_descriptor_list,
     };
-    reb_integrator_register(custom, "custom-integrator");
-    reb_simulation_set_integrator(r, "custom-integrator");
+    reb_integrator_register(custom, "custom-leapfrog");
+    reb_simulation_set_integrator(r, "custom-leapfrog");
     
     // Integrate 5 time units
     // This will automatically call synchronize() at the end.
@@ -120,6 +126,10 @@ int main(int argc, char* argv[]) {
     struct custom_integrator_state* leapfrog = r->integrator.state;
     printf("number_of_steps = %d\n", leapfrog->number_of_steps);
     printf("number_of_synchronizations = %d\n", leapfrog->number_of_synchronizations);
+
+    // We can change some of the integrator state properties, for example the string:
+    free(leapfrog->best_nbody_package);
+    leapfrog->best_nbody_package = strdup("REBOUND is still the best N-body package.");
     
     // Step forward 10 steps
     reb_simulation_steps(r, 10);
@@ -146,6 +156,7 @@ int main(int argc, char* argv[]) {
     leapfrog = r->integrator.state;
     printf("number_of_steps = %d\n", leapfrog->number_of_steps);
     printf("number_of_synchronizations = %d\n", leapfrog->number_of_synchronizations);
+    printf("best_nbody_package = %s\n", leapfrog->best_nbody_package);
 
     
     // Simulation is not synchronized right now.
