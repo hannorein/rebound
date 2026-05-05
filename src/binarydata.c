@@ -764,7 +764,9 @@ next_field:
                         *pointer = realloc(*pointer, field.size_data);
                     }
                     fread(*pointer, field.size_data,1,inf);
-                    *pointer_N = (size_t)field.size_data/fd.element_size;
+                    if (fd.offset_N!=SIZE_MAX){ // Dynamic N if offset_N is given
+                        *pointer_N = (size_t)field.size_data/fd.element_size;
+                    }
                 }
                 goto next_field;
                 break;
