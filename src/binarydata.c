@@ -83,7 +83,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { REB_DOUBLE,       "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
     { REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
     { REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
-    { REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
+    { REB_OTHER,        "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
     { REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
     { REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
     { REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
@@ -704,10 +704,14 @@ next_field:
             goto next_field;
         }
         // Try to get name of field
+        if (field.size_name>1024){
+            *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+            goto finish_fields;
+        }
         numread = (int)fread(name,field.size_name,1,inf);
         if (numread<1){
             *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
-            goto finish_fields; // End of file
+            goto finish_fields;
         }
         // Fields that require special handling
         if (strcmp(name, "end")==0){
@@ -723,7 +727,11 @@ next_field:
             }
             goto next_field;
         }
-
+        if (strcmp(name, "integrator.name")==0){
+            fread(name, field.size_data,1,inf); // Overwrites name
+            reb_simulation_set_integrator(r, name);
+            goto next_field;
+        }
 
         struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(r, name) ;
         char** pointer = (char**)fd.offset;
@@ -771,16 +779,8 @@ next_field:
                 goto next_field;
                 break;
             case REB_STRING:
-                // char** pointer = (char**)(base_address + fd.offset);
-                // *pointer = realloc(*pointer, field.size_data); // TODO: memory needs to be freed somewhere else
-                {
-                    char* string = malloc(field.size_data);
-                    fread(string, field.size_data,1,inf);
-                    // HACK
-                    reb_simulation_set_integrator(r, string);
-                    free(string);
-                    // /HACK
-                }
+                *pointer = realloc(*pointer, field.size_data);
+                fread(*pointer, field.size_data,1,inf);
                 goto next_field;
                 break;
             case REB_CHARP_LIST:
@@ -823,11 +823,7 @@ next_field:
                 goto finish_fields;
                 break;
         }
-        // If we're here then it was not a simple or pointer datatype. 
-        // Can skip the iteration trough the descriptor list.
-        // TODO:
-        printf("shouldn't be hereeeee\n");
-        break;
+        // Unreachable. 
     }
 
 
