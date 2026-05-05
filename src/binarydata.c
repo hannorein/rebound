@@ -641,7 +641,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     // Integrator
     if (r->integrator.name[0]){
         char prefix[256] = "integrator.";
-        strlcat(prefix, r->integrator.name, sizeof(prefix));
+        strcat(prefix, r->integrator.name);
         output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, prefix);
     }
 
