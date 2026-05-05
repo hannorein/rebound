@@ -28,6 +28,10 @@
 
 #define REB_API     // Public REBOUND API definitions
 
+// Maximum length string for most strings used by REBOUND,
+// including names of binary fields.
+#define REB_STRING_SIZE_MAX 512
+
 // Helper macros for padding structures
 #if defined(_WIN64) || defined(_LP64)
 #define REB_PAD(s) // 64 bit pointers require no padding
