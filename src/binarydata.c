@@ -83,7 +83,7 @@ const struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_lis
     { REB_DOUBLE,       "simulationarchive_auto_walltime", offsetof(struct reb_simulation, simulationarchive_auto_walltime), 0, 0, 0},
     { REB_DOUBLE,       "simulationarchive_next",       offsetof(struct reb_simulation, simulationarchive_next), 0, 0, 0},
     { REB_INT,          "collision",                    offsetof(struct reb_simulation, collision), 0, 0, 0},
-    { REB_OTHER,        "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0},
+    { REB_STRING,       "integrator.name",              offsetof(struct reb_simulation, integrator.name), 0, 0, 0}, // special!
     { REB_INT,          "boundary",                     offsetof(struct reb_simulation, boundary), 0, 0, 0},
     { REB_INT,          "gravity",                      offsetof(struct reb_simulation, gravity), 0, 0, 0},
     { REB_DOUBLE,       "OMEGA",                        offsetof(struct reb_simulation, OMEGA), 0, 0, 0},
@@ -182,7 +182,7 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
             return fd_integrator;
         } 
     }
-    
+
     fd = reb_binarydata_field_descriptor_for_name_in_list(reb_binarydata_field_descriptor_list, name); 
     if (fd){
         struct reb_binarydata_field_descriptor fd_simulation = *fd;
@@ -641,7 +641,7 @@ void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char** bufp, 
     // Integrator
     if (r->integrator.name[0]){
         char prefix[256] = "integrator.";
-        strlcat(prefix, r->integrator.name, sizeof(prefix));
+        strcat(prefix, r->integrator.name);
         output_fields_from_list(bufp, current_pos, &allocatedsize, r->integrator.callbacks.field_descriptor_list, (char*)r->integrator.state, prefix);
     }
 
@@ -734,6 +734,14 @@ next_field:
             fread(name, field.size_data,1,inf); // Overwrites name
             reb_simulation_set_integrator(r, name);
             goto next_field;
+        }
+        // Check that we only read integrator values that match the currently set integrator to avoid seg faults.
+        char* name_sub;
+        if (strncmp("integrator.", name, 11)==0 && (name_sub = strchr(name+11,'.'))){
+            if (!r->integrator.name[0] || strncmp(name+11, r->integrator.name, name_sub - name -11)){
+                *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
+                goto finish_fields;
+            }
         }
 
         struct reb_binarydata_field_descriptor fd = reb_binarydata_field_descriptor_for_name(r, name) ;
