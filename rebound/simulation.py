@@ -1349,9 +1349,9 @@ class Simulation(Structure):
 class timeval(Structure):
     _fields_ = [("tv_sec",c_int64),("tv_usec",c_int64)]
 
+from .ODE import ODE
 from .particle import Particle
 from .particles import Particles
-from .integrators.bs import ODE
 from .variation import Variation
 
 # Setting up fields after class definition (because of self-reference)

@@ -1,6 +1,5 @@
-from ctypes import c_uint, c_double, c_void_p, CFUNCTYPE, POINTER, c_int, Structure, c_size_t
-from .. import clibrebound
-
+from . import clibrebound
+from ctypes import Structure, c_double, POINTER, c_uint, CFUNCTYPE, c_size_t, c_void_p 
 class ODE(Structure):
     @property
     def derivatives(self):
@@ -13,7 +12,7 @@ class ODE(Structure):
     def update_particles(self):
         clibrebound.reb_integrator_bs_update_particles(self.r, None) 
 
-from ..simulation import Simulation
+from .simulation import Simulation
 ODE._fields_ = [
                 ("length", c_uint),
                 ("y", POINTER(c_double)),
@@ -35,26 +34,3 @@ ODE._fields_ = [
             ]               
 
 ODEDER = CFUNCTYPE(None,POINTER(ODE), POINTER(c_double), POINTER(c_double), c_double)
-
-class IntegratorBS(Structure):
-    """
-    This class is an abstraction of the C-struct reb_integrator_bs.
-    It controls the behaviour of the Gragg-Bulirsch-Stoer integrator.
-    """
-    _fields_ = [
-                ("eps_abs", c_double),
-                ("eps_rel", c_double),
-                ("min_dt", c_double),
-                ("max_dt", c_double),
-                ("_nbody_ode", POINTER(ODE)),
-                ("_sequence", POINTER(c_int)),
-                ("_cost_per_step", POINTER(c_int)),
-                ("_cost_per_time_unit", POINTER(c_double)),
-                ("_optimal_step", POINTER(c_double)),
-                ("_coeff", POINTER(c_double)),
-                ("dt_proposed", c_double),
-                ("_first_or_last_step", c_int),
-                ("_previous_rejected", c_int),
-                ("_target_iter", c_int),
-                ("_user_ode_needs_nbody", c_int),
-            ]               
