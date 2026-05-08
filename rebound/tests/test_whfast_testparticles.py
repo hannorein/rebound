@@ -1,6 +1,5 @@
 import rebound
 import unittest
-import rebound.data
 import warnings
 
 coordinatelist = ["democraticheliocentric","whds","jacobi","barycentric"]

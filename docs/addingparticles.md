@@ -148,17 +148,30 @@ See [the discussion on orbital elements](orbitalelements.md) for more details.
 ## Solar System planets
 If you want to quickly try something out, you can use a set of initial conditions for the Solar System that come with REBOUND: 
 
-```python
-sim = rebound.Simulation()
-rebound.data.add_solar_system(sim)
-```
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "solar system");
+    ```
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.add("solar system")
+    ```
 
 and similarly for the outer Solar System:
 
-```python
-sim = rebound.Simulation()
-rebound.data.add_outer_solar_system(sim)
-```
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "outer solar system");
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.add("outer solar system")
+    ```
 
 
 This is currently only supported in python.

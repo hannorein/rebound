@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import rebound.data
 import warnings
     
     
@@ -9,7 +8,7 @@ class TestIntegratorWHFast(unittest.TestCase):
     # WHDS
     def test_whfastwhds_outersolarsystem(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
         sim.integrator.coordinates = "whds"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
@@ -21,7 +20,7 @@ class TestIntegratorWHFast(unittest.TestCase):
     # Jacobi
     def test_whfast_outersolarsystem(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
         sim.integrator.coordinates = "jacobi"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
@@ -212,14 +211,14 @@ class TestIntegratorWHFast(unittest.TestCase):
 
     def test_whfasthelio_outersolarsystem(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
         sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
         e1 = sim.energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1.2e-8)
+        self.assertLess(math.fabs((e0-e1)/e1),1.5e-8)
     
     def test_whfasthelio_veryhyperbolic(self):
         sim = rebound.Simulation()

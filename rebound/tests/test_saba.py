@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import rebound.data
     
 sabasettings1 = [ # type, relative error
         ["SABA2",1e-10], 
@@ -40,7 +39,7 @@ class TestIntegratorSABA(unittest.TestCase):
     def energy(self, s):
         integrator, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = integrator
         if integrator == "saba":
             sim.integrator.safe_mode = False
@@ -53,7 +52,7 @@ class TestIntegratorSABA(unittest.TestCase):
     def energy_notcom(self, s):
         integrator, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for p in sim.particles:
             p.vx += 1.
         com = sim.com()
@@ -70,7 +69,7 @@ class TestIntegratorSABA(unittest.TestCase):
     def compias(self, s):
         integrator, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for p in sim.particles:
             p.vx += 1050. # move out of com to make it harder
         sim.integrator = integrator
@@ -79,7 +78,7 @@ class TestIntegratorSABA(unittest.TestCase):
         
         simi = rebound.Simulation()
         simi.integrator = "ias15"
-        rebound.data.add_outer_solar_system(simi)
+        simi.add("outer solar system")
         for p in simi.particles:
             p.vx += 1050.
         simi.integrate(sim.t,exact_finish_time=True)
@@ -90,7 +89,7 @@ class TestIntegratorSABA(unittest.TestCase):
     def backandforth(self, s):
         integrator, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for p in sim.particles:
             p.vx += 1.
         sim0=sim.copy()
@@ -108,7 +107,7 @@ class TestIntegratorSABA(unittest.TestCase):
     def restart(self, s):
         integrator, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = integrator
         sim.steps(1)
         sim2 = sim.copy()

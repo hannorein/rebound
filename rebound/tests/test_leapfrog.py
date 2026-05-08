@@ -1,12 +1,11 @@
 import rebound
 import unittest
 import math
-import rebound.data
 
 class TestIntegrator(unittest.TestCase):
     def setUp(self):
         self.sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(self.sim)
+        self.sim.add("outer solar system")
         self.sim.move_to_com()
     
     def tearDown(self):

@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import rebound.data
 
 
 def derivatives_ho(ode, yDot, y, t):
@@ -153,7 +152,7 @@ class TestIntegratorBS(unittest.TestCase):
     def test_bs_outersolarsystem(self):
         for eps in [1e-5, 1e-7, 1e-9, 1e-11]:
             sim = rebound.Simulation()
-            rebound.data.add_outer_solar_system(sim)
+            sim.add("outer solar system")
             sim.integrator = "bs"
             sim.integrator.eps_rel = eps
             sim.integrator.eps_abs = eps
@@ -178,7 +177,7 @@ class TestIntegratorBS(unittest.TestCase):
     
     def test_bs_inout(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         eps = 1e-6
         sim.integrator = "bs"
         sim.integrator.eps_rel = eps

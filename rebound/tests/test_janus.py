@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import rebound.data
 
 class TestIntegratorJanus(unittest.TestCase):
     def test_janus_energy(self):

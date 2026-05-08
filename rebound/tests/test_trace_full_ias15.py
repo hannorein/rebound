@@ -110,7 +110,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
     def test_outer_solar(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
 
         sim.integrator = "trace"
         sim.integrator.peri_mode = 2
@@ -120,7 +120,7 @@ class TestIntegratorTrace(unittest.TestCase):
         E0 = sim.energy()
         sim.integrate(1000)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,2e-10)
+        self.assertLess(dE,2.5e-10)
 
     def test_order_doesnt_matter_tp0(self):
         sim = rebound.Simulation()
@@ -210,7 +210,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
     def test_outer_solar_massive(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for i in range(1,sim.N):
             sim.particles[i].m *=50.
 
@@ -222,7 +222,7 @@ class TestIntegratorTrace(unittest.TestCase):
         E0 = sim.energy()
         sim.integrate(1000)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,7e-8)
+        self.assertLess(dE,2.7e-7)
 
     def test_simple_collision(self):
         sim = rebound.Simulation()

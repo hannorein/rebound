@@ -893,11 +893,12 @@ class Simulation(Structure):
                 if self.python_unit_l == 0 or self.python_unit_m == 0 or self.python_unit_t == 0:
                     self.units = ('AU', 'yr2pi', 'Msun')
                     self.G = 1.0
-                builtindatasets = ["solar system", "outer solar system"]
-                if particle.lower() == "solar system":          # built in test dataset
-                    data.add_solar_system(self)
-                elif particle.lower() == "outer solar system":  # built in test dataset
-                    data.add_outer_solar_system(self)
+                builtindatasets = ["solarsystem", "outersolarsystem"]
+                clean = "".join(particle.lower().split())
+                if clean in builtindatasets:
+                    clibrebound.reb_simulation_add_fmt(byref(self), clean.encode("ascii"))
+                    for p in self.particles:
+                        units_convert_particle(p, "au", "yr2pi", "msun", hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
                 else:
                     if "frame" not in kwargs:
                         if hasattr(self, 'default_plane'):
@@ -1490,5 +1491,4 @@ if simulation_size_c != sizeof(Simulation):
 
 # Import at the end to avoid circular dependence
 from . import horizons
-from . import data
 from .simulationarchive import Simulationarchive
