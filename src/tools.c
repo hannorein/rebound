@@ -589,28 +589,6 @@ static const char* reb_string_for_particle_error(int err){
 
 }
 
-static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args);
-
-void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
-    if (!r){
-        reb_simulation_error(NULL, "Simulation can't be NULL in reb_simulation_add_fmt.");
-        return;
-    }
-
-    int err = 0;
-    va_list args;
-    va_start(args, fmt);
-    struct reb_particle particle = reb_particle_from_fmt_errV(r, &err, fmt, args);
-    va_end(args);
-
-    if (err==0){ // Success
-        reb_simulation_add(r, particle);
-    }else{
-        const char* error_string = reb_string_for_particle_error(err);
-        reb_simulation_error(r, error_string);
-    }
-}
-
 static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args){
     double m = 0;
     double radius = 0;
@@ -884,6 +862,53 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
     particle.name = name;
     return particle;
 }
+
+// Solar System Data. Taken from NASA Horizons. Used for testing.
+static const struct reb_particle reb_particle_solarsystem[] = {
+    {.m=1.00000000000000000000, .x=-0.00583761661678666201, .y=0.00660036108188146939,  .z=0.00008090699630593683,  .vx=-0.00043778026915688127, .vy=-0.00027688340567327781, .vz=0.00001289781032896905},
+    {.m=0.00000016601141530543, .x=-0.29485531126658365286, .y=-0.34334233225957377922, .z=-0.00200264586836620137, .vx=0.92896432258229966195,  .vy=-0.96594579119516865706, .vz=-0.16415293821738913271},
+    {.m=0.00000244783828778477, .x=0.47227261050357943750,  .y=0.54819205023577255442,  .z=-0.02007680147008551394, .vx=-0.88553481794279420569, .vy=0.77279164698675262279,  .vz=0.06169738346121213246},
+    {.m=0.00000304043264802264, .x=0.97541936428768183376,  .y=-0.22011750964499116057, .z=0.00008866761098092638,  .vx=0.20842772535763168240,  .vy=0.97042888227470602835,  .vz=-0.00003307038073776142},
+    {.m=0.00000032271560375550, .x=1.38489786417060911639,  .y=-0.00373655464561763921, .z=-0.03425238653564356694, .vx=0.03680838810437889880,  .vy=0.88267192839777131042,  .vz=0.01760188515939473466},
+    {.m=0.00095479191521124043, .x=2.31793441229397512160,  .y=-4.57278216881576948794, .z=-0.03288979300198136002, .vx=0.38587103958050272823,  .vy=0.21916457142972819994,  .vz=-0.00954142828183331820},
+    {.m=0.00028588567272224167, .x=4.97984063350991323915,  .y=-8.66630842281542435046, .z=-0.04756566088166765821, .vx=0.26314427785251254255,  .vy=0.16073015466677914587,  .vz=-0.01327326395768535505},
+    {.m=0.00004366243735831270, .x=15.62435177921100226683, .y=12.13892823277256738379, .z=-0.15733112984491792741, .vx=-0.14195568334904265506, .vy=0.16989920313154410758,  .vz=0.00247006450290807337},
+    {.m=0.00005151383772628674, .x=29.39189844361883885426, .y=-5.57834279640134234057, .z=-0.56249012217889071685, .vx=0.03281663353639149155,  .vy=0.18036894277947276843,  .vz=-0.00447061619870956460}
+};
+
+void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
+    if (!r){
+        reb_simulation_error(NULL, "Simulation can't be NULL in reb_simulation_add_fmt.");
+        return;
+    }
+    if (reb_strcmp_ignore_whitespace("outer solar system", fmt)==0){
+        reb_simulation_add(r, reb_particle_solarsystem[0]);
+        for (size_t i=5; i<9; i++){
+            reb_simulation_add(r, reb_particle_solarsystem[i]);
+        }
+        return;
+    }
+    if (reb_strcmp_ignore_whitespace("solar system", fmt)==0){
+        for (size_t i=0; i<9; i++){
+            reb_simulation_add(r, reb_particle_solarsystem[i]);
+        }
+        return;
+    }
+
+    int err = 0;
+    va_list args;
+    va_start(args, fmt);
+    struct reb_particle particle = reb_particle_from_fmt_errV(r, &err, fmt, args);
+    va_end(args);
+
+    if (err==0){ // Success
+        reb_simulation_add(r, particle);
+    }else{
+        const char* error_string = reb_string_for_particle_error(err);
+        reb_simulation_error(r, error_string);
+    }
+}
+
 
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 

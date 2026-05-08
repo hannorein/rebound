@@ -99,6 +99,8 @@ void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type
 REB_API int reb_check_fp_contract(); 
 // Wrapper method to set number of OpenMP threads from python.
 REB_API void reb_omp_set_num_threads(int num_threads);
+// Helper function for comparing strings
+int reb_strcmp_ignore_whitespace(const char *s1, const char *s2);
 
 // Lists to find available integrators
 REB_API char** reb_integrators_registered(); // only used by python

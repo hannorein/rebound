@@ -24,6 +24,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #ifdef _WIN32
 #include <io.h>
 #define isatty _isatty
@@ -213,6 +214,20 @@ int reb_check_fp_contract(){
 void reb_free(void* p){
     free(p);
 }
+
+// Helper function to check for equal strings with whitespace ignored
+int reb_strcmp_ignore_whitespace(const char *s1, const char *s2) {
+    while (*s1 != '\0' || *s2 != '\0') {
+        while (isspace((unsigned char)*s1)) s1++;
+        while (isspace((unsigned char)*s2)) s2++;
+        if (*s1 == '\0' && *s2 == '\0') return 0;
+        if (*s1 != *s2) return (unsigned char)*s1 - (unsigned char)*s2;
+        s1++;
+        s2++;
+    }
+    return 0;
+}
+
 
 #ifdef _WIN32
 
