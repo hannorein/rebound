@@ -428,7 +428,7 @@ The `reb_integrator_trace` structure contains the configuration and data structu
 
 `unsigned int coordinates`
 :   TRACE supports different coordinate systems. 
-    Default are democratic heliocentric coordinates, but wide binary coordinates ([Chambers et al 2002](https://ui.adsabs.harvard.edu/abs/2002AJ....123.2884C/abstract)) may also be used.
+    Default are democratic heliocentric coordinates, but wide binary coordinates ([Chambers et al 2002](https://ui.adsabs.harvard.edu/abs/2002AJ....123.2884C/abstract), [Lu & Brown 2026](https://ui.adsabs.harvard.edu/abs/2026arXiv260501005L/abstract)) may also be used.
     The syntax to use them is 
     
     === "C"
