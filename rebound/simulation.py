@@ -137,8 +137,6 @@ class Simulation(Structure):
             # Recreate existing simulation 
             sim = clibrebound.reb_simulation_create().contents
             sim._simulation_needsfree_ = True
-            # TODO: Reimplement:
-            #w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
             w = c_int(0)
             clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
