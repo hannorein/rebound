@@ -1,7 +1,7 @@
 from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof, cast 
 from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError, string_size_max 
 from .citations import cite
-from .binary_field_descriptor import IntegratorConfiguration
+from .integrator import IntegratorConfiguration
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
 from .vectors import Vec3d, Vec3dBasic, Vec6d
 import os
@@ -1349,7 +1349,7 @@ class Simulation(Structure):
 class timeval(Structure):
     _fields_ = [("tv_sec",c_int64),("tv_usec",c_int64)]
 
-from .ODE import ODE
+from .ode import ODE
 from .particle import Particle
 from .particles import Particles
 from .variation import Variation
