@@ -221,27 +221,23 @@ class Simulationarchive(Structure):
         sim = Simulation()
         w = c_int(0)
         clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
+        
+        try:
+            safe_mode = sim.integrator.safe_mode
+            if safe_mode == 1 or mode=='exact':
+                keep_unsynchronized = 0
+            sim.integrator.keep_unsynchronized = keep_unsynchronized
+        except AttributeError:
+            pass # not all integrators support keep_unsynchronized
 
         if mode=='snapshot':
-            # TODO: Reimplement
-            #if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
-            #    keep_unsynchronized = 0
-            #sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            #sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             sim.synchronize()
-            return sim
-        else:
-            if mode=='exact':
-                keep_unsynchronized = 0
-            # TODO: Reimplement
-            #if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
-            #    keep_unsynchronized = 0
-            #sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            #sim.ri_saba.keep_unsynchronized = keep_unsynchronized
-            exact_finish_time = 1 if mode=='exact' else 0
-            sim.integrate(t,exact_finish_time=exact_finish_time)
+        if mode=='close':
+            sim.integrate(t,exact_finish_time=0)
+        if mode=='exact':
+            sim.integrate(t,exact_finish_time=1)
                 
-            return sim
+        return sim
 
 
     def getSimulations(self, times, **kwargs):
