@@ -1094,42 +1094,42 @@ void reb_display_init(struct reb_simulation * const r){
         // SIMPLEFONT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec2 vp;\n"
-            "in float charpos;\n"
-            "uniform float scale;\n"
-            "uniform float aspect;\n"
-            "uniform float screen_aspect;\n"
-            "uniform float ypos;\n"
-            "uniform vec2 pos;\n"
-            "uniform int rotation;\n"
-            "in vec2 charval;\n"
-            "in vec2 texcoord;\n"
-            "out vec2 Texcoord;\n"
-            "void main() {\n"
-            "  if (rotation==0) {\n"
-            "    gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
-            "  }else{\n"
-            "    gl_Position = vec4(pos.x+screen_aspect*scale*(-vp.y),pos.y+scale*(vp.x-ypos+charpos*aspect),0.,1.);\n"
-            "  }\n"
-            "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
-            "}\n";
+        "in vec2 vp;\n"
+        "in float charpos;\n"
+        "uniform float scale;\n"
+        "uniform float aspect;\n"
+        "uniform float screen_aspect;\n"
+        "uniform float ypos;\n"
+        "uniform vec2 pos;\n"
+        "uniform int rotation;\n"
+        "in vec2 charval;\n"
+        "in vec2 texcoord;\n"
+        "out vec2 Texcoord;\n"
+        "void main() {\n"
+        "  if (rotation==0) {\n"
+        "    gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
+        "  }else{\n"
+        "    gl_Position = vec4(pos.x+screen_aspect*scale*(-vp.y),pos.y+scale*(vp.x-ypos+charpos*aspect),0.,1.);\n"
+        "  }\n"
+        "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "uniform sampler2D tex;\n"
-            "in vec2 Texcoord;\n"
-            "void main() {\n"
-            "  outcolor =   vec4(0.5,0.5,0.5,(1.-texture(tex, Texcoord).r)); \n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "uniform sampler2D tex;\n"
+        "in vec2 Texcoord;\n"
+        "void main() {\n"
+        "  outcolor =   vec4(0.5,0.5,0.5,(1.-texture(tex, Texcoord).r)); \n"
+        "}\n";
 
         data->shader_simplefont.program = loadShader(vertex_shader, fragment_shader);
         data->shader_simplefont.ypos_location = glGetUniformLocation(data->shader_simplefont.program, "ypos");
@@ -1210,47 +1210,47 @@ void reb_display_init(struct reb_simulation * const r){
         // POINT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 vp;\n"
-            "uniform mat4 mvp;\n"
-            "uniform vec4 vc;\n"
-            "out vec4 color;\n"
-            "uniform int current_index;\n"
-            "uniform int N;\n"
-            "uniform int breadcrumb_N;\n"
-            "void main() {\n"
-            "  gl_Position = mvp*vec4(vp, 1.0);\n"
-            "  gl_Position.z = 0.;\n" // no clipping
-            "  gl_PointSize = 15.0f;\n"
-            "  color = vc;\n"
-            "  float age = float( (gl_VertexID/N - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
-            "  if (N == 0) age = 1.0;\n"
-            "  color = vec4(vc.xyz,age*vc.a);\n"
-            "}\n";
+        "in vec3 vp;\n"
+        "uniform mat4 mvp;\n"
+        "uniform vec4 vc;\n"
+        "out vec4 color;\n"
+        "uniform int current_index;\n"
+        "uniform int N;\n"
+        "uniform int breadcrumb_N;\n"
+        "void main() {\n"
+        "  gl_Position = mvp*vec4(vp, 1.0);\n"
+        "  gl_Position.z = 0.;\n" // no clipping
+        "  gl_PointSize = 15.0f;\n"
+        "  color = vc;\n"
+        "  float age = float( (gl_VertexID/N - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
+        "  if (N == 0) age = 1.0;\n"
+        "  color = vec4(vc.xyz,age*vc.a);\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "in vec4 color;\n"
-            "out vec4 outcolor;\n"
-            "void main() {\n"
-            "  vec2 rel = gl_PointCoord.st;\n"
-            "  rel.s -=0.5f;\n"
-            "  rel.t -=0.5f;\n"
-            "  if (length(rel)>0.25f){\n"
-            "     outcolor = vec4(0.f,0.f,0.f,0.f); \n"
-            "  }else{\n"
-            "     vec4 cmod = color;\n"
-            "     cmod.a*= min(1.,1.-4.*(length(rel)/0.25-0.75));\n"
-            "     outcolor = cmod;\n"
-            "  }\n"
-            "}\n";
+        "precision highp float;"
+        "in vec4 color;\n"
+        "out vec4 outcolor;\n"
+        "void main() {\n"
+        "  vec2 rel = gl_PointCoord.st;\n"
+        "  rel.s -=0.5f;\n"
+        "  rel.t -=0.5f;\n"
+        "  if (length(rel)>0.25f){\n"
+        "     outcolor = vec4(0.f,0.f,0.f,0.f); \n"
+        "  }else{\n"
+        "     vec4 cmod = color;\n"
+        "     cmod.a*= min(1.,1.-4.*(length(rel)/0.25-0.75));\n"
+        "     outcolor = cmod;\n"
+        "  }\n"
+        "}\n";
 
         data->shader_point.program = loadShader(vertex_shader, fragment_shader);
         data->shader_point.mvp_location = glGetUniformLocation(data->shader_point.program, "mvp");
@@ -1275,31 +1275,31 @@ void reb_display_init(struct reb_simulation * const r){
         // BOX shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 vp;\n"
-            "uniform mat4 mvp;\n"
-            "uniform vec4 vc;\n"
-            "out vec4 color;\n"
-            "void main() {\n"
-            "  gl_Position = mvp*vec4(vp, 1.0);\n"
-            "  gl_Position.z = 0.;\n" // no clipping
-            "  color = vc;\n"
-            "}\n";
+        "in vec3 vp;\n"
+        "uniform mat4 mvp;\n"
+        "uniform vec4 vc;\n"
+        "out vec4 color;\n"
+        "void main() {\n"
+        "  gl_Position = mvp*vec4(vp, 1.0);\n"
+        "  gl_Position.z = 0.;\n" // no clipping
+        "  color = vc;\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "in vec4 color;\n"
-            "out vec4 outcolor;\n"
-            "void main() {\n"
-            "  outcolor = color;\n"
-            "}\n";
+        "precision highp float;"
+        "in vec4 color;\n"
+        "out vec4 outcolor;\n"
+        "void main() {\n"
+        "  outcolor = color;\n"
+        "}\n";
 
         data->shader_box.program = loadShader(vertex_shader, fragment_shader);
         data->shader_box.mvp_location = glGetUniformLocation(data->shader_box.program, "mvp");
@@ -1368,33 +1368,33 @@ void reb_display_init(struct reb_simulation * const r){
         // SPHERE shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 vp;\n"
-            "in float sr;\n"
-            "in vec3 sp;\n"
-            "out vec3 normal;\n"
-            "uniform mat4 mvp;\n"
-            "void main() {\n"
-            "  gl_Position = mvp*(vec4(sr*vp, 1.0)+vec4(sp,0.));\n"
-            "  normal = vp;\n"
-            "}\n";
+        "in vec3 vp;\n"
+        "in float sr;\n"
+        "in vec3 sp;\n"
+        "out vec3 normal;\n"
+        "uniform mat4 mvp;\n"
+        "void main() {\n"
+        "  gl_Position = mvp*(vec4(sr*vp, 1.0)+vec4(sp,0.));\n"
+        "  normal = vp;\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "in vec3 normal;\n"
-            "void main() {\n"
-            "  vec3 lightdir = vec3(1.,1.,1.);\n"
-            "  float intensity = 0.5+max(0.,0.5*dot(normalize(lightdir),normalize(normal)));\n"
-            "  outcolor = vec4(intensity,intensity,intensity,1.);\n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "in vec3 normal;\n"
+        "void main() {\n"
+        "  vec3 lightdir = vec3(1.,1.,1.);\n"
+        "  float intensity = 0.5+max(0.,0.5*dot(normalize(lightdir),normalize(normal)));\n"
+        "  outcolor = vec4(intensity,intensity,intensity,1.);\n"
+        "}\n";
 
         data->shader_sphere.program = loadShader(vertex_shader, fragment_shader);
         data->shader_sphere.mvp_location = glGetUniformLocation(data->shader_sphere.program, "mvp");
@@ -1478,61 +1478,61 @@ void reb_display_init(struct reb_simulation * const r){
         // ORBIT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 focus;\n"
-            "in vec3 aef;\n"
-            "in vec3 omegaOmegainc;\n"
-            "uniform int current_index;\n"
-            "uniform int N;\n"
-            "uniform int vertex_count;\n"
-            "uniform int breadcrumb_N;\n"
-            "out float lin;\n"
-            "uniform mat4 mvp;\n"
-            "const float M_PI = 3.14159265359;\n"
-            "void main() {\n"
-            "   float a = aef.x;\n"
-            "   float e = aef.y;\n"
-            "   lin = float(gl_VertexID)/float(vertex_count-1);\n"
-            "   float f = aef.z+lin*M_PI*2.;\n"
-            "   if (e>1.){\n"
-            "       float theta_max = acos(-1./e);\n"
-            "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
-            "       lin = sqrt(min(0.5,lin));\n"
-            "   }\n"
-            "   if (N != 0) {\n"
-            "       lin = float( (gl_InstanceID/N - current_index + 2*breadcrumb_N -1)%breadcrumb_N )/float(breadcrumb_N);\n"
-            "   }\n"
-            "   float omega = omegaOmegainc.x;\n"
-            "   float Omega = omegaOmegainc.y;\n"
-            "   float inc = omegaOmegainc.z;\n"
-            "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
-            "   float cO = cos(Omega);\n"
-            "   float sO = sin(Omega);\n"
-            "   float co = cos(omega);\n"
-            "   float so = sin(omega);\n"
-            "   float cf = cos(f);\n"
-            "   float sf = sin(f);\n"
-            "   float ci = cos(inc);\n"
-            "   float si = sin(inc);\n"
-            "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
-            "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
-            "    gl_Position.z = 0.;\n" // no clipping
-            "}\n";
+        "in vec3 focus;\n"
+        "in vec3 aef;\n"
+        "in vec3 omegaOmegainc;\n"
+        "uniform int current_index;\n"
+        "uniform int N;\n"
+        "uniform int vertex_count;\n"
+        "uniform int breadcrumb_N;\n"
+        "out float lin;\n"
+        "uniform mat4 mvp;\n"
+        "const float M_PI = 3.14159265359;\n"
+        "void main() {\n"
+        "   float a = aef.x;\n"
+        "   float e = aef.y;\n"
+        "   lin = float(gl_VertexID)/float(vertex_count-1);\n"
+        "   float f = aef.z+lin*M_PI*2.;\n"
+        "   if (e>1.){\n"
+        "       float theta_max = acos(-1./e);\n"
+        "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+        "       lin = sqrt(min(0.5,lin));\n"
+        "   }\n"
+        "   if (N != 0) {\n"
+        "       lin = float( (gl_InstanceID/N - current_index + 2*breadcrumb_N -1)%breadcrumb_N )/float(breadcrumb_N);\n"
+        "   }\n"
+        "   float omega = omegaOmegainc.x;\n"
+        "   float Omega = omegaOmegainc.y;\n"
+        "   float inc = omegaOmegainc.z;\n"
+        "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
+        "   float cO = cos(Omega);\n"
+        "   float sO = sin(Omega);\n"
+        "   float co = cos(omega);\n"
+        "   float so = sin(omega);\n"
+        "   float cf = cos(f);\n"
+        "   float sf = sin(f);\n"
+        "   float ci = cos(inc);\n"
+        "   float si = sin(inc);\n"
+        "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
+        "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+        "    gl_Position.z = 0.;\n" // no clipping
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "in float lin;\n"
-            "void main() {\n"
-            "  outcolor = vec4(1.,1.,1.,sqrt(lin));\n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "in float lin;\n"
+        "void main() {\n"
+        "  outcolor = vec4(1.,1.,1.,sqrt(lin));\n"
+        "}\n";
 
         data->shader_orbit.program = loadShader(vertex_shader, fragment_shader);
         data->shader_orbit.mvp_location = glGetUniformLocation(data->shader_orbit.program, "mvp");
@@ -1593,73 +1593,73 @@ void reb_display_init(struct reb_simulation * const r){
         // PLANE shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 focus;\n"
-            "in vec3 aef;\n"
-            "in vec3 omegaOmegainc;\n"
-            "uniform int vertex_count;\n"
-            "uniform mat4 mvp;\n"
-            "out float fog;\n"
-            "const float M_PI = 3.14159265359;\n"
-            "void main() {\n"
-            "   float a = aef.x;\n"
-            "   float e = aef.y;\n"
-            "   float lin = float(gl_VertexID/3)/float(vertex_count/3) + float(gl_VertexID%3)/float(vertex_count/3);\n"
-            "   float f = 2.*M_PI*lin;\n"
-            "   float theta_max = 0.0;\n"
-            "   fog = 1.;\n"
-            "   float r;\n"
-            "   if (e>1.){\n"
-            "       theta_max = acos(-1./e);\n"
-            "       lin = 0.5/float(vertex_count/3+1) ;\n"
-            "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
-            "       float rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
-            "       if (gl_VertexID%3==0) { \n"
-            "           r = rmax;\n"
-            "           f = 0.0; \n"
-            "       }else{\n"
-            "           lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
-            "           f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
-            "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
-            "       }\n"
-            "       fog = 1.-abs(r/rmax);\n"
-            "   }else{ \n"
-            "       if (gl_VertexID%3==0) { \n"
-            "           r = 0.;\n"
-            "       }else{\n"
-            "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
-            "       }\n"
-            "   }\n"
-            "   float omega = omegaOmegainc.x;\n"
-            "   float Omega = omegaOmegainc.y;\n"
-            "   float inc = omegaOmegainc.z;\n"
-            "   float cO = cos(Omega);\n"
-            "   float sO = sin(Omega);\n"
-            "   float co = cos(omega);\n"
-            "   float so = sin(omega);\n"
-            "   float cf = cos(f);\n"
-            "   float sf = sin(f);\n"
-            "   float ci = cos(inc);\n"
-            "   float si = sin(inc);\n"
-            "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
-            "   gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
-            "   gl_Position.z = 0.;\n" // no clipping
-            "}\n";
+        "in vec3 focus;\n"
+        "in vec3 aef;\n"
+        "in vec3 omegaOmegainc;\n"
+        "uniform int vertex_count;\n"
+        "uniform mat4 mvp;\n"
+        "out float fog;\n"
+        "const float M_PI = 3.14159265359;\n"
+        "void main() {\n"
+        "   float a = aef.x;\n"
+        "   float e = aef.y;\n"
+        "   float lin = float(gl_VertexID/3)/float(vertex_count/3) + float(gl_VertexID%3)/float(vertex_count/3);\n"
+        "   float f = 2.*M_PI*lin;\n"
+        "   float theta_max = 0.0;\n"
+        "   fog = 1.;\n"
+        "   float r;\n"
+        "   if (e>1.){\n"
+        "       theta_max = acos(-1./e);\n"
+        "       lin = 0.5/float(vertex_count/3+1) ;\n"
+        "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+        "       float rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
+        "       if (gl_VertexID%3==0) { \n"
+        "           r = rmax;\n"
+        "           f = 0.0; \n"
+        "       }else{\n"
+        "           lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
+        "           f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+        "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
+        "       }\n"
+        "       fog = 1.-abs(r/rmax);\n"
+        "   }else{ \n"
+        "       if (gl_VertexID%3==0) { \n"
+        "           r = 0.;\n"
+        "       }else{\n"
+        "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
+        "       }\n"
+        "   }\n"
+        "   float omega = omegaOmegainc.x;\n"
+        "   float Omega = omegaOmegainc.y;\n"
+        "   float inc = omegaOmegainc.z;\n"
+        "   float cO = cos(Omega);\n"
+        "   float sO = sin(Omega);\n"
+        "   float co = cos(omega);\n"
+        "   float so = sin(omega);\n"
+        "   float cf = cos(f);\n"
+        "   float sf = sin(f);\n"
+        "   float ci = cos(inc);\n"
+        "   float si = sin(inc);\n"
+        "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
+        "   gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+        "   gl_Position.z = 0.;\n" // no clipping
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "in float fog;\n"
-            "void main() {\n"
-            "  outcolor = vec4(1.,1.,1.,fog*0.3);\n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "in float fog;\n"
+        "void main() {\n"
+        "  outcolor = vec4(1.,1.,1.,fog*0.3);\n"
+        "}\n";
 
         data->shader_plane.program = loadShader(vertex_shader, fragment_shader);
         data->shader_plane.mvp_location = glGetUniformLocation(data->shader_plane.program, "mvp");

@@ -714,14 +714,14 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                         // Variational equations
                         // delta^(2) terms
                         double dax =         ddx * ( 3.*dx*dx*r5inv - r3inv )
-                            + ddy * ( 3.*dx*dy*r5inv )
-                            + ddz * ( 3.*dx*dz*r5inv );
+                        + ddy * ( 3.*dx*dy*r5inv )
+                        + ddz * ( 3.*dx*dz*r5inv );
                         double day =         ddx * ( 3.*dy*dx*r5inv )
-                            + ddy * ( 3.*dy*dy*r5inv - r3inv )
-                            + ddz * ( 3.*dy*dz*r5inv );
+                        + ddy * ( 3.*dy*dy*r5inv - r3inv )
+                        + ddz * ( 3.*dy*dz*r5inv );
                         double daz =         ddx * ( 3.*dz*dx*r5inv )
-                            + ddy * ( 3.*dz*dy*r5inv )
-                            + ddz * ( 3.*dz*dz*r5inv - r3inv );
+                        + ddy * ( 3.*dz*dy*r5inv )
+                        + ddz * ( 3.*dz*dz*r5inv - r3inv );
 
                         // delta^(1) delta^(1) terms
                         const double dk1dx = particles_var1a[i].x - particles_var1a[j].x;
@@ -735,17 +735,17 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                         const double rdk2 =  dx*dk2dx + dy*dk2dy + dz*dk2dz;
                         const double dk1dk2 =  dk1dx*dk2dx + dk1dy*dk2dy + dk1dz*dk2dz;
                         dax     +=        3.* r5inv * dk2dx * rdk1
-                            + 3.* r5inv * dk1dx * rdk2
-                            + 3.* r5inv    * dx * dk1dk2  
-                            - 15.      * dx * r7inv * rdk1 * rdk2;
+                        + 3.* r5inv * dk1dx * rdk2
+                        + 3.* r5inv    * dx * dk1dk2  
+                        - 15.      * dx * r7inv * rdk1 * rdk2;
                         day     +=        3.* r5inv * dk2dy * rdk1
-                            + 3.* r5inv * dk1dy * rdk2
-                            + 3.* r5inv    * dy * dk1dk2  
-                            - 15.      * dy * r7inv * rdk1 * rdk2;
+                        + 3.* r5inv * dk1dy * rdk2
+                        + 3.* r5inv    * dy * dk1dk2  
+                        - 15.      * dy * r7inv * rdk1 * rdk2;
                         daz     +=        3.* r5inv * dk2dz * rdk1
-                            + 3.* r5inv * dk1dz * rdk2
-                            + 3.* r5inv    * dz * dk1dk2  
-                            - 15.      * dz * r7inv * rdk1 * rdk2;
+                        + 3.* r5inv * dk1dz * rdk2
+                        + 3.* r5inv    * dz * dk1dk2  
+                        - 15.      * dz * r7inv * rdk1 * rdk2;
 
                         const double dk1Gmi = G * particles_var1a[i].m;
                         const double dk1Gmj = G * particles_var1a[j].m;
@@ -753,30 +753,30 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                         const double dk2Gmj = G * particles_var1b[j].m;
 
                         particles_var2[i].ax += Gmj * dax 
-                            - ddGmj*r3inv*dx 
-                            - dk2Gmj*r3inv*dk1dx + 3.*dk2Gmj*r5inv*dx*rdk1
-                            - dk1Gmj*r3inv*dk2dx + 3.*dk1Gmj*r5inv*dx*rdk2;
+                        - ddGmj*r3inv*dx 
+                        - dk2Gmj*r3inv*dk1dx + 3.*dk2Gmj*r5inv*dx*rdk1
+                        - dk1Gmj*r3inv*dk2dx + 3.*dk1Gmj*r5inv*dx*rdk2;
                         particles_var2[i].ay += Gmj * day 
-                            - ddGmj*r3inv*dy
-                            - dk2Gmj*r3inv*dk1dy + 3.*dk2Gmj*r5inv*dy*rdk1
-                            - dk1Gmj*r3inv*dk2dy + 3.*dk1Gmj*r5inv*dy*rdk2;
+                        - ddGmj*r3inv*dy
+                        - dk2Gmj*r3inv*dk1dy + 3.*dk2Gmj*r5inv*dy*rdk1
+                        - dk1Gmj*r3inv*dk2dy + 3.*dk1Gmj*r5inv*dy*rdk2;
                         particles_var2[i].az += Gmj * daz 
-                            - ddGmj*r3inv*dz
-                            - dk2Gmj*r3inv*dk1dz + 3.*dk2Gmj*r5inv*dz*rdk1
-                            - dk1Gmj*r3inv*dk2dz + 3.*dk1Gmj*r5inv*dz*rdk2;
+                        - ddGmj*r3inv*dz
+                        - dk2Gmj*r3inv*dk1dz + 3.*dk2Gmj*r5inv*dz*rdk1
+                        - dk1Gmj*r3inv*dk2dz + 3.*dk1Gmj*r5inv*dz*rdk2;
 
                         particles_var2[j].ax -= Gmi * dax 
-                            - ddGmi*r3inv*dx
-                            - dk2Gmi*r3inv*dk1dx + 3.*dk2Gmi*r5inv*dx*rdk1
-                            - dk1Gmi*r3inv*dk2dx + 3.*dk1Gmi*r5inv*dx*rdk2;
+                        - ddGmi*r3inv*dx
+                        - dk2Gmi*r3inv*dk1dx + 3.*dk2Gmi*r5inv*dx*rdk1
+                        - dk1Gmi*r3inv*dk2dx + 3.*dk1Gmi*r5inv*dx*rdk2;
                         particles_var2[j].ay -= Gmi * day 
-                            - ddGmi*r3inv*dy
-                            - dk2Gmi*r3inv*dk1dy + 3.*dk2Gmi*r5inv*dy*rdk1
-                            - dk1Gmi*r3inv*dk2dy + 3.*dk1Gmi*r5inv*dy*rdk2;
+                        - ddGmi*r3inv*dy
+                        - dk2Gmi*r3inv*dk1dy + 3.*dk2Gmi*r5inv*dy*rdk1
+                        - dk1Gmi*r3inv*dk2dy + 3.*dk1Gmi*r5inv*dy*rdk2;
                         particles_var2[j].az -= Gmi * daz 
-                            - ddGmi*r3inv*dz
-                            - dk2Gmi*r3inv*dk1dz + 3.*dk2Gmi*r5inv*dz*rdk1
-                            - dk1Gmi*r3inv*dk2dz + 3.*dk1Gmi*r5inv*dz*rdk2;
+                        - ddGmi*r3inv*dz
+                        - dk2Gmi*r3inv*dk1dz + 3.*dk2Gmi*r5inv*dz*rdk1
+                        - dk1Gmi*r3inv*dk2dz + 3.*dk1Gmi*r5inv*dz*rdk2;
                     }
                 }
             }else{ //testparticle
@@ -802,14 +802,14 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                     // Variational equations
                     // delta^(2) terms
                     double dax =         ddx * ( 3.*dx*dx*r5inv - r3inv )
-                        + ddy * ( 3.*dx*dy*r5inv )
-                        + ddz * ( 3.*dx*dz*r5inv );
+                    + ddy * ( 3.*dx*dy*r5inv )
+                    + ddz * ( 3.*dx*dz*r5inv );
                     double day =         ddx * ( 3.*dy*dx*r5inv )
-                        + ddy * ( 3.*dy*dy*r5inv - r3inv )
-                        + ddz * ( 3.*dy*dz*r5inv );
+                    + ddy * ( 3.*dy*dy*r5inv - r3inv )
+                    + ddz * ( 3.*dy*dz*r5inv );
                     double daz =         ddx * ( 3.*dz*dx*r5inv )
-                        + ddy * ( 3.*dz*dy*r5inv )
-                        + ddz * ( 3.*dz*dz*r5inv - r3inv );
+                    + ddy * ( 3.*dz*dy*r5inv )
+                    + ddz * ( 3.*dz*dz*r5inv - r3inv );
 
                     // delta^(1) delta^(1) terms
                     const double dk1dx = particles_var1a[0].x;
@@ -823,17 +823,17 @@ void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r){
                     const double rdk2 =  dx*dk2dx + dy*dk2dy + dz*dk2dz;
                     const double dk1dk2 =  dk1dx*dk2dx + dk1dy*dk2dy + dk1dz*dk2dz;
                     dax     +=        3.* r5inv * dk2dx * rdk1
-                        + 3.* r5inv * dk1dx * rdk2
-                        + 3.* r5inv    * dx * dk1dk2  
-                        - 15.      * dx * r7inv * rdk1 * rdk2;
+                    + 3.* r5inv * dk1dx * rdk2
+                    + 3.* r5inv    * dx * dk1dk2  
+                    - 15.      * dx * r7inv * rdk1 * rdk2;
                     day     +=        3.* r5inv * dk2dy * rdk1
-                        + 3.* r5inv * dk1dy * rdk2
-                        + 3.* r5inv    * dy * dk1dk2  
-                        - 15.      * dy * r7inv * rdk1 * rdk2;
+                    + 3.* r5inv * dk1dy * rdk2
+                    + 3.* r5inv    * dy * dk1dk2  
+                    - 15.      * dy * r7inv * rdk1 * rdk2;
                     daz     +=        3.* r5inv * dk2dz * rdk1
-                        + 3.* r5inv * dk1dz * rdk2
-                        + 3.* r5inv    * dz * dk1dk2  
-                        - 15.      * dz * r7inv * rdk1 * rdk2;
+                    + 3.* r5inv * dk1dz * rdk2
+                    + 3.* r5inv    * dz * dk1dk2  
+                    - 15.      * dz * r7inv * rdk1 * rdk2;
 
                     // No variational mass contributions for test particles!
 

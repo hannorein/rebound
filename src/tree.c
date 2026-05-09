@@ -296,7 +296,7 @@ static void reb_tree_calculate_acceleration_for_particle_from_cell(const struct 
             particles[pt].ay += qprefact*(dx*node->mxy + dy*node->myy + dz*node->myz); 
             particles[pt].az += qprefact*(dx*node->mxz + dy*node->myz + dz*node->mzz); 
             double mrr     = dx*dx*node->mxx     + dy*dy*node->myy     + dz*dz*node->mzz
-                + 2.*dx*dy*node->mxy     + 2.*dx*dz*node->mxz     + 2.*dy*dz*node->myz; 
+            + 2.*dx*dy*node->mxy     + 2.*dx*dz*node->mxz     + 2.*dy*dz*node->myz; 
             qprefact *= -5.0/(2.0*_r*_r)*mrr;
             particles[pt].ax += (qprefact + prefact) * dx; 
             particles[pt].ay += (qprefact + prefact) * dy; 

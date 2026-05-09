@@ -62,7 +62,7 @@ char** reb_integrators_registered(){
 #define X(iname) N++;
     REB_AVAILABLE_INTEGRATORS
 #undef X
-        int Nc = 0;
+    int Nc = 0;
     if (reb_integrator_configurations_custom){
         while(reb_integrator_configurations_custom[Nc].name) Nc++;
     }
@@ -71,7 +71,7 @@ char** reb_integrators_registered(){
 #define X(iname) names[i++] = #iname;
     REB_AVAILABLE_INTEGRATORS
 #undef X
-        Nc = 0;
+    Nc = 0;
     if (reb_integrator_configurations_custom){
         while(reb_integrator_configurations_custom[Nc].name){
             names[N+Nc] = (char*)reb_integrator_configurations_custom[Nc].name;
@@ -91,7 +91,7 @@ void reb_integrator_register(const struct reb_integrator integrator, const char*
 #define X(iname) if (strcmp(name, #iname)==0) { name_exists = 1; }
     REB_AVAILABLE_INTEGRATORS
 #undef X
-        int N = 0;
+    int N = 0;
     if (reb_integrator_configurations_custom){
         while(reb_integrator_configurations_custom[N].name){ // {0} terminated array
             N++;

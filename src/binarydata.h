@@ -73,10 +73,10 @@ REB_API void reb_binarydata_simulation_to_stream(struct reb_simulation* r, char*
 
 #define REB_AS_STRUCT_MEMBER(prefix, value, name) {value, #name}, 
 #define REB_GENERATE_ENUM_DESCRIPTORS(LIST) \
-    (struct reb_binarydata_enum_descriptor[]){ \
-        LIST(REB_AS_STRUCT_MEMBER, LIST)\
-        {0} /* Null terminated*/ \
-    }
+(struct reb_binarydata_enum_descriptor[]){ \
+    LIST(REB_AS_STRUCT_MEMBER, LIST)\
+    {0} /* Null terminated*/ \
+}
 
 // This structure is written/read to files. Precedes the actual data. 
 // Note: using uint64 for both sizes to avoid padding issues

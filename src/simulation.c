@@ -222,16 +222,16 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
 #define X(iname) if (strcmp(name, #iname)==0) { return set_integrator(r, #iname, reb_integrator_##iname); }
     REB_AVAILABLE_INTEGRATORS
 #undef X
-        if (reb_integrator_configurations_custom){
-            int i=0;
-            while(reb_integrator_configurations_custom[i].name){ // {0} terminated array
-                const struct reb_integrator_configuration integrator = reb_integrator_configurations_custom[i];
-                if (strcmp(integrator.name, name)==0){
-                    return set_integrator(r, integrator.name, integrator.callbacks);
-                }
-                i++;
+    if (reb_integrator_configurations_custom){
+        int i=0;
+        while(reb_integrator_configurations_custom[i].name){ // {0} terminated array
+            const struct reb_integrator_configuration integrator = reb_integrator_configurations_custom[i];
+            if (strcmp(integrator.name, name)==0){
+                return set_integrator(r, integrator.name, integrator.callbacks);
             }
+            i++;
         }
+    }
 
     reb_simulation_error(r, "Integrator not found.");
     return NULL;

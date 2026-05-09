@@ -365,7 +365,7 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
         double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
         double dbeta = -2.*mu*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
         double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
-            + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
+        + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
         double dzeta0 = -beta*dr0 - r0*dbeta;
         double G3beta = 0.5*(3.*Gs[5]-X*Gs[4]);
         double G2beta = 0.5*(2.*Gs[4]-X*Gs[3]);

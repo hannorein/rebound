@@ -274,16 +274,16 @@ static void reb_mercurius_encounter_predict(struct reb_simulation* const r, stru
             const double tmin2 = (-b - sr)/(2.*a); 
             if (tmin1>0. && tmin1<1.){
                 const double rmin1 = (1.-tmin1)*(1.-tmin1)*(1.+2.*tmin1)*ro
-                    + tmin1*tmin1*(3.-2.*tmin1)*rn
-                    + tmin1*(1.-tmin1)*(1.-tmin1)*dt*drodt
-                    - tmin1*tmin1*(1.-tmin1)*dt*drndt;
+                + tmin1*tmin1*(3.-2.*tmin1)*rn
+                + tmin1*(1.-tmin1)*(1.-tmin1)*dt*drodt
+                - tmin1*tmin1*(1.-tmin1)*dt*drndt;
                 rmin = MIN(MAX(rmin1,0.),rmin);
             }
             if (tmin2>0. && tmin2<1.){
                 const double rmin2 = (1.-tmin2)*(1.-tmin2)*(1.+2.*tmin2)*ro
-                    + tmin2*tmin2*(3.-2.*tmin2)*rn
-                    + tmin2*(1.-tmin2)*(1.-tmin2)*dt*drodt
-                    - tmin2*tmin2*(1.-tmin2)*dt*drndt;
+                + tmin2*tmin2*(3.-2.*tmin2)*rn
+                + tmin2*(1.-tmin2)*(1.-tmin2)*dt*drodt
+                - tmin2*tmin2*(1.-tmin2)*dt*drndt;
                 rmin = MIN(MAX(rmin2,0.),rmin);
             }
 

@@ -1505,11 +1505,11 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done)
     double _d_Y = reb_simulation_megno(r) - r->megno_mean_Y;
     r->megno_mean_Y += _d_Y/(double)r->megno_n;
     r->megno_cov_Yt += ((double)r->megno_n-1.)/(double)r->megno_n 
-        *(r->t - r->megno_initial_t - r->megno_mean_t)
-        *(reb_simulation_megno(r)-r->megno_mean_Y);
+    *(r->t - r->megno_initial_t - r->megno_mean_t)
+    *(reb_simulation_megno(r)-r->megno_mean_Y);
     r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
-        *(r->t - r->megno_initial_t - r->megno_mean_t)
-        *(r->t - r->megno_initial_t - r->megno_mean_t);
+    *(r->t - r->megno_initial_t - r->megno_mean_t)
+    *(r->t - r->megno_initial_t - r->megno_mean_t);
 }
 
 void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel){
