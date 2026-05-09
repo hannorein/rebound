@@ -1,12 +1,6 @@
 /**
- * @file    integrator_whfast.c
- * @brief   WHFAST integration scheme.
- * @author  Hanno Rein <hanno@hanno-rein.de>
- * @details This file implements the WHFast integration scheme.  
- * Described in Rein & Tamayo 2015, Rein et al. 2019.
- * See also Wisdom et al. 1996.
+ * integrator_whfast.c: The Wisdom-Holman integrator WHFast
  * 
- * @section LICENSE
  * Copyright (c) 2015 Hanno Rein, Daniel Tamayo
  *
  * This file is part of rebound.
@@ -40,6 +34,30 @@
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
+
+void* reb_integrator_whfast_create();
+void reb_integrator_whfast_free(void* state);
+void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* state);
+void reb_integrator_whfast_step(struct reb_simulation* const r, void* state);
+const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[];
+
+const struct reb_integrator reb_integrator_whfast = {
+    .documentation = "Wisdom Holman integrator \n"
+    "WHFast is an implementation of the symplectic [Wisdom-Holman](https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/abstract) integrator. " 
+    "It is the best choice for systems in which there is a dominant central object and perturbations to the Keplerian orbits are small. "
+    "It supports first and second symplectic correctors as well as the kernel method of [Wisdom et al. 1996](https://ui.adsabs.harvard.edu/abs/1996FIC....10..217W/abstract) with various different kernels. "
+    "The basic implementation of WHFast is described in detail in [Rein & Tamayo 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..376R/abstract). "
+    "The higher order aspects of it are described in [Rein, Tamayo & Brown 2019](https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract). "
+    "WHFast also supports first order variational equations which can be used in chaos estimators ([Rein & Tamayo 2016](https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R/abstract)). "
+    "The user can choose between Jacobi, Democratic Heliocentric, WHDS, and barycentric coordinates. "
+    "Because WHFast is not an adaptive integrator, the user needs to set an appropriaye timestep. "
+    "Typically, this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem. ",
+    .step = reb_integrator_whfast_step,
+    .synchronize = reb_integrator_whfast_synchronize,
+    .create = reb_integrator_whfast_create,
+    .free = reb_integrator_whfast_free,
+    .field_descriptor_list = reb_integrator_whfast_field_descriptor_list,
+};
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
     { "The order of the symplectic corrector in the WHFast integrator \n"
@@ -84,28 +102,12 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { 0 }, // Null terminated list
 };
 
-void* reb_integrator_whfast_create();
-void reb_integrator_whfast_free(void* state);
-void reb_integrator_whfast_synchronize(struct reb_simulation* const r, void* state);
-void reb_integrator_whfast_step(struct reb_simulation* const r, void* state);
-
-const struct reb_integrator reb_integrator_whfast = {
-    .step = reb_integrator_whfast_step,
-    .synchronize = reb_integrator_whfast_synchronize,
-    .create = reb_integrator_whfast_create,
-    .free = reb_integrator_whfast_free,
-    .field_descriptor_list = reb_integrator_whfast_field_descriptor_list,
-};
 
 void* reb_integrator_whfast_create(){
+    // Allocate memory and set default parameters.
     struct reb_integrator_whfast_state* whfast = calloc(sizeof(struct reb_integrator_whfast_state),1);
-    whfast->corrector = 0;
-    whfast->corrector2 = 0;
-    whfast->kernel = 0;
     whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI;
-    whfast->keep_unsynchronized = 0;
     whfast->safe_mode = 1;
-    whfast->recalculate_coordinates_but_not_synchronized_warning = 0;
     return whfast;
 }
 

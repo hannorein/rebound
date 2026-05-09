@@ -2,7 +2,8 @@ import ctypes
 from .binarydata_field_descriptor import BinarydataFieldDescriptor, REB_BINARYDATA_DTYPE
 
 class Integrator(ctypes.Structure):
-    _fields_ = [("step", ctypes.c_void_p),
+    _fields_ = [("documentation", ctypes.c_char_p),
+                ("step", ctypes.c_void_p),
                 ("synchronize", ctypes.c_void_p),
                 ("create", ctypes.c_void_p),
                 ("free", ctypes.c_void_p),

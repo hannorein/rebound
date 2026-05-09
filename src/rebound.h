@@ -153,7 +153,7 @@ struct reb_binarydata_enum_descriptor{
 
 // Binary field descriptors are used to identify data blobs in simulationarchives.
 struct reb_binarydata_field_descriptor {
-    char* documentation;             // Documentation. Optional.
+    char* documentation;             // Documentation of this field. Optional, can be NULL or "" for internal fields.
     enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
     char name[REB_STRING_SIZE_MAX];  // Null terminated, unique, human readable name.
     size_t offset;                   // Offset of the storage location relative to the beginning of reb_simulation
@@ -165,6 +165,7 @@ struct reb_binarydata_field_descriptor {
 // Generic integrator callbacks.
 // This can be used to implement a user provided integrator.
 struct reb_integrator {
+    char* documentation;    // Documentation of the integrator. Optional, can be NULL or "".
     void (*step)(struct reb_simulation* r, void* p);        // Performs one timestep. Timestep should be r->dt for a non-adaptive integrator. Need to update r->t in this routine.
     void (*synchronize)(struct reb_simulation* r, void* p); // Synchronizes particle state. Optional. Set to NULL if not used.
     void* (*create)();                                      // Allocate memory for integrator and set default values. Return pointer to the new integrator state.
