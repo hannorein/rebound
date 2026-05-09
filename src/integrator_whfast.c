@@ -42,16 +42,23 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[];
 
 const struct reb_integrator reb_integrator_whfast = {
-    .documentation = "Wisdom Holman integrator \n"
-    "WHFast is an implementation of the symplectic [Wisdom-Holman](https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/abstract) integrator. " 
+    .documentation =
+    "WHFast is an implementation of the symplectic [Wisdom & Holman (1991)] integrator. " 
     "It is the best choice for systems in which there is a dominant central object and perturbations to the Keplerian orbits are small. "
-    "It supports first and second symplectic correctors as well as the kernel method of [Wisdom et al. 1996](https://ui.adsabs.harvard.edu/abs/1996FIC....10..217W/abstract) with various different kernels. "
-    "The basic implementation of WHFast is described in detail in [Rein & Tamayo 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..376R/abstract). "
-    "The higher order aspects of it are described in [Rein, Tamayo & Brown 2019](https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract). "
-    "WHFast also supports first order variational equations which can be used in chaos estimators ([Rein & Tamayo 2016](https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R/abstract)). "
+    "It supports first and second symplectic correctors as well as the kernel method of [Wisdom et al. (1996)] with various different kernels. "
+    "The basic implementation of WHFast is described in detail in [Rein & Tamayo (2015)]. "
+    "The higher order aspects of it are described in [Rein, Tamayo & Brown (2019)]. "
+    "WHFast also supports first order variational equations which can be used in chaos estimators. See [Rein & Tamayo (2016)]. "
     "The user can choose between Jacobi, Democratic Heliocentric, WHDS, and barycentric coordinates. "
     "Because WHFast is not an adaptive integrator, the user needs to set an appropriaye timestep. "
-    "Typically, this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem. ",
+    "Typically, this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem. "
+    "\n\n"
+    "[Wisdom & Holman (1991)]: https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/\n"
+    "[Wisdom et al. (1996)]: https://ui.adsabs.harvard.edu/abs/1996FIC....10..217W/\n"
+    "[Rein & Tamayo (2015)]: https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..376R/\n"
+    "[Rein, Tamayo & Brown (2019)]: https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/\n" 
+    "[Rein & Tamayo (2016)]: https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R/\n" 
+    ,
     .step = reb_integrator_whfast_step,
     .synchronize = reb_integrator_whfast_synchronize,
     .create = reb_integrator_whfast_create,
@@ -60,37 +67,34 @@ const struct reb_integrator reb_integrator_whfast = {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
-    { "The order of the symplectic corrector in the WHFast integrator \n"
+    { "This flag sets the order of the symplectic corrector in the WHFast integrator. "
         "By default, the symplectic correctors are turned off (=0). For high "
         "accuracy simulation set this value to 11 or 17. For more details read "
         "Rein and Tamayo (2015). ",
         REB_UINT,       "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
-    { "Safe mode flag \n"
-        "If this flag is set to 1 (default) particle positions and velocities are "
+    { "If this flag is set to 1 (default) particle positions and velocities are "
         "always synchronized and particles can be modified between timesteps. "
         "If this flag is set to 0, the speed and accuracy of WHFast improve. "
         "However, one needs to make sure to call synchronize before an output is "
         "required or before particles are modified. Read the iPython tutorial "
         "on advanced WHFast usage to learn more.",
         REB_UINT,        "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
-    { "Coordinate system used for WH splitting \n"
-        "This option chooses the internal coordinate system that WHFast is using for "
+    { "This option chooses the internal coordinate system that WHFast is using for "
         "splitting the Keplerian from the Interaction and Jump parts. "
         "By default, it uses JACOBI (0) coordinates. Other options are "
         "DEMOCRATICHELIOCENTRIC (1) and WHDS (2). See Rein & Tamayo 2019 and "
         "Hernandez & Dehnen (2017) for more information.",
         REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },
-    { "Second correctors (C2 of Wisdom et al 1996) \n"
+    { "This flag chooses the second correctors (C2 of Wisdom et al 1996)."
         " By default, the second symplectic correctors are turned off (=0). "
         " Set to 1 to turn them on. ",
         REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0, 0},
-    { "Kernel option \n"
-        "The default option is DEFAULT (0) for the normal 2nd order WH kernel (i.e. a standard kick step). "
+    { "This flag chooses the kernel. The default is DEFAULT (0) which corresponds "
+        "to the normal 2nd order WH kernel (i.e. a standard kick step). "
         "Other options are MODIFIEDKICK (1), COMPOSITION (2), and LAZY (3). "
         "See Rein, Tamayo & Brown 2019 for details and references. ",
         REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_KERNEL)},
-    { "Keep unsynchronized values \n"
-        "By default this flag is 0. If set to 1 synchronization of the "
+    { "By default the keep_unsynchronized flag is 0. If set to 1 synchronization of the "
         "simulation is done on a copy of the particle data. This allows "
         "the simulation to continue integrating as if the simulation "
         "were never synchronized. This allows for bit-wise reproducability. "

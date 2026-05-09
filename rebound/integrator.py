@@ -1,4 +1,5 @@
 import ctypes
+import textwrap
 from .binarydata_field_descriptor import BinarydataFieldDescriptor, REB_BINARYDATA_DTYPE
 
 class Integrator(ctypes.Structure):
@@ -12,20 +13,85 @@ class Integrator(ctypes.Structure):
                 ("field_descriptor_list", ctypes.POINTER(BinarydataFieldDescriptor)),
                 ]
 
+import re
+from textwrap import TextWrapper
+
+class MarkdownTextWrapper(TextWrapper):
+    """A TextWrapper which handles markdown links."""
+    
+    LINK_REGEX = re.compile(r"(\[.*?\](?::\s*https?://[^\s]+))")
+
+    def _split(self, text):
+        split = re.split(self.LINK_REGEX, text)
+        chunks: List[str] = []
+        for item in split:
+            match = re.match(self.LINK_REGEX, item)
+            if match:
+                chunks.append(item) # do not break links
+            else:
+                chunks.extend(super()._split(item)) # handle normally
+        return chunks
+
+def format_doc(doc, indent=""):
+    doc = doc.decode("utf-8")
+    lines = doc.splitlines()
+    doc = ""
+    wrapper = MarkdownTextWrapper(width=80, initial_indent=indent, subsequent_indent=indent, break_long_words=False)
+    for i, line in enumerate(lines):
+        if i:
+            doc += "\n"
+        doc += wrapper.fill(line)
+    return doc
+
 class IntegratorConfiguration(ctypes.Structure):
     _fields_ = [("name", ctypes.c_char_p),
                 ("callbacks", Integrator),
                 ("state", ctypes.c_void_p),
                 ]
+    # Automatically generate __doc__ from data in C structs
+    def __getattribute__(self, name):
+        if name == "__doc__":
+            callbacks = self.callbacks
+            if callbacks:
+                doc = "REBOUND Integrator ("+self.name.decode("utf-8")+")\n\n"
+                if callbacks.documentation:
+                    doc += format_doc(callbacks.documentation) + "\n"
+                fdlist = callbacks.field_descriptor_list
+                i = 0
+                attributes = 0
+                while fdlist:
+                    fd  = fdlist[i]
+                    if fd.name == b'':
+                        break
+                    if fd.documentation == b'':
+                        i += 1
+                        continue
+                    if attributes == 0:
+                        doc += "\nAttributes\n"
+                        doc += "----------\n"
+                    else:
+                        doc += "\n"
+                    attributes +=1
+                    doc += fd.name.decode("utf-8") + " : " + "%d" % fd.dtype + "\n"
+                    doc += format_doc(fd.documentation,indent="    ")
+                    i += 1
+                return doc
+
+
+        attr = super().__getattribute__(name)
+
+        return attr
     def __str__(self):
-        if self.name:
-            return self.name.decode("utf-8")
+        print("Str")
+        _name = self.name
+        if _name:
+            return _name.decode("utf-8")
         else:
             return "<no name provided>"
         return None
 
-    def __eq__(self, other):
-        return self.__str__() == other.__str__()
+    def __eq__(self, value):
+        return self.__str__() == value.__str__()
 
     def _field_descriptor_for_name(self, name):
         i=0
