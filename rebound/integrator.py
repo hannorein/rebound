@@ -26,51 +26,44 @@ class IntegratorConfiguration(ctypes.Structure):
     def __eq__(self, other):
         return self.__str__() == other.__str__()
 
-    def __getattr__(self, name):
+    def _field_descriptor_for_name(self, name):
         i=0
-        while True:
-            # TODO make sure field_descriptor_list is not NULL
+        while self.callbacks.field_descriptor_list:
             field_descriptor = self.callbacks.field_descriptor_list[i]
             if field_descriptor.name == b'':
                 raise AttributeError("Field '%s' not found in IntegratorState." % name)
             if field_descriptor.name.decode("utf-8") == name:
                 if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
                     raise NotImplemented("Datatype of field '%s' in IntegratorState is currently not supported." % name)
-                return REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
+                return field_descriptor
             i += 1
 
+    def __getattr__(self, name):
+        field_descriptor = self._field_descriptor_for_name(name)
+        return REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
+
     def __setattr__(self, name, value):
-        i=0
-        while True:
-            # TODO make sure field_descriptor_list is not NULL
-            field_descriptor = self.callbacks.field_descriptor_list[i]
-            if field_descriptor.name == b'':
-                raise AttributeError("Field '%s' not found in IntegratorState." % name)
-            if field_descriptor.name.decode("utf-8") == name:
-                if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
-                    raise NotImplemented("Datatype of field '%s' in IntegratorState is currently not supported." % name)
-                pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset)
-                if isinstance(value, str) and field_descriptor.enum_descriptor_list:
-                    j=0
+        field_descriptor = self._field_descriptor_for_name(name)
+        pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset)
+        if isinstance(value, str) and field_descriptor.enum_descriptor_list:
+            j=0
+            while True:
+                enum_descriptor = field_descriptor.enum_descriptor_list[j]
+                if enum_descriptor.name == b"": # reached end of list
+                    available_options = []
+                    k=0
                     while True:
-                        enum_descriptor = field_descriptor.enum_descriptor_list[j]
+                        enum_descriptor = field_descriptor.enum_descriptor_list[k]
+                        k += 1
                         if enum_descriptor.name == b"": # reached end of list
-                            available_options = []
-                            k=0
-                            while True:
-                                enum_descriptor = field_descriptor.enum_descriptor_list[k]
-                                k += 1
-                                if enum_descriptor.name == b"": # reached end of list
-                                    raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join(available_options)))
-                                else:
-                                    available_options.append("'"+enum_descriptor.name.decode("utf-8").lower()+"'")
-                        if enum_descriptor.name.decode("utf-8") == value.upper():
-                            pointer_to_field.value = enum_descriptor.value
-                            return
-                        j += 1
-                pointer_to_field.value = value
-                return
-            i += 1
+                            raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join(available_options)))
+                        else:
+                            available_options.append("'"+enum_descriptor.name.decode("utf-8").lower()+"'")
+                if enum_descriptor.name.decode("utf-8") == value.upper():
+                    pointer_to_field.value = enum_descriptor.value
+                    return
+                j += 1
+        pointer_to_field.value = value
     
     def __repr__(self):
         if self.name:
