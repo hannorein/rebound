@@ -6,14 +6,16 @@ from .vectors import Vec3dBasic
 REB_BINARYDATA_DTYPE = {1: ctypes.c_double, 2: ctypes.c_int, 3: ctypes.c_uint, 4: ctypes.c_uint32, 5: ctypes.c_int64,
                         6: ctypes.c_uint64, 7: ctypes.c_size_t, 8: Vec3dBasic, 10: ctypes.c_void_p, 11: ctypes.c_void_p}
 
-class EnumDescriptorListIterator:
-    def __init__(self, enum_descriptor_list):
-        self._enum_descriptor = enum_descriptor_list
+class DescriptorListIterator:
+    """ Iterator for both BindarydataFieldDescriptor and EnumDescriptor lists """
+    def __init__(self, dlist):
+        self._dlist = dlist
         self._index = 0
     def __next__(self):
-        if not self._enum_descriptor_list:
+        if not ctypes.cast(self._dlist, ctypes.c_void_p).value:
+            # Don't iterate NULL pointer
             raise StopIteration
-        ed = self._enum_descritor_list[self._index]
+        ed = self._dlist[self._index]
         if ed.name == b"":
             raise StopIteration
         self._index += 1 
@@ -22,21 +24,19 @@ class EnumDescriptorListIterator:
         return self
 
 class EnumDescriptor(ctypes.Structure):
+    """ Describes an Enum value in C """
     _fields_ = [("value", ctypes.c_int), 
                 ("name", ctypes.c_char*string_size_max),
                 ]
 BaseEnumDescriptorList = ctypes.POINTER(EnumDescriptor)
 class EnumDescriptorList(BaseEnumDescriptorList):
+    _type_ = EnumDescriptor
     def __iter__(self):
-        return EnumDescriptorListIterator(self)
+        return DescriptorListIterator(self)
 
 
 class BinarydataFieldDescriptor(ctypes.Structure):
-    """ 
-    See C structure reb_binarydata_field_descriptor.
-    Describes the binarydata field in simulationarchives.
-    """
-
+    """ Describes the binarydata field in simulationarchives  """
     def __repr__(self):
         return '<{0}.{1} object at {2}, dtype={3}, name=\'{4}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.dtype, self.name.decode("ascii"))
     _fields_ = [("documentation", ctypes.c_char_p),
@@ -48,4 +48,16 @@ class BinarydataFieldDescriptor(ctypes.Structure):
                 ("enum_descriptor_list", EnumDescriptorList),
                 ]
 
+BaseBinarydataFieldDescriptorList = ctypes.POINTER(BinarydataFieldDescriptor)
+class BinarydataFieldDescriptorList(BaseBinarydataFieldDescriptorList):
+    _type_ = BinarydataFieldDescriptor
+    def __iter__(self):
+        return DescriptorListIterator(self)
 
+    def field_descriptor_for_name(self, name):
+        for field_descriptor in self: 
+            if field_descriptor.name.decode("utf-8") == name:
+                if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
+                    raise NotImplemented("Datatype of field '%s' in IntegratorState is currently not supported." % name)
+                return field_descriptor
+        raise AttributeError("Field '%s' not found in BinarydataFieldDescriptorList." % name)

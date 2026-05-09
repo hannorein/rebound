@@ -1,6 +1,6 @@
 import ctypes
 import textwrap
-from .binarydata_field_descriptor import BinarydataFieldDescriptor, REB_BINARYDATA_DTYPE
+from .binarydata_field_descriptor import BinarydataFieldDescriptorList, REB_BINARYDATA_DTYPE
 
 class Integrator(ctypes.Structure):
     _fields_ = [("documentation", ctypes.c_char_p),
@@ -10,7 +10,7 @@ class Integrator(ctypes.Structure):
                 ("free", ctypes.c_void_p),
                 ("did_add_particle", ctypes.c_void_p),
                 ("will_remove_particle", ctypes.c_void_p),
-                ("field_descriptor_list", ctypes.POINTER(BinarydataFieldDescriptor)),
+                ("field_descriptor_list", BinarydataFieldDescriptorList),
                 ]
 
 import re
@@ -58,21 +58,18 @@ class IntegratorConfiguration(ctypes.Structure):
             if callbacks.documentation:
                 doc += format_doc(callbacks.documentation) + "\n"
             fdlist = callbacks.field_descriptor_list
-            i = 0
             attributes = 0
-            while fdlist:
-                fd  = fdlist[i]
+            for fd in fdlist:
                 if fd.name == b'':
                     break
                 if fd.documentation == b'':
-                    i += 1
                     continue
                 if attributes == 0:
                     doc += "\nAttributes\n"
                     doc += "----------\n"
                 else:
                     doc += "\n"
-                attributes +=1
+                attributes += 1
                 doc += fd.name.decode("utf-8") + " : " 
                 if fd.dtype not in REB_BINARYDATA_DTYPE:
                     doc += "(unknown datatype)\n"
@@ -81,13 +78,9 @@ class IntegratorConfiguration(ctypes.Structure):
                 doc += format_doc(fd.documentation,indent="    ")
                 edl = fd.enum_descriptor_list
                 if edl:
-                    j = 0
                     doc += "\n    Supported values:"
-                    while edl[j].name != b"":
-                        ed = edl[j]
+                    for ed in edl:
                         doc += "\n        " + str(ed.value) + " = '"+ed.name.decode("utf-8") + "'"
-                        j += 1
-                i += 1
             return doc
         return "No documentation available."
 
@@ -102,43 +95,19 @@ class IntegratorConfiguration(ctypes.Structure):
     def __eq__(self, value):
         return self.__str__() == value.__str__()
 
-    def _field_descriptor_for_name(self, name):
-        i=0
-        while self.callbacks.field_descriptor_list:
-            field_descriptor = self.callbacks.field_descriptor_list[i]
-            if field_descriptor.name == b'':
-                raise AttributeError("Field '%s' not found in IntegratorState." % name)
-            if field_descriptor.name.decode("utf-8") == name:
-                if field_descriptor.dtype not in REB_BINARYDATA_DTYPE:
-                    raise NotImplemented("Datatype of field '%s' in IntegratorState is currently not supported." % name)
-                return field_descriptor
-            i += 1
-
     def __getattr__(self, name):
-        field_descriptor = self._field_descriptor_for_name(name)
+        field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         return REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
 
     def __setattr__(self, name, value):
-        field_descriptor = self._field_descriptor_for_name(name)
+        field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset)
         if isinstance(value, str) and field_descriptor.enum_descriptor_list:
-            j=0
-            while True:
-                enum_descriptor = field_descriptor.enum_descriptor_list[j]
-                if enum_descriptor.name == b"": # reached end of list
-                    available_options = []
-                    k=0
-                    while True:
-                        enum_descriptor = field_descriptor.enum_descriptor_list[k]
-                        k += 1
-                        if enum_descriptor.name == b"": # reached end of list
-                            raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join(available_options)))
-                        else:
-                            available_options.append("'"+enum_descriptor.name.decode("utf-8").lower()+"'")
-                if enum_descriptor.name.decode("utf-8") == value.upper():
+            for enum_descriptor in field_descriptor.enum_descriptor_list:
+                if enum_descriptor.name.decode("utf-8").upper() == value.upper():
                     pointer_to_field.value = enum_descriptor.value
                     return
-                j += 1
+            raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join([ed.name.decode("utf-8") for ed in field_descriptor.enum_descriptor_list])))
         pointer_to_field.value = value
     
     def __repr__(self):
