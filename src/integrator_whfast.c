@@ -42,14 +42,45 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descriptor_list[] = {
-    { "", REB_UINT,        "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
-    { "", REB_UINT,        "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
-    { "", REB_UINT,        "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
+    { "The order of the symplectic corrector in the WHFast integrator \n"
+        "By default, the symplectic correctors are turned off (=0). For high "
+        "accuracy simulation set this value to 11 or 17. For more details read "
+        "Rein and Tamayo (2015). ",
+        REB_UINT,       "corrector",          offsetof(struct reb_integrator_whfast_state, corrector), 0, 0, 0},
+    { "Safe mode flag \n"
+        "If this flag is set to 1 (default) particle positions and velocities are "
+        "always synchronized and particles can be modified between timesteps. "
+        "If this flag is set to 0, the speed and accuracy of WHFast improve. "
+        "However, one needs to make sure to call synchronize before an output is "
+        "required or before particles are modified. Read the iPython tutorial "
+        "on advanced WHFast usage to learn more.",
+        REB_UINT,        "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
+    { "Coordinate system used for WH splitting \n"
+        "This option chooses the internal coordinate system that WHFast is using for "
+        "splitting the Keplerian from the Interaction and Jump parts. "
+        "By default, it uses JACOBI (0) coordinates. Other options are "
+        "DEMOCRATICHELIOCENTRIC (1) and WHDS (2). See Rein & Tamayo 2019 and "
+        "Hernandez & Dehnen (2017) for more information.",
+        REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },
+    { "Second correctors (C2 of Wisdom et al 1996) \n"
+        " By default, the second symplectic correctors are turned off (=0). "
+        " Set to 1 to turn them on. ",
+        REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0, 0},
+    { "Kernel option \n"
+        "The default option is DEFAULT (0) for the normal 2nd order WH kernel (i.e. a standard kick step). "
+        "Other options are MODIFIEDKICK (1), COMPOSITION (2), and LAZY (3). "
+        "See Rein, Tamayo & Brown 2019 for details and references. ",
+        REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_KERNEL)},
+    { "Keep unsynchronized values \n"
+        "By default this flag is 0. If set to 1 synchronization of the "
+        "simulation is done on a copy of the particle data. This allows "
+        "the simulation to continue integrating as if the simulation "
+        "were never synchronized. This allows for bit-wise reproducability. "
+        "in long term simulations.",
+        REB_UINT,        "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
+    // Internal variables
     { "", REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_whfast_state, p_jh), offsetof(struct reb_integrator_whfast_state, N_allocated), sizeof(struct reb_particle), 0},
     { "", REB_POINTER,     "p_jh_var",           offsetof(struct reb_integrator_whfast_state, p_jh_var), offsetof(struct reb_integrator_whfast_state, N_allocated_var), sizeof(struct reb_particle), 0},
-    { "", REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },
-    { "", REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0, 0},
-    { "", REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_KERNEL)},
     { 0 }, // Null terminated list
 };
 
