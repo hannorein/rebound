@@ -650,22 +650,40 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
             e = va_arg(args, double);
         if (0==strcmp(token,"inc"))
             inc = va_arg(args, double);
+        if (0==strcmp(token,"uniform(inc)"))
+            inc = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"Omega"))
             Omega = va_arg(args, double);
+        if (0==strcmp(token,"uniform(Omega)"))
+            Omega = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"omega"))
             omega = va_arg(args, double);
+        if (0==strcmp(token,"uniform(omega)"))
+            omega = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"pomega"))
             pomega = va_arg(args, double);
+        if (0==strcmp(token,"uniform(pomega)"))
+            pomega = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"f"))
             f = va_arg(args, double);
+        if (0==strcmp(token,"uniform(f)"))
+            f = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"M"))
             M = va_arg(args, double);
+        if (0==strcmp(token,"uniform(M)"))
+            M = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"E"))
             E = va_arg(args, double);
+        if (0==strcmp(token,"uniform(E)"))
+            E = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"l"))
             l = va_arg(args, double);
+        if (0==strcmp(token,"uniform(l)"))
+            l = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"theta"))
             theta = va_arg(args, double);
+        if (0==strcmp(token,"uniform(theta)"))
+            theta = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"T"))
             T = va_arg(args, double);
         if (0==strcmp(token,"h"))
@@ -681,13 +699,11 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
             primary_given = 1;
         }
 #ifdef MPI
-        if (0==strcmp(token,"id")){
+        if (0==strcmp(token,"id"))
             name = (void*)(size_t)va_arg(args, int);
-        }
 #else // MPI
-        if (0==strcmp(token,"name")){
+        if (0==strcmp(token,"name"))
             name = va_arg(args, char*);
-        }
 #endif// MPI
     }
     free(fmt_c);

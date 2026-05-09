@@ -7,6 +7,7 @@ This changelog only includes the most important changes in recent updates. For a
 ### Version 5.0.0
 * A lot of changes!
 * Custom integrators
+* uniform() in fmt
 * integrators not woven into other parts
 * Particle are kept sorted
 * Names
