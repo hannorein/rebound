@@ -64,14 +64,14 @@ struct reb_particle_avx512 {
 
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[] = {
-    { REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_whfast512_state, keep_unsynchronized), 0, 0, 0},
-    { REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
-    { REB_POINTER_ALIGNED, "pjh",         offsetof(struct reb_integrator_whfast512_state, p_jh), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct reb_particle_avx512), 0},
-    { REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
-    { REB_PARTICLE,    "pjh0_0",          offsetof(struct reb_integrator_whfast512_state, p_jh0[0]), 0, 0, 0},
-    { REB_PARTICLE,    "pjh0_1",          offsetof(struct reb_integrator_whfast512_state, p_jh0[1]), 0, 0, 0},
-    { REB_PARTICLE,    "pjh0_2",          offsetof(struct reb_integrator_whfast512_state, p_jh0[2]), 0, 0, 0},
-    { REB_PARTICLE,    "pjh0_3",          offsetof(struct reb_integrator_whfast512_state, p_jh0[3]), 0, 0, 0},
+    { "", REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_whfast512_state, keep_unsynchronized), 0, 0, 0},
+    { "", REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
+    { "", REB_POINTER_ALIGNED, "pjh",         offsetof(struct reb_integrator_whfast512_state, p_jh), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct reb_particle_avx512), 0},
+    { "", REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_0",          offsetof(struct reb_integrator_whfast512_state, p_jh0[0]), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_1",          offsetof(struct reb_integrator_whfast512_state, p_jh0[1]), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_2",          offsetof(struct reb_integrator_whfast512_state, p_jh0[2]), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_3",          offsetof(struct reb_integrator_whfast512_state, p_jh0[3]), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 

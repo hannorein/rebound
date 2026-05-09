@@ -153,6 +153,7 @@ struct reb_binarydata_enum_descriptor{
 
 // Binary field descriptors are used to identify data blobs in simulationarchives.
 struct reb_binarydata_field_descriptor {
+    char* documentation;             // Documentation. Optional.
     enum REB_BINARYDATA_DTYPE dtype; // Datatype (note: not the same as type)
     char name[REB_STRING_SIZE_MAX];  // Null terminated, unique, human readable name.
     size_t offset;                   // Offset of the storage location relative to the beginning of reb_simulation

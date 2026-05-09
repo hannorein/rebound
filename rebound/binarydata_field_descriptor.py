@@ -19,7 +19,8 @@ class BinarydataFieldDescriptor(ctypes.Structure):
 
     def __repr__(self):
         return '<{0}.{1} object at {2}, dtype={3}, name=\'{4}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.dtype, self.name.decode("ascii"))
-    _fields_ = [("dtype", ctypes.c_int),
+    _fields_ = [("documentation", ctypes.c_char_p),
+                ("dtype", ctypes.c_int),
                 ("name", ctypes.c_char*string_size_max),
                 ("offset", ctypes.c_size_t),
                 ("offset_N", ctypes.c_size_t),

@@ -79,13 +79,13 @@ static const int maxIter = 2; // maximal number of iterations for which checks a
 static const int maxChecks = 1; // maximal number of checks for each iteration
 
 const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_list[] = {
-    { REB_DOUBLE,      "eps_abs",                offsetof(struct reb_integrator_bs_state, eps_abs), 0, 0, 0},
-    { REB_DOUBLE,      "eps_rel",                offsetof(struct reb_integrator_bs_state, eps_rel), 0, 0, 0},
-    { REB_DOUBLE,      "min_dt",                 offsetof(struct reb_integrator_bs_state, min_dt), 0, 0, 0},
-    { REB_DOUBLE,      "max_dt",                 offsetof(struct reb_integrator_bs_state, max_dt), 0, 0, 0},
-    { REB_INT,         "first_or_last_step",     offsetof(struct reb_integrator_bs_state, first_or_last_step), 0, 0, 0},
-    { REB_INT,         "previous_rejected",      offsetof(struct reb_integrator_bs_state, previous_rejected), 0, 0, 0},
-    { REB_INT,         "target_iter",            offsetof(struct reb_integrator_bs_state, target_iter), 0, 0, 0},
+    { "", REB_DOUBLE,      "eps_abs",                offsetof(struct reb_integrator_bs_state, eps_abs), 0, 0, 0},
+    { "", REB_DOUBLE,      "eps_rel",                offsetof(struct reb_integrator_bs_state, eps_rel), 0, 0, 0},
+    { "", REB_DOUBLE,      "min_dt",                 offsetof(struct reb_integrator_bs_state, min_dt), 0, 0, 0},
+    { "", REB_DOUBLE,      "max_dt",                 offsetof(struct reb_integrator_bs_state, max_dt), 0, 0, 0},
+    { "", REB_INT,         "first_or_last_step",     offsetof(struct reb_integrator_bs_state, first_or_last_step), 0, 0, 0},
+    { "", REB_INT,         "previous_rejected",      offsetof(struct reb_integrator_bs_state, previous_rejected), 0, 0, 0},
+    { "", REB_INT,         "target_iter",            offsetof(struct reb_integrator_bs_state, target_iter), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
