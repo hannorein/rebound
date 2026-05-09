@@ -6,10 +6,30 @@ from .vectors import Vec3dBasic
 REB_BINARYDATA_DTYPE = {1: ctypes.c_double, 2: ctypes.c_int, 3: ctypes.c_uint, 4: ctypes.c_uint32, 5: ctypes.c_int64,
                         6: ctypes.c_uint64, 7: ctypes.c_size_t, 8: Vec3dBasic, 10: ctypes.c_void_p, 11: ctypes.c_void_p}
 
+class EnumDescriptorListIterator:
+    def __init__(self, enum_descriptor_list):
+        self._enum_descriptor = enum_descriptor_list
+        self._index = 0
+    def __next__(self):
+        if not self._enum_descriptor_list:
+            raise StopIteration
+        ed = self._enum_descritor_list[self._index]
+        if ed.name == b"":
+            raise StopIteration
+        self._index += 1 
+        return ed
+    def __iter__(self):
+        return self
+
 class EnumDescriptor(ctypes.Structure):
     _fields_ = [("value", ctypes.c_int), 
                 ("name", ctypes.c_char*string_size_max),
                 ]
+BaseEnumDescriptorList = ctypes.POINTER(EnumDescriptor)
+class EnumDescriptorList(BaseEnumDescriptorList):
+    def __iter__(self):
+        return EnumDescriptorListIterator(self)
+
 
 class BinarydataFieldDescriptor(ctypes.Structure):
     """ 
@@ -25,7 +45,7 @@ class BinarydataFieldDescriptor(ctypes.Structure):
                 ("offset", ctypes.c_size_t),
                 ("offset_N", ctypes.c_size_t),
                 ("element_size", ctypes.c_size_t),
-                ("enum_descriptor_list", ctypes.POINTER(EnumDescriptor)),
+                ("enum_descriptor_list", EnumDescriptorList),
                 ]
 
 

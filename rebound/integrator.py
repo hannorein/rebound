@@ -17,7 +17,7 @@ import re
 from textwrap import TextWrapper
 
 class MarkdownTextWrapper(TextWrapper):
-    """A TextWrapper which handles markdown links."""
+    """A TextWrapper which handles  markdowni reference links."""
     
     LINK_REGEX = re.compile(r"(\[.*?\](?::\s*https?://[^\s]+))")
 
@@ -44,45 +44,54 @@ def format_doc(doc, indent=""):
     return doc
 
 class IntegratorConfiguration(ctypes.Structure):
+    """ Generic Integrator Configuration """
     _fields_ = [("name", ctypes.c_char_p),
                 ("callbacks", Integrator),
                 ("state", ctypes.c_void_p),
                 ]
     # Automatically generate __doc__ from data in C structs
-    def __getattribute__(self, name):
-        if name == "__doc__":
-            callbacks = self.callbacks
-            if callbacks:
-                doc = "REBOUND Integrator ("+self.name.decode("utf-8")+")\n\n"
-                if callbacks.documentation:
-                    doc += format_doc(callbacks.documentation) + "\n"
-                fdlist = callbacks.field_descriptor_list
-                i = 0
-                attributes = 0
-                while fdlist:
-                    fd  = fdlist[i]
-                    if fd.name == b'':
-                        break
-                    if fd.documentation == b'':
-                        i += 1
-                        continue
-                    if attributes == 0:
-                        doc += "\nAttributes\n"
-                        doc += "----------\n"
-                    else:
-                        doc += "\n"
-                    attributes +=1
-                    doc += fd.name.decode("utf-8") + " : " + "%d" % fd.dtype + "\n"
-                    doc += format_doc(fd.documentation,indent="    ")
+    @property
+    def __doc__(self):
+        callbacks = self.callbacks
+        if callbacks:
+            doc = "REBOUND Integrator ("+self.name.decode("utf-8")+")\n\n"
+            if callbacks.documentation:
+                doc += format_doc(callbacks.documentation) + "\n"
+            fdlist = callbacks.field_descriptor_list
+            i = 0
+            attributes = 0
+            while fdlist:
+                fd  = fdlist[i]
+                if fd.name == b'':
+                    break
+                if fd.documentation == b'':
                     i += 1
-                return doc
+                    continue
+                if attributes == 0:
+                    doc += "\nAttributes\n"
+                    doc += "----------\n"
+                else:
+                    doc += "\n"
+                attributes +=1
+                doc += fd.name.decode("utf-8") + " : " 
+                if fd.dtype not in REB_BINARYDATA_DTYPE:
+                    doc += "(unknown datatype)\n"
+                else:
+                    doc += str(REB_BINARYDATA_DTYPE[fd.dtype].__name__) + "\n"
+                doc += format_doc(fd.documentation,indent="    ")
+                edl = fd.enum_descriptor_list
+                if edl:
+                    j = 0
+                    doc += "\n    Supported values:"
+                    while edl[j].name != b"":
+                        ed = edl[j]
+                        doc += "\n        " + str(ed.value) + " = '"+ed.name.decode("utf-8") + "'"
+                        j += 1
+                i += 1
+            return doc
+        return "No documentation available."
 
-
-        attr = super().__getattribute__(name)
-
-        return attr
     def __str__(self):
-        print("Str")
         _name = self.name
         if _name:
             return _name.decode("utf-8")
@@ -133,6 +142,7 @@ class IntegratorConfiguration(ctypes.Structure):
         pointer_to_field.value = value
     
     def __repr__(self):
+        # TODO: implement proper output
         if self.name:
             return '<{0}.{1} object at {2}, name=\'{3}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.name.decode("ascii"))
         else:

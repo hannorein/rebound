@@ -81,23 +81,21 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
         REB_UINT,        "safe_mode",          offsetof(struct reb_integrator_whfast_state, safe_mode), 0, 0, 0},
     { "This option chooses the internal coordinate system that WHFast is using for "
         "splitting the Keplerian from the Interaction and Jump parts. "
-        "By default, it uses JACOBI (0) coordinates. Other options are "
-        "DEMOCRATICHELIOCENTRIC (1) and WHDS (2). See Rein & Tamayo 2019 and "
+        "By default, it uses JACOBI coordinates. See Rein & Tamayo 2019 and "
         "Hernandez & Dehnen (2017) for more information.",
         REB_INT,         "coordinates",        offsetof(struct reb_integrator_whfast_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_COORDINATES) },
     { "This flag chooses the second correctors (C2 of Wisdom et al 1996)."
         " By default, the second symplectic correctors are turned off (=0). "
         " Set to 1 to turn them on. ",
         REB_UINT,        "corrector2",         offsetof(struct reb_integrator_whfast_state, corrector2), 0, 0, 0},
-    { "This flag chooses the kernel. The default is DEFAULT (0) which corresponds "
+    { "This flag chooses the kernel. The default is DEFAULT which corresponds "
         "to the normal 2nd order WH kernel (i.e. a standard kick step). "
-        "Other options are MODIFIEDKICK (1), COMPOSITION (2), and LAZY (3). "
         "See Rein, Tamayo & Brown 2019 for details and references. ",
         REB_INT,         "kernel",             offsetof(struct reb_integrator_whfast_state, kernel), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_WHFAST_KERNEL)},
     { "By default the keep_unsynchronized flag is 0. If set to 1 synchronization of the "
         "simulation is done on a copy of the particle data. This allows "
         "the simulation to continue integrating as if the simulation "
-        "were never synchronized. This allows for bit-wise reproducability. "
+        "were never synchronized. This allows for bit-wise reproducability "
         "in long term simulations.",
         REB_UINT,        "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
     // Internal variables

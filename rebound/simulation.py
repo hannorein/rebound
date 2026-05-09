@@ -555,48 +555,43 @@ class Simulation(Structure):
         self._free_particle_ap = self._fpa
 
 # Setter/getter of parameters and constants
-    @property
-    def integrator(self):
-        """
-        Get or set the integrator module.
-
-        Check the online documentation for a full description of each of the integrators. 
-        """
-        return self._integrator
-    @integrator.setter
-    def integrator(self, value):
-        if isinstance(value, str):
-            value = value.lower()
-            # Shortcuts
-            if value=="wh":
-                self.integrator = "whfast"
-                self.integrator.corrector = 0
-                self.integrator.kernel = "default"
-            elif value=="whc":
-                self.integrator = "whfast"
-                self.integrator.corrector = 17
-                self.integrator.kernel = "default"
-            elif value=="whckl":
-                self.integrator = "whfast"
-                self.integrator.corrector = 17
-                self.integrator.kernel = "lazy"
-            elif value=="whckm":
-                self.integrator = "whfast"
-                self.integrator.corrector = 17
-                self.integrator.kernel = "modifiedkick"
-            elif value=="whckc":
-                self.integrator = "whfast"
-                self.integrator.corrector = 17
-                self.integrator.kernel = "composition"
-            elif value[0:4]=="saba" and len(value)>4:
-                self.integrator = "saba"
-                self.integrator.type = value[4:].replace(",","_")
+    def __setattr__(self, name, value):
+        if name == "integrator":
+            if isinstance(value, str):
+                value = value.lower()
+                # Shortcuts
+                if value=="wh":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 0
+                    self.integrator.kernel = "default"
+                elif value=="whc":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "default"
+                elif value=="whckl":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "lazy"
+                elif value=="whckm":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "modifiedkick"
+                elif value=="whckc":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "composition"
+                elif value[0:4]=="saba" and len(value)>4:
+                    self.integrator = "saba"
+                    self.integrator.type = value[4:].replace(",","_")
+                else:
+                    clibrebound.reb_simulation_set_integrator.argtypes = [POINTER(Simulation), c_char_p]
+                    clibrebound.reb_simulation_set_integrator(byref(self), c_char_p(value.encode("ascii")))
+                    self.process_messages()
+                return
             else:
-                clibrebound.reb_simulation_set_integrator.argtypes = [POINTER(Simulation), c_char_p]
-                clibrebound.reb_simulation_set_integrator(byref(self), c_char_p(value.encode("ascii")))
-                self.process_messages()
-        else:
-            raise ValueError("Expected string when setting integrator.")
+                raise ValueError("Expected string when setting integrator.")
+        # Default:
+        super().__setattr__(name, value)
     
     @property
     def boundary(self):
@@ -1454,7 +1449,7 @@ Simulation._fields_ = [
                 ("simulationarchive_next_step", c_uint64),
                 ("_simulationarchive_filename", c_char_p),
                 ("_collision", c_int),
-                ("_integrator", IntegratorConfiguration),
+                ("integrator", IntegratorConfiguration),
                 ("_boundary", c_int),
                 ("_gravity", c_int),
                 ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
