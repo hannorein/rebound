@@ -96,8 +96,16 @@ class IntegratorConfiguration(ctypes.Structure):
         return self.__str__() == value.__str__()
 
     def __getattr__(self, name):
+        # TODO enum
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
-        return REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
+        value = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
+        if field_descriptor.enum_descriptor_list:
+            for enum_descriptor in field_descriptor.enum_descriptor_list:
+                print(enum_descriptor.value, value)
+                if enum_descriptor.value == value:
+                    return enum_descriptor.name.decode("utf-8")
+        return value
+
 
     def __setattr__(self, name, value):
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
@@ -112,8 +120,16 @@ class IntegratorConfiguration(ctypes.Structure):
     
     def __repr__(self):
         # TODO: implement proper output
-        if self.name:
-            return '<{0}.{1} object at {2}, name=\'{3}\'>'.format(self.__module__, type(self).__name__, hex(id(self)), self.name.decode("ascii"))
-        else:
-            return '<{0}.{1} object at {2}, name=None>'.format(self.__module__, type(self).__name__, hex(id(self)))
+        fields = {"name": self.name.decode("utf-8")}
+        for fd in self.callbacks.field_descriptor_list:
+            value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
+            for enum_descriptor in fd.enum_descriptor_list:
+                if enum_descriptor.value == value:
+                    value = enum_descriptor.name.decode("utf-8")
+                    break
+            if value and REB_BINARYDATA_DTYPE[fd.dtype] == ctypes.c_void_p:
+                value = hex(value) # pointers as hex
+            fields[fd.name.decode("utf-8")] = value
+        values = ", ".join([name+"="+str(value) for name,value in fields.items()])
+        return '<{0}.{1} object at {2}, {3}>'.format(self.__module__, type(self).__name__, hex(id(self)), values)
 
