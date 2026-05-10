@@ -1,11 +1,6 @@
 /**
- * @file    integrator_mercurius.c
- * @brief   MERCURIUS, a modified version of John Chambers' MERCURY algorithm
- *          using the IAS15 integrator and WHFast. It works with planet-planry
- *          collisions, test particles, and additional forces.
- * @author  Hanno Rein, Dan Tamayo
+ * integrator_mercurius.c:  The hybrid symplectic MERCURIUS integrator.
  * 
- * @section LICENSE
  * Copyright (c) 2019 Hanno Rein, Dan Tamayo
  *
  * This file is part of rebound.
@@ -45,7 +40,27 @@ void reb_integrator_mercurius_free(void* state);
 void reb_integrator_mercurius_synchronize(struct reb_simulation* r, void* state);
 void reb_integrator_mercurius_did_add_particle(struct reb_simulation* r);
 void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, size_t index);
+const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_descriptor_list[];
 
+
+const struct reb_integrator reb_integrator_mercurius = {
+    .documentation = 
+    "MERCURIUS is a hybrid symplectic integrator very similar to MERCURY "
+    "by [Chambers (1999)]. It uses WHFast for long term integrations but "
+    "switches over smoothly to IAS15 for close encounters. The MERCURIUS "
+    "implementation is described in [Rein et al (2019)]."
+    "\n\n"
+    "[Rein et al (2019)]: https://ui.adsabs.harvard.edu/abs/2019MNRAS.485.5490R/abstract\n"
+    "[Chambers (1999)]: https://ui.adsabs.harvard.edu/abs/1999MNRAS.304..793C/abstract\n" 
+    ,
+    .step = reb_integrator_mercurius_step,
+    .create = reb_integrator_mercurius_create,
+    .free = reb_integrator_mercurius_free,
+    .synchronize = reb_integrator_mercurius_synchronize,
+    .did_add_particle = reb_integrator_mercurius_did_add_particle,
+    .will_remove_particle = reb_integrator_mercurius_will_remove_particle,
+    .field_descriptor_list = reb_integrator_mercurius_field_descriptor_list,
+};
 
 const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_descriptor_list[] = {
     { "The critical switchover radii of particles are calculated automatically "
@@ -72,15 +87,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_desc
     { 0 }, // Null terminated list
 };
 
-const struct reb_integrator reb_integrator_mercurius = {
-    .step = reb_integrator_mercurius_step,
-    .create = reb_integrator_mercurius_create,
-    .free = reb_integrator_mercurius_free,
-    .synchronize = reb_integrator_mercurius_synchronize,
-    .did_add_particle = reb_integrator_mercurius_did_add_particle,
-    .will_remove_particle = reb_integrator_mercurius_will_remove_particle,
-    .field_descriptor_list = reb_integrator_mercurius_field_descriptor_list,
-};
 
 void* reb_integrator_mercurius_create(){
     struct reb_integrator_mercurius_state* mercurius = calloc(sizeof(struct reb_integrator_mercurius_state),1);

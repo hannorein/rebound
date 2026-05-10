@@ -53,11 +53,11 @@ const struct reb_integrator reb_integrator_whfast = {
     "Because WHFast is not an adaptive integrator, the user needs to set an appropriaye timestep. "
     "Typically, this should be a small fraction (a few percent) of the smallest dynamical timescale in the problem. "
     "\n\n"
-    "[Wisdom & Holman (1991)]: https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/\n"
-    "[Wisdom et al. (1996)]: https://ui.adsabs.harvard.edu/abs/1996FIC....10..217W/\n"
-    "[Rein & Tamayo (2015)]: https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..376R/\n"
-    "[Rein, Tamayo & Brown (2019)]: https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/\n" 
-    "[Rein & Tamayo (2016)]: https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R/\n" 
+    "[Wisdom & Holman (1991)]: https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/abstract\n"
+    "[Wisdom et al. (1996)]: https://ui.adsabs.harvard.edu/abs/1996FIC....10..217W/abstract\n"
+    "[Rein & Tamayo (2015)]: https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..376R/abstract\n"
+    "[Rein, Tamayo & Brown (2019)]: https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract\n" 
+    "[Rein & Tamayo (2016)]: https://ui.adsabs.harvard.edu/abs/2016MNRAS.459.2275R/abstract\n" 
     ,
     .step = reb_integrator_whfast_step,
     .synchronize = reb_integrator_whfast_synchronize,
