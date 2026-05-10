@@ -1,11 +1,6 @@
 /**
- * @file    integrator_saba.c
- * @brief   SABA integrator family (Laskar and Robutel 2001, Blanes et al 2013).
- * @author  Hanno Rein <hanno@hanno-rein.de>
- * @details This file implements the family of symplectic integrators
- * of Laskar and Robutel (2001), Blanes et al (2013), Farres et al (2013).
+ * integrator_saba.c: SABA integrator family 
  * 
- * @section LICENSE
  * Copyright (c) 2019 Hanno Rein
  *
  * This file is part of rebound.
@@ -35,31 +30,52 @@
 #include "integrator_saba.h"
 #include "binarydata.h"
 
-#define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
-#define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
+#define MIN(a, b) ((a) > (b) ? (b) : (a))
 
-void reb_integrator_saba_step(struct reb_simulation* r, void* state);		///< Internal function used to call a specific integrator
-void reb_integrator_saba_synchronize(struct reb_simulation* r, void* state);	///< Internal function used to call a specific integrator
-void reb_integrator_saba_reset(struct reb_simulation* r);	///< Internal function used to call a specific integrator
-
-const struct reb_binarydata_field_descriptor reb_integrator_saba_field_descriptor_list[] = {
-    { "", REB_UINT,        "safe_mode",            offsetof(struct reb_integrator_saba_state, safe_mode), 0, 0, 0},
-    { "", REB_INT,         "type",                 offsetof(struct reb_integrator_saba_state, type), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_SABA_TYPE)},
-    { "", REB_UINT,        "keep_unsynchronized",  offsetof(struct reb_integrator_saba_state, keep_unsynchronized), 0, 0, 0},
-    { "", REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_saba_state, p_jh), offsetof(struct reb_integrator_saba_state, N_allocated), sizeof(struct reb_particle), 0},
-    { 0 }, // Null terminated list
-};
-
+void reb_integrator_saba_step(struct reb_simulation* r, void* state);
+void reb_integrator_saba_synchronize(struct reb_simulation* r, void* state);
 void* reb_integrator_saba_create();
 void reb_integrator_saba_free(void* p);
+const struct reb_binarydata_field_descriptor reb_integrator_saba_field_descriptor_list[];
 
 const struct reb_integrator reb_integrator_saba = {
+    .documentation = 
+    "SABA are symplectic integrators developed by [Laskar & Robutel (2001)] "
+    "and [Blanes et al. (2013)]. The implementation in REBOUND supports "
+    "SABA1, SABA2, SABA3, and SABA4 as well as the corrected versions "
+    "SABAC1, SABAC2, SABAC3, and SABAC4. Different correctors can be selected. "
+    "In addition, the following methods with various generalized orders "
+    "are supported: SABA(8,4,4), SABA(8,6,4), SABA(10,6,4). "
+    "See [Rein, Tamayo & Brown (2019)]for details on how these methods work. "
+    "\n\n"
+    "[Laskar & Robutel (2001)]: https://ui.adsabs.harvard.edu/abs/2001CeMDA..80...39L/abstract\n"
+    "[Blanes et al. (2013)]: https://ui.adsabs.harvard.edu/abs/2012arXiv1208.0689B/abstract\n"
+    "[Rein, Tamayo & Brown (2019)]: https://ui.adsabs.harvard.edu/abs/2019MNRAS.489.4632R/abstract\n"
+    ,
     .step = reb_integrator_saba_step,
     .create = reb_integrator_saba_create,
     .synchronize = reb_integrator_saba_synchronize,
     .free = reb_integrator_saba_free,
     .field_descriptor_list = reb_integrator_saba_field_descriptor_list,
 };
+
+const struct reb_binarydata_field_descriptor reb_integrator_saba_field_descriptor_list[] = {
+    { "This flag has the same functionality as in WHFast. Default is 1. Setting "
+        "this to 0 will provide a speedup, but care must be taken with synchronizing "
+        "integration steps and modifying particles.",
+        REB_UINT,        "safe_mode",            offsetof(struct reb_integrator_saba_state, safe_mode), 0, 0, 0},
+    { "This parameter specifies which SABA integrator type is used.",
+        REB_INT,           "type",               offsetof(struct reb_integrator_saba_state, type), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_SABA_TYPE)},
+    { "This flag determines if the inertial coordinates generated are "
+        "discarded in subsequent timesteps (cached Jacobi coordinates are "
+        "used instead). The default is 0. Set this flag to 1 if you "
+        "require outputs and bit-wise reproducibility",
+        REB_UINT,        "keep_unsynchronized",  offsetof(struct reb_integrator_saba_state, keep_unsynchronized), 0, 0, 0},
+    { "", REB_POINTER,     "p_jh",               offsetof(struct reb_integrator_saba_state, p_jh), offsetof(struct reb_integrator_saba_state, N_allocated), sizeof(struct reb_particle), 0},
+    { 0 }, // Null terminated list
+};
+
 
 void* reb_integrator_saba_create(){
     struct reb_integrator_saba_state* saba = calloc(sizeof(struct reb_integrator_saba_state),1);
