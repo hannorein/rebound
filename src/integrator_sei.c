@@ -1,16 +1,6 @@
 /**
- * @file 	integrator_sei.c
- * @brief 	Symplectic Epicycle Integrator (SEI).
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the Symplectic Epicycle Integrator 
- * (SEI). The integrator is described in detail in Rein & Tremaine 2011. 
- * It solves epicyclic motion exactly and is therefore exact up to machine
- * precision in the limit of no perturbing forces. When perturbing-forces
- * are of order eps, then the error of the scheme is O(eps dt^3). It also
- * makes use of two shear operators instead of a rotation to minimize 
- * systematic numerical round-off errors.
+ * integrator_sei.c: The Symplectic Epicycle Integrator (SEI)
  * 
- * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
@@ -48,6 +38,27 @@ struct reb_integrator_sei_state {
     double tandtz;      // Cached tan(), z axis
 };
 
+void reb_integrator_sei_step(struct reb_simulation* r, void* state);
+void* reb_integrator_sei_create();
+void reb_integrator_sei_free(void* p);
+const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[];
+
+const struct reb_integrator reb_integrator_sei = {
+    .documentation = 
+    "The Symplectic Epicycle Integrator (SEI), is a mixed variable second order "
+    "symplectic integrator for the shearing sheet. Its main purpose is to simulate "
+    "planetary rings in a local corotating frame. See [Rein & Tremaine (2011)] for "
+    "details. The (vertical) epicyclic frequency `OMEGA` (`OMEGAZ`) needs to be set "
+    "in the simulation. In previous versions of REBOUND, these variable were defined "
+    "in the integrator, not the simulation. "
+    "\n\n"
+    "[Rein & Tremaine (2011)]: https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.3168R/abstract\n",
+    .step = reb_integrator_sei_step,
+    .create = reb_integrator_sei_create,
+    .free = reb_integrator_sei_free,
+    .field_descriptor_list = reb_integrator_sei_field_descriptor_list,
+};
+
 const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[] = {
     { "", REB_DOUBLE,       "lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0, 0},
     { "", REB_DOUBLE,       "sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0, 0},
@@ -57,16 +68,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor
     { 0 }, // Null terminated list
 };
 
-void reb_integrator_sei_step(struct reb_simulation* r, void* state);
-void* reb_integrator_sei_create();
-void reb_integrator_sei_free(void* p);
-
-const struct reb_integrator reb_integrator_sei = {
-    .step = reb_integrator_sei_step,
-    .create = reb_integrator_sei_create,
-    .free = reb_integrator_sei_free,
-    .field_descriptor_list = reb_integrator_sei_field_descriptor_list,
-};
 
 static void operator_H012(double dt, const struct reb_integrator_sei_state sei, struct reb_particle* p, double OMEGA, double OMEGAZ);
 static void operator_phi1(double dt, struct reb_particle* p);
