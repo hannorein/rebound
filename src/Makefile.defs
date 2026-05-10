@@ -28,16 +28,10 @@ endif
 	OBJFILEEXT=obj
 	LIBREBOUND=librebound.dll
 	EXEREBOUND=rebound.exe
-ifdef MSYSTEM
 	SHELL=cmd.exe
-	RM=rm -f
-	LINKORCOPYLIBREBOUND=cp ../../src/librebound.* .
-	LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . 
-else
 	RM=del /q
 	LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
 	LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
-endif
 	CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
 endif
 # Removed -march=native for now
