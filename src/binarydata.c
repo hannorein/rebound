@@ -612,6 +612,7 @@ static void output_fields_from_list(char** bufp, size_t* current_pos, size_t* al
                     }
                 }
                 break;
+            case REB_FUNCTIONPOINTER:
             case REB_OTHER:
             case REB_FIELD_NOT_FOUND:
                 // Special fields are not written to output.
@@ -815,6 +816,10 @@ next_field:
                     }
                     free(serialized_strings);
                 }
+                goto next_field;
+                break;
+            case REB_FUNCTIONPOINTER:
+                reb_simulation_warning(r, "Did not expect REB_FUNCTIONPOINTER here.");
                 goto next_field;
                 break;
             case REB_OTHER:

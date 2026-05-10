@@ -117,6 +117,7 @@ enum REB_BINARYDATA_DTYPE {
     REB_POINTER_ALIGNED = 11,    // memory aligned to 64 bit boundary for AVX512
     REB_OTHER = 12,              // Fields that need special treatment during input and/or output
     REB_CHARP_LIST = 13,         // A list of NULL terminated strings (char**).
+    REB_FUNCTIONPOINTER = 14,    // A function pointer. Will not be saved to Simulationarchive.
     REB_STRING = 20,             // NULL character terminated string
 };
 

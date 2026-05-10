@@ -48,8 +48,24 @@ void reb_integrator_mercurius_will_remove_particle(struct reb_simulation* r, siz
 
 
 const struct reb_binarydata_field_descriptor reb_integrator_mercurius_field_descriptor_list[] = {
-    { "", REB_DOUBLE,      "r_crit_hill",     offsetof(struct reb_integrator_mercurius_state, r_crit_hill), 0, 0, 0},
-    { "", REB_UINT,        "safe_mode",       offsetof(struct reb_integrator_mercurius_state, safe_mode), 0, 0, 0},
+    { "The critical switchover radii of particles are calculated automatically "
+        "based on multiple criteria. One criterion calculates the Hill radius of "
+        "particles and then multiplies it with the `r_crit_hill` parameter. The "
+        "parameter is in units of the Hill radius. The default value is 3.",
+        REB_DOUBLE,      "r_crit_hill",     offsetof(struct reb_integrator_mercurius_state, r_crit_hill), 0, 0, 0},
+    { "If this flag is set to 1 (the default), the integrator will recalculate "
+        "heliocentric coordinates and synchronize after every timestep to avoid "
+        "problems with outputs or particle modifications between timesteps. Setting "
+        "this flag to 0 will result in a speedup, but care must be taken to synchronize "
+        "and recalculate coordinates manually if needed.",
+        REB_UINT,        "safe_mode",       offsetof(struct reb_integrator_mercurius_state, safe_mode), 0, 0, 0},
+    { "This is a function pointer to the force switching function. " 
+        "By default the MERCURY switching function will be used. "
+        "The argument `d` is the distance between two particles. "
+        "The argument `dcrit` is the maximum of the critical distances of the two particles. "
+        "The return value is a scalar between 0 and 1. "
+        "If this function always returns 1, then the integrator effectively becomes the standard Wisdom-Holman integrator.",
+        REB_FUNCTIONPOINTER,"L",            offsetof(struct reb_integrator_mercurius_state, L), 0, 0, 0},
     { "", REB_POINTER,     "dcrit",           offsetof(struct reb_integrator_mercurius_state, dcrit), offsetof(struct reb_integrator_mercurius_state, N_allocated_dcrit), sizeof(double), 0},
     { "", REB_VEC3D,       "com_pos",         offsetof(struct reb_integrator_mercurius_state, com_pos), 0, 0, 0},
     { "", REB_VEC3D,       "com_vel",         offsetof(struct reb_integrator_mercurius_state, com_vel), 0, 0, 0},

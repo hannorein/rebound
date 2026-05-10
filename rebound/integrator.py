@@ -3,6 +3,7 @@ import textwrap
 from .binarydata_field_descriptor import BinarydataFieldDescriptorList, REB_BINARYDATA_DTYPE, format_doc
 
 class Integrator(ctypes.Structure):
+    """ Contains function pointers to integrator routines, documentation, and field data """
     _fields_ = [("documentation", ctypes.c_char_p),
                 ("step", ctypes.c_void_p),
                 ("synchronize", ctypes.c_void_p),
@@ -19,9 +20,9 @@ class IntegratorConfiguration(ctypes.Structure):
                 ("callbacks", Integrator),
                 ("state", ctypes.c_void_p),
                 ]
-    # Automatically generate __doc__ from data in C structs
     @property
     def __doc__(self):
+        """ Dynamically generate __doc__ from data in C structs """
         callbacks = self.callbacks
         if callbacks:
             doc = "REBOUND Integrator ("+self.name.decode("utf-8")+")\n\n"
@@ -40,6 +41,7 @@ class IntegratorConfiguration(ctypes.Structure):
         return "No documentation available."
 
     def __str__(self):
+        """ The string representation of an integrator is its name """
         _name = self.name
         if _name:
             return _name.decode("utf-8")
@@ -48,30 +50,18 @@ class IntegratorConfiguration(ctypes.Structure):
         return None
 
     def __eq__(self, value):
+        """ Integrators are equal if they have the same name """
         return self.__str__() == value.__str__()
 
-    def _getInstance(self, fd):
-        if REB_BINARYDATA_DTYPE[fd.dtype] == ctypes.c_int:
-            doc = fd.doc()
-            #TODO: generalize, cleanup
-            class MyInt(int):
-                __doc__ = doc
-            value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
-            return MyInt(value)
-        return REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
-
     def __getattr__(self, name):
+        """ Get the value of a field in the integrator's state """
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         value = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
-        return self._getInstance(field_descriptor)
-        if field_descriptor.enum_descriptor_list:
-            for enum_descriptor in field_descriptor.enum_descriptor_list:
-                if enum_descriptor.value == value:
-                    return enum_descriptor.name.decode("utf-8")
-        return value
-
+        return field_descriptor.getInstance(value)
 
     def __setattr__(self, name, value):
+        """ Set a field in the integrator's state to a value """
+        field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset)
         if isinstance(value, str) and field_descriptor.enum_descriptor_list:
@@ -83,6 +73,7 @@ class IntegratorConfiguration(ctypes.Structure):
         pointer_to_field.value = value
     
     def __repr__(self):
+        """ Create a repr with all integrator fields shown for easy debugging """
         fields = {"name": self.name.decode("utf-8")}
         for fd in self.callbacks.field_descriptor_list:
             value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
