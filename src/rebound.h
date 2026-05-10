@@ -49,6 +49,7 @@
 
 // Windows requires special treatment.
 #ifdef _WIN32
+#undef REB_API
 #define _USE_MATH_DEFINES // Windows (MVSC) does not include math constants by default.
 #ifdef BUILDINGLIBREBOUND // Windows needs different declarations depending on whether the library is built or used.
 #define REB_API __declspec(dllexport)
