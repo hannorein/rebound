@@ -30,16 +30,13 @@ endif
 	EXEREBOUND=rebound.exe
 	RM=del
 	ifeq (, $(shell copy))
-		LINKORCOPYLIBREBOUND=cp ../../src/librebound.* . & cp ../../src/rebound.h . & cp ../../src/simulationarchive.h .& cp ../../src/binarydata.h .
-
-
-		LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . & cp src/rebound.h .
+		LINKORCOPYLIBREBOUND=cp ../../src/librebound.* .
+		LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . 
 	else
-		LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . & copy ..\..\src\rebound.h . & copy ..\..\src\simulationarchive.h . & cp ../../src/binarydata.h .
-
-		LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . & copy src\rebound.h .
+		LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
+		LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
 	endif
-	CCPROBLEM=$(CC) $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
+	CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
 endif
 # Removed -march=native for now
 ifeq ($(OS), Linux)
