@@ -46,11 +46,67 @@
 #include "integrator_ias15.h"
 #include "binarydata.h"
 
+void* reb_integrator_ias15_create();
+void reb_integrator_ias15_free(void* p);
+void reb_integrator_ias15_step(struct reb_simulation* const r, void* state);
+const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descriptor_list[];
+
+const struct reb_integrator reb_integrator_ias15 = {
+    .documentation = 
+    "IAS15 is the default integrator of REBOUND."
+    "IAS15 stands for Integrator with Adaptive Step-size control, 15th order. "
+    "It is a very high order, non-symplectic integrator which can handle arbitrary "
+    "forces (including those who are velocity dependent). "
+    "It is in most cases accurate down to machine precision (16 significant decimal digits). "
+    "The IAS15 implementation in REBOUND can integrate variational equations. "
+    "The algorithm is described in detail in [Rein & Spiegel (2015)] and also in the "
+    "original paper by [Everhart (1985)]. " 
+    "The timestepping choice is described in [Pham et al. (2024)]. "
+    "A short [YouTube video] also provides a basic introduction to this integrator."
+    "\n\n"
+    "[Rein & Spiegel (2015)]: https://ui.adsabs.harvard.edu/abs/2015MNRAS.446.1424R/abstract\n"
+    "[Pham et al. (2024)]: https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract\n"
+    "[Everhart (1985)]: https://ui.adsabs.harvard.edu/abs/1985ASSL..115..185E/abstract\n"
+    "[Aarseth (1985)]: https://ui.adsabs.harvard.edu/abs/1985IAUS..113..251A/abstract\n"
+    "[YouTube video]: https://www.youtube.com/embed/UILEgdZt-fw\n"
+    ,
+    .step = reb_integrator_ias15_step,
+    .create = reb_integrator_ias15_create,
+    .free = reb_integrator_ias15_free,
+    .field_descriptor_list = reb_integrator_ias15_field_descriptor_list,
+};
 
 const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descriptor_list[] = {
-    { "", REB_DOUBLE,       "epsilon",             offsetof(struct reb_integrator_ias15_state, epsilon), 0, 0, 0},
-    { "", REB_DOUBLE,       "min_dt",              offsetof(struct reb_integrator_ias15_state, min_dt), 0, 0, 0},
-    { "", REB_UINT,         "adaptive_mode",       offsetof(struct reb_integrator_ias15_state, adaptive_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_IAS15_ADAPTIVEMODE)},
+    { "IAS15 is an adaptive integrator. It chooses its timesteps automatically. "
+        "This parameter controls the accuracy of the integrator. The default "
+        "value is 1e-9. Setting this parameter to 0 turns off adaptive timestepping "
+        "and a constant timestep will is used. Turning off adaptive time-stepping is "
+        "rarely useful. "
+        "\n\n"
+        "It is tempting to change this parameter to achieve a speedup at the loss of "
+        "some accuracy. However, that makes rarely sense. The reason is that IAS15 "
+        "is a very high (15th!) order integrator. Suppose we increase the timestep "
+        "by a factor of 10. This will increase the error by a factor of 1e15. "
+        "In other words, a simulation that previously was converged to machine "
+        "precision will now have an error of order unity. ",
+        REB_DOUBLE,       "epsilon",             offsetof(struct reb_integrator_ias15_state, epsilon), 0, 0, 0},
+    { "This sets the minimum allowed timestep. The default value is 0. Set this "
+        "to a finite value if the adaptive timestep becomes excessively small, for "
+        "example during close encounters or because of finite floating point precision. "
+        "Use with caution and make sure the simulation results still make physical sense "
+        "as you might be in danger of ignoring small timescales in the problem. ",
+        REB_DOUBLE,       "min_dt",              offsetof(struct reb_integrator_ias15_state, min_dt), 0, 0, 0},
+    { "This flag determines how the adaptive timestep is chosen. The previous name "
+        "of this flag was `epsilon_global`. The default is PRS23 which corresponds to "
+        "the timestep criterion described in [Pham et al. (2024)]. This default "
+        "should be optimal in almost all cases. "
+        "If set to INDIVIDUAL, the fractional error is estimated via `max(acceleration_error/acceleration)` "
+        "and the timestep criterion of [Rein & Spiegel (2015)] is used. "
+        "If set to GLOBAL, IAS15 estimates the fractional error via `max(acceleration_error)/max(acceleration)` "
+        "where the maximum is taken over all particles and the timestep criterion of "
+        "[Rein & Spiegel (2015)] is used. This was the default until January 2024. "
+        "If set to AARSETH85, then the criterion of [Aarseth (1985)]) is used.",
+        REB_UINT,         "adaptive_mode",       offsetof(struct reb_integrator_ias15_state, adaptive_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_IAS15_ADAPTIVEMODE)},
     { "", REB_UINT64,       "iterations_max_exceeded", offsetof(struct reb_integrator_ias15_state, iterations_max_exceeded), 0, 0, 0},
     { "", REB_POINTER,      "at",                  offsetof(struct reb_integrator_ias15_state, at), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
     { "", REB_POINTER,      "x0",                  offsetof(struct reb_integrator_ias15_state, x0), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
@@ -66,17 +122,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descript
     { "", REB_POINTER,      "br",                  offsetof(struct reb_integrator_ias15_state, br), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
     { "", REB_POINTER,      "er",                  offsetof(struct reb_integrator_ias15_state, er), offsetof(struct reb_integrator_ias15_state, N_allocated), 7*sizeof(double), 0},
     { 0 }, // Null terminated list
-};
-
-void* reb_integrator_ias15_create();
-void reb_integrator_ias15_free(void* p);
-void reb_integrator_ias15_step(struct reb_simulation* const r, void* state);
-
-const struct reb_integrator reb_integrator_ias15 = {
-    .step = reb_integrator_ias15_step,
-    .create = reb_integrator_ias15_create,
-    .free = reb_integrator_ias15_free,
-    .field_descriptor_list = reb_integrator_ias15_field_descriptor_list,
 };
 
 void* reb_integrator_ias15_create(){
