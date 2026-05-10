@@ -177,7 +177,6 @@ struct reb_integrator {
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load the integrator state from restart files for this integrator.
 };
 
-extern const struct reb_integrator reb_integrator_none; // Defined in rebound.c
 
 // A current integrator configuation. Internal use only.
 struct reb_integrator_configuration {
@@ -186,34 +185,23 @@ struct reb_integrator_configuration {
     void* state;
 };
 
-
 // Available built-in integrators
 // See individual files for configuration options.
-#include "integrator_ias15.h"
-#include "integrator_whfast.h"
-#include "integrator_sei.h"
-#include "integrator_leapfrog.h"
-#include "integrator_janus.h"
-#include "integrator_mercurius.h"
-#include "integrator_saba.h"
-#include "integrator_eos.h"
-#include "integrator_bs.h"
-#include "integrator_whfast512.h"
-#include "integrator_trace.h"
-
-#define REB_AVAILABLE_INTEGRATORS \
-X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
-X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
-X(sei)           /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */ \
-X(leapfrog)      /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */ \
-X(none)          /* Do not integrate anything                                                          */ \
-X(janus)         /* Bit-wise reversible JANUS integrator.                                              */ \
-X(mercurius)     /* MERCURIUS integrator                                                               */ \
-X(saba)          /* SABA integrator family (Laskar and Robutel 2001)                                   */ \
-X(eos)           /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */ \
-X(bs)            /* Gragg-Bulirsch-Stoer                                                               */ \
-X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
-X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
+#include "integrator_ias15.h"        /* IAS15 integrator, 15th order, non-symplectic (default)                             */
+#include "integrator_whfast.h"       /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */
+#include "integrator_sei.h"          /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */
+#include "integrator_leapfrog.h"     /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */
+#include "integrator_janus.h"        /* Bit-wise reversible JANUS integrator.                                              */
+#include "integrator_mercurius.h"    /* MERCURIUS integrator                                                               */
+#include "integrator_saba.h"         /* SABA integrator family (Laskar and Robutel 2001)                                   */
+#include "integrator_eos.h"          /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */
+#include "integrator_bs.h"           /* Gragg-Bulirsch-Stoer                                                               */
+#include "integrator_whfast512.h"    /* WHFast integrator, optimized for AVX512                                            */
+#include "integrator_trace.h"        /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */
+extern const struct reb_integrator reb_integrator_none; /* Does nothing other than adcance time. Defined in rebound.c      */
+                                     
+// List of built-in integrators for X macros
+#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(trace) X(none) 
 
 
 // Available return values for collision resolve functions

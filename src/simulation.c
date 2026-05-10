@@ -220,7 +220,7 @@ void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
     }
     // All built-in integrators
 #define X(iname) if (strcmp(name, #iname)==0) { return set_integrator(r, #iname, reb_integrator_##iname); }
-    REB_AVAILABLE_INTEGRATORS
+    REB_BUILTIN_INTEGRATORS
 #undef X
     if (reb_integrator_configurations_custom){
         int i=0;

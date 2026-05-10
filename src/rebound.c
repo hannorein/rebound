@@ -64,7 +64,7 @@ char** reb_integrators_registered(){
     // Returns a NULL terminated list of names. List must be freed but not names.
     int N = 0;
 #define X(iname) N++;
-    REB_AVAILABLE_INTEGRATORS
+    REB_BUILTIN_INTEGRATORS
 #undef X
     int Nc = 0;
     if (reb_integrator_configurations_custom){
@@ -73,7 +73,7 @@ char** reb_integrators_registered(){
     char** names = malloc(sizeof(char*)*(N+Nc+1));
     int i = 0;
 #define X(iname) names[i++] = #iname;
-    REB_AVAILABLE_INTEGRATORS
+    REB_BUILTIN_INTEGRATORS
 #undef X
     Nc = 0;
     if (reb_integrator_configurations_custom){
@@ -93,7 +93,7 @@ void reb_integrator_register(const struct reb_integrator integrator, const char*
     }
     int name_exists = 0;
 #define X(iname) if (strcmp(name, #iname)==0) { name_exists = 1; }
-    REB_AVAILABLE_INTEGRATORS
+    REB_BUILTIN_INTEGRATORS
 #undef X
     int N = 0;
     if (reb_integrator_configurations_custom){
