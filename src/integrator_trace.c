@@ -43,21 +43,63 @@ void* reb_integrator_trace_create();
 void reb_integrator_trace_free(void* p);
 void reb_integrator_trace_did_add_particle(struct reb_simulation* r);
 void reb_integrator_trace_will_remove_particle(struct reb_simulation* r, size_t index);
-
-const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descriptor_list[] = {
-    { "", REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
-    { "", REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
-    { "", REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
-    { 0 }, // Null terminated list
-};
+const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descriptor_list[];
 
 const struct reb_integrator reb_integrator_trace = {
+    .documentation = 
+    "TRACE is a hybrid (almost) time-reversible integrator, based on the algorithm described "
+    "in [Hernandez & Dehnen (2023)]. It uses WHFast for long term integrations but "
+    "switches to BS or IAS15 for all close encounters. TRACE is appropriate for systems "
+    "with a dominant central mass if particles occasionally have close encounters. "
+    "This TRACE implementation is described in [Lu, Hernandez & Rein (2024)]. " 
+    "\n\n"
+    "[Hernandez & Dehnen (2023)]: https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract\n" 
+    "[Lu, Hernandez & Rein (2024)]: https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L/abstract\n" 
+    "[Pham, Rein, and Spiegel (2024)]: https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract\n"
+    ,
     .step = reb_integrator_trace_step,
     .create = reb_integrator_trace_create,
     .free = reb_integrator_trace_free,
     .will_remove_particle = reb_integrator_trace_will_remove_particle,
     .did_add_particle = reb_integrator_trace_did_add_particle,
     .field_descriptor_list = reb_integrator_trace_field_descriptor_list,
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descriptor_list[] = {
+    { "The critical switchover radii of non-central particles are calculated based on a "
+        "modified Hill radii criteria. This modified Hill radius for each particle is "
+        "calculated and then multiplied by this parameter. The parameter is in units of "
+        "the modified Hill radius. This value is used by the `default` switching function. "
+        "The default value is 4.", 
+        REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
+    { "The criteria for a pericenter approach with the central body. This criteria is used "
+        "in the `default` pericenter switching condition. It flags a particle as in a close "
+        "pericenter approach if the ratio of the timestep to the condition described in "
+        "[Pham, Rein, and Spiegel (2024)]. The default value is 1.",
+        REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
+    { "This flag determines how TRACE integrates close approaches with the central star.", 
+        REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
+    { "This is a function pointer to the switching function for close encounters between "
+        "non-central bodies. If NULL (the default), the default switching function will be used."
+        "The default switching function is a similar (but slightly modified) switching function "
+        "used by MERCURY. It uses a modified Hill radius criteria, with heliocentric distance "
+        "replacing the semimajor axis. "
+        "\n\n"
+        "The arguments `i` and `j` are the indices of the two particles considered. The return "
+        "value is either 0 or 1. A return value of 1 means a close encounter has been flagged. "
+        "If the return values of both this function and the central switching function are "
+        "always 0, then the integrator effectively becomes the standard Wisdom-Holman integrator. ", 
+        REB_FUNCTIONPOINTER,"S",            offsetof(struct reb_integrator_trace_state, S), 0, 0, 0},
+    { "This is a function pointer to the switching function for close encounters involving "
+        "the central body. If NULL (the default), the default switching function will be used. "
+        "The defult switching function checks if a body is close to its pericenter by "
+        "considering a timescale derived from high-order derivatives of the particle's "
+        "herliocentric position, inspired by [Pham, Rein, and Spiegel (2024)]. "
+        "The argument `j` is the index of the non-central particle considered. "
+        "The return value is either 0 or 1. A return value of 1 means a close encounter "
+        "has been flagged. ",
+        REB_FUNCTIONPOINTER,"S_peri",            offsetof(struct reb_integrator_trace_state, S), 0, 0, 0},
+    { 0 }, // Null terminated list
 };
 
 void* reb_integrator_trace_create(){

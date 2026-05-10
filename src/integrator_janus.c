@@ -38,22 +38,34 @@ void reb_integrator_janus_step(struct reb_simulation* r, void* state);
 void reb_integrator_janus_synchronize(struct reb_simulation* r, void* state);
 void* reb_integrator_janus_create();
 void reb_integrator_janus_free(void* p);
-
-const struct reb_binarydata_field_descriptor reb_integrator_janus_field_descriptor_list[] = {
-    { "", REB_POINTER,     "p_int",               offsetof(struct reb_integrator_janus_state, p_int), offsetof(struct reb_integrator_janus_state, N_allocated), sizeof(struct reb_particle_int), 0},
-    { "", REB_DOUBLE,      "scale_pos",           offsetof(struct reb_integrator_janus_state, scale_pos), 0, 0, 0},
-    { "", REB_DOUBLE,      "scale_vel",           offsetof(struct reb_integrator_janus_state, scale_vel), 0, 0, 0},
-    { "", REB_UINT,        "order",               offsetof(struct reb_integrator_janus_state, order), 0, 0, 0},
-    { "", REB_UINT,        "recalculate_integer_coordinates_this_timestep", offsetof(struct reb_integrator_janus_state, recalculate_integer_coordinates_this_timestep), 0, 0, 0},
-    { 0 }, // Null terminated list
-};
+const struct reb_binarydata_field_descriptor reb_integrator_janus_field_descriptor_list[];
 
 const struct reb_integrator reb_integrator_janus = {
+    .documentation = 
+    "Janus is a bit-wise time-reversible high-order symplectic integrator "
+    "using a mix of floating point and integer arithmetic. The basic idea and "
+    "this specific implementation is described in [Rein & Tamayo (2018)]."
+    "\n\n"
+    "[Rein & Tamayo (2018)]: https://ui.adsabs.harvard.edu/abs/2018MNRAS.473.3351R/abstract\n"
+    ,
     .step = reb_integrator_janus_step,
     .create = reb_integrator_janus_create,
     .free = reb_integrator_janus_free,
     .synchronize = reb_integrator_janus_synchronize,
     .field_descriptor_list = reb_integrator_janus_field_descriptor_list,
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_janus_field_descriptor_list[] = {
+    { "Scale of the problem. Positions get divided by this number before the conversion to an integer. Default: 1e-16.", 
+        REB_DOUBLE,      "scale_pos",           offsetof(struct reb_integrator_janus_state, scale_pos), 0, 0, 0},
+    { "Scale of the problem. Velocities get divided by this number before the conversion to an integer. Default: 1e-16.", 
+        REB_DOUBLE,      "scale_vel",           offsetof(struct reb_integrator_janus_state, scale_vel), 0, 0, 0},
+    { "The order of the scheme. Supported values: 2, 4, 6, 8, 10. Default is 6.", 
+        REB_UINT,        "order",               offsetof(struct reb_integrator_janus_state, order), 0, 0, 0},
+    { "If this flag is set, then JANUS will recalculate the integer coordinates from floating point coordinates at the next timestep.", 
+        REB_UINT,        "recalculate_integer_coordinates_this_timestep", offsetof(struct reb_integrator_janus_state, recalculate_integer_coordinates_this_timestep), 0, 0, 0},
+    { "", REB_POINTER,     "p_int",               offsetof(struct reb_integrator_janus_state, p_int), offsetof(struct reb_integrator_janus_state, N_allocated), sizeof(struct reb_particle_int), 0},
+    { 0 }, // Null terminated list
 };
 
 void* reb_integrator_janus_create(){

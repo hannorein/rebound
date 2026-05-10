@@ -76,14 +76,17 @@ class IntegratorConfiguration(ctypes.Structure):
         """ Create a repr with all integrator fields shown for easy debugging """
         fields = {"name": self.name.decode("utf-8")}
         for fd in self.callbacks.field_descriptor_list:
-            value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
-            for enum_descriptor in fd.enum_descriptor_list:
-                if enum_descriptor.value == value:
-                    value = enum_descriptor.name.decode("utf-8")
-                    break
-            if value and REB_BINARYDATA_DTYPE[fd.dtype] == ctypes.c_void_p:
-                value = hex(value) # pointers as hex
-            fields[fd.name.decode("utf-8")] = value
+            if fd.dtype in REB_BINARYDATA_DTYPE and REB_BINARYDATA_DTYPE[fd.dtype] is not None:
+                value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
+                for enum_descriptor in fd.enum_descriptor_list:
+                    if enum_descriptor.value == value:
+                        value = enum_descriptor.name.decode("utf-8")
+                        break
+                if value and REB_BINARYDATA_DTYPE[fd.dtype] == ctypes.c_void_p:
+                    value = hex(value) # pointers as hex
+                fields[fd.name.decode("utf-8")] = value
+            else:
+                fields[fd.name.decode("utf-8")] = "<value not shown>"
         values = ", ".join([name+"="+str(value) for name,value in fields.items()])
         return '<{0}.{1} object at {2}, {3}>'.format(self.__module__, type(self).__name__, hex(id(self)), values)
 

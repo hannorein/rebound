@@ -39,8 +39,9 @@
 
 void reb_integrator_whfast512_free(void* state);		
 void* reb_integrator_whfast512_create();		
-void reb_integrator_whfast512_step(struct reb_simulation* r, void* step);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* step);	///< Internal function used to call a specific integrator
+void reb_integrator_whfast512_step(struct reb_simulation* r, void* step);
+void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* step);
+const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[];
 
 struct reb_particle_avx512 {
 #ifdef AVX512
@@ -62,12 +63,78 @@ struct reb_particle_avx512 {
 #endif // AVX512
 };
 
+const struct reb_integrator reb_integrator_whfast512 = {
+    .documentation = 
+    "WHFast512 is a symplectic Wisdom-Holman integrator. "
+    "It is using Single Instruction Multiple Data (SIMD) parallelism and 512-bit Advanced Vector Extensions "
+    "(AVX512) to speed up the integration of planetary systems by up to 4.7x compared to the standard version "
+    "of WHFast. See [Javaheri et al. (2023)] for details on this integrator."
+    "\n\n"
+    "Important: To use WHFast512 you need to compile and run REBOUND on a computer that has a CPU which "
+    "supports AVX512 instructions. You will see an error message if you try to use WHFast512 but have "
+    "not compiled REBOUND with the AVX512 flag. To find out if your CPU supports AVX512 instructions, "
+    "check for the AVX512 flags by running `cat /proc/cpuinfo | grep avx512`. "
+    "\n\n"
+    "Note that you can read Simulationarchives of simulations which used WHFast512 on machines that do "
+    "not support AVX512 instruction. If a synchronization is required, it will be performed with the "
+    "standard WHFast integrator. "
+    "\n\n"
+    "To turn on the AVX512 flag in the C version of REBOUND, go to the Makefile in your problem "
+    "directory. Add this line at the top `export AVX512=1`. Make sure to add the `-march=native` "
+    "flag to the compiler options. This will optimize your code (and enable AVX512 instruction) "
+    "for the specific CPU you're using. In the Makefile add the line `export OPT=-march=native`. "
+    "Finally, clean your build directory and (re)-build REBOUND with `make clean && make`. "
+    "\n\n"
+    "To use WHFast512 from python, you also need to compile REBOUND with AVX512 instructions enabled. "
+    "They are disabled by default and enabled with the AVX512 environment variable. "
+    "Download latest version of REBOUND. Then set the AVX512 environment variable in your shell "
+    "with `export AVX512=1` and install rebound with `pip install -e .` form the main directory. "
+    "\n\n"
+    "To allow for the best performance, WHFast512 has certain limitations that WHFast does not have:\n"
+    "- The number of particles cannot exceed 9 (1 star and 8 planets) and needs to be constant.\n" 
+    "- Although you can use WHFast512 with any number of planets (up to 8), the performance is best "
+    "if the system has either 2, 4, or 8 planets. \n"
+    "- The gravitational constant needs to be exactly equal to 1. Note that you can always rescale "
+    "your system such that G=1. \n"
+    "- The integrator always combines the first and last drift step (`safe_mode=0` for WHFast). \n"
+    "- No variational or test particles are supported (although a particle can have mass 0). \n"
+    "- MEGNO and other chaos indicators are not supported.\n"
+    "- WHFast512 always uses democratic heliocentric coordinates. Jacobi coordinates are not supported. \n"
+    "- The timestep needs to be constant and the `exact_finish_time` flag needs to be set to 0.\n"
+    "- The masses of all particles need to be constant.\"n"
+    "- Additional forces (other than the GR potential) and REBOUNDx are not supported.\n"
+    "\n\n"
+    "[Javaheri et al. (2023)]: https://ui.adsabs.harvard.edu/abs/2023OJAp....6E..29J/abstract\n"
+    ,
+    .step = reb_integrator_whfast512_step,
+    .create = reb_integrator_whfast512_create,
+    .free = reb_integrator_whfast512_free,
+    .synchronize = reb_integrator_whfast512_synchronize,
+    .field_descriptor_list = reb_integrator_whfast512_field_descriptor_list,
+};
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[] = {
-    { "", REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_whfast512_state, keep_unsynchronized), 0, 0, 0},
-    { "", REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
+    { "By default the keep_unsynchronized flag is 0. If set to 1 synchronization of the "
+        "simulation is done on a copy of the particle data. This allows "
+        "the simulation to continue integrating as if the simulation "
+        "were never synchronized. This allows for bit-wise reproducability "
+        "in long term simulations.",
+        REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_whfast512_state, keep_unsynchronized), 0, 0, 0},
+    { "This flag determines if an additional $1/r^2$ potential is included in the force "
+        "calculation. The default is 0. Set to 1 to turn on the GR potential. This can be "
+        "used to mimic general relativistic precession. Note that this feature assumes units "
+        "of AU and year/2pi. ", 
+        REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
+    { "This flag determines how many systems are integrated in parallel. Possible values "
+        "are 1, 2, or 4.  By default this is set to 1 which means WHFast512 is integrating "
+        "only one system at a time. If your system has fewer than 5 planets, then you can "
+        "use WHFast512 to integrate 2 systems in parallel. If your system has fewer than "
+        "3 planets, then you can use WHFast512 to integrate 4 systems in parallel. If "
+        "multiple systems are integrated at the same time, particles must be added in the "
+        "following order: Star 1, Planet, Planet, Star 2, Planet, Planet, ... "
+        "For more information see the `whfast512_2_planets` example.", 
+        REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
     { "", REB_POINTER_ALIGNED, "pjh",         offsetof(struct reb_integrator_whfast512_state, p_jh), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct reb_particle_avx512), 0},
-    { "", REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
     { "", REB_PARTICLE,    "pjh0_0",          offsetof(struct reb_integrator_whfast512_state, p_jh0[0]), 0, 0, 0},
     { "", REB_PARTICLE,    "pjh0_1",          offsetof(struct reb_integrator_whfast512_state, p_jh0[1]), 0, 0, 0},
     { "", REB_PARTICLE,    "pjh0_2",          offsetof(struct reb_integrator_whfast512_state, p_jh0[2]), 0, 0, 0},
@@ -75,13 +142,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
     { 0 }, // Null terminated list
 };
 
-const struct reb_integrator reb_integrator_whfast512 = {
-    .step = reb_integrator_whfast512_step,
-    .create = reb_integrator_whfast512_create,
-    .free = reb_integrator_whfast512_free,
-    .synchronize = reb_integrator_whfast512_synchronize,
-    .field_descriptor_list = reb_integrator_whfast512_field_descriptor_list,
-};
 
 
 void* reb_integrator_whfast512_create(){
