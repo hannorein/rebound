@@ -27,7 +27,7 @@ if sys.platform == "darwin":
 if sys.platform == "win32":
     extra_compile_args = [ghash_arg, "-DBUILDINGLIBREBOUND", "-D_GNU_SOURCE", "-DSERVER"]
 else:
-    extra_compile_args = [ "-fstrict-aliasing", "-std=c99", "-Wno-unknown-pragmas", ghash_arg, "-D_GNU_SOURCE", "-DSERVER", "-fPIC"]
+    extra_compile_args = [ "-fstrict-aliasing", "-std=c99", "-Wno-unreachable-code", "-Wno-unknown-pragmas", ghash_arg, "-D_GNU_SOURCE", "-DSERVER", "-fPIC"]
     if os.environ.get("COVERAGE"):
         extra_compile_args += ["-O1", "-fprofile-arcs", "-ftest-coverage", "-coverage"]
         extra_link_args   += ["-fprofile-arcs", "-ftest-coverage", "-coverage"]
