@@ -96,12 +96,10 @@ class IntegratorConfiguration(ctypes.Structure):
         return self.__str__() == value.__str__()
 
     def __getattr__(self, name):
-        # TODO enum
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         value = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
         if field_descriptor.enum_descriptor_list:
             for enum_descriptor in field_descriptor.enum_descriptor_list:
-                print(enum_descriptor.value, value)
                 if enum_descriptor.value == value:
                     return enum_descriptor.name.decode("utf-8")
         return value
@@ -119,7 +117,6 @@ class IntegratorConfiguration(ctypes.Structure):
         pointer_to_field.value = value
     
     def __repr__(self):
-        # TODO: implement proper output
         fields = {"name": self.name.decode("utf-8")}
         for fd in self.callbacks.field_descriptor_list:
             value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
