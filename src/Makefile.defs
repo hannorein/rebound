@@ -28,15 +28,17 @@ endif
 	OBJFILEEXT=obj
 	LIBREBOUND=librebound.dll
 	EXEREBOUND=rebound.exe
-	RM=del
-	ifeq (, $(shell copy))
-		LINKORCOPYLIBREBOUND=cp ../../src/librebound.* .
-		LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . 
-	else
-		LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
-		LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
-	endif
-	CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
+ifdef MSYSTEM
+	SHELL=cmd.exe
+	RM=rm -f
+	LINKORCOPYLIBREBOUND=cp ../../src/librebound.* .
+	LINKORCOPYLIBREBOUNDMAIN=cp src/librebound.* . 
+else
+	RM=del /q
+	LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
+	LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
+endif
+	CCPROBLEM=$(CC) /I "../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
 endif
 # Removed -march=native for now
 ifeq ($(OS), Linux)
