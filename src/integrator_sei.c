@@ -29,7 +29,7 @@
 #include "integrator_sei.h"
 #include "binarydata.h"
 
-// Symplectic Epicycle Integrator SEI (Rein & Tremaine 2011)
+// No user configurable options
 struct reb_integrator_sei_state {
     double lastdt;      // Cached sin(), tan() for this value of dt.
     double sindt;       // Cached sin() 

@@ -24,6 +24,13 @@
  */
 #ifndef _INTEGRATOR_LEAPFROG_H
 #define _INTEGRATOR_LEAPFROG_H
+
+extern const struct reb_integrator reb_integrator_leapfrog;
+
+struct reb_integrator_leapfrog_state {
+    unsigned int order;
+};
+
 // Constants also used by EOS.
 extern const double reb_integrator_leapfrog_lf4_a;
 extern const double reb_integrator_leapfrog_lf6_a[5];

@@ -79,6 +79,7 @@ struct reb_name_hash_item;      // Opaque pointer. Implemented in particle.h
 struct reb_simulation;          // Implemented below.
 struct reb_display_settings;    // Implemented below.
 struct reb_variational_configuration;  // Implemented below.
+struct reb_ode; // Implemented below.
 
 // Particle structure
 struct reb_particle {
@@ -176,6 +177,8 @@ struct reb_integrator {
     const struct reb_binarydata_field_descriptor* field_descriptor_list;    // Information on how to safe/load the integrator state from restart files for this integrator.
 };
 
+extern const struct reb_integrator reb_integrator_none; // Defined in rebound.c
+
 // A current integrator configuation. Internal use only.
 struct reb_integrator_configuration {
     const char* name;
@@ -183,7 +186,21 @@ struct reb_integrator_configuration {
     void* state;
 };
 
+
 // Available built-in integrators
+// See individual files for configuration options.
+#include "integrator_ias15.h"
+#include "integrator_whfast.h"
+#include "integrator_sei.h"
+#include "integrator_leapfrog.h"
+#include "integrator_janus.h"
+#include "integrator_mercurius.h"
+#include "integrator_saba.h"
+#include "integrator_eos.h"
+#include "integrator_bs.h"
+#include "integrator_whfast512.h"
+#include "integrator_trace.h"
+
 #define REB_AVAILABLE_INTEGRATORS \
 X(ias15)         /* IAS15 integrator, 15th order, non-symplectic (default)                             */ \
 X(whfast)        /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */ \
@@ -198,215 +215,6 @@ X(bs)            /* Gragg-Bulirsch-Stoer                                        
 X(whfast512)     /* WHFast integrator, optimized for AVX512                                            */ \
 X(trace)         /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */ 
 
-// Forward declarations of reb_integrator_NAME. Implementations are in corresponding integrator_NAME.c file.
-#define X(name) REB_API extern const struct reb_integrator reb_integrator_##name;
-REB_AVAILABLE_INTEGRATORS
-#undef X
-
-// Integrator structures 
-// IAS15 (Rein & Spiegel 2015)
-struct reb_integrator_ias15_state {
-    double epsilon;                 // Precision control parameter
-    double min_dt;                  // Minimal timestep
-#define REB_IAS15_ADAPTIVEMODE(X,Y) \
-    X(Y, 0, INDIVIDUAL)     /* fractional error is calculated separately for each particle              */ \
-    X(Y, 1, GLOBAL)         /* fractional error is calculated globally (was default until 01/2024)      */ \
-    X(Y, 2, PRS23)          /* Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)   */ \
-    X(Y, 3, AARSETH85)       /* Aarseth (1985) timestep criterion                                        */
-    enum {
-        REB_GENERATE_ENUM(REB_IAS15_ADAPTIVEMODE)
-    } adaptive_mode;                    // Determines how the timestep is chosen
-    uint64_t iterations_max_exceeded;   // Counter how many times the iteration did not converge. 
-    size_t N_allocated;          
-    double* REB_RESTRICT at;
-    double* REB_RESTRICT x0;
-    double* REB_RESTRICT v0;
-    double* REB_RESTRICT a0;
-    double* REB_RESTRICT csx;
-    double* REB_RESTRICT csv;
-    double* REB_RESTRICT csa0;
-    // The following are reb_dp7 pointers. See implementation for details.
-    double* REB_RESTRICT g;
-    double* REB_RESTRICT b;
-    double* REB_RESTRICT csb;             // Compensated summation storage for b
-    double* REB_RESTRICT e;
-    double* REB_RESTRICT br;              // Used for resetting the b coefficients if a timestep gets rejected
-    double* REB_RESTRICT er;              // Same for e coefficients
-};
-
-// Mercurius (Rein et al. 2019)
-struct reb_integrator_mercurius_state {
-    double (*L) (const struct reb_simulation* const r, double d, double dcrit); // Switching function (default same as Mercury) 
-    double r_crit_hill;                                 // Critical switching distance in units of Hill radii
-    unsigned int safe_mode;                             // Combine Kick steps at beginning and end of timestep
-
-    // Internal use
-    enum {
-        REB_INTEGRATOR_MERCURIUS_MODE_WH = 0,
-        REB_INTEGRATOR_MERCURIUS_MODE_ENCOUNTER = 1,
-    } mode;
-    size_t encounter_N;             // Number of particles currently having an encounter
-    size_t encounter_N_active;      // Number of active particles currently having an encounter
-    unsigned int tponly_encounter;  // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
-    size_t N_allocated;
-    size_t N_allocated_additional_forces;
-    size_t N_allocated_dcrit;       // Current size of dcrit arrays
-    double* dcrit;                  // Precalculated switching radii for particles
-    struct reb_particle* REB_RESTRICT particles_backup; //  contains coordinates before Kepler step for encounter prediction
-    struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // contains coordinates before Kepler step for encounter prediction
-    size_t* encounter_map;          // Map to represent which particles are integrated with ias15
-    struct reb_vec3d com_pos;       // Used to keep track of the center of mass during the timestep
-    struct reb_vec3d com_vel;
-};
-
-// TRACE (Lu Hernandez & Rein 2024)
-struct reb_integrator_trace_state {
-    int (*S) (struct reb_simulation* const r, const size_t i, const size_t j);
-    int (*S_peri) (struct reb_simulation* const r, const size_t j);
-
-#define REB_INTEGRATOR_TRACE_PERIMODE(X,Y) \
-    X(Y, 0, PARTIAL_BS) \
-    X(Y, 1, FULL_BS) \
-    X(Y, 2, FULL_IAS15)
-    enum {
-        REB_GENERATE_ENUM(REB_INTEGRATOR_TRACE_PERIMODE)
-    } peri_mode;
-
-    double r_crit_hill;
-    double peri_crit_eta;
-
-    // Internal use
-    enum {
-        REB_INTEGRATOR_TRACE_MODE_INTERACTION = 0, // Interaction step
-        REB_INTEGRATOR_TRACE_MODE_KEPLER = 1,      // Kepler step
-        REB_INTEGRATOR_TRACE_MODE_FULL = 3,        // Doing everything in one step
-    } mode;
-    size_t encounter_N;                 // Number of particles currently having an encounter
-    size_t encounter_N_active;          // Number of active particles currently having an encounter
-
-    size_t N_allocated;
-    size_t N_allocated_additional_forces;
-    unsigned int tponly_encounter;      // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
-
-    struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
-    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
-    struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
-
-    size_t* encounter_map;              // Map to represent which particles are integrated with BS
-    size_t* encounter_map_backup;       // Contains encounter map from after pre-ts check. Used to retain memory of CEs flagged at this step.
-    struct reb_vec3d com_pos;           // Used to keep track of the centre of mass during the timestep
-    struct reb_vec3d com_vel;
-
-    int* current_Ks; // Tracking K_ij for the entire timestep
-    unsigned int current_C; // Tracking C for the entire timestep
-    unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
-};
-
-// SABA Integrator (Laskar & Robutel 2001)
-struct reb_integrator_saba_state {
-#define REB_INTEGRATOR_SABA_TYPE(X,Y) \
-    X(Y, 0, DEFAULT) \
-    X(Y, 0x0,    1)         /* WH                                 */ \
-    X(Y, 0x1,    2)         /* SABA2                              */ \
-    X(Y, 0x2,    3)         /* SABA3                              */ \
-    X(Y, 0x3,    4)         /* SABA4                              */ \
-    X(Y, 0x100,  CM_1)      /* SABACM1 (Modified kick corrector)  */ \
-    X(Y, 0x101,  CM_2)      /* SABACM2 (Modified kick corrector)  */ \
-    X(Y, 0x102,  CM_3)      /* SABACM3 (Modified kick corrector)  */ \
-    X(Y, 0x103,  CM_4)      /* SABACM4 (Modified kick corrector)  */ \
-    X(Y, 0x200,  CL_1)      /* SABACL1 (lazy corrector)           */ \
-    X(Y, 0x201,  CL_2)      /* SABACL2 (lazy corrector)           */ \
-    X(Y, 0x202,  CL_3)      /* SABACL3 (lazy corrector)           */ \
-    X(Y, 0x203,  CL_4)      /* SABACL4 (lazy corrector)           */ \
-    X(Y, 0x4,    10_4)      /* SABA(10,4), 7 stages               */ \
-    X(Y, 0x5,    8_6_4)     /* SABA(8,6,4), 7 stages              */ \
-    X(Y, 0x6,    10_6_4)    /*SABA(10,6,4), 8 stages, default     */ \
-    X(Y, 0x7,    H_8_4_4)   /*SABAH(8,4,4), 6 stages              */ \
-    X(Y, 0x8,    H_8_6_4)   /*SABAH(8,6,4), 8 stages              */ \
-    X(Y, 0x9,    H_10_6_4)  /*SABAH(10,6,4), 9 stages             */
-    enum {
-        REB_GENERATE_ENUM(REB_INTEGRATOR_SABA_TYPE)
-    } type;                             // Type of integrator
-    unsigned int safe_mode;             // Combine first and last sub-step
-    unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization
-
-    // Internal use
-    size_t N_allocated;
-    struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
-    size_t N_allocated_temp;
-    struct reb_particle* REB_RESTRICT p_temp;
-};
-
-// WHFast Integrator (Rein & Tamayo 2015)
-struct reb_integrator_whfast_state {
-    unsigned int corrector;                                     // Order of first symplectic corrector: 0 (default - no corrector), 3, 5, 7, 11, 17.  
-    unsigned int corrector2;                                    // 0: no second corrector, 1: use second corrector
-#define REB_INTEGRATOR_WHFAST_KERNEL(X,Y) \
-    X(Y, 0, DEFAULT) \
-    X(Y, 1, MODIFIEDKICK) \
-    X(Y, 2, COMPOSITION) \
-    X(Y, 3, LAZY)
-    enum {
-        REB_GENERATE_ENUM(REB_INTEGRATOR_WHFAST_KERNEL)
-    } kernel;                                                   // Kernel type. See Rein, Tamayo & Brown 2019 for details.                            
-#define REB_INTEGRATOR_WHFAST_COORDINATES(X,Y) \
-    X(Y, 0, JACOBI)                                         /* Jacobi coordinates (default)                   */ \
-    X(Y, 1, DEMOCRATICHELIOCENTRIC)                         /* Democratic Heliocentric coordinates            */ \
-    X(Y, 2, WHDS)                                           /* WHDS coordinates (Hernandez and Dehnen, 2017)  */ \
-    X(Y, 3, BARYCENTRIC)                                    /* Barycentric coordinates                        */ 
-    enum {
-        REB_GENERATE_ENUM(REB_INTEGRATOR_WHFAST_COORDINATES)
-    } coordinates;                                              // Coordinate system used in Hamiltonian splitting
-    unsigned int safe_mode;                                     // 0: Drift Kick Drift scheme (default), 1: combine first and last sub-step.
-    unsigned int keep_unsynchronized;                           // 1: continue from unsynchronized state after synchronization 
-
-    // Internal use
-    size_t N_allocated;
-    struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
-    size_t N_allocated_var;
-    struct reb_particle* REB_RESTRICT p_jh_var; // Jacobi coordinates for variational equations
-    size_t N_allocated_temp;
-    struct reb_particle* REB_RESTRICT p_temp;   // Used for lazy implementer's kernel 
-    unsigned int recalculate_coordinates_but_not_synchronized_warning;
-};
-
-
-// Special particle struct for WHFast512
-struct reb_particle_avx512; // Opaque pointer. Implemented in integrator_whfast.c
-
-// WHFast512 Integrator (Javaheri & Rein 2023)
-struct reb_integrator_whfast512_state {
-    unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
-    unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
-    unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
-
-    // Internal use
-    size_t N_allocated;
-    unsigned int recalculate_constants;
-    struct reb_particle_avx512* p_jh;
-    struct reb_particle p_jh0[4];
-};
-
-// Bulirsch Stoer Integrator (roughly follows fortran code by E. Hairer and G. Wanner)
-struct reb_integrator_bs_state {
-    double eps_abs; // Allowed absolute scalar error.
-    double eps_rel; // Allowed relative scalar error.
-    double min_dt;  // Minimum timestep
-    double max_dt;  // Maximum teimstep
-
-    // Internal use
-    struct reb_ode* nbody_ode;  // ODE corresponding to N-body system
-    int* sequence;              // stepsize sequence
-    int* cost_per_step;         // overall cost of applying step reduction up to iteration k + 1, in number of calls.
-    double* cost_per_time_unit; // cost per unit step.
-    double* optimal_step;       // optimal steps for each order. 
-    double* coeff;              // extrapolation coefficients.
-    double dt_proposed;
-    int first_or_last_step;
-    int previous_rejected;
-    int target_iter;
-    int user_ode_needs_nbody;   // Do not set manually. Use needs_nbody in reb_ode instead.
-};
 
 // Available return values for collision resolve functions
 enum REB_COLLISION_RESOLVE_OUTCOME {
@@ -415,42 +223,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME {
     REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2 = 2,
     REB_COLLISION_RESOLVE_OUTCOME_REMOVE_BOTH = 3,
 };
-
-// Available methods for EOS Integrator
-enum REB_INTEGRATOR_EOS_TYPE {
-#define REB_INTEGRATOR_EOS_TYPE(X,Y) \
-    X(Y, 0, LF)  \
-    X(Y, 1, LF4) \
-    X(Y, 2, LF6) \
-    X(Y, 3, LF8) \
-    X(Y, 4, LF4_2)   \
-    X(Y, 5, LF8_6_4) \
-    X(Y, 6, PLF7_6_4)\
-    X(Y, 7, PMLF4)   \
-    X(Y, 8, PMLF6)   
-    REB_GENERATE_ENUM(REB_INTEGRATOR_EOS_TYPE)
-};
-
-// Embedded Operator Splitting Integrator (Rein 2020)
-struct reb_integrator_eos_state {
-    enum REB_INTEGRATOR_EOS_TYPE phi0;         // Outer operator splitting method
-    enum REB_INTEGRATOR_EOS_TYPE phi1;         // Inner operator splitting method
-    unsigned int n;                 // Number of inner splittings per outer splitting
-    unsigned int safe_mode;         // Combine Kick steps at beginning and end of timestep
-};
-
-// Janus integrator (Rein & Tamayo 2018)
-struct reb_integrator_janus_state {
-    double scale_pos;       // Scale of position grid. Default 1e-16
-    double scale_vel;       // Scale of velocity grid. Default 1e-16
-    unsigned int order;     // Order: 2 (default), 4, 6, 8, 10 
-    unsigned int recalculate_integer_coordinates_this_timestep;  // Set to 1 if particles have been modified
-
-    // Internal use
-    struct reb_particle_int* REB_RESTRICT p_int;
-    size_t N_allocated;
-};
-
 
 // Possible return values of rebound_integrate
 enum REB_STATUS {

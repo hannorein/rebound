@@ -1,9 +1,6 @@
 /**
- * @file 	integrator_sei.h
- * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * integrator_sei.h: Symplectic Epicycle Integrator
  * 
- * @section 	LICENSE
  * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
@@ -24,4 +21,7 @@
  */
 #ifndef _INTEGRATOR_SEI_H
 #define _INTEGRATOR_SEI_H
+
+extern const struct reb_integrator reb_integrator_sei;
+
 #endif

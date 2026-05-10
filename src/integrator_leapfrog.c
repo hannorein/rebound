@@ -24,10 +24,6 @@
 #include "integrator_leapfrog.h"
 #include "binarydata.h"
 
-// Leapfrog Integrator (TU splitting)
-struct reb_integrator_leapfrog_state {
-    unsigned int order;
-};
 void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state);
 void* reb_integrator_leapfrog_create();
 void reb_integrator_leapfrog_free(void* p);
