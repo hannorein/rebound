@@ -1,13 +1,15 @@
 import ctypes
 from . import clibrebound, string_size_max
 from .vectors import Vec3dBasic
+from .particle import Particle
 import re
 from textwrap import TextWrapper
 
 
 # Note: ignoring some types that are not supposed to be set by the user
 REB_BINARYDATA_DTYPE = {1: ctypes.c_double, 2: ctypes.c_int, 3: ctypes.c_uint, 4: ctypes.c_uint32, 5: ctypes.c_int64,
-                        6: ctypes.c_uint64, 7: ctypes.c_size_t, 8: Vec3dBasic, 10: ctypes.c_void_p, 11: ctypes.c_void_p}
+                        6: ctypes.c_uint64, 7: ctypes.c_size_t, 8: Vec3dBasic, 9: Particle, 10: ctypes.c_void_p, 
+                        11: ctypes.c_void_p, 12: None, 13: ctypes.c_void_p, 20: ctypes.c_char_p}
 
 class MarkdownTextWrapper(TextWrapper):
     """A TextWrapper which handles  markdowni reference links."""
