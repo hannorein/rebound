@@ -1,6 +1,6 @@
 import ctypes
 import textwrap
-from .binarydata_field_descriptor import BinarydataFieldDescriptorList, REB_BINARYDATA_DTYPE
+from .binarydata_field_descriptor import BinarydataFieldDescriptorList, REB_BINARYDATA_DTYPE, format_doc
 
 class Integrator(ctypes.Structure):
     _fields_ = [("documentation", ctypes.c_char_p),
@@ -12,36 +12,6 @@ class Integrator(ctypes.Structure):
                 ("will_remove_particle", ctypes.c_void_p),
                 ("field_descriptor_list", BinarydataFieldDescriptorList),
                 ]
-
-import re
-from textwrap import TextWrapper
-
-class MarkdownTextWrapper(TextWrapper):
-    """A TextWrapper which handles  markdowni reference links."""
-    
-    LINK_REGEX = re.compile(r"(\[.*?\](?::\s*https?://[^\s]+))")
-
-    def _split(self, text):
-        split = re.split(self.LINK_REGEX, text)
-        chunks: List[str] = []
-        for item in split:
-            match = re.match(self.LINK_REGEX, item)
-            if match:
-                chunks.append(item) # do not break links
-            else:
-                chunks.extend(super()._split(item)) # handle normally
-        return chunks
-
-def format_doc(doc, indent=""):
-    doc = doc.decode("utf-8")
-    lines = doc.splitlines()
-    doc = ""
-    wrapper = MarkdownTextWrapper(width=80, initial_indent=indent, subsequent_indent=indent, break_long_words=False)
-    for i, line in enumerate(lines):
-        if i:
-            doc += "\n"
-        doc += wrapper.fill(line)
-    return doc
 
 class IntegratorConfiguration(ctypes.Structure):
     """ Generic Integrator Configuration """
@@ -58,29 +28,14 @@ class IntegratorConfiguration(ctypes.Structure):
             if callbacks.documentation:
                 doc += format_doc(callbacks.documentation) + "\n"
             fdlist = callbacks.field_descriptor_list
-            attributes = 0
+            fdlist_doc = []
             for fd in fdlist:
-                if fd.name == b'':
-                    break
-                if fd.documentation == b'':
-                    continue
-                if attributes == 0:
-                    doc += "\nAttributes\n"
-                    doc += "----------\n"
-                else:
-                    doc += "\n"
-                attributes += 1
-                doc += fd.name.decode("utf-8") + " : " 
-                if fd.dtype not in REB_BINARYDATA_DTYPE:
-                    doc += "(unknown datatype)\n"
-                else:
-                    doc += str(REB_BINARYDATA_DTYPE[fd.dtype].__name__) + "\n"
-                doc += format_doc(fd.documentation,indent="    ")
-                edl = fd.enum_descriptor_list
-                if edl:
-                    doc += "\n    Supported values:"
-                    for ed in edl:
-                        doc += "\n        " + str(ed.value) + " = '"+ed.name.decode("utf-8") + "'"
+                fd_doc = fd.doc()
+                if fd_doc: fdlist_doc.append(fd_doc)
+            if len(fdlist_doc):
+                doc += "\nAttributes\n"
+                doc += "----------\n"
+                doc += "\n".join(fdlist_doc)
             return doc
         return "No documentation available."
 
@@ -95,9 +50,19 @@ class IntegratorConfiguration(ctypes.Structure):
     def __eq__(self, value):
         return self.__str__() == value.__str__()
 
+    def _getInstance(self, fd):
+        if REB_BINARYDATA_DTYPE[fd.dtype] == ctypes.c_int:
+            doc = fd.documentation.decode("utf-8")
+            class MyInt(int):
+                __doc__ = doc
+            value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
+            return MyInt(value)
+        return REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
+
     def __getattr__(self, name):
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         value = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset).value
+        return self._getInstance(field_descriptor)
         if field_descriptor.enum_descriptor_list:
             for enum_descriptor in field_descriptor.enum_descriptor_list:
                 if enum_descriptor.value == value:
