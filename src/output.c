@@ -61,7 +61,6 @@ int reb_simulation_output_check(struct reb_simulation* r, double interval){
 }
 
 #ifdef PROFILING
-#warning PROFILING enabled. Rebound is NOT thread-safe.
 double profiling_time_sum[PROFILING_CAT_NUM];
 double profiling_time_initial   = 0;
 double profiling_timing_initial = 0;
