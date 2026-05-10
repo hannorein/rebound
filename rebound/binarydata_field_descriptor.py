@@ -10,7 +10,7 @@ REB_BINARYDATA_DTYPE = {1: ctypes.c_double, 2: ctypes.c_int, 3: ctypes.c_uint, 4
 
 class MarkdownTextWrapper(TextWrapper):
     """A TextWrapper which handles  markdowni reference links."""
-    LINK_REGEX = re.compile(r"(\[.*?\](?::\s*https?://[^\s]+))")
+    LINK_REGEX = re.compile(r"(\[.*?\](?::\s*https?://[^\s]+|\.)?)")
     def _split(self, text):
         split = re.split(self.LINK_REGEX, text)
         chunks: List[str] = []

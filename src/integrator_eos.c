@@ -37,12 +37,30 @@
 
 void reb_integrator_eos_step(struct reb_simulation* r, void* state);
 void reb_integrator_eos_synchronize(struct reb_simulation* r, void* state);
+void* reb_integrator_eos_create();
+const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor_list[];
+
+const struct reb_integrator reb_integrator_eos = {
+    .documentation = 
+    "This is the Embedded Operator Splitting (EOS) methods described in [Rein (2019)]."
+    "\n\n"
+    "[Rein (2019)]: https://ui.adsabs.harvard.edu/abs/2020MNRAS.492.5413R/abstract\n"
+    ,
+    .step = reb_integrator_eos_step,
+    .create = reb_integrator_eos_create,
+    .synchronize = reb_integrator_eos_synchronize,
+    .field_descriptor_list = reb_integrator_eos_field_descriptor_list,
+};
 
 const struct reb_binarydata_field_descriptor reb_integrator_eos_field_descriptor_list[] = {
-    { "", REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
-    { "", REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
-    { "", REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
-    { "", REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
+    { "Outer operator splitting scheme",
+        REB_INT,         "phi0",                  offsetof(struct reb_integrator_eos_state, phi0), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
+    { "Inner operator splitting scheme", 
+        REB_INT,         "phi1",                  offsetof(struct reb_integrator_eos_state, phi1), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_EOS_TYPE)},
+    { "Number of sub-timesteps. Default: 2.",
+        REB_UINT,        "n",                     offsetof(struct reb_integrator_eos_state, n), 0, 0, 0},
+    { "If set to 0, always combine drift steps at the beginning and end of `phi0`. If set to 1, `n` needs to be bigger than 1.", 
+        REB_UINT,        "safe_mode",             offsetof(struct reb_integrator_eos_state, safe_mode), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
@@ -55,13 +73,6 @@ void* reb_integrator_eos_create(){
     return eos;
 }
 
-
-const struct reb_integrator reb_integrator_eos = {
-    .step = reb_integrator_eos_step,
-    .create = reb_integrator_eos_create,
-    .synchronize = reb_integrator_eos_synchronize,
-    .field_descriptor_list = reb_integrator_eos_field_descriptor_list,
-};
 
 static const double lf4_2_a = 0.211324865405187117745425609749;
 

@@ -25,7 +25,7 @@ class IntegratorConfiguration(ctypes.Structure):
         """ Dynamically generate __doc__ from data in C structs """
         callbacks = self.callbacks
         if callbacks:
-            doc = "REBOUND Integrator ("+self.name.decode("utf-8")+")\n\n"
+            doc = "REBOUND Integrator ("+self.name.decode("utf-8").upper()+")\n\n"
             if callbacks.documentation:
                 doc += format_doc(callbacks.documentation) + "\n"
             fdlist = callbacks.field_descriptor_list

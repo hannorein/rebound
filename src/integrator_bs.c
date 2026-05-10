@@ -78,27 +78,80 @@ static const double stabilityReduction = 0.5;
 static const int maxIter = 2; // maximal number of iterations for which checks are performed
 static const int maxChecks = 1; // maximal number of checks for each iteration
 
-const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_list[] = {
-    { "", REB_DOUBLE,      "eps_abs",                offsetof(struct reb_integrator_bs_state, eps_abs), 0, 0, 0},
-    { "", REB_DOUBLE,      "eps_rel",                offsetof(struct reb_integrator_bs_state, eps_rel), 0, 0, 0},
-    { "", REB_DOUBLE,      "min_dt",                 offsetof(struct reb_integrator_bs_state, min_dt), 0, 0, 0},
-    { "", REB_DOUBLE,      "max_dt",                 offsetof(struct reb_integrator_bs_state, max_dt), 0, 0, 0},
-    { "", REB_INT,         "first_or_last_step",     offsetof(struct reb_integrator_bs_state, first_or_last_step), 0, 0, 0},
-    { "", REB_INT,         "previous_rejected",      offsetof(struct reb_integrator_bs_state, previous_rejected), 0, 0, 0},
-    { "", REB_INT,         "target_iter",            offsetof(struct reb_integrator_bs_state, target_iter), 0, 0, 0},
-    { 0 }, // Null terminated list
-};
-
 void reb_integrator_bs_step(struct reb_simulation* r, void* p);
 void* reb_integrator_bs_create();
 void reb_integrator_bs_free(void* state);
+const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_list[];
 
 const struct reb_integrator reb_integrator_bs = {
+    .documentation =
+    "The Gragg-Bulirsch-Stoer integrator (short BS for Bulirsch-Stoer) is an adaptive integrator "
+    "which uses Richardson extrapolation and the modified midpoint method to obtain solutions to "
+    "ordinary differential equations. The version in REBOUND is based on the method described in "
+    "Hairer, Norsett, and Wanner 1993 (see section II.9, page 224ff), specifically the JAVA "
+    "implementation available in the [Hipparchus package]. The Hipparchus and the REBOUND "
+    "versions are adaptive in both the timestep and the order of the method for optimal performance. "
+    "The BS implementation in REBOUND can integrate first and second order variational equations. "
+    "The BS integrator is particularly useful for short integrations where only medium accuracy is "
+    "required. For long integrations a symplectic integratoris such as WHFast perform better. "
+    "For high accuracy integrations the IAS15 integrator generally performs better. "
+    "Because BS is adaptive, it can handle close encounters. Currently a collision search is "
+    "only performed after every timestep, i.e. not after a every sub-timestep. "
+    "The BS integrator tries to keep the error of each coordinate $y$ below $\\epsilon_{abs} + "
+    "\\epsilon_{rel} \\cdot  \\left|y\\right|$. Note that this applies to both position and "
+    "velocity coordinates of all particles which implies that the code units you're "
+    "choosing for the integration matter. If you need fine control over the scales "
+    "used internally, you can set the `getscale` function pointer in `nbody_ode`. "
+    "\n\n"
+    "Note: The code does not guarantee that the errors remain below the tolerances. "
+    "In particular, note that BS is not a symplectic integrator which results "
+    "in errors growing linearly in time (phase errors grow quadratically in time). "
+    "It requires some experimentation to find the tolerances that offer the best "
+    "compromise between accuracy and speed for your specific problem. "
+    "\n\n"
+    "Compared to the other integrators in REBOUND, BS can be used to integrate arbitrary "
+    "ordinary differential equations (ODEs), not just the N-body problem. REBOUND exposes an "
+    "ODE-API which allows you to make use of this. User-defined ODEs are always integrated "
+    "with BS. You can choose to integrate the N-body equations with BS as well, or any of the "
+    "other integrators. If you choose BS for the N-body equations, then BS will treat all "
+    "ODEs (N-body + all user-defined ones) as one big system of coupled ODEs. This means "
+    "your timestep will be set by either the N-body problem or the user-defined ODEs, "
+    "whichever involves the shorter timescale."
+    "\n\n"
+    "If you choose IAS15 or WHFast for the N-body equation but also have user-defined ODEs, "
+    "then they cannot be treated as one big coupled system of ODEs anymore. In that case "
+    "the N-body integration is done first. Then the user-defined ODEs are advanced to the "
+    "exact same time as the N-body system using BS using whatever timestep is required "
+    "to achieve the set tolerance. During the integration of the user-defined ODEs, "
+    "the coordinates of the particles in the N-body simulation are assumed to be fixed "
+    "at their final position and velocity. This introduces an error. However, if the system "
+    "evolves adiabatically (the timescales in the user-defined ODEs are much longer than "
+    "in the N-body problem), then the error will be small. "
+    "\n\n"
+    "[Hipparchus package]: https://github.com/Hipparchus-Math/hipparchus/blob/master/hipparchus-ode/src/main/java/org/hipparchus/ode/nonstiff/GraggBulirschStoerIntegrator.java\n"
+    ,
     .step = reb_integrator_bs_step,
     .create = reb_integrator_bs_create,
     .free = reb_integrator_bs_free,
     .field_descriptor_list = reb_integrator_bs_field_descriptor_list,
 };
+
+const struct reb_binarydata_field_descriptor reb_integrator_bs_field_descriptor_list[] = {
+    { "Sets the absolute tolerance for both position and velocity coordinates", 
+        REB_DOUBLE,      "eps_abs",                offsetof(struct reb_integrator_bs_state, eps_abs), 0, 0, 0},
+    { "Sets the relative tolerance for both position and velocity coordinates", 
+        REB_DOUBLE,      "eps_rel",                offsetof(struct reb_integrator_bs_state, eps_rel), 0, 0, 0},
+    { "Minimum allowed timestep for the adaptive timestepping algorithm", 
+        REB_DOUBLE,      "min_dt",                 offsetof(struct reb_integrator_bs_state, min_dt), 0, 0, 0},
+    { "Maximum allowed timestep for the adaptive timestepping algorithm", 
+        REB_DOUBLE,      "max_dt",                 offsetof(struct reb_integrator_bs_state, max_dt), 0, 0, 0},
+    { "This flag can be set to 1 to indicate that particle data has changed in between steps", 
+        REB_INT,         "first_or_last_step",     offsetof(struct reb_integrator_bs_state, first_or_last_step), 0, 0, 0},
+    { "", REB_INT,         "previous_rejected",      offsetof(struct reb_integrator_bs_state, previous_rejected), 0, 0, 0},
+    { "", REB_INT,         "target_iter",            offsetof(struct reb_integrator_bs_state, target_iter), 0, 0, 0},
+    { 0 }, // Null terminated list
+};
+
 
 
 void* reb_integrator_bs_create(){
