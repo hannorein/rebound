@@ -51,10 +51,14 @@ struct reb_integrator_configuration* reb_integrator_configurations_custom = NULL
 // Dummy integrator
 static void reb_integrator_none_step(struct reb_simulation* const r, void* state){
     (void) state; // Not used
-    r->t+=r->dt/2.;
+    r->t+=r->dt;
     r->dt_last_done = r->dt;
 }
-const struct reb_integrator reb_integrator_none = {.step=reb_integrator_none_step};
+const struct reb_integrator reb_integrator_none = {
+    .documentation = 
+    "This is a dummy integrator and has no effect on the simulation when used other than advancing time foward.",
+    .step=reb_integrator_none_step
+};
 
 char** reb_integrators_registered(){
     // Returns a NULL terminated list of names. List must be freed but not names.

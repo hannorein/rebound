@@ -4,6 +4,31 @@ import math
 import warnings
 import ctypes 
 
+class TestIntegratorDoc(unittest.TestCase):
+    def test_integrator_doc(self):
+        """ Make sure documentation is available for each integrator and it renders ok """
+        clibrebound = rebound.clibrebound
+        clibrebound.reb_integrators_registered.restype = ctypes.POINTER(ctypes.c_char_p)
+        res = clibrebound.reb_integrators_registered()
+        i = 0
+        names = []
+        while True:
+            if res[i] == None:
+                break
+            else:
+                names.append(res[i].decode("ascii"))
+            i = i+1
+        clibrebound.reb_free(res)
+        for name in names:
+            with self.subTest(val=name):
+                sim = rebound.Simulation()
+                sim.integrator = name
+                doc = sim.integrator.__doc__
+                self.assertNotEqual(doc, None)
+                lines = len(doc.split("\n"))
+                self.assertGreater(lines, 4)
+
+
 class TestUniqueIntegrator(unittest.TestCase):
     def test_unique_integrator_names(self):
         clibrebound = rebound.clibrebound
