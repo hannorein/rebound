@@ -52,7 +52,8 @@ class IntegratorConfiguration(ctypes.Structure):
 
     def _getInstance(self, fd):
         if REB_BINARYDATA_DTYPE[fd.dtype] == ctypes.c_int:
-            doc = fd.documentation.decode("utf-8")
+            doc = fd.doc()
+            #TODO: generalize, cleanup
             class MyInt(int):
                 __doc__ = doc
             value = REB_BINARYDATA_DTYPE[fd.dtype].from_address(self.state + fd.offset).value
