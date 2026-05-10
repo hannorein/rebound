@@ -1,13 +1,6 @@
 /**
- * @file 	integrator_leapfrog.c
- * @brief 	Leap-frog integration scheme.
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the leap-frog integration scheme.  
- * This scheme is second order accurate, symplectic and well suited for 
- * non-rotating coordinate systems. Note that the scheme is formally only
- * first order accurate when velocity dependent forces are present.
- * 
- * @section 	LICENSE
+ * integrator_leapfrog.c: The standard Leap Frog integator and higher order generalizations
+ *
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
@@ -35,20 +28,33 @@
 struct reb_integrator_leapfrog_state {
     unsigned int order;
 };
-
-const struct reb_binarydata_field_descriptor reb_integrator_leapfrog_field_descriptor_list[] = {
-    { "", REB_UINT,        "order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0, 0},
-    { 0 }, // Null terminated list
-};
-
 void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state);
 void* reb_integrator_leapfrog_create();
 void reb_integrator_leapfrog_free(void* p);
+const struct reb_binarydata_field_descriptor reb_integrator_leapfrog_field_descriptor_list[];
+
 const struct reb_integrator reb_integrator_leapfrog = {
+    .documentation = 
+    "This is the standard leap frog integrator. It is symplectic. "
+    "By default it is second order with one force evaluation per "
+    "step. Higher orders of 4, 6, and 8 can be selected as well. "
+    "These correspond to the 4th order Yoshida integrator and the "
+    "8th order by Blanes & Casa (2016), p91. The higher order methods "
+    "have more function evaluations and are therefore slower. Note "
+    "that some substeps of the higher order methods move particles "
+    "backwards. Therefore higher order methods might not give "
+    "accurate results when a collision search is turned on."
+    ,
     .step = reb_integrator_leapfrog_step,
     .create = reb_integrator_leapfrog_create,
     .free = reb_integrator_leapfrog_free,
     .field_descriptor_list = reb_integrator_leapfrog_field_descriptor_list,
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_leapfrog_field_descriptor_list[] = {
+    { "Order of the integrator. Default is 2. Other allowed values are 6 and 8.",
+        REB_UINT,        "order",          offsetof(struct reb_integrator_leapfrog_state, order), 0, 0, 0},
+    { 0 }, // Null terminated list
 };
 
 void* reb_integrator_leapfrog_create(){
