@@ -38,7 +38,7 @@ else
 	LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
 	LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
 endif
-	CCPROBLEM=$(CC) /I "../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
+	CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
 endif
 # Removed -march=native for now
 ifeq ($(OS), Linux)
