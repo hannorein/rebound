@@ -48,4 +48,12 @@ struct reb_integrator_mercurius_state {
     struct reb_vec3d com_vel;
 };
 
+// Built in mercurius switching functions
+
+REB_API double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
+REB_API double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
+REB_API double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
+REB_API double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
+
+
 #endif

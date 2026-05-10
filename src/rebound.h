@@ -198,7 +198,7 @@ struct reb_integrator_configuration {
 #include "integrator_bs.h"           /* Gragg-Bulirsch-Stoer                                                               */
 #include "integrator_whfast512.h"    /* WHFast integrator, optimized for AVX512                                            */
 #include "integrator_trace.h"        /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */
-extern const struct reb_integrator reb_integrator_none; /* Does nothing other than adcance time. Defined in rebound.c      */
+extern const struct reb_integrator reb_integrator_none; /* Does nothing other than advance time. Defined in rebound.c      */
                                      
 // List of built-in integrators for X macros
 #define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(trace) X(none) 
@@ -521,8 +521,6 @@ REB_API struct reb_particle reb_simulation_com(struct reb_simulation* r);
 REB_API struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_particle p2);
 // Returns the center of mass of particles in the simulation within a given range.
 REB_API struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t first, size_t last);
-// Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
-REB_API double reb_integrator_ias15_timescale(struct reb_simulation* r);
 
 
 // Functions to add and initialize particles
@@ -565,8 +563,6 @@ REB_API void reb_particle_imul(struct reb_particle* p1, double value);
 REB_API double reb_particle_distance(struct reb_particle* p1, struct reb_particle* p2);
 // Compares two particles, ignoring pointers. Returns 1 if particles differ, 0 if they are exactly equal.
 REB_API int reb_particle_cmp(struct reb_particle p1, struct reb_particle p2); 
-// Advances one particle forward in a Keplerian orbit for time dt. mu is the gravitational parameter, G*(m+M). r can be NULL unless variational particles are used or warnings are needed.
-REB_API void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r);
 // Sets a particle's name. This function should be used instead of directly setting the name in the particle's structure as it
 // registers the name, allowing for faster lookup and storing of name in binary files.
 REB_API void reb_particle_set_name(struct reb_particle* p, const char* const name);
@@ -592,19 +588,6 @@ REB_API double reb_simulation_megno(struct reb_simulation* r);
 // Returns the largest Lyapunov characteristic number (LCN).
 REB_API double reb_simulation_lyapunov(struct reb_simulation* r);
 
-
-// Built in mercurius switching functions
-
-REB_API double reb_integrator_mercurius_L_mercury(const struct reb_simulation* const r, double d, double dcrit);  // default
-REB_API double reb_integrator_mercurius_L_infinity(const struct reb_simulation* const r, double d, double dcrit);
-REB_API double reb_integrator_mercurius_L_C4(const struct reb_simulation* const r, double d, double dcrit);
-REB_API double reb_integrator_mercurius_L_C5(const struct reb_simulation* const r, double d, double dcrit);
-
-// Built in trace switching functions
-
-REB_API int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const size_t j);
-REB_API int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j);
-REB_API int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j);
 
 // Built in collision resolve functions
 

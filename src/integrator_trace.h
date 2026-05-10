@@ -66,6 +66,10 @@ struct reb_integrator_trace_state {
     unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
 };
 
-void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Ionternal in-place coordinate transformation
-void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation
+// Built in trace switching functions
+
+REB_API int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const size_t j);
+REB_API int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j);
+REB_API int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j);
+
 #endif

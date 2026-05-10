@@ -53,4 +53,7 @@ struct reb_integrator_ias15_state {
     double* REB_RESTRICT er;              // Same for e coefficients
 };
 
+// Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
+REB_API double reb_integrator_ias15_timescale(struct reb_simulation* r);
+
 #endif
