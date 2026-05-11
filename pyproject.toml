@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,8 @@ name = "rebound"
 version = "5.0.0"
 description = "An open-source multi-purpose N-body code"
 readme = { file = "README.md", content-type = "text/markdown" }
-license = { text = "GPL-3.0-only" }
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 authors = [
     { name = "Hanno Rein", email = "hanno@hanno-rein.de" },
 ]
