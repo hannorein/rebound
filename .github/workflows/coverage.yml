@@ -27,8 +27,6 @@ jobs:
           pip install pytest coverage multiprocess matplotlib numpy
       - name: Build package
         run: |
-          python -m venv venv
-          source venv/bin/activate
           pip install . -v
         env:
           FFP_CONTRACT_OFF: 1
