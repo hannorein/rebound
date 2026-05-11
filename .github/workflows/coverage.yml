@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest coverage multiprocess matplotlib numpy
       - name: Build package
-        run: python setup.py build_ext --inplace
+        run: pip install -e .
         env:
           FFP_CONTRACT_OFF: 1
           COVERAGE: 1
