@@ -40,10 +40,6 @@ jobs:
         run: |
           find . -name "*.gcda" -exec cp {} ./src \;
           find . -name "*.gcno" -exec cp {} ./src/ \;
-      - name: Debug output
-        run: |
-          ls -lsrt .
-          ls -lsrt ./src/
       - name: Run lcov
         run: |
           lcov --capture --directory src --output-file coverage.info 
