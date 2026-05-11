@@ -15,6 +15,8 @@ jobs:
           curl -Os https://cli.codecov.io/latest/linux/codecov
           chmod +x codecov
           ./codecov --version
+      - name: Install lcov
+        run: sudo apt-get install -y lcov
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -35,8 +37,12 @@ jobs:
           python -m coverage run -m unittest discover -s rebound/tests/ -v
       - name: Move coverage files to workspace
         run: |
-          find . -name "*.gcda" -exec cp {} ./src/ \;
+          find . -name "*.gcda" -exec cp {} ./src \;
           find . -name "*.gcno" -exec cp {} ./src/ \;
+      - name: Debug output
+        run: |
+          ls -lsrt .
+          ls -lsrt ./src/
       - name: Upload coverage reports
         run: |
           ./codecov --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }}
