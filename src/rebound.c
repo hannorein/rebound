@@ -44,7 +44,7 @@ const size_t reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
 const char* reb_version_str = "5.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
-
+ //TODO: ADD coverage test of c extension
 // NULL terminated list of custom registered integrators.
 struct reb_integrator_configuration* reb_integrator_configurations_custom = NULL;
 
