@@ -56,7 +56,7 @@ static void reb_integrator_none_step(struct reb_simulation* const r, void* state
 }
 const struct reb_integrator reb_integrator_none = {
     .documentation = 
-    "This is a dummy integrator and has no effect on the simulation when used other than advancing time foward.",
+    "This is a dummy integrator and has no effect on the simulation when used other than advancing time forward.",
     .step=reb_integrator_none_step
 };
 

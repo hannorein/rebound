@@ -148,7 +148,7 @@ struct reb_collision{
     size_t ri;              // Root cell index (MPI only)
 };
 
-// Dictionary element to provie human readable name for enums. Used by python.
+// Dictionary element to provide human readable name for enums. Used by python.
 struct reb_binarydata_enum_descriptor{
     int value;
     char name[REB_STRING_SIZE_MAX];
@@ -179,7 +179,7 @@ struct reb_integrator {
 };
 
 
-// A current integrator configuation. Internal use only.
+// A current integrator configuration. Internal use only.
 struct reb_integrator_configuration {
     const char* name;
     struct reb_integrator callbacks;

@@ -95,7 +95,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
     { "By default the keep_unsynchronized flag is 0. If set to 1 synchronization of the "
         "simulation is done on a copy of the particle data. This allows "
         "the simulation to continue integrating as if the simulation "
-        "were never synchronized. This allows for bit-wise reproducability "
+        "were never synchronized. This allows for bit-wise reproducibility "
         "in long term simulations.",
         REB_UINT,        "keep_unsynchronized",offsetof(struct reb_integrator_whfast_state, keep_unsynchronized), 0, 0, 0},
     // Internal variables

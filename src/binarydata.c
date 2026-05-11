@@ -377,7 +377,7 @@ int reb_binarydata_diff(char* buf1, size_t size1, char* buf2, size_t size2, char
         }
         if(fields_differ){
             if (strncmp(name1, "walltime",8)!=0){
-                // Ignore all fiels that start with walltime, but only for the return value (print it out)
+                // Ignore all fields that start with walltime, but only for the return value (print it out)
                 // Typically we do not care about this field when comparing simulations.
                 are_different = 1.;
             }

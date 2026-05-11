@@ -92,7 +92,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         REB_FUNCTIONPOINTER,"S",            offsetof(struct reb_integrator_trace_state, S), 0, 0, 0},
     { "This is a function pointer to the switching function for close encounters involving "
         "the central body. If NULL (the default), the default switching function will be used. "
-        "The defult switching function checks if a body is close to its pericenter by "
+        "The default switching function checks if a body is close to its pericenter by "
         "considering a timescale derived from high-order derivatives of the particle's "
         "herliocentric position, inspired by [Pham, Rein, and Spiegel (2024)]. "
         "The argument `j` is the index of the non-central particle considered. "
