@@ -5,6 +5,13 @@ import warnings
 import ctypes 
 
 class TestIntegratorDoc(unittest.TestCase):
+    def test_field_doc(self):
+        sim = rebound.Simulation()
+        sim.integrator = "whfast"
+        doc = sim.integrator.safe_mode.__doc__
+        lines = len(doc.split("\n"))
+        self.assertGreater(lines, 4)
+
     def test_integrator_doc(self):
         """ Make sure documentation is available for each integrator and it renders ok """
         clibrebound = rebound.clibrebound
