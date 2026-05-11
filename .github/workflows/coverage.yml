@@ -35,8 +35,8 @@ jobs:
           python -m coverage run -m unittest discover -s rebound/tests/ -v
       - name: Move coverage files to workspace
         run: |
-          find /var/folders -name "*.gcda" -exec cp {} ./src/ \;
-          find /var/folders -name "*.gcno" -exec cp {} ./src/ \;
+          find . -name "*.gcda" -exec cp {} ./src/ \;
+          find . -name "*.gcno" -exec cp {} ./src/ \;
       - name: Upload coverage reports
         run: |
           ./codecov --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }}
