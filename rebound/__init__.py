@@ -5,6 +5,7 @@ import sys
 import os
 import warnings
 import platform
+import importlib.util
 from ctypes import cdll, c_char_p, c_int, c_uint32
 
 # Find suffix
@@ -29,10 +30,12 @@ except:
     pass
 
 # Import shared library
-pymodulepath = os.path.dirname(os.path.abspath(__file__))
-pymodulepath = os.path.abspath(os.path.join(pymodulepath, os.pardir))
-__libpath__ = os.path.join(pymodulepath, "librebound"+suffix)
-clibrebound = cdll.LoadLibrary(__libpath__)
+spec = importlib.util.find_spec("librebound")
+if spec and spec.origin:
+    __libpath__ = spec.origin
+    clibrebound = cdll.LoadLibrary(__libpath__)
+else:
+    raise ImportError("librebound not found")
 
 # Version
 __version__ = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
