@@ -23,8 +23,23 @@
  *
  */
 
+
 #ifndef _MAIN_H
 #define _MAIN_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __cplusplus
+#if defined(__GNUC__)
+#define restrict __restrict__
+#elif defined(__clang__)
+#define restrict __restrict
+#elif defined(_MSC_VER)
+#define restrict  __restrict
+#endif
+#endif
 
 #ifdef _WIN64
 #define _LP64
@@ -1446,4 +1461,8 @@ DLLEXPORT void reb_whfast_interaction_step(struct reb_simulation* const r, const
 DLLEXPORT void reb_whfast_jump_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
 DLLEXPORT void reb_whfast_kepler_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
 DLLEXPORT void reb_whfast_com_step(const struct reb_simulation* const r, const double _dt); ///< Internal function
+
+#ifdef __cplusplus
+}
+#endif
 #endif // _MAIN_H
