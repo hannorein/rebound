@@ -15,7 +15,7 @@
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
     
-    struct reb_particle p; 
+    struct reb_particle p = {0}; 
     p.m      = 1.;    
     reb_simulation_add(r, p); 
 
