@@ -25,6 +25,7 @@ indx = "indx"
 setp = "setp"
 [files]
 extend-exclude = [
+"site/*",
 "src/glad.*",
 "src/derivatives.c",
 "docs/javascripts",
