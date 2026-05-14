@@ -6,5 +6,16 @@
 
 /* Ensure that when a section IS expanded, the spacing doesn't double up */
 .md-nav__item--active > .md-nav__link {
-  margin-bottom: 0.2rem; 
+  margin-bottom: 0rem; 
+}
+
+
+/* Target only the root-level list items in the primary navigation tree */
+.md-nav--primary > .md-nav__list > .md-nav__item {
+  margin-top: 2.5rem;
+}
+
+/* Ensure the very first item (usually 'Home' or 'Index') stays aligned at the top */
+.md-nav--primary > .md-nav__list > .md-nav__item:first-child {
+  margin-top: 0;
 }

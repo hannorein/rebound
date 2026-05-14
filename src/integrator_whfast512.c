@@ -90,7 +90,7 @@ const struct reb_integrator reb_integrator_whfast512 = {
     "Download latest version of REBOUND. Then set the AVX512 environment variable in your shell "
     "with `export AVX512=1` and install rebound with `pip install -e .` form the main directory. "
     "\n\n"
-    "To allow for the best performance, WHFast512 has certain limitations that WHFast does not have:\n"
+    "To allow for the best performance, WHFast512 has certain limitations that WHFast does not have:\n\n"
     "- The number of particles cannot exceed 9 (1 star and 8 planets) and needs to be constant.\n" 
     "- Although you can use WHFast512 with any number of planets (up to 8), the performance is best "
     "if the system has either 2, 4, or 8 planets. \n"
