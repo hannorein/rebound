@@ -3,15 +3,14 @@ repo_url: https://github.com/hannorein/rebound
 repo_name: hannorein/rebound
 edit_uri: ""
 nav:
-  - "Home":
-    - index.md
-    - changelog.md
+  - index.md
   - "Quick-start guide":
     - quickstart_installation.md
     - quickstart_firstexample.md
     - quickstart_whereto.md
   - "API Documentation":
     - api.md
+    - changelog.md
     - "Simulation":
       - simulation.md
       - simulationvariables.md
@@ -166,8 +165,8 @@ theme:
   logo: img/rebound.png
   favicon: img/favicon.ico
   features:
-    - navigation.tabs
-    - toc.integrate
+    - navigation.sections
+    - navigation.path
 markdown_extensions:
   - admonition
   - def_list
