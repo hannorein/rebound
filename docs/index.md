@@ -91,7 +91,7 @@ sim.cite()
 ```
 
 !!! Info
-    When you cite one of the REBOUND papers, your paper will receive an automatic shout-out from the [REBOUND Citation Bot](https://botsin.space/@reboundbot). 
+    When you cite one of the REBOUND papers, your paper will receive an automatic shout-out from the [REBOUND Citation Bot](https://mastodon.social/@reboundbot). 
 
 ## License
 

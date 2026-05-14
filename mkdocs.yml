@@ -45,8 +45,7 @@ nav:
     - collisions.md
     - boundaryconditions.md
     - gravity.md
-    - "Visualization":
-      - visualization.md
+    - visualization.md
     - "Other concepts":
       - units.md
       - simulationarchive.md
