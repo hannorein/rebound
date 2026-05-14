@@ -1,4 +1,4 @@
-# Life cycle
+# Simulation
 
 These pages describe the C structure `reb_simulation` and the python class `rebound.Simulation`.
 Because the python class is an abstraction of the C structure, we describe their common features in one place.

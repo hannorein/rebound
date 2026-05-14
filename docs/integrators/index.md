@@ -17,6 +17,6 @@ Furthermore, if your custom integrator needs to store any data, this can be done
 
 To enable a custom integrator, you must set `integrator` and setup various function pointers in the `ri_custom` struct. 
 This feature is intended to be used from C and we do currently not provide a python interface.
-There is one [basic C example](../c_examples/custom_integrator) and one more [advanced C example](../c_examples/custom_integrator_with_data) which show the usage.
+There is one [basic C example](../c_examples/custom_integrator.md) and one more [advanced C example](../c_examples/custom_integrator_with_data.md) which show the usage.
 
 

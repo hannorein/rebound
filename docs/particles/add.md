@@ -2,9 +2,9 @@
 
 ![type:video](https://www.youtube.com/embed/FoTwDtAeJyk)
 
-Once you've created a [simulation object](simulation.md), you can add particles to it. 
+Once you've created a [simulation object](../simulation/index.md), you can add particles to it. 
 REBOUND supports several different ways to do that. 
-Also check out the [discussion on particle operators](particleoperators.md).
+Also check out the [discussion on particle operators](operators.md).
 
 ## Adding particles manually
 One way to add a particle to a simulation is to first manually create a particle object, then calling a function to add the particle to the simulation.

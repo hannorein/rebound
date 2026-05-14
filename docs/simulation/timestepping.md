@@ -103,4 +103,4 @@ You can manually 'synchronize' the simulation by calling
     sim.synchronize()
     ```
 
-See the [discussion on integrators](integrators.md) for more information about the `safe_mode` and synchronizing simulations.
+See the [discussion on integrators](../integrators/index.md) for more information about the `safe_mode` and synchronizing simulations.

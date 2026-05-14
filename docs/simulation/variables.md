@@ -20,14 +20,14 @@ To keep the documentation concise, variables which are only intended for interna
 ## Timestepping
 
 `#!c double t`                  
-:   Current simulation time. The default value is 0. The value increases if a simulation is integrated forward in time ($dt>0$). See also the [discussion on units](units.md).
+:   Current simulation time. The default value is 0. The value increases if a simulation is integrated forward in time ($dt>0$). See also the [discussion on units](../units.md).
 
 `#!c double dt`                 
 :   This is the current timestep. The default is 0.001. 
     Make sure to set the timestep to a small fraction (a few percent) of the shortest dynamical timescale in the problem.
-    Adaptive integrators such as [IAS15](../integrators/#ias15) will use this value as their initial guess during the first timestep.
+    Adaptive integrators such as [IAS15](../integrators/ias15.md) will use this value as their initial guess during the first timestep.
     In subsequent timesteps, adaptive integrators will change this value.
-    See also the [discussion on units](units.md).
+    See also the [discussion on units](../units.md).
      
 `#!c double dt_last_done`       
 :   REBOUND sets this variable to the last timestep used. Do not set this variable manually.
@@ -110,7 +110,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c double G`                  
 :   Gravitational constant. By default, this value is 1. 
     If $G=1$, then an orbit with semi-major axis $a=1$ has a period of $P=2\pi$.
-    See also the [discussion on units](units.md).
+    See also the [discussion on units](../units.md).
 
 `#!c double softening`          
 :   This is the gravitational softening parameter. 
@@ -230,7 +230,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c enum REB_COLLISION_RESOLVE_OUTCOME (*collision_resolve) (struct reb_simulation* const r, struct reb_collision)` 
 :   This is a function pointer which determines how a collision is resolved. By default, it is NULL, assuming hard sphere model.
     A return value of type `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE` (=0) indicates that both particles remain in the simulation. A return value of `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P1`/`REB_COLLISION_RESOLVE_OUTCOME_REMOVE_P2` (=1/2) indicates that particle 1/2 should be removed from the simulation. A return value of `REB_COLLISION_RESOLVE_OUTCOME_REMOVE_BOTH` (=3) indicates that both particles should be removed from the simulation. 
-    See [the discussion on collisions](collisions.md#resolving-collisions) for more information on how to use this function pointer. 
+    See [the discussion on collisions](../collisions.md#resolving-collisions) for more information on how to use this function pointer. 
 
 `#!c int track_energy_offset`   
 :   Set this variable to 1 to track energy change during collisions and ejections (default: 0).
@@ -277,7 +277,7 @@ To keep the documentation concise, variables which are only intended for interna
 ## Module selection 
 
 The following variables in the simulation structure determine which modules are selected. 
-The [gravity solvers](gravity.md), [collision detection algorithms](collisions.md), [boundary conditions](boundaryconditions.md), and [integration methods](integrators.md) are explained in detail on their own pages.
+The [gravity solvers](../gravity.md), [collision detection algorithms](../collisions.md), [boundary conditions](../boundaryconditions.md), and [integration methods](../integrators/index.md) are explained in detail on their own pages.
 
 `#!c enum visualization`
 
@@ -292,7 +292,7 @@ The [gravity solvers](gravity.md), [collision detection algorithms](collisions.m
 ## Integrator configuration 
 
 The following variables in the simulation structure contain the configuration for the individual integrators. 
-They are described on their own [separate page](integrators.md). 
+They are described on their own [separate page](../integrators/index.md). 
 
 `#!c struct reb_integrator_sei ri_sei`
 

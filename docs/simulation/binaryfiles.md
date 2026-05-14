@@ -29,7 +29,7 @@ Below is an example on how to work with binary files.
     sim2 = None 
     ```
 
-Rather than using one file for one snapshot of a simulation, you can also use a [Simulationarchive](simulationarchive.md).
+Rather than using one file for one snapshot of a simulation, you can also use a [Simulationarchive](../simulationarchive.md).
 A Simulationarchive is a collection of simulation snapshots stored in one binary file. 
 
 

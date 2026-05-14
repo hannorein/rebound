@@ -12,18 +12,19 @@ nav:
     - api.md
     - changelog.md
     - "Simulation":
-      - simulation.md
-      - simulationvariables.md
-      - simulationtimestepping.md
-      - simulationbinaryfiles.md
-      - simulationdiagnostics.md
-      - simulationreferenceframes.md
-      - simulationoperators.md
+      - simulation/index.md
+      - simulation/variables.md
+      - simulation/timestepping.md
+      - simulation/binaryfiles.md
+      - simulation/diagnostics.md
+      - simulation/referenceframes.md
+      - simulation/operators.md
     - "Particles":
-      - particles.md
-      - addingparticles.md
-      - removingparticles.md
-      - particleoperators.md
+      - particles/index.md
+      - particles/add.md
+      - particles/remove.md
+      - particles/orbitalelements.md
+      - particles/operators.md
     - "Integrators":
       - integrators/index.md
     # Integrators --START--
@@ -47,7 +48,6 @@ nav:
       - visualization.md
     - "Other concepts":
       - units.md
-      - orbitalelements.md
       - simulationarchive.md
       - chaos.md
       - binaryformat.md
