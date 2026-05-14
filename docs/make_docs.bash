@@ -54,7 +54,6 @@ do
     else
         echo "Skipping $dir."
     fi
-    echo ""
 
 done
 

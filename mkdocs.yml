@@ -205,12 +205,9 @@ extra:
       link: https://mastodon.social/@reboundbot
     - icon: fontawesome/brands/github
       link: https://github.com/hannorein/rebound
-
+not_in_nav: "exclude"
 plugins:
   - search
-  - mkdocs-simple-hooks:
-      hooks:
-        on_pre_build: "docs.c_examples.generate_c_examples:run"
   #- mkdocs-jupyter
     # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
     # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
