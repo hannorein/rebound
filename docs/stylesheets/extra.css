@@ -1,0 +1,10 @@
+/* Add vertical spacing around top-level collapsed section titles */
+.md-nav__item--nested > .md-nav__link {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Ensure that when a section IS expanded, the spacing doesn't double up */
+.md-nav__item--active > .md-nav__link {
+  margin-bottom: 0.2rem; 
+}

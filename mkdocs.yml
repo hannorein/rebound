@@ -24,8 +24,20 @@ nav:
       - addingparticles.md
       - removingparticles.md
       - particleoperators.md
-    - "Integrators"
+    - "Integrators":
     # Integrators --START--
+      - integrators/ias15.md
+      - integrators/whfast.md
+      - integrators/sei.md
+      - integrators/leapfrog.md
+      - integrators/janus.md
+      - integrators/mercurius.md
+      - integrators/saba.md
+      - integrators/eos.md
+      - integrators/bs.md
+      - integrators/whfast512.md
+      - integrators/trace.md
+      - integrators/none.md
     # Integrators --END--
     - collisions.md
     - boundaryconditions.md
@@ -183,6 +195,8 @@ extra_javascript:
   - javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js      
+extra_css:
+  - stylesheets/extra.css  
 extra:
   social:
     - icon: fontawesome/brands/mastodon
@@ -195,7 +209,7 @@ plugins:
   - mkdocs-simple-hooks:
       hooks:
         on_pre_build: "docs.c_examples.generate_c_examples:run"
-  - mkdocs-jupyter
+  #- mkdocs-jupyter
     # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
     # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
   - mkdocs-video:
