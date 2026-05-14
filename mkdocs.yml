@@ -1,4 +1,5 @@
 site_name: REBOUND
+site_url: https://rebound.hanno-rein.de
 repo_url: https://github.com/hannorein/rebound
 repo_name: hannorein/rebound
 edit_uri: ""
@@ -202,7 +203,7 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/mastodon
-      link: https://botsin.space/@reboundbot
+      link: https://mastodon.social/@reboundbot
     - icon: fontawesome/brands/github
       link: https://github.com/hannorein/rebound
 
