@@ -24,11 +24,12 @@ nav:
       - addingparticles.md
       - removingparticles.md
       - particleoperators.md
-    - "Modules":
-      - integrators.md
-      - collisions.md
-      - boundaryconditions.md
-      - gravity.md
+    - "Integrators"
+    # Integrators --START--
+    # Integrators --END--
+    - collisions.md
+    - boundaryconditions.md
+    - gravity.md
     - "Visualization":
       - visualization.md
     - "Other concepts":
