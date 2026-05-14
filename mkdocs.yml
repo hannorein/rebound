@@ -6,11 +6,11 @@ edit_uri: ""
 nav:
   - index.md
   - "Quick-start guide":
-    - quickstart_installation.md
-    - quickstart_firstexample.md
-    - quickstart_whereto.md
+    - quickstart/installation.md
+    - quickstart/firstexample.md
+    - quickstart/whereto.md
   - "API Documentation":
-    - api.md
+    - api/index.md
     - changelog.md
     - "Simulation":
       - simulation/index.md
