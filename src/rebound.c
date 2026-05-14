@@ -1,9 +1,6 @@
 /**
- * @file    rebound.c
- * @brief   Various REBOUND control structures and routine.
- * @author  Hanno Rein <hanno@hanno-rein.de>
+ * rebound.c: Various REBOUND control structures and routine.
  * 
- * @section LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
@@ -56,7 +53,7 @@ static void reb_integrator_none_step(struct reb_simulation* const r, void* state
 }
 const struct reb_integrator reb_integrator_none = {
     .documentation = 
-    "This is a dummy integrator and has no effect on the simulation when used other than advancing time forward.",
+    "This is a dummy integrator. When used, it has no effect on the simulation other than advancing time forward.",
     .step=reb_integrator_none_step
 };
 
