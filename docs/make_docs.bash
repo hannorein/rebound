@@ -22,16 +22,21 @@ fi
 
 echo "Updating documentation."
 
-## UPDATE START
+echo "Making C examples"
+echo "-----------------"
+python docs/make_c_examples.py
 
+
+
+## UPDATE START
 mkdocs build  
 ../emsdk/emsdk activate latest
 source ../emsdk/emsdk_env.sh
 
 OPTIMI="${1:-3}"
     
-echo "Compiling C examples with emscripten."
-echo ""
+echo "Compiling C examples with emscripten"
+echo "------------------------------------"
 mkdir -p site/emscripten_c_examples/
 
 for dir in examples/*/
