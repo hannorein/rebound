@@ -25,6 +25,7 @@ nav:
       - removingparticles.md
       - particleoperators.md
     - "Integrators":
+      - integrators/index.md
     # Integrators --START--
       - integrators/ias15.md
       - integrators/whfast.md
@@ -179,6 +180,7 @@ theme:
   favicon: img/favicon.ico
   features:
     - navigation.sections
+    - navigation.indexes
     - navigation.path
 markdown_extensions:
   - admonition

@@ -68,7 +68,7 @@ const struct reb_integrator reb_integrator_ias15 = {
     "[Pham et al. (2024)]: https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract\n"
     "[Everhart (1985)]: https://ui.adsabs.harvard.edu/abs/1985ASSL..115..185E/abstract\n"
     "[Aarseth (1985)]: https://ui.adsabs.harvard.edu/abs/1985IAUS..113..251A/abstract\n"
-    "[YouTube video]: https://www.youtube.com/embed/UILEgdZt-fw\n"
+    "[YouTube video]: https://www.youtube.com/watch?v=UILEgdZt-fw\n"
     ,
     .step = reb_integrator_ias15_step,
     .create = reb_integrator_ias15_create,

@@ -1,8 +1,11 @@
 import rebound
 import ctypes
 import os
+import re
 from rebound.binarydata_field_descriptor import REB_BINARYDATA_DTYPE
 os.makedirs("integrators", exist_ok=True)
+
+youtube_regex = r'(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/\n\s]+/\S+/|(?:v|e(?:mbed)?)/|\S*?[?&]v=)|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})'
 
 # Get all integrators
 clibrebound = rebound.clibrebound
@@ -24,7 +27,17 @@ for name in names:
         sim = rebound.Simulation()
         sim.integrator = name
         file.write("# " + name.upper()+"\n\n")
-        file.write(sim.integrator.callbacks.documentation.decode("utf-8") + "\n\n")
+        doc = sim.integrator.callbacks.documentation.decode("utf-8") + "\n\n"
+        try:
+            res = re.search(youtube_regex,doc)
+            videoid = res.group(1)
+            print("  video found.")
+            file.write("![type:video](https://www.youtube.com/embed/"+videoid+")\n\n")
+
+        except:
+            pass
+
+        file.write(doc)
         fdlist = sim.integrator.callbacks.field_descriptor_list
         first_attr = True
         for fd in fdlist:
