@@ -156,7 +156,7 @@ nav:
       - c_examples/profiling.md
       - c_examples/star_of_david.md
       - ipython_examples/Testparticles.ipynb
-      - ipython_examples/UniquelyIdentifyingParticlesWithHashes.ipynb
+      - ipython_examples/UniquelyIdentifyingParticlesWithNames.ipynb
       - ipython_examples/Units.ipynb
       - ipython_examples/Cheartbeat.ipynb
       - ipython_examples/Holmberg.ipynb
