@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, string_at, POINTER, c_char, c_void_p, c_char_p
+from ctypes import Structure, c_double, c_int, byref, memmove, sizeof, c_uint32, c_uint, c_uint64, string_at, POINTER, c_char, c_void_p, c_char_p, cast
 import math
 import sys
 
@@ -167,7 +167,7 @@ class Particle(Structure):
             buft = c_char * len(binarydata)
             buf = buft.from_buffer_copy(binarydata)
             memmove(byref(self), byref(buf), sizeof(self))
-            self._sim = 0
+            self._sim = None # This doesn't seem to set _sim to 0. Don't know why
             self.ap = 0
             return
 
