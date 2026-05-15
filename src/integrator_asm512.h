@@ -1,7 +1,7 @@
 /**
- * integrator_whfast512.h: The AVX512 accelerated symplectic integrator WHFast512
+ * integrator_asm512.h: The AVX512 accelerated symplectic integrator WHFast512 in ASM
  * 
- * Copyright (c) 2023 Hanno Rein, Pejvak Javaheri
+ * Copyright (c) 2025 Hanno Rein
  *
  * This file is part of rebound.
  *
@@ -19,8 +19,8 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef _INTEGRATOR_WHFAST512_H
-#define _INTEGRATOR_WHFAST512_H
+#ifndef _INTEGRATOR_ASM512_H
+#define _INTEGRATOR_ASM512_H
 
 #include "rebound.h"
 
@@ -37,13 +37,11 @@
 #endif
 #endif // AVX512
 
-extern const struct reb_integrator reb_integrator_whfast512;
+extern const struct reb_integrator reb_integrator_asm512;
 
-// Special particle struct for WHFast512
-struct reb_particle_avx512; // Implemented in integrator_whfast.c
+struct reb_particle_avx512_asm; // Implemented in integrator_asm512.c
 
-// WHFast512 Integrator (Javaheri & Rein 2023)
-struct reb_integrator_whfast512_state {
+struct reb_integrator_asm512_state {
     unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
     unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
     unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
@@ -51,11 +49,11 @@ struct reb_integrator_whfast512_state {
     // Internal use
     size_t N_allocated;
     unsigned int recalculate_constants;
-    struct reb_particle_avx512* p_jh;
+    struct reb_particle_avx512_asm* p_jh;
     struct reb_particle p_jh0[4];
 };
 
-void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r); // Internal function. 
-void reb_whfast512_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
+void reb_integrator_asm512_synchronize_fallback(struct reb_simulation* const r); // Internal function. 
+void reb_asm512_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
 
 #endif
