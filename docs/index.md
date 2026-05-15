@@ -33,7 +33,7 @@ The top 20 contributors to REBOUND by number of lines and commits are:
 <!-- START CONTRIBUTORS -->
 | Name | Number of contributed lines | Number of contributed commits |
 | ---- | --------------------------- | ----------------------------- |
-| Hanno Rein | 246954 | 3823 |
+| Hanno Rein | 246982 | 3824 |
 | Daniel Tamayo | 25696 | 312 |
 | Shangfei Liu | 19726 | 86 |
 | Peter Bartram | 8512 | 36 |
@@ -43,6 +43,17 @@ The top 20 contributors to REBOUND by number of lines and commits are:
 | David Spiegel | 1473 | 7 |
 | Ruth Huang | 858 | 2 |
 | Lukas Winkler | 799 | 41 |
+| Robert Melikyan | 458 | 6 |
+| Samuel Hadden | 341 | 1 |
+| Luke Wriglesworth | 330 | 3 |
+| Ilya V. Schurov | 169 | 1 |
+| Akihiko Fujii | 148 | 1 |
+| Garett Brown | 128 | 31 |
+| Stanley A. Baronett | 113 | 13 |
+| Copilot | 89 | 1 |
+| Francesco Biscani | 56 | 3 |
+| Dave Spiegel | 56 | 2 |
+
 <!-- END CONTRIBUTORS -->
 
 
