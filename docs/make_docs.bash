@@ -25,6 +25,12 @@ echo "Installing REBOUND"
 echo "------------------"
 pip install -e .
 
+echo "Generating contributor data"
+echo "---------------------------"
+bash docs/make_contributors.bash
+python docs/make_contributors_replace.py
+
+
 echo "Generating integrator docs"
 echo "--------------------------"
 python docs/make_integrators.py

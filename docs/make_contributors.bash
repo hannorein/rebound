@@ -27,12 +27,15 @@ sed \
     -e 's/Dave\,/David Spiegel\,/g' \
     contributors.txt > contributors_clean.txt
 
+echo "| Name | Number of contributed lines | Number of contributed commits |" >  contributors.txt
+echo "| ---- | --------------------------- | ----------------------------- |" >> contributors.txt
+
 awk -F',' '
 BEGIN { OFS="," } { added[$1] += $2; commits[$1] += $3 }
 END {
     for (name in added) {
         printf "| %s | %s | %s |\n", name,  added[name], commits[name]
     }
-}' contributors_clean.txt | sort -rnk2 -t\| | head -n 10 > contributors.txt
+}' contributors_clean.txt | sort -rnk3 -t\| | head -n 20 >> contributors.txt
 rm contributors_clean.txt
 

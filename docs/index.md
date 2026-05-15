@@ -27,17 +27,25 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 ## Contributors
 
-* Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
-* Dan Tamayo, Harvey Mudd College <dtamayo@hmc.edu>
-* David S. Spiegel, Institute for Advanced Study Princeton, <dave@ias.edu>
-* Garett Brown, University of Toronto, <garett.brown@mail.utoronto.ca>
-* Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
-* Ari Silburt, Penn State University, <ajs725@psu.edu>
-* Pejvak Javaheri, University of Toronto, <pejvak.javaheri@mail.utoronto.ca>
-* Ruth Huang, University of Toronto, <ruth.huang@mail.utoronto.ca>
-* and many others! Check the git history to find out who contributed to the code.
-
 REBOUND is open source and you are invited to contribute to this project! 
+The top 20 contributors to REBOUND by number of lines and commits are:
+
+<!-- START CONTRIBUTORS -->
+| Name | Number of contributed lines | Number of contributed commits |
+| ---- | --------------------------- | ----------------------------- |
+| Hanno Rein | 246954 | 3823 |
+| Daniel Tamayo | 25696 | 312 |
+| Shangfei Liu | 19726 | 86 |
+| Peter Bartram | 8512 | 36 |
+| Tiger Lu | 3448 | 12 |
+| Deborah Lokhorst | 2391 | 11 |
+| Ari Silburt | 1709 | 34 |
+| David Spiegel | 1473 | 7 |
+| Ruth Huang | 858 | 2 |
+| Lukas Winkler | 799 | 41 |
+<!-- END CONTRIBUTORS -->
+
+
 
 ## YouTube tutorials
 
