@@ -1,19 +1,8 @@
 [![Version](https://img.shields.io/badge/rebound-v5.0.0-green.svg?style=flat)](https://rebound.hanno-rein.de)
-[![codecov](https://codecov.io/github/hannorein/rebound/graph/badge.svg?token=Zmynoi99Vl)](https://codecov.io/github/hannorein/rebound)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
-[![Paper](https://img.shields.io/badge/arXiv-1110.4876-green.svg?style=flat)](https://arxiv.org/abs/1110.4876)
-[![Paper](https://img.shields.io/badge/arXiv-1409.4779-green.svg?style=flat)](https://arxiv.org/abs/1409.4779)
-[![Paper](https://img.shields.io/badge/arXiv-1506.01084-green.svg?style=flat)](https://arxiv.org/abs/1506.01084)
-[![Paper](https://img.shields.io/badge/arXiv-1603.03424-green.svg?style=flat)](https://arxiv.org/abs/1603.03424)
-[![Paper](https://img.shields.io/badge/arXiv-1701.07423-green.svg?style=flat)](https://arxiv.org/abs/1701.07423)
-[![Paper](https://img.shields.io/badge/arXiv-1704.07715-green.svg?style=flat)](https://arxiv.org/abs/1704.07715)
-[![Paper](https://img.shields.io/badge/arXiv-1903.04972-green.svg?style=flat)](https://arxiv.org/abs/1903.04972)
-[![Paper](https://img.shields.io/badge/arXiv-1907.11335-green.svg?style=flat)](https://arxiv.org/abs/1907.11335)
 [![Docs](https://img.shields.io/badge/Documentation-green.svg?style=flat)](https://rebound.hanno-rein.de/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/hannorein/rebound/main)
-[![REBOUND (C)](https://github.com/hannorein/rebound/actions/workflows/c.yml/badge.svg)](https://github.com/hannorein/rebound/actions/workflows/c.yml)
-[![REBOUND (python)](https://github.com/hannorein/rebound/actions/workflows/python.yml/badge.svg)](https://github.com/hannorein/rebound/actions/workflows/python.yml)
     
 
 # Welcome to REBOUND
@@ -81,6 +70,7 @@ If you have trouble installing or using REBOUND, please open an issue on github 
 
 There are also short YouTube videos describing various aspects of REBOUND available at https://www.youtube.com/channel/UCNmrCzxcmWVTBwtDPPLxkkw .
 
+
 ## Related projects
 
 ### Additional physics
@@ -91,6 +81,7 @@ If you're interested in comparing numerical simulations to analytical and semian
 
 ### Ephemeris-quality integrations of test particles
 To generate ephemeris-quality integrations of test particles in the Solar System with a precision on par with JPL's small body integrator, see ASSIST at https://github.com/matthewholman/assist
+
 
 ## Papers
 
@@ -124,21 +115,6 @@ sim = rebound.Simulation()
 -your setup-
 sim.cite()
 ```
-
-
-## Main contributors
-
-* Hanno Rein, University of Toronto, <hanno@hanno-rein.de>
-* Dan Tamayo, Harvey Mudd College, <dtamayo@hmc.edu>
-* David S. Spiegel, Institute for Advanced Study Princeton, <dave@ias.edu>
-* Garett Brown, University of Toronto, <garett.brown@mail.utoronto.ca>
-* Shangfei Liu, Kavli Institute for Astronomy and Astrophysics at Peking University, <liushangfei@pku.edu.cn>
-* Ari Silburt, Penn State University, <ajs725@psu.edu>
-* Tiger Lu, Flatiron Institute, <tlu@flatironinstitute.org>
-* and many others! Check the git history to find out who contributed to the code.
-
-REBOUND is open source and you are invited to contribute to this project! 
-
 
 ## AI/LLM policy
 
