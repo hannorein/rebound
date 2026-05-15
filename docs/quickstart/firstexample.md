@@ -50,7 +50,6 @@ for o in sim.orbits():
     print(o)
 ```
 
-As a next step, have a look at the examples and tutorials in the `python_examples` and `ipython_examples` directories.
 
 ## C version
 
@@ -115,6 +114,7 @@ into a terminal window while you're in the `examples/simplest/` directory. Then 
 === "Linux/Mac"
     ```bash
     ./rebound
+    ```
 
 === "Windows"
     ```bash

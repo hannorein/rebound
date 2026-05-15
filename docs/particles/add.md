@@ -110,6 +110,7 @@ By far the easiest way to add particles to REBOUND is to use a convenience funct
     Parameter | Description
     --------- | -----------
     `m`|          mass  (default: 0)
+    `name`|       name (default: `""`)
     `x, y, z`|    positions in Cartesian coordinates  (default: 0)
     `vx, vy, vz`| velocities in Cartesian coordinates (default: 0)
     `primary`|    primary body for converting orbital elements to cartesian (default: center of mass of the particles in the passed simulation, i.e., this will yield Jacobi coordinates as one progressively adds particles) 
@@ -166,6 +167,7 @@ and similarly for the outer Solar System:
     ```c
     struct reb_simulation* r = reb_simulation_create();
     reb_simulation_add_fmt(r, "outer solar system");
+    ```
 
 === "Python"
     ```python

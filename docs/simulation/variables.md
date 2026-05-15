@@ -32,7 +32,7 @@ To keep the documentation concise, variables which are only intended for interna
 `#!c double dt_last_done`       
 :   REBOUND sets this variable to the last timestep used. Do not set this variable manually.
 
-`#!c unsigned long long steps_done` 
+`#!c uint64_t steps_done` 
 :   Number of timesteps completed.
 
 `#!c int exact_finish_time`     
@@ -67,6 +67,8 @@ To keep the documentation concise, variables which are only intended for interna
         sim.integrate(25, exact_finish_time=1)
         print(sim.t)                # will print 25
         ```
+`#!c unsigned int is_synchronized`     
+:   This flag is 1 if the integrator is in a synchronized state. If it is set to 0, then the positions and velocities of the particles may not correspond to the positions and velocities in the inertial frame. Call `reb_simulation_synchronize()` to synchronize a simulation before outouts. 
 
 `#!c double walltime`           
 :   This variable keeps track of the wall-time (in seconds) used by REBOUND for this simulation.
@@ -139,10 +141,8 @@ To keep the documentation concise, variables which are only intended for interna
     - 2 ignore terms not required for WHFast with democratic heliocentirc coordinates
 
 `#!c void (*additional_forces) (struct reb_simulation* const r)`
-:   This function allows the user to add additional (non-gravitational) forces.
-     
-    !!! Todo
-        Add examples.
+:   This function allows the user to add additional (non-gravitational) forces. See examples for how to use this feature.
+
 
 ## Particles
 
@@ -177,16 +177,16 @@ To keep the documentation concise, variables which are only intended for interna
     - When integrating systems with the WHFast integrator, the central object needs to be added first.
     - When Jacobi coordinates are used, then the particles needs to be added from the inside out (star, inner planet, outer planet).
 
-`#!c int N`                     
+`#!c size_t N`                     
 :   Current number of particles in this REBOUND simulation. 
     This number includes all active, test, and variational particles.
     The simulation stops when this number is 0 and there are no more particles in the simulation.
     The default is 0.
 
-`#!c int N_active`              
+`#!c size_t N_active`              
 :   This is the number of active particles in the simulation.
     Only active particles contribute to the force in the gravity calculation.
-    The default is -1 which means the number of active particles is equal to the number of particles, `N`. 
+    The default is `SIZE_MAX` which means the number of active particles is equal to the number of particles, `N`. 
     Particles with an index larger or equal than `N_active` are considered test-particles.
    
     The following example sets up a simulation with two active particles and one massless test-particle.
@@ -217,11 +217,20 @@ To keep the documentation concise, variables which are only intended for interna
 
     Test-particles never feel each other.
 
+`#!c unsigned int did_modify_particles`                     
+:   This flag should be set to 1 every time a particle got modified manually in-between timesteps. 
+
 `#!c int N_var`                 
 :   Total number of variational particles. Default: 0.
 
 `#!c int N_var_config`          
 :   Number of variational particle configurations. Default: 0.
+
+`#!c double OMEGA`        
+:   Epicyclic frequency in code units. Used by SEI integrator for shearing sheet simulations. Default: 0.
+
+`#!c double OMEGAZ`        
+:   Vertical epicyclic frequency in code units. Used by SEI integrator for shearing sheet simulations. Default: -1 which corresponds to using the same value as `OMEGA`.
 
 
 ## Collisions
@@ -279,33 +288,12 @@ To keep the documentation concise, variables which are only intended for interna
 The following variables in the simulation structure determine which modules are selected. 
 The [gravity solvers](../gravity.md), [collision detection algorithms](../collisions.md), [boundary conditions](../boundaryconditions.md), and [integration methods](../integrators/index.md) are explained in detail on their own pages.
 
-`#!c enum visualization`
+`#!c reb_integrator_configuration integrator`
 
 `#!c enum collision`
-
-`#!c enum integrator`
 
 `#!c enum boundary`
 
 `#!c enum gravity`
-
-## Integrator configuration 
-
-The following variables in the simulation structure contain the configuration for the individual integrators. 
-They are described on their own [separate page](../integrators/index.md). 
-
-`#!c struct reb_integrator_sei ri_sei`
-
-`#!c struct reb_integrator_whfast ri_whfast`
-
-`#!c struct reb_integrator_saba ri_saba`
-
-`#!c struct reb_integrator_ias15 ri_ias15`
-
-`#!c struct reb_integrator_mercurius ri_mercurius`
-
-`#!c struct reb_integrator_janus ri_janus`
-
-`#!c struct reb_integrator_eos ri_eos`
 
 

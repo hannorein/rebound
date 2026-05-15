@@ -10,7 +10,7 @@ You can combine different [gravity solvers](../gravity.md), [collision detection
 Not all combinations make physically sense, and not all combinations are supported.
 We describe the different modules and their configuration in this section.
 
-Also make sure to some of the other concepts documented in this section. 
+We also cover some of the other concepts in this section. 
 They will help you understand the [units](../units.md) used in REBOUND, how REBOUND handles [orbital elements](../particles/orbitalelements.md), how to save and load simulations to [Simulationarchive](../simulationarchive.md) files, how to use [chaos indicators](../chaos.md), how to use the [browser based 3D visualization](../visualization.md), and several other topics.
 
 

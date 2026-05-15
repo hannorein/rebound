@@ -14,8 +14,8 @@ The particle object contains the following variables which can be directly manip
 `#!c double x, y, z, vx, vy, vz`
 :   position and velocity coordinates
 
-`#!c uint32_t hash`
-:   integer or hash value used to identify the particle
+`#!c const char* name`
+:   The name of the particle as a NULL terminated string. If the particle is part of a REBOUND simulation, then the memory of the name is managed by REBOUND. Do not set the name of a particle directly if it is in a REBOUND simulation. Use `reb_particle_set_name()` instead.
     
 You can create a particle object which is not part of a REBOUND simulation.
 === "C"
@@ -45,22 +45,20 @@ You then access the particle using the simulation's `particles` array:
     sim.particles[0].x = 1
     ```
 
-Alternatively you can assign a hash value to particles and access them using the following syntax: 
+Alternatively you can assign a name to particles and access them using the following syntax: 
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_add_fmt(r, "m", 1.); 
-    r->particles[0].hash = reb_hash("star");
-    reb_simulation_add_fmt(r, "a", 1.); 
-    r->particles[1].hash = reb_hash("planet1");
-    struct reb_particle* p = reb_simulation_particle_by_hash(r, reb_hash("planet1"));
+    reb_simulation_add_fmt(r, "m name", 1., "star"); 
+    reb_simulation_add_fmt(r, "a name", 1., "planet1"); 
+    struct reb_particle* p = reb_simulation_get_particle_by_name(r, "planet1");
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
-    sim.add(m=1., hash="star")
-    sim.add(a=1., hash="planet1")
+    sim.add(m=1., name="star")
+    sim.add(a=1., name="planet1")
     p = sim.particles["planet1"]
     ```
 

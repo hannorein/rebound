@@ -46,31 +46,27 @@ You can remove a particle using this index as shown in the following code:
     The order of the remaining particles will remain unchanged. 
     (In previous versions of REBOUND this was the behaviour when `keep_sorted=1` was set. This is now the default.) 
 
-## Remove particle by hash
-TODO: Update this with new names syntax. 
-In addition to the index, you can also identify particles by hash.
+## Remove particle by name
+In addition to the index, you can also identify particles by name.
 This is useful when you want to make sure you can uniquely identify particles in simulations where you constantly add or remove particles. 
-If a particle has a hash, you can remove it as shown here:
+If a particle has a name, you can remove it as shown here:
 
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_add_fmt(r, "m", 1.); 
-    r->particles[0].hash = reb_hash("star");
-    reb_simulation_add_fmt(r, "a", 1.); 
-    r->particles[1].hash = reb_hash("planet1");
-    reb_simulation_add_fmt(r, "a", 2.); 
-    r->particles[2].hash = reb_hash("planet2");
-    reb_simulation_remove_particle_by_hash(r, reb_hash("planet1"), 1);
+    reb_simulation_add_fmt(r, "m name", 1., "star"); 
+    reb_simulation_add_fmt(r, "a name", 1., "planet1"); 
+    reb_simulation_add_fmt(r, "a name", 2., "planet2"); 
+    reb_simulation_remove_particle_by_name(r, "planet1");
     ```
-    The syntax of the function is the same as for `reb_simulation_remove_particle` except you pass the hash instead of the index.
+    The syntax of the function is the same as for `reb_simulation_remove_particle` except you pass the name instead of the index.
 
 === "Python"
     ```python
     sim = rebound.Simulation()
-    sim.add(m=1., hash="star")
-    sim.add(a=1., hash="planet1")
-    sim.add(a=2., hash="planet2")
-    sim.remove(hash="planet1")
+    sim.add(m=1., name="star")
+    sim.add(a=1., name="planet1")
+    sim.add(a=2., name="planet2")
+    sim.remove(name="planet1")
     ```
 

@@ -23,7 +23,7 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 * Parallelized [WHFast512](integrators/whfast512.md) integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
 * Parallelized with OpenMP (for shared memory systems)
 * Parallelized with [MPI](mpi.md) is supported for some special use cases only (using an essential tree for gravity and collisions)
-* The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
+* The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound).
 
 ## Contributors
 

@@ -12,8 +12,8 @@ REBOUND uses two structures for the binary files:
 
 ```c
 struct reb_binarydata_field {
-    uint32_t type; 
-    uint64_t size;
+    uint64_t size_name; 
+    uint64_t size_data;
 };
 ```
 
@@ -49,22 +49,26 @@ Such a binary file with one snapshot is simply a set of `reb_binaryfield`s follo
 
 ```
 reb_binarydata_field:
-    type: DT
-    size: 8 bytes
+    size_name: 2 bytes
+    size_data: 8 bytes
 
+2 bytes representing the string "t" plus the NULL character
 8 bytes of data representing the value of DT
 
 reb_binarydata_field:
-    type: PARTICLES
-    size: 128 bytes
+    size_name: 10 bytes
+    size_data: 128 bytes
 
+10 bytes representing the string "particles" plus the NULL character
 128 bytes of data representing the values of PARTICLES
 
 ...
 
 reb_binarydata_field:
-    type: END
-    size: 0
+    size_name: 4 bytes
+    size_data: 0 bytes
+
+4 bytes representing the string "end" plus the NULL character
 
 reb_simulationarchive_blob:
     index: 0
@@ -72,12 +76,12 @@ reb_simulationarchive_blob:
     offset_next: 0
 ```
 
-Each of the binary fields provides the context (type and size) for the data that immediately follows the field.
-The type is an integer defined in the `reb_binarydata_field_descriptor_list` (see below).
-The last binary field of type `9999` (`end`) to indicate that the snapshot ends here. 
+Each of the binary fields provides the context (name and size) for the data that immediately follows the field.
+The type is a name which is defined in the `reb_binarydata_field_descriptor_list` (see below).
+The last binary field of type `end` indicates that the snapshot ends here. 
 
 !!! note
-    Before version 3.27 data was encoded using the enum `REB_BINARY_FIELD_TYPE` instead of `reb_binarydata_field_descriptor_list`.
+    Before version 5.0 the field where encoded with an integer type rather than a string. 
 
 
 ## Simulationarchive file (multiple snapshots)
@@ -94,16 +98,19 @@ Thus, a Simulationarchive file with multiple snapshots looks something like this
 
 ```
 reb_binarydata_field:
-    type: DT
-    size: 8 bytes
+    size_name: 2 bytes
+    size_data: 8 bytes
 
+2 bytes representing the string "t" plus the NULL character
 8 bytes of data representing the value of DT
 
 ... more reb_binarydata_fields ...
 
 reb_binarydata_field:
-    type: END
-    size: 0
+    size_name: 4 bytes
+    size_data: 0 bytes
+
+4 bytes representing the string "end" plus the NULL character
 
 reb_simulationarchive_blob:
     index: 0
@@ -111,16 +118,19 @@ reb_simulationarchive_blob:
     offset_next: 256 (offset to the next blob)
 
 reb_binarydata_field:
-    type: DT
-    size: 8 bytes
+    size_name: 2 bytes
+    size_data: 8 bytes
 
+2 bytes representing the string "t" plus the NULL character
 8 bytes of data representing the value of DT
 
 ... more reb_binarydata_fields ...
 
 reb_binarydata_field:
-    type: END
-    size: 0
+    size_name: 4 bytes
+    size_data: 0 bytes
+
+4 bytes representing the string "end" plus the NULL character
 
 reb_simulationarchive_blob:
     index: 1
@@ -128,16 +138,19 @@ reb_simulationarchive_blob:
     offset_next: 256 (offset to the next blob)
 
 reb_binarydata_field:
-    type: DT
-    size: 8 bytes
+    size_name: 2 bytes
+    size_data: 8 bytes
 
+2 bytes representing the string "t" plus the NULL character
 8 bytes of data representing the value of DT
 
 ... more reb_binarydata_fields ...
 
 reb_binarydata_field:
-    type: END
-    size: 0
+    size_name: 4 bytes
+    size_data: 0 bytes
+
+4 bytes representing the string "end" plus the NULL character
 
 reb_simulationarchive_blob:
     index: 2
@@ -153,20 +166,22 @@ You will see a warning message when that happens and should proceed with caution
 ## Binary Field Descriptor
 
 REBOUND maintains a list of fields it needs to input/output in order to restore a simulation. 
-This list is of type `struct reb_binarydata_field_descriptor[]` and defined in `output.c` as `reb_binarydata_field_descriptor_list`.
+This list is of type `struct reb_binarydata_field_descriptor[]` and defined in `binarydata.c` as `reb_binarydata_field_descriptor_list`.
 A single struct `reb_binarydata_field_descriptor` contains the information to input/output one REBOUND field, for example the current simulation time `t`:
 
 ```c
-    struct reb_binarydata_field_descriptor fd_t = { 0, REB_DOUBLE, "t", offsetof(struct reb_simulation, t), 0, 0};
+    struct reb_binarydata_field_descriptor fd_t = { "", REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0};
 ```
-The first number is a unique identifier (in this case 0). The second entry is the type of data, in this case a single double precision floating point number. The third entry is a string used to identify the field. This is only used when generating human-readable output and is typically the same as the variable name in C. The next entry is the offset of where this variable is stored relative to the beginning of the simulation structure. 
+The first parameter is an optional documentation string. Next is the type of data, in this case a single double precision floating point number. The third entry is the name of the field. This is used to identify field in the binary files. The name shoudl be human-readable and correspond to the name of the parameter in the c structure. The next entry is the offset of where this variable is stored relative to the beginning of the simulation structure. 
 
 REBOUND also supports array like fields. For example consider the `particles` field:
 ```c
-    struct reb_binarydata_field_descriptor fd_particles = { 85, REB_POINTER, "particles", offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle)};
+    struct reb_binarydata_field_descriptor fd_particles = { "", REB_POINTER,      "particles",                    offsetof(struct reb_simulation, particles), offsetof(struct reb_simulation, N), sizeof(struct reb_particle), 0};
 ```
 
-The second to last entry lists the offset of the a variable in the `reb_simulation` structure that determines the number of array elements. In this case the number of particles. The last entry is the size of a single element. In this case, the size of one `reb_particle`.
+The three last parameters are the offset of the a variable in the `reb_simulation` structure that determines the number of array elements. In this case the number of particles. The second to last entry is the size of a single element. In this case, the size of one `reb_particle`, the last entry is used to encode allowed enumeration values which is used for the python interface.
 
 If you add an additional field to the `reb_simulation` struct and you want to write it to a binary file and read it back in, then you need to add an entry to `reb_binarydata_field_descriptor_list`.
+
+Individual integrators define their own `reb_binarydata_field_descriptor` list of elements which they need to export/import. 
 
