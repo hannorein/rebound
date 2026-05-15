@@ -1,4 +1,4 @@
-from ctypes import Structure, c_double, POINTER, c_int, c_int64, c_uint64, c_void_p, c_char_p, byref 
+from ctypes import Structure, c_double, POINTER, c_int, c_int64, c_uint64, c_void_p, c_char_p, byref, c_size_t
 import os
 import sys
 import math
@@ -57,61 +57,49 @@ class Simulationarchive(Structure):
     def __repr__(self):
         return '<{0}.{1} object at {2}, nblobs={3}, reb_version={4}.{5}.{6}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.nblobs, self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
 
-    def __init__(self,filename,setup=None, setup_args=(), process_warnings=True, reuse_index=None):
+    def __new__(cls, filename, process_warnings=True):
+        if isinstance(filename, str):
+            clibrebound.reb_simulationarchive_create_from_file_with_messages.restype = POINTER(cls)
+            w = c_int(0)
+            ptr = clibrebound.reb_simulationarchive_create_from_file_with_messages(c_char_p(filename.encode("ascii")), byref(w))
+        elif isinstance(filename, bytes):
+            clibrebound.reb_simulationarchive_create_from_buffer_with_messages.restype = POINTER(cls)
+            w = c_int(0)
+            buf = c_char_p(filename)
+            size = c_size_t(len(filename))
+            ptr = clibrebound.reb_simulationarchive_create_from_buffer_with_messages(buf, size, byref(w))
+        else:
+            raise RuntimeError("Unable to create Simulationarchive from object of type "+type(filename))
+
+        for majorerror, value, message in BINARY_WARNINGS:
+            if w.value & value:
+                if majorerror:
+                    raise RuntimeError(message)
+                else:  
+                    if process_warnings:
+                        warnings.warn(message, RuntimeWarning)
+        return ptr.contents
+
+    def __init__(self,filename, process_warnings=True):
         """
         Arguments
         ---------
         filename : str or bytes
             Filename of the Simulationarchive file to be opened.
             Can also be of type bytes to read from memory (uses fmemopen).
-        setup : function
-            Function to be called everytime a simulation object is created
-            In this function, the user can setup additional forces
-        setup_args : list
-            Arguments passed to setup function.
         process_warnings : Bool
             Display warning messages if True (default). Only fail on major errors if set to False.
-        reuse_index : Simulationarchive
-            Useful when loading many large Simulationarchives. After loading the first 
-            Simulationarchive, pass it as this argument when opening other Simulationarchives with the 
-            same shape. Note: Simulationarchive shape must be exactly the same to avoid unexpected
-            behaviour.
 
         """
-        self.setup = setup
-        self.setup_args = setup_args
         self.process_warnings = process_warnings
         w = c_int(0)
-        if reuse_index:
-            # Optimized loading
-            clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), byref(reuse_index), byref(w))
-
-        else:
-            clibrebound.reb_simulationarchive_create_from_file_with_messages(byref(self),c_char_p(filename.encode("ascii")), None, byref(w))
-        for majorerror, value, message in BINARY_WARNINGS:
-            if w.value & value:
-                if majorerror:
-                    raise RuntimeError(message)
-                else:  
-                    # Just a warning
-                    if value==2: # Version warning. Append version used to save SA to message
-                        sa_version = "%d.%d.%d" %(self._reb_version_major, self._reb_version_minor, self._reb_version_patch)
-                        if sa_version != __version__ and sa_version != "0.0.0":
-                            message += " Binary file was saved with REBOUND Version " + sa_version + "."
-                            message += " You are currently using REBOUND Version " +  __version__ + "."
-                    if process_warnings:
-                        warnings.warn(message, RuntimeWarning)
-        if not process_warnings:
-            # Store for later
-            self.warnings = w
         if self.nblobs<1:
             RuntimeError("Something went wrong. Simulationarchive is empty.")
         self.tmin = self.t[0]
         self.tmax = self.t[self.nblobs-1]
 
     def __del__(self):
-        if self._b_needsfree_ == 1: 
-            clibrebound.reb_simulationarchive_free_pointers(byref(self))
+        clibrebound.reb_simulationarchive_free(byref(self))
 
     def __str__(self):
         """
@@ -137,9 +125,7 @@ class Simulationarchive(Structure):
         
         w = c_int(0)
         sim = Simulation()
-        clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim), byref(self), c_int64(key), byref(w))
-        if self.setup:
-            self.setup(sim, *self.setup_args)
+        clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim), byref(self), c_int64(key), byref(w))
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
@@ -151,7 +137,8 @@ class Simulationarchive(Structure):
         # Also process Simulation Warnings
         if self.process_warnings:
             sim.process_messages()
-        if sim.ri_eos.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0 or sim.ri_whfast.is_synchronized==0 or sim.ri_mercurius.is_synchronized==0:
+
+        if sim.is_synchronized==0:
             warnings.warn("The simulation might not be synchronized. You can manually synchronize it by calling sim.synchronize().", RuntimeWarning)
 
         return sim
@@ -233,30 +220,24 @@ class Simulationarchive(Structure):
         bi, bt = self._getSnapshotIndex(t)
         sim = Simulation()
         w = c_int(0)
-        clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
-
-        # Restore function pointers and any additional setup required by the user provided functions
-        if self.setup:
-            self.setup(sim, *self.setup_args)
+        clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(self),bi,byref(w))
+        
+        try:
+            safe_mode = sim.integrator.safe_mode
+            if safe_mode == 1 or mode=='exact':
+                keep_unsynchronized = 0
+            sim.integrator.keep_unsynchronized = keep_unsynchronized
+        except AttributeError:
+            pass # not all integrators support keep_unsynchronized
 
         if mode=='snapshot':
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
-                keep_unsynchronized = 0
-            sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            sim.ri_saba.keep_unsynchronized = keep_unsynchronized
             sim.synchronize()
-            return sim
-        else:
-            if mode=='exact':
-                keep_unsynchronized = 0
-            if (sim.integrator=="mercurius" and sim.ri_mercurius.safe_mode == 1) or (sim.integrator=="whfast" and sim.ri_whfast.safe_mode == 1) or (sim.integrator=="saba" and sim.ri_saba.safe_mode == 1):
-                keep_unsynchronized = 0
-            sim.ri_whfast.keep_unsynchronized = keep_unsynchronized
-            sim.ri_saba.keep_unsynchronized = keep_unsynchronized
-            exact_finish_time = 1 if mode=='exact' else 0
-            sim.integrate(t,exact_finish_time=exact_finish_time)
+        if mode=='close':
+            sim.integrate(t,exact_finish_time=0)
+        if mode=='exact':
+            sim.integrate(t,exact_finish_time=1)
                 
-            return sim
+        return sim
 
 
     def getSimulations(self, times, **kwargs):

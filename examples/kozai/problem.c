@@ -7,10 +7,10 @@
  * even very high eccentricity encounters are resolved with high 
  * accuracy.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
    
     // Setup constants
     r->dt           = M_PI*1e-2;     // initial timestep
-    r->integrator   = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->heartbeat    = heartbeat;
 
     // Initial conditions

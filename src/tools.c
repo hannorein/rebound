@@ -22,21 +22,21 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #ifdef _WIN32
 #define strtok_r strtok_s
 #define REB_RAND_MAX 2147483647  // INT_MAX
 #else // Linux and MacOS
 #define REB_RAND_MAX RAND_MAX
 #endif // _WIN32
+#include "rebound.h"
+#include "rebound_internal.h"
 #include <stdint.h>
+#include <math.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
-#include "rebound.h"
+#include <string.h>
 #include "particle.h"
-#include "rebound.h"
 #include "tools.h"
 #include "tree.h"
 #include "boundary.h"
@@ -45,6 +45,15 @@
 #endif // MPI
 #define MAX(a, b) ((a) > (b) ? (a) : (b))    ///< Returns the maximum of a and b
 
+uint32_t reb_hash(const char *str) {
+    // djb2 algorithm
+    uint32_t hash = 5381;
+    int c;
+    while ((c = *str++)) {
+        hash = ((hash << 5) + hash) + (uint32_t)c;
+    }
+    return hash;
+}
 
 unsigned int reb_tools_get_rand_seed(){
     struct reb_timeval tim;
@@ -100,20 +109,19 @@ double reb_simulation_energy(struct reb_simulation* const r){
 #ifdef MPI
     reb_communication_mpi_distribute_particles(r);
 #endif
-    const int N = r->N;
-    const int N_var = r->N_var;
-    const int _N_active = (r->N_active==-1)?(N-N_var):r->N_active;
+    const size_t N = r->N;
+    const size_t N_active = (r->N_active==SIZE_MAX)?N:r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
     double e_kin = 0.;
     double e_pot = 0.;
-    int N_interact = (r->testparticle_type==0)?_N_active:(N-N_var);
-    for (int i=0;i<N_interact;i++){
+    size_t N_interact = (r->testparticle_type==0)?N_active:N;
+    for (size_t i=0;i<N_interact;i++){
         struct reb_particle pi = particles[i];
         e_kin += 0.5 * pi.m * (pi.vx*pi.vx + pi.vy*pi.vy + pi.vz*pi.vz);
     }
-    for (int i=0;i<_N_active;i++){
+    for (size_t i=0;i<N_active;i++){
         struct reb_particle pi = particles[i];
-        for (int j=i+1;j<N_interact;j++){
+        for (size_t j=i+1;j<N_interact;j++){
             struct reb_particle pj = particles[j];
             double dx = pi.x - pj.x;
             double dy = pi.y - pj.y;
@@ -126,7 +134,7 @@ double reb_simulation_energy(struct reb_simulation* const r){
     reb_communication_mpi_distribute_particles_all_to_all(r);
     for (int m=0;m<r->mpi_num;m++){
         if (m==r->mpi_id) continue;
-        for (int i=0;i<_N_active;i++){
+        for (size_t i=0;i<N_active;i++){
             struct reb_particle pi = particles[i];
             // TODO: Use N_interact from other node for test_particle_type==1
             for (int j=0;j<r->N_particles_recv[m];j++){
@@ -154,11 +162,10 @@ double reb_simulation_energy(struct reb_simulation* const r){
 }
 
 struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* const r){
-    const int N = r->N;
+    const size_t N = r->N;
     const struct reb_particle* restrict const particles = r->particles;
-    const int N_var = r->N_var;
     struct reb_vec3d L = {0};
-    for (int i=0;i<N-N_var;i++){
+    for (size_t i=0;i<N;i++){
         struct reb_particle pi = particles[i];
         L.x += pi.m*(pi.y*pi.vz - pi.z*pi.vy);
         L.y += pi.m*(pi.z*pi.vx - pi.x*pi.vz);
@@ -168,12 +175,12 @@ struct reb_vec3d reb_simulation_angular_momentum(const struct reb_simulation* co
 }
 
 void reb_simulation_move_to_hel(struct reb_simulation* const r){
-    const int N_real = r->N - r->N_var;
-    if (N_real>0){
+    const size_t N = r->N;
+    if (N>0){
         struct reb_particle* restrict const particles = r->particles;
         struct reb_particle hel = r->particles[0];
         // Note: Variational particles will not be affected.
-        for (int i=1;i<N_real;i++){
+        for (size_t i=1;i<N;i++){
             particles[i].x  -= hel.x;
             particles[i].y  -= hel.y;
             particles[i].z  -= hel.z;
@@ -194,82 +201,83 @@ void reb_simulation_move_to_hel(struct reb_simulation* const r){
 void reb_simulation_move_to_com(struct reb_simulation* const r){
     struct reb_particle com = reb_simulation_com(r); // Particles will be redistributed in this call if MPI used
     struct reb_particle* restrict const particles = r->particles;
-    const int N_real = r->N - r->N_var; 
+    struct reb_particle* restrict const particles_var = r->particles_var;
+    const size_t N = r->N; 
 
     // First do second order
-    for (int v=0;v<r->N_var_config;v++){
-        int index = r->var_config[v].index;
+    for (size_t v=0;v<r->N_var_config;v++){
+        size_t index = r->var_config[v].index;
         if (r->var_config[v].testparticle>=0){
             // Test particles do not affect the COM
         }else{
             if (r->var_config[v].order==2){
                 struct reb_particle com_shift = {0};
-                int index_1st_order_a = r->var_config[v].index_1st_order_a;
-                int index_1st_order_b = r->var_config[v].index_1st_order_b;
+                size_t index_1st_order_a = r->var_config[v].index_1st_order_a;
+                size_t index_1st_order_b = r->var_config[v].index_1st_order_b;
                 double dma = 0.;
                 double dmb = 0.;
                 double ddm = 0.;
-                for (int i=0;i<N_real;i++){
-                    dma += particles[i+index_1st_order_a].m;
-                    dmb += particles[i+index_1st_order_b].m;
-                    ddm += particles[i+index].m;
+                for (size_t i=0;i<N;i++){
+                    dma += particles_var[i+index_1st_order_a].m;
+                    dmb += particles_var[i+index_1st_order_b].m;
+                    ddm += particles_var[i+index].m;
                 }
-                for (int i=0;i<N_real;i++){
-                    com_shift.x  += particles[i+index].x /com.m * particles[i].m; 
-                    com_shift.y  += particles[i+index].y /com.m * particles[i].m; 
-                    com_shift.z  += particles[i+index].z /com.m * particles[i].m; 
-                    com_shift.vx += particles[i+index].vx/com.m * particles[i].m; 
-                    com_shift.vy += particles[i+index].vy/com.m * particles[i].m; 
-                    com_shift.vz += particles[i+index].vz/com.m * particles[i].m; 
+                for (size_t i=0;i<N;i++){
+                    com_shift.x  += particles_var[i+index].x /com.m * particles[i].m; 
+                    com_shift.y  += particles_var[i+index].y /com.m * particles[i].m; 
+                    com_shift.z  += particles_var[i+index].z /com.m * particles[i].m; 
+                    com_shift.vx += particles_var[i+index].vx/com.m * particles[i].m; 
+                    com_shift.vy += particles_var[i+index].vy/com.m * particles[i].m; 
+                    com_shift.vz += particles_var[i+index].vz/com.m * particles[i].m; 
 
-                    com_shift.x  += particles[i+index_1st_order_a].x  /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.y  += particles[i+index_1st_order_a].y  /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.z  += particles[i+index_1st_order_a].z  /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.vx += particles[i+index_1st_order_a].vx /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.vy += particles[i+index_1st_order_a].vy /com.m * particles[i+index_1st_order_b].m; 
-                    com_shift.vz += particles[i+index_1st_order_a].vz /com.m * particles[i+index_1st_order_b].m; 
+                    com_shift.x  += particles_var[i+index_1st_order_a].x  /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.y  += particles_var[i+index_1st_order_a].y  /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.z  += particles_var[i+index_1st_order_a].z  /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.vx += particles_var[i+index_1st_order_a].vx /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.vy += particles_var[i+index_1st_order_a].vy /com.m * particles_var[i+index_1st_order_b].m; 
+                    com_shift.vz += particles_var[i+index_1st_order_a].vz /com.m * particles_var[i+index_1st_order_b].m; 
 
-                    com_shift.x  -= particles[i+index_1st_order_a].x  * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.y  -= particles[i+index_1st_order_a].y  * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.z  -= particles[i+index_1st_order_a].z  * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.vx -= particles[i+index_1st_order_a].vx * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.vy -= particles[i+index_1st_order_a].vy * particles[i].m/com.m/com.m*dmb; 
-                    com_shift.vz -= particles[i+index_1st_order_a].vz * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.x  -= particles_var[i+index_1st_order_a].x  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.y  -= particles_var[i+index_1st_order_a].y  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.z  -= particles_var[i+index_1st_order_a].z  * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vx -= particles_var[i+index_1st_order_a].vx * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vy -= particles_var[i+index_1st_order_a].vy * particles[i].m/com.m/com.m*dmb; 
+                    com_shift.vz -= particles_var[i+index_1st_order_a].vz * particles[i].m/com.m/com.m*dmb; 
 
-                    com_shift.x  += particles[i+index_1st_order_b].x  /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.y  += particles[i+index_1st_order_b].y  /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.z  += particles[i+index_1st_order_b].z  /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.vx += particles[i+index_1st_order_b].vx /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.vy += particles[i+index_1st_order_b].vy /com.m * particles[i+index_1st_order_a].m; 
-                    com_shift.vz += particles[i+index_1st_order_b].vz /com.m * particles[i+index_1st_order_a].m; 
+                    com_shift.x  += particles_var[i+index_1st_order_b].x  /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.y  += particles_var[i+index_1st_order_b].y  /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.z  += particles_var[i+index_1st_order_b].z  /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.vx += particles_var[i+index_1st_order_b].vx /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.vy += particles_var[i+index_1st_order_b].vy /com.m * particles_var[i+index_1st_order_a].m; 
+                    com_shift.vz += particles_var[i+index_1st_order_b].vz /com.m * particles_var[i+index_1st_order_a].m; 
 
-                    com_shift.x  += particles[i].x  /com.m * particles[i+index].m; 
-                    com_shift.y  += particles[i].y  /com.m * particles[i+index].m; 
-                    com_shift.z  += particles[i].z  /com.m * particles[i+index].m; 
-                    com_shift.vx += particles[i].vx /com.m * particles[i+index].m; 
-                    com_shift.vy += particles[i].vy /com.m * particles[i+index].m; 
-                    com_shift.vz += particles[i].vz /com.m * particles[i+index].m; 
+                    com_shift.x  += particles[i].x  /com.m * particles_var[i+index].m; 
+                    com_shift.y  += particles[i].y  /com.m * particles_var[i+index].m; 
+                    com_shift.z  += particles[i].z  /com.m * particles_var[i+index].m; 
+                    com_shift.vx += particles[i].vx /com.m * particles_var[i+index].m; 
+                    com_shift.vy += particles[i].vy /com.m * particles_var[i+index].m; 
+                    com_shift.vz += particles[i].vz /com.m * particles_var[i+index].m; 
 
-                    com_shift.x  -= particles[i].x  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.y  -= particles[i].y  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.z  -= particles[i].z  * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.vx -= particles[i].vx * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.vy -= particles[i].vy * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
-                    com_shift.vz -= particles[i].vz * particles[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.x  -= particles[i].x  * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.y  -= particles[i].y  * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.z  -= particles[i].z  * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vx -= particles[i].vx * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vy -= particles[i].vy * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
+                    com_shift.vz -= particles[i].vz * particles_var[i+index_1st_order_a].m/com.m/com.m*dmb; 
 
-                    com_shift.x  -= particles[i+index_1st_order_b].x  * particles[i].m/com.m/com.m*dma; 
-                    com_shift.y  -= particles[i+index_1st_order_b].y  * particles[i].m/com.m/com.m*dma; 
-                    com_shift.z  -= particles[i+index_1st_order_b].z  * particles[i].m/com.m/com.m*dma; 
-                    com_shift.vx -= particles[i+index_1st_order_b].vx * particles[i].m/com.m/com.m*dma; 
-                    com_shift.vy -= particles[i+index_1st_order_b].vy * particles[i].m/com.m/com.m*dma; 
-                    com_shift.vz -= particles[i+index_1st_order_b].vz * particles[i].m/com.m/com.m*dma; 
+                    com_shift.x  -= particles_var[i+index_1st_order_b].x  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.y  -= particles_var[i+index_1st_order_b].y  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.z  -= particles_var[i+index_1st_order_b].z  * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vx -= particles_var[i+index_1st_order_b].vx * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vy -= particles_var[i+index_1st_order_b].vy * particles[i].m/com.m/com.m*dma; 
+                    com_shift.vz -= particles_var[i+index_1st_order_b].vz * particles[i].m/com.m/com.m*dma; 
 
-                    com_shift.x  -= particles[i].x  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.y  -= particles[i].y  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.z  -= particles[i].z  * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.vx -= particles[i].vx * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.vy -= particles[i].vy * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
-                    com_shift.vz -= particles[i].vz * particles[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.x  -= particles[i].x  * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.y  -= particles[i].y  * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.z  -= particles[i].z  * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vx -= particles[i].vx * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vy -= particles[i].vy * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
+                    com_shift.vz -= particles[i].vz * particles_var[i+index_1st_order_b].m/com.m/com.m*dma; 
 
                     com_shift.x  += 2.*particles[i].x  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
                     com_shift.y  += 2.*particles[i].y  * particles[i].m/com.m/com.m/com.m*dma*dmb; 
@@ -290,43 +298,43 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
 
 
                 }
-                for (int i=0;i<N_real;i++){
-                    particles[i+index].x -= com_shift.x; 
-                    particles[i+index].y -= com_shift.y; 
-                    particles[i+index].z -= com_shift.z; 
-                    particles[i+index].vx -= com_shift.vx; 
-                    particles[i+index].vy -= com_shift.vy; 
-                    particles[i+index].vz -= com_shift.vz; 
+                for (size_t i=0;i<N;i++){
+                    particles_var[i+index].x -= com_shift.x; 
+                    particles_var[i+index].y -= com_shift.y; 
+                    particles_var[i+index].z -= com_shift.z; 
+                    particles_var[i+index].vx -= com_shift.vx; 
+                    particles_var[i+index].vy -= com_shift.vy; 
+                    particles_var[i+index].vz -= com_shift.vz; 
                 }
             }
         }
     }
     // Then do first order
-    for (int v=0;v<r->N_var_config;v++){
-        int index = r->var_config[v].index;
+    for (size_t v=0;v<r->N_var_config;v++){
+        size_t index = r->var_config[v].index;
         if (r->var_config[v].testparticle>=0){
             // Test particles do not affect the COM
         }else{
             if (r->var_config[v].order==1){
                 struct reb_particle com_shift = {0};
                 double dm = 0.;
-                for (int i=0;i<N_real;i++){
+                for (size_t i=0;i<N;i++){
                     dm += particles[i+index].m;
                 }
-                for (int i=0;i<N_real;i++){
-                    com_shift.x  += particles[i].m/com.m * particles[i+index].x ; 
-                    com_shift.y  += particles[i].m/com.m * particles[i+index].y ; 
-                    com_shift.z  += particles[i].m/com.m * particles[i+index].z ; 
-                    com_shift.vx += particles[i].m/com.m * particles[i+index].vx; 
-                    com_shift.vy += particles[i].m/com.m * particles[i+index].vy; 
-                    com_shift.vz += particles[i].m/com.m * particles[i+index].vz; 
+                for (size_t i=0;i<N;i++){
+                    com_shift.x  += particles[i].m/com.m * particles_var[i+index].x ; 
+                    com_shift.y  += particles[i].m/com.m * particles_var[i+index].y ; 
+                    com_shift.z  += particles[i].m/com.m * particles_var[i+index].z ; 
+                    com_shift.vx += particles[i].m/com.m * particles_var[i+index].vx; 
+                    com_shift.vy += particles[i].m/com.m * particles_var[i+index].vy; 
+                    com_shift.vz += particles[i].m/com.m * particles_var[i+index].vz; 
 
-                    com_shift.x  += particles[i].x /com.m * particles[i+index].m; 
-                    com_shift.y  += particles[i].y /com.m * particles[i+index].m; 
-                    com_shift.z  += particles[i].z /com.m * particles[i+index].m; 
-                    com_shift.vx += particles[i].vx/com.m * particles[i+index].m; 
-                    com_shift.vy += particles[i].vy/com.m * particles[i+index].m; 
-                    com_shift.vz += particles[i].vz/com.m * particles[i+index].m; 
+                    com_shift.x  += particles[i].x /com.m * particles_var[i+index].m; 
+                    com_shift.y  += particles[i].y /com.m * particles_var[i+index].m; 
+                    com_shift.z  += particles[i].z /com.m * particles_var[i+index].m; 
+                    com_shift.vx += particles[i].vx/com.m * particles_var[i+index].m; 
+                    com_shift.vy += particles[i].vy/com.m * particles_var[i+index].m; 
+                    com_shift.vz += particles[i].vz/com.m * particles_var[i+index].m; 
 
                     com_shift.x  -= particles[i].x /(com.m*com.m) * particles[i].m*dm; 
                     com_shift.y  -= particles[i].y /(com.m*com.m) * particles[i].m*dm; 
@@ -335,20 +343,20 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
                     com_shift.vy -= particles[i].vy/(com.m*com.m) * particles[i].m*dm; 
                     com_shift.vz -= particles[i].vz/(com.m*com.m) * particles[i].m*dm; 
                 }
-                for (int i=0;i<N_real;i++){
-                    particles[i+index].x -= com_shift.x; 
-                    particles[i+index].y -= com_shift.y; 
-                    particles[i+index].z -= com_shift.z; 
-                    particles[i+index].vx -= com_shift.vx; 
-                    particles[i+index].vy -= com_shift.vy; 
-                    particles[i+index].vz -= com_shift.vz; 
+                for (size_t i=0;i<N;i++){
+                    particles_var[i+index].x -= com_shift.x; 
+                    particles_var[i+index].y -= com_shift.y; 
+                    particles_var[i+index].z -= com_shift.z; 
+                    particles_var[i+index].vx -= com_shift.vx; 
+                    particles_var[i+index].vy -= com_shift.vy; 
+                    particles_var[i+index].vz -= com_shift.vz; 
                 }
             }
         }
     }
 
     // Finally do normal particles
-    for (int i=0;i<N_real;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].x  -= com.x;
         particles[i].y  -= com.y;
         particles[i].z  -= com.z;
@@ -359,81 +367,11 @@ void reb_simulation_move_to_com(struct reb_simulation* const r){
 
     // Check boundaries and update tree if needed
     reb_boundary_check(r);     
-    if (r->gravity==REB_GRAVITY_TREE || r->collision==REB_COLLISION_TREE || r->collision==REB_COLLISION_LINETREE){
-        reb_simulation_update_tree(r);          
-    }
 #ifdef MPI
     reb_communication_mpi_distribute_particles(r);
 #endif // MPI
 }
 
-void reb_simulation_get_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
-    const int N_real = r->N - r->N_var;
-    struct reb_particle* restrict const particles = r->particles;
-    for (int i=0;i<N_real;i++){
-        if (hash){
-            hash[i] = particles[i].hash;
-        }
-        if (m){
-            m[i] = particles[i].m;
-        }
-        if (radius){
-            radius[i] = particles[i].r;
-        }
-        if (xyz){
-            xyz[i][0] = particles[i].x;
-            xyz[i][1] = particles[i].y;
-            xyz[i][2] = particles[i].z;
-        }
-        if (vxvyvz){
-            vxvyvz[i][0] = particles[i].vx;
-            vxvyvz[i][1] = particles[i].vy;
-            vxvyvz[i][2] = particles[i].vz;
-        }
-        if (xyzvxvyvz){
-            xyzvxvyvz[i][0] = particles[i].x;
-            xyzvxvyvz[i][1] = particles[i].y;
-            xyzvxvyvz[i][2] = particles[i].z;
-            xyzvxvyvz[i][3] = particles[i].vx;
-            xyzvxvyvz[i][4] = particles[i].vy;
-            xyzvxvyvz[i][5] = particles[i].vz;
-        }
-    }
-}
-
-void reb_simulation_set_serialized_particle_data(struct reb_simulation* r, uint32_t* hash, double* m, double* radius, double (*xyz)[3], double (*vxvyvz)[3], double (*xyzvxvyvz)[6]){
-    const int N_real = r->N - r->N_var;
-    struct reb_particle* restrict const particles = r->particles;
-    for (int i=0;i<N_real;i++){
-        if (hash){
-            particles[i].hash = hash[i];
-        }
-        if (m){
-            particles[i].m = m[i];
-        }
-        if (radius){
-            particles[i].r = radius[i] ;
-        }
-        if (xyz){
-            particles[i].x = xyz[i][0];
-            particles[i].y = xyz[i][1];
-            particles[i].z = xyz[i][2];
-        }
-        if (vxvyvz){
-            particles[i].vx = vxvyvz[i][0];
-            particles[i].vy = vxvyvz[i][1];
-            particles[i].vz = vxvyvz[i][2];
-        }
-        if (xyzvxvyvz){
-            particles[i].x = xyzvxvyvz[i][0];
-            particles[i].y = xyzvxvyvz[i][1];
-            particles[i].z = xyzvxvyvz[i][2];
-            particles[i].vx = xyzvxvyvz[i][3];
-            particles[i].vy = xyzvxvyvz[i][4];
-            particles[i].vz = xyzvxvyvz[i][5];
-        }
-    }
-}
 
 struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_particle p2){
     p1.x   = p1.x*p1.m + p2.x*p2.m;		
@@ -461,9 +399,9 @@ struct reb_particle reb_particle_com_of_pair(struct reb_particle p1, struct reb_
     return p1;
 }
 
-struct reb_particle reb_simulation_com_range(struct reb_simulation* r, int first, int last){
+struct reb_particle reb_simulation_com_range(struct reb_simulation* r, size_t first, size_t last){
     struct reb_particle com = {0};
-    for(int i=first; i<last; i++){
+    for(size_t i=first; i<last; i++){
         com = reb_particle_com_of_pair(com, r->particles[i]);
     }
     return com;
@@ -472,8 +410,8 @@ struct reb_particle reb_simulation_com_range(struct reb_simulation* r, int first
 struct reb_particle reb_simulation_com(struct reb_simulation* r){
 #ifdef MPI
     reb_communication_mpi_distribute_particles(r);
-    int N_real = r->N-r->N_var;
-    struct reb_particle com = reb_simulation_com_range(r, 0, N_real);
+    size_t N = r->N;
+    struct reb_particle com = reb_simulation_com_range(r, 0, N);
     com.x  *= com.m;
     com.y  *= com.m;
     com.z  *= com.m;
@@ -509,23 +447,22 @@ struct reb_particle reb_simulation_com(struct reb_simulation* r){
 
     return com; 
 #else // MPI
-    int N_real = r->N-r->N_var;
-    return reb_simulation_com_range(r, 0, N_real);
+    return reb_simulation_com_range(r, 0, r->N);
 #endif // MPI
 }
 
 struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p){
-    int p_index = reb_simulation_particle_index(p);
+    size_t p_index = reb_simulation_particle_index(p);
     struct reb_simulation* r = p->sim;
     return reb_simulation_com_range(r, 0, p_index);
 }
 
-void reb_simulation_add_plummer(struct reb_simulation* r, int _N, double M, double R) {
+void reb_simulation_add_plummer(struct reb_simulation* r, size_t _N, double M, double R) {
     // Algorithm from:	
     // http://adsabs.harvard.edu/abs/1974A%26A....37..183A
 
     double E = 3./64.*M_PI*M*M/R;
-    for (int i=0;i<_N;i++){
+    for (size_t i=0;i<_N;i++){
         struct reb_particle star = {0};
         double _r = pow(pow(reb_random_uniform(r, 0,1),-2./3.)-1.,-1./2.);
         double x2 = reb_random_uniform(r, 0,1);
@@ -652,49 +589,10 @@ static const char* reb_string_for_particle_error(int err){
 
 }
 
-static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args);
-
-void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
-    if (!r){
-        fprintf(stderr, "\n\033[1mError!\033[0m Simulation can't be NULL1.\n");
-        return;
-    }
-
-    int err = 0;
-    va_list args;
-    va_start(args, fmt);
-    struct reb_particle particle = reb_particle_from_fmt_errV(r, &err, fmt, args);
-    va_end(args);
-
-    if (err==0){ // Success
-        reb_simulation_add(r, particle);
-    }else{
-        const char* error_string = reb_string_for_particle_error(err);
-        reb_simulation_error(r, error_string);
-    }
-}
-
-struct reb_particle reb_particle_from_fmt(struct reb_simulation* r, const char* fmt, ...){
-    int err = 0;
-
-    va_list args;
-    va_start(args, fmt);
-    struct reb_particle particle = reb_particle_from_fmt_errV(r, &err, fmt, args);
-    va_end(args);
-
-    if (err==0){ // Success
-        return particle;
-    }else{
-        const char* error_string = reb_string_for_particle_error(err);
-        fprintf(stderr, "\n\033[1mError!\033[0m %s\n", error_string);
-        return reb_particle_nan();
-    }
-}
-
 static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, int* err, const char* fmt, va_list args){
     double m = 0;
     double radius = 0;
-    uint32_t hash = 0;
+    char* name = NULL;
     double x = nan("");
     double y = nan("");
     double z = nan("");
@@ -752,22 +650,40 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
             e = va_arg(args, double);
         if (0==strcmp(token,"inc"))
             inc = va_arg(args, double);
+        if (0==strcmp(token,"uniform(inc)"))
+            inc = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"Omega"))
             Omega = va_arg(args, double);
+        if (0==strcmp(token,"uniform(Omega)"))
+            Omega = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"omega"))
             omega = va_arg(args, double);
+        if (0==strcmp(token,"uniform(omega)"))
+            omega = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"pomega"))
             pomega = va_arg(args, double);
+        if (0==strcmp(token,"uniform(pomega)"))
+            pomega = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"f"))
             f = va_arg(args, double);
+        if (0==strcmp(token,"uniform(f)"))
+            f = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"M"))
             M = va_arg(args, double);
+        if (0==strcmp(token,"uniform(M)"))
+            M = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"E"))
             E = va_arg(args, double);
+        if (0==strcmp(token,"uniform(E)"))
+            E = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"l"))
             l = va_arg(args, double);
+        if (0==strcmp(token,"uniform(l)"))
+            l = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"theta"))
             theta = va_arg(args, double);
+        if (0==strcmp(token,"uniform(theta)"))
+            theta = reb_random_uniform(r, 0.0, 2.0*M_PI);
         if (0==strcmp(token,"T"))
             T = va_arg(args, double);
         if (0==strcmp(token,"h"))
@@ -782,9 +698,13 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
             primary = va_arg(args, struct reb_particle);
             primary_given = 1;
         }
-        if (0==strcmp(token,"hash")){
-            hash = va_arg(args, uint32_t);
-        }
+#ifdef MPI
+        if (0==strcmp(token,"id"))
+            name = (void*)(size_t)va_arg(args, int);
+#else // MPI
+        if (0==strcmp(token,"name"))
+            name = va_arg(args, char*);
+#endif// MPI
     }
     free(fmt_c);
 
@@ -850,7 +770,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
 
     if (Ncart || (!Norb)){ // Cartesian coordinates given, or not coordinates whatsoever
         struct reb_particle particle = {0};
-        particle.hash = hash;
+        particle.name = name;
         particle.m = m;
         particle.r = radius;
         if (!isnan(x)) particle.x = x; // Note: is x is nan, then particle.x is 0  
@@ -899,7 +819,7 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
         }
         struct reb_particle particle = reb_particle_from_pal(r->G, primary, m, a, l, k, h, ix, iy);
         particle.r = radius;
-        particle.hash = hash;
+        particle.name = name;
         return particle;
     }
 
@@ -955,9 +875,56 @@ static struct reb_particle reb_particle_from_fmt_errV(struct reb_simulation* r, 
     }
     struct reb_particle particle = reb_particle_from_orbit_err(r->G, primary, m, a, e, inc, Omega, omega, f, err);
     particle.r = radius;
-    particle.hash = hash;
+    particle.name = name;
     return particle;
 }
+
+// Solar System Data. Taken from NASA Horizons. Used for testing.
+static const struct reb_particle reb_particle_solarsystem[] = {
+    {.m=1.00000000000000000000, .x=-0.00583761661678666201, .y=0.00660036108188146939,  .z=0.00008090699630593683,  .vx=-0.00043778026915688127, .vy=-0.00027688340567327781, .vz=0.00001289781032896905},  // 0 Sun
+    {.m=0.00000016601141530543, .x=-0.29485531126658365286, .y=-0.34334233225957377922, .z=-0.00200264586836620137, .vx=0.92896432258229966195,  .vy=-0.96594579119516865706, .vz=-0.16415293821738913271}, // 1 Mercury
+    {.m=0.00000244783828778477, .x=0.47227261050357943750,  .y=0.54819205023577255442,  .z=-0.02007680147008551394, .vx=-0.88553481794279420569, .vy=0.77279164698675262279,  .vz=0.06169738346121213246},  // 2 Venus
+    {.m=0.00000304043264802264, .x=0.97541936428768183376,  .y=-0.22011750964499116057, .z=0.00008866761098092638,  .vx=0.20842772535763168240,  .vy=0.97042888227470602835,  .vz=-0.00003307038073776142}, // 3 Earth
+    {.m=0.00000032271560375550, .x=1.38489786417060911639,  .y=-0.00373655464561763921, .z=-0.03425238653564356694, .vx=0.03680838810437889880,  .vy=0.88267192839777131042,  .vz=0.01760188515939473466},  // 4 Mars
+    {.m=0.00095479191521124043, .x=2.31793441229397512160,  .y=-4.57278216881576948794, .z=-0.03288979300198136002, .vx=0.38587103958050272823,  .vy=0.21916457142972819994,  .vz=-0.00954142828183331820}, // 5 Jupiter
+    {.m=0.00028588567272224167, .x=4.97984063350991323915,  .y=-8.66630842281542435046, .z=-0.04756566088166765821, .vx=0.26314427785251254255,  .vy=0.16073015466677914587,  .vz=-0.01327326395768535505}, // 6 Saturn
+    {.m=0.00004366243735831270, .x=15.62435177921100226683, .y=12.13892823277256738379, .z=-0.15733112984491792741, .vx=-0.14195568334904265506, .vy=0.16989920313154410758,  .vz=0.00247006450290807337},  // 7 Uranus
+    {.m=0.00005151383772628674, .x=29.39189844361883885426, .y=-5.57834279640134234057, .z=-0.56249012217889071685, .vx=0.03281663353639149155,  .vy=0.18036894277947276843,  .vz=-0.00447061619870956460}  // 8 Neptune
+};
+
+void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
+    if (!r){
+        reb_simulation_error(NULL, "Simulation can't be NULL in reb_simulation_add_fmt.");
+        return;
+    }
+    if (reb_strcmp_ignore_whitespace("outer solar system", fmt)==0){
+        reb_simulation_add(r, reb_particle_solarsystem[0]);
+        for (size_t i=5; i<9; i++){
+            reb_simulation_add(r, reb_particle_solarsystem[i]);
+        }
+        return;
+    }
+    if (reb_strcmp_ignore_whitespace("solar system", fmt)==0){
+        for (size_t i=0; i<9; i++){
+            reb_simulation_add(r, reb_particle_solarsystem[i]);
+        }
+        return;
+    }
+
+    int err = 0;
+    va_list args;
+    va_start(args, fmt);
+    struct reb_particle particle = reb_particle_from_fmt_errV(r, &err, fmt, args);
+    va_end(args);
+
+    if (err==0){ // Success
+        reb_simulation_add(r, particle);
+    }else{
+        const char* error_string = reb_string_for_particle_error(err);
+        reb_simulation_error(r, error_string);
+    }
+}
+
 
 #define TINY 1.E-308 		///< Close to smallest representable floating point number, used for orbit calculation
 
@@ -1341,18 +1308,18 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
         return;
     }
 
-    for (int v=0;v<r->N_var_config;v++){
+    for (size_t v=0;v<r->N_var_config;v++){
         struct reb_variational_configuration* vc = &(r->var_config[v]);
 
         if (vc->lrescale <0 ) continue;  // Skip rescaling if lrescale set to -1
 
-        int N = 1;
+        size_t N = 1;
         if (vc->testparticle<0){
-            N = r->N - r->N_var;
+            N = r->N;
         }
         double scale = 0;
-        struct reb_particle* const particles = r->particles + vc->index;
-        for (int i=0; i<N; i++){
+        struct reb_particle* const particles = r->particles_var + vc->index;
+        for (size_t i=0; i<N; i++){
             struct reb_particle p = particles[i];
             scale = MAX(fabs(p.x), scale);
             scale = MAX(fabs(p.y), scale);
@@ -1364,41 +1331,33 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
         if (scale > 1e100){
 
             if (vc->order == 1){
-                for (int w=0;w<r->N_var_config;w++){
+                for (size_t w=0;w<r->N_var_config;w++){
                     struct reb_variational_configuration* wc = &(r->var_config[w]);
                     if (wc->order == 2 && (wc->index_1st_order_a == vc->index || wc->index_1st_order_b == vc->index)){
-                        if (!(r->var_rescale_warning & 4)){
-                            r->var_rescale_warning |= 4;
+                        if (!(r->messages_var_rescale_warning & 4)){
+                            r->messages_var_rescale_warning |= 4;
                             reb_simulation_warning(r, "Rescaling a set of variational equations of order 1 which are being used by a set of variational equations of order 2. Order 2 equations will no longer be valid.");
                         }
                     }
                 }
             }else{ // order 2
-                if (!(r->var_rescale_warning & 2)){
-                    r->var_rescale_warning |= 2;
+                if (!(r->messages_var_rescale_warning & 2)){
+                    r->messages_var_rescale_warning |= 2;
                     reb_simulation_warning(r, "Variational particles which are part of a second order variational equation have now large coordinates which might exceed range of floating point number range. REBOUND cannot rescale a second order variational equation as it is non-linear.");
                 }
                 return;
             }
 
-
-            int is_synchronized = 1;
-            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.is_synchronized == 0){
-                is_synchronized = 0;
-            }
-            if (r->integrator == REB_INTEGRATOR_EOS && r->ri_eos.is_synchronized == 0){
-                is_synchronized = 0;
-            }
-            if (is_synchronized == 0){
-                if (!(r->var_rescale_warning & 1)){
-                    r->var_rescale_warning |= 1;
-                    reb_simulation_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize and rescale.");
+            if (!r->is_synchronized){
+                if (!(r->messages_var_rescale_warning & 1)){
+                    r->messages_var_rescale_warning |= 1;
+                    reb_simulation_warning(r, "Variational particles have large coordinates which might exceed range of floating point numbers. Rescaling failed because integrator was not synchronized. Turn on safe_mode or manually synchronize. Then rescale.");
                 }
                 return;
             }
 
             vc->lrescale += log(scale);
-            for (int i=0; i<N; i++){
+            for (size_t i=0; i<N; i++){
                 particles[i].x /= scale;
                 particles[i].y /= scale;
                 particles[i].z /= scale;
@@ -1406,60 +1365,56 @@ void reb_simulation_rescale_var(struct reb_simulation* const r){
                 particles[i].vy /= scale;
                 particles[i].vz /= scale;
             }
-
-            if (r->integrator == REB_INTEGRATOR_WHFAST && r->ri_whfast.safe_mode == 0){
-                r->ri_whfast.recalculate_coordinates_this_timestep = 1;
-            }
+            r->did_modify_particles = 1;
         }
     }
 }
 
+static void reb_simulation_add_var_particle_local(struct reb_simulation* r, size_t N_var_add){
+    // Calling realloc every time a variational particle is added.
+    // Somewhat inefficient but avoid storing a capacity for the array
+    // and variational particles are really only added once at the beginning.
+    r->particles_var = realloc(r->particles_var,sizeof(struct reb_particle)*(r->N_var+N_var_add));
+    for (size_t i=0; i<N_var_add;i++){
+        r->particles_var[r->N_var+i] = (struct reb_particle){0};
+        r->particles_var[r->N_var+i].sim = r;
+    }
+    r->N_var += N_var_add;
+}
 
 int reb_simulation_add_variation_1st_order(struct reb_simulation* const r, int testparticle){
     r->N_var_config++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
     r->var_config[r->N_var_config-1].order = 1;
-    int index = r->N;
+    size_t index = r->N_var;
     r->var_config[r->N_var_config-1].index = index;
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
-    struct reb_particle p0 = {0};
     if (testparticle>=0){
-        reb_simulation_add(r,p0);
-        r->N_var++;
+        reb_simulation_add_var_particle_local(r,1);
     }else{
-        int N_real = r->N - r->N_var;
-        for (int i=0;i<N_real;i++){
-            reb_simulation_add(r,p0);
-        }
-        r->N_var += N_real;
+        reb_simulation_add_var_particle_local(r,r->N);
     }
     return index;
 }
 
 
-int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, int index_1st_order_a, int index_1st_order_b){
+int reb_simulation_add_variation_2nd_order(struct reb_simulation* const r, int testparticle, size_t index_1st_order_a, size_t index_1st_order_b){
     r->N_var_config++;
     r->var_config = realloc(r->var_config,sizeof(struct reb_variational_configuration)*r->N_var_config);
     r->var_config[r->N_var_config-1].sim = r;
     r->var_config[r->N_var_config-1].order = 2;
-    int index = r->N;
+    size_t index = r->N_var;
     r->var_config[r->N_var_config-1].index = index;
     r->var_config[r->N_var_config-1].lrescale = 0;
     r->var_config[r->N_var_config-1].testparticle = testparticle;
     r->var_config[r->N_var_config-1].index_1st_order_a = index_1st_order_a;
     r->var_config[r->N_var_config-1].index_1st_order_b = index_1st_order_b;
-    struct reb_particle p0 = {0};
     if (testparticle>=0){
-        reb_simulation_add(r,p0);
-        r->N_var++;
+        reb_simulation_add_var_particle_local(r,1);
     }else{
-        int N_real = r->N - r->N_var;
-        for (int i=0;i<N_real;i++){
-            reb_simulation_add(r,p0);
-        }
-        r->N_var += N_real;
+        reb_simulation_add_var_particle_local(r,r->N);
     }
     return index;
 }
@@ -1478,11 +1433,10 @@ void reb_simulation_init_megno(struct reb_simulation* const r){
     r->megno_mean_Y = 0;
     r->megno_initial_t = r->t;
     r->megno_mean_t = 0;
-    int i = reb_simulation_add_variation_1st_order(r,-1);
-    r->calculate_megno = i;
-    const int imax = i + (r->N-r->N_var);
-    struct reb_particle* const particles = r->particles;
-    for (;i<imax;i++){ 
+    reb_simulation_add_variation_1st_order(r,-1);
+    r->calculate_megno = 1;
+    struct reb_particle* const particles = r->particles_var;
+    for (size_t i=0;i<r->N;i++){
         particles[i].m  = 0.;
         particles[i].x  = reb_random_normal(r,1.);
         particles[i].y  = reb_random_normal(r,1.);
@@ -1518,12 +1472,10 @@ double reb_simulation_lyapunov(struct reb_simulation* r){
     return r->megno_cov_Yt/r->megno_var_t;
 }
 double reb_tools_megno_deltad_delta(struct reb_simulation* const r){
-    const struct reb_particle* restrict const particles = r->particles;
+    const struct reb_particle* restrict const particles = r->particles_var;
     double deltad = 0;
     double delta2 = 0;
-    int i = r->calculate_megno;
-    const int imax = i + (r->N-r->N_var);
-    for (;i<imax;i++){
+    for (size_t i=0;i<r->N;i++){
         deltad += particles[i].vx * particles[i].x; 
         deltad += particles[i].vy * particles[i].y; 
         deltad += particles[i].vz * particles[i].z; 
@@ -1553,75 +1505,17 @@ void reb_tools_megno_update(struct reb_simulation* r, double dY, double dt_done)
     double _d_Y = reb_simulation_megno(r) - r->megno_mean_Y;
     r->megno_mean_Y += _d_Y/(double)r->megno_n;
     r->megno_cov_Yt += ((double)r->megno_n-1.)/(double)r->megno_n 
-        *(r->t - r->megno_initial_t - r->megno_mean_t)
-        *(reb_simulation_megno(r)-r->megno_mean_Y);
+    *(r->t - r->megno_initial_t - r->megno_mean_t)
+    *(reb_simulation_megno(r)-r->megno_mean_Y);
     r->megno_var_t  += ((double)r->megno_n-1.)/(double)r->megno_n 
-        *(r->t - r->megno_initial_t - r->megno_mean_t)
-        *(r->t - r->megno_initial_t - r->megno_mean_t);
-}
-
-#define ROT32(x, y) ((x << y) | (x >> (32 - y))) // avoid effort
-static uint32_t reb_murmur3_32(const char *key, uint32_t len, uint32_t seed) {
-    // Source: Wikipedia
-    static const uint32_t c1 = 0xcc9e2d51;
-    static const uint32_t c2 = 0x1b873593;
-    static const uint32_t r1 = 15;
-    static const uint32_t r2 = 13;
-    static const uint32_t m = 5;
-    static const uint32_t n = 0xe6546b64;
-
-    uint32_t hash = seed;
-
-    const int nblocks = len / 4;
-    const uint32_t *blocks = (const uint32_t *) key;
-    int i;
-    uint32_t k;
-    for (i = 0; i < nblocks; i++) {
-        k = blocks[i];
-        k *= c1;
-        k = ROT32(k, r1);
-        k *= c2;
-
-        hash ^= k;
-        hash = ROT32(hash, r2) * m + n;
-    }
-
-    const uint8_t *tail = (const uint8_t *) (key + nblocks * 4);
-    uint32_t k1 = 0;
-
-    switch (len & 3) {
-        case 3:
-            k1 ^= tail[2] << 16;
-        case 2:
-            k1 ^= tail[1] << 8;
-        case 1:
-            k1 ^= tail[0];
-
-            k1 *= c1;
-            k1 = ROT32(k1, r1);
-            k1 *= c2;
-            hash ^= k1;
-    }
-
-    hash ^= len;
-    hash ^= (hash >> 16);
-    hash *= 0x85ebca6b;
-    hash ^= (hash >> 13);
-    hash *= 0xc2b2ae35;
-    hash ^= (hash >> 16);
-
-    return hash;
-}
-
-uint32_t reb_hash(const char* str){
-    const int reb_seed = 1983;
-    return reb_murmur3_32(str,(uint32_t)strlen(str),reb_seed);
+    *(r->t - r->megno_initial_t - r->megno_mean_t)
+    *(r->t - r->megno_initial_t - r->megno_mean_t);
 }
 
 void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double scalar_vel){
-    const int N = r->N;
+    const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
-    for (int i=0;i<N;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].x *= scalar_pos;
         particles[i].y *= scalar_pos;
         particles[i].z *= scalar_pos;
@@ -1632,12 +1526,12 @@ void reb_simulation_imul(struct reb_simulation* r, double scalar_pos, double sca
 }
 
 int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2){
-    const int N = r->N;
-    const int N2 = r2->N;
+    const size_t N = r->N;
+    const size_t N2 = r2->N;
     if (N!=N2) return -1;
     struct reb_particle* restrict const particles = r->particles;
     const struct reb_particle* restrict const particles2 = r2->particles;
-    for (int i=0;i<N;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].x += particles2[i].x;
         particles[i].y += particles2[i].y;
         particles[i].z += particles2[i].z;
@@ -1649,12 +1543,12 @@ int reb_simulation_iadd(struct reb_simulation* r, struct reb_simulation* r2){
 }
 
 int reb_simulation_isub(struct reb_simulation* r, struct reb_simulation* r2){
-    const int N = r->N;
-    const int N2 = r2->N;
+    const size_t N = r->N;
+    const size_t N2 = r2->N;
     if (N!=N2) return -1;
     struct reb_particle* restrict const particles = r->particles;
     const struct reb_particle* restrict const particles2 = r2->particles;
-    for (int i=0;i<N;i++){
+    for (size_t i=0;i<N;i++){
         particles[i].x -= particles2[i].x;
         particles[i].y -= particles2[i].y;
         particles[i].z -= particles2[i].z;

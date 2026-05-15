@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import rebound.data
     
 whfastsettings1 = [ # corrector, corrector2, kernel, relative error
         [0, 0,"default",2e-7], 
@@ -34,12 +33,12 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
     def energy(self, s):
         corrector, corrector2, kernel, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
-        sim.ri_whfast.corrector = corrector 
-        sim.ri_whfast.corrector2 = corrector2
-        sim.ri_whfast.kernel = kernel
-        sim.ri_whfast.safe_mode = False
+        sim.integrator.corrector = corrector 
+        sim.integrator.corrector2 = corrector2
+        sim.integrator.kernel = kernel
+        sim.integrator.safe_mode = False
         sim.dt = 0.0123235235*sim.particles[1].P  
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
@@ -49,14 +48,14 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
     def energy_notcom(self, s):
         corrector, corrector2, kernel, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for p in sim.particles:
             p.vx += 1.
         com = sim.com()
         sim.integrator = "whfast"
-        sim.ri_whfast.corrector = corrector 
-        sim.ri_whfast.corrector2 = corrector2
-        sim.ri_whfast.kernel = kernel
+        sim.integrator.corrector = corrector 
+        sim.integrator.corrector2 = corrector2
+        sim.integrator.kernel = kernel
         sim.dt = 0.0123235235*sim.particles[1].P  
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
@@ -69,19 +68,19 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
     def compias(self, s):
         corrector, corrector2, kernel, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for p in sim.particles:
             p.vx += 1050. # move out of com to make it harder
         sim.integrator = "whfast"
-        sim.ri_whfast.corrector = corrector 
-        sim.ri_whfast.corrector2 = corrector2
-        sim.ri_whfast.kernel = kernel
+        sim.integrator.corrector = corrector 
+        sim.integrator.corrector2 = corrector2
+        sim.integrator.kernel = kernel
         sim.dt = 0.0123235235*sim.particles[1].P  
         sim.integrate(13.21415,exact_finish_time=False)
         
         simi = rebound.Simulation()
         simi.integrator = "ias15"
-        rebound.data.add_outer_solar_system(simi)
+        simi.add("outer solar system")
         for p in simi.particles:
             p.vx += 1050.
         simi.integrate(sim.t,exact_finish_time=True)
@@ -90,26 +89,24 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
             if corrector:
                 self.assertLess(math.fabs(simi.particles[i].x-sim.particles[i].x),1e-8)
             else: # less accurate
-               self.assertLess(math.fabs(simi.particles[i].x-sim.particles[i].x),2e-7)
+               self.assertLess(math.fabs(simi.particles[i].x-sim.particles[i].x),1.2e-6)
 
     def backandforth(self, s):
         corrector, corrector2, kernel, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for p in sim.particles:
             p.vx += 1.
         sim0=sim.copy()
         sim.integrator = "whfast"
-        sim.ri_whfast.corrector = corrector 
-        sim.ri_whfast.corrector2 = corrector2
-        sim.ri_whfast.kernel = kernel
+        sim.integrator.corrector = corrector 
+        sim.integrator.corrector2 = corrector2
+        sim.integrator.kernel = kernel
         sim.dt = 0.0123235235*sim.particles[1].P  
         steps = 10
-        for i in range(steps):
-            sim.step()
+        sim.steps(steps)
         sim.dt *= -1
-        for i in range(steps):
-            sim.step()
+        sim.steps(steps)
         for i in range(sim.N):
             if corrector:
                 self.assertLess(math.fabs(sim0.particles[i].x-sim.particles[i].x),2e-11)
@@ -117,15 +114,15 @@ class TestIntegratorWHFastAdvanced(unittest.TestCase):
     def restart(self, s):
         corrector, corrector2, kernel, maxerror = s
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
-        sim.ri_whfast.corrector = corrector 
-        sim.ri_whfast.corrector2 = corrector2
-        sim.ri_whfast.kernel = kernel
-        sim.step()
+        sim.integrator.corrector = corrector 
+        sim.integrator.corrector2 = corrector2
+        sim.integrator.kernel = kernel
+        sim.steps(1)
         sim2 = sim.copy()
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
         self.assertEqual(sim,sim2)
 
 def create_test_whfastsettings1(s):

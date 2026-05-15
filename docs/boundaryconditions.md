@@ -27,14 +27,14 @@ The syntax is as follows:
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_configure_box(r, 10., 1, 1, 1); # confine the simulation to a box of size 10
+    r->root_size = 10.0 # confine the simulation to a box of size 10
     r->boundary = REB_BOUNDARY_OPEN;
     ```
 
 === "Python"
     ```python
     sim = rebound.Simulation()
-    sim.configure_box(10.)   # confine the simulation to a box of size 10
+    sim.root_size = 10.0   # confine the simulation to a box of size 10
     sim.boundary = "open"
     ```
 
@@ -46,14 +46,20 @@ The syntax is as follows:
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_configure_box(r, 10., 1, 2, 3); # confine the simulation to a box of size 10x20x30
+    r->root_size = 10.0
+    r->N_root_x = 1  // 1 is the default
+    r->N_root_y = 2
+    r->N_root_z = 3  // confine the simulation to a box of size 10x20x30
     r->boundary = reb_boundary_periodic;
     ```
 
 === "python"
     ```python
     sim = rebound.simulation()
-    sim.configure_box(10., 1, 2, 3)   # confine the simulation to a box of size 10x20x30
+    sim.root_size = 10.0
+    sim.N_root_x = 1  # 1 is the default
+    sim.N_root_y = 2
+    sim.N_root_z = 3  # confine the simulation to a box of size 10x20x30
     sim.boundary = "periodic"
     ```
 
@@ -94,7 +100,7 @@ For more information on how to setup simulations of planetary rings in REBOUND, 
 === "C"
     ```c
     struct reb_simulation* r = reb_simulation_create();
-    reb_simulation_configure_box(r, 10., 1, 1, 1); 
+    r->root_size = 10.0
     r->OMEGA = 1.0;
     r->boundary = REB_BOUNDARY_SHEAR;
     ```
@@ -102,7 +108,7 @@ For more information on how to setup simulations of planetary rings in REBOUND, 
 === "Python"
     ```python
     sim = rebound.Simulation()
-    sim.configure_box(10.)
+    sim.root_size = 10.0
     sim.OMEGA = 1.0
     sim.boundary = "shear"
     ```

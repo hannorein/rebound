@@ -4,9 +4,10 @@
 #include <string.h>
 #include <emscripten/fetch.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "fmemopen.h"
 #include "display.h"
-#include "input.h"
+#include "binarydata.h"
 
 int first = 1;
 double reconnect_delay = 1.;
@@ -111,8 +112,8 @@ void request_frame_succeeded(emscripten_fetch_t *fetch) {
     struct reb_simulation* r = fetch->userData;
 
     FILE* fin = reb_fmemopen((void*)fetch->data, fetch->numBytes, "r");
-    enum reb_simulation_binary_error_codes warnings;
-    reb_input_fields(r, fin, &warnings);
+    enum REB_BINARYDATA_ERROR_CODE warnings;
+    reb_binarydata_input_fields(r, fin, &warnings);
     fclose(fin);
 
     if (first){

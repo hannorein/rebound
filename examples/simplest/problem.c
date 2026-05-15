@@ -9,6 +9,7 @@
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
@@ -21,6 +22,9 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "m", 1.);                // Central object
     reb_simulation_add_fmt(r, "m a e", 1e-3, 1., 0.1); // Jupiter mass planet
     reb_simulation_add_fmt(r, "a e", 1.4, 0.1);        // Massless test particle 
+
+    // Move simulation to center of mass frame
+    reb_simulation_move_to_com(r);
 
     // First integrate for 100 time units. 
     reb_simulation_integrate(r,100.);

@@ -1,36 +1,64 @@
 /**
- * Custom integrator with data storage
+ * Custom integrator with state storage
  * 
  * This example shows how to use a custom, user-provided integrator
  * that requires internal storage with REBOUND. Here, we implement 
  * the 2nd order leap-frog integrator which combines the first and
- * last Drift steps.
+ * last Drift steps. We also record some diagnostic data in the 
+ * integrator state to demonstrate how to build a custom integrator
+ * which requires its own datastorage.
  */
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
-struct leapfrog_data {
-    int is_synchronized;
+struct custom_integrator_state {
+    // Here we just log the number of steps
+    // but this could contain any data or array 
+    // as required by the integrator.
+    int number_of_steps;
+    int number_of_synchronizations;
+    // We can for example use a string
+    char* best_nbody_package;
 };
 
-void leapfrog_step(struct reb_simulation* r){
-    if (r->ri_custom.data_size==0){
-        // Need to allocate memory on first call
-        size_t size = sizeof(struct leapfrog_data);
-        r->ri_custom.data = malloc(size);
-        r->ri_custom.data_size = size; // size of data in bytes
-        // Populate default value
-        struct leapfrog_data* data = r->ri_custom.data;
-        data->is_synchronized = 1; 
-    }
+// By defining the layout of the state in the form of a reb_binary_data_field_descriptor,
+// REBOUND can automatically safe and restore integrator state to a Simulationarchive file.
+const struct reb_binarydata_field_descriptor leapfrog_field_descriptor_list[] = {
+    { "The number of steps taken", // This is an optional comment.
+        REB_INT, "number_of_steps",            offsetof(struct custom_integrator_state, number_of_steps), 0, 0, 0},
+    { "The number of synchronizations done", 
+        REB_INT, "number_of_synchronizations", offsetof(struct custom_integrator_state, number_of_synchronizations), 0, 0, 0},
+    { "A random string", 
+        REB_STRING, "best_nbody_package",      offsetof(struct custom_integrator_state, best_nbody_package), 0, 0, 0},
+    { 0 }, // Null terminated list
+};
 
+void* leapfrog_create(){
+    struct custom_integrator_state* leapfrog = malloc(sizeof(struct custom_integrator_state));
+    // Default values 
+    leapfrog->number_of_steps = 0;  
+    leapfrog->number_of_synchronizations = 0;
+    leapfrog->best_nbody_package = strdup("REBOUND, of course."); // Note: strdup allocate memory.
+    return leapfrog;
+}
+
+void leapfrog_free(void* p){
+    struct custom_integrator_state* leapfrog = p;
+    // Free any data allocated by integrator
+    free(leapfrog->best_nbody_package);
+    // Then, free the state itself.
+    free(leapfrog);
+}
+
+void leapfrog_step(struct reb_simulation* r, void* p){
     struct reb_particle* restrict const particles = r->particles;
-    struct leapfrog_data* data = r->ri_custom.data;
+    struct custom_integrator_state* leapfrog = p;
 
     // Drift
-    if (data->is_synchronized){
+    if (r->is_synchronized){
         // Half drift step
         for (unsigned int i=0;i<r->N;i++){
             particles[i].x  += (0.5*r->dt) * particles[i].vx;
@@ -55,31 +83,24 @@ void leapfrog_step(struct reb_simulation* r){
         particles[i].vz += r->dt * particles[i].az;
     }
     // Skipping second Drift step. Particles are unsynchronized.
-    data->is_synchronized = 0; 
+    r->is_synchronized = 0; 
+
+    leapfrog->number_of_steps++;
 }
 
-void leapfrog_synchronize(struct reb_simulation* r){
-    if (r->ri_custom.data_size!=0){
-        struct leapfrog_data* data = r->ri_custom.data;
-        if (data->is_synchronized==0){
-            // Drift half step
-            struct reb_particle* restrict const particles = r->particles;
-            for (unsigned int i=0;i<r->N;i++){
-                particles[i].x  += (0.5*r->dt) * particles[i].vx;
-                particles[i].y  += (0.5*r->dt) * particles[i].vy;
-                particles[i].z  += (0.5*r->dt) * particles[i].vz;
-            }
-            r->t += 0.5*r->dt; // Advance time
-            data->is_synchronized = 1;
+void leapfrog_synchronize(struct reb_simulation* r, void* p){
+    if (r->is_synchronized==0){
+        struct custom_integrator_state* leapfrog = p;
+        // Drift half step
+        struct reb_particle* restrict const particles = r->particles;
+        for (unsigned int i=0;i<r->N;i++){
+            particles[i].x  += (0.5*r->dt) * particles[i].vx;
+            particles[i].y  += (0.5*r->dt) * particles[i].vy;
+            particles[i].z  += (0.5*r->dt) * particles[i].vz;
         }
-    }
-}
-
-void leapfrog_reset(struct reb_simulation* r){
-    if (r->ri_custom.data_size!=0){
-        free(r->ri_custom.data);
-        r->ri_custom.data = NULL;
-        r->ri_custom.data_size = 0;
+        r->t += 0.5*r->dt; // Advance time
+        r->is_synchronized = 1;
+        leapfrog->number_of_synchronizations++;
     }
 }
 
@@ -91,43 +112,61 @@ int main(int argc, char* argv[]) {
     reb_simulation_add_fmt(r, "a e", 1.4, 0.1);        // Massless test particle 
 
     // Choose CUSTOM integrator and setup function pointers.
-    r->integrator = REB_INTEGRATOR_CUSTOM;
-    r->ri_custom.step = leapfrog_step;
-    r->ri_custom.synchronize = leapfrog_synchronize;
-    r->ri_custom.reset = leapfrog_reset;
+    struct reb_integrator custom = {
+        .step = leapfrog_step,
+        .synchronize = leapfrog_synchronize,
+        .create = leapfrog_create,
+        .free = leapfrog_free,
+        .field_descriptor_list = leapfrog_field_descriptor_list,
+    };
+    reb_integrator_register(custom, "custom-leapfrog");
+    reb_simulation_set_integrator(r, "custom-leapfrog");
     
     // Integrate 5 time units
     // This will automatically call synchronize() at the end.
     r->exact_finish_time = 0; // Allow overshoot. We do not want to change the timestep in last step.
     reb_simulation_integrate(r, 5.0);
-    printf("is_synchronized = %d\n", ((struct leapfrog_data*)r->ri_custom.data)->is_synchronized);
+    struct custom_integrator_state* leapfrog = r->integrator.state;
+    printf("number_of_steps = %d\n", leapfrog->number_of_steps);
+    printf("number_of_synchronizations = %d\n", leapfrog->number_of_synchronizations);
+
+    // We can change some of the integrator state properties, for example the string:
+    free(leapfrog->best_nbody_package);
+    leapfrog->best_nbody_package = strdup("REBOUND is still the best N-body package.");
     
     // Step forward 10 steps
     reb_simulation_steps(r, 10);
-    // Simulation is not synchronized afterwards.
-    printf("is_synchronized = %d\n", ((struct leapfrog_data*)r->ri_custom.data)->is_synchronized);
+    // Simulation is not synchronized right now.
+    printf("is_synchronized = %d\n", r->is_synchronized);
     // Synchronize manually
     reb_simulation_synchronize(r);
-    printf("is_synchronized = %d\n", ((struct leapfrog_data*)r->ri_custom.data)->is_synchronized);
+    printf("is_synchronized = %d\n", r->is_synchronized);
 
     // Step forward 10 more steps
     reb_simulation_steps(r, 10);
-    // We can save the simulation to a file in the unsynchronized state.
-    // This automatically saves everything stored in r->ri_custom.data to the file.
+
+    // We next save the simulation to a file.
+    // This automatically saves everything stored in r->integrator.state to the file.
+    // Note that it is in the unsynchronized state.
     reb_simulation_save_to_file(r, "out.bin");
-    // Free the original simulation. This will call leapfrog_reset() which is responsible for freeing r->ri_custom.data.
+    // Free the original simulation. This will call leapfrog_reset() which is responsible for freeing r->integrator.state.
     reb_simulation_free(r);
 
     // Load the simulation back from the file.
+    // Custom integrator needs to be registered before loading file. 
+    // Integrator state is restored automatically if field_descriptor_list is provided.
     r = reb_simulation_create_from_file("out.bin", -1);
-    // Need to set the function pointers manually. 
-    // Data is automatically restored.
-    r->ri_custom.step = leapfrog_step;
-    r->ri_custom.synchronize = leapfrog_synchronize;
-    r->ri_custom.reset = leapfrog_reset;
+    leapfrog = r->integrator.state;
+    printf("number_of_steps = %d\n", leapfrog->number_of_steps);
+    printf("number_of_synchronizations = %d\n", leapfrog->number_of_synchronizations);
+    printf("best_nbody_package = %s\n", leapfrog->best_nbody_package);
+
+    
+    // Simulation is not synchronized right now.
+    printf("is_synchronized = %d\n", r->is_synchronized);
     // Synchronize manually
     reb_simulation_synchronize(r);
-    printf("is_synchronized = %d\n", ((struct leapfrog_data*)r->ri_custom.data)->is_synchronized);
+    printf("is_synchronized = %d\n", r->is_synchronized);
 
     // cleanup
     reb_simulation_free(r);

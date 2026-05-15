@@ -15,17 +15,17 @@
  * simulations.
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* const r){
     if (r->steps_done%400==0){ // Every 400 timesteps
         int id = r->steps_done/400;
         char filename[1024];
         sprintf(filename, "screenshot_%05d.png", id);
-        if (reb_simulation_output_screenshot(r, filename)){
+        if (reb_simulation_output_screenshot(r, filename)==0){ // Success?
             printf("Screenshot saved: %s\n", filename);
         }
     }
@@ -33,7 +33,7 @@ void heartbeat(struct reb_simulation* const r){
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r = reb_simulation_create();
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    reb_simulation_set_integrator(r, "whfast");
     r->heartbeat = heartbeat;
 
     // Initial conditions

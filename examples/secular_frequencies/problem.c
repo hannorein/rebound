@@ -5,10 +5,10 @@
  * frequency analysis using the Frequency Modified Fourier Transform
  * to determine the secular frequencies (g-modes).
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double ss_pos[6][3] =
     {
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     const double k = 0.01720209895; // Gaussian constant
     r->dt = 120;                    // Timestep is 120 days.
     r->G = k * k;                   // These are the same units as used by the mercury6 code.
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    reb_simulation_set_integrator(r, "whfast");
 
     // Initial conditions
     for (int i = 0; i < 6; i++) {

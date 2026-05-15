@@ -7,10 +7,10 @@
  * size and merge if they collide. Note that the size is unphysically large
  * in this example. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt                   = 0.01*2.*M_PI;                // initial timestep
-    r->integrator           = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->collision            = REB_COLLISION_DIRECT;
     r->collision_resolve    = reb_collision_resolve_merge; // Choose merger collision routine.
     r->heartbeat            = heartbeat;
@@ -40,7 +40,6 @@ int main(int argc, char* argv[]){
         struct reb_particle planet = {0};
         planet.m = 1e-4; 
         planet.r = 4e-2;                                 // radius in AU (it is unphysically large in this example)
-        planet.last_collision = 0;                       // The first time particles can collide with each other
         planet.x = a; 
         planet.vy = v;
         reb_simulation_add(r, planet); 

@@ -6,10 +6,10 @@
  * automatically adjusts the timestep so that the pericenter passages
  * are resolved with high accuracy.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double timescale; // orbital timescale
 void heartbeat(struct reb_simulation* r);
@@ -23,9 +23,9 @@ int main(int argc, char* argv[]){
    
     // Setup constants
     r->G            = 1;        // Gravitational constant
-    r->integrator   = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->heartbeat    = heartbeat;
-    r->ri_ias15.adaptive_mode = 2;    // Improved timestep criterion
+    ((struct reb_integrator_ias15_state*)r->integrator.state)->adaptive_mode = 2;    // Improved timestep criterion
 
     double e_testparticle = 1.-1e-7;    
     double mass_scale     = 1.;       // Some integrators have problems when changing the mass scale, IAS15 does not. 

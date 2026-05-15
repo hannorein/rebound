@@ -1,0 +1,109 @@
+/**
+ * @file    rebound_internal.h
+ * @brief   Various functions used internally and implemented in rebound.c
+ * @author  Hanno Rein <hanno@hanno-rein.de>
+ * 
+ * @section     LICENSE
+ * Copyright (c) 2026 Hanno Rein
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#ifndef _REBOUND_INTERNAL_H
+#define _REBOUND_INTERNAL_H
+
+// Definitions for functions that we need to implement ourselves on Windows.
+#ifdef _WIN32
+#define _NO_CRT_STDIO_INLINE // WIN32 to use _vsprintf_s
+#include <WinSock2.h>
+#define _WINSOCKAPI_ //stops windows.h including winsock.h
+#include <windows.h>
+typedef struct reb_timeval {
+    int64_t tv_sec;
+    int64_t tv_usec;
+} reb_timeval;
+int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
+#include <stdarg.h>
+int asprintf(char **strp, const char *fmt, ...);
+int vasprintf(char **strp, const char *fmt, va_list ap);
+int rand_r (unsigned int *seed);
+void usleep(__int64 usec);
+#include <io.h>
+#define REB_STR_RED
+#define REB_STR_RED_BOLD
+#define REB_STR_YELLOW_BOLD
+#define REB_STR_BOLD
+#define REB_STR_GREEN
+#define REB_STR_RESET
+#else // Linux and MacOS
+#define reb_timeval timeval
+#include <sys/time.h>
+#include <unistd.h>
+#include <pthread.h>
+#define REB_STR_RED "\033[31m"
+#define REB_STR_RED_BOLD "\033[1;31m"
+#define REB_STR_YELLOW_BOLD "\033[1;33m"
+#define REB_STR_BOLD "\033[1m"
+#define REB_STR_GREEN "\033[32m"
+#define REB_STR_RESET "\033[0m"
+#endif // _WIN32
+
+// Githash should be provided as a command line argument to the compiler. 
+// If not, use this dummy.
+#ifndef GITHASH
+#define GITHASH notavailable0000000000000000000000000001 
+#endif
+
+// Graceful global interrupt handler 
+#include <signal.h>
+extern volatile sig_atomic_t reb_sigint;  
+void reb_sigint_handler(int signum);
+
+
+// Global constants and variables
+REB_API extern const char* reb_build_str;   ///< Date and time build string.
+REB_API extern const char* reb_version_str; ///< Version string.
+REB_API extern const char* reb_githash_str; ///< Current git hash.
+REB_API extern const char* reb_logo[26];    ///< Logo of rebound. 
+REB_API extern const unsigned char reb_favicon_png[]; /// < Favicon in PNG format.
+REB_API extern const unsigned int reb_favicon_len;
+REB_API extern const size_t reb_messages_max_N;
+REB_API extern const uint32_t reb_string_size_max; // defined in rebound.c
+
+// Free any pointer. Alias for free(). Used by python.
+REB_API void reb_free(void* p);
+// Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
+REB_API int reb_pop_message(char** messages, char* const buf); 
+// Print or save a message. 
+enum REB_MESSAGE_TYPE {
+    REB_MESSAGE_TYPE_INFO = 'i',
+    REB_MESSAGE_TYPE_ERROR = 'e',
+    REB_MESSAGE_TYPE_WARNING = 'w',
+};
+void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg);
+// Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
+REB_API int reb_check_fp_contract(); 
+// Wrapper method to set number of OpenMP threads from python.
+REB_API void reb_omp_set_num_threads(int num_threads);
+// Helper function for comparing strings
+int reb_strcmp_ignore_whitespace(const char *s1, const char *s2);
+
+// Lists to find available integrators
+REB_API char** reb_integrators_registered(); // only used by python
+extern struct reb_integrator_configuration* reb_integrator_configurations_custom;
+
+#endif // _REBOUND_INTERNAL_H

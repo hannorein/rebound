@@ -30,14 +30,11 @@ class TestSerialize(unittest.TestCase):
 
         b = np.zeros(self.sim.N,dtype="uint32")
         c = np.zeros(self.sim.N)
-        self.sim.serialize_particle_data(r=c,hash=b)
+        self.sim.serialize_particle_data(r=c)
 
         with self.assertRaises(AttributeError):
             self.sim.serialize_particle_data(r=b)
 
-        with self.assertRaises(AttributeError):
-            self.sim.serialize_particle_data(hash=a)
-        
         with self.assertRaises(AttributeError):
             self.sim.serialize_particle_data(xyz=c)
 

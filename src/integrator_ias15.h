@@ -1,9 +1,6 @@
 /**
- * @file    integrator_ias15.h
- * @brief   Interface for numerical particle integrator
- * @author  Hanno Rein <hanno@hanno-rein.de>
+ * integrator_ias15.h: The high order IAS15 integrator.
  * 
- * @section LICENSE
  * Copyright (c) 2015 Hanno Rein
  *
  * This file is part of rebound.
@@ -24,7 +21,39 @@
  */
 #ifndef _INTEGRATOR_IAS15_H
 #define _INTEGRATOR_IAS15_H
-void reb_integrator_ias15_step(struct reb_simulation* r);         ///< Internal function used to call a specific integrator
-void reb_integrator_ias15_synchronize(struct reb_simulation* r);   ///< Internal function used to call a specific integrator
-void reb_integrator_ias15_alloc(struct reb_simulation* r);         ///< Internal function, alloctes memory for IAS15 
+
+extern const struct reb_integrator reb_integrator_ias15;
+
+struct reb_integrator_ias15_state {
+    double epsilon;                 // Precision control parameter
+    double min_dt;                  // Minimal timestep
+#define REB_IAS15_ADAPTIVEMODE(X,Y) \
+    X(Y, 0, INDIVIDUAL)     /* fractional error is calculated separately for each particle              */ \
+    X(Y, 1, GLOBAL)         /* fractional error is calculated globally (was default until 01/2024)      */ \
+    X(Y, 2, PRS23)          /* Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)   */ \
+    X(Y, 3, AARSETH85)       /* Aarseth (1985) timestep criterion                                        */
+    enum {
+        REB_GENERATE_ENUM(REB_IAS15_ADAPTIVEMODE)
+    } adaptive_mode;                    // Determines how the timestep is chosen
+    uint64_t iterations_max_exceeded;   // Counter how many times the iteration did not converge. 
+    size_t N_allocated;          
+    double* REB_RESTRICT at;
+    double* REB_RESTRICT x0;
+    double* REB_RESTRICT v0;
+    double* REB_RESTRICT a0;
+    double* REB_RESTRICT csx;
+    double* REB_RESTRICT csv;
+    double* REB_RESTRICT csa0;
+    // The following are reb_dp7 pointers. See implementation for details.
+    double* REB_RESTRICT g;
+    double* REB_RESTRICT b;
+    double* REB_RESTRICT csb;             // Compensated summation storage for b
+    double* REB_RESTRICT e;
+    double* REB_RESTRICT br;              // Used for resetting the b coefficients if a timestep gets rejected
+    double* REB_RESTRICT er;              // Same for e coefficients
+};
+
+// Returns the gravitational timescale as calculated in Pham, Rein, Spiegel (2023). Useful for setting the initial IAS15 timestep.
+REB_API double reb_integrator_ias15_timescale(struct reb_simulation* r);
+
 #endif

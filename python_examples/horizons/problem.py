@@ -24,7 +24,7 @@ else:
     sim.move_to_com()
     # Configure simulation
     sim.integrator = "whfast"
-    sim.set_dt = 0.01
+    sim.dt = 0.01
     # Let's save it for next time
     # Note: sim.save_to_file() only saves the particle data, not the integrator settings, etc.
     sim.save_to_file(filename)  
@@ -52,7 +52,7 @@ def plot(zoom):
     ax.set_ylim([-zoom,zoom])
     ax.set_xlabel("x [AU]")
     ax.set_ylabel("y [AU]")
-    for i in xrange(0,sim.N):
+    for i in range(sim.N):
         plt.plot(x[i],y[i])
         if x[i][-1]*x[i][-1]+y[i][-1]*y[i][-1]>0.01*zoom*zoom or i==0:
             ax.annotate(solar_system_objects[i], xy=(x[i][-1], y[i][-1]),horizontalalignment="center")

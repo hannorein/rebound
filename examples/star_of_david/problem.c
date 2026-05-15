@@ -7,10 +7,10 @@
  * which illustrates that IAS15 can handle both forward and backward in time
  * integrations. The initial conditions are by Robert Vanderbei.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 
 int main(int argc, char* argv[]){
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
     // your web browser to http://localhost:1234
     reb_simulation_start_server(r, 1234);
 
-    r->integrator = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->dt = -1;
     r->usleep = 10000;   // Slowing down integrator (for visualization only)
 

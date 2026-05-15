@@ -6,12 +6,13 @@
  * CPU which support AVX512 instructions to run 
  * this example.
  */
+#include "rebound.h"
+#include "rebound_internal.h" // only needed for windows
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <sched.h>
 #include <stdbool.h>
-#include "rebound.h"
 
 // Initial conditions for the Solar System
 // from NASA horizons
@@ -87,12 +88,14 @@ double run(int use_whfast512){
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
     if (use_whfast512){ 
-        r->integrator = REB_INTEGRATOR_WHFAST512;
-        r->ri_whfast512.gr_potential = 1;
+        reb_simulation_set_integrator(r, "whfast512");
+        struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
+        whfast512->gr_potential = 1;
     }else{
-        r->integrator = REB_INTEGRATOR_WHFAST;
-        r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
-        r->ri_whfast.safe_mode = 0;
+        reb_simulation_set_integrator(r, "whfast");
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
+        whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+        whfast->safe_mode = 0;
         r->additional_forces = gr_force;
     }
     

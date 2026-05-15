@@ -1,8 +1,8 @@
-from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof 
-from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError 
+from ctypes import Structure, c_double, POINTER, c_uint32, c_int, c_uint, c_int64, c_uint64, c_void_p, c_char_p, CFUNCTYPE, byref, create_string_buffer, addressof, c_char, c_size_t, string_at, sizeof, cast 
+from . import clibrebound, Escape, NoParticles, Encounter, Collision, GenericError, string_size_max 
 from .citations import cite
+from .integrator import IntegratorConfiguration
 from .units import units_convert_particle, check_units, convert_G, hash_to_unit
-from .hash import hash as rebhash, HashPointerPair
 from .vectors import Vec3d, Vec3dBasic, Vec6d
 import os
 import sys
@@ -13,14 +13,10 @@ import warnings
 class allocated_c_char_p(c_char_p):
     pass
 
-import types
-      
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h
-        
-INTEGRATORS = {"ias15": 0, "whfast": 1, "sei": 2, "leapfrog": 4, "none": 7, "janus": 8, "mercurius": 9, "saba": 10, "eos": 11, "bs": 12, "whfast512": 21, "trace": 25, "custom": 26}
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
-GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "trace": 6}
+GRAVITIES = {"none": 0, "basic": 1, "compensated": 2, "tree": 3, "mercurius": 4, "jacobi": 5, "custom": 7}
 COLLISIONS = {"none": 0, "direct": 1, "tree": 2, "line": 4, "linetree": 5}
 # Format: Majorerror, id, message
 BINARY_WARNINGS = [
@@ -36,6 +32,7 @@ BINARY_WARNINGS = [
     (False,  512, "The binary file seems to be corrupted. An attempt has been made to read the uncorrupted parts of it."),
     (True, 1024, "Reading old Simulationarchives (version < 2) is no longer supported. If you need to read such an archive, use a REBOUND version <= 3.26.3"),
 ]
+
 
 # Note: name conflict with exception "Collision"
 class CollisionS(Structure):
@@ -92,27 +89,25 @@ class Simulation(Structure):
     >>> sim = rebound.Simulation(open("archive.bin","rb").read())
 
     """
+
+    # Only allow attributes which are fields.
+    # Exceptions are listed here. Used to keep reference for function pointers.
+    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp", "_simulation_needsfree_", "_extras_ref"]
+
     def __new__(cls, *args, **kw):
+        clibrebound.reb_simulation_create.restype = POINTER(Simulation)
         # Create a new simulation if no arguments given
         if len(args)==0:
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
-            return sim
-        
+            sim = clibrebound.reb_simulation_create().contents
+            sim._simulation_needsfree_ = True
+            return sim 
         # If first argument is of type bytes, then unpickle a Simulation
         if isinstance(args[0], bytes):
-            l = len(args[0]) 
-            buft = c_char * l
-            buf = buft.from_buffer_copy(args[0])
-            # Note: Not calling Simulationarchive.
-            # Doing this manually here because we need to keep the reference to buf.
-            # So we can later access the contents of the archive to get the simulation.
-            sa = Simulationarchive.__new__(Simulationarchive, None, None)
+            sa = Simulationarchive(args[0])
             w = c_int(0)
-            clibrebound.reb_simulationarchive_init_from_buffer_with_messages(byref(sa), byref(buf), c_size_t(l), None, byref(w))
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
-            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
+            sim = clibrebound.reb_simulation_create().contents
+            sim._simulation_needsfree_ = True
+            clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(-1),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
                 if w.value & value:
                     if majorerror:
@@ -140,10 +135,10 @@ class Simulation(Structure):
 
         if sa is not None:
             # Recreate existing simulation 
-            sim = super(Simulation,cls).__new__(cls)
-            clibrebound.reb_simulation_init(byref(sim))
-            w = sa.warnings # warnings will be appended to previous warnings (as to not repeat them) 
-            clibrebound.reb_simulation_create_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
+            sim = clibrebound.reb_simulation_create().contents
+            sim._simulation_needsfree_ = True
+            w = c_int(0)
+            clibrebound.reb_simulation_init_from_simulationarchive_with_messages(byref(sim),byref(sa),c_int64(snapshot),byref(w))
             for majorerror, value, message in BINARY_WARNINGS:
                 if w.value & value:
                     if majorerror:
@@ -155,6 +150,12 @@ class Simulation(Structure):
 
         # Still here? Then an error occurred.
         raise RuntimeError("Can not create Simulation.")
+
+    def __del__(self):
+        # _simulation_needsfree_ is not set if Simulation is created by ctypes as a simple view.
+        if hasattr(self, "_simulation_needsfree_"):
+            if self._simulation_needsfree_:
+                clibrebound.reb_simulation_free(byref(self))
 
     def __init__(self,filename=None,snapshot=None):
         self.save_messages = 1 # Warnings will be checked within python
@@ -251,36 +252,36 @@ class Simulation(Structure):
 
 # Message and memory management functions
     def process_messages(self):
-        clibrebound.reb_simulation_get_next_message.restype = c_int
-        buf = create_string_buffer(c_int.in_dll(clibrebound, "reb_max_messages_length").value)
-        while clibrebound.reb_simulation_get_next_message(byref(self), buf):
-            msg = buf.value.decode("ascii")
-            if msg[0]=='w':
-                warnings.warn(msg[1:], RuntimeWarning)
-            elif msg[0]=='e':
-                raise RuntimeError(msg[1:])
+        clibrebound.reb_pop_message.restype = c_int
+        clibrebound.reb_pop_message.argtypes = [c_void_p, c_char*string_size_max]
+        buf = create_string_buffer(string_size_max)
+        if self.messages:
+            while clibrebound.reb_pop_message(self.messages, buf):
+                msg = buf.value.decode("ascii")
+                if msg[0]=='i':
+                    print(msg[1:])
+                elif msg[0]=='w':
+                    warnings.warn(msg[1:], RuntimeWarning)
+                elif msg[0]=='e':
+                    raise RuntimeError(msg[1:])
 
 # Pickling methods: return Simulationarchive binary
     def __reduce__(self):
         buf = c_char_p()
         size = c_size_t()
-        clibrebound.reb_simulation_save_to_stream(byref(self), byref(buf), byref(size))
+        clibrebound.reb_binarydata_simulation_to_stream(byref(self), byref(buf), byref(size))
         s = bytes(string_at(buf, size=size.value)) #make copy
-        clibrebound.reb_simulation_output_free_stream(buf) # free original
+        clibrebound.reb_free(buf) # free original
         return (Simulation, (s,))
 
 # Other operators
-
-    def __del__(self):
-        if self._b_needsfree_ == 1: # to avoid, e.g., sim.particles[1]._sim.contents.G creating a Simulation instance to get G, and then freeing the C simulation when it immediately goes out of scope
-            clibrebound.reb_simulation_free_pointers(byref(self))
 
     def __eq__(self, other):
         # This ignores the walltime parameter
         if not isinstance(other,Simulation):
             return NotImplemented
         clibrebound.reb_simulation_diff.restype = c_int
-        ret = clibrebound.reb_simulation_diff(byref(self), byref(other),c_int(2))
+        ret = clibrebound.reb_simulation_diff(byref(self), byref(other),c_int(0))
         return not ret
             
     def diff(self, other):
@@ -407,7 +408,7 @@ class Simulation(Structure):
         s += "REBOUND version:     \t%s\n" %__version__
         s += "REBOUND built on:    \t%s\n" %__build__
         s += "Number of particles: \t%d\n" %self.N       
-        s += "Selected integrator: \t" + self.integrator + "\n"       
+        s += "Selected integrator: \t" + str(self.integrator) + "\n"       
         s += "Simulation time:     \t%.16e\n" %self.t
         s += "Current timestep:    \t%f\n" %self.dt
         s += "---------------------------------\n"
@@ -533,14 +534,11 @@ class Simulation(Structure):
     @collision_resolve.setter
     def collision_resolve(self, func):
         if func == "merge":
-            clibrebound.reb_simulation_set_collision_resolve.restype = None
-            clibrebound.reb_simulation_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_merge)
+            self._collision_resolve = COLRFF(clibrebound.reb_collision_resolve_merge)
         elif func == "hardsphere":
-            clibrebound.reb_simulation_set_collision_resolve.restype = None
-            clibrebound.reb_simulation_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_hardsphere)
+            self._collision_resolve = COLRFF(clibrebound.reb_collision_resolve_hardsphere)
         elif func == "halt":
-            clibrebound.reb_simulation_set_collision_resolve.restype = None
-            clibrebound.reb_simulation_set_collision_resolve(byref(self), clibrebound.reb_collision_resolve_halt)
+            self._collision_resolve = COLRFF(clibrebound.reb_collision_resolve_halt)
         else:
             self._colrfp = COLRFF(func)
             self._collision_resolve = self._colrfp
@@ -557,80 +555,43 @@ class Simulation(Structure):
         self._free_particle_ap = self._fpa
 
 # Setter/getter of parameters and constants
-    @property 
-    def N_real(self):
-        """
-        Get the current number of real (i.e. no variational/shadow) particles in the simulation.
-        """
-        return self.N-self.N_var
-
-    @property
-    def integrator(self):
-        """
-        Get or set the integrator module.
-
-        Available integrators include:
-
-        - ``'IAS15'`` (default)
-        - ``'WHFast'``
-        - ``'SEI'``
-        - ``'LEAPFROG'``
-        - ``'JANUS'``
-        - ``'MERCURIUS'``
-        - ``'WHCKL'`` 
-        - ``'WHCKM'`` 
-        - ``'WHCKC'`` 
-        - ``'SABA4'`` 
-        - ``'SABACL4'`` 
-        - ``'SABACM4'`` 
-        - ``'SABA(10,6,4)'`` 
-        - ``'EOS'`` 
-        - ``'BS'`` 
-        - ``'WHFast512'``
-        - ``'TRACE'``
-        - ``'none'``
-        
-        Check the online documentation for a full description of each of the integrators. 
-        """
-        i = self._integrator
-        for name, _i in INTEGRATORS.items():
-            if i==_i:
-                return name
-        return i
-    @integrator.setter
-    def integrator(self, value):
-        if isinstance(value, int):
-            self._integrator = c_int(value)
-        elif isinstance(value, basestring):
-            value = value.lower()
-            if value in INTEGRATORS: 
-                self._integrator = INTEGRATORS[value]
-            # Shortcuts
-            elif value=="wh":
-                self.integrator = "whfast"
-                self.ri_whfast.corrector = 0
-                self.ri_whfast.kernel = "default"
-            elif value=="whc":
-                self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "default"
-            elif value=="whckl":
-                self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "lazy"
-            elif value=="whckm":
-                self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "modifiedkick"
-            elif value=="whckc":
-                self.integrator = "whfast"
-                self.ri_whfast.corrector = 17
-                self.ri_whfast.kernel = "composition"
-            elif value[0:4]=="saba" and len(value)>4:
-                self.integrator = "saba"
-                self.ri_saba.type = value[4:]
+    def __setattr__(self, name, value):
+        if name == "integrator":
+            if isinstance(value, str):
+                value = value.lower()
+                # Shortcuts
+                if value=="wh":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 0
+                    self.integrator.kernel = "default"
+                elif value=="whc":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "default"
+                elif value=="whckl":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "lazy"
+                elif value=="whckm":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "modifiedkick"
+                elif value=="whckc":
+                    self.integrator = "whfast"
+                    self.integrator.corrector = 17
+                    self.integrator.kernel = "composition"
+                elif value[0:4]=="saba" and len(value)>4:
+                    self.integrator = "saba"
+                    self.integrator.type = value[4:].replace(",","_")
+                else:
+                    clibrebound.reb_simulation_set_integrator.argtypes = [POINTER(Simulation), c_char_p]
+                    clibrebound.reb_simulation_set_integrator(byref(self), c_char_p(value.encode("ascii")))
+                    self.process_messages()
+                return
             else:
-                raise ValueError("Integrator not found.")
+                raise ValueError("Expected string when setting integrator.")
+        # Default:
+        super().__setattr__(name, value)
     
     @property
     def boundary(self):
@@ -655,7 +616,7 @@ class Simulation(Structure):
     def boundary(self, value):
         if isinstance(value, int):
             self._boundary = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in BOUNDARIES: 
                 self._boundary = BOUNDARIES[value]
@@ -666,14 +627,6 @@ class Simulation(Structure):
     def gravity(self):
         """
         Get or set the gravity module.
-
-        Available gravity modules are:
-
-        - ``'none'`` 
-        - ``'basic'`` (default)
-        - ``'compensated'``
-        - ``'tree'``
-        
         Check the online documentation for a full description of each of the modules. 
         """
         i = self._gravity
@@ -685,7 +638,7 @@ class Simulation(Structure):
     def gravity(self, value):
         if isinstance(value, int):
             self._gravity = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in GRAVITIES: 
                 self._gravity = GRAVITIES[value]
@@ -716,7 +669,7 @@ class Simulation(Structure):
     def collision(self, value):
         if isinstance(value, int):
             self._collision = c_int(value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             value = value.lower()
             if value in COLLISIONS: 
                 self.collision = COLLISIONS[value]
@@ -933,17 +886,18 @@ class Simulation(Structure):
                 if self.python_unit_l == 0 or self.python_unit_m == 0 or self.python_unit_t == 0:
                     self.units = ('AU', 'yr2pi', 'Msun')
                     self.G = 1.0
-                builtindatasets = ["solar system", "outer solar system"]
-                if particle.lower() == "solar system":          # built in test dataset
-                    data.add_solar_system(self)
-                elif particle.lower() == "outer solar system":  # built in test dataset
-                    data.add_outer_solar_system(self)
+                builtindatasets = ["solarsystem", "outersolarsystem"]
+                clean = "".join(particle.lower().split())
+                if clean in builtindatasets:
+                    clibrebound.reb_simulation_add_fmt(byref(self), clean.encode("ascii"))
+                    for p in self.particles:
+                        units_convert_particle(p, "au", "yr2pi", "msun", hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
                 else:
                     if "frame" not in kwargs:
                         if hasattr(self, 'default_plane'):
                             kwargs["plane"] = self.default_plane # allow ASSIST to set default plane
                     mass_unit = hash_to_unit(self.python_unit_m) # For manually provided masses
-                    self.add(horizons.query_horizons_for_particle(mass_unit, particle, **kwargs), hash=particle)
+                    self.add(horizons.query_horizons_for_particle(particle, mass_unit, **kwargs))
                     units_convert_particle(self.particles[-1], 'km', 's', 'kg', hash_to_unit(self.python_unit_l), hash_to_unit(self.python_unit_t), hash_to_unit(self.python_unit_m))
             else: 
                 raise ValueError("Argument passed to add() not supported.")
@@ -955,7 +909,7 @@ class Simulation(Structure):
     @property
     def particles(self):
         """
-        Returns a Particles object that allows users to access particles like a dictionary using indices, hashes, or strings. 
+        Returns a Particles object that allows users to access particles like a dictionary using indices, or names. 
 
         The Particles object uses pointers and thus the contents update 
         as the simulation progresses. Note that the pointers could change,
@@ -971,38 +925,30 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_remove_all_particles(byref(self))
         self.process_messages()
+    @property
+    def particles_var(self):
+        """
+        Returns a Particles object that allows users to access variational particles.
+        """
+        particles = Particles(self, var=True)
+        return particles
 
-    def remove(self, index=None, hash=None, keep_sorted=True):
+    def remove(self, identifier):
         """ 
         Removes a particle from the simulation.
 
         Parameters
         ----------
-        index : int, optional
-            Specify particle to remove by index.
-        hash : c_uint32 or string, optional
-            Specify particle to remove by hash (if a string is passed, the corresponding hash is calculated).
-        keep_sorted : bool, optional
-            By default, remove preserves the order of particles in the particles array. 
-            Might set it to zero in cases with many particles and many removals to speed things up.
+        identifier : int or string
+            Specify particle to remove by index or by name.
         """
-        if index is not None:
-            clibrebound.reb_simulation_remove_particle(byref(self), index, keep_sorted)
-        if hash is not None:
-            hash_types = c_uint32, c_uint, c_uint64
-            PY3 = sys.version_info[0] == 3
-            if PY3:
-                string_types = str,
-                int_types = int,
-            else:
-                string_types = basestring,
-                int_types = int, long
-            if isinstance(hash, string_types):
-                clibrebound.reb_simulation_remove_particle_by_hash(byref(self), rebhash(hash), keep_sorted)
-            elif isinstance(hash, int_types):
-                clibrebound.reb_simulation_remove_particle_by_hash(byref(self), c_uint32(hash), keep_sorted)
-            elif isinstance(hash, hash_types):
-                clibrebound.reb_simulation_remove_particle_by_hash(byref(self), hash, keep_sorted)
+        if isinstance(identifier, int):
+            clibrebound.reb_simulation_remove_particle(byref(self), identifier)
+        elif isinstance(identifier, str):
+            s = identifier.encode("utf-8")
+            clibrebound.reb_simulation_remove_particle_by_name(byref(self), s)
+        else:
+            raise ValueError("Argument passed to remove() not supported.")
 
         self.process_messages()
 
@@ -1036,7 +982,7 @@ class Simulation(Structure):
         else:
             jacobi = False
 
-        for p in self.particles[1:self.N_real]:
+        for p in self.particles[1:self.N]:
             if jacobi_masses is True:
                 interior_mass = primary.m
                 # orbit conversion uses mu=G*(p.m+primary.m) so set prim.m=Mjac-m so mu=G*Mjac
@@ -1081,9 +1027,11 @@ class Simulation(Structure):
 
         """
         if last is None:
-            last = self.N_real
+            last = self.N
+        if first<0 or last <0:
+            raise AttributeError("first and last in com() can not be negative.")
         clibrebound.reb_simulation_com_range.restype = Particle
-        return clibrebound.reb_simulation_com_range(byref(self), c_int(first), c_int(last))
+        return clibrebound.reb_simulation_com_range(byref(self), c_size_t(first), c_size_t(last))
 
 # Tools
     def serialize_particle_data(self,**kwargs):
@@ -1098,10 +1046,9 @@ class Simulation(Structure):
         It expects correctly sized numpy arrays as arguments. The argument
         name indicates what kind of particle data is written to the array. 
         
-        Possible argument names are "hash", "m", "r", "xyz", "vxvyvz", and 
-        "xyzvxvyvz". The datatype for the "hash" array needs to be uint32. 
-        The other arrays expect a datatype of float64. The lengths of 
-        "hash", "m", "r" arrays need to be at least sim.N. The lengths of 
+        Possible argument names are "m", "r", "xyz", "vxvyvz", and 
+        "xyzvxvyvz". The datatype for arrays needs to be float64. The i
+        lengths of "m", "r" arrays need to be at least sim.N. The lengths of 
         xyz and vxvyvz need to be at least 3*sim.N. The length of
         "xyzvxvyvz" arrays need to be 6*sim.N. Exceptions are raised 
         otherwise.
@@ -1127,41 +1074,27 @@ class Simulation(Structure):
         >>> sim.serialize_particle_data(r=a)
         >>> print(a)
         
-        To get all current radii and hashes of particles:
-
-        >>> a = np.zeros(sim.N,dtype="float64")
-        >>> b = np.zeros(sim.N,dtype="uint32")
-        >>> sim.serialize_particle_data(r=a,hash=b)
-        >>> print(a,b)
-
         """
         N = self.N
-        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
+        possible_keys = ["m","r","xyz","vxvyvz","xyzvxvyvz"]
         d = {x:None for x in possible_keys}
         for k,v in kwargs.items():
             if k in d:
-                if k == "hash":
-                    if v.dtype!= "uint32":
-                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
-                    if v.size<N:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_uint32))
+                if v.dtype!= "float64":
+                    raise AttributeError("Expected 'float64' data type for %s array."%k)
+                if k in ["xyz", "vxvyvz"]:
+                    minsize = 3*N
+                elif k in ["xyzvxvyvz"]:
+                    minsize = 6*N
                 else:
-                    if v.dtype!= "float64":
-                        raise AttributeError("Expected 'float64' data type for %s array."%k)
-                    if k in ["xyz", "vxvyvz"]:
-                        minsize = 3*N
-                    elif k in ["xyzvxvyvz"]:
-                        minsize = 6*N
-                    else:
-                        minsize = N
-                    if v.size<minsize:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_double))
+                    minsize = N
+                if v.size<minsize:
+                    raise AttributeError("Array '%s' is not large enough."%k)
+                d[k] = v.ctypes.data_as(POINTER(c_double))
             else:
                 raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
 
-        clibrebound.reb_simulation_get_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+        clibrebound.reb_simulation_get_serialized_particle_data(byref(self), d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
     
     def set_serialized_particle_data(self,**kwargs):
         """
@@ -1171,32 +1104,25 @@ class Simulation(Structure):
         """
 
         N = self.N
-        possible_keys = ["hash","m","r","xyz","vxvyvz","xyzvxvyvz"]
+        possible_keys = ["m","r","xyz","vxvyvz","xyzvxvyvz"]
         d = {x:None for x in possible_keys}
         for k,v in kwargs.items():
             if k in d:
-                if k == "hash":
-                    if v.dtype!= "uint32":
-                        raise AttributeError("Expected 'uint32' data type for '%s' array."%k)
-                    if v.size<N:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_uint32))
+                if v.dtype!= "float64":
+                    raise AttributeError("Expected 'float64' data type for %s array."%k)
+                if k in ["xyz", "vxvyvz"]:
+                    minsize = 3*N
+                elif k in ["xyzvxvyvz"]:
+                    minsize = 6*N
                 else:
-                    if v.dtype!= "float64":
-                        raise AttributeError("Expected 'float64' data type for %s array."%k)
-                    if k in ["xyz", "vxvyvz"]:
-                        minsize = 3*N
-                    elif k in ["xyzvxvyvz"]:
-                        minsize = 6*N
-                    else:
-                        minsize = N
-                    if v.size<minsize:
-                        raise AttributeError("Array '%s' is not large enough."%k)
-                    d[k] = v.ctypes.data_as(POINTER(c_double))
+                    minsize = N
+                if v.size<minsize:
+                    raise AttributeError("Array '%s' is not large enough."%k)
+                d[k] = v.ctypes.data_as(POINTER(c_double))
             else:
                 raise AttributeError("Only '%s' are currently supported attributes for serialization." % "', '".join(d.keys()))
 
-        clibrebound.reb_simulation_set_serialized_particle_data(byref(self), d["hash"], d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
+        clibrebound.reb_simulation_set_serialized_particle_data(byref(self), d["m"], d["r"], d["xyz"], d["vxvyvz"], d["xyzvxvyvz"])
 
     def move_to_hel(self):
         """
@@ -1236,25 +1162,6 @@ class Simulation(Structure):
         clibrebound.reb_integrator_ias15_timescale.restype = c_double
         return clibrebound.reb_integrator_ias15_timescale(byref(self))
 
-    def configure_box(self, boxsize, N_root_x=1, N_root_y=1, N_root_z=1):
-        """
-        Initialize the simulation box.
-
-        This function only needs to be called it boundary conditions other than "none"
-        are used. In such a case the boxsize must be known and is set with this function.
-
-        Parameters
-        ----------
-        boxsize : float
-            The size of one root box.
-        N_root_x, N_root_y, N_root_z : int, optional
-            The number of root boxes in each direction. The total size of the simulation box
-            will be ``N_root_x * boxsize``, ``N_root_y * boxsize`` and ``N_root_z * boxsize``.
-            By default, there will be exactly one root box in each direction.
-        """
-        clibrebound.reb_simulation_configure_box(byref(self), c_double(boxsize), c_int(N_root_x), c_int(N_root_y), c_int(N_root_z))
-        return
-   
 # Output to file (Simulationarchive)
     def save_to_file(self, filename, interval=None, walltime=None, step=None, delete_file=False):
         """
@@ -1362,20 +1269,11 @@ class Simulation(Structure):
         self.process_messages()
 
 # Integration
-    def step(self):
-        """
-        Perform exactly one integration step with REBOUND. This function is rarely needed.
-        Instead, use integrate().
-        """
-        clibrebound.reb_simulation_step(byref(self))
-        self.process_messages()
-    
     def steps(self, N_steps):
         """
-        Perform exactly N_steps integration steps with REBOUND. This function is rarely needed.
-        Instead, use integrate().
+        Perform exactly N_steps integration steps with REBOUND.
         """
-        clibrebound.reb_simulation_steps(byref(self),c_uint(N_steps))
+        clibrebound.reb_simulation_steps(byref(self),c_size_t(N_steps))
         self.process_messages()
 
     def integrate(self, tmax, exact_finish_time=1):
@@ -1434,12 +1332,6 @@ class Simulation(Structure):
         """
         clibrebound.reb_simulation_stop(byref(self))
 
-    def reset_integrator(self):
-        """
-        Call this function to reset temporary integrator variables
-        """
-        clibrebound.reb_simulation_reset_integrator(byref(self))
-
     def synchronize(self):
         """
         Call this function if safe-mode is disabled and you need to synchronize particle positions and velocities between timesteps.
@@ -1447,33 +1339,13 @@ class Simulation(Structure):
         clibrebound.reb_simulation_synchronize(byref(self))
         self.process_messages()
     
-    def update_tree(self):
-        """
-        Call this function to update the tree structure manually after removing particles.
-        """
-        clibrebound.reb_simulation_update_tree(byref(self))
-    
 
 class timeval(Structure):
     _fields_ = [("tv_sec",c_int64),("tv_usec",c_int64)]
 
+from .ode import ODE
 from .particle import Particle
 from .particles import Particles
-
-
-from .integrators.bs import ODE, IntegratorBS
-from .integrators.whfast import IntegratorWHFast
-from .integrators.whfast512 import IntegratorWHFast512
-from .integrators.janus import IntegratorJanus
-from .integrators.custom import IntegratorCustom
-from .integrators.sei import IntegratorSEI
-from .integrators.leapfrog import IntegratorLeapfrog
-from .integrators.eos import IntegratorEOS
-from .integrators.ias15 import IntegratorIAS15
-from .integrators.saba import IntegratorSABA
-from .integrators.mercurius import IntegratorMercurius
-from .integrators.trace import IntegratorTRACE
-
 from .variation import Variation
 
 # Setting up fields after class definition (because of self-reference)
@@ -1494,34 +1366,41 @@ Simulation._fields_ = [
                 ("t", c_double),
                 ("G", c_double),
                 ("softening", c_double),
+                ("OMEGA", c_double),
+                ("OMEGAZ", c_double),
                 ("dt", c_double),
                 ("dt_last_done", c_double),
                 ("steps_done", c_uint64),
-                ("N", c_uint),
-                ("N_var", c_int),
-                ("N_var_config", c_int),
+                ("is_synchronized", c_uint),
+                ("did_modify_particles", c_uint),
+                ("N", c_size_t),
+                ("N_allocated", c_size_t),
+                ("_particles", POINTER(Particle)),
+                ("_N_map", c_size_t),
+                ("_map", POINTER(c_size_t)),
+                ("N_var", c_size_t),
+                ("_particles_var", POINTER(Particle)),
+                ("N_var_config", c_size_t),
                 ("var_config", POINTER(Variation)),
-                ("_var_rescale_warning", c_int),
-                ("N_active", c_int),
+                ("N_active", c_size_t),
                 ("testparticle_type", c_int),
                 ("testparticle_hidewarnings", c_int),
-                ("_particle_lookup_table", POINTER(HashPointerPair)),
-                ("N_lookup", c_int),
-                ("N_allocated_lookup", c_int),
-                ("N_allocated", c_uint),
-                ("_particles", POINTER(Particle)),
+                ("_name_list", POINTER(c_char_p)),
+                ("_N_name_list", c_size_t),
+                ("_name_hash_table", c_void_p),
                 ("gravity_cs", POINTER(Vec3dBasic)),
-                ("N_allocated_gravity_cs", c_int),
+                ("N_allocated_gravity_cs", c_size_t),
                 ("_tree_root", c_void_p),
-                ("_tree_needs_update", c_int),
                 ("opening_angle2", c_double),
                 ("_status", c_int),
                 ("exact_finish_time", c_int),
-                ("force_is_velocity_dependent", c_uint),
-                ("gravity_ignore", c_uint),
+                ("force_is_velocity_dependent", c_int),
+                ("gravity_ignore", c_int),
                 ("_output_timing_last", c_double),
                 ("save_messages", c_int),
                 ("messages", c_void_p),
+                ("_messages_var_rescale_warning", c_int),
+                ("_messages_timestep_warning", c_int),
                 ("exit_max_distance", c_double),
                 ("exit_min_distance", c_double),
                 ("usleep", c_double),
@@ -1538,20 +1417,17 @@ Simulation._fields_ = [
                 ("python_unit_t",c_uint32),
                 ("python_unit_l",c_uint32),
                 ("python_unit_m",c_uint32),
-                ("boxsize", Vec3dBasic),
-                ("boxsize_max", c_double),
                 ("root_size", c_double),
-                ("N_root", c_int),
-                ("N_root_x", c_int),
-                ("N_root_y", c_int),
-                ("N_root_z", c_int),
+                ("N_root_x", c_size_t),
+                ("N_root_y", c_size_t),
+                ("N_root_z", c_size_t),
                 ("N_ghost_x", c_int),
                 ("N_ghost_y", c_int),
                 ("N_ghost_z", c_int),
-                ("collision_resolve_keep_sorted", c_int),
                 ("collisions", c_void_p),
-                ("N_allocated_collisions", c_int),
-                ("collisions_N", c_uint),
+                ("N_allocated_collisions", c_size_t),
+                ("N_collisions", c_size_t),
+                ("N_targets", c_size_t),
                 ("minimum_collision_velocity", c_double),
                 ("collisions_plog", c_double),
                 ("collisions_log_n", c_int64),
@@ -1573,25 +1449,13 @@ Simulation._fields_ = [
                 ("simulationarchive_next_step", c_uint64),
                 ("_simulationarchive_filename", c_char_p),
                 ("_collision", c_int),
-                ("_integrator", c_int),
+                ("integrator", IntegratorConfiguration),
                 ("_boundary", c_int),
                 ("_gravity", c_int),
-                ("ri_custom", IntegratorCustom), 
-                ("ri_sei", IntegratorSEI), 
-                ("ri_leapfrog", IntegratorLeapfrog), 
-                ("ri_whfast", IntegratorWHFast),
-                ("ri_whfast512", IntegratorWHFast512),
-                ("ri_saba", IntegratorSABA),
-                ("ri_ias15", IntegratorIAS15),
-                ("ri_mercurius", IntegratorMercurius),
-                ("ri_trace", IntegratorTRACE),
-                ("ri_janus", IntegratorJanus),
-                ("ri_eos", IntegratorEOS),
-                ("ri_bs", IntegratorBS),
+                ("_gravity_custom", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_odes", POINTER(POINTER(ODE))),
-                ("_N_odes", c_int),
-                ("_N_allocated_odes", c_int),
-                ("_odes_warnings", c_int),
+                ("_N_odes", c_size_t),
+                ("_N_allocated_odes", c_size_t),
                 ("_additional_forces", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_pre_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
                 ("_post_timestep_modifications", CFUNCTYPE(None,POINTER(Simulation))),
@@ -1620,5 +1484,4 @@ if simulation_size_c != sizeof(Simulation):
 
 # Import at the end to avoid circular dependence
 from . import horizons
-from . import data
 from .simulationarchive import Simulationarchive

@@ -8,10 +8,10 @@
  * during the collision resolve phase. Thus you can ignore 
  * the warning in this case.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator        = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->boundary          = REB_BOUNDARY_OPEN;
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
     r->heartbeat         = heartbeat;
     
     double boxsize = 4.8;
-    reb_simulation_configure_box(r, boxsize, 1, 1, 1);
+    r->root_size = boxsize;
 
     // Setup particles
     int _N = 1000;

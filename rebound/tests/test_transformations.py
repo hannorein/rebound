@@ -30,12 +30,12 @@ class TestTransformations(unittest.TestCase):
 
         c0 = getc(sim)
         cl = rebound.clibrebound
-        cl.reb_particles_transform_inertial_to_barycentric_posvel(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_inertial_to_barycentric_posvel(sim._particles,p,sim.N,sim.N)
 
         for i in range(sim.N):
             sim.particles[i].x = 1234.
             sim.particles[i].vx = 1234.
-        cl.reb_particles_transform_barycentric_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_barycentric_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
         for i in range(len(c0)):
@@ -43,7 +43,7 @@ class TestTransformations(unittest.TestCase):
         
         for i in range(sim.N):
             sim.particles[i].x = 1234.
-        cl.reb_particles_transform_barycentric_to_inertial_pos(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_barycentric_to_inertial_pos(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
         for i in range(len(c0)):
@@ -63,12 +63,12 @@ class TestTransformations(unittest.TestCase):
         c0 = getc(sim)
 
         cl = rebound.clibrebound
-        cl.reb_particles_transform_inertial_to_democraticheliocentric_posvel(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_inertial_to_democraticheliocentric_posvel(sim._particles,p,sim.N,sim.N)
 
         for i in range(sim.N):
             sim.particles[i].x = 1234.
             sim.particles[i].vx = 1234.
-        cl.reb_particles_transform_democraticheliocentric_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_democraticheliocentric_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
         
@@ -77,7 +77,7 @@ class TestTransformations(unittest.TestCase):
         
         for i in range(sim.N):
             sim.particles[i].x = 1234.
-        cl.reb_particles_transform_democraticheliocentric_to_inertial_pos(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_democraticheliocentric_to_inertial_pos(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
         
@@ -98,12 +98,12 @@ class TestTransformations(unittest.TestCase):
         c0 = getc(sim)
 
         cl = rebound.clibrebound
-        cl.reb_particles_transform_inertial_to_whds_posvel(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_inertial_to_whds_posvel(sim._particles,p,sim.N,sim.N)
 
         for i in range(sim.N):
             sim.particles[i].x = 1234.
             sim.particles[i].vx = 1234.
-        cl.reb_particles_transform_whds_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_whds_to_inertial_posvel(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
         
@@ -112,7 +112,7 @@ class TestTransformations(unittest.TestCase):
         
         for i in range(sim.N):
             sim.particles[i].x = 1234.
-        cl.reb_particles_transform_whds_to_inertial_pos(sim._particles,p,sim.N,sim.N)
+        cl.reb_transformations_whds_to_inertial_pos(sim._particles,p,sim.N,sim.N)
         
         c1 = getc(sim)
         
@@ -137,12 +137,12 @@ class TestTransformations(unittest.TestCase):
         cl = rebound.clibrebound
         
         
-        cl.reb_particles_transform_inertial_to_jacobi_posvel(sim._particles,p,sim._particles,sim.N,sim.N)
+        cl.reb_transformations_inertial_to_jacobi_posvel(sim._particles,p,sim._particles,sim.N,sim.N)
 
         for i in range(sim.N):
             sim.particles[i].x = 1234.
             sim.particles[i].vx = 1234.
-        cl.reb_particles_transform_jacobi_to_inertial_posvel(sim._particles,p,sim._particles,sim.N,sim.N)
+        cl.reb_transformations_jacobi_to_inertial_posvel(sim._particles,p,sim._particles,sim.N,sim.N)
         
         c1 = getc(sim)
         
@@ -151,7 +151,7 @@ class TestTransformations(unittest.TestCase):
         
         for i in range(sim.N):
             sim.particles[i].x = 1234.
-        cl.reb_particles_transform_jacobi_to_inertial_pos(sim._particles,p,sim._particles,sim.N,sim.N)
+        cl.reb_transformations_jacobi_to_inertial_pos(sim._particles,p,sim._particles,sim.N,sim.N)
         
         c1 = getc(sim)
         

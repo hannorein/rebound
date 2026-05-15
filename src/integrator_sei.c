@@ -1,16 +1,6 @@
 /**
- * @file 	integrator_sei.c
- * @brief 	Symplectic Epicycle Integrator (SEI).
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- * @details	This file implements the Symplectic Epicycle Integrator 
- * (SEI). The integrator is described in detail in Rein & Tremaine 2011. 
- * It solves epicyclic motion exactly and is therefore exact up to machine
- * precision in the limit of no perturbing forces. When perturbing-forces
- * are of order eps, then the error of the scheme is O(eps dt^3). It also
- * makes use of two shear operators instead of a rotation to minimize 
- * systematic numerical round-off errors.
+ * integrator_sei.c: The Symplectic Epicycle Integrator (SEI)
  * 
- * @section 	LICENSE
  * Copyright (c) 2011 Hanno Rein, Shangfei Liu
  *
  * This file is part of rebound.
@@ -29,45 +19,89 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <stdio.h>
-#include <stdlib.h>
 #include "rebound.h"
+#include "rebound_internal.h"
+#include <math.h>
+#include <assert.h>
 #include "particle.h"
 #include "gravity.h"
 #include "boundary.h"
-#include "integrator.h"
 #include "integrator_sei.h"
+#include "binarydata.h"
+
+// No user configurable options
+struct reb_integrator_sei_state {
+    double lastdt;      // Cached sin(), tan() for this value of dt.
+    double sindt;       // Cached sin() 
+    double tandt;       // Cached tan() 
+    double sindtz;      // Cached sin(), z axis
+    double tandtz;      // Cached tan(), z axis
+};
+
+void reb_integrator_sei_step(struct reb_simulation* r, void* state);
+void* reb_integrator_sei_create();
+void reb_integrator_sei_free(void* p);
+const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[];
+
+const struct reb_integrator reb_integrator_sei = {
+    .documentation = 
+    "The Symplectic Epicycle Integrator (SEI), is a mixed variable second order "
+    "symplectic integrator for the shearing sheet. Its main purpose is to simulate "
+    "planetary rings in a local corotating frame. See [Rein & Tremaine (2011)] for "
+    "details. The (vertical) epicyclic frequency `OMEGA` (`OMEGAZ`) needs to be set "
+    "in the simulation. In previous versions of REBOUND, these variable were defined "
+    "in the integrator, not the simulation. "
+    "\n\n"
+    "[Rein & Tremaine (2011)]: https://ui.adsabs.harvard.edu/abs/2011MNRAS.415.3168R/abstract\n",
+    .step = reb_integrator_sei_step,
+    .create = reb_integrator_sei_create,
+    .free = reb_integrator_sei_free,
+    .field_descriptor_list = reb_integrator_sei_field_descriptor_list,
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_sei_field_descriptor_list[] = {
+    { "", REB_DOUBLE,       "lastdt",                offsetof(struct reb_integrator_sei_state, lastdt), 0, 0, 0},
+    { "", REB_DOUBLE,       "sindt",                 offsetof(struct reb_integrator_sei_state, sindt), 0, 0, 0},
+    { "", REB_DOUBLE,       "tandt",                 offsetof(struct reb_integrator_sei_state, tandt), 0, 0, 0},
+    { "", REB_DOUBLE,       "sindtz",                offsetof(struct reb_integrator_sei_state, sindtz), 0, 0, 0},
+    { "", REB_DOUBLE,       "tandtz",                offsetof(struct reb_integrator_sei_state, tandtz), 0, 0, 0},
+    { 0 }, // Null terminated list
+};
 
 
-static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p);
+static void operator_H012(double dt, const struct reb_integrator_sei_state sei, struct reb_particle* p, double OMEGA, double OMEGAZ);
 static void operator_phi1(double dt, struct reb_particle* p);
 
 
-static void reb_integrator_sei_init(struct reb_simulation* const r){
-    /**
-     * Pre-calculates sin() and tan() needed for SEI. 
-     */
-    if (r->ri_sei.OMEGAZ==-1){
-        r->ri_sei.OMEGAZ=r->ri_sei.OMEGA;
-    }
-    r->ri_sei.sindt = sin(r->ri_sei.OMEGA*(-r->dt/2.));
-    r->ri_sei.tandt = tan(r->ri_sei.OMEGA*(-r->dt/4.));
-    r->ri_sei.sindtz = sin(r->ri_sei.OMEGAZ*(-r->dt/2.));
-    r->ri_sei.tandtz = tan(r->ri_sei.OMEGAZ*(-r->dt/4.));
-    r->ri_sei.lastdt = r->dt;
+void* reb_integrator_sei_create(){
+    struct reb_integrator_sei_state* sei = calloc(sizeof(struct reb_integrator_sei_state),1);
+    return sei;
+}
+void reb_integrator_sei_free(void* p){
+    struct reb_integrator_sei_state* sei = p;
+    free(sei);
 }
 
-void reb_integrator_sei_step(struct reb_simulation* const r){
-    r->gravity_ignore_terms = 0;
+
+void reb_integrator_sei_step(struct reb_simulation* const r, void* state){
+    struct reb_integrator_sei_state* sei = state;
+    r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     const int N = r->N;
     struct reb_particle* const particles = r->particles;
-    if (r->ri_sei.lastdt!=r->dt){
-        reb_integrator_sei_init(r);
+    if (sei->lastdt!=r->dt){
+        // Pre-calculates sin() and tan() needed for SEI. 
+        if (r->OMEGAZ==-1){
+            r->OMEGAZ=r->OMEGA;
+        }
+        sei->sindt = sin(r->OMEGA*(-r->dt/2.));
+        sei->tandt = tan(r->OMEGA*(-r->dt/4.));
+        sei->sindtz = sin(r->OMEGAZ*(-r->dt/2.));
+        sei->tandtz = tan(r->OMEGAZ*(-r->dt/4.));
+        sei->lastdt = r->dt;
     }
-    const struct reb_integrator_sei ri_sei = r->ri_sei;
 #pragma omp parallel for schedule(guided)
     for (int i=0;i<N;i++){
-        operator_H012(r->dt, ri_sei, &(particles[i]));
+        operator_H012(r->dt, *sei, &(particles[i]),r->OMEGA,r->OMEGAZ);
     }
     r->t+=r->dt/2.;
 
@@ -76,18 +110,10 @@ void reb_integrator_sei_step(struct reb_simulation* const r){
 #pragma omp parallel for schedule(guided)
     for (int i=0;i<N;i++){
         operator_phi1(r->dt, &(particles[i]));
-        operator_H012(r->dt, ri_sei, &(particles[i]));
+        operator_H012(r->dt, *sei, &(particles[i]),r->OMEGA,r->OMEGAZ);
     }
     r->t+=r->dt/2.;
     r->dt_last_done = r->dt;
-}
-
-void reb_integrator_sei_synchronize(struct reb_simulation* r){
-    // Do nothing.
-}
-
-void reb_integrator_sei_reset(struct reb_simulation* r){
-    r->ri_sei.lastdt = 0;	
 }
 
 /**
@@ -97,10 +123,10 @@ void reb_integrator_sei_reset(struct reb_simulation* r){
  * @param dt Timestep
  * @param ri_sei Integrator struct
  */
-static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, struct reb_particle* p){
+static void operator_H012(double dt, const struct reb_integrator_sei_state ri_sei, struct reb_particle* p, double OMEGA, double OMEGAZ){
 
     // Integrate vertical motion
-    const double zx = p->z * ri_sei.OMEGAZ;
+    const double zx = p->z * OMEGAZ;
     const double zy = p->vz;
 
     // Rotation implemented as 3 shear operators
@@ -108,15 +134,15 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
     const double zt1 =  zx - ri_sei.tandtz*zy;			
     const double zyt =  ri_sei.sindtz*zt1 + zy;
     const double zxt =  zt1 - ri_sei.tandtz*zyt;	
-    p->z  = zxt/ri_sei.OMEGAZ;
+    p->z  = zxt/OMEGAZ;
     p->vz = zyt;
 
     // Integrate motion in xy directions
-    const double aO = 2.*p->vy + 4.*p->x*ri_sei.OMEGA;	// Center of epicyclic motion
-    const double bO = p->y*ri_sei.OMEGA - 2.*p->vx;	
+    const double aO = 2.*p->vy + 4.*p->x*OMEGA;	// Center of epicyclic motion
+    const double bO = p->y*OMEGA - 2.*p->vx;	
 
-    const double ys = (p->y*ri_sei.OMEGA-bO)/2.; 		// Epicycle vector
-    const double xs = (p->x*ri_sei.OMEGA-aO); 
+    const double ys = (p->y*OMEGA-bO)/2.; 		// Epicycle vector
+    const double xs = (p->x*OMEGA-aO); 
 
     // Rotation implemented as 3 shear operators
     // to avoid round-off errors
@@ -124,8 +150,8 @@ static void operator_H012(double dt, const struct reb_integrator_sei ri_sei, str
     const double yst  =  ri_sei.sindt*xst1 + ys;
     const double xst  =  xst1 - ri_sei.tandt*yst;	
 
-    p->x  = (xst+aO)    /ri_sei.OMEGA;			
-    p->y  = (yst*2.+bO) /ri_sei.OMEGA - 3./4.*aO*dt;	
+    p->x  = (xst+aO)    /OMEGA;			
+    p->y  = (yst*2.+bO) /OMEGA - 3./4.*aO*dt;	
     p->vx = yst;
     p->vy = -xst*2. -3./2.*aO;
 }

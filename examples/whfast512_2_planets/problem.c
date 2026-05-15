@@ -6,12 +6,13 @@
  * a CPU which support AVX512 instructions to run 
  * this example.
  */
+#include "rebound.h"
+#include "rebound_internal.h" // only needed for windows
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <sched.h>
 #include <stdbool.h>
-#include "rebound.h"
 
 // Initial conditions for the Sun, Mercury, and Venus
 // from NASA horizons
@@ -76,9 +77,6 @@ double run(int use_whfast512){
         r->dt = 5.0/365.25*2*M_PI; // 5 days
         r->G = 1.;
         r->force_is_velocity_dependent = 0; 
-        // Tell WHFast512 how many systems we are integrating in parallel.
-        // This parameter can be either 1, 2, or 4.
-        r->ri_whfast512.N_systems = 4;
         for (int s = 0; s < 4; s++){
             struct reb_simulation* r_single = setup_single();
             // We're adding a small perturbation to each simulation so they are
@@ -91,7 +89,11 @@ double run(int use_whfast512){
             }
             reb_simulation_free(r_single);
         }
-        r->integrator = REB_INTEGRATOR_WHFAST512;
+        reb_simulation_set_integrator(r, "whfast512");
+        // Tell WHFast512 how many systems we are integrating in parallel.
+        // This parameter can be either 1, 2, or 4.
+        struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
+        whfast512->N_systems = 4;
         int err = reb_simulation_integrate(r,  tmax);
         if (err>0){
             printf("An error occurred during the integration.\n");
@@ -108,8 +110,9 @@ double run(int use_whfast512){
             r->dt = 5.0/365.25*2*M_PI; // 5 days
             r->G = 1.;
             r->force_is_velocity_dependent = 0; 
-            r->integrator = REB_INTEGRATOR_WHFAST;
-            r->ri_whfast.coordinates = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+            reb_simulation_set_integrator(r, "whfast");
+            struct reb_integrator_whfast_state* whfast = r->integrator.state;
+            whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
             r->particles[1].x += 1e-14*s; 
             int err = reb_simulation_integrate(r,  tmax);
             if (err>0){

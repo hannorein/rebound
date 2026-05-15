@@ -5,7 +5,8 @@ import sys
 import os
 import warnings
 import platform
-from ctypes import cdll, c_char_p
+import importlib.util
+from ctypes import cdll, c_char_p, c_int, c_uint32
 
 # Find suffix
 if platform.system()=="Windows" and sys.version_info.major<=3 and sys.version_info.minor<8:
@@ -28,21 +29,13 @@ try: # Only needed for pyodide
 except:
     pass
 
-
-# Make changes for python 2 and 3 compatibility
-try:
-    import builtins      # if this succeeds it's python 3.x
-    builtins.xrange = range
-    builtins.basestring = (str,bytes)
-except ImportError:
-    pass                 # python 2.x
-
-
 # Import shared library
-pymodulepath = os.path.dirname(os.path.abspath(__file__))
-pymodulepath = os.path.abspath(os.path.join(pymodulepath, os.pardir))
-__libpath__ = os.path.join(pymodulepath, "librebound"+suffix)
-clibrebound = cdll.LoadLibrary(__libpath__)
+spec = importlib.util.find_spec("librebound")
+if spec and spec.origin:
+    __libpath__ = spec.origin
+    clibrebound = cdll.LoadLibrary(__libpath__)
+else:
+    raise ImportError("librebound not found")
 
 # Version
 __version__ = c_char_p.in_dll(clibrebound, "reb_version_str").value.decode('ascii')
@@ -58,6 +51,9 @@ moduleversion = sys.modules["rebound"].__version__
 libreboundversion = __version__
 if moduleversion != libreboundversion:
     warnings.warn("WARNING: python module and librebound have different version numbers: '%s' vs '%s'.\n" %(moduleversion, libreboundversion), ImportWarning)
+        
+# Max string size for error messages, field descriptors, etc.
+string_size_max = c_uint32.in_dll(clibrebound, "reb_string_size_max").value
         
 # Exceptions
 class GenericError(Exception):
@@ -88,7 +84,10 @@ class ParticleNotFound(Exception):
     """Particle was not found in the simulation."""
     pass
 
-from .hash import hash
+# OpenMP
+def omp_set_num_threads(num_threads):
+    clibrebound.reb_omp_set_num_threads(c_int(num_threads))
+
 from .tools import mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
 from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic, CollisionS # CollisionS is the collision struct, not the exception
 from .rotation import Rotation

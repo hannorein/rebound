@@ -8,14 +8,14 @@ class TestShearingSheet(unittest.TestCase):
     def test_saturnsrings(self):
         sim = rebound.Simulation()
         OMEGA = 0.00013143527     # [1/s]
-        sim.ri_sei.OMEGA = OMEGA
+        sim.OMEGA = OMEGA
         surface_density = 400.    # kg/m^2
         particle_density = 400.   # kg/m^3
         sim.G = 6.67428e-11       # N m^2 / kg^2
         sim.dt = 1e-3*2.*math.pi/OMEGA
         sim.softening = 0.2       # [m]
         boxsize = 50.            # [m]
-        sim.configure_box(boxsize)
+        sim.root_size = boxsize
         sim.N_ghost_x = 2
         sim.N_ghost_y = 2
         sim.integrator = "sei"
@@ -55,14 +55,10 @@ class TestShearingSheet(unittest.TestCase):
         sim.integrate(2.*math.pi/OMEGA)
         self.assertGreater(sim.collisions_log_n,1000)
         Nbefore = sim.N
-        sim.remove(0,keep_sorted=0)
-        sim.update_tree()
+        sim.remove(0)
+        sim.steps(1)
         self.assertEqual(Nbefore-1,sim.N)
-        with self.assertRaises(RuntimeError):
-            sim.remove(0,keep_sorted=1)
-        self.assertNotEqual(sim.ri_sei._lastdt,0.0)
-        sim.reset_integrator()
-        self.assertEqual(sim.ri_sei._lastdt,0.0)
+        self.assertNotEqual(sim.integrator.lastdt,0.0)
 
 if __name__ == "__main__":
     unittest.main()

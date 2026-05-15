@@ -8,10 +8,10 @@
  * encounter happens. IAS15 is very high order and ideally suited for the 
  * detection of these kind of encounters.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt           = 0.01*2.*M_PI;     // initial timestep
-    r->integrator   = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->heartbeat    = heartbeat;
     r->usleep       = 10000;            // Slow down integration (for visualization only)
 

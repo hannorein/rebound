@@ -1,0 +1,70 @@
+name: REBOUND (function prefix checker)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    name: Checking if function names correspond to file names
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build rebound
+        run: make -j 24 
+      #- name: Checking integrator_bs.o 
+      #  run: bash .github/function_prefix_checker.bash src/integrator_bs.o
+      - name: Checking integrator_eos.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_eos.o
+      - name: Checking integrator_ias15.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_ias15.o
+      - name: Checking integrator_janus.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_janus.o
+      - name: Checking integrator_leapfrog.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_leapfrog.o
+      - name: Checking integrator_mercurius.o 
+        run: bash .github/function_prefix_checker.bash src/integrator_mercurius.o
+      - name: Checking integrator_saba.o
+        run: bash .github/function_prefix_checker.bash src/integrator_saba.o
+      - name: Checking integrator_sei.o
+        run: bash .github/function_prefix_checker.bash src/integrator_sei.o
+      - name: Checking integrator_trace.o
+        run: bash .github/function_prefix_checker.bash src/integrator_trace.o
+      - name: Checking integrator_whfast.o
+        run: bash .github/function_prefix_checker.bash src/integrator_whfast.o
+      - name: Checking integrator_whfast512.o
+        run: bash .github/function_prefix_checker.bash src/integrator_whfast512.o
+      #- name: Checking particle.o
+      #  run: bash .github/function_prefix_checker.bash src/particle.o
+      - name: Checking binarydata.o
+        run: bash .github/function_prefix_checker.bash src/binarydata.o
+      - name: Checking boundary.o
+        run: bash .github/function_prefix_checker.bash src/boundary.o
+      - name: Checking collision.o
+        run: bash .github/function_prefix_checker.bash src/collision.o
+      - name: Checking derivatives.o
+        run: bash .github/function_prefix_checker.bash src/derivatives.o reb_particle_derivative
+      - name: Checking display.o
+        run: bash .github/function_prefix_checker.bash src/display.o
+      - name: Checking fmemopen.o
+        run: bash .github/function_prefix_checker.bash src/fmemopen.o
+      - name: Checking frequency_analysis.o
+        run: bash .github/function_prefix_checker.bash src/frequency_analysis.o
+      - name: Checking gravity.o
+        run: bash .github/function_prefix_checker.bash src/gravity.o
+      - name: Checking output.o
+        run: bash .github/function_prefix_checker.bash src/output.o reb_simulation_output
+      #- name: Checking rotations.o
+      #  run: bash .github/function_prefix_checker.bash src/rotations.o
+      #- name: Checking server.o
+      #  run: bash .github/function_prefix_checker.bash src/server.o
+      - name: Checking simulation.o 
+        run: bash .github/function_prefix_checker.bash src/simulation.o
+      #- name: Checking simulationarchive.o 
+      #  run: bash .github/function_prefix_checker.bash src/simulationarchive.o
+      #- name: Checking tools.o 
+      #  run: bash .github/function_prefix_checker.bash src/tools.o
+      - name: Checking transformations.o 
+        run: bash .github/function_prefix_checker.bash src/transformations.o
+      - name: Checking tree.o 
+        run: bash .github/function_prefix_checker.bash src/tree.o

@@ -5,10 +5,10 @@
  * using a binary file. A shearing sheet ring simulation is used, but
  * the same method can be applied to any other type of simulation.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* const r);
 
@@ -16,22 +16,22 @@ int main(int argc, char* argv[]){
     {
         printf("Running simulation until t=1.\n");
         struct reb_simulation* r = reb_simulation_create();
-        r->integrator    = REB_INTEGRATOR_SEI;
+        reb_simulation_set_integrator(r, "sei");
         r->collision    = REB_COLLISION_DIRECT;
         r->collision_resolve = reb_collision_resolve_hardsphere;
         r->boundary     = REB_BOUNDARY_SHEAR;
-        r->ri_sei.OMEGA    = 1.;    
+        r->OMEGA      = 1.;    
         r->dt         = 1e-4*2.*M_PI; 
         r->exact_finish_time = 1; // Finish exactly at tmax in reb_simulation_integrate(). Default is already 1.
         r->N_ghost_x = 1; r->N_ghost_y = 1; r->N_ghost_z = 0;
-        reb_simulation_configure_box(r,2.,1,1,1);
+        r->root_size = 2;
 
         while (r->N<50){
             struct reb_particle p = {0};
-            p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.x;
-            p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.y;
-            p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.z;
-            p.vy = -1.5*p.x*r->ri_sei.OMEGA;
+            p.x  = ((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.y  = ((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.z  = 0.1*((double)rand()/(double)RAND_MAX-0.5)*r->root_size;
+            p.vy = -1.5*p.x*r->OMEGA;
             p.m  = 0.0001;
             p.r  = 0.1;
             reb_simulation_add(r, p);

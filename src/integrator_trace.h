@@ -1,9 +1,6 @@
 /**
- * @file 	integrator_trace.h
- * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein
+ * integrator_trace.h: TRACE integrator
  *
- * @section 	LICENSE
  * Copyright (c) 2023 Tiger Lu
  *
  * This file is part of rebound.
@@ -24,9 +21,55 @@
  */
 #ifndef _INTEGRATOR_TRACE_H
 #define _INTEGRATOR_TRACE_H
-void reb_integrator_trace_step(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_trace_synchronize(struct reb_simulation* r);    ///< Internal function used to call a specific integrator
-void reb_integrator_trace_reset(struct reb_simulation* r);          ///< Internal function used to call a specific integrator
-void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r); ///< Ionternal in-place coordinate transformation
-void reb_integrator_trace_inertial_to_dh(struct reb_simulation* r); ///< Internal in-place coordinate transformation
+
+extern const struct reb_integrator reb_integrator_trace;
+
+struct reb_integrator_trace_state {
+    int (*S) (struct reb_simulation* const r, const size_t i, const size_t j);
+    int (*S_peri) (struct reb_simulation* const r, const size_t j);
+
+#define REB_INTEGRATOR_TRACE_PERIMODE(X,Y) \
+    X(Y, 0, PARTIAL_BS) \
+    X(Y, 1, FULL_BS) \
+    X(Y, 2, FULL_IAS15)
+    enum {
+        REB_GENERATE_ENUM(REB_INTEGRATOR_TRACE_PERIMODE)
+    } peri_mode;
+
+    double r_crit_hill;
+    double peri_crit_eta;
+
+    // Internal use
+    enum {
+        REB_INTEGRATOR_TRACE_MODE_INTERACTION = 0, // Interaction step
+        REB_INTEGRATOR_TRACE_MODE_KEPLER = 1,      // Kepler step
+        REB_INTEGRATOR_TRACE_MODE_FULL = 3,        // Doing everything in one step
+    } mode;
+    size_t encounter_N;                 // Number of particles currently having an encounter
+    size_t encounter_N_active;          // Number of active particles currently having an encounter
+
+    size_t N_allocated;
+    size_t N_allocated_additional_forces;
+    unsigned int tponly_encounter;      // 0 if any encounters are between two massive bodies. 1 if encounters only involve test particles
+
+    struct reb_particle* REB_RESTRICT particles_backup; //  Contains coordinates before the entire step
+    struct reb_particle* REB_RESTRICT particles_backup_kepler; //  Contains coordinates before kepler step
+    struct reb_particle* REB_RESTRICT particles_backup_additional_forces; // For additional forces
+
+    size_t* encounter_map;              // Map to represent which particles are integrated with BS
+    size_t* encounter_map_backup;       // Contains encounter map from after pre-ts check. Used to retain memory of CEs flagged at this step.
+    struct reb_vec3d com_pos;           // Used to keep track of the centre of mass during the timestep
+    struct reb_vec3d com_vel;
+
+    int* current_Ks; // Tracking K_ij for the entire timestep
+    unsigned int current_C; // Tracking C for the entire timestep
+    unsigned int force_accept; // Force accept for irreversible steps: collisions and adding particles
+};
+
+// Built in trace switching functions
+
+REB_API int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, const size_t j);
+REB_API int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j);
+REB_API int reb_integrator_trace_switch_default(struct reb_simulation* const r, const size_t i, const size_t j);
+
 #endif

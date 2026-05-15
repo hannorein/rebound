@@ -1711,3 +1711,4 @@ int gladLoadGLLoader(GLADloadproc load) {
 
 #endif // __EMSCRIPTEN__
 #endif // OPENGL
+typedef int reb_glad_ignore_empty_compilation_unit;

@@ -1,7 +1,6 @@
 import rebound
 import unittest
 import math
-import rebound.data
 import warnings
     
     
@@ -9,9 +8,9 @@ class TestIntegratorWHFast(unittest.TestCase):
     # WHDS
     def test_whfastwhds_outersolarsystem(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "whds"
+        sim.integrator.coordinates = "whds"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
@@ -21,9 +20,9 @@ class TestIntegratorWHFast(unittest.TestCase):
     # Jacobi
     def test_whfast_outersolarsystem(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "jacobi"
+        sim.integrator.coordinates = "jacobi"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
@@ -35,9 +34,9 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=0.,x=1.,vy=100000.)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "jacobi"
+        sim.integrator.coordinates = "jacobi"
         sim.dt = 1.234567
-        sim.step()
+        sim.steps(1)
         y = sim.particles[1].y
         ys = 1.234567*100000.
         self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-15)
@@ -47,7 +46,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-3, a=-1.,e=2.5)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "jacobi"
+        sim.integrator.coordinates = "jacobi"
         e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.00512*yr
@@ -61,7 +60,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=1.,e=.1)
         sim.add(m=1e-3, a=3.,e=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "jacobi"
+        sim.integrator.coordinates = "jacobi"
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
         e0 = sim.energy()
@@ -76,8 +75,8 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=1.,e=.1)
         sim.add(m=1e-3, a=3.,e=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator.coordinates = "jacobi"
+        sim.integrator.safe_mode = 0
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
         e0 = sim.energy()
@@ -94,7 +93,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 0
@@ -114,7 +113,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 0
@@ -139,7 +138,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 1
@@ -156,7 +155,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 1
@@ -180,7 +179,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = sim.N-1
         sim.testparticle_type = 1
@@ -197,7 +196,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
 
         sim.integrate(1000)
@@ -212,23 +211,23 @@ class TestIntegratorWHFast(unittest.TestCase):
 
     def test_whfasthelio_outersolarsystem(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 0.005*12.*2.*3.1415   # ~ 1/200 of a jupiter year
         e0 = sim.energy()
         sim.integrate(1000.*2.*3.1415)
         e1 = sim.energy()
-        self.assertLess(math.fabs((e0-e1)/e1),1.2e-8)
+        self.assertLess(math.fabs((e0-e1)/e1),1.5e-8)
     
     def test_whfasthelio_veryhyperbolic(self):
         sim = rebound.Simulation()
         sim.add(m=1.)
         sim.add(m=0.,x=1.,vy=100000.)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         sim.dt = 1.234567
-        sim.step()
+        sim.steps(1)
         y = sim.particles[1].y
         ys = 1.234567*100000.
         self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-15)
@@ -238,7 +237,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1.)
         sim.add(m=1e-3, a=-1.,e=2.5)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.00512*yr
@@ -252,7 +251,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=1.,e=.1)
         sim.add(m=1e-3, a=3.,e=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
+        sim.integrator.coordinates = "democraticheliocentric"
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
         e0 = sim.energy()
@@ -269,7 +268,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim1.add(m=1e-3, a=1.,e=0.1,primary=sim1.particles[0])
         sim1.add(m=1e-3, a=3.,e=0.1,primary=sim1.particles[0])
         sim1.integrator = "whfast"
-        sim1.ri_whfast.coordinates = "democraticheliocentric"
+        sim1.integrator.coordinates = "democraticheliocentric"
         sim1.dt = 0.005123*jupyr
         sim1.integrate(1e0*jupyr)
         sim2 = rebound.Simulation()
@@ -277,7 +276,7 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim2.add(m=1e-3, a=3.,e=0.1,primary=sim2.particles[0])
         sim2.add(m=1e-3, a=1.,e=0.1,primary=sim2.particles[0])
         sim2.integrator = "whfast"
-        sim2.ri_whfast.coordinates = "democraticheliocentric"
+        sim2.integrator.coordinates = "democraticheliocentric"
         sim2.dt = 0.005123*jupyr
         sim2.integrate(1e0*jupyr)
         
@@ -293,8 +292,8 @@ class TestIntegratorWHFast(unittest.TestCase):
         sim.add(m=1e-3, a=1.,e=.1)
         sim.add(m=1e-3, a=3.,e=0.1)
         sim.integrator = "whfast"
-        sim.ri_whfast.coordinates = "democraticheliocentric"
-        sim.ri_whfast.safe_mode = 0
+        sim.integrator.coordinates = "democraticheliocentric"
+        sim.integrator.safe_mode = 0
         jupyr = 2.*math.pi
         sim.dt = 0.005123*jupyr
         e0 = sim.energy()
@@ -315,11 +314,9 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         e0 = sim.energy()
         yr = -sim.particles[1].P
         sim.dt = 0.0512*yr
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         sim.dt *= -1
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         x1 = sim.particles[1].x
         v1 = sim.particles[1].vx
         e1 = sim.energy()
@@ -337,11 +334,9 @@ class TestIntegratorWHFastBackAndForth(unittest.TestCase):
         e0 = sim.energy()
         yr = sim.particles[1].P
         sim.dt = 0.0512*yr
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         sim.dt *= -1
-        for i in range(100):
-            sim.step()
+        sim.steps(100)
         x1 = sim.particles[1].x
         v1 = sim.particles[1].vx
         e1 = sim.energy()

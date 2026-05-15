@@ -55,18 +55,19 @@ struct reb_treecell {
     int remote; /**< 0 by default. Set to 1 if this cell is part of an essential tree (MPI).*/ 
 };
 
-/**
- * @brief This function updates the tree.
- * @details The tree needs to be updated when particles move, this function does that.
- * @param r Rebound simulation to operate on
- */
-void reb_simulation_update_tree(struct reb_simulation* const r);
+// The function loops over all trees to call calculate_forces_for_particle_from_cell() tree to calculate forces for each particle.
+void reb_tree_calculate_acceleration_for_particle(const struct reb_simulation* const r, const int pt, const struct reb_vec6d gb);
 
 /**
- * @brief The wrap function calls reb_simulation_update_tree_gravity_data_in_cell() for each tree.
+ * @brief construct tree by adding all particles currently in simulation.
+ */
+void reb_tree_construct(struct reb_simulation* const r);
+
+/**
+ * @brief The wrap function calls reb_tree_calculate_gravity_data_in_cell() for each tree.
  * @param r Rebound simulation to operate on
  */
-void reb_simulation_update_tree_gravity_data(struct reb_simulation* const r);
+void reb_tree_calculate_gravity_data(struct reb_simulation* const r);
 
 /**
  * @brief The wrap function calls reb_tree_add_particle_to_cell() to add the particle into one of the trees. If the tree_root doesn't exist, then it initializes the tree. 

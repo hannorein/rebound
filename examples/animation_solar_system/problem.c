@@ -12,6 +12,7 @@
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 struct reb_mat4df view0; // Initial view matrix
 double dt0;              // Initial timestep
@@ -162,7 +163,7 @@ int main(int argc, char* argv[]) {
     }
     
     // We use the WHFast integrator and a fixed timestep of 2 days
-    r->integrator = REB_INTEGRATOR_WHFAST;
+    reb_simulation_set_integrator(r, "whfast");
     r->dt = 2./365.25 *2.0*M_PI;
 
    

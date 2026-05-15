@@ -15,13 +15,13 @@
  * the parameters to compile REBOUND on both OSX
  * and Linux.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
 #include <omp.h>
-#include "rebound.h"
 #include "tools.h"
 #include "output.h"
 
@@ -29,7 +29,7 @@
 void run_sim(){
     struct reb_simulation* const r = reb_simulation_create();
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->gravity    = REB_GRAVITY_BASIC;
     r->boundary    = REB_BOUNDARY_OPEN;
     r->opening_angle2    = 1.5;    // This constant determines the accuracy of the tree code gravity estimate.
@@ -37,7 +37,8 @@ void run_sim(){
     r->softening     = 0.02;        // Gravitational softening length
     r->dt         = 3e-2;        // Timestep
     const double boxsize = 10.2;
-    reb_simulation_configure_box(r,boxsize,1,1,1);
+    r->root_size = boxsize; 
+
 
     // Setup particles
     double disc_mass = 2e-1;    // Total disc mass

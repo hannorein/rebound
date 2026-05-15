@@ -12,10 +12,10 @@
  * Special thanks goes to Willy Kley for helping me to implement
  * the damping terms as actual forces. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double* tau_a;     /**< Migration timescale in years for all particles */
 double* tau_e;     /**< Eccentricity damping timescale in years for all particles */
@@ -33,10 +33,9 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator           = REB_INTEGRATOR_WHFAST;
-    //r->integrator         = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "whfast");
     r->dt                   = 1e-2*2.*M_PI;        // in year/(2*pi)
-    r->additional_forces    = migration_forces;     //Set function pointer to add dissipative forces.
+    r->additional_forces    = migration_forces;    //Set function pointer to add dissipative forces.
     r->heartbeat            = heartbeat;  
     r->force_is_velocity_dependent = 1;
     tmax                    = 2.0e4*2.*M_PI;    // in year/(2*pi)

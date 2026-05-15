@@ -42,8 +42,16 @@ ipython_examples/*.png
 others/*.tar.gz
 others/*.tar
 docs/c_examples/*.md
+docs/c_examples_emscripten/
+docs/contributors.txt
+docs/integrators/*.md
 problems/
+*.gcno
+*.gcda
 .vscode/
 *.pete
 examples/solar_system_tes
 rebound.html
+tags
+.nfs*
+*.asm_o

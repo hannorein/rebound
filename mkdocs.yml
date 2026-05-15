@@ -1,40 +1,53 @@
 site_name: REBOUND
+site_url: https://rebound.hanno-rein.de
 repo_url: https://github.com/hannorein/rebound
 repo_name: hannorein/rebound
 edit_uri: ""
 nav:
-  - "Home":
-    - index.md
-    - changelog.md
+  - index.md
   - "Quick-start guide":
-    - quickstart_installation.md
-    - quickstart_firstexample.md
-    - quickstart_whereto.md
+    - quickstart/installation.md
+    - quickstart/firstexample.md
+    - quickstart/whereto.md
   - "API Documentation":
-    - api.md
+    - api/index.md
+    - changelog.md
     - "Simulation":
-      - simulation.md
-      - simulationvariables.md
-      - simulationtimestepping.md
-      - simulationbinaryfiles.md
-      - simulationdiagnostics.md
-      - simulationreferenceframes.md
-      - simulationoperators.md
+      - simulation/index.md
+      - simulation/variables.md
+      - simulation/timestepping.md
+      - simulation/binaryfiles.md
+      - simulation/diagnostics.md
+      - simulation/referenceframes.md
+      - simulation/operators.md
     - "Particles":
-      - particles.md
-      - addingparticles.md
-      - removingparticles.md
-      - particleoperators.md
-    - "Modules":
-      - integrators.md
-      - collisions.md
-      - boundaryconditions.md
-      - gravity.md
-    - "Visualization":
-      - visualization.md
+      - particles/index.md
+      - particles/add.md
+      - particles/remove.md
+      - particles/orbitalelements.md
+      - particles/operators.md
+    - "Integrators":
+      - integrators/index.md
+    # Integrators --START--
+      - integrators/ias15.md
+      - integrators/whfast.md
+      - integrators/sei.md
+      - integrators/leapfrog.md
+      - integrators/janus.md
+      - integrators/mercurius.md
+      - integrators/saba.md
+      - integrators/eos.md
+      - integrators/bs.md
+      - integrators/whfast512.md
+      - integrators/trace.md
+      - integrators/none.md
+    # Integrators --END--
+    - collisions.md
+    - boundaryconditions.md
+    - gravity.md
+    - visualization.md
     - "Other concepts":
       - units.md
-      - orbitalelements.md
       - simulationarchive.md
       - chaos.md
       - binaryformat.md
@@ -149,15 +162,14 @@ nav:
     - "Removing particles":
       - c_examples/removing_particles_from_simulation.md
       - ipython_examples/EscapingParticles.ipynb
-      - ipython_examples/RemovingParticlesFromSimulation.ipynb
     - "Other examples":
       - c_examples/selfgravity_plummer.md
-      - c_examples/uniquely_identifying_particles_with_hashes.md
+      - c_examples/uniquely_identifying_particles_with_names.md
       - c_examples/openmp.md
       - c_examples/profiling.md
       - c_examples/star_of_david.md
       - ipython_examples/Testparticles.ipynb
-      - ipython_examples/UniquelyIdentifyingParticlesWithHashes.ipynb
+      - ipython_examples/UniquelyIdentifyingParticlesWithNames.ipynb
       - ipython_examples/Units.ipynb
       - ipython_examples/Cheartbeat.ipynb
       - ipython_examples/Holmberg.ipynb
@@ -167,8 +179,9 @@ theme:
   logo: img/rebound.png
   favicon: img/favicon.ico
   features:
-    - navigation.tabs
-    - toc.integrate
+    - navigation.sections
+    - navigation.indexes
+    - navigation.path
 markdown_extensions:
   - admonition
   - def_list
@@ -184,19 +197,18 @@ extra_javascript:
   - javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js      
+extra_css:
+  - stylesheets/extra.css  
 extra:
   social:
     - icon: fontawesome/brands/mastodon
-      link: https://botsin.space/@reboundbot
+      link: https://mastodon.social/@reboundbot
     - icon: fontawesome/brands/github
       link: https://github.com/hannorein/rebound
-
+not_in_nav: "exclude"
 plugins:
   - search
-  - mkdocs-simple-hooks:
-      hooks:
-        on_pre_build: "docs.c_examples.generate_c_examples:run"
-  - mkdocs-jupyter
+  #- mkdocs-jupyter
     # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
     # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
   - mkdocs-video:

@@ -5,10 +5,10 @@
  * which becomes unstable on a timescale of only a few orbits. 
  * This is a test case for the MERCURIUS integrator.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -22,8 +22,9 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     r->dt = 0.0012*2.*M_PI;                
-    r->integrator = REB_INTEGRATOR_MERCURIUS;
-    r->ri_mercurius.r_crit_hill = 3;            // By default the switching radius is three times the hill radius
+    reb_simulation_set_integrator(r, "mercurius");
+    struct reb_integrator_mercurius_state* mercurius = r->integrator.state;
+    mercurius->r_crit_hill = 3;            // By default the switching radius is three times the hill radius
     r->heartbeat = heartbeat;
 
     struct reb_particle star = {0};

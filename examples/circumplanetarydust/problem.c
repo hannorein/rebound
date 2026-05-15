@@ -9,10 +9,11 @@
  * The output is custom too, outputting the semi-major axis of 
  * every dust particle relative to the planet. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
+
 
 void force_radiation(struct reb_simulation* r);
 void heartbeat(struct reb_simulation* r);
@@ -28,7 +29,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
    
     // Setup constants
-    r->integrator           = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->dt                   = 1e-4;      // Initial timestep.
     r->N_active             = 2;         // Only the star and the planet are massive.
     r->additional_forces    = force_radiation;

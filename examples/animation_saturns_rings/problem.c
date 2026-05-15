@@ -10,10 +10,10 @@
  * the Model-View-Projection (MVP) paradigm. 
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 
@@ -39,29 +39,36 @@ int main(int argc, char* argv[]) {
     
     // Setup problem. For more details, see the shearing sheet example.
     r->opening_angle2    = .5;
-    r->integrator        = REB_INTEGRATOR_SEI;
+    reb_simulation_set_integrator(r, "sei");
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
-    r->ri_sei.OMEGA      = 0.00013143527;       // 1/s
-    r->minimum_collision_velocity = r->ri_sei.OMEGA*0.001;
+    r->OMEGA      = 0.00013143527;       // 1/s
+    r->minimum_collision_velocity = r->OMEGA*0.001;
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
-    r->dt                = 1e-3*2.*M_PI/r->ri_sei.OMEGA;  // s
-    
-    reb_simulation_configure_box(r, 100, 2, 2, 1); // 100m box
+    r->dt                = 1e-3*2.*M_PI/r->OMEGA;  // s
+   
+    r->root_size = 100.0;
+    r->N_root_x = 2; 
+    r->N_root_y = 2; 
     r->N_ghost_x = 2; r->N_ghost_y = 2; r->N_ghost_z = 0;
     
     // Add all ring particles
     double mass = 0;
-    while(mass < 400*r->boxsize.x*r->boxsize.y){ // 400kg/m^2 surface density
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
+    while(mass < 400*boxsize.x*boxsize.y){ // 400kg/m^2 surface density
         struct reb_particle pt = {0};
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
-        pt.vy         = -1.5*pt.x*r->ri_sei.OMEGA;
+        pt.vy         = -1.5*pt.x*r->OMEGA;
         double radius     = reb_random_powerlaw(r, 1., 4.,-3);
         pt.r         = radius;                        // m
         double        particle_mass = 400.0*4./3.*M_PI*radius*radius*radius; // 400kg/m^3 particle density

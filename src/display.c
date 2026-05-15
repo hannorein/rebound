@@ -24,23 +24,25 @@
  * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "rebound.h"
+#include "rebound_internal.h"
 #define DEG2RAD (M_PI/180.)
 #include <stdio.h>
-#include <stdlib.h>
+#include <math.h>
 #ifndef _WIN32
 #include <pthread.h>
 #endif // _WIN32
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include "rebound.h"
 #include "display.h"
+#include "binarydata.h"
 #include "tools.h"
 #include "particle.h"
 #include "boundary.h"
 #include "display.h"
 #include "output.h"
-#include "integrator.h"
+#include "simulation.h"
 #define MAX(a, b) ((a) < (b) ? (b) : (a))       ///< Returns the maximum of a and b
 
 static void reb_display_set_default_view(struct reb_simulation* const r, struct reb_display_settings* s){
@@ -49,7 +51,7 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
     if (r->root_size==-1){  
         scale = 0.;
         const struct reb_particle* p = r->particles;
-        for (unsigned int i=0;i<r->N-r->N_var;i++){
+        for (size_t i=0;i<r->N;i++){
             const double _r = sqrt(p[i].x*p[i].x+p[i].y*p[i].y+p[i].z*p[i].z);
             scale = MAX(scale, _r);
         }
@@ -58,7 +60,12 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
         }
         scale *= 1.1;
     }else{
-        scale = r->boxsize_max/2.;
+        struct reb_vec3d boxsize = {
+            .x = r->root_size*(double)r->N_root_x,
+            .y = r->root_size*(double)r->N_root_y,
+            .z = r->root_size*(double)r->N_root_z,
+        };
+        scale = MAX(boxsize.x, MAX(boxsize.y, boxsize.z));
     }
 
     struct reb_mat4df oldview = s->view;
@@ -83,11 +90,11 @@ static void reb_display_set_default_view(struct reb_simulation* const r, struct 
 }
 
 void reb_display_settings_init(struct reb_simulation*r, struct reb_display_settings* s){
-    int l1 = -1;
-    int l2 = -1;
+    size_t l1 = SIZE_MAX;
+    size_t l2 = SIZE_MAX;
     reb_simulation_two_largest_particles(r, &l1, &l2);
     double largest_radius = 0;
-    if (l1!=-1){
+    if (l1!=SIZE_MAX){
         largest_radius = r->particles[l1].r;
     }
     if (largest_radius > 0.0){
@@ -97,7 +104,7 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     }
     s->pause             = 0; 
     s->multisample       = 1; 
-    if (r->integrator==REB_INTEGRATOR_WHFAST){
+    if (strcmp(r->integrator.name, "whfast")==0){
         s->wire          = 1; 
     }else{
         s->wire          = 0; 
@@ -105,25 +112,17 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     s->breadcrumbs       = 0;
     s->onscreentext      = 1; 
     s->ghostboxes        = 0; 
-    s->reference         = -1;
+    s->reference         = SIZE_MAX;
     s->view.m[1]=1; // this will make set_default_view show the xy plane
     reb_display_set_default_view(r, s);
 }
-
-void reb_simulation_add_display_settings(struct reb_simulation*r){
-    if (r->display_settings){
-        reb_simulation_error(r,"Simulation already has display settings.");
-        return;
-    }
-    r->display_settings = calloc(1,sizeof(struct reb_display_settings));
-    reb_display_settings_init(r, r->display_settings);
-}
-
 
 #ifdef OPENGL
 #include "simplefont.h"
 
 #ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
 #include <emscripten/fetch.h>
 // Need to use emscripten_ version of these functions because types are wrong otherwise
 void emscripten_glVertexAttribDivisor(GLuint index, GLuint divisor);
@@ -301,10 +300,12 @@ static int loadShader(const char* vert_source, const char* frag_source){
 }
 
 static void reb_glfw_error_callback(int error, const char* description){
-    fprintf(stderr, "GLFW Error: %s\n", description);
+    fprintf(stderr, "GLFW Error (%d): %s\n", error, description);
 }
 
 static void reb_display_scroll(GLFWwindow* window, double xoffset, double yoffset){
+    (void) xoffset;
+    (void) yoffset;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_scroll\n");
@@ -314,6 +315,8 @@ static void reb_display_scroll(GLFWwindow* window, double xoffset, double yoffse
     data->s.view = reb_mat4df_scale(data->s.view, scale, scale, scale);
 }
 static void reb_display_mouse_button(GLFWwindow* window, int button, int action, int mods){
+    (void)button;
+    (void)mods;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_mouse_button\n");
@@ -323,6 +326,8 @@ static void reb_display_mouse_button(GLFWwindow* window, int button, int action,
 }
 
 static void reb_display_resize(GLFWwindow* window, int x, int y){
+    (void)x;
+    (void)y;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_resize\n");
@@ -378,11 +383,11 @@ static void reb_display_cursor(GLFWwindow* window, double x, double y){
 #define xstr(s) ystr(s)
 #define ystr(s) #s
 static void reb_display_clear_particle_data(struct reb_display_data* data){
-    int N_real = data->N_allocated;
+    int N = data->N_allocated;
     int N_hist = data->breadcrumb_N_allocated;
     if (data->particle_data){
         float n = NAN;
-        for (int i=0; i<N_real; i++){
+        for (int i=0; i<N; i++){
             data->particle_data[i].x = n;
             data->particle_data[i].y = n;
             data->particle_data[i].z = n;
@@ -390,24 +395,25 @@ static void reb_display_clear_particle_data(struct reb_display_data* data){
         }
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
         for (int i=0; i<N_hist; i++){
-            glBufferSubData(GL_ARRAY_BUFFER, i*N_real*sizeof(struct reb_vec4df), N_real*sizeof(struct reb_vec4df), data->particle_data);
+            glBufferSubData(GL_ARRAY_BUFFER, i*N*sizeof(struct reb_vec4df), N*sizeof(struct reb_vec4df), data->particle_data);
         }
     }
     if (data->orbit_data){
         float n = NAN;
-        for (int i=0; i<N_real; i++){
+        for (int i=0; i<N; i++){
             data->orbit_data[i].x = n; // enough to not render
             data->orbit_data[i].y = n;
             data->orbit_data[i].z = n;
         }
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
         for (int i=0; i<N_hist; i++){
-            glBufferSubData(GL_ARRAY_BUFFER, i*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+            glBufferSubData(GL_ARRAY_BUFFER, i*(N-1)*sizeof(struct reb_orbit_opengl), (N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
         }
     }
 }
 
 void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
+    (void)scancode;
     struct reb_display_data* data = glfwGetWindowUserPointer(window);
     if (!data){
         printf("Error accessing data in reb_display_keyboard\n");
@@ -459,7 +465,7 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
                 }
                 break;
             case 'R':
-                data->s.reference     = -1;
+                data->s.reference     = SIZE_MAX;
                 reb_display_set_default_view(data->r, &data->s);
                 break;
             case 'D':
@@ -487,12 +493,15 @@ void reb_display_keyboard(GLFWwindow* window, int key, int scancode, int action,
             case 'X': 
                 if (mods!=GLFW_MOD_SHIFT){
                     data->s.reference++;
-                    if (data->s.reference>=data->r->N) data->s.reference = -1;
-                    printf("Reference particle: %d.\n",data->s.reference);
+                    if (data->s.reference>=data->r->N) data->s.reference = data->r->N-1;
                 }else{
                     data->s.reference--;
-                    if (data->s.reference<-1) data->s.reference = data->r->N-1;
-                    printf("Reference particle: %d.\n",data->s.reference);
+                    if (data->s.reference==SIZE_MAX-1) data->s.reference = SIZE_MAX;
+                }
+                if (data->s.reference == SIZE_MAX){
+                    printf("Reference particle: NONE.\n");
+                }else{
+                    printf("Reference particle: %zu.\n",data->s.reference);
                 }
                 break;
             case 264: // arrow down
@@ -563,7 +572,7 @@ void reb_render_frame(void* p){
 
     if (!ret_try){
         // Copy if lock obtained. Otherwise use old data.
-        enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+        enum REB_BINARYDATA_ERROR_CODE warnings = REB_BINARYDATA_WARNING_NONE;
         reb_simulation_copy_with_messages(data->r_copy,r,&warnings);
         data->need_copy = 0;
         pthread_mutex_unlock(&(data->mutex));  
@@ -575,10 +584,10 @@ void reb_render_frame(void* p){
     }
 
     // prepare data (incl orbit calculation)
-    const int N_real = r_copy->N - r_copy->N_var;
+    size_t N = r_copy->N;
 
-    if (N_real > data->N_allocated || data->s.breadcrumbs+1 != data->breadcrumb_N_allocated){
-        data->N_allocated = N_real;
+    if (N > data->N_allocated || data->s.breadcrumbs+1 != data->breadcrumb_N_allocated){
+        data->N_allocated = N;
         data->breadcrumb_N_allocated = data->s.breadcrumbs+1;
 
         data->particle_data = realloc(data->particle_data, data->N_allocated*sizeof(struct reb_vec4df));
@@ -602,7 +611,7 @@ void reb_render_frame(void* p){
     reb_simulation_synchronize(r_copy);
 
     // Update data on GPU 
-    for (unsigned int i=0;i<N_real;i++){
+    for (size_t i=0;i<N;i++){
         struct reb_particle p = r_copy->particles[i];
         data->particle_data[i].x  = (float)p.x;
         data->particle_data[i].y  = (float)p.y;
@@ -619,9 +628,9 @@ void reb_render_frame(void* p){
         data->breadcrumb_current_index = (data->breadcrumb_current_index+1) % data->breadcrumb_N_allocated;
     }
 
-    if (data->s.wire && N_real>1){
+    if (data->s.wire && N>1){
         struct reb_particle com = r_copy->particles[0];
-        for (unsigned int i=1;i<N_real;i++){
+        for (size_t i=1;i<N;i++){
             struct reb_particle p = r_copy->particles[i];
             data->orbit_data[i-1].x  = (float)com.x;
             data->orbit_data[i-1].y  = (float)com.y;
@@ -636,20 +645,20 @@ void reb_render_frame(void* p){
             com = reb_particle_com_of_pair(p,com);
         }
     }
-    if (N_real>0){
+    if (N>0){
         // Fill memory (but not resize)
         glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*N_real*sizeof(struct reb_vec4df), N_real*sizeof(struct reb_vec4df), data->particle_data);
+        glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*N*sizeof(struct reb_vec4df), N*sizeof(struct reb_vec4df), data->particle_data);
         if (data->s.spheres==1 || data->s.spheres==2){
             glBindBuffer(GL_ARRAY_BUFFER, data->particle_buffer_current);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, N_real*sizeof(struct reb_vec4df), data->particle_data);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, N*sizeof(struct reb_vec4df), data->particle_data);
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer);
-        glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*(N_real-1)*sizeof(struct reb_orbit_opengl), (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+        glBufferSubData(GL_ARRAY_BUFFER, data->breadcrumb_current_index*(N-1)*sizeof(struct reb_orbit_opengl), (N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
         if (data->s.wire){
             glBindBuffer(GL_ARRAY_BUFFER, data->orbit_buffer_current);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, (N_real-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, (N-1)*sizeof(struct reb_orbit_opengl), data->orbit_data);
         }
     }
 
@@ -665,7 +674,7 @@ void reb_render_frame(void* p){
     // Precalculate matrices 
     struct reb_mat4df projection = reb_mat4df_ortho( -1.6*ratio, 1.6*ratio, -1.6,1.6, -2.5,2.5);
     struct reb_mat4df view = data->s.view;
-    if (data->s.reference>=0){
+    if (data->s.reference!=SIZE_MAX){
         struct reb_particle p = data->r_copy->particles[data->s.reference];
         view = reb_mat4df_translate(view, -p.x, -p.y, -p.z);
     }
@@ -684,7 +693,7 @@ void reb_render_frame(void* p){
                         glUniformMatrix4fv(data->shader_plane.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                         glBindVertexArray(data->shader_plane.particle_vao_current);
                         glUniform1i(data->shader_plane.vertex_count_location, data->shader_plane.vertex_count);
-                        reb_glDrawArraysInstanced(GL_TRIANGLES, 0, data->shader_plane.vertex_count, N_real-1);
+                        reb_glDrawArraysInstanced(GL_TRIANGLES, 0, data->shader_plane.vertex_count, N-1);
                         glBindVertexArray(0);
                         glEnable(GL_CULL_FACE);
                     }
@@ -695,10 +704,10 @@ void reb_render_frame(void* p){
                         glUniformMatrix4fv(data->shader_sphere.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                         if (data->breadcrumb_N_allocated>1){
                             glBindVertexArray(data->shader_sphere.particle_vao);
-                            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real*data->breadcrumb_N_allocated);
+                            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N*data->breadcrumb_N_allocated);
                         }else{
                             glBindVertexArray(data->shader_sphere.particle_vao_current);
-                            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N_real);
+                            reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 800, N);
                         }
                         glBindVertexArray(0);
                         glDisable(GL_DEPTH_TEST);
@@ -711,14 +720,14 @@ void reb_render_frame(void* p){
                         glUniform1i(data->shader_point.breadcrumb_N_location, data->breadcrumb_N_allocated);
                         if (data->breadcrumb_N_allocated>1){
                             glUniform4f(data->shader_point.color_location, 1.,1.,1.,0.8);
-                            glUniform1i(data->shader_point.N_real_location, N_real);
+                            glUniform1i(data->shader_point.N_location, N);
                             glUniform1i(data->shader_point.current_index_location, data->breadcrumb_current_index);
-                            glDrawArrays(GL_POINTS, 0, N_real*data->breadcrumb_N_allocated);
+                            glDrawArrays(GL_POINTS, 0, N*data->breadcrumb_N_allocated);
                         }
                         // Points
                         glUniform4f(data->shader_point.color_location, 1.,1.,0.,0.8);
-                        glUniform1i(data->shader_point.N_real_location, 0);
-                        glDrawArrays(GL_POINTS, N_real*data->breadcrumb_current_index, N_real);
+                        glUniform1i(data->shader_point.N_location, 0);
+                        glDrawArrays(GL_POINTS, N*data->breadcrumb_current_index, N);
                         glBindVertexArray(0);
                     }
                     if (data->s.wire>=1){
@@ -729,13 +738,13 @@ void reb_render_frame(void* p){
                         glUniform1i(data->shader_orbit.vertex_count_location, data->shader_orbit.vertex_count);
                         if (data->breadcrumb_N_allocated>1){
                             glBindVertexArray(data->shader_orbit.particle_vao);
-                            glUniform1i(data->shader_orbit.N_real_location, N_real-1);
+                            glUniform1i(data->shader_orbit.N_location, N-1);
                             glUniform1i(data->shader_orbit.current_index_location, data->breadcrumb_current_index);
-                            reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->breadcrumb_N_allocated*(N_real-1));
+                            reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, data->breadcrumb_N_allocated*(N-1));
                         }else{
                             glBindVertexArray(data->shader_orbit.particle_vao_current);
-                            glUniform1i(data->shader_orbit.N_real_location, 0);
-                            reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, N_real-1);
+                            glUniform1i(data->shader_orbit.N_location, 0);
+                            reb_glDrawArraysInstanced(GL_LINE_STRIP, 0, data->shader_orbit.vertex_count, N-1);
                         }
                         glBindVertexArray(0);
                     }
@@ -749,7 +758,7 @@ void reb_render_frame(void* p){
                         boxmodel = reb_mat4df_scale(boxmodel, 1./scale.x, 1./scale.y, 1./scale.z);
                     }else{
                         glBindVertexArray(data->shader_box.box_vao);
-                        boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->boxsize.x/2., data->r_copy->boxsize.y/2., data->r_copy->boxsize.z/2.);
+                        boxmodel = reb_mat4df_scale(boxmodel, data->r_copy->root_size*(double)r->N_root_x/2., data->r_copy->root_size*(double)r->N_root_y/2., data->r_copy->root_size*(double)r->N_root_z/2.);
                     }
                     struct reb_mat4df mvp = reb_mat4df_multiply(projection, reb_mat4df_multiply(view, boxmodel));
                     glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
@@ -823,7 +832,7 @@ void reb_render_frame(void* p){
     glUniform1f(data->shader_simplefont.aspect_location, 0.5);
     glUniform1i(data->shader_simplefont.rotation_location, 0);
     glUniform1f(data->shader_simplefont.scale_location, scale);
-    for (int i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
+    for (size_t i=0;i<sizeof(reb_logo)/sizeof(reb_logo[0]);i++){
         int j = convertLine(reb_logo[i],val);
         glUniform1f(data->shader_simplefont.ypos_location, (float)i);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
@@ -872,15 +881,15 @@ void reb_render_frame(void* p){
     reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
 
-    sprintf(str, "N = %d ",data->r_copy->N);
+    sprintf(str, "N = %zu ",data->r_copy->N);
     glUniform1f(data->shader_simplefont.ypos_location, ypos++);
     j = convertLine(str,val);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
     reb_glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, j);
 
     glUniform1f(data->shader_simplefont.ypos_location, ypos++);
-    if (data->r_copy->integrator==REB_INTEGRATOR_SEI){
-        sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->ri_sei.OMEGA/2./M_PI);
+    if (data->r_copy->OMEGA){
+        sprintf(str, "t = %f [orb]  ", data->r_copy->t*data->r_copy->OMEGA/2./M_PI);
     }else{
         sprintf(str, "t = %f  ", data->r_copy->t);
     }
@@ -902,7 +911,7 @@ if (data->s.onscreenhelp){ // On screen help
     glUniform1f(data->shader_simplefont.scale_location, 0.035);
     glBindBuffer(GL_ARRAY_BUFFER, data->shader_simplefont.charval_buffer);
     float val[200] = {0.};
-    for (int i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
+    for (size_t i=0;i<sizeof(onscreenhelp)/sizeof(onscreenhelp[0]);i++){
         int j = convertLine(onscreenhelp[i],val);
         glUniform1f(data->shader_simplefont.ypos_location, (float)i);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(val), val);
@@ -962,7 +971,7 @@ EM_BOOL reb_render_frame_emscripten(double time, void* p){
                 }
             }
             strlcat(str, line, 10240);
-            sprintf(line, "N = %d<br />",data->r_copy->N);
+            sprintf(line, "N = %zu<br />",data->r_copy->N);
             strlcat(str, line, 10240);
             sprintf(line, "t = %g<br />",data->r_copy->t);
             strlcat(str, line, 10240);
@@ -1085,42 +1094,42 @@ void reb_display_init(struct reb_simulation * const r){
         // SIMPLEFONT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec2 vp;\n"
-            "in float charpos;\n"
-            "uniform float scale;\n"
-            "uniform float aspect;\n"
-            "uniform float screen_aspect;\n"
-            "uniform float ypos;\n"
-            "uniform vec2 pos;\n"
-            "uniform int rotation;\n"
-            "in vec2 charval;\n"
-            "in vec2 texcoord;\n"
-            "out vec2 Texcoord;\n"
-            "void main() {\n"
-            "  if (rotation==0) {\n"
-            "    gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
-            "  }else{\n"
-            "    gl_Position = vec4(pos.x+screen_aspect*scale*(-vp.y),pos.y+scale*(vp.x-ypos+charpos*aspect),0.,1.);\n"
-            "  }\n"
-            "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
-            "}\n";
+        "in vec2 vp;\n"
+        "in float charpos;\n"
+        "uniform float scale;\n"
+        "uniform float aspect;\n"
+        "uniform float screen_aspect;\n"
+        "uniform float ypos;\n"
+        "uniform vec2 pos;\n"
+        "uniform int rotation;\n"
+        "in vec2 charval;\n"
+        "in vec2 texcoord;\n"
+        "out vec2 Texcoord;\n"
+        "void main() {\n"
+        "  if (rotation==0) {\n"
+        "    gl_Position = vec4(pos.x+screen_aspect*scale*(vp.x+charpos*aspect),pos.y+scale*(vp.y-ypos),0.,1.);\n"
+        "  }else{\n"
+        "    gl_Position = vec4(pos.x+screen_aspect*scale*(-vp.y),pos.y+scale*(vp.x-ypos+charpos*aspect),0.,1.);\n"
+        "  }\n"
+        "  Texcoord = vec2((charval.s+texcoord.s)/16.,(charval.t+texcoord.t)/16.00);\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "uniform sampler2D tex;\n"
-            "in vec2 Texcoord;\n"
-            "void main() {\n"
-            "  outcolor =   vec4(0.5,0.5,0.5,(1.-texture(tex, Texcoord).r)); \n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "uniform sampler2D tex;\n"
+        "in vec2 Texcoord;\n"
+        "void main() {\n"
+        "  outcolor =   vec4(0.5,0.5,0.5,(1.-texture(tex, Texcoord).r)); \n"
+        "}\n";
 
         data->shader_simplefont.program = loadShader(vertex_shader, fragment_shader);
         data->shader_simplefont.ypos_location = glGetUniformLocation(data->shader_simplefont.program, "ypos");
@@ -1201,54 +1210,54 @@ void reb_display_init(struct reb_simulation * const r){
         // POINT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 vp;\n"
-            "uniform mat4 mvp;\n"
-            "uniform vec4 vc;\n"
-            "out vec4 color;\n"
-            "uniform int current_index;\n"
-            "uniform int N_real;\n"
-            "uniform int breadcrumb_N;\n"
-            "void main() {\n"
-            "  gl_Position = mvp*vec4(vp, 1.0);\n"
-            "  gl_Position.z = 0.;\n" // no clipping
-            "  gl_PointSize = 15.0f;\n"
-            "  color = vc;\n"
-            "  float age = float( (gl_VertexID/N_real - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
-            "  if (N_real == 0) age = 1.0;\n"
-            "  color = vec4(vc.xyz,age*vc.a);\n"
-            "}\n";
+        "in vec3 vp;\n"
+        "uniform mat4 mvp;\n"
+        "uniform vec4 vc;\n"
+        "out vec4 color;\n"
+        "uniform int current_index;\n"
+        "uniform int N;\n"
+        "uniform int breadcrumb_N;\n"
+        "void main() {\n"
+        "  gl_Position = mvp*vec4(vp, 1.0);\n"
+        "  gl_Position.z = 0.;\n" // no clipping
+        "  gl_PointSize = 15.0f;\n"
+        "  color = vc;\n"
+        "  float age = float( (gl_VertexID/N - current_index + 2*breadcrumb_N -1)%breadcrumb_N +1 )/float(breadcrumb_N);\n"
+        "  if (N == 0) age = 1.0;\n"
+        "  color = vec4(vc.xyz,age*vc.a);\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "in vec4 color;\n"
-            "out vec4 outcolor;\n"
-            "void main() {\n"
-            "  vec2 rel = gl_PointCoord.st;\n"
-            "  rel.s -=0.5f;\n"
-            "  rel.t -=0.5f;\n"
-            "  if (length(rel)>0.25f){\n"
-            "     outcolor = vec4(0.f,0.f,0.f,0.f); \n"
-            "  }else{\n"
-            "     vec4 cmod = color;\n"
-            "     cmod.a*= min(1.,1.-4.*(length(rel)/0.25-0.75));\n"
-            "     outcolor = cmod;\n"
-            "  }\n"
-            "}\n";
+        "precision highp float;"
+        "in vec4 color;\n"
+        "out vec4 outcolor;\n"
+        "void main() {\n"
+        "  vec2 rel = gl_PointCoord.st;\n"
+        "  rel.s -=0.5f;\n"
+        "  rel.t -=0.5f;\n"
+        "  if (length(rel)>0.25f){\n"
+        "     outcolor = vec4(0.f,0.f,0.f,0.f); \n"
+        "  }else{\n"
+        "     vec4 cmod = color;\n"
+        "     cmod.a*= min(1.,1.-4.*(length(rel)/0.25-0.75));\n"
+        "     outcolor = cmod;\n"
+        "  }\n"
+        "}\n";
 
         data->shader_point.program = loadShader(vertex_shader, fragment_shader);
         data->shader_point.mvp_location = glGetUniformLocation(data->shader_point.program, "mvp");
         data->shader_point.color_location = glGetUniformLocation(data->shader_point.program, "vc");
         data->shader_point.current_index_location = glGetUniformLocation(data->shader_point.program, "current_index");
         data->shader_point.breadcrumb_N_location = glGetUniformLocation(data->shader_point.program, "breadcrumb_N");
-        data->shader_point.N_real_location = glGetUniformLocation(data->shader_point.program, "N_real");
+        data->shader_point.N_location = glGetUniformLocation(data->shader_point.program, "N");
 
         glUseProgram(data->shader_point.program);
         glGenVertexArrays(1, &data->shader_point.particle_vao);
@@ -1266,31 +1275,31 @@ void reb_display_init(struct reb_simulation * const r){
         // BOX shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 vp;\n"
-            "uniform mat4 mvp;\n"
-            "uniform vec4 vc;\n"
-            "out vec4 color;\n"
-            "void main() {\n"
-            "  gl_Position = mvp*vec4(vp, 1.0);\n"
-            "  gl_Position.z = 0.;\n" // no clipping
-            "  color = vc;\n"
-            "}\n";
+        "in vec3 vp;\n"
+        "uniform mat4 mvp;\n"
+        "uniform vec4 vc;\n"
+        "out vec4 color;\n"
+        "void main() {\n"
+        "  gl_Position = mvp*vec4(vp, 1.0);\n"
+        "  gl_Position.z = 0.;\n" // no clipping
+        "  color = vc;\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "in vec4 color;\n"
-            "out vec4 outcolor;\n"
-            "void main() {\n"
-            "  outcolor = color;\n"
-            "}\n";
+        "precision highp float;"
+        "in vec4 color;\n"
+        "out vec4 outcolor;\n"
+        "void main() {\n"
+        "  outcolor = color;\n"
+        "}\n";
 
         data->shader_box.program = loadShader(vertex_shader, fragment_shader);
         data->shader_box.mvp_location = glGetUniformLocation(data->shader_box.program, "mvp");
@@ -1359,33 +1368,33 @@ void reb_display_init(struct reb_simulation * const r){
         // SPHERE shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 vp;\n"
-            "in float sr;\n"
-            "in vec3 sp;\n"
-            "out vec3 normal;\n"
-            "uniform mat4 mvp;\n"
-            "void main() {\n"
-            "  gl_Position = mvp*(vec4(sr*vp, 1.0)+vec4(sp,0.));\n"
-            "  normal = vp;\n"
-            "}\n";
+        "in vec3 vp;\n"
+        "in float sr;\n"
+        "in vec3 sp;\n"
+        "out vec3 normal;\n"
+        "uniform mat4 mvp;\n"
+        "void main() {\n"
+        "  gl_Position = mvp*(vec4(sr*vp, 1.0)+vec4(sp,0.));\n"
+        "  normal = vp;\n"
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "in vec3 normal;\n"
-            "void main() {\n"
-            "  vec3 lightdir = vec3(1.,1.,1.);\n"
-            "  float intensity = 0.5+max(0.,0.5*dot(normalize(lightdir),normalize(normal)));\n"
-            "  outcolor = vec4(intensity,intensity,intensity,1.);\n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "in vec3 normal;\n"
+        "void main() {\n"
+        "  vec3 lightdir = vec3(1.,1.,1.);\n"
+        "  float intensity = 0.5+max(0.,0.5*dot(normalize(lightdir),normalize(normal)));\n"
+        "  outcolor = vec4(intensity,intensity,intensity,1.);\n"
+        "}\n";
 
         data->shader_sphere.program = loadShader(vertex_shader, fragment_shader);
         data->shader_sphere.mvp_location = glGetUniformLocation(data->shader_sphere.program, "mvp");
@@ -1469,68 +1478,68 @@ void reb_display_init(struct reb_simulation * const r){
         // ORBIT shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 focus;\n"
-            "in vec3 aef;\n"
-            "in vec3 omegaOmegainc;\n"
-            "uniform int current_index;\n"
-            "uniform int N_real;\n"
-            "uniform int vertex_count;\n"
-            "uniform int breadcrumb_N;\n"
-            "out float lin;\n"
-            "uniform mat4 mvp;\n"
-            "const float M_PI = 3.14159265359;\n"
-            "void main() {\n"
-            "   float a = aef.x;\n"
-            "   float e = aef.y;\n"
-            "   lin = float(gl_VertexID)/float(vertex_count-1);\n"
-            "   float f = aef.z+lin*M_PI*2.;\n"
-            "   if (e>1.){\n"
-            "       float theta_max = acos(-1./e);\n"
-            "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
-            "       lin = sqrt(min(0.5,lin));\n"
-            "   }\n"
-            "   if (N_real != 0) {\n"
-            "       lin = float( (gl_InstanceID/N_real - current_index + 2*breadcrumb_N -1)%breadcrumb_N )/float(breadcrumb_N);\n"
-            "   }\n"
-            "   float omega = omegaOmegainc.x;\n"
-            "   float Omega = omegaOmegainc.y;\n"
-            "   float inc = omegaOmegainc.z;\n"
-            "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
-            "   float cO = cos(Omega);\n"
-            "   float sO = sin(Omega);\n"
-            "   float co = cos(omega);\n"
-            "   float so = sin(omega);\n"
-            "   float cf = cos(f);\n"
-            "   float sf = sin(f);\n"
-            "   float ci = cos(inc);\n"
-            "   float si = sin(inc);\n"
-            "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
-            "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
-            "    gl_Position.z = 0.;\n" // no clipping
-            "}\n";
+        "in vec3 focus;\n"
+        "in vec3 aef;\n"
+        "in vec3 omegaOmegainc;\n"
+        "uniform int current_index;\n"
+        "uniform int N;\n"
+        "uniform int vertex_count;\n"
+        "uniform int breadcrumb_N;\n"
+        "out float lin;\n"
+        "uniform mat4 mvp;\n"
+        "const float M_PI = 3.14159265359;\n"
+        "void main() {\n"
+        "   float a = aef.x;\n"
+        "   float e = aef.y;\n"
+        "   lin = float(gl_VertexID)/float(vertex_count-1);\n"
+        "   float f = aef.z+lin*M_PI*2.;\n"
+        "   if (e>1.){\n"
+        "       float theta_max = acos(-1./e);\n"
+        "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+        "       lin = sqrt(min(0.5,lin));\n"
+        "   }\n"
+        "   if (N != 0) {\n"
+        "       lin = float( (gl_InstanceID/N - current_index + 2*breadcrumb_N -1)%breadcrumb_N )/float(breadcrumb_N);\n"
+        "   }\n"
+        "   float omega = omegaOmegainc.x;\n"
+        "   float Omega = omegaOmegainc.y;\n"
+        "   float inc = omegaOmegainc.z;\n"
+        "   float r = a*(1.-e*e)/(1. + e*cos(f));\n"
+        "   float cO = cos(Omega);\n"
+        "   float sO = sin(Omega);\n"
+        "   float co = cos(omega);\n"
+        "   float so = sin(omega);\n"
+        "   float cf = cos(f);\n"
+        "   float sf = sin(f);\n"
+        "   float ci = cos(inc);\n"
+        "   float si = sin(inc);\n"
+        "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
+        "    gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+        "    gl_Position.z = 0.;\n" // no clipping
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "in float lin;\n"
-            "void main() {\n"
-            "  outcolor = vec4(1.,1.,1.,sqrt(lin));\n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "in float lin;\n"
+        "void main() {\n"
+        "  outcolor = vec4(1.,1.,1.,sqrt(lin));\n"
+        "}\n";
 
         data->shader_orbit.program = loadShader(vertex_shader, fragment_shader);
         data->shader_orbit.mvp_location = glGetUniformLocation(data->shader_orbit.program, "mvp");
         data->shader_orbit.current_index_location = glGetUniformLocation(data->shader_orbit.program, "current_index");
         data->shader_orbit.vertex_count_location = glGetUniformLocation(data->shader_orbit.program, "vertex_count");
         data->shader_orbit.breadcrumb_N_location = glGetUniformLocation(data->shader_orbit.program, "breadcrumb_N");
-        data->shader_orbit.N_real_location = glGetUniformLocation(data->shader_orbit.program, "N_real");
+        data->shader_orbit.N_location = glGetUniformLocation(data->shader_orbit.program, "N");
         data->shader_orbit.vertex_count = 500; // higher number = smoother orbits
 
         // Generate two orbit vao
@@ -1584,73 +1593,73 @@ void reb_display_init(struct reb_simulation * const r){
         // PLANE shader
         const char* vertex_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "in vec3 focus;\n"
-            "in vec3 aef;\n"
-            "in vec3 omegaOmegainc;\n"
-            "uniform int vertex_count;\n"
-            "uniform mat4 mvp;\n"
-            "out float fog;\n"
-            "const float M_PI = 3.14159265359;\n"
-            "void main() {\n"
-            "   float a = aef.x;\n"
-            "   float e = aef.y;\n"
-            "   float lin = float(gl_VertexID/3)/float(vertex_count/3) + float(gl_VertexID%3)/float(vertex_count/3);\n"
-            "   float f = 2.*M_PI*lin;\n"
-            "   float theta_max = 0.0;\n"
-            "   fog = 1.;\n"
-            "   float r;\n"
-            "   if (e>1.){\n"
-            "       theta_max = acos(-1./e);\n"
-            "       lin = 0.5/float(vertex_count/3+1) ;\n"
-            "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
-            "       float rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
-            "       if (gl_VertexID%3==0) { \n"
-            "           r = rmax;\n"
-            "           f = 0.0; \n"
-            "       }else{\n"
-            "           lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
-            "           f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
-            "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
-            "       }\n"
-            "       fog = 1.-abs(r/rmax);\n"
-            "   }else{ \n"
-            "       if (gl_VertexID%3==0) { \n"
-            "           r = 0.;\n"
-            "       }else{\n"
-            "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
-            "       }\n"
-            "   }\n"
-            "   float omega = omegaOmegainc.x;\n"
-            "   float Omega = omegaOmegainc.y;\n"
-            "   float inc = omegaOmegainc.z;\n"
-            "   float cO = cos(Omega);\n"
-            "   float sO = sin(Omega);\n"
-            "   float co = cos(omega);\n"
-            "   float so = sin(omega);\n"
-            "   float cf = cos(f);\n"
-            "   float sf = sin(f);\n"
-            "   float ci = cos(inc);\n"
-            "   float si = sin(inc);\n"
-            "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
-            "   gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
-            "   gl_Position.z = 0.;\n" // no clipping
-            "}\n";
+        "in vec3 focus;\n"
+        "in vec3 aef;\n"
+        "in vec3 omegaOmegainc;\n"
+        "uniform int vertex_count;\n"
+        "uniform mat4 mvp;\n"
+        "out float fog;\n"
+        "const float M_PI = 3.14159265359;\n"
+        "void main() {\n"
+        "   float a = aef.x;\n"
+        "   float e = aef.y;\n"
+        "   float lin = float(gl_VertexID/3)/float(vertex_count/3) + float(gl_VertexID%3)/float(vertex_count/3);\n"
+        "   float f = 2.*M_PI*lin;\n"
+        "   float theta_max = 0.0;\n"
+        "   fog = 1.;\n"
+        "   float r;\n"
+        "   if (e>1.){\n"
+        "       theta_max = acos(-1./e);\n"
+        "       lin = 0.5/float(vertex_count/3+1) ;\n"
+        "       f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+        "       float rmax = -a*(1.-e*e)/(1. + e*cos(f));\n"
+        "       if (gl_VertexID%3==0) { \n"
+        "           r = rmax;\n"
+        "           f = 0.0; \n"
+        "       }else{\n"
+        "           lin = float(gl_VertexID/3)/float(vertex_count/3+1) + float(gl_VertexID%3)/float(vertex_count/3+1) - 0.5/float(vertex_count/3+1) ;\n"
+        "           f = 0.0001-theta_max+1.9998*lin*theta_max;\n"
+        "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
+        "       }\n"
+        "       fog = 1.-abs(r/rmax);\n"
+        "   }else{ \n"
+        "       if (gl_VertexID%3==0) { \n"
+        "           r = 0.;\n"
+        "       }else{\n"
+        "           r = a*(1.-e*e)/(1. + e*cos(f));\n"
+        "       }\n"
+        "   }\n"
+        "   float omega = omegaOmegainc.x;\n"
+        "   float Omega = omegaOmegainc.y;\n"
+        "   float inc = omegaOmegainc.z;\n"
+        "   float cO = cos(Omega);\n"
+        "   float sO = sin(Omega);\n"
+        "   float co = cos(omega);\n"
+        "   float so = sin(omega);\n"
+        "   float cf = cos(f);\n"
+        "   float sf = sin(f);\n"
+        "   float ci = cos(inc);\n"
+        "   float si = sin(inc);\n"
+        "   vec3 pos = vec3(r*(cO*(co*cf-so*sf) - sO*(so*cf+co*sf)*ci),r*(sO*(co*cf-so*sf) + cO*(so*cf+co*sf)*ci),+ r*(so*cf+co*sf)*si);\n"
+        "   gl_Position = mvp*(vec4(focus+pos, 1.0));\n"
+        "   gl_Position.z = 0.;\n" // no clipping
+        "}\n";
         const char* fragment_shader =
 #ifdef __EMSCRIPTEN__
-            "#version 300 es\n"
+        "#version 300 es\n"
 #else
-            "#version 330\n"
+        "#version 330\n"
 #endif
-            "precision highp float;"
-            "out vec4 outcolor;\n"
-            "in float fog;\n"
-            "void main() {\n"
-            "  outcolor = vec4(1.,1.,1.,fog*0.3);\n"
-            "}\n";
+        "precision highp float;"
+        "out vec4 outcolor;\n"
+        "in float fog;\n"
+        "void main() {\n"
+        "  outcolor = vec4(1.,1.,1.,fog*0.3);\n"
+        "}\n";
 
         data->shader_plane.program = loadShader(vertex_shader, fragment_shader);
         data->shader_plane.mvp_location = glGetUniformLocation(data->shader_plane.program, "mvp");

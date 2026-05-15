@@ -10,11 +10,11 @@
  * number of close encounters.  
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 double E0;
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
 
     
     // Simulation Setup
-    r->integrator    = REB_INTEGRATOR_MERCURIUS;
+    reb_simulation_set_integrator(r, "mercurius");
     r->heartbeat     = heartbeat;
     // Test particle type 1 allows massive particles to feel the gravity of testparticles.
     // However, test particles will not feel the gravity from other test particles.
@@ -43,12 +43,13 @@ int main(int argc, char* argv[]){
     r->collision = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_merge_pass_through;
     r->track_energy_offset = 1;
-    r->collision_resolve_keep_sorted = 1;
     
     // Boundaries
     r->boundary = REB_BOUNDARY_OPEN;
     const double boxsize = 6;
-    reb_simulation_configure_box(r,boxsize,2,2,1);
+    r->root_size = boxsize;
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     
     srand(12);
     double m_earth = 3.003e-6;
@@ -118,7 +119,7 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge_pass_through(stru
     // This function then outputs some information about the merger.
     enum REB_COLLISION_RESOLVE_OUTCOME result = reb_collision_resolve_merge(r, c);
     if (result!=REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE){
-        printf("A merger occurred! Particles involved: %d, %d.\n",c.p1,c.p2);
+        printf("A merger occurred! Particles involved: %zu, %zu.\n",c.p1,c.p2);
     }
     return result;
 }
@@ -134,6 +135,6 @@ void heartbeat(struct reb_simulation* r){
         struct reb_particle star = r->particles[0];
         struct reb_orbit o = reb_orbit_from_particle(r->G,p,star);
         
-        printf("a2=%f,dE=%e,N=%d\n",o.a,relE,r->N);
+        printf("a2=%f,dE=%e,N=%zu\n",o.a,relE,r->N);
     }
 }

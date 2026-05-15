@@ -13,6 +13,16 @@ class TestSimulation(unittest.TestCase):
     
     def tearDown(self):
         self.sim = None
+    
+    def test_attribute_error_simulation(self):
+        with self.assertRaises(AttributeError):
+            self.sim.does_not_exist = 1
+    
+    def test_attribute_error_particle(self):
+        self.sim.add(m=1)
+        with self.assertRaises(AttributeError):
+            self.sim.particles[0].does_not_exist = 1
+
 
     def test_status(self):
         sys.stdout = open(os.devnull, 'w')
@@ -52,31 +62,20 @@ class TestSimulation(unittest.TestCase):
         self.sim.remove(1)
         self.assertEqual(self.sim.N,1)
     
-    def test_remove_keepsorted(self):
-        self.sim.remove(1,keep_sorted=0)
-        self.assertEqual(self.sim.N,1)
-    
-    def test_removehash(self):
+    def test_remove_name(self):
         self.sim.add(m=1e-3, a=1., e=0.01, omega=0.02, M=0.04, inc=0.1)
-        self.sim.particles[-1].hash = 99
-        self.sim.remove(hash=99)
+        self.sim.particles[-1].name = "99"
+        self.sim.remove("99")
         self.assertEqual(self.sim.N,2)
         with self.assertRaises(RuntimeError):
-            self.sim.remove(hash=99)
+            self.sim.remove("99")
         with self.assertRaises(RuntimeError):
-            self.sim.remove(hash=99)
-        with self.assertRaises(RuntimeError):
-            self.sim.remove(hash=-99334)
+            self.sim.remove("-99334")
     
-    def test_step(self):
-        self.sim.step()
+    def test_steps(self):
+        self.sim.steps(1)
         self.assertNotEqual(self.sim.t, 1.246)
 
-    def test_configure_box(self):
-        self.assertEqual(self.sim.root_size,-1.)
-        self.sim.configure_box(100.,1,1,1)
-        self.assertEqual(self.sim.root_size,100.)
-    
     def test_orbits(self):
         orbits = self.sim.orbits()
         self.assertAlmostEqual(orbits[0].a,1.,delta=1e-15)
@@ -97,7 +96,7 @@ class TestSimulation(unittest.TestCase):
         self.assertAlmostEqual(com.x, 0., delta=1e-15)
         # Check if tree is adjusted.
         sim = rebound.Simulation()
-        sim.configure_box(10)
+        sim.root_size = 10.0
         sim.gravity = "tree"
         sim.add(m=1,x=1)
         sim.move_to_com()
@@ -127,8 +126,6 @@ class TestSimulation(unittest.TestCase):
         self.assertAlmostEqual(com.x, 1., delta=1e-15)
         com = sim.com(first=1,last=2)
         self.assertAlmostEqual(com.x, 2., delta=1e-15)
-        com = sim.com(first=4, last=-3)
-        self.assertAlmostEqual(com.x, 0., delta=1e-15)
     
     def test_jacobi_com(self):
         sim = rebound.Simulation()
@@ -144,8 +141,8 @@ class TestSimulation(unittest.TestCase):
 
     def test_init_megno(self):
         self.sim.init_megno()
-        self.assertEqual(self.sim.N,4)
-        self.assertEqual(self.sim.N_real,2)
+        self.assertEqual(self.sim.N,2)
+        self.assertEqual(self.sim.N_var,2)
         self.assertEqual(self.sim.megno(),0)
         self.assertEqual(self.sim.lyapunov(),0)
         
@@ -167,37 +164,32 @@ class TestSimulation(unittest.TestCase):
 
     def test_additional_forces(self):
         def af(sim):
-            sim.contents.particles[0].hash = 5
+            sim.contents.particles[0].name = "5"
             pass
         self.sim.additional_forces = af
         self.sim.integrate(.1)
-        self.assertEqual(self.sim.particles[0].hash.value,5)
+        self.assertEqual(self.sim.particles[0].name, "5")
         with self.assertRaises(AttributeError):
             self.sim.additional_forces
 
     def test_post_timestep_modifications(self):
         def ptm(sim):
-            sim.contents.particles[0].hash = 6
+            sim.contents.particles[0].name = "6"
             pass
         self.sim.post_timestep_modifications = ptm
         self.sim.integrate(.1)
-        self.assertEqual(self.sim.particles[0].hash.value,6)
+        self.assertEqual(self.sim.particles[0].name,"6")
         with self.assertRaises(AttributeError):
             self.sim.post_timestep_modifications
 
     def test_N(self):
         self.assertEqual(self.sim.N, 2)
     
-    def test_N_real(self):
-        self.assertEqual(self.sim.N_real, 2)
-    
     def test_integrator(self):
         self.assertEqual(self.sim.integrator, "ias15")
         self.sim.integrator = "whfast"
         self.assertEqual(self.sim.integrator, "whfast")
-        self.sim.integrator = 1
-        self.assertEqual(self.sim.integrator, "whfast")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             self.sim.integrator = "bogusintegrator"
 
     def test_boundaries(self):
@@ -285,7 +277,7 @@ class TestSimulationCollisions(unittest.TestCase):
         self.assertAlmostEqual(self.sim.particles[0].x,-1,delta=1e-15)
 
     def test_tree(self):
-        self.sim.configure_box(10)
+        self.sim.root_size = 10
         self.sim.collision = "tree"
         self.sim.collision_resolve = "hardsphere"
         self.sim.add(m=1.,x=-1,vx=1.,r=0.5)

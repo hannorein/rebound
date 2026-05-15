@@ -10,12 +10,12 @@
  * large clusters goes beyond this simple example and
  * almost certainly requires experimentation.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
-#include "rebound.h"
 #include "tools.h"
 #include "output.h"
 
@@ -25,7 +25,7 @@ void heartbeat(struct reb_simulation* const r);
 int main(int argc, char* argv[]){
     struct reb_simulation* const r = reb_simulation_create();
     // Setup constants
-    r->integrator       = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->gravity          = REB_GRAVITY_TREE;
     r->boundary         = REB_BOUNDARY_OPEN;
     r->opening_angle2   = 1.5;        // This constant determines the accuracy of the tree code gravity estimate.
@@ -36,10 +36,11 @@ int main(int argc, char* argv[]){
     // Setup root boxes for gravity tree.
     // Here, we use 2x2=4 root boxes (each with length 'boxsize')
     // This allows you to use up to 4 MPI nodes.
-    reb_simulation_configure_box(r,boxsize,2,2,1);
+    r->root_size = boxsize;
+    r->N_root_x = 2;
+    r->N_root_y = 2;
 
     // Initialize MPI
-    // This can only be done after reb_simulation_configure_box.
     reb_mpi_init(r);
 
     // Setup particles only on master node
