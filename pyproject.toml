@@ -40,3 +40,6 @@ exclude = ["reboundx*"]
 
 [tool.setuptools.package-data]
 rebound = ["../src/*.h"]
+
+[tool.cibuildwheel]
+skip = ["cp36-*", "cp37-*", "cp38-*"]
