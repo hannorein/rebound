@@ -35,6 +35,9 @@ class Particle(Structure):
     a, e, inc, Omega, omega, f	: float
 	    (Kepler Elements) Semi-major axis, eccentricity, inclination, longitude of the ascending node, argument of periapsis, and true anomaly respectively. The Keplerian Elements are in Jacobi coordinates (with mu = G*Minc, where Minc is the total mass from index 0 to the particle's index, inclusive).
     """
+    # Only allow attributes which are fields.
+    __slots__ = ["_name_buf"]
+    
     def __repr__(self):
         """ 
         Returns a string with the position and velocity of the particle.
@@ -164,7 +167,7 @@ class Particle(Structure):
             buft = c_char * len(binarydata)
             buf = buft.from_buffer_copy(binarydata)
             memmove(byref(self), byref(buf), sizeof(self))
-            self.sim = 0
+            self._sim = 0
             self.ap = 0
             return
 

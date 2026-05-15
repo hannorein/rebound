@@ -13,6 +13,16 @@ class TestSimulation(unittest.TestCase):
     
     def tearDown(self):
         self.sim = None
+    
+    def test_attribute_error_simulation(self):
+        with self.assertRaises(AttributeError):
+            self.sim.does_not_exist = 1
+    
+    def test_attribute_error_particle(self):
+        self.sim.add(m=1)
+        with self.assertRaises(AttributeError):
+            self.sim.particles[0].does_not_exist = 1
+
 
     def test_status(self):
         sys.stdout = open(os.devnull, 'w')
