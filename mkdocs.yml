@@ -208,7 +208,7 @@ extra:
 not_in_nav: "exclude"
 plugins:
   - search
-  #- mkdocs-jupyter
+  - mkdocs-jupyter
     # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
     # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
   - mkdocs-video:
