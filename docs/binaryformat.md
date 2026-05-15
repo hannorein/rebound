@@ -172,7 +172,7 @@ A single struct `reb_binarydata_field_descriptor` contains the information to in
 ```c
     struct reb_binarydata_field_descriptor fd_t = { "", REB_DOUBLE,       "t",                            offsetof(struct reb_simulation, t), 0, 0, 0};
 ```
-The first parameter is an optional documentation string. Next is the type of data, in this case a single double precision floating point number. The third entry is the name of the field. This is used to identify field in the binary files. The name shoudl be human-readable and correspond to the name of the parameter in the c structure. The next entry is the offset of where this variable is stored relative to the beginning of the simulation structure. 
+The first parameter is an optional documentation string. Next is the type of data, in this case a single double precision floating point number. The third entry is the name of the field. This is used to identify field in the binary files. The name should be human-readable and correspond to the name of the parameter in the c structure. The next entry is the offset of where this variable is stored relative to the beginning of the simulation structure. 
 
 REBOUND also supports array like fields. For example consider the `particles` field:
 ```c
