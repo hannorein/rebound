@@ -9,20 +9,20 @@ REBOUND is an N-body integrator, i.e. a software package that can integrate the 
 
 * No dependencies on external libraries.
 * Runs natively on Linux, MacOS, and Windows. 
-* Symplectic integrators ([WHFast](integrators/#whfast), [SEI](integrators/#sei), [LEAPFROG](integrators/#leapfrog), [EOS](integrators/#embedded-operator-splitting-method-eos))
-* Hybrid reversible integrators for planetary dynamics with arbitrary close encounters ([TRACE](integrators/#trace))
-* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/#mercurius))
-* High order symplectic integrators for integrating planetary systems ([SABA](integrators/#saba), WH Kernel methods)
-* High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/#ias15))
+* Symplectic integrators ([WHFast](integrators/whfast.md), [SEI](integrators/sei.md), [LEAPFROG](integrators/leapfrog.md), [EOS](integrators/eos.md))
+* Hybrid reversible integrators for planetary dynamics with arbitrary close encounters ([TRACE](integrators/trace.md))
+* Hybrid symplectic integrators for planetary dynamics with close encounters ([MERCURIUS](integrators/mercurius.md))
+* High order symplectic integrators for integrating planetary systems ([SABA](integrators/saba.md), WH Kernel methods)
+* High accuracy non-symplectic integrator with adaptive time-stepping ([IAS15](integrators/ias15.md))
 * Can integrate arbitrary user-defined ODEs that are coupled to N-body dynamics for tides, spin, etc
 * Support for collisional/granular dynamics, various collision detection routines
 * The computationally intensive parts of the code are written entirely in C, conforming to the ISO standard C99, and can be used as a thread-safe shared library
 * Easy-to-use Python module, installation in 3 words: `pip install rebound`
 * Real-time, 3D visualization, for both C and Python.
 * Extensive set of example problems for both C and Python. You can run examples directly from your browser without the need to download or install anything.
-* Parallelized [WHFast512](integrators/#whfast512) integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
+* Parallelized [WHFast512](integrators/whfast512.md) integrator for super fast integrations of planetary systems with SIMD AVX512 instructions
 * Parallelized with OpenMP (for shared memory systems)
-* Parallelized with [MPI](mpi/) is supported for some special use cases only (using an essential tree for gravity and collisions)
+* Parallelized with [MPI](mpi.md) is supported for some special use cases only (using an essential tree for gravity and collisions)
 * The code is 100% open-source. All features are included in the public repository on [github](https://github.com/hannorein/rebound)
 
 ## Contributors
