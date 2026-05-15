@@ -23,7 +23,7 @@ clibrebound.reb_free(res)
 
 for name in names:
     print(name)
-    with open("integrators/"+name+".md", "w") as file:
+    with open("docs/integrators/"+name+".md", "w") as file:
         sim = rebound.Simulation()
         sim.integrator = name
         file.write("# " + name.upper()+"\n\n")
@@ -69,7 +69,7 @@ for name in names:
 
 
 
-with open("."+"./mkdocs.yml", "r") as file:
+with open("mkdocs.yml", "r") as file:
     lines = file.readlines()
     
 output_lines = []
@@ -93,7 +93,7 @@ for line in lines:
     if not inside_markers:
         output_lines.append(line)
 
-with open("."+"./mkdocs.yml", "w") as file:
+with open("mkdocs.yml", "w") as file:
     file.write("".join(output_lines))
 
 

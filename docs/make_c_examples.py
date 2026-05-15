@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 
 # C Example update
 print("Generating C examples.")
@@ -53,7 +54,7 @@ for l in config:
                                 line += "    REBOUND has been compiled with emscripten to WebAssembly.\n"
                                 line += "    This lets you run this example interactively from within your browser at almost native speed.\n"
                                 line += "    No installation is required.\n"
-                                line += "    [Click here](../../emscripten_c_examples/"+name+"/) to try it out.\n"
+                                line += "    [Click here](../c_examples_emscripten/"+name+"/index.html) to try it out.\n"
                         will_output = 2
                         if len(line[3:].strip())==0:
                             fd.write("\n\n"+line[3:].strip())
@@ -69,11 +70,13 @@ for l in config:
                 if did_output==0:
                     print("Warning: Did not find description in "+problemc)
             if livepreview:
-                os.makedirs("docs/c_examples_emscription/"+name, exist_ok=True)
-                print("Compiling with emscripten..." 
+                os.makedirs("docs/c_examples_emscripten/"+name, exist_ok=True)
+                print("Compiling with emscripten...") 
                 if server_used == 0:
-                    os.system("source ../emsdk/emsdk_env.sh && emcc -O3 -Isrc/ src/*.c $dir/problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -s -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS="callMain" --shell-file web_client/shell_rebound_console.html -o site/emscripten_c_$dir/index.html")
+                    if "--fast" not in sys.argv:
+                        os.system("source ../emsdk/emsdk_env.sh > /dev/null 2>&1; emcc -O3 -Isrc/ src/*.c examples/"+name+"/problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -s -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_console.html -o docs/c_examples_emscripten/"+name+"/index.html")
                 else:
-                    os.system("source ../emsdk/emsdk_env.sh && emcc -O3 -Isrc/ src/*.c $dir/problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_webgl.html -o site/emscripten_c_$dir/index.html"
+                    if "--fast" not in sys.argv:
+                        os.system("source ../emsdk/emsdk_env.sh > /dev/null 2>&1; emcc -O3 -Isrc/ src/*.c examples/"+name+"/problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_webgl.html -o docs/c_examples_emscripten/"+name+"/index.html")
 
 print("Converted %d C examples."%count)
