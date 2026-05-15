@@ -5,14 +5,15 @@ This changelog only includes the most important changes in recent updates. For a
 ## Version 5.x
 
 ### Version 5.0.0
-* A lot of changes!
-* Custom integrators
-* uniform() in fmt
-* integrators not woven into other parts
-* Particle are kept sorted
-* Names
-* Automatic python enum names
-* Python only allows setting defined attributes
+* This release incorporates major updates and breaks backwards compatability. 
+* Particles can now be identified with a name. The names can be any string. The memory for names is managed by REBOUND. Names are automatically stored in Simulationarchives. Hashes are now longer available to identify particles.
+* A new interface for integrators has beed added. Thanks to this all the functionality provided by an integrator are implemented in the integrator's C file. This also makes it much easier to experiment with new integrators. 
+* Python bindings are automatically generated for both built-in and custom imtegrators. This includes documentation strings (`__doc__`) and support for setting enumeration values with a string. 
+* The python structures `Simulation` and `Particle` only allow setting attributes that correspond to fields in the C structures. This makes it much easier to find bugs where previously a typo in an assignment failed silently.
+* The file format for the Simulationarchive has been changed. Note that you can not read Simulationsarchives that were saved with a previous version. 
+* The `reb_simulation_add_fmt()` function now allows for angles to be initialized with a uniform distribution. The synatx is `reb_simulation_add_fmt(r, "a e uniform(omega)", 1.0, 0.1)`.
+* The particle array is now kept sorted by default. The user doesn't need to manually specify that the particles should be kept sorted when a particle gets removed.
+* The tree structure is now regenerated from scratch at every timestep instead of updating a previously generated tree. This simplifies the logic significantly does not negatively affect the runtime.
 
 
 ## Version 4.x
