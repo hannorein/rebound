@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
     "Programming Language :: Python :: 3",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = []
 
 [project.urls]
