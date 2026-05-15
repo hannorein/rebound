@@ -25,6 +25,7 @@ sed \
     -e 's/rmelikyan/Robert Melikyan/g' \
     -e 's/tigerchenlu98/Tiger Lu/g' \
     -e 's/Dave\,/David Spiegel\,/g' \
+    -e '/Copilot/d' \
     contributors.txt > contributors_clean.txt
 
 echo "| Name | Number of contributed lines | Number of contributed commits |" >  docs/contributors.txt
