@@ -25,6 +25,7 @@ jobs:
         env:
            FFP_CONTRACT_OFF: 1
            CIBW_ARCHS_MACOS: x86_64 arm64
+           CIBW_SKIP: "cp36-* cp37-* cp38-*"
 
       - uses: actions/upload-artifact@v5
         with:
