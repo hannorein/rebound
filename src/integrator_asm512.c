@@ -35,6 +35,61 @@
 #include "integrator_whfast.h"
 #include "integrator_asm512.h"
 
+
+void reb_integrator_asm512_free(void* state);		
+void* reb_integrator_asm512_create();		
+void reb_integrator_asm512_step(struct reb_simulation* r, void* step);
+void reb_integrator_asm512_synchronize(struct reb_simulation* r, void* step);
+const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descriptor_list[];
+
+struct reb_particle_asm512 {
+    __m512d m REB_ALIGNED_64;
+    __m512d x REB_ALIGNED_64;
+    __m512d y REB_ALIGNED_64;
+    __m512d z REB_ALIGNED_64;
+    __m512d vx REB_ALIGNED_64;
+    __m512d vy REB_ALIGNED_64;
+    __m512d vz REB_ALIGNED_64;
+};
+
+const struct reb_integrator reb_integrator_asm512 = {
+    .step = reb_integrator_asm512_step,
+    .create = reb_integrator_asm512_create,
+    .free = reb_integrator_asm512_free,
+    .synchronize = reb_integrator_asm512_synchronize,
+    .field_descriptor_list = reb_integrator_asm512_field_descriptor_list,
+};
+
+const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descriptor_list[] = {
+    { "", REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_asm512_state, keep_unsynchronized), 0, 0, 0},
+    { "", REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_asm512_state, gr_potential), 0, 0, 0},
+    { "", REB_UINT,        "N_systems",       offsetof(struct reb_integrator_asm512_state, N_systems), 0, 0, 0},
+    { "", REB_POINTER_ALIGNED, "pjh",         offsetof(struct reb_integrator_asm512_state, p_jh), offsetof(struct reb_integrator_asm512_state, N_allocated), sizeof(struct reb_particle_asm512), 0},
+    { "", REB_PARTICLE,    "pjh0_0",          offsetof(struct reb_integrator_asm512_state, p_jh0[0]), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_1",          offsetof(struct reb_integrator_asm512_state, p_jh0[1]), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_2",          offsetof(struct reb_integrator_asm512_state, p_jh0[2]), 0, 0, 0},
+    { "", REB_PARTICLE,    "pjh0_3",          offsetof(struct reb_integrator_asm512_state, p_jh0[3]), 0, 0, 0},
+    { 0 }, // Null terminated list
+};
+
+
+
+void* reb_integrator_asm512_create(){
+    struct reb_integrator_asm512_state* asm512 = calloc(sizeof(struct reb_integrator_asm512_state),1);
+    asm512->N_systems = 1;
+    asm512->gr_potential = 0;
+    asm512->keep_unsynchronized = 0;
+    asm512->recalculate_constants = 1;
+    return asm512;
+}
+
+void reb_integrator_asm512_free(void* state){
+    struct reb_integrator_asm512_state* asm512 = state;
+    free(asm512->p_jh);
+    free(asm512);
+}
+
+
 #ifdef AVX512
 // Debug function to print vectors
 static inline void printavx512(__m512d a) {
