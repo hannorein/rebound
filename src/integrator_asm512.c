@@ -734,16 +734,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r){
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt/2.0); 
         reb_whfast512_kepler_step(r->ri_whfast512.p512);    
         ri_whfast512->p512->dt = _mm512_set1_pd(r->dt); // Reset
-        switch (ri_whfast512->coordinates){
-            case REB_WHFAST512_COORDINATES_DEMOCRATICHELIOCENTRIC:
-                democraticheliocentric_to_inertial_posvel_and_com(r, r->t-ri_whfast512->time_of_last_synchronize);
-                break;
-            case REB_WHFAST512_COORDINATES_JACOBI:
-                jacobi_to_inertial_posvel_and_com(r, r->t-ri_whfast512->time_of_last_synchronize);
-                break;
-            default:
-                reb_simulation_error(r,"Coordinate system not supported.");
-        }
+        jacobi_to_inertial_posvel_and_com(r, r->t-ri_whfast512->time_of_last_synchronize);
         // Use WHFast to applyt the correctors
         apply_corrector(r, -1.0);
         if (ri_whfast512->keep_unsynchronized){
