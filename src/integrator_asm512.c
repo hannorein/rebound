@@ -42,15 +42,30 @@ void reb_integrator_asm512_step(struct reb_simulation* r, void* step);
 void reb_integrator_asm512_synchronize(struct reb_simulation* r, void* step);
 const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descriptor_list[];
 
-struct reb_particle_asm512 {
-    __m512d m REB_ALIGNED_64;
-    __m512d x REB_ALIGNED_64;
-    __m512d y REB_ALIGNED_64;
-    __m512d z REB_ALIGNED_64;
-    __m512d vx REB_ALIGNED_64;
-    __m512d vy REB_ALIGNED_64;
-    __m512d vz REB_ALIGNED_64;
+struct reb_particle_asm512{
+    // Various constants
+    __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
+    __m512d dt __attribute__ ((aligned (64)));                  //  Timestep
+    __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
+    __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
+    __m512d jump_prefac __attribute__ ((aligned (64)));         //  Prefactor for DHC jump step
+    // Working arrays (either DHC or Jacobi)
+    __m512d m __attribute__ ((aligned (64)));
+    __m512d x __attribute__ ((aligned (64)));
+    __m512d y __attribute__ ((aligned (64)));
+    __m512d z __attribute__ ((aligned (64)));
+    __m512d vx __attribute__ ((aligned (64)));
+    __m512d vy __attribute__ ((aligned (64)));
+    __m512d vz __attribute__ ((aligned (64)));
+    double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
+    double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
+    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
+    double mat8_inertial_to_jacobi_T[64] __attribute__ ((aligned (64)));
+    __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
+    // Mask for cases with less than 8 planets
+    __mmask8 mask __attribute__ ((aligned (64)));
 };
+
 
 const struct reb_integrator reb_integrator_asm512 = {
     .step = reb_integrator_asm512_step,
