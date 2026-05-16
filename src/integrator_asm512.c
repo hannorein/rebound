@@ -558,7 +558,7 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
         inertial_to_jacobi_posvel(r, data, asm512->N_systems);
         // First half DRIFT step. Note negative sign. We will do a full step below.
         data->dt = _mm512_set1_pd(-dt/2.0); 
-        local_reb_asm512_kepler_step(data);    
+        reb_asm512_kepler_step(data);    
         data->dt = _mm512_set1_pd(dt); // Reset
     }
 
@@ -575,12 +575,12 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
         }
     }else if (asm512->N_systems==2){
         //for (unsigned int i=0;i<N_steps;i++){
-        //    local_reb_asm512_kepler_step(asm512->data);    // full timestep
+        //    reb_asm512_kepler_step(asm512->data);    // full timestep
         //    reb_asm512_interaction_step_4planets_jacobi(r);
         //}
     }else if (asm512->N_systems==4){
         //for (unsigned int i=0;i<N_steps;i++){
-        //    local_reb_asm512_kepler_step(asm512->data);    // full timestep
+        //    reb_asm512_kepler_step(asm512->data);    // full timestep
         //    reb_asm512_interaction_step_2planets_jacobi(r);
         //}
     }
@@ -605,7 +605,7 @@ void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* sta
         //    memcpy(sync_pj,asm512->p512, sizeof(struct reb_particle_avx512));
         //}
         data->dt = _mm512_set1_pd(r->dt/2.0); 
-        local_reb_asm512_kepler_step(data);    
+        reb_asm512_kepler_step(data);    
         data->dt = _mm512_set1_pd(r->dt); // Reset
                                          // TODO Add COM step
         jacobi_to_inertial_posvel_and_com(r, data, 0.0, asm512->N_systems);

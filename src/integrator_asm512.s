@@ -1,8 +1,8 @@
-# file: integrator_whfast512.s
+# file: integrator_asm512.s
 .section .text
 .globl block1_gr
 .globl block1_nogr
-.globl reb_whfast512_kepler_step
+.globl reb_asm512_kepler_step
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -62,7 +62,7 @@
 .set M, %zmm31
 .set M_DT, %zmm12   # Only used once per step.
 
-.macro reb_whfast512_init_registers
+.macro reb_asm512_init_registers
     # Ignore exceptions
     subq $8, %rsp
     stmxcsr (%rsp)
@@ -560,10 +560,10 @@
 ###############################################################################
 # Global functions
 ###############################################################################
-reb_whfast512_kepler_step:
+reb_asm512_kepler_step:
     # Need to init registers here when not called after interaction step.
     # This will be required for synchronizing.  
-    reb_whfast512_init_registers
+    reb_asm512_init_registers
     kepler_step 2
     vmovapd    VX, P512_VX(%rdi)
     vmovapd    VY, P512_VY(%rdi)
@@ -580,7 +580,7 @@ reb_whfast512_kepler_step:
     #           rsi = Number of steps (counting down)
 
     # Load constants
-    reb_whfast512_init_registers
+    reb_asm512_init_registers
     # Allocate space on stack for matrix multiplications
     subq    $192, %rsp
 

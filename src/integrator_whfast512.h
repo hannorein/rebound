@@ -56,6 +56,5 @@ struct reb_integrator_whfast512_state {
 };
 
 void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r); // Internal function. 
-void reb_whfast512_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
 
 #endif
