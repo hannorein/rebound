@@ -11,10 +11,12 @@ void force_J2_inertial(struct reb_simulation* r);
 
 const double Mplanet = 3.95e21;// kg
 const double Rplanet = 7.8e5; //m mean radius of Haumea
-const double OMEGA = 0.0001485;    // 1/s T = 3*3.92 hours (assuming 3:1 ratio between T_ring and T_haumea)
+double OMEGA = 0.0001485;    // 1/s T = 3*3.92 hours (assuming 3:1 ratio between T_ring and T_haumea)
 const double OMEGA_H = 0.0004455;
 const double J2planet = 0.24; // dimensionless
 const double C22planet = 0.05; // dimensionless
+const int t_c = 400; // time during which impact velocities are measured (measure in periods)
+const int tmax_wo_c = 1100; // time before measuring collisions
 
 int main(int argc, char* argv[]) {
 	struct reb_simulation* r = reb_simulation_create();
@@ -25,7 +27,11 @@ int main(int argc, char* argv[]) {
 	// Setup constants
 	r->integrator        = REB_INTEGRATOR_WHFAST;
     r->N_active = 1;
-	r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
+	r->G                 = 6.67428e-11;         // N / kg^2 m^2
+    double a_min = 2.235e6;
+    double a_max = 2.34e6;
+    double a_avg = (a_min + a_max)/2;
+    OMEGA = sqrt(r->G*Mplanet/pow(a_avg, 3));
 	r->dt                = 1e-3*2*M_PI/OMEGA;  // s
 	r->heartbeat         = heartbeat;           // function pointer for heartbeat
 	double surfacedensity          = 640;     // kg/m^2
@@ -38,28 +44,38 @@ int main(int argc, char* argv[]) {
 	
     struct reb_particle planet = {0};
     planet.m  = Mplanet;
+    //planet.r = Rplanet;
     reb_simulation_add(r, planet);
-    float a, e, v;
+    float a, e, v, corr;
     float _omega_0[N_p];
     struct reb_orbit o_0;
     for (int i = 0; i < N_p; i++) {
-        a = reb_random_uniform(r, 2.235e6, 2.34e6);
+        a = reb_random_uniform(r, a_min, a_max);
+        corr = sqrt(1 + ((3.0/2.0) * J2planet + 3 * C22planet) * (Rplanet * Rplanet/a/a));
         struct reb_particle p = {0};          // test particle
-        e = reb_random_uniform(r, 1e-5, 1e-4);
-        float inc = 0.0;
+        e = 0.0;//reb_random_uniform(r, 1e-5, 1e-4);
+        float inc = reb_random_uniform(r, 0.0, 9e-3);
         float radius = reb_random_uniform(r, 0.1, 1.0);
-        float m = 4/3*M_PI*pow(radius, 3)*particle_density;
-        reb_simulation_add_fmt(r, "m a e inc primary", m, a, e, inc, r->particles[0]);
+        //float m = 4/3*M_PI*pow(radius, 3)*particle_density;
+        reb_simulation_add_fmt(r, "a e inc primary", a, e, inc, r->particles[0]);
+        r->particles[i+1].vx *= corr;
+        r->particles[i+1].vy *= corr;
     }
 
     reb_simulation_move_to_com(r);
-    r->additional_forces = force_J2_inertial;
+    r->additional_forces = force_J2_C22;
     float period = 2*M_PI/OMEGA;
-    reb_simulation_integrate(r, 500*period);
+
+    reb_simulation_integrate(r, tmax_wo_c*period);
     double _e[N_p], _a[N_p], _Omega[N_p], _omega[N_p], _inc[N_p], _x[N_p], _y[N_p];
 
     for (int i = 1; i < N_p + 1; i++) {
+        
         struct reb_orbit o= reb_orbit_from_particle(r->G, r->particles[i], r->particles[0]);
+        corr = sqrt(1 + ((3.0/2.0) * J2planet + 3 * C22planet) * (Rplanet * Rplanet/a/a));
+        //r->particles[i].vx /= corr;
+        //r->particles[i].vy /= corr;
+        o= reb_orbit_from_particle(r->G, r->particles[i], r->particles[0]);
         _e[i-1] = o.e;
         _a[i-1] = o.a / 1e6;
         _Omega[i-1] = o.Omega;
@@ -73,67 +89,137 @@ int main(int argc, char* argv[]) {
     FILE *data;
     fp = fopen("commands.gplot", "w");
 
-    fprintf(fp, "set terminal qt persist\n");
-    fprintf(fp, "set multiplot layout 3,2\n");
-    fprintf(fp, "set xlabel font ', 12'\n");
-    fprintf(fp, "set ylabel font ', 12'\n");
+    //fprintf(fp, "set terminal qt persist\n");
+    //fprintf(fp, "set lmargin 10\n");
+    //fprintf(fp, "set rmargin 2\n");
+    //fprintf(fp, "set tmargin 2\n");
+    //fprintf(fp, "set bmargin 4\n");
+    //fprintf(fp, "set multiplot layout 2,2\n");
+    //fprintf(fp, "set xlabel font ', 10'\n");
+    //fprintf(fp, "set ylabel font ', 10'\n");
     //fprintf(fp, "set xtics font ',12'\n");
     //fprintf(fp, "set ytics font ',12'\n");
     //fprintf(fp, "set key font ',12'\n");
-    fprintf(fp, "set xlabel 'a (10^3 km)'\n");
-    fprintf(fp, "set ylabel 'Omega'\n");
-    fprintf(fp, "plot [ %f : %f ] \'fn1.dat\' w points, 0 \n", 2.0, 2.6);     
+    //fprintf(fp, "set xlabel 'a (10^3 km)'\n");
+    //fprintf(fp, "set ylabel 'Omega'\n");
+    //fprintf(fp, "plot [ %f : %f ] \'fn1.dat\' w points, 0 \n", 2.0, 2.6);     
     
-    fprintf(fp, "set xlabel 'a (10^3 km)'\n");
-    fprintf(fp, "set ylabel 'i (rad)'\n");
-    fprintf(fp, "plot [ %f : %f ] \'fn2.dat\' w points, 0 \n", 2.0, 2.6);
+    //fprintf(fp, "set xlabel 'a (10^3 km)'\n");
+    //fprintf(fp, "set ylabel 'i (rad)'\n");
+    //fprintf(fp, "plot [ %f : %f ] \'fn2.dat\' w points, 0 \n", 2.0, 2.6);
 
+    fprintf(fp, "set terminal qt persist size 1400,1000\n");
 
+    fprintf(fp, "set multiplot layout 2,1 rowsfirst spacing 0.08,0.08 margins 0.10,0.95,0.10,0.95\n");
+
+    fprintf(fp, "set tics font ',8'\n");
+    fprintf(fp, "set xlabel font ',12'\n");
+    fprintf(fp, "set ylabel font ',12'\n");
+    fprintf(fp, "set title font ',11'\n");
+    fprintf(fp, "set xtics font ',12'\n");
+    fprintf(fp, "set ytics font ',12'\n");
+    fprintf(fp, "set key off\n");
+    fprintf(fp, "set grid\n");
+    /*
     fprintf(fp, "set xlabel 'a (10^3 km)'\n");
     fprintf(fp, "set ylabel 'e '\n");
     fprintf(fp, "plot [ %f : %f ] \'fn3.dat\' w points, 0 \n", 2.0, 2.6);
-
+    
     fprintf(fp, "set xlabel 'a (10^3 km)'\n");
     fprintf(fp, "set ylabel 'omega'\n");
     fprintf(fp, "plot [ %f : %f ] \'fn4.dat\' w points, 0 \n", 2.0, 2.6);
+    */
 
-    fprintf(fp, "set xlabel 'x (km)'\n");
-    fprintf(fp, "set ylabel 'y (km)'\n");
-    fprintf(fp, "plot [ %f : %f ] \'fn5.dat\' w points, 0 \n", -3000., 3000.);  
+    //fprintf(fp, "set xlabel 'x (km)'\n");
+    //fprintf(fp, "set ylabel 'y (km)'\n");
+    //fprintf(fp, "set yrange [-3000.:3000.]\n");
+    //fprintf(fp, "plot [ %f : %f ] \'fn5.dat\' w points, 0 \n", -3000., 3000.);
+
+    fprintf(fp, "set xlabel 't (period)'\n");
+    fprintf(fp, "set ylabel 'Impact velocity (m/s)'\n");
+    fprintf(fp, "set yrange [*:*]\n");
+    fprintf(fp, "plot [ %f : %f ] \'fn6.dat\' w points, 0 \n", (float)tmax_wo_c, (float)(tmax_wo_c + t_c));
     
+    fprintf(fp, "set xlabel 't (period)'\n");
+    fprintf(fp, "set ylabel 'Number of collisions'\n");
+    fprintf(fp, "plot [ %f : %f ] \'fn7.dat\' w points, 0 \n", (float)tmax_wo_c, (float)(tmax_wo_c + t_c));
+
     fprintf(fp, "unset multiplot\n");    
     fclose(fp);
-    
+    /*
     data = fopen("fn1.dat", "w");
     for (int i = 0; i < N_p; i++) {
         fprintf(data, "%25.15f  %25.15f\n",(float)_a[i], (float)_Omega[i]);
     }
     fclose(data);
-
+    
     data = fopen("fn2.dat", "w");
     for (int i = 0; i < N_p; i++) {
         fprintf(data, "%25.15f  %25.15f\n",(float)_a[i], (float)_inc[i]);
     }
     fclose(data);
-
+    */
+    /*
     data = fopen("fn3.dat", "w");
     for (int i = 0; i < N_p; i++) {
         fprintf(data, "%25.15f  %25.15f\n",(float)_a[i], (float)_e[i]);
     }
     fclose(data);
-
+    
     data = fopen("fn4.dat", "w");
     for (int i = 0; i < N_p; i++) {
         fprintf(data, "%25.15f  %25.15f\n",(float)_a[i], (float)_omega[i]);
     }
     fclose(data);
-
+    */
+    /*
     data = fopen("fn5.dat", "w");
+    
     for (int i = 0; i < N_p; i++) {
         fprintf(data, "%25.15f  %25.15f\n",(float)_x[i], (float)_y[i]);
     }
     fclose(data);
-
+    */
+    
+    double rx, ry, rz, r2, vx, vy, vz, v2;
+    double delta_r = r->dt*340./2.2; // two times inflated radius
+    int _t_c = 5, n;
+    for (int i = 0; i < t_c/_t_c; i++) {
+        if (i == 0) {
+            data = fopen("fn6.dat", "w");
+        } else {
+            data = fopen("fn6.dat", "a");
+        }
+        reb_simulation_integrate(r, (tmax_wo_c + _t_c*(i+1))*period);
+        n = 0;
+        for (int j = 0; j < N_p; j++) {
+            for (int k = j + 1; k < N_p; k++) {
+                rx = r->particles[j + 1].x - r->particles[k + 1].x;
+                ry = r->particles[j + 1].y - r->particles[k + 1].y;
+                rz = r->particles[j + 1].z - r->particles[k + 1].z;
+                r2 = rx*rx + ry*ry + rz*rz;
+                if (sqrt(r2) < delta_r) {
+                    vx = r->particles[j + 1].vx - r->particles[k + 1].vx;
+                    vy = r->particles[j + 1].vy - r->particles[k + 1].vy;
+                    vz = r->particles[j + 1].vz - r->particles[k + 1].vz;
+                    v2 = vx*vx + vy*vy + vz*vz;
+                    printf("v: %f\n", sqrt(v2));
+                    printf("r: %f\n", sqrt(r2));
+                    fprintf(data, "%25.15f  %25.15f\n",(float)(r->t/period), (float)(sqrt(v2)));
+                    n += 1;
+                }
+            }
+        }
+        fclose(data);
+        if (i == 0) {
+            data = fopen("fn7.dat", "w");
+        } else {
+            data = fopen("fn7.dat", "a");
+        }
+        fprintf(data, "%25.15f  %25.15f\n",(float)(r->t/period), (float)(n));
+        fclose(data);
+    }
+    fclose(data);
     system("gnuplot commands.gplot");
     reb_simulation_free(r);
 }
@@ -232,5 +318,3 @@ void heartbeat(struct reb_simulation* const r){
 		//reb_output_append_velocity_dispersion("veldisp.txt");
 	}
 }
-
-
