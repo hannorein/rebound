@@ -42,13 +42,18 @@ void reb_integrator_asm512_step(struct reb_simulation* r, void* state);
 void reb_integrator_asm512_synchronize(struct reb_simulation* r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descriptor_list[];
 
+#define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(gr_prefac2) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
+    X(mat8_inertial_to_jacobi) \
+    X(mat8_jacobi_to_heliocentric) \
+    X(M0) X(mask) \
+    X(mat8_jacobi_to_inertial)
+
 struct simd_data{
     // Various constants
     __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
     __m512d dt __attribute__ ((aligned (64)));                  //  Timestep
     __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
     __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
-    __m512d jump_prefac __attribute__ ((aligned (64)));         //  Prefactor for DHC jump step
     __m512d m __attribute__ ((aligned (64)));
     __m512d x __attribute__ ((aligned (64)));
     __m512d y __attribute__ ((aligned (64)));
@@ -58,11 +63,10 @@ struct simd_data{
     __m512d vz __attribute__ ((aligned (64)));
     double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
     double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
-    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
-    double mat8_inertial_to_jacobi_T[64] __attribute__ ((aligned (64)));
     __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
     // Mask for cases with less than 8 planets
     __mmask8 mask __attribute__ ((aligned (64)));
+    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
 };
 
 
@@ -110,12 +114,11 @@ void reb_integrator_asm512_free(void* state){
 }
 
 
-#ifdef AVX512
 // Debug function to print vectors
 static inline void printavx512(__m512d a) {
     double _nax[8];
     _mm512_storeu_pd(&_nax[0], a);
-    printf("avx = {%.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
+    printf("avx = {%.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g}\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
 }
 
 // Print mask in binary format for debuggin
@@ -126,10 +129,6 @@ static inline void printmask8(__mmask8 mask) {
     }
     printf("\n");
 }
-const int reb_integrator_asm512_available = 1;   // Let python check if REBOUND was compiled with AVX512 enabled
-#else //AVX512
-const int reb_integrator_asm512_available = 0;   // Let python check if REBOUND was compiled with AVX512 enabled
-#endif //AVX512
 
 // Debug function to print 8x8 matrix
 static inline void printmat8(double* a) {
@@ -259,7 +258,7 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
         }
     }
 #else  // AVX512
-    reb_simulation_error(r, "Fallback for Jacobi transformations in whfast512 not yet implemented.");
+    reb_simulation_error(r, "Fallback for Jacobi transformations in asm512 not yet implemented.");
 #endif // AVX512
 }
 
@@ -327,76 +326,76 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
         default:
             reb_simulation_error(r,"Invalid value for N_systems.");
     }
-            // Zeroing.
-            for (unsigned int i=1; i<9; i++){
-                for (unsigned int j=1; j<9; j++){
-                    data->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
-                    data->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
-                    data->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
-                    mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
-                }
-            }
-            
-            // Filling vector
-            for (unsigned int s=0; s<N_systems; s++){
-                for (unsigned int i=0;i<N_per_system-1;i++){
-                    for (unsigned int j=0;j<i+2;j++){
-                        M[s*p_per_system+i] += r->particles[s*N_per_system+j].m;
-                    }
-                }
-            }
+    // Zeroing.
+    for (unsigned int i=1; i<9; i++){
+        for (unsigned int j=1; j<9; j++){
+            data->mat8_inertial_to_jacobi[(i-1)+8*(j-1)] = 0.0;
+            data->mat8_jacobi_to_inertial[(i-1)+8*(j-1)] = 0.0;
+            data->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
+            mat8_inertial_to_heliocentric[(i-1)+8*(j-1)] = 0.0;
+        }
+    }
 
-            // Fill matricies
-            for (unsigned int s=0; s<N_systems; s++){
-                double ms = particles[s*N_per_system+0].m;
-                for (unsigned int i=1; i<N_per_system; i++){
-                    for (unsigned int j=i; j<N_per_system; j++){
-                        data->mat8_inertial_to_jacobi[(s*p_per_system+i-1)+8*(s*p_per_system+j-1)] += particles[s*N_per_system+j].m/ms;
-                    }
-                    for (unsigned int j=1; j<N_per_system; j++){
-                        mat8_inertial_to_heliocentric[(s*p_per_system+i-1)+8*(s*p_per_system+j-1)] += particles[s*N_per_system+j].m/particles[s*N_per_system+0].m;
-                    }
-                    mat8_inertial_to_heliocentric[(s*p_per_system+i-1)+8*(s*p_per_system+i-1)] += 1.0;
-                    data->mat8_inertial_to_jacobi[(s*p_per_system+i-1)+8*(s*p_per_system+i-1)] += 1.0;
-                    data->mat8_jacobi_to_inertial[(s*p_per_system+i-1)+8*(s*p_per_system+i-1)] += ms/(ms + particles[s*N_per_system+i].m);
-                    ms += particles[s*N_per_system+i].m;
-                    if (i<N_per_system-1){ 
-                        for (unsigned int ii=i; ii>0; ii--){
-                            int jj = i+1;
-                            data->mat8_jacobi_to_inertial[(s*p_per_system+ii-1)+8*(s*p_per_system+jj-1)] -= particles[s*N_per_system+jj].m/(ms+particles[s*N_per_system+jj].m);
-                        }
-                    }
-                    M0[(s*p_per_system+i-1)] = -particles[s*N_per_system+0].m*r->dt;
-                }
+    // Filling vector
+    for (unsigned int s=0; s<N_systems; s++){
+        for (unsigned int i=0;i<N_per_system-1;i++){
+            for (unsigned int j=0;j<i+2;j++){
+                M[s*p_per_system+i] += r->particles[s*N_per_system+j].m;
             }
+        }
+    }
 
-            // Might be numerically more stable to calculate this manually rather than do a matrix multiplication.
-            for (unsigned int i=1; i<9; i++){
-                for (unsigned int j=1; j<9; j++){
-                    for (unsigned int k=1; k<9; k++){
-                        data->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] += mat8_inertial_to_heliocentric[(i-1)+8*(k-1)] * data->mat8_jacobi_to_inertial[(k-1)+8*(j-1)];
-                    }
+    // Fill matricies
+    for (unsigned int s=0; s<N_systems; s++){
+        double ms = particles[s*N_per_system+0].m;
+        for (unsigned int i=1; i<N_per_system; i++){
+            for (unsigned int j=i; j<N_per_system; j++){
+                data->mat8_inertial_to_jacobi[(s*p_per_system+i-1)+8*(s*p_per_system+j-1)] += particles[s*N_per_system+j].m/ms;
+            }
+            for (unsigned int j=1; j<N_per_system; j++){
+                mat8_inertial_to_heliocentric[(s*p_per_system+i-1)+8*(s*p_per_system+j-1)] += particles[s*N_per_system+j].m/particles[s*N_per_system+0].m;
+            }
+            mat8_inertial_to_heliocentric[(s*p_per_system+i-1)+8*(s*p_per_system+i-1)] += 1.0;
+            data->mat8_inertial_to_jacobi[(s*p_per_system+i-1)+8*(s*p_per_system+i-1)] += 1.0;
+            data->mat8_jacobi_to_inertial[(s*p_per_system+i-1)+8*(s*p_per_system+i-1)] += ms/(ms + particles[s*N_per_system+i].m);
+            ms += particles[s*N_per_system+i].m;
+            if (i<N_per_system-1){ 
+                for (unsigned int ii=i; ii>0; ii--){
+                    int jj = i+1;
+                    data->mat8_jacobi_to_inertial[(s*p_per_system+ii-1)+8*(s*p_per_system+jj-1)] -= particles[s*N_per_system+jj].m/(ms+particles[s*N_per_system+jj].m);
                 }
             }
-            //// Quick transpose test
-            //// TODO Cleanup.
-            //double tmp[64];
-            //for (unsigned int i=0; i<8; i++){
-            //    for (unsigned int j=0; j<8; j++){
-            //        tmp[i+8*j] = data->mat8_jacobi_to_heliocentric[i+8*j];
-            //    }
-            //}
-            //for (unsigned int i=0; i<8; i++){
-            //    for (unsigned int j=0; j<8; j++){
-            //        data->mat8_jacobi_to_heliocentric[i+8*j] = tmp[j+8*i];
-            //        data->mat8_inertial_to_jacobi_T[i+8*j] = data->mat8_inertial_to_jacobi[j+8*i];
-            //    }
-            //}
+            M0[(s*p_per_system+i-1)] = -particles[s*N_per_system+0].m*r->dt;
+        }
+    }
+
+    // Might be numerically more stable to calculate this manually rather than do a matrix multiplication.
+    for (unsigned int i=1; i<9; i++){
+        for (unsigned int j=1; j<9; j++){
+            for (unsigned int k=1; k<9; k++){
+                data->mat8_jacobi_to_heliocentric[(i-1)+8*(j-1)] += mat8_inertial_to_heliocentric[(i-1)+8*(k-1)] * data->mat8_jacobi_to_inertial[(k-1)+8*(j-1)];
+            }
+        }
+    }
+    //// Quick transpose test
+    //// TODO Cleanup.
+    //double tmp[64];
+    //for (unsigned int i=0; i<8; i++){
+    //    for (unsigned int j=0; j<8; j++){
+    //        tmp[i+8*j] = data->mat8_jacobi_to_heliocentric[i+8*j];
+    //    }
+    //}
+    //for (unsigned int i=0; i<8; i++){
+    //    for (unsigned int j=0; j<8; j++){
+    //        data->mat8_jacobi_to_heliocentric[i+8*j] = tmp[j+8*i];
+    //        data->mat8_inertial_to_jacobi_T[i+8*j] = data->mat8_inertial_to_jacobi[j+8*i];
+    //    }
+    //}
 
     data->M = _mm512_loadu_pd(&M);
     data->M0 = _mm512_loadu_pd(&M0); //  = -particles[0].m * dt
 
-    // GR and jump prefactors. Note: assumes units of AU, year/2pi.
+    // GR prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
     double _gr_prefac[8];
     double _gr_prefac2[8];
@@ -407,13 +406,17 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
     for (unsigned int s=0; s<N_systems; s++){
         double m0 = r->particles[s*N_per_system].m;
         for (unsigned int p=1; p<N_per_system; p++){
-                    _gr_prefac[s*p_per_system+(p-1)] = -r->dt*6.*m0*m0/(c*c);
-                    _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m / m0;
+            _gr_prefac[s*p_per_system+(p-1)] = -r->dt*6.*m0*m0/(c*c);
+            _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m / m0;
         }
     }
     data->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
     data->gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
     data->dt = _mm512_set1_pd(r->dt); 
+//#define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
+//    SIMD_DATA_MEMBERS
+//#undef X
+
 }
 
 static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
@@ -523,7 +526,7 @@ static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
 ////            for (unsigned int i=0;i<N_per_system;i++){
 ////                reb_simulation_add(rt, r->particles[s*N_per_system+i]);
 ////            }
-////            reb_integrator_whfast_init(rt);
+////            reb_integrator_asm_init(rt);
 ////            reb_integrator_whfast_from_inertial(rt);
 ////            reb_whfast_apply_corrector(rt, direction, asm512->corrector);
 ////            reb_integrator_whfast_to_inertial(rt);
@@ -535,6 +538,18 @@ static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
 ////        }
 ////    }
 //}
+
+
+void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_steps){
+    struct reb_integrator_asm512_state* asm512 = r->integrator.state;
+    recalculate_constants(r, asm512->data, asm512->N_systems);
+    inertial_to_jacobi_posvel(r, asm512->data, asm512->N_systems);
+    struct simd_data* data = asm512->data;
+    for (int i=0; i<N_steps; i++){
+        reb_asm512_kepler_step(asm512->data);    
+    }
+    jacobi_to_inertial_posvel_and_com(r, asm512->data, 0.0, asm512->N_systems);
+}
 
 // Optimized main loops allowing for concatenate_steps
 void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){

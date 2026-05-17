@@ -9,18 +9,17 @@
 .set P512_DT, 64
 .set P512_GR_PREFAC, 128
 .set P512_GR_PREFAC2, 192
-.set P512_m, 320
-.set P512_X, 384
-.set P512_Y, 448
-.set P512_Z, 512
-.set P512_VX, 576
-.set P512_VY, 640
-.set P512_VZ, 704
-.set P512_MAT8_INERTIAL_TO_JACOBI, 768
-.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1280
-.set P512_MAT8_INERTIAL_TO_JACOBI_T, 2304
-.set P512_M0, 2816
-.set P512_MASK, 2880
+.set P512_m, 256
+.set P512_X, 320
+.set P512_Y, 384
+.set P512_Z, 448
+.set P512_VX, 512
+.set P512_VY, 576
+.set P512_VZ, 640
+.set P512_MAT8_INERTIAL_TO_JACOBI, 704
+.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1216
+.set P512_M0, 1728
+.set P512_MASK, 1792
 
 #####################################
 # Register alias
@@ -58,7 +57,7 @@
 .set VZ, %zmm27
 .set ONE, %zmm28
 .set DT, %zmm29
-.set HALF_MASK, %zmm30
+.set HALF, %zmm30
 .set M, %zmm31
 .set M_DT, %zmm12   # Only used once per step.
 
@@ -76,7 +75,7 @@
     vmovapd         P512_M(%rdi), M
     vmulpd          DT, M, M_DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
-    vpbroadcastq    .HALF_MASK(%rip), HALF_MASK
+    vpbroadcastq    .HALF(%rip), HALF
     vmovdqa64    .SIGN_MASK(%rip), %zmm10
     vmovapd      .EPS(%rip),     %zmm11
     
@@ -240,7 +239,7 @@
 
     vmulpd          GS1, GS3, GS1           # f*fpp
     # Next instruction uses exponent trick to speed up multiplication by 0.5 by using integer subtraction
-    vpsubq          HALF_MASK, GS1, GS1     # 0.5*f*fpp
+    vmulpd          HALF, GS1, GS1          # 0.5*f*fpp
     vfmsub231pd     GS2, GS2, GS1           # fp*fp-0.5*f*fpp
     vmulpd          GS3, GS2, GS3           # f*fp
     vdivpd          GS1, GS3, GS3
@@ -284,31 +283,33 @@
     vfnmadd132pd    R, M, ZETA                  # zeta
     vmulpd          RI, DT, %zmm5               # dt/r
     vmulpd          ETA, %zmm5, %zmm4           # eta*dt/r
-    vpsubq          HALF_MASK, %zmm4, %zmm4     # 0.5*eta*dt/r  (Note: integer sub trick)
+    vmulpd          HALF, %zmm4, %zmm4          # 0.5*eta*dt/r
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
-   
     # Iterations to improve X
     # PYTHON REPLACE START
     mm_stiefel_Gs03_avx512
     halley
-    #mm_stiefel_Gs03_avx512
-    #halley
+    mm_stiefel_Gs03_avx512
+    halley
+    mm_stiefel_Gs13_avx512
+    newton
+    mm_stiefel_Gs13_avx512
    
-.NewtonLoop\grflag:    
-    vmovapd         XX,     %zmm9
-    mm_stiefel_Gs13_avx512
-    newton 
-
-    vsubpd      XX, %zmm9, %zmm9  # Delta XX
-    vpandq      %zmm10, %zmm9, %zmm9  # abs(Delta XX)
-
-    vcmppd     $25, %zmm11, %zmm9, %k2         # abs(Delta XX) < eps    25 = Not greater or equal, unordered (nans pass), quiet
-    kmovb   %k2, %eax
-    cmpb    $0xFF, %al
-    jne .NewtonLoop\grflag
-
-    mm_stiefel_Gs13_avx512
+####.NewtonLoop\grflag:    
+####    vmovapd         XX,     %zmm9
+####    mm_stiefel_Gs13_avx512
+####    newton 
+####
+####    vsubpd      XX, %zmm9, %zmm9  # Delta XX
+####    vpandq      %zmm10, %zmm9, %zmm9  # abs(Delta XX)
+####
+####    vcmppd     $25, %zmm11, %zmm9, %k2         # abs(Delta XX) < eps    25 = Not greater or equal, unordered (nans pass), quiet
+####    kmovb   %k2, %eax
+####    cmpb    $0xFF, %al
+####    jne .NewtonLoop\grflag
+####
+####    mm_stiefel_Gs13_avx512
     # PYTHON REPLACE STOP
     
     # Calculate 1/r
@@ -612,8 +613,8 @@ block1_nogr: BLOCK1 0
 .section    .rodata
 
 .align 8
-.HALF_MASK:  # Used for fast division by 2
-    .quad   0x0010000000000000
+.HALF:
+    .quad 0x3fe0000000000000
 
 # Shuffle Indicies
 # Each is eight 64-bit integers
