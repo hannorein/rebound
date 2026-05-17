@@ -94,6 +94,7 @@ void* reb_integrator_asm512_create(){
     asm512->gr_potential = 0;
     asm512->keep_unsynchronized = 0;
     asm512->recalculate_constants = 1;
+    asm512->concatenate_steps = 1;
     asm512->data = aligned_alloc(64,sizeof(struct simd_data));
     if (!asm512->data){
         reb_simulation_error(NULL, "WHFast512 was not able to allocate memory.");
@@ -263,8 +264,9 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 }
 
 
-extern void block1_gr(struct reb_particle_avx512* p512, long N_steps);
-extern void block1_nogr(struct reb_particle_avx512* p512, long N_steps);
+extern void block1_gr(struct simd_data* data, long N_steps);
+extern void block1_nogr(struct simd_data* data, long N_steps);
+extern void reb_asm512_kepler_step(struct simd_data* data);
 
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
@@ -479,60 +481,60 @@ static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
 
 // Implementation of the GR force for WHFast correctors.
 // (WHFast512 comes with built-in support) 
-static void gr_force(struct reb_simulation* r){
-    double C2 = 10065.32 * 10065.32;
-    struct reb_particle* particles = r->particles;
-    const struct reb_particle source = particles[0];
-    const double prefac1 = 6.*(r->G*source.m)*(r->G*source.m)/C2;
-    for (unsigned int i=1; i<r->N; i++){
-        const struct reb_particle p = particles[i];
-        const double dx = p.x - source.x;
-        const double dy = p.y - source.y;
-        const double dz = p.z - source.z;
-        const double r2 = dx*dx + dy*dy + dz*dz;
-        const double prefac = prefac1/(r2*r2);
-
-        particles[i].ax -= prefac*dx;
-        particles[i].ay -= prefac*dy;
-        particles[i].az -= prefac*dz;
-        particles[0].ax += p.m/source.m*prefac*dx;
-        particles[0].ay += p.m/source.m*prefac*dy;
-        particles[0].az += p.m/source.m*prefac*dz;
-    }
-}
-
-// Creates a new simulation just for doing the correctors.
-// Slow, but convenient. Only called when a simulation is synchronized.
-static void apply_corrector(struct reb_simulation* r, double direction, struct reb_integrator_asm512_state* asm512){
-    (void) r;
-    (void) direction;
-    (void) asm512;
-//    if (asm512->corrector){
-//        const unsigned int N_systems = asm512->N_systems;
-//        const unsigned int N_per_system = r->N/N_systems;
-//        for (unsigned int s=0; s<N_systems; s++){
-//            // TODO Implement Correctors
-//            struct reb_simulation* rt = reb_simulation_create();
-//            rt->dt = r->dt;
-//            rt->G = r->G;
-//            if (asm512->gr_potential){
-//                rt->additional_forces = gr_force;
-//            }
-//            for (unsigned int i=0;i<N_per_system;i++){
-//                reb_simulation_add(rt, r->particles[s*N_per_system+i]);
-//            }
-//            reb_integrator_whfast_init(rt);
-//            reb_integrator_whfast_from_inertial(rt);
-//            reb_whfast_apply_corrector(rt, direction, asm512->corrector);
-//            reb_integrator_whfast_to_inertial(rt);
-//            for (unsigned int i=0;i<N_per_system;i++){
-//                r->particles[s*N_per_system+i] = rt->particles[i];
-//                r->particles[s*N_per_system+i].sim = r;
-//            }
-//            reb_simulation_free(rt);
-//        }
+//static void gr_force(struct reb_simulation* r){
+//    double C2 = 10065.32 * 10065.32;
+//    struct reb_particle* particles = r->particles;
+//    const struct reb_particle source = particles[0];
+//    const double prefac1 = 6.*(r->G*source.m)*(r->G*source.m)/C2;
+//    for (unsigned int i=1; i<r->N; i++){
+//        const struct reb_particle p = particles[i];
+//        const double dx = p.x - source.x;
+//        const double dy = p.y - source.y;
+//        const double dz = p.z - source.z;
+//        const double r2 = dx*dx + dy*dy + dz*dz;
+//        const double prefac = prefac1/(r2*r2);
+//
+//        particles[i].ax -= prefac*dx;
+//        particles[i].ay -= prefac*dy;
+//        particles[i].az -= prefac*dz;
+//        particles[0].ax += p.m/source.m*prefac*dx;
+//        particles[0].ay += p.m/source.m*prefac*dy;
+//        particles[0].az += p.m/source.m*prefac*dz;
 //    }
-}
+//}
+
+//// Creates a new simulation just for doing the correctors.
+//// Slow, but convenient. Only called when a simulation is synchronized.
+//static void apply_corrector(struct reb_simulation* r, double direction, struct reb_integrator_asm512_state* asm512){
+//    (void) r;
+//    (void) direction;
+//    (void) asm512;
+////    if (asm512->corrector){
+////        const unsigned int N_systems = asm512->N_systems;
+////        const unsigned int N_per_system = r->N/N_systems;
+////        for (unsigned int s=0; s<N_systems; s++){
+////            // TODO Implement Correctors
+////            struct reb_simulation* rt = reb_simulation_create();
+////            rt->dt = r->dt;
+////            rt->G = r->G;
+////            if (asm512->gr_potential){
+////                rt->additional_forces = gr_force;
+////            }
+////            for (unsigned int i=0;i<N_per_system;i++){
+////                reb_simulation_add(rt, r->particles[s*N_per_system+i]);
+////            }
+////            reb_integrator_whfast_init(rt);
+////            reb_integrator_whfast_from_inertial(rt);
+////            reb_whfast_apply_corrector(rt, direction, asm512->corrector);
+////            reb_integrator_whfast_to_inertial(rt);
+////            for (unsigned int i=0;i<N_per_system;i++){
+////                r->particles[s*N_per_system+i] = rt->particles[i];
+////                r->particles[s*N_per_system+i].sim = r;
+////            }
+////            reb_simulation_free(rt);
+////        }
+////    }
+//}
 
 // Optimized main loops allowing for concatenate_steps
 void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
@@ -594,7 +596,7 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
 void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* state){
     struct reb_integrator_asm512_state* const asm512 = state;
     if (!r->is_synchronized){
-        struct reb_particle_avx512* sync_pj = NULL;
+        //struct reb_particle_avx512* sync_pj = NULL;
         struct simd_data * data = asm512->data;
         //if (asm512->keep_unsynchronized){
         //    free(asm512->particles_keep_unsynchronized);

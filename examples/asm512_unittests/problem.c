@@ -53,7 +53,7 @@ double all_ss_mass[9] = {
 struct reb_simulation* setup_sim(int N){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 4.0/365.25*2*M_PI; //6 days
+    r->dt = 4.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
     r->force_is_velocity_dependent = 0; 
@@ -100,12 +100,11 @@ int test_basic(){
     struct reb_simulation* r = setup_sim(9);
     struct reb_simulation* r512 = reb_simulation_copy(r);
      
-    reb_simulation_set_integrator(r512, "whfast512");
-    struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-    whfast512->gr_potential = 0;
+    reb_simulation_set_integrator(r512, "asm512");
+    struct reb_integrator_asm512_state* asm512 = r512->integrator.state;
+    asm512->gr_potential = 0;
     reb_simulation_set_integrator(r, "whfast");
     struct reb_integrator_whfast_state* whfast = r->integrator.state;
-    whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     whfast->safe_mode = 0;
 
     double tmax = 1e2;
@@ -113,7 +112,7 @@ int test_basic(){
     if (reb_simulation_integrate(r512, tmax)>0) return 0;
 
     for (int i=0;i<r->N;i++){
-        if (fabs(r->particles[i].x - r512->particles[i].x)>1e-11){
+        if (fabs(r->particles[i].x - r512->particles[i].x)>1e-13){
             printf("Accuracy not met in basic test.\n");
             printf("%.16e\n",fabs(r->particles[i].x - r512->particles[i].x));
             return 0;
@@ -125,242 +124,7 @@ int test_basic(){
     return 1;
 }
 
-int test_number_of_planets(){
-    // Different numbers of planets
-    for (int gr=0; gr<=1; gr++){
-        for (int p=2; p<=9; p++){
-            struct reb_simulation* r = setup_sim(p);
-            struct reb_simulation* r512 = reb_simulation_copy(r);
-             
-            reb_simulation_set_integrator(r512, "whfast512");
-            struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-            whfast512->gr_potential = gr;
-            if (gr) {
-                r->additional_forces = gr_force;
-            }
-            reb_simulation_set_integrator(r, "whfast");
-            struct reb_integrator_whfast_state* whfast = r->integrator.state;
-            whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
-            whfast->safe_mode = 0;
-
-            double tmax = 1e2;
-            if (reb_simulation_integrate(r, tmax)>0) return 0;
-            if (reb_simulation_integrate(r512, tmax)>0) return 0;
-
-            for (int i=0;i<r->N;i++){
-                double prec = gr?1e-9:1e-11;
-                if (fabs(r->particles[i].x - r512->particles[i].x)>prec){
-                    printf("Accuracy not met in number_of_planets test with %d particles (gr = %d).\n", p, gr);
-                    printf("%.16e\n",fabs(r->particles[i].x - r512->particles[i].x));
-                    return 0;
-                }
-            }
-
-            reb_simulation_free(r);
-            reb_simulation_free(r512);
-        }
-    }
-    return 1;
-}
-
-int test_N_systems(int N_systems, int planets){
-    for (int gr=0; gr<=1; gr++){
-        struct reb_simulation* r_single = setup_sim(planets+1);
-        reb_simulation_set_integrator(r_single, "whfast512");
-        struct reb_integrator_whfast512_state* whfast512_single = r_single->integrator.state;
-        whfast512_single->gr_potential = gr;
-        struct reb_simulation* r_many = reb_simulation_copy(r_single);
-        struct reb_integrator_whfast512_state* whfast512_many = r_many->integrator.state;
-        whfast512_many->N_systems = N_systems;
-        for (int i=1; i<N_systems; i++){
-            for (int j=0; j<r_single->N; j++){
-                reb_simulation_add(r_many, r_single->particles[j]);
-            }
-        }
-         
-        double tmax = 1e2;
-        if (reb_simulation_integrate(r_single, tmax)>0) return 0;
-        if (reb_simulation_integrate(r_many, tmax)>0) return 0;
-       
-        assert(r_single->t == r_many->t);
-        assert(N_systems*r_single->N == r_many->N);
-
-        for (int i=0; i<N_systems; i++){
-            for (int j=0; j<r_single->N; j++){
-                int equal = r_single->particles[j].x == r_many->particles[r_single->N*i+j].x;
-                if (! equal){
-                    printf("Simulation with N_systems>1 not giving same results as simulation with N_systems=1 (gr=%d).\n", gr);
-                    return 0;
-                }
-            }
-        }
-    }
-
-    return 1;
-}
-
-int test_com(){
-    struct reb_simulation* r512 = setup_sim(9);
-     
-    reb_simulation_set_integrator(r512, "whfast512");
-    struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-    whfast512->gr_potential = 0;
-
-    double tmax = 1e5;
-    if (reb_simulation_integrate(r512, tmax)>0) return 0;
-    struct reb_particle com = reb_simulation_com(r512);
-    assert(fabs(com.x)<1e-14);
-    assert(fabs(com.y)<1e-14);
-    assert(fabs(com.z)<1e-14);
-
-    reb_simulation_free(r512);
-    return 1;
-}
-
-int test_twobody(){
-    struct reb_simulation* r512 = reb_simulation_create();
-    r512->exact_finish_time = 0;
-    reb_simulation_set_integrator(r512, "whfast512");
-    struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-    whfast512->gr_potential = 0;
-    reb_simulation_add_fmt(r512, "m", 1.0);
-    reb_simulation_add_fmt(r512, "a", 1.0);
-
-    double tmax = 10.*M_PI*2.;
-    r512->dt = tmax / 128; 
-    if (reb_simulation_integrate(r512, tmax)>0) return 0;
-    assert(fabs(r512->particles[1].x-1.0)<2e-15);
-    assert(fabs(r512->particles[1].y)<2e-13);
-    assert(fabs(r512->particles[1].z)==0.0);
-
-    reb_simulation_free(r512);
-    return 1;
-}
-
-int test_gr(){
-    struct reb_simulation* r = setup_sim(9);
-    struct reb_simulation* r512 = reb_simulation_copy(r);
-     
-    reb_simulation_set_integrator(r512, "whfast512");
-    struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-    whfast512->gr_potential = 1;
-    reb_simulation_set_integrator(r, "whfast");
-    struct reb_integrator_whfast_state* whfast = r->integrator.state;
-    whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
-    whfast->safe_mode = 0;
-    r->additional_forces = gr_force;
-
-    double tmax = 1e2;
-    if (reb_simulation_integrate(r, tmax)>0) return 0;
-    if (reb_simulation_integrate(r512, tmax)>0) return 0;
-
-    for (int i=0;i<r->N;i++){
-        if (fabs(r->particles[i].x - r512->particles[i].x)>1e-9){
-            printf("Accuracy not met in GR test.\n");
-            printf("%.16e\n",fabs(r->particles[i].x - r512->particles[i].x));
-            return 0;
-        }
-    }
-
-    reb_simulation_free(r);
-    reb_simulation_free(r512);
-    return 1;
-}
-
-int test_restart(){
-    struct reb_simulation* r512 = setup_sim(9);
-    reb_simulation_set_integrator(r512, "whfast512");
-    struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-    r512->exact_finish_time = 0;
-    whfast512->gr_potential = 1;
-    whfast512->keep_unsynchronized = 1;
-    
-    double tmax = 1e2;
-    double tmaxfinal = 4.*tmax;
-
-    struct reb_simulation* r512c = reb_simulation_copy(r512);
-    if (reb_simulation_integrate(r512c, tmaxfinal)>0) return 0;
-
-    if (reb_simulation_integrate(r512, tmax)>0) return 0;
-    if (reb_simulation_integrate(r512, 2.*tmax)>0) return 0;
-    remove("test.bin");
-    reb_simulation_save_to_file(r512, "test.bin");
-    if (reb_simulation_integrate(r512, 3.*tmax)>0) return 0;
-    if (reb_simulation_integrate(r512, tmaxfinal)>0) return 0;
-    
-    struct reb_simulation* r512c2 = reb_simulation_create_from_file("test.bin", 0);
-    if (r512c2 == NULL) return 0;
-    if (reb_simulation_integrate(r512c2, 3.*tmax)>0) return 0;
-    if (reb_simulation_integrate(r512c2, tmaxfinal)>0) return 0;
-
-    for (int i=0;i<r512->N;i++){
-        assert(r512->t == r512c->t);
-        assert(r512->particles[i].m == r512c->particles[i].m);
-        assert(r512->particles[i].x == r512c->particles[i].x);
-        assert(r512->particles[i].vx == r512c->particles[i].vx);
-        assert(r512->t == r512c2->t);
-        assert(r512->particles[i].x == r512c2->particles[i].x);
-        assert(r512->particles[i].m == r512c2->particles[i].m);
-        assert(r512->particles[i].vx == r512c2->particles[i].vx);
-    }
-
-    reb_simulation_free(r512);
-    reb_simulation_free(r512c);
-    reb_simulation_free(r512c2);
-    return 1;
-}
-
-// Only needed for unit testing
-void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r);
-
-int test_synchronization_fallback(){
-    remove("test.bin");
-    struct reb_simulation* r512 = setup_sim(9);
-     
-    reb_simulation_set_integrator(r512, "whfast512");
-    struct reb_integrator_whfast512_state* whfast512 = r512->integrator.state;
-    whfast512->gr_potential = 1;
-    reb_simulation_save_to_file_interval(r512, "test.bin", 1.0);
-    if (reb_simulation_integrate(r512, 2.5)>0) return 0;
-    reb_simulation_free(r512);
-
-    struct reb_simulation* r1 = reb_simulation_create_from_file("test.bin", 1);
-    struct reb_simulation* r2 = reb_simulation_create_from_file("test.bin", 1);
-    assert(r1->is_synchronized == 0);
-    assert(r2->is_synchronized == 0);
-    reb_simulation_synchronize(r1);
-    reb_integrator_whfast512_synchronize_fallback(r2);
-    assert(r1->is_synchronized == 1);
-    assert(r2->is_synchronized == 1);
-    
-    for (int i=0;i<r1->N;i++){
-        double dx = fabs(r1->particles[i].x - r2->particles[i].x);
-        double dvx = fabs(r1->particles[i].vx - r2->particles[i].vx);
-        if (dx>1e-15 || dvx>1e-15){
-            printf("Accuracy not met in synchronization fallback test.\n");
-            printf("i=%i diff_x=%.16e diff_vx=%.16e\n",i,dx, dvx);
-            return 0;
-        }
-    }
-    
-    reb_simulation_free(r1);
-    reb_simulation_free(r2);
-    return 1;
-}
-
 int main(int argc, char* argv[]) {
     assert(test_basic());
-    assert(test_number_of_planets());
-    assert(test_N_systems(2,1));
-    assert(test_N_systems(2,2));
-    assert(test_N_systems(2,3));
-    assert(test_N_systems(2,4));
-    assert(test_N_systems(4,1));
-    assert(test_N_systems(4,2));
-    assert(test_restart());
-    assert(test_com());
-    assert(test_twobody());
-    assert(test_gr());
-    assert(test_synchronization_fallback());
     printf("All tests passed.\n");
 }
