@@ -48,12 +48,19 @@ int main(int argc, char* argv[]) {
             reb_simulation_set_integrator(r, "asm512");
             reb_integrator_asm512_kepler_step(r, 730); // 10yrs
             struct reb_orbit o = reb_orbit_from_particle(1., r->particles[1], r->particles[0]);
-            struct reb_particle p;
+            //struct reb_particle p;
             //p = r->particles[0];
             //printf("[0] x y z = %f %f %f   %f %f %f\n", p.x, p.y, p.z, p.vx, p.vy, p.vz);
             //p = r->particles[1];
             //printf("[1] x y z = %f %f %f   %f %f %f\n", p.x, p.y, p.z, p.vx, p.vy, p.vz);
-            printf("%e %e %e %e\n", a, e, fabs((a-o.a)/a), a-o.a);
+            double s = 0;
+            if (a-o.a>0.0){
+                s = 1.0;
+            }
+            if (a-o.a<0.0){
+                s = -1.0;
+            }
+            printf("%e %e %e %e\n", a, e, fabs((a-o.a)/a), s);
             reb_simulation_free(r);
         }
     }

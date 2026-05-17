@@ -295,6 +295,8 @@
     mm_stiefel_Gs13_avx512
     newton
     mm_stiefel_Gs13_avx512
+    newton
+    mm_stiefel_Gs13_avx512
    
 ####.NewtonLoop\grflag:    
 ####    vmovapd         XX,     %zmm9
