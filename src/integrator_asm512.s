@@ -48,7 +48,6 @@
 .set GS2, %zmm19
 .set GS3, %zmm20
 .set BETA, %zmm21
-.set EPS, %zmm11
 
 # Common register use
 .set X, %zmm22
@@ -62,6 +61,8 @@
 .set HALF, %zmm30
 .set M, %zmm31
 .set M_DT, %zmm12   # Only used once per step.
+.set EPS, %zmm11
+.set SIGN_MASK, %zmm10
 
 .macro reb_asm512_init_registers
     # Ignore exceptions
@@ -78,7 +79,7 @@
     vmulpd          DT, M, M_DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vpbroadcastq    .HALF(%rip), HALF
-    vmovdqa64    .SIGN_MASK(%rip), %zmm10
+    vmovdqa64    .SIGN_MASK(%rip), SIGN_MASK
     vmovapd      .EPS(%rip), EPS
     
     vmovapd     P512_X(%rdi), X
@@ -289,11 +290,11 @@
     vfnmadd132pd    RI, ONE, %zmm4        
     vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
     # Iterations to improve X
-    # PYTHON REPLACE START
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     mm_stiefel_Gs03_avx512
     halley
-    mm_stiefel_Gs03_avx512
-    halley
+#    mm_stiefel_Gs03_avx512
+#    halley
 #    mm_stiefel_Gs13_avx512
 #    newton
 #    mm_stiefel_Gs13_avx512
@@ -308,9 +309,9 @@
     newton 
 
     vsubpd      XX, %zmm9, %zmm9  # Delta XX
-    vpandq      %zmm10, %zmm9, %zmm9  # abs(Delta XX)
+    vpandq      SIGN_MASK, %zmm9, %zmm9  # abs(Delta XX)
 
-    vcmppd     $25, EPS, %zmm9, %k2         # abs(Delta XX) < eps    25 = Not greater or equal, unordered (nans pass), quiet
+    vcmppd     $25, EPS, %zmm9, %k2         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
     kmovb   %k2, %eax
 
     vmovdqa64 P512_COUNTER(%rdi), %zmm0
@@ -319,15 +320,19 @@
 
 
     incl %ecx
-    cmpl $10, %ecx
-    je .NewtonLoopDone\grflag
+    cmpl $15, %ecx
+    je .FallbackBisection\grflag
 
     cmpb    $0xFF, %al
     jne .NewtonLoop\grflag
+    jmp .NewtonLoopDone\grflag
+
+.FallbackBisection\grflag:
+    
 
 .NewtonLoopDone\grflag:
     mm_stiefel_Gs13_avx512
-    # PYTHON REPLACE STOP
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     # Calculate 1/r
     vmulpd          GS1, ETA, %zmm2
@@ -667,14 +672,14 @@ b34mergeidx:
     .quad 0x7FFFFFFFFFFFFFFF
 .align 64   
 .EPS:
-    .double 1e-8
-    .double 1e-8
-    .double 1e-8
-    .double 1e-8
-    .double 1e-8
-    .double 1e-8
-    .double 1e-8
-    .double 1e-8
+    .double 1e-11
+    .double 1e-11
+    .double 1e-11
+    .double 1e-11
+    .double 1e-11
+    .double 1e-11
+    .double 1e-11
+    .double 1e-11
 .align 64
 .IF0:
 .DOUBLE_ONE:
