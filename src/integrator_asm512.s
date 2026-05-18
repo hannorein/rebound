@@ -314,13 +314,9 @@
     vcmppd     $25, EPS, %zmm9, %k2         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
     kmovb   %k2, %eax
 
-    vmovdqa64 P512_COUNTER(%rdi), %zmm0
-    vpaddq .ONE_DD(%rip), %zmm0, %zmm0
-    vmovdqa64 %zmm0, P512_COUNTER(%rdi)
-
 
     incl %ecx
-    cmpl $15, %ecx
+    cmpl $5, %ecx
     je .FallbackBisection\grflag
 
     cmpb    $0xFF, %al
@@ -328,7 +324,33 @@
     jmp .NewtonLoopDone\grflag
 
 .FallbackBisection\grflag:
+    movl $0, %ecx
+    vxorpd          %zmm3, %zmm3, %zmm3         # X_MIN = 0
+    vmovapd         .TWOPI(%rip), %zmm1
+    vdivpd          BETA, %zmm1, %zmm1          # X_MAX = 2*pi/BETA = X_per_period
+    vaddpd          %zmm3, %zmm1, XX            # X_MIN + X_MAX
+    vmulpd          HALF, XX, XX                # X
+.FallbackBisectionLoop\grflag:
+#DEBUG COUNTER:
+    vmovdqa64 P512_COUNTER(%rdi), %zmm4
+    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4
+    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+#END DEBUG COUNTER
+    mm_stiefel_Gs13_avx512
+    vmulpd          R, XX, %zmm2                # r0*X
+    vfmadd231pd     GS2, ETA, %zmm2
+    vfmadd231pd     GS3, ZETA, %zmm2            # r0*X + eta0*Gs2 + zeta0*Gs3
+
+    vcmppd          $30, DT, %zmm2, %k2         # $30 = Greater than, ordered, quiet
+    knotb           %k2, %k3
+    vmovapd         XX, %zmm1{%k2}
+    vmovapd         XX, %zmm3{%k3}
+    vaddpd          %zmm3, %zmm1, XX            # X_MIN + X_MAX
+    vmulpd          HALF, XX, XX                # X
     
+    incl %ecx
+    cmpl $10, %ecx
+    jl .FallbackBisectionLoop\grflag
 
 .NewtonLoopDone\grflag:
     mm_stiefel_Gs13_avx512
@@ -635,7 +657,11 @@ block1_nogr: BLOCK1 0
 .section    .rodata
 
 .align 8
-.ONE_DD:
+.TWOPI:
+    .quad 0x401921fb54442d18
+
+.align 8
+.ONE_QUAD:
     .quad 1
     .quad 1
     .quad 1

@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
                 s = -1.0;
             }
             uint64_t counter  = reb_asm512_counter(r);
-            printf("%e %e %e %e %e\n", a, e, fabs((a-o.a)/a), s, (double)counter/(double)Nsteps);
+            printf("%e %e %e %e %e\n", a, e, fabs((a-o.a)/a), s, ((double)counter)/((double)Nsteps));
             reb_simulation_free(r);
         }
     }
