@@ -46,7 +46,8 @@ const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descrip
     X(mat8_inertial_to_jacobi) \
     X(mat8_jacobi_to_heliocentric) \
     X(M0) X(mask) \
-    X(mat8_jacobi_to_inertial)
+    X(mat8_jacobi_to_inertial)\
+    X(counter) 
 
 struct simd_data{
     // Various constants
@@ -67,8 +68,16 @@ struct simd_data{
     // Mask for cases with less than 8 planets
     __mmask8 mask __attribute__ ((aligned (64)));
     double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
+    __m512i counter __attribute__ ((aligned (64)));
 };
 
+uint64_t reb_asm512_counter(struct reb_simulation* r){
+    struct reb_integrator_asm512_state* asm512 = r->integrator.state;
+    struct simd_data* data = asm512->data;
+    uint64_t i[8];
+    _mm512_store_epi64(&i[0], data->counter);
+    return i[0];
+}
 
 const struct reb_integrator reb_integrator_asm512 = {
     .step = reb_integrator_asm512_step,
@@ -100,6 +109,7 @@ void* reb_integrator_asm512_create(){
     asm512->recalculate_constants = 1;
     asm512->concatenate_steps = 1;
     asm512->data = aligned_alloc(64,sizeof(struct simd_data));
+    memset(asm512->data, 0, sizeof(struct simd_data));
     if (!asm512->data){
         reb_simulation_error(NULL, "WHFast512 was not able to allocate memory.");
         return NULL;
@@ -413,9 +423,9 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
     data->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
     data->gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
     data->dt = _mm512_set1_pd(r->dt); 
-//#define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
+#define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
 //    SIMD_DATA_MEMBERS
-//#undef X
+#undef X
 
 }
 

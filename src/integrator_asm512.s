@@ -20,6 +20,7 @@
 .set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1216
 .set P512_M0, 1728
 .set P512_MASK, 1792
+.set P512_COUNTER, 2368
 
 #####################################
 # Register alias
@@ -47,6 +48,7 @@
 .set GS2, %zmm19
 .set GS3, %zmm20
 .set BETA, %zmm21
+.set EPS, %zmm11
 
 # Common register use
 .set X, %zmm22
@@ -77,7 +79,7 @@
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vpbroadcastq    .HALF(%rip), HALF
     vmovdqa64    .SIGN_MASK(%rip), %zmm10
-    vmovapd      .EPS(%rip),     %zmm11
+    vmovapd      .EPS(%rip), EPS
     
     vmovapd     P512_X(%rdi), X
     vmovapd     P512_Y(%rdi), Y
@@ -292,26 +294,39 @@
     halley
     mm_stiefel_Gs03_avx512
     halley
+#    mm_stiefel_Gs13_avx512
+#    newton
+#    mm_stiefel_Gs13_avx512
+#    newton
+#    mm_stiefel_Gs13_avx512
+  
+    movl $0, %ecx
+
+.NewtonLoop\grflag:    
+    vmovapd         XX,     %zmm9
     mm_stiefel_Gs13_avx512
-    newton
+    newton 
+
+    vsubpd      XX, %zmm9, %zmm9  # Delta XX
+    vpandq      %zmm10, %zmm9, %zmm9  # abs(Delta XX)
+
+    vcmppd     $25, EPS, %zmm9, %k2         # abs(Delta XX) < eps    25 = Not greater or equal, unordered (nans pass), quiet
+    kmovb   %k2, %eax
+
+    vmovdqa64 P512_COUNTER(%rdi), %zmm0
+    vpaddq .ONE_DD(%rip), %zmm0, %zmm0
+    vmovdqa64 %zmm0, P512_COUNTER(%rdi)
+
+
+    incl %ecx
+    cmpl $10, %ecx
+    je .NewtonLoopDone\grflag
+
+    cmpb    $0xFF, %al
+    jne .NewtonLoop\grflag
+
+.NewtonLoopDone\grflag:
     mm_stiefel_Gs13_avx512
-    newton
-    mm_stiefel_Gs13_avx512
-   
-####.NewtonLoop\grflag:    
-####    vmovapd         XX,     %zmm9
-####    mm_stiefel_Gs13_avx512
-####    newton 
-####
-####    vsubpd      XX, %zmm9, %zmm9  # Delta XX
-####    vpandq      %zmm10, %zmm9, %zmm9  # abs(Delta XX)
-####
-####    vcmppd     $25, %zmm11, %zmm9, %k2         # abs(Delta XX) < eps    25 = Not greater or equal, unordered (nans pass), quiet
-####    kmovb   %k2, %eax
-####    cmpb    $0xFF, %al
-####    jne .NewtonLoop\grflag
-####
-####    mm_stiefel_Gs13_avx512
     # PYTHON REPLACE STOP
     
     # Calculate 1/r
@@ -615,6 +630,17 @@ block1_nogr: BLOCK1 0
 .section    .rodata
 
 .align 8
+.ONE_DD:
+    .quad 1
+    .quad 1
+    .quad 1
+    .quad 1
+    .quad 1
+    .quad 1
+    .quad 1
+    .quad 1
+
+.align 8
 .HALF:
     .quad 0x3fe0000000000000
 
@@ -641,14 +667,14 @@ b34mergeidx:
     .quad 0x7FFFFFFFFFFFFFFF
 .align 64   
 .EPS:
-    .double 0.00000001
-    .double 0.00000001
-    .double 0.00000001
-    .double 0.00000001
-    .double 0.00000001
-    .double 0.00000001
-    .double 0.00000001
-    .double 0.00000001
+    .double 1e-8
+    .double 1e-8
+    .double 1e-8
+    .double 1e-8
+    .double 1e-8
+    .double 1e-8
+    .double 1e-8
+    .double 1e-8
 .align 64
 .IF0:
 .DOUBLE_ONE:
