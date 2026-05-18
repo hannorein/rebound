@@ -78,9 +78,9 @@
     vmovapd         P512_M(%rdi), M
     vmulpd          DT, M, M_DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
-    vpbroadcastq    .HALF(%rip), HALF
+    vbroadcastsd    .HALF(%rip), HALF
+    vbroadcastsd    .EPS(%rip), EPS
     vmovdqa64    .SIGN_MASK(%rip), SIGN_MASK
-    vmovapd      .EPS(%rip), EPS
     
     vmovapd     P512_X(%rdi), X
     vmovapd     P512_Y(%rdi), Y
@@ -325,11 +325,11 @@
 
 .FallbackBisection\grflag:
     movl $0, %ecx
-    vxorpd          %zmm3, %zmm3, %zmm3         # X_MIN = 0
-    vmovapd         .TWOPI(%rip), %zmm1
-    vdivpd          BETA, %zmm1, %zmm1          # X_MAX = 2*pi/BETA = X_per_period
-    vaddpd          %zmm3, %zmm1, XX            # X_MIN + X_MAX
-    vmulpd          HALF, XX, XX                # X
+    vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
+    vsqrtpd         BETA, %zmm2
+    vbroadcastsd    .TWOPI(%rip), %zmm1
+    vdivpd          %zmm2, %zmm1, %zmm1         # X_MAX = 2*pi/BETA = X_per_period
+    vmulpd          HALF, %zmm1, XX             # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\grflag:
 #DEBUG COUNTER:
     vmovdqa64 P512_COUNTER(%rdi), %zmm4
@@ -344,12 +344,12 @@
     vcmppd          $30, DT, %zmm2, %k2         # $30 = Greater than, ordered, quiet
     knotb           %k2, %k3
     vmovapd         XX, %zmm1{%k2}
-    vmovapd         XX, %zmm3{%k3}
-    vaddpd          %zmm3, %zmm1, XX            # X_MIN + X_MAX
+    vmovapd         XX, %zmm5{%k3}
+    vaddpd          %zmm5, %zmm1, XX            # X_MIN + X_MAX
     vmulpd          HALF, XX, XX                # X
     
     incl %ecx
-    cmpl $10, %ecx
+    cmpl $50, %ecx
     jl .FallbackBisectionLoop\grflag
 
 .NewtonLoopDone\grflag:
@@ -696,15 +696,8 @@ b34mergeidx:
     .quad 0x7FFFFFFFFFFFFFFF
     .quad 0x7FFFFFFFFFFFFFFF
     .quad 0x7FFFFFFFFFFFFFFF
-.align 64   
+.align 8
 .EPS:
-    .double 1e-11
-    .double 1e-11
-    .double 1e-11
-    .double 1e-11
-    .double 1e-11
-    .double 1e-11
-    .double 1e-11
     .double 1e-11
 .align 64
 .IF0:
