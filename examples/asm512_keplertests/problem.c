@@ -22,10 +22,8 @@ struct reb_simulation* setup_sim(double a, double e){
     r->exact_finish_time = 0;
    
     reb_simulation_add_fmt(r, "m", 1.0);
-    reb_simulation_add_fmt(r, "a e uniform(f)", a, e);
-    //reb_simulation_add_fmt(r, "a e uniform(f)", a, e);
-    for (int i=0; i<7; i++){
-        reb_simulation_add_fmt(r, "a", a+1+i);
+    for (int i=0; i<8; i++){
+        reb_simulation_add_fmt(r, "a e uniform(f)", a, e);
     }
 
     reb_simulation_set_integrator(r, "asm512");
@@ -35,7 +33,7 @@ struct reb_simulation* setup_sim(double a, double e){
 }
 
 extern void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_steps);
-extern uint64_t reb_asm512_counter(struct reb_simulation* r);
+extern uint64_t reb_asm512_counter(struct reb_simulation* r, int test_p);
 
 
 int main(int argc, char* argv[]) {
@@ -49,7 +47,8 @@ int main(int argc, char* argv[]) {
             reb_simulation_set_integrator(r, "asm512");
             int Nsteps = 1; // 10 years
             reb_integrator_asm512_kepler_step(r, Nsteps);
-            struct reb_orbit o = reb_orbit_from_particle(1., r->particles[1], r->particles[0]);
+            int test_p = rand_r(&r->rand_seed) % 8;
+            struct reb_orbit o = reb_orbit_from_particle(1., r->particles[test_p+1], r->particles[0]);
             //struct reb_particle p;
             //p = r->particles[0];
             //printf("[0] x y z = %f %f %f   %f %f %f\n", p.x, p.y, p.z, p.vx, p.vy, p.vz);
@@ -62,7 +61,7 @@ int main(int argc, char* argv[]) {
             if (a-o.a<0.0){
                 s = -1.0;
             }
-            uint64_t counter  = reb_asm512_counter(r);
+            uint64_t counter  = reb_asm512_counter(r, test_p);
             printf("%e %e %e %e %e\n", a, e, fabs((a-o.a)/a), s, ((double)counter)/((double)Nsteps));
             reb_simulation_free(r);
         }

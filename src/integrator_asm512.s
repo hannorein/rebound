@@ -311,29 +311,29 @@
     vsubpd      XX, %zmm9, %zmm9  # Delta XX
     vpandq      SIGN_MASK, %zmm9, %zmm9  # abs(Delta XX)
 
-    vcmppd     $25, EPS, %zmm9, %k2         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
-    kmovb   %k2, %eax
+    # Required precision reached?
+    vcmppd      $25, EPS, %zmm9, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
+    kmovb       %k4, %eax
+    cmpb        $0xFF, %al
+    je          .NewtonLoopDone\grflag
 
-
+    # Maximum iterations reached?
     incl %ecx
-    cmpl $5, %ecx
-    je .FallbackBisection\grflag
-
-    cmpb    $0xFF, %al
+    cmpl $5, %ecx                               # max Newton iterations
     jne .NewtonLoop\grflag
-    jmp .NewtonLoopDone\grflag
 
-.FallbackBisection\grflag:
-    movl $0, %ecx
+    # If not converged yet, fall back to bisection
+    knotb           %k4, %k4                    # Only update failed particles
+    movl            $0, %ecx
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     vsqrtpd         BETA, %zmm2
     vbroadcastsd    .TWOPI(%rip), %zmm1
     vdivpd          %zmm2, %zmm1, %zmm1         # X_MAX = 2*pi/BETA = X_per_period
-    vmulpd          HALF, %zmm1, XX             # X = (X_MIN + X_MAX)/2
+    vmulpd          HALF, %zmm1, XX{%k4}        # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\grflag:
 #DEBUG COUNTER:
     vmovdqa64 P512_COUNTER(%rdi), %zmm4
-    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4
+    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
     vmovdqa64 %zmm4, P512_COUNTER(%rdi)
 #END DEBUG COUNTER
     mm_stiefel_Gs13_avx512
@@ -345,11 +345,11 @@
     knotb           %k2, %k3
     vmovapd         XX, %zmm1{%k2}
     vmovapd         XX, %zmm5{%k3}
-    vaddpd          %zmm5, %zmm1, XX            # X_MIN + X_MAX
-    vmulpd          HALF, XX, XX                # X
+    vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
+    vmulpd          HALF, XX, XX{%k4}           # X
     
     incl %ecx
-    cmpl $50, %ecx
+    cmpl $52, %ecx                              # max Bisection iterations (=number of significant bits)
     jl .FallbackBisectionLoop\grflag
 
 .NewtonLoopDone\grflag:

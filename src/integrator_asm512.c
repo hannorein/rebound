@@ -71,12 +71,12 @@ struct simd_data{
     __m512i counter __attribute__ ((aligned (64)));
 };
 
-uint64_t reb_asm512_counter(struct reb_simulation* r){
+uint64_t reb_asm512_counter(struct reb_simulation* r, int test_p){
     struct reb_integrator_asm512_state* asm512 = r->integrator.state;
     struct simd_data* data = asm512->data;
     uint64_t i[8];
     _mm512_store_epi64(&i[0], data->counter);
-    return i[0];
+    return i[test_p];
 }
 
 const struct reb_integrator reb_integrator_asm512 = {
