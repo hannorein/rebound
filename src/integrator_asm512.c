@@ -273,9 +273,10 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 }
 
 
-extern void block1_gr(struct simd_data* data, long N_steps);
-extern void block1_nogr(struct simd_data* data, long N_steps);
+extern void block1_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void block1_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
 extern void reb_asm512_kepler_step(struct simd_data* data);
+extern void reb_asm512_interactior_step(struct simd_data* data);
 
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
@@ -492,64 +493,6 @@ static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
     return 0; // success
 }
 
-// Implementation of the GR force for WHFast correctors.
-// (WHFast512 comes with built-in support) 
-//static void gr_force(struct reb_simulation* r){
-//    double C2 = 10065.32 * 10065.32;
-//    struct reb_particle* particles = r->particles;
-//    const struct reb_particle source = particles[0];
-//    const double prefac1 = 6.*(r->G*source.m)*(r->G*source.m)/C2;
-//    for (unsigned int i=1; i<r->N; i++){
-//        const struct reb_particle p = particles[i];
-//        const double dx = p.x - source.x;
-//        const double dy = p.y - source.y;
-//        const double dz = p.z - source.z;
-//        const double r2 = dx*dx + dy*dy + dz*dz;
-//        const double prefac = prefac1/(r2*r2);
-//
-//        particles[i].ax -= prefac*dx;
-//        particles[i].ay -= prefac*dy;
-//        particles[i].az -= prefac*dz;
-//        particles[0].ax += p.m/source.m*prefac*dx;
-//        particles[0].ay += p.m/source.m*prefac*dy;
-//        particles[0].az += p.m/source.m*prefac*dz;
-//    }
-//}
-
-//// Creates a new simulation just for doing the correctors.
-//// Slow, but convenient. Only called when a simulation is synchronized.
-//static void apply_corrector(struct reb_simulation* r, double direction, struct reb_integrator_asm512_state* asm512){
-//    (void) r;
-//    (void) direction;
-//    (void) asm512;
-////    if (asm512->corrector){
-////        const unsigned int N_systems = asm512->N_systems;
-////        const unsigned int N_per_system = r->N/N_systems;
-////        for (unsigned int s=0; s<N_systems; s++){
-////            // TODO Implement Correctors
-////            struct reb_simulation* rt = reb_simulation_create();
-////            rt->dt = r->dt;
-////            rt->G = r->G;
-////            if (asm512->gr_potential){
-////                rt->additional_forces = gr_force;
-////            }
-////            for (unsigned int i=0;i<N_per_system;i++){
-////                reb_simulation_add(rt, r->particles[s*N_per_system+i]);
-////            }
-////            reb_integrator_asm_init(rt);
-////            reb_integrator_whfast_from_inertial(rt);
-////            reb_whfast_apply_corrector(rt, direction, asm512->corrector);
-////            reb_integrator_whfast_to_inertial(rt);
-////            for (unsigned int i=0;i<N_per_system;i++){
-////                r->particles[s*N_per_system+i] = rt->particles[i];
-////                r->particles[s*N_per_system+i].sim = r;
-////            }
-////            reb_simulation_free(rt);
-////        }
-////    }
-//}
-
-
 void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_steps){
     struct reb_integrator_asm512_state* asm512 = r->integrator.state;
     recalculate_constants(r, asm512->data, asm512->N_systems);
@@ -579,37 +522,26 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
     struct simd_data* data = asm512->data;
 
     // Normal initial synchronize step (not trigger when synchronize was kalled with keep_unsynchronized=1)
+    int skip_first_kepler_step = 0;
     if (r->is_synchronized){
         // Use WHFast to apply the correctors.
         //apply_corrector(r, 1.0);
         inertial_to_jacobi_posvel(r, data, asm512->N_systems);
         // First half DRIFT step. Note negative sign. We will do a full step below.
-        data->dt = _mm512_set1_pd(-dt/2.0); 
+        skip_first_kepler_step = 1;
+        data->dt = _mm512_set1_pd(dt/2.0); 
         reb_asm512_kepler_step(data);    
         data->dt = _mm512_set1_pd(dt); // Reset
     }
 
-    // Tight inner loops for speed
     if (asm512->N_systems==1){
         if (asm512->gr_potential){
-            //for (unsigned int i=0;i<N_steps;i++){
-            block1_gr(asm512->data, N_steps);
-            //}
+            block1_gr(asm512->data, N_steps, skip_first_kepler_step);
         }else{
-            //for (unsigned int i=0;i<N_steps;i++){
-            block1_nogr(asm512->data, N_steps);
-            //}
+            block1_nogr(asm512->data, N_steps, skip_first_kepler_step);
         }
     }else if (asm512->N_systems==2){
-        //for (unsigned int i=0;i<N_steps;i++){
-        //    reb_asm512_kepler_step(asm512->data);    // full timestep
-        //    reb_asm512_interaction_step_4planets_jacobi(r);
-        //}
     }else if (asm512->N_systems==4){
-        //for (unsigned int i=0;i<N_steps;i++){
-        //    reb_asm512_kepler_step(asm512->data);    // full timestep
-        //    reb_asm512_interaction_step_2planets_jacobi(r);
-        //}
     }
 
     r->is_synchronized = 0;

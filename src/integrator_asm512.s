@@ -636,15 +636,20 @@ reb_asm512_interaction_step:
     # Input:   
     #           rdi = p512
     #           rsi = Number of steps (counting down)
+    #           rdx = skip_first_kepler_step
 
     # Load constants
     reb_asm512_init_registers
     # Allocate space on stack for matrix multiplications
     subq    $192, %rsp
+    # Ignore first Kepler step (half timestep done manually)
+    cmpq    $1, %rdx
+    je      .LSkipFirstKeplerStep\grflag
 
     # Main loop
 .LMainLoop\grflag:    
     kepler_step \grflag
+.LSkipFirstKeplerStep\grflag:
     interaction_step \grflag
     subq    $1, %rsi
     jnz     .LMainLoop\grflag

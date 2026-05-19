@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <sys/time.h>
 
-struct reb_simulation* setup_sim(char* integrator){
+void setup_sim(char* integrator, int corrector){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->dt = 6.0/365.25*2*M_PI;
@@ -29,7 +29,8 @@ struct reb_simulation* setup_sim(char* integrator){
     if (strcmp(integrator,"asm512")==0){
         struct reb_integrator_asm512_state* asm512 = r->integrator.state;
         asm512->gr_potential = 0;
-        asm512->concatenate_steps = 1e6;
+        asm512->concatenate_steps = 1e4;
+        asm512->corrector = corrector;
     }
     if (strcmp(integrator,"whfast512")==0){
         struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
@@ -38,8 +39,14 @@ struct reb_simulation* setup_sim(char* integrator){
     if (strcmp(integrator,"whfast")==0){
         struct reb_integrator_whfast_state* whfast = r->integrator.state;
         whfast->safe_mode = 0;
+        asm512->corrector = corrector;
     }
-    return r;
+
+    double E0 = reb_simulation_energy(r);
+    //reb_simulation_integrate(r, 1e2*M_PI*2);
+    double E1 = reb_simulation_energy(r);
+    printf("integrator=%s, corrector=%d: %e\n", integrator, corrector, fabs((E0-E1)/E0));
+    reb_simulation_free(r);
 }
 
 extern void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_steps);
@@ -47,25 +54,10 @@ extern uint64_t reb_asm512_counter(struct reb_simulation* r, int test_p);
 
 
 int main(int argc, char* argv[]) {
-    struct timeval time_beginning;
-    struct timeval time_end;
-    double tmax_years = 1e5;
-
-    for (int i=0; i<3; i++){
-        char* integrator = "asm512";
-        if (i==1) integrator = "whfast512";
-        if (i==2) integrator = "whfast";
-        printf("###################################\n");
-        printf("integrator:     %s\n", integrator);
-        struct reb_simulation* r = setup_sim(integrator);
-        gettimeofday(&time_beginning,NULL);
-        reb_simulation_integrate(r, tmax_years*M_PI*2.0);
-        gettimeofday(&time_end,NULL);
-        double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
-        printf("time:           %.8f seconds\n", walltime);
-        printf("time to 5 Gyr:  %.8f hours\n", walltime/(r->t/2/M_PI) * 5e9/60./60.);
-        
-        reb_simulation_free(r);
-    }
+    setup_sim("asm512", 0);
+    setup_sim("asm512", 17);
+    setup_sim("whfast", 0);
+    setup_sim("whfast", 17);
+    setup_sim("whfast512", 0);
     return 1;
 }
