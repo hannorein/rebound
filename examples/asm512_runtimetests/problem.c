@@ -11,22 +11,34 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <string.h>
 #include <sched.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
-struct reb_simulation* setup_sim(){
+struct reb_simulation* setup_sim(char* integrator){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 1e-2*5.0/365.25*2*M_PI;
+    r->dt = 6.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
    
     reb_simulation_add_fmt(r, "solarsystem");
 
-    reb_simulation_set_integrator(r, "asm512");
-    struct reb_integrator_asm512_state* asm512 = r->integrator.state;
-    asm512->gr_potential = 0;
-    asm512->concatenate_steps = 1e3;
+    reb_simulation_set_integrator(r, integrator);
+    if (strcmp(integrator,"asm512")==0){
+        struct reb_integrator_asm512_state* asm512 = r->integrator.state;
+        asm512->gr_potential = 0;
+        asm512->concatenate_steps = 1e6;
+    }
+    if (strcmp(integrator,"whfast512")==0){
+        struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
+        whfast512->gr_potential = 0;
+    }
+    if (strcmp(integrator,"whfast")==0){
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
+        whfast->safe_mode = 0;
+    }
     return r;
 }
 
@@ -35,25 +47,25 @@ extern uint64_t reb_asm512_counter(struct reb_simulation* r, int test_p);
 
 
 int main(int argc, char* argv[]) {
-    struct reb_simulation* r_asm = setup_sim();
-    struct reb_simulation* r_old = setup_sim();
-    struct reb_simulation* r_whf = setup_sim();
-    double E0 = reb_simulation_energy(r_asm);
-    reb_simulation_set_integrator(r_asm, "asm512");
-    reb_simulation_set_integrator(r_old, "whfast512");
-    reb_simulation_set_integrator(r_whf, "whfast");
-    struct reb_integrator_whfast_state* whfast = r_whf->integrator.state;
-    whfast->safe_mode = 0;
-    for (double dT=1e1; r_asm->t<1e4*2*M_PI; dT=dT*1.05){
-        reb_simulation_integrate(r_asm, r_asm->t+dT);
-        reb_simulation_integrate(r_old, r_asm->t+dT);
-        reb_simulation_integrate(r_whf, r_asm->t+dT);
-        double E1_asm = reb_simulation_energy(r_asm);
-        double E1_old = reb_simulation_energy(r_old);
-        double E1_whf = reb_simulation_energy(r_whf);
-        printf("%e %e %e %e\n", r_asm->t, fabs((E0-E1_asm)/E0), fabs((E0-E1_old)/E0), fabs((E0-E1_whf)/E0));
+    struct timeval time_beginning;
+    struct timeval time_end;
+    double tmax_years = 1e5;
+
+    for (int i=0; i<3; i++){
+        char* integrator = "asm512";
+        if (i==1) integrator = "whfast512";
+        if (i==2) integrator = "whfast";
+        printf("###################################\n");
+        printf("integrator:     %s\n", integrator);
+        struct reb_simulation* r = setup_sim(integrator);
+        gettimeofday(&time_beginning,NULL);
+        reb_simulation_integrate(r, tmax_years*M_PI*2.0);
+        gettimeofday(&time_end,NULL);
+        double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+        printf("time:           %.8f seconds\n", walltime);
+        printf("time to 5 Gyr:  %.8f hours\n", walltime/(r->t/2/M_PI) * 5e9/60./60.);
+        
+        reb_simulation_free(r);
     }
-    reb_simulation_free(r_asm);
-    reb_simulation_free(r_old);
     return 1;
 }

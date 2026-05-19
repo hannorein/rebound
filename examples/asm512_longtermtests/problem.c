@@ -23,10 +23,6 @@ struct reb_simulation* setup_sim(){
    
     reb_simulation_add_fmt(r, "solarsystem");
 
-    reb_simulation_set_integrator(r, "asm512");
-    struct reb_integrator_asm512_state* asm512 = r->integrator.state;
-    asm512->gr_potential = 0;
-    asm512->concatenate_steps = 1e3;
     return r;
 }
 
@@ -40,11 +36,14 @@ int main(int argc, char* argv[]) {
     struct reb_simulation* r_whf = setup_sim();
     double E0 = reb_simulation_energy(r_asm);
     reb_simulation_set_integrator(r_asm, "asm512");
+    struct reb_integrator_asm512_state* asm512 = r_asm->integrator.state;
+    asm512->gr_potential = 0;
+    asm512->concatenate_steps = 1e3;
     reb_simulation_set_integrator(r_old, "whfast512");
     reb_simulation_set_integrator(r_whf, "whfast");
     struct reb_integrator_whfast_state* whfast = r_whf->integrator.state;
     whfast->safe_mode = 0;
-    for (double dT=1e1; r_asm->t<1e4*2*M_PI; dT=dT*1.05){
+    for (double dT=1e1; r_asm->t<1e5*2*M_PI; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
         reb_simulation_integrate(r_old, r_asm->t+dT);
         reb_simulation_integrate(r_whf, r_asm->t+dT);
