@@ -49,11 +49,6 @@ int main(int argc, char* argv[]) {
             reb_integrator_asm512_kepler_step(r, Nsteps);
             int test_p = rand_r(&r->rand_seed) % 8;
             struct reb_orbit o = reb_orbit_from_particle(1., r->particles[test_p+1], r->particles[0]);
-            //struct reb_particle p;
-            //p = r->particles[0];
-            //printf("[0] x y z = %f %f %f   %f %f %f\n", p.x, p.y, p.z, p.vx, p.vy, p.vz);
-            //p = r->particles[1];
-            //printf("[1] x y z = %f %f %f   %f %f %f\n", p.x, p.y, p.z, p.vx, p.vy, p.vz);
             double s = 0;
             if (a-o.a>0.0){
                 s = 1.0;
