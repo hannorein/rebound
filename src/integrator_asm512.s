@@ -3,6 +3,7 @@
 .globl block1_gr
 .globl block1_nogr
 .globl reb_asm512_kepler_step
+.globl reb_asm512_interaction_step
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -90,6 +91,15 @@
     vmovapd     P512_VY(%rdi), VY
     vmovapd     P512_VZ(%rdi), VZ
 .endm  
+
+.macro reb_asm512_store_results
+    vmovapd    VX, P512_VX(%rdi)
+    vmovapd    VY, P512_VY(%rdi)
+    vmovapd    VZ, P512_VZ(%rdi)
+    vmovapd    X, P512_X(%rdi)
+    vmovapd    Y, P512_Y(%rdi)
+    vmovapd    Z, P512_Z(%rdi)
+.endm
 
 .macro gravity_prefactor multiplier=ONE
     # Input:  zmm0=dx, zmm1=dy, zmm2=dy
@@ -293,8 +303,8 @@
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     mm_stiefel_Gs03_avx512
     halley
-#    mm_stiefel_Gs03_avx512
-#    halley
+    mm_stiefel_Gs03_avx512
+    halley
 #    mm_stiefel_Gs13_avx512
 #    newton
 #    mm_stiefel_Gs13_avx512
@@ -606,17 +616,20 @@
 # Global functions
 ###############################################################################
 reb_asm512_kepler_step:
-    # Need to init registers here when not called after interaction step.
-    # This will be required for synchronizing.  
     reb_asm512_init_registers
     kepler_step 2
-    vmovapd    VX, P512_VX(%rdi)
-    vmovapd    VY, P512_VY(%rdi)
-    vmovapd    VZ, P512_VZ(%rdi)
-    vmovapd    X, P512_X(%rdi)
-    vmovapd    Y, P512_Y(%rdi)
-    vmovapd    Z, P512_Z(%rdi)
+    reb_asm512_store_results
     ret
+
+reb_asm512_interaction_step:
+    reb_asm512_init_registers
+    # Allocate space on stack for matrix multiplications
+    subq    $192, %rsp
+    interaction_step 2
+    reb_asm512_store_results
+    addq    $192, %rsp
+    ret
+ 
 
 # Macro creates two functions for branchless GR/no-GR
 .macro BLOCK1 grflag
@@ -637,12 +650,7 @@ reb_asm512_kepler_step:
     jnz     .LMainLoop\grflag
 
     # Store final data in P512 structure
-    vmovapd    VX, P512_VX(%rdi)
-    vmovapd    VY, P512_VY(%rdi)
-    vmovapd    VZ, P512_VZ(%rdi)
-    vmovapd    X, P512_X(%rdi)
-    vmovapd    Y, P512_Y(%rdi)
-    vmovapd    Z, P512_Z(%rdi)
+    reb_asm512_store_results
 
     addq    $192, %rsp
     ret
