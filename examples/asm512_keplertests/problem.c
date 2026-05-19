@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
     int Ne = 100;
     for (int ia=0; ia<Na; ia++){
         for (int ie=0; ie<Ne; ie++){
-            double a = 0.1 + (0.95-0.1)*(double)ia/(double)(Na+1);
-            double e = 0.0 + (0.95-0.0)*(double)ie/(double)(Ne+1);
+            double a = 0.05 + (0.95-0.05)*(double)ia/(double)(Na-1);
+            double e = 0.0 + (0.99-0.0)*(double)ie/(double)(Ne-1);
             struct reb_simulation* r = setup_sim(a,e);
             reb_simulation_set_integrator(r, "asm512");
             int Nsteps = 1; // 10 years
