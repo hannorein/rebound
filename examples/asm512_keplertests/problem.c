@@ -43,22 +43,35 @@ int main(int argc, char* argv[]) {
         for (int ie=0; ie<Ne; ie++){
             double a = 0.05 + (0.95-0.05)*(double)ia/(double)(Na-1);
             double e = 0.0 + (0.99-0.0)*(double)ie/(double)(Ne-1);
-            struct reb_simulation* r = setup_sim(a,e);
-            reb_simulation_set_integrator(r, "asm512");
-            int Nsteps = 1; // 10 years
-            reb_integrator_asm512_kepler_step(r, Nsteps);
-            int test_p = rand_r(&r->rand_seed) % 8;
-            struct reb_orbit o = reb_orbit_from_particle(1., r->particles[test_p+1], r->particles[0]);
-            double s = 0;
-            if (a-o.a>0.0){
-                s = 1.0;
+            printf("%e %e ", a, e);
+            for (int i=0; i<2;i++){
+                int Nsteps = 1; // 10 years
+                struct reb_simulation* r = setup_sim(a,e);
+                if (i==0){
+                    reb_simulation_set_integrator(r, "asm512");
+                    reb_integrator_asm512_kepler_step(r, Nsteps);
+                }else{
+                    reb_simulation_set_integrator(r, "whfast512");
+                    reb_simulation_steps(r, 1);
+                }
+                int test_p = rand_r(&r->rand_seed) % 8;
+                struct reb_orbit o = reb_orbit_from_particle(1., r->particles[test_p+1], r->particles[0]);
+                double s = 0;
+                if (a-o.a>0.0){
+                    s = 1.0;
+                }
+                if (a-o.a<0.0){
+                    s = -1.0;
+                }
+                if (i==0){
+                    uint64_t counter  = reb_asm512_counter(r, test_p);
+                    printf("%e %e %e ", fabs((a-o.a)/a), s, ((double)counter)/((double)Nsteps));
+                }else{
+                    printf("%e %e", fabs((a-o.a)/a), s);
+                }
+                reb_simulation_free(r);
             }
-            if (a-o.a<0.0){
-                s = -1.0;
-            }
-            uint64_t counter  = reb_asm512_counter(r, test_p);
-            printf("%e %e %e %e %e\n", a, e, fabs((a-o.a)/a), s, ((double)counter)/((double)Nsteps));
-            reb_simulation_free(r);
+            printf("\n");
         }
     }
     return 1;
