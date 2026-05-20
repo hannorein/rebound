@@ -656,7 +656,7 @@ reb_asm512_corrector_step:
     subq        $200, %rsp
     movsd       %xmm0, 192(%rsp) # store direction (1 or -1)
     leaq        .CORRECTOR17_AB(%rip), %r8
-    leaq        520(%r8), %rdx #end of array 63*8
+    leaq        504(%r8), %rdx #end of array 63*8
 
     jmp .L_CorrectorLoopK
 
@@ -846,7 +846,7 @@ b34mergeidx:
     .long    938635522
 
 .align 64
-.CORRECTOR17_AB:        # 65 coefficients for 17th order corrector
+.CORRECTOR17_AB:        # 63 coefficients for 17th order corrector
     .quad 0xC00AC5EB3F7AB2F8    # Kepler
     .quad 0xBED22E64AF0557FF    # Interaction
     .quad 0x401AC5EB3F7AB2F8    # Kepler
@@ -878,12 +878,10 @@ b34mergeidx:
     .quad 0xBFF414706F9C063A    # Kepler
     .quad 0x3FB7D2865A643682    # Interaction
     .quad 0x3FEAC5EB3F7AB2F8    # Kepler
-
-#    .quad 0xBFC7D2865A643682    # Interaction (combined next three)
-    .quad 0xBFB7D2865A643682    # Interaction
-    .quad 0x0000000000000000    # Kepler
-    .quad 0xBFB7D2865A643682    # Interaction
-
+    .quad 0xBFC7D2865A643682    # Interaction (combined next three)
+#    .quad 0xBFB7D2865A643682    # Interaction
+#    .quad 0x0000000000000000    # Kepler
+#    .quad 0xBFB7D2865A643682    # Interaction
     .quad 0xBFEAC5EB3F7AB2F8    # Kepler
     .quad 0x3FB7D2865A643682    # Interaction
     .quad 0x3FF414706F9C063A    # Kepler
