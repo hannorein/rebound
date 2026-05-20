@@ -641,7 +641,7 @@ _interaction_step:
     vmulpd          P512_DT(%rdi), %zmm0, DT
     vmulpd          DT, M, M_DT
     subq    $192, %rsp
-    #interaction_step 3
+    interaction_step 3
     addq    $192, %rsp
     ret
 
@@ -672,7 +672,7 @@ reb_asm512_corrector_step:
 .L_CorrectorLoopK:
     vbroadcastsd    (%r8), %zmm0
     addq            $8, %r8
-    #call _kepler_step
+    call _kepler_step
     
     cmpq        %rdx, %r8
     jne        .L_CorrectorLoopI
