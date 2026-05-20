@@ -312,7 +312,7 @@
 #    newton
 #    mm_stiefel_Gs13_avx512
   
-    movl $0, %ecx
+    movq $0, %rcx
 
 .NewtonLoop\grflag:    
     vmovapd         XX,     %zmm9
@@ -329,13 +329,13 @@
     je          .NewtonLoopDone\grflag
 
     # Maximum iterations reached?
-    incl %ecx
-    cmpl $5, %ecx                               # max Newton iterations
+    incq %rcx
+    cmpq $5, %rcx                               # max Newton iterations
     jne .NewtonLoop\grflag
 
     # If not converged yet, fall back to bisection
     knotb           %k4, %k4                    # Only update failed particles
-    movl            $0, %ecx
+    movq            $0, %rcx
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     vsqrtpd         BETA, %zmm2
     vbroadcastsd    .TWOPI(%rip), %zmm1
@@ -359,8 +359,8 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X
     
-    incl %ecx
-    cmpl $52, %ecx                              # max Bisection iterations (=number of significant bits)
+    incq %rcx
+    cmpq $52, %rcx                              # max Bisection iterations (=number of significant bits)
     jl .FallbackBisectionLoop\grflag
 
 .NewtonLoopDone\grflag:
@@ -644,6 +644,23 @@
 #    ret
 #.endm
 
+_kepler_step:
+    # Kepler uses DT
+    vmovapd         P512_DT(%rdi), %zmm0
+    vmulpd          %zmm0, DT, DT
+    kepler_step 3
+    ret
+
+_interaction_step:
+    # Interaction uses DT, M_DT
+    vmovapd         P512_DT(%rdi), DT
+    vmulpd          %zmm0, DT, DT
+    vmovapd         P512_M(%rdi), M
+    vmulpd          DT, M, M_DT
+    subq    $192, %rsp
+    interaction_step 3
+    addq    $192, %rsp
+    ret
 
 ###############################################################################
 # Global functions
@@ -655,6 +672,29 @@ reb_asm512_kepler_step:
     ret
 
 reb_asm512_corrector_step:
+    reb_asm512_init_registers # does not overwrite xmm0
+    subq        $8, %rsp
+    movsd       %xmm0, (%rsp) # store direction (1 or -1)
+
+    leaq        .CORRECTOR17_AB(%rip), %r8
+    leaq        504(%r8), %rdx
+
+    jmp .L_CorrectorLoopK
+
+.L_CorrectorLoopI:
+    vbroadcastsd     (%r8), %zmm0
+    call _interaction_step
+    addq        $8, %r8
+
+.L_CorrectorLoopK:
+    vbroadcastsd     (%r8), %zmm0
+    call _kepler_step
+    addq        $8, %r8
+    
+    cmpq        %rdx, %r8
+    jne        .L_CorrectorLoopI
+
+    addq        $8, %rsp
     ret
 
 reb_asm512_interaction_step:

@@ -527,7 +527,9 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
     if (r->is_synchronized){
         // Use WHFast to apply the correctors.
         inertial_to_jacobi_posvel(r, data, asm512->N_systems);
-        reb_asm512_corrector_step(data, 1.0);    
+        if (asm512->corrector){
+            reb_asm512_corrector_step(data, 1.0);    
+        }
         // First half DRIFT step. Note negative sign. We will do a full step below.
         skip_first_kepler_step = 1;
         data->dt = _mm512_set1_pd(dt/2.0); 
@@ -568,7 +570,9 @@ void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* sta
         reb_asm512_kepler_step(data);    
         data->dt = _mm512_set1_pd(r->dt); // Reset
                                          // TODO Add COM step
-        reb_asm512_corrector_step(data, -1.0);    
+        if (asm512->corrector){
+            reb_asm512_corrector_step(data, -1.0);    
+        }
         jacobi_to_inertial_posvel_and_com(r, data, 0.0, asm512->N_systems);
         // Use WHFast to applyt the correctors
         //apply_corrector(r, -1.0);
