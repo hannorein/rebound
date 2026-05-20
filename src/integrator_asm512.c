@@ -417,7 +417,7 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
     for (unsigned int s=0; s<N_systems; s++){
         double m0 = r->particles[s*N_per_system].m;
         for (unsigned int p=1; p<N_per_system; p++){
-            _gr_prefac[s*p_per_system+(p-1)] = -r->dt*6.*m0*m0/(c*c);
+            _gr_prefac[s*p_per_system+(p-1)] = -6.*m0*m0/(c*c);
             _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m / m0;
         }
     }

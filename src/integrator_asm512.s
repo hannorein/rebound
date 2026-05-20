@@ -437,8 +437,8 @@
 
     .if \grflag == 1
         # GR term
-        vmovapd     P512_GR_PREFAC(%rdi), %zmm3
-        vmovapd     P512_GR_PREFAC2(%rdi), %zmm4
+        vmulpd    P512_GR_PREFAC(%rdi), DT, %zmm3
+        vmovapd   P512_GR_PREFAC2(%rdi), %zmm4
 
         vmulpd    %zmm6, %zmm6, %zmm5               # r^4
         vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}       # -dt*6*m0*m0/(c*c) /r^4
@@ -612,6 +612,38 @@
     vaddpd    VZ, %zmm2, VZ
 .endm 
 
+
+#.macro reb_asm512_corrector_Z a b
+#    #input a, b
+## Kepler used DT
+#    vmovapd         P512_DT(%rdi), DT
+#    vmulpd          \a, DT, DT
+#    kepler_step a
+## Interaction uses DT, M_DT
+#    vmovapd         P512_DT(%rdi), DT
+#    vmulpd          \-b, DT, DT
+#    vmovapd         P512_M(%rdi), M
+#    vmulpd          DT, M, M_DT
+#    interaction_step -b
+## Kepler used DT
+#    vmovapd         P512_DT(%rdi), DT
+#    vmulpd          \-a, DT, DT
+#    vadpd           DT, DT, DT
+#    kepler_step -2*a
+## Interaction uses DT, M_DT
+#    interaction_step b
+#    vmovapd         P512_DT(%rdi), DT
+#    vmulpd          \b, DT, DT
+#    vmovapd         P512_M(%rdi), M
+#    vmulpd          DT, M, M_DT
+## Kepler used DT
+#    vmovapd         P512_DT(%rdi), DT
+#    vmulpd          \a, DT, DT
+#    kepler_step a
+#    ret
+#.endm
+
+
 ###############################################################################
 # Global functions
 ###############################################################################
@@ -783,5 +815,71 @@ b34mergeidx:
     .long    943953938
     .long    834731386
     .long    938635522
+
+.align 64
+.CORRECTOR17_AB:        # 63 coefficients for 17th order corrector
+    .quad 0xC00AC5EB3F7AB2F8    # Kepler
+    .quad 0xBED22E64AF0557FF    # Interaction
+    .quad 0x401AC5EB3F7AB2F8    # Kepler
+    .quad 0x3ED22E64AF0557FF    # Interaction
+    .quad 0xC019198C8B8307C8    # Kepler
+    .quad 0x3F14098E956E85C7    # Interaction
+    .quad 0x40176D2DD78B5C99    # Kepler
+    .quad 0xBF14098E956E85C7    # Interaction
+    .quad 0xC015C0CF2393B16A    # Kepler
+    .quad 0xBF44D7273C9751C8    # Interaction
+    .quad 0x401414706F9C063A    # Kepler
+    .quad 0x3F44D7273C9751C8    # Interaction
+    .quad 0xC0126811BBA45B0A    # Kepler
+    .quad 0x3F6B2467AFD31964    # Interaction
+    .quad 0x4010BBB307ACAFDB    # Kepler
+    .quad 0xBF6B2467AFD31964    # Interaction
+    .quad 0xC00E1EA8A76A0957    # Kepler
+    .quad 0xBF88B9144F7F2B3F    # Interaction
+    .quad 0x400AC5EB3F7AB2F8    # Kepler
+    .quad 0x3F88B9144F7F2B3F    # Interaction
+    .quad 0xC0076D2DD78B5C99    # Kepler
+    .quad 0x3FA099A47793A306    # Interaction
+    .quad 0x400414706F9C063A    # Kepler
+    .quad 0xBFA099A47793A306    # Interaction
+    .quad 0xC000BBB307ACAFDB    # Kepler
+    .quad 0xBFB0B07AC0FE3DF1    # Interaction
+    .quad 0x3FFAC5EB3F7AB2F8    # Kepler
+    .quad 0x3FB0B07AC0FE3DF1    # Interaction
+    .quad 0xBFF414706F9C063A    # Kepler
+    .quad 0x3FB7D2865A643682    # Interaction
+    .quad 0x3FEAC5EB3F7AB2F8    # Kepler
+    .quad 0xBFC7D2865A643682    # Interaction (combined)
+    .quad 0xBFEAC5EB3F7AB2F8    # Kepler
+    .quad 0x3FB7D2865A643682    # Interaction
+    .quad 0x3FF414706F9C063A    # Kepler
+    .quad 0x3FB0B07AC0FE3DF1    # Interaction
+    .quad 0xBFFAC5EB3F7AB2F8    # Kepler
+    .quad 0xBFB0B07AC0FE3DF1    # Interaction
+    .quad 0x4000BBB307ACAFDB    # Kepler
+    .quad 0xBFA099A47793A306    # Interaction
+    .quad 0xC00414706F9C063A    # Kepler
+    .quad 0x3FA099A47793A306    # Interaction
+    .quad 0x40076D2DD78B5C99    # Kepler
+    .quad 0x3F88B9144F7F2B3F    # Interaction
+    .quad 0xC00AC5EB3F7AB2F8    # Kepler
+    .quad 0xBF88B9144F7F2B3F    # Interaction
+    .quad 0x400E1EA8A76A0957    # Kepler
+    .quad 0xBF6B2467AFD31964    # Interaction
+    .quad 0xC010BBB307ACAFDB    # Kepler
+    .quad 0x3F6B2467AFD31964    # Interaction
+    .quad 0x40126811BBA45B0A    # Kepler
+    .quad 0x3F44D7273C9751C8    # Interaction
+    .quad 0xC01414706F9C063A    # Kepler
+    .quad 0xBF44D7273C9751C8    # Interaction
+    .quad 0x4015C0CF2393B16A    # Kepler
+    .quad 0xBF14098E956E85C7    # Interaction
+    .quad 0xC0176D2DD78B5C99    # Kepler
+    .quad 0x3F14098E956E85C7    # Interaction
+    .quad 0x4019198C8B8307C8    # Kepler
+    .quad 0x3ED22E64AF0557FF    # Interaction
+    .quad 0xC01AC5EB3F7AB2F8    # Kepler
+    .quad 0xBED22E64AF0557FF    # Interaction
+    .quad 0x400AC5EB3F7AB2F8    # Kepler
 
 .section .note.GNU-stack,"",@progbits
