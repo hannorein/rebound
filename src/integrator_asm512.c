@@ -436,11 +436,11 @@ static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
     // Check if all assumptions are satisfied.
     // Note: These are not checked every timestep. 
     // So it is possible for the user to screw things up.
-    if (r->dt<0.0){
-        reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
-        r->status = REB_STATUS_GENERIC_ERROR;
-        return 1;
-    }
+//    if (r->dt<0.0){
+//        reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
+//        r->status = REB_STATUS_GENERIC_ERROR;
+//        return 1;
+//    }
     if (r->N_var!=0){
         reb_simulation_error(r, "WHFast512 does not support variational particles.");
         r->status = REB_STATUS_GENERIC_ERROR;

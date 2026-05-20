@@ -31,7 +31,7 @@ void setup_sim(char* integrator, int corrector){
         whfast->corrector = corrector;
     }
     double E0 = reb_simulation_energy(r);
-    reb_simulation_integrate(r, 1e2*M_PI*2);
+    reb_simulation_integrate(r, 1e-2*M_PI*2);
     double E1 = reb_simulation_energy(r);
     printf("integrator=%s, corrector=%d: \t%.16e\n", integrator, corrector, fabs((E0-E1)/E0));
     reb_simulation_free(r);

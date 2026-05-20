@@ -17,7 +17,7 @@
 struct reb_simulation* setup_sim(double a, double e){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 5.0/365.25*2*M_PI;
+    r->dt = -5.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
    

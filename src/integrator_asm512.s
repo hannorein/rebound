@@ -25,6 +25,22 @@
 .set P512_COUNTER, 2368
 
 #####################################
+# Register use
+#                           Kepler   Interaction   Other
+# 64    32    16   8      
+# rax   eax   ax   ah,al    Newton   matmul
+# rbx   ebx   bx   bh,bl  
+# rcx   ecx   cx   ch,cl    Newton 
+# rdx   edx   dx   dh,dl                           skip_first_kepler 
+# rsi   esi   si   sil                             number_of_steps 
+# rdi   edi   di   dil      ------------pointer to simd_data--------- 
+# rbp   ebp   bp   bpl      ------------frame pointer----------------
+# rsp   esp   sp   spl      ------------stack pointer----------------
+# r8    r8d   r8w  r8b                             corrector 
+# r9    r9d   r9w  r9b      
+
+
+#####################################
 # Register alias
 #####################################
 
@@ -614,36 +630,6 @@
 .endm 
 
 
-#.macro reb_asm512_corrector_Z a b
-#    #input a, b
-## Kepler used DT
-#    vmovapd         P512_DT(%rdi), DT
-#    vmulpd          \a, DT, DT
-#    kepler_step a
-## Interaction uses DT, M_DT
-#    vmovapd         P512_DT(%rdi), DT
-#    vmulpd          \-b, DT, DT
-#    vmovapd         P512_M(%rdi), M
-#    vmulpd          DT, M, M_DT
-#    interaction_step -b
-## Kepler used DT
-#    vmovapd         P512_DT(%rdi), DT
-#    vmulpd          \-a, DT, DT
-#    vadpd           DT, DT, DT
-#    kepler_step -2*a
-## Interaction uses DT, M_DT
-#    interaction_step b
-#    vmovapd         P512_DT(%rdi), DT
-#    vmulpd          \b, DT, DT
-#    vmovapd         P512_M(%rdi), M
-#    vmulpd          DT, M, M_DT
-## Kepler used DT
-#    vmovapd         P512_DT(%rdi), DT
-#    vmulpd          \a, DT, DT
-#    kepler_step a
-#    ret
-#.endm
-
 _kepler_step:
     # Kepler uses DT
     vmulpd          P512_DT(%rdi), %zmm0, DT
@@ -653,7 +639,6 @@ _kepler_step:
 _interaction_step:
     # Interaction uses DT, M_DT
     vmulpd          P512_DT(%rdi), %zmm0, DT
-    vmovapd         P512_M(%rdi), M
     vmulpd          DT, M, M_DT
     subq    $192, %rsp
     #interaction_step 3
@@ -673,22 +658,21 @@ reb_asm512_corrector_step:
     reb_asm512_init_registers # does not overwrite xmm0
     subq        $8, %rsp
     movsd       %xmm0, (%rsp) # store direction (1 or -1)
-
     leaq        .CORRECTOR17_AB(%rip), %r8
-    leaq        504(%r8), %rdx
+    leaq        504(%r8), %rdx #end of array 63*8
 
     jmp .L_CorrectorLoopK
 
 .L_CorrectorLoopI:
-    vbroadcastsd     (%r8), %zmm0
+    vbroadcastsd    (%r8), %zmm0
+    addq            $8, %r8
     vmulpd          (%rsp){1to8}, %zmm0, %zmm0
     call _interaction_step
-    addq        $8, %r8
 
 .L_CorrectorLoopK:
-    vbroadcastsd     (%r8), %zmm0
-    call _kepler_step
-    addq        $8, %r8
+    vbroadcastsd    (%r8), %zmm0
+    addq            $8, %r8
+    #call _kepler_step
     
     cmpq        %rdx, %r8
     jne        .L_CorrectorLoopI
