@@ -396,6 +396,203 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
     particles[0].vz = trace->com_vel.z - temp.vz;
 }
 
+void reb_integrator_trace_inertial_to_wb(struct reb_simulation* r){
+    struct reb_particle* particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const int N = r->N;
+    const int N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?r->N:r->N_active;
+
+    const int idxA = 0; // star A assumed to be first particle
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+
+    if (idxB == -1){
+        // no binary companion, just shift to DH coordinates
+        reb_integrator_trace_inertial_to_dh(r);
+        return;
+    }
+
+    double mplanets = 0.0; // total planet mass
+    struct reb_vec3d sum_mx = {0.0, 0.0, 0.0};   // sum(m_i x_i)
+    struct reb_vec3d sum_mvx = {0.0, 0.0, 0.0};  // sum(m_i v_i)
+
+    for (int i = 1; i <= N_active-1; ++i){
+        if (i == idxB) continue; // skip binary companion
+        double m = particles[i].m;
+        mplanets += m;
+        sum_mx.x  += m * particles[i].x;
+        sum_mx.y  += m * particles[i].y;
+        sum_mx.z  += m * particles[i].z;
+        sum_mvx.x += m * particles[i].vx;
+        sum_mvx.y += m * particles[i].vy;
+        sum_mvx.z += m * particles[i].vz;
+    }
+
+    double mA = particles[idxA].m;
+    double mB = particles[idxB].m;
+    double mtot = mA + mB + mplanets;
+
+    // ------------------ POSITIONS ------------------
+    // Save B original position
+    struct reb_vec3d xB_orig = {
+        .x=particles[idxB].x,
+        .y=particles[idxB].y,
+        .z=particles[idxB].z
+    };
+
+    // X_i = x_i - x_A
+    // Particle 0 is also changed to allow for easy collision detection NOT YET BUT PUT THIS BACK IN!!!!!
+    for (int i=N-1; i>0; i--){
+        if (i == idxB) continue; // skip binary companion
+        particles[i].x -= particles[idxA].x;
+        particles[i].y -= particles[idxA].y;
+        particles[i].z -= particles[idxA].z;
+    }
+
+    // X_B = x_B - (mA xA + sum_mx)/(mA+mplanets)
+    particles[idxB].x -= (mA*particles[idxA].x + sum_mx.x)/(mA+mplanets);
+    particles[idxB].y -= (mA*particles[idxA].y + sum_mx.y)/(mA+mplanets);
+    particles[idxB].z -= (mA*particles[idxA].z + sum_mx.z)/(mA+mplanets);
+
+    // X_A = (mA xA + mB xB + sum_mx) / mtot
+    // X_A = COM position — save it, then zero particle A
+    trace->com_pos.x = (mA * particles[idxA].x + mB * xB_orig.x + sum_mx.x) / mtot;
+    trace->com_pos.y = (mA * particles[idxA].y + mB * xB_orig.y + sum_mx.y) / mtot;
+    trace->com_pos.z = (mA * particles[idxA].z + mB * xB_orig.z + sum_mx.z) / mtot;
+    // Particle 0 is also changed to allow for easy collision detection
+    particles[idxA].x = 0.0;
+    particles[idxA].y = 0.0;
+    particles[idxA].z = 0.0;
+
+    // ------------------ VELOCITIES ------------------
+    // Save original inertial velocities before any writes
+    struct reb_vec3d vA_orig = { particles[idxA].vx, particles[idxA].vy, particles[idxA].vz };
+    struct reb_vec3d vB_orig = { particles[idxB].vx, particles[idxB].vy, particles[idxB].vz };
+
+    // Planets: V_i = v_i - (mA vA + sum_mvx)/(mA+mplanets)
+    for (int i=N-1; i>0; i--) {
+        if (i == idxB) continue; // skip binary companion
+        particles[i].vx -= (mA*vA_orig.x + sum_mvx.x)/(mA+mplanets);
+        particles[i].vy -= (mA*vA_orig.y + sum_mvx.y)/(mA+mplanets);
+        particles[i].vz -= (mA*vA_orig.z + sum_mvx.z)/(mA+mplanets);
+    }
+
+    // Total momentum (inertial)
+    struct reb_vec3d Ptot = {
+        .x = mA*vA_orig.x + mB*vB_orig.x + sum_mvx.x,
+        .y = mA*vA_orig.y + mB*vB_orig.y + sum_mvx.y,
+        .z = mA*vA_orig.z + mB*vB_orig.z + sum_mvx.z
+    };
+
+    // A DOF is the COM: V_A = Ptot / mtot
+    trace->com_vel.x = Ptot.x / mtot;
+    trace->com_vel.y = Ptot.y / mtot;
+    trace->com_vel.z = Ptot.z / mtot;
+    particles[idxA].vx = 0.0;
+    particles[idxA].vy = 0.0;
+    particles[idxA].vz = 0.0;
+
+    // B DOF: V_B = v_B - Ptot/mtot  (i.e. v_B - V_A)
+    particles[idxB].vx -= trace->com_vel.x;
+    particles[idxB].vy -= trace->com_vel.y;
+    particles[idxB].vz -= trace->com_vel.z;
+}
+
+void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
+    struct reb_particle* particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const int N = r->N;
+    const int N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?r->N:r->N_active;
+
+    const int idxA = 0; // star A assumed to be first particle
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+
+    if (idxB == -1){
+        // no binary companion, just shift to DH coordinates
+        reb_integrator_trace_dh_to_inertial(r);
+        return;
+    }
+
+    // ------------------ sums from WB planet coordinates ------------------
+    double M = 0.0; // Σ m_i
+    struct reb_vec3d sum_mX = {0.0, 0.0, 0.0}; // Σ m_i X_i
+    struct reb_vec3d sum_mV = {0.0, 0.0, 0.0}; // Σ m_i V_i
+
+    for (int i = 1; i <= N_active-1; ++i) {
+        if (i == idxB) continue; // skip binary companion
+        const double m = particles[i].m;
+        M += m;
+        sum_mX.x += m * particles[i].x;
+        sum_mX.y += m * particles[i].y;
+        sum_mX.z += m * particles[i].z;
+
+        sum_mV.x += m * particles[i].vx;
+        sum_mV.y += m * particles[i].vy;
+        sum_mV.z += m * particles[i].vz;
+    }
+
+    const double mA = particles[idxA].m;
+    const double mB = particles[idxB].m;
+    const double mtot   = mA + mB + M;
+    const double denomA = mA + M;  // (mA + Σ m_i)
+
+    // Cache WB star
+    const struct reb_vec3d X_B = { particles[idxB].x,  particles[idxB].y,  particles[idxB].z };
+    const struct reb_vec3d V_B = { particles[idxB].vx, particles[idxB].vy, particles[idxB].vz };
+
+    // POSITIONS
+    struct reb_vec3d sum_mX_over_d = {0.0, 0.0, 0.0};
+    sum_mX_over_d.x = sum_mX.x / denomA;
+    sum_mX_over_d.y = sum_mX.y / denomA;
+    sum_mX_over_d.z = sum_mX.z / denomA;
+
+    // Use com to calculate central object's position.
+    // This ignores previous values stored in particles[0].
+    // Should not matter unless collisions occurred.
+    particles[idxA].x = trace->com_pos.x - (mB * X_B.x + mB * sum_mX_over_d.x + sum_mX.x) / mtot;
+    particles[idxA].y = trace->com_pos.y - (mB * X_B.y + mB * sum_mX_over_d.y + sum_mX.y) / mtot;
+    particles[idxA].z = trace->com_pos.z - (mB * X_B.z + mB * sum_mX_over_d.z + sum_mX.z) / mtot;
+
+    // Planets: x_i = X_i + x_A
+    // Loop over all N to include test particles
+    for (int i=1;i<N;i++) {
+        if (i == idxB) continue; // skip binary companion
+        particles[i].x += particles[idxA].x; // particles[i].x currently X_i
+        particles[i].y += particles[idxA].y;
+        particles[i].z += particles[idxA].z;
+    }
+
+    // Star B: x_B = X_B + x_A + sum_mX/denomA
+    particles[idxB].x = X_B.x + particles[idxA].x + sum_mX_over_d.x; 
+    particles[idxB].y = X_B.y + particles[idxA].y + sum_mX_over_d.y; 
+    particles[idxB].z = X_B.z + particles[idxA].z + sum_mX_over_d.z;
+
+    // Common additive term for all planets: W = V_A - coefB * V_B
+    const struct reb_vec3d W = {
+        trace->com_vel.x - (mB / denomA) * V_B.x,
+        trace->com_vel.y - (mB / denomA) * V_B.y,
+        trace->com_vel.z - (mB / denomA) * V_B.z
+    };
+
+    // v_A
+    particles[idxA].vx = W.x - sum_mV.x / mA;
+    particles[idxA].vy = W.y - sum_mV.y / mA;
+    particles[idxA].vz = W.z - sum_mV.z / mA;
+
+    // v_B
+    particles[idxB].vx = V_B.x + trace->com_vel.x;
+    particles[idxB].vy = V_B.y + trace->com_vel.y;
+    particles[idxB].vz = V_B.z + trace->com_vel.z;
+
+    // Planets: v_i = V_i + add_planet
+    for (int i = 1; i < N; ++i) {
+        if (i == idxB) continue;
+        particles[i].vx += W.x; // particles[i].vx currently V_i
+        particles[i].vy += W.y;
+        particles[i].vz += W.z;
+    }
+}
+
+
 static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
     struct reb_integrator_trace_state* const trace = r->integrator.state;
