@@ -3,6 +3,7 @@
 .globl block1_gr
 .globl block1_nogr
 .globl reb_asm512_kepler_step
+.globl reb_asm512_corrector_step
 .globl reb_asm512_interaction_step
 
 #P512 Structure offsets
@@ -651,6 +652,9 @@ reb_asm512_kepler_step:
     reb_asm512_init_registers
     kepler_step 2
     reb_asm512_store_results
+    ret
+
+reb_asm512_corrector_step:
     ret
 
 reb_asm512_interaction_step:
