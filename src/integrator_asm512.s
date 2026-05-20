@@ -646,19 +646,17 @@
 
 _kepler_step:
     # Kepler uses DT
-    vmovapd         P512_DT(%rdi), %zmm0
-    vmulpd          %zmm0, DT, DT
+    vmulpd          P512_DT(%rdi), %zmm0, DT
     kepler_step 3
     ret
 
 _interaction_step:
     # Interaction uses DT, M_DT
-    vmovapd         P512_DT(%rdi), DT
-    vmulpd          %zmm0, DT, DT
+    vmulpd          P512_DT(%rdi), %zmm0, DT
     vmovapd         P512_M(%rdi), M
     vmulpd          DT, M, M_DT
     subq    $192, %rsp
-    interaction_step 3
+    #interaction_step 3
     addq    $192, %rsp
     ret
 
@@ -683,6 +681,7 @@ reb_asm512_corrector_step:
 
 .L_CorrectorLoopI:
     vbroadcastsd     (%r8), %zmm0
+    vmulpd          (%rsp){1to8}, %zmm0, %zmm0
     call _interaction_step
     addq        $8, %r8
 
@@ -695,6 +694,7 @@ reb_asm512_corrector_step:
     jne        .L_CorrectorLoopI
 
     addq        $8, %rsp
+    reb_asm512_store_results
     ret
 
 reb_asm512_interaction_step:
