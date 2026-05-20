@@ -10,7 +10,7 @@
 void setup_sim(char* integrator, int corrector){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 0.1* 6.0/365.25*2*M_PI;
+    r->dt = 6.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
     reb_simulation_add_fmt(r, "solarsystem");
@@ -31,7 +31,7 @@ void setup_sim(char* integrator, int corrector){
         whfast->corrector = corrector;
     }
     double E0 = reb_simulation_energy(r);
-    reb_simulation_integrate(r, 1e-2*M_PI*2);
+    reb_simulation_integrate(r, 1e2*M_PI*2);
     double E1 = reb_simulation_energy(r);
     printf("integrator=%s, corrector=%d: \t%.16e\n", integrator, corrector, fabs((E0-E1)/E0));
     reb_simulation_free(r);
