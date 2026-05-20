@@ -98,7 +98,7 @@
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vbroadcastsd    .HALF(%rip), HALF
     vbroadcastsd    .EPS(%rip), EPS
-    vmovdqa64    .SIGN_MASK(%rip), SIGN_MASK
+    vbroadcastsd    .SIGN_MASK(%rip), SIGN_MASK
     
     vmovapd     P512_X(%rdi), X
     vmovapd     P512_Y(%rdi), Y
@@ -662,18 +662,18 @@ reb_asm512_corrector_step:
 
 .L_CorrectorLoopI:
     vbroadcastsd    (%r8), %zmm0
-    addq            $8, %r8
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
     # Interaction uses DT, M_DT
     vmulpd          P512_DT(%rdi), %zmm0, DT
     vmulpd          DT, M, M_DT
     interaction_step 3
+    addq            $8, %r8
 
 .L_CorrectorLoopK:
     vbroadcastsd    (%r8), %zmm0
-    addq            $8, %r8
     vmulpd          P512_DT(%rdi), %zmm0, DT
     kepler_step 3
+    addq            $8, %r8
     
     cmpq        %rdx, %r8
     jne        .L_CorrectorLoopI
@@ -735,7 +735,7 @@ block1_nogr: BLOCK1 0
     .quad 0x401921fb54442d18
 
 .align 8
-.ONE_QUAD:
+.ONE_QUAD: # TODO DEBUG ONLY
     .quad 1
     .quad 1
     .quad 1
@@ -760,15 +760,8 @@ b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
 
 # Inverse factorial table
-.align 64
+.align 8
 .SIGN_MASK:
-    .quad 0x7FFFFFFFFFFFFFFF
-    .quad 0x7FFFFFFFFFFFFFFF
-    .quad 0x7FFFFFFFFFFFFFFF
-    .quad 0x7FFFFFFFFFFFFFFF
-    .quad 0x7FFFFFFFFFFFFFFF
-    .quad 0x7FFFFFFFFFFFFFFF
-    .quad 0x7FFFFFFFFFFFFFFF
     .quad 0x7FFFFFFFFFFFFFFF
 .align 8
 .EPS:
