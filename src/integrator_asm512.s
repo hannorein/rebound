@@ -78,10 +78,10 @@
 .set DT, %zmm29
 .set HALF, %zmm30
 .set M, %zmm31
-.set M_DT, %zmm12   # Only used once per step.
+.set M_DT, %zmm12           # Only used once per step.
 .set EPS, %zmm11
-.set SIGN_MASK, %zmm10
-.set MM0_DT, %zmm9 # -dt*M0 Only used once per step.
+.set SIGN_ABS_MASK, %zmm10  # Only used once per step.
+.set MM0_DT, %zmm9          # -dt*M0 Only used once per step.
 
 .macro reb_asm512_init_registers
     # Ignore exceptions
@@ -102,7 +102,7 @@
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vbroadcastsd    .HALF(%rip), HALF
     vbroadcastsd    .EPS(%rip), EPS
-    vbroadcastsd    .SIGN_MASK(%rip), SIGN_MASK
+    vbroadcastsd    .SIGN_ABS_MASK(%rip), SIGN_ABS_MASK
     
     vmovapd     P512_X(%rdi), X
     vmovapd     P512_Y(%rdi), Y
@@ -340,7 +340,7 @@
     newton 
 
     vsubpd      XX, %zmm7, %zmm7  # Delta XX
-    vpandq      SIGN_MASK, %zmm7, %zmm7  # abs(Delta XX)
+    vpandq      SIGN_ABS_MASK, %zmm7, %zmm7  # abs(Delta XX)
 
     # Required precision reached?
     vcmppd      $25, EPS, %zmm7, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
@@ -765,8 +765,9 @@ b4idx:
 b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
 
+# These two MASK are the inverse of each other and could be combined.
 .align 8
-.SIGN_MASK:
+.SIGN_ABS_MASK:
     .quad 0x7FFFFFFFFFFFFFFF
 .align 8
 .SIGN_FLIP_MASK:
