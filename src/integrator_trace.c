@@ -211,16 +211,16 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     const struct reb_integrator_trace_state* const trace = r->integrator.state;
     double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use.
 
-    double x = r->particles[j].x;
-    double y = r->particles[j].y;
-    double z = r->particles[j].z;
+    double x = r->particles[j].x - r->particles[0].x;
+    double y = r->particles[j].y - r->particles[0].y;
+    double z = r->particles[j].z - r->particles[0].z;
     double d2 = x*x + y*y + z*z;
     double d = sqrt(d2);
 
     // first derivative
-    double dx = r->particles[j].vx;
-    double dy = r->particles[j].vy;
-    double dz = r->particles[j].vz;
+    double dx = r->particles[j].vx - r->particles[0].vx;
+    double dy = r->particles[j].vy - r->particles[0].vy;
+    double dz = r->particles[j].vz - r->particles[0].vz;
 
     // second derivative
     double prefact2 = -GM/(d2*d);
@@ -249,10 +249,67 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     double dt_prs2 = trace->peri_crit_eta * trace->peri_crit_eta * tau_prs2;
 
     if (r->dt * r->dt > dt_prs2){
+        //printf("This happening??? %f\n", r->t);
+        //exit(1);
         return 1;
     }else{
+        // In WB coordinates, we also switch if we enter the binary's hill sphere x r_crit_WB
+
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+            // reb_integrator_trace_wb_to_inertial(r);
+            const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); // star B assumed to be last active particle
+            const int has_binary = (idxB != -1);
+            if (has_binary){
+                double bx = r->particles[idxB].x;
+                double by = r->particles[idxB].y;
+                double bz = r->particles[idxB].z;
+                double br2 = bx*bx + by*by + bz*bz;
+                double mr = r->particles[idxB].m/(3.*r->particles[0].m);
+
+                double factor2 = trace->r_crit_WB*trace->r_crit_WB;
+                const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+
+                double dxb = r->particles[j].x - r->particles[idxB].x;
+                double dyb = r->particles[j].y - r->particles[idxB].y;
+                double dzb = r->particles[j].z - r->particles[idxB].z;
+                double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+
+                //printf("this happening??? %f %d %d %f %f\n", r->t, j, idxB, sqrt(d2b), pow(rhillb6,1./6.));
+                //    exit(1);
+
+                if (d2b*d2b*d2b < rhillb6){
+                    return 1;
+                }
+            }
+
+        }
         return 0;
     }
+}
+
+int reb_integrator_trace_switch_WB_default(struct reb_simulation* const r, const size_t j){
+    // reb_integrator_trace_wb_to_inertial(r);
+    const struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); // star B assumed to be last active particle
+    double bx = r->particles[idxB].x - r->particles[0].x;
+    double by = r->particles[idxB].y - r->particles[0].y;
+    double bz = r->particles[idxB].z - r->particles[0].z;
+    double br2 = bx*bx + by*by + bz*bz;
+    double mr = r->particles[idxB].m/(3.*r->particles[0].m);
+
+    double factor2 = trace->r_crit_WB*trace->r_crit_WB;
+    const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+    //const double rhillb62 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+
+    double dxb = r->particles[j].x - r->particles[idxB].x;
+    double dyb = r->particles[j].y - r->particles[idxB].y;
+    double dzb = r->particles[j].z - r->particles[idxB].z;
+    double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+
+    if (d2b*d2b*d2b < rhillb6){
+        return 1;
+    }
+    return 0;
 }
 
 int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j){
