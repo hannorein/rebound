@@ -10,7 +10,7 @@
 void setup_sim(char* integrator, int corrector){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 1e-1*6.0/365.25*2*M_PI;
+    r->dt = 0.1* 6.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
     reb_simulation_add_fmt(r, "solarsystem");

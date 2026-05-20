@@ -641,20 +641,6 @@
 .endm 
 
 
-_kepler_step:
-    # Kepler uses DT
-    vmulpd          P512_DT(%rdi), %zmm0, DT
-    kepler_step 3
-    ret
-
-_interaction_step:
-    # Interaction uses DT, M_DT
-    vmulpd          P512_DT(%rdi), %zmm0, DT
-    vmulpd          DT, M, M_DT
-    subq    $192, %rsp
-    interaction_step 3
-    addq    $192, %rsp
-    ret
 
 ###############################################################################
 # Global functions
@@ -667,28 +653,32 @@ reb_asm512_kepler_step:
 
 reb_asm512_corrector_step:
     reb_asm512_init_registers # does not overwrite xmm0
-    subq        $8, %rsp
-    movsd       %xmm0, (%rsp) # store direction (1 or -1)
+    subq        $200, %rsp
+    movsd       %xmm0, 192(%rsp) # store direction (1 or -1)
     leaq        .CORRECTOR17_AB(%rip), %r8
-    leaq        504(%r8), %rdx #end of array 63*8
+    leaq        520(%r8), %rdx #end of array 63*8
 
     jmp .L_CorrectorLoopK
 
 .L_CorrectorLoopI:
     vbroadcastsd    (%r8), %zmm0
     addq            $8, %r8
-    vmulpd          (%rsp){1to8}, %zmm0, %zmm0
-    call _interaction_step
+    vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
+    # Interaction uses DT, M_DT
+    vmulpd          P512_DT(%rdi), %zmm0, DT
+    vmulpd          DT, M, M_DT
+    interaction_step 3
 
 .L_CorrectorLoopK:
     vbroadcastsd    (%r8), %zmm0
     addq            $8, %r8
-    call _kepler_step
+    vmulpd          P512_DT(%rdi), %zmm0, DT
+    kepler_step 3
     
     cmpq        %rdx, %r8
     jne        .L_CorrectorLoopI
 
-    addq        $8, %rsp
+    addq        $200, %rsp
     reb_asm512_store_results
     ret
 
@@ -856,7 +846,7 @@ b34mergeidx:
     .long    938635522
 
 .align 64
-.CORRECTOR17_AB:        # 63 coefficients for 17th order corrector
+.CORRECTOR17_AB:        # 65 coefficients for 17th order corrector
     .quad 0xC00AC5EB3F7AB2F8    # Kepler
     .quad 0xBED22E64AF0557FF    # Interaction
     .quad 0x401AC5EB3F7AB2F8    # Kepler
@@ -888,7 +878,12 @@ b34mergeidx:
     .quad 0xBFF414706F9C063A    # Kepler
     .quad 0x3FB7D2865A643682    # Interaction
     .quad 0x3FEAC5EB3F7AB2F8    # Kepler
-    .quad 0xBFC7D2865A643682    # Interaction (combined)
+
+#    .quad 0xBFC7D2865A643682    # Interaction (combined next three)
+    .quad 0xBFB7D2865A643682    # Interaction
+    .quad 0x0000000000000000    # Kepler
+    .quad 0xBFB7D2865A643682    # Interaction
+
     .quad 0xBFEAC5EB3F7AB2F8    # Kepler
     .quad 0x3FB7D2865A643682    # Interaction
     .quad 0x3FF414706F9C063A    # Kepler
