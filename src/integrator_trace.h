@@ -35,9 +35,17 @@ struct reb_integrator_trace_state {
     enum {
         REB_GENERATE_ENUM(REB_INTEGRATOR_TRACE_PERIMODE)
     } peri_mode;
+    
+#define REB_INTEGRATOR_TRACE_COORDINATES(X,Y) \
+    X(Y, 1, DEMOCRATICHELIOCENTRIC) \
+    X(Y, 2, WIDEBINARY)
+    enum {
+        REB_GENERATE_ENUM(REB_INTEGRATOR_TRACE_COORDINATES)
+    } coordinates;
 
     double r_crit_hill;
     double peri_crit_eta;
+    double r_crit_WB; // critical distance (units of hill radius) for close encounters with the binary in WB coordinates
 
     // Internal use
     enum {

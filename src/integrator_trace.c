@@ -72,6 +72,8 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         "the modified Hill radius. This value is used by the `default` switching function. "
         "The default value is 4.", 
         REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
+    { "Critical distance (units of hill radius) for close encounters with the binary in WB coordinates.", 
+        REB_DOUBLE,      "r_crit_WB",      offsetof(struct reb_integrator_trace_state, r_crit_WB), 0, 0, 0},
     { "The criteria for a pericenter approach with the central body. This criteria is used "
         "in the `default` pericenter switching condition. It flags a particle as in a close "
         "pericenter approach if the ratio of the timestep to the condition described in "
@@ -79,6 +81,8 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
     { "This flag determines how TRACE integrates close approaches with the central star.", 
         REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
+    { "Coordinates system.", 
+        REB_INT,         "coordinates",      offsetof(struct reb_integrator_trace_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_COORDINATES)},
     { "This is a function pointer to the switching function for close encounters between "
         "non-central bodies. If NULL (the default), the default switching function will be used."
         "The default switching function is a similar (but slightly modified) switching function "
@@ -105,10 +109,12 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
 void* reb_integrator_trace_create(){
     struct reb_integrator_trace_state* trace = calloc(sizeof(struct reb_integrator_trace_state),1);
     trace->r_crit_hill = 3;
+    trace->r_crit_WB = 0.1;
     trace->peri_crit_eta = 1.0;
     trace->S = NULL;
     trace->S_peri = NULL;
     trace->peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS;
+    trace->coordinates = REB_INTEGRATOR_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC;
     return trace;
 }
 
