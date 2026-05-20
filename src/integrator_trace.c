@@ -592,6 +592,8 @@ void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
     }
 }
 
+static void reb_integrator_trace_calculate_acceleration_mode_interaction_wb(struct reb_simulation* r){
+}
 
 static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct reb_simulation* r){
     struct reb_particle* const particles = r->particles;
@@ -712,6 +714,9 @@ static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct 
             particles[i].vz = backup[i].vz;
         }
     }
+}
+
+static void reb_integrator_trace_calculate_acceleration_mode_kepler_wb(struct reb_simulation* r){
 }
 
 static void reb_integrator_trace_calculate_acceleration_mode_kepler(struct reb_simulation* r){
@@ -860,7 +865,12 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     trace->mode = REB_INTEGRATOR_TRACE_MODE_INTERACTION;
-    reb_integrator_trace_calculate_acceleration_mode_interaction(r);
+    if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+        reb_integrator_trace_calculate_acceleration_mode_interaction_wb(r);
+    }else{
+        reb_integrator_trace_calculate_acceleration_mode_interaction(r);
+    }
+
     for (size_t i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
@@ -961,7 +971,11 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
     reb_integrator_trace_update_particles(r, y);
-    reb_integrator_trace_calculate_acceleration_mode_kepler(r);
+    if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+        reb_integrator_trace_calculate_acceleration_mode_kepler_wb(r);
+    }else{
+        reb_integrator_trace_calculate_acceleration_mode_kepler(r);
+    }
 
     double px=0., py=0., pz=0.;
     size_t* map = trace->encounter_map;
@@ -1036,7 +1050,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     r->map = trace->encounter_map; // for collision search
     r->N_map = trace->encounter_N;
     r->gravity = REB_GRAVITY_CUSTOM;
-    r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
+    if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+        r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler_wb;
+    }else{
+        r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
+    }
 
     // Only Partial BS uses this step 
     if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS || !trace->current_C){
