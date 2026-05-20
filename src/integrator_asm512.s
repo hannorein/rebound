@@ -353,10 +353,21 @@
     knotb           %k4, %k4                    # Only update failed particles
     movq            $0, %rcx
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
-    vsqrtpd         BETA, %zmm2
-    vbroadcastsd    .TWOPI(%rip), %zmm1
-    vdivpd          %zmm2, %zmm1, %zmm1         # X_MAX = 2*pi/BETA = X_per_period
-    vmulpd          HALF, %zmm1, XX{%k4}        # X = (X_MIN + X_MAX)/2
+    
+    vsqrtpd         BETA, %zmm1
+    vmulpd          %zmm1, BETA, %zmm2          # sqrt(BETA)*BETA
+    vmulpd          .TWOPI(%rip){1to8}, M, %zmm3
+    vdivpd          %zmm3, %zmm2, %zmm2         # invperiod
+    vmulpd          %zmm2, DT, %zmm2
+    vrndscalepd     $0x1, %zmm2, %zmm2          # floor(dt*invperiod)
+
+    vbroadcastsd    .TWOPI(%rip), %zmm3
+    vdivpd          %zmm1, %zmm3, %zmm1         # X_per_period = 2*pi/sqrt(BETA)
+    vmulpd          %zmm1, %zmm2, %zmm5         # X_MIN = X_per_period*floor(dt_invperiod)
+    vaddpd          %zmm1, %zmm5, %zmm1         # X_MAX = X_MIN + X_per_period
+
+    vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
+    vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\grflag:
 ##DEBUG COUNTER:
 #    vmovdqa64 P512_COUNTER(%rdi), %zmm4
