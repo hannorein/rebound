@@ -698,7 +698,8 @@ static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct 
             trace->N_allocated_additional_forces = r->N;
         }
         memcpy(trace->particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
-        reb_integrator_trace_dh_to_inertial(r);
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+        else reb_integrator_trace_dh_to_inertial(r);
         r->additional_forces(r);
         struct reb_particle* restrict const particles = r->particles;
         struct reb_particle* restrict const backup = trace->particles_backup_additional_forces;
@@ -905,9 +906,35 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
     struct reb_particle* restrict const particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
-    for (size_t i=1;i<N;i++){
-        reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL);
+    const int N_active = r->N_active==SIZE_MAX?r->N:r->N_active;
+    
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+    const int has_binary = (idxB != -1);
+    struct reb_particle* p = r->particles;
+
+    double mA = p[0].m;
+    double mB = has_binary ? p[idxB].m : 0.0;
+    double Mpl = 0.0;
+    for (size_t i=1; i<N; ++i){
+        if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && i==idxB){
+            // This is ONLY to integrate the wide binary in WB coordinates
+            // Kepler parameter for relative coordinate X_B is G * m_tot
+            const double GM = r->G * (mA + Mpl + mB);
+
+            // I believe we need to convert from V_B equiv P_B / m_B to real velocities here, just for the Kepler solver.
+            // Works! note to self get this sanity checked...
+
+            const double scale = ((mA + mB + Mpl) / (mA + Mpl));
+            p[i].vx *= scale;  p[i].vy *= scale;  p[i].vz *= scale;
+            reb_integrator_whfast_kepler_solver(&p[i],GM,dt,NULL);
+            p[i].vx /= scale;  p[i].vy /= scale;  p[i].vz /= scale;
+        }else{
+            // normal Keplerian orbit
+            reb_integrator_whfast_kepler_solver(&p[i],r->G*p[0].m,dt,NULL);
+            Mpl += p[i].m;
+        }
     }
 }
 
@@ -1138,6 +1165,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     const size_t Nactive = r->N_active==SIZE_MAX?r->N:r->N_active;
+    int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
     int (*_switch) (struct reb_simulation* const r, const size_t i, const size_t j) = trace->S ? trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const size_t j) = trace->S_peri ? trace->S_peri : reb_integrator_trace_switch_peri_default;
 
@@ -1164,11 +1192,14 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     }
 
     // Check for pericenter CE
+    // in WB we do the pericenter checks in inertial
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     for (size_t j = 1; j < Nactive; j++){
         if (_switch_peri(r, j)){
             trace->current_C = 1;
             if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
+                if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
                 return;
             }
             if (j < Nactive){ // Two massive particles have a close encounter
@@ -1177,6 +1208,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
 
     if (trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -1191,6 +1223,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (size_t i = 0; i < Nactive; i++){ // Check central body, for collisions
         for (size_t j = i + 1; j < N; j++){
+            if ((i == idxB || j == idxB) && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 trace->current_Ks[i*N+j] = 1;
                 if (trace->encounter_map[i] == 0){
@@ -1216,6 +1249,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     const size_t Nactive = r->N_active==SIZE_MAX?r->N:r->N_active;
+    int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); // only used for WB
     int (*_switch) (struct reb_simulation* const r, const size_t i, const size_t j) = trace->S ? trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const size_t j) = trace->S_peri ? trace->S_peri : reb_integrator_trace_switch_peri_default;
     size_t new_close_encounter = 0; // New CEs
@@ -1223,14 +1257,21 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // Set this from pre-ts encounter map. I don't think we need to reset encounter_N here.
     memcpy(trace->encounter_map, trace->encounter_map_backup, N*sizeof(size_t));
 
+    // in WB we do the pericenter checks in inertial
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     if (!trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timestep.
         for (size_t j = 1; j < Nactive; j++){
+            
+            // in WB coordinates this is checked against the WB itself
+            if (j == idxB && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue;
+            
             if (_switch_peri(r, j)){
                 trace->current_C = 1;
                 new_close_encounter = 1;
                 if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15){
                     // Everything will be integrated with BS/IAS15. No need to check any further.
+                    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
                     return new_close_encounter;
                 }
 
@@ -1241,6 +1282,8 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+
     if (trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
         trace->encounter_N = N;
@@ -1254,6 +1297,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (size_t i = 0; i < Nactive; i++){ // Do not check for central body anymore
         for (size_t j = i + 1; j < N; j++){
+            if ((i == idxB || j == idxB) && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 if (trace->current_Ks[i*N+j] == 0){
                     new_close_encounter = 1;
@@ -1294,7 +1338,8 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
         trace->mode = REB_INTEGRATOR_TRACE_MODE_FULL;
-        reb_integrator_trace_dh_to_inertial(r);
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+        else reb_integrator_trace_dh_to_inertial(r);
         switch (trace->peri_mode){
             case REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15:
                 {
@@ -1364,7 +1409,9 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         }
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
-        reb_integrator_trace_inertial_to_dh(r);
+        
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+        else reb_integrator_trace_inertial_to_dh(r);
     }
 }
 
@@ -1487,7 +1534,8 @@ void reb_integrator_trace_step(struct reb_simulation* r, void* state){
     // Not sure why this was needed. HR 4 April 2026
     // reb_integrator_trace_update_acceleration(r);
 
-    reb_integrator_trace_inertial_to_dh(r);
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+    else reb_integrator_trace_inertial_to_dh(r);
 
     // Create copy of all particle to allow for the step to be rejected.
     memcpy(trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
@@ -1513,7 +1561,8 @@ void reb_integrator_trace_step(struct reb_simulation* r, void* state){
             reb_integrator_trace_step_try(r);
         }
     }
-    reb_integrator_trace_dh_to_inertial(r);
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+    else reb_integrator_trace_dh_to_inertial(r);
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
