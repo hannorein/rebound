@@ -377,7 +377,7 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
                     data->mat8_jacobi_to_inertial[(s*p_per_system+ii-1)+8*(s*p_per_system+jj-1)] -= particles[s*N_per_system+jj].m/(ms+particles[s*N_per_system+jj].m);
                 }
             }
-            M0[(s*p_per_system+i-1)] = -particles[s*N_per_system+0].m*r->dt;
+            M0[(s*p_per_system+i-1)] = particles[s*N_per_system+0].m;
         }
     }
 
@@ -405,7 +405,7 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
     //}
 
     data->M = _mm512_loadu_pd(&M);
-    data->M0 = _mm512_loadu_pd(&M0); //  = -particles[0].m * dt
+    data->M0 = _mm512_loadu_pd(&M0); //  = particles[0].m 
 
     // GR prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;

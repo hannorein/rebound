@@ -81,6 +81,7 @@
 .set M_DT, %zmm12   # Only used once per step.
 .set EPS, %zmm11
 .set SIGN_MASK, %zmm10
+.set MM0_DT, %zmm9 # -dt*M0 Only used once per step.
 
 .macro reb_asm512_init_registers
     # Ignore exceptions
@@ -95,6 +96,9 @@
     vmovapd         P512_DT(%rdi), DT
     vmovapd         P512_M(%rdi), M
     vmulpd          DT, M, M_DT
+    vmovapd         P512_M0(%rdi), MM0_DT
+    vmulpd          DT, MM0_DT, MM0_DT
+    vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
     vbroadcastsd    .DOUBLE_ONE(%rip), ONE
     vbroadcastsd    .HALF(%rip), HALF
     vbroadcastsd    .EPS(%rip), EPS
@@ -331,15 +335,15 @@
     movq $0, %rcx
 
 .NewtonLoop\grflag:    
-    vmovapd         XX,     %zmm9
+    vmovapd         XX,     %zmm7
     mm_stiefel_Gs13_avx512
     newton 
 
-    vsubpd      XX, %zmm9, %zmm9  # Delta XX
-    vpandq      SIGN_MASK, %zmm9, %zmm9  # abs(Delta XX)
+    vsubpd      XX, %zmm7, %zmm7  # Delta XX
+    vpandq      SIGN_MASK, %zmm7, %zmm7  # abs(Delta XX)
 
     # Required precision reached?
-    vcmppd      $25, EPS, %zmm9, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
+    vcmppd      $25, EPS, %zmm7, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
     kmovb       %k4, %eax
     cmpb        $0xFF, %al
     je          .NewtonLoopDone\grflag
@@ -459,9 +463,8 @@
     vsqrtpd     %zmm6, %zmm7                # r
         
     # Jacobi term
-    vmovapd     P512_M0(%rdi), %zmm5        # -m0*dt
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
-    vdivpd    %zmm7, %zmm5, %zmm8{%k1}{z}   # -m0*dt/r^3 (jacobi term)
+    vdivpd    %zmm7, MM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
 
     .if \grflag == 1
         # GR term
@@ -663,9 +666,12 @@ reb_asm512_corrector_step:
 .L_CorrectorLoopI:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
-    # Interaction uses DT, M_DT
+    # Interaction uses DT, M_DT, MM0_DT
     vmulpd          P512_DT(%rdi), %zmm0, DT
     vmulpd          DT, M, M_DT
+    vmovapd         P512_M0(%rdi), MM0_DT
+    vmulpd          DT, MM0_DT, MM0_DT
+    vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
     interaction_step 3
     addq            $8, %r8
 
@@ -759,14 +765,17 @@ b4idx:
 b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
 
-# Inverse factorial table
 .align 8
 .SIGN_MASK:
     .quad 0x7FFFFFFFFFFFFFFF
 .align 8
+.SIGN_FLIP_MASK:
+    .quad 0x8000000000000000
+.align 8
 .EPS:
     .double 1e-11
 .align 64
+# Inverse factorial table
 .IF0:
 .DOUBLE_ONE:
     .double     1.0
