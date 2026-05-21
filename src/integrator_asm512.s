@@ -31,13 +31,13 @@
 # rax   eax   ax   ah,al    Newton   matmul
 # rbx   ebx   bx   bh,bl  
 # rcx   ecx   cx   ch,cl    Newton 
-# rdx   edx   dx   dh,dl                           skip_first_kepler 
+# rdx   edx   dx   dh,dl                           skip_first_kepler, corrector
 # rsi   esi   si   sil                             number_of_steps 
 # rdi   edi   di   dil      ------------pointer to simd_data--------- 
 # rbp   ebp   bp   bpl      ------------frame pointer----------------
 # rsp   esp   sp   spl      ------------stack pointer----------------
 # r8    r8d   r8w  r8b                             corrector 
-# r9    r9d   r9w  r9b      
+# r9    r9d   r9w  r9b                             corrector
 
 
 #####################################
@@ -315,11 +315,11 @@
     vfmadd231pd     VZ, Z, ETA                  # eta
     vmovapd         BETA, ZETA
     vfnmadd132pd    R, M, ZETA                  # zeta
-    vmulpd          RI, DT, %zmm5               # dt/r
-    vmulpd          ETA, %zmm5, %zmm4           # eta*dt/r
-    vmulpd          HALF, %zmm4, %zmm4          # 0.5*eta*dt/r
-    vfnmadd132pd    RI, ONE, %zmm4        
-    vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
+    vmulpd          RI, DT, XX               # dt/r
+#    vmulpd          ETA, %zmm5, %zmm4           # eta*dt/r
+#    vmulpd          HALF, %zmm4, %zmm4          # 0.5*eta*dt/r
+#    vfnmadd132pd    RI, ONE, %zmm4        
+#    vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
     # Iterations to improve X
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     mm_stiefel_Gs03_avx512
@@ -344,15 +344,16 @@
 
     # Required precision reached?
     vcmppd      $25, EPS, %zmm7, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
+#DEBUG COUNTER:
+#    vmovdqa64 P512_COUNTER(%rdi), %zmm4
+#    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
+#    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+#END DEBUG COUNTER
+
     kmovb       %k4, %eax
     cmpb        $0xFF, %al
     je          .NewtonLoopDone\grflag
 
-#DEBUG COUNTER:
-    vmovdqa64 P512_COUNTER(%rdi), %zmm4
-    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
-    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
-#END DEBUG COUNTER
     # Maximum iterations reached?
     incq %rcx
     cmpq $5, %rcx                               # max Newton iterations
@@ -678,13 +679,19 @@ reb_asm512_corrector_step:
 .L_CorrectorLoopK:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          P512_DT(%rdi), %zmm0, DT
+    vmulpd          DT, HALF, DT # Reduce timestep for convergence
+    vmulpd          DT, HALF, DT
+    movq            $4, %r9
+.L_CorrectorLoopInnerKepler:
     kepler_step 3
+    decq            %r9
+    jnz             .L_CorrectorLoopInnerKepler
     addq            $8, %r8
     
-    cmpq        %rdx, %r8
-    jne        .L_CorrectorLoopI
+    cmpq            %rdx, %r8
+    jne             .L_CorrectorLoopI
 
-    addq        $200, %rsp
+    addq            $200, %rsp
     reb_asm512_store_results
     ret
 
