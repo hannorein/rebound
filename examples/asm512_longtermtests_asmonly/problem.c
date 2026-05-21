@@ -38,10 +38,14 @@ int main(int argc, char* argv[]) {
     asm512->gr_potential = 0;
     asm512->concatenate_steps = 1e6;
     asm512->corrector = 17;
-    for (double dT=1e1; r_asm->t<1e7*2*M_PI; dT=dT*1.05){
+    for (double dT=1e1; r_asm->t<5e9*2*M_PI; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
         double E1_asm = reb_simulation_energy(r_asm);
-        printf("%e %e\n", r_asm->t, fabs((E0-E1_asm)/E0));
+        char* mode = "a";
+        if (dT==1e1) mode = "w";
+        FILE* f = fopen("out.txt",mode);
+        fprintf(f,"%e %e\n", r_asm->t, fabs((E0-E1_asm)/E0));
+        fclose(f);
     }
     reb_simulation_free(r_asm);
     return 1;
