@@ -29,12 +29,19 @@ with open("src/rebound.c") as f:
 with open("setup.py") as f:
     setuplines = f.readlines()
     for i,l in enumerate(setuplines):
-        if "version='" in l:
-            setuplines[i] = "    version='"+reboundversion+"',\n"
         if "GITHASHAUTOUPDATE" in l:
             setuplines[i] = "    ghash_arg = \"-DGITHASH="+ghash+"\" #GITHASHAUTOUPDATE\n"
 
     with open("setup.py", "w") as f:
+        f.writelines(setuplines)
+
+with open("pyproject.toml") as f:
+    setuplines = f.readlines()
+    for i,l in enumerate(setuplines):
+        if "version = \""
+            setuplines[i] = "version = \""+reboundversion+"\"\n"
+
+    with open("pyproject.toml", "w") as f:
         f.writelines(setuplines)
 
 with open("web_client/shell_rebound_webgl.html") as f:
