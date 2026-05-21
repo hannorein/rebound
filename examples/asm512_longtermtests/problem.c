@@ -17,7 +17,7 @@
 struct reb_simulation* setup_sim(){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 1e-2*5.0/365.25*2*M_PI;
+    r->dt = 5.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
    
@@ -38,11 +38,13 @@ int main(int argc, char* argv[]) {
     reb_simulation_set_integrator(r_asm, "asm512");
     struct reb_integrator_asm512_state* asm512 = r_asm->integrator.state;
     asm512->gr_potential = 0;
-    asm512->concatenate_steps = 1e3;
+    asm512->concatenate_steps = 1e5;
+    asm512->corrector = 17;
     reb_simulation_set_integrator(r_old, "whfast512");
     reb_simulation_set_integrator(r_whf, "whfast");
     struct reb_integrator_whfast_state* whfast = r_whf->integrator.state;
     whfast->safe_mode = 0;
+    whfast->corrector = 17;
     for (double dT=1e1; r_asm->t<1e5*2*M_PI; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
         reb_simulation_integrate(r_old, r_asm->t+dT);
