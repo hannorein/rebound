@@ -38,17 +38,17 @@ int main(int argc, char* argv[]) {
     reb_simulation_set_integrator(r_asm, "asm512");
     struct reb_integrator_asm512_state* asm512 = r_asm->integrator.state;
     asm512->gr_potential = 0;
-    asm512->concatenate_steps = 1e5;
+    asm512->concatenate_steps = 1e6;
     asm512->corrector = 17;
     reb_simulation_set_integrator(r_old, "whfast512");
     reb_simulation_set_integrator(r_whf, "whfast");
     struct reb_integrator_whfast_state* whfast = r_whf->integrator.state;
     whfast->safe_mode = 0;
     whfast->corrector = 17;
-    for (double dT=1e1; r_asm->t<1e5*2*M_PI; dT=dT*1.05){
+    for (double dT=1e1; r_asm->t<1e7*2*M_PI; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
-        reb_simulation_integrate(r_old, r_asm->t+dT);
-        reb_simulation_integrate(r_whf, r_asm->t+dT);
+        reb_simulation_integrate(r_old, r_asm->t);
+        reb_simulation_integrate(r_whf, r_asm->t);
         double E1_asm = reb_simulation_energy(r_asm);
         double E1_old = reb_simulation_energy(r_old);
         double E1_whf = reb_simulation_energy(r_whf);
