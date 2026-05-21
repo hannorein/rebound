@@ -345,9 +345,11 @@
     # Required precision reached?
     vcmppd      $25, EPS, %zmm7, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
 #DEBUG COUNTER:
-#    vmovdqa64 P512_COUNTER(%rdi), %zmm4
-#    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
-#    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+    knotb           %k4, %k4
+    vmovdqa64 P512_COUNTER(%rdi), %zmm4
+    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
+    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+    knotb           %k4, %k4
 #END DEBUG COUNTER
 
     kmovb       %k4, %eax
@@ -379,6 +381,11 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\grflag:
+#DEBUG COUNTER:
+    vmovdqa64 P512_COUNTER(%rdi), %zmm4
+    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
+    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+#END DEBUG COUNTER
     mm_stiefel_Gs13_avx512
     vmulpd          R, XX, %zmm2                # r0*X
     vfmadd231pd     GS2, ETA, %zmm2
