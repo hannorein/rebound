@@ -299,7 +299,7 @@
 # Kepler Step
 ###############################################################################
 
-.macro kepler_step grflag
+.macro kepler_step 
     vmulpd          X, X, %zmm0
     vmulpd          VX, VX, %zmm1
     vfmadd231pd     Y, Y, %zmm0
@@ -330,7 +330,7 @@
     halley
   
     movq $0, %rcx                               # Newton loop counter
-.NewtonLoop\grflag:    
+.NewtonLoop\@:    
     vmovapd         XX,     %zmm7               # Store old XX
     mm_stiefel_Gs13_avx512
     newton 
@@ -351,12 +351,12 @@
 
     kmovb           %k4, %eax
     cmpb            $0xFF, %al
-    je              .NewtonLoopDone\grflag
+    je              .NewtonLoopDone\@
 
     # Maximum iterations reached?
     incq            %rcx
     cmpq            $5, %rcx                    # max Newton iterations
-    jne             .NewtonLoop\grflag
+    jne             .NewtonLoop\@
 
     # If not converged yet, fall back to bisection
     knotb           %k4, %k4                    # Only update failed particles
@@ -377,7 +377,7 @@
 
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
-.FallbackBisectionLoop\grflag:
+.FallbackBisectionLoop\@:
 #START DEBUG COUNTER:
 #    vmovdqa64       P512_COUNTER(%rdi), %zmm4
 #    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
@@ -397,9 +397,9 @@
     
     incq %rcx
     cmpq $52, %rcx                              # max Bisection iterations (=number of significant bits)
-    jl .FallbackBisectionLoop\grflag
+    jl .FallbackBisectionLoop\@
 
-.NewtonLoopDone\grflag:
+.NewtonLoopDone\@:
     mm_stiefel_Gs13_avx512
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -696,7 +696,7 @@ reb_asm512_corrector_step:
     vmulpd          DT, HALF, DT
     movq            $4, %r9
 .L_CorrectorLoopInnerKepler:
-    kepler_step 3
+    kepler_step
     decq            %r9
     jnz             .L_CorrectorLoopInnerKepler
     addq            $8, %r8
@@ -710,7 +710,7 @@ reb_asm512_corrector_step:
 
 reb_asm512_kepler_step:
     reb_asm512_init_registers
-    kepler_step 2
+    kepler_step
     reb_asm512_store_results
     ret
 
@@ -737,15 +737,15 @@ reb_asm512_interaction_step:
     alloc_stack64 192
     # Ignore first Kepler step (if half timestep done manually)
     cmpq    $1, %rdx
-    je      .LSkipFirstKeplerStep\grflag
+    je      .LSkipFirstKeplerStep\@
 
     # Main loop
-.LMainLoop\grflag:    
-    kepler_step \grflag
-.LSkipFirstKeplerStep\grflag:
+.LMainLoop\@:    
+    kepler_step
+.LSkipFirstKeplerStep\@:
     interaction_step \grflag
     subq    $1, %rsi
-    jnz     .LMainLoop\grflag
+    jnz     .LMainLoop\@
 
     # Store final data in P512 structure
     reb_asm512_store_results
