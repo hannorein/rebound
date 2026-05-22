@@ -315,51 +315,48 @@
     vfmadd231pd     VZ, Z, ETA                  # eta
     vmovapd         BETA, ZETA
     vfnmadd132pd    R, M, ZETA                  # zeta
-    vmulpd          RI, DT, XX               # dt/r
-#    vmulpd          ETA, %zmm5, %zmm4           # eta*dt/r
-#    vmulpd          HALF, %zmm4, %zmm4          # 0.5*eta*dt/r
-#    vfnmadd132pd    RI, ONE, %zmm4        
-#    vmulpd          %zmm5, %zmm4, XX            # X (second order initial guess)
+    vmulpd          RI, DT, XX                  # dt/r  = first order guess for XX
+    # Second order alternative
+    #    vmulpd          ETA, %zmm5, %zmm4      # eta*dt/r
+    #    vmulpd          HALF, %zmm4, %zmm4     # 0.5*eta*dt/r
+    #    vfnmadd132pd    RI, ONE, %zmm4        
+    #    vmulpd          %zmm5, %zmm4, XX       # XX (second order initial guess)
+    
     # Iterations to improve X
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     mm_stiefel_Gs03_avx512
     halley
     mm_stiefel_Gs03_avx512
     halley
-#    mm_stiefel_Gs13_avx512
-#    newton
-#    mm_stiefel_Gs13_avx512
-#    newton
-#    mm_stiefel_Gs13_avx512
   
-    movq $0, %rcx
-
+    movq $0, %rcx                               # Newton loop counter
 .NewtonLoop\grflag:    
-    vmovapd         XX,     %zmm7
+    vmovapd         XX,     %zmm7               # Store old XX
     mm_stiefel_Gs13_avx512
     newton 
 
-    vsubpd      XX, %zmm7, %zmm7  # Delta XX
-    vpandq      SIGN_ABS_MASK, %zmm7, %zmm7  # abs(Delta XX)
+    vsubpd          XX, %zmm7, %zmm7            # Delta XX
+    vpandq          SIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta XX)
 
-    # Required precision reached?
-    vcmppd      $25, EPS, %zmm7, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
-#DEBUG COUNTER:
-    knotb           %k4, %k4
-    vmovdqa64 P512_COUNTER(%rdi), %zmm4
-    vpaddq .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
-    knotb           %k4, %k4
+    # Required precision reached? abs(Delta XX) < eps
+    vcmppd          $0x11, EPS, %zmm7, %k4      # $11 = less than, ordered (nans fail), quiet
+    #vcmppd         $25, EPS, %zmm7, %k4        # $25 = Not greater or equal, unordered (nans pass), quiet
+#START DEBUG COUNTER:
+#    knotb           %k4, %k4
+#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+#    knotb           %k4, %k4
 #END DEBUG COUNTER
 
-    kmovb       %k4, %eax
-    cmpb        $0xFF, %al
-    je          .NewtonLoopDone\grflag
+    kmovb           %k4, %eax
+    cmpb            $0xFF, %al
+    je              .NewtonLoopDone\grflag
 
     # Maximum iterations reached?
-    incq %rcx
-    cmpq $5, %rcx                               # max Newton iterations
-    jne .NewtonLoop\grflag
+    incq            %rcx
+    cmpq            $5, %rcx                    # max Newton iterations
+    jne             .NewtonLoop\grflag
 
     # If not converged yet, fall back to bisection
     knotb           %k4, %k4                    # Only update failed particles
@@ -381,10 +378,10 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\grflag:
-#DEBUG COUNTER:
-#    vmovdqa64 P512_COUNTER(%rdi), %zmm4
-#    vpaddq .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+#START DEBUG COUNTER:
+#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
 #END DEBUG COUNTER
     mm_stiefel_Gs13_avx512
     vmulpd          R, XX, %zmm2                # r0*X
