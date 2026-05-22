@@ -345,11 +345,11 @@
     # Required precision reached?
     vcmppd      $25, EPS, %zmm7, %k4         # abs(Delta XX) < eps    $25 = Not greater or equal, unordered (nans pass), quiet
 #DEBUG COUNTER:
-#    knotb           %k4, %k4
-#    vmovdqa64 P512_COUNTER(%rdi), %zmm4
-#    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
-#    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
-#    knotb           %k4, %k4
+    knotb           %k4, %k4
+    vmovdqa64 P512_COUNTER(%rdi), %zmm4
+    vpaddq .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
+    knotb           %k4, %k4
 #END DEBUG COUNTER
 
     kmovb       %k4, %eax
@@ -383,7 +383,7 @@
 .FallbackBisectionLoop\grflag:
 #DEBUG COUNTER:
 #    vmovdqa64 P512_COUNTER(%rdi), %zmm4
-#    vpaddq .ONE_QUAD(%rip), %zmm4, %zmm4{%k4}
+#    vpaddq .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
 #    vmovdqa64 %zmm4, P512_COUNTER(%rdi)
 #END DEBUG COUNTER
     mm_stiefel_Gs13_avx512
@@ -713,7 +713,7 @@ reb_asm512_interaction_step:
  
 
 # Macro creates two functions for branchless GR/no-GR
-.macro BLOCK1 grflag
+.macro full_steps grflag
     # Input:   
     #           rdi = p512
     #           rsi = Number of steps (counting down)
@@ -742,33 +742,18 @@ reb_asm512_interaction_step:
     ret
 .endm
 
-reb_asm512_full_steps_gr: BLOCK1 1
+reb_asm512_full_steps_gr: full_steps 1
 
-reb_asm512_full_steps_nogr: BLOCK1 0
+reb_asm512_full_steps_nogr: full_steps 0
 
 
 
 .section    .rodata
 
-.align 8
-.TWOPI:
-    .quad 0x401921fb54442d18
 
-.align 8
+.align 64
 .ONE_QUAD: # TODO DEBUG ONLY
     .quad 1
-    .quad 1
-    .quad 1
-    .quad 1
-    .quad 1
-    .quad 1
-    .quad 1
-    .quad 1
-
-.align 8
-.HALF:
-    .quad 0x3fe0000000000000
-
 # Shuffle Indicies
 # Each is eight 64-bit integers
 .align 64
@@ -778,17 +763,22 @@ b4idx:
     .quad 5,6,7,4,2,3,0,1
 b34mergeidx:
     .quad 7,4,5,6,0,1,2,3
-
 # These two MASK are the inverse of each other and could be combined.
-.align 8
+.align 64
 .SIGN_ABS_MASK:
     .quad 0x7FFFFFFFFFFFFFFF
-.align 8
+.align 64
 .SIGN_FLIP_MASK:
     .quad 0x8000000000000000
-.align 8
+.align 64
 .EPS:
     .double 1e-11
+.align 64
+.TWOPI:
+    .quad 0x401921fb54442d18
+.align 64
+.HALF:
+    .quad 0x3fe0000000000000
 .align 64
 # Inverse factorial table
 .IF0:
@@ -862,7 +852,7 @@ b34mergeidx:
     .long    834731386
     .long    938635522
 
-.align 64
+.align 8
 .CORRECTOR17_AB:        # 63 coefficients for 17th order corrector
     .quad 0xC00AC5EB3F7AB2F8    # Kepler
     .quad 0xBED22E64AF0557FF    # Interaction
