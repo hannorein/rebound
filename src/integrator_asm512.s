@@ -1,7 +1,7 @@
 # file: integrator_asm512.s
 .section .text
-.globl block1_gr
-.globl block1_nogr
+.globl reb_asm512_full_steps_gr
+.globl reb_asm512_full_steps_nogr
 .globl reb_asm512_kepler_step
 .globl reb_asm512_corrector_step
 .globl reb_asm512_interaction_step
@@ -598,7 +598,7 @@
     vmovdqa64 b4idx(%rip), %zmm7
 
     vpermpd HX, %zmm7, %zmm0                    # 01234567 -> 56742301  
-    vpermpd HY, %zmm7, %zmm1                    # TODO: Make this an in-line shuffle be reusing block3 data
+    vpermpd HY, %zmm7, %zmm1                    # TODO: Make this an in-line shuffle by reusing block3 data
     vpermpd HZ, %zmm7, %zmm2
     vpermpd %zmm3, %zmm7, %zmm4 
 
@@ -742,9 +742,9 @@ reb_asm512_interaction_step:
     ret
 .endm
 
-block1_gr: BLOCK1 1
+reb_asm512_full_steps_gr: BLOCK1 1
 
-block1_nogr: BLOCK1 0
+reb_asm512_full_steps_nogr: BLOCK1 0
 
 
 

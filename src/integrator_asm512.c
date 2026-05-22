@@ -273,8 +273,8 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 }
 
 
-extern void block1_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void block1_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_asm512_full_steps_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_asm512_full_steps_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
 extern void reb_asm512_corrector_step(struct simd_data* data, double inv);
 extern void reb_asm512_kepler_step(struct simd_data* data);
 extern void reb_asm512_interactior_step(struct simd_data* data);
@@ -500,7 +500,7 @@ void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_ste
     inertial_to_jacobi_posvel(r, asm512->data, asm512->N_systems);
     struct simd_data* data = asm512->data;
     for (int i=0; i<N_steps; i++){
-        reb_asm512_kepler_step(asm512->data);    
+        reb_asm512_kepler_step(data);    
     }
     jacobi_to_inertial_posvel_and_com(r, asm512->data, 0.0, asm512->N_systems);
 }
@@ -539,9 +539,9 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
 
     if (asm512->N_systems==1){
         if (asm512->gr_potential){
-            block1_gr(asm512->data, N_steps, skip_first_kepler_step);
+            reb_asm512_full_steps_gr(asm512->data, N_steps, skip_first_kepler_step);
         }else{
-            block1_nogr(asm512->data, N_steps, skip_first_kepler_step);
+            reb_asm512_full_steps_nogr(asm512->data, N_steps, skip_first_kepler_step);
         }
     }else if (asm512->N_systems==2){
     }else if (asm512->N_systems==4){
