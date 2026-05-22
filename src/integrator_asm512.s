@@ -3,8 +3,10 @@
 .globl reb_asm512_full_steps_gr
 .globl reb_asm512_full_steps_nogr
 .globl reb_asm512_kepler_step
-.globl reb_asm512_corrector_step
-.globl reb_asm512_interaction_step
+.globl reb_asm512_corrector_step_gr
+.globl reb_asm512_corrector_step_nogr
+.globl reb_asm512_interaction_step_gr
+.globl reb_asm512_interaction_step_nogr
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -669,15 +671,15 @@
     popq    %rbp
 .endm
 
-reb_asm512_corrector_step:
+.macro corrector_step grflag
     reb_asm512_init_registers                   # does not overwrite xmm0
     alloc_stack64   256                         # space for matricies (192) and direction (8), rounded up to nearest 64bytes
     movsd           %xmm0, 192(%rsp)            # store direction (1 or -1)
     leaq            .CORRECTOR17_AB(%rip), %r8
     leaq            504(%r8), %rdx              # end of array 63*8
-    jmp             .L_CorrectorLoopK           # start with Kepler step
+    jmp             .L_CorrectorLoopK\@         # start with Kepler step
 
-.L_CorrectorLoopI:
+.L_CorrectorLoopI\@:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
     # Interaction step uses DT, M_DT, MM0_DT
@@ -686,27 +688,31 @@ reb_asm512_corrector_step:
     vmovapd         P512_M0(%rdi), MM0_DT
     vmulpd          DT, MM0_DT, MM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
-    interaction_step 3
+    interaction_step \grflag
     addq            $8, %r8
 
-.L_CorrectorLoopK:
+.L_CorrectorLoopK\@:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          P512_DT(%rdi), %zmm0, DT
     vmulpd          DT, HALF, DT # Reduce timestep for better convergence
     vmulpd          DT, HALF, DT
     movq            $4, %r9
-.L_CorrectorLoopInnerKepler:
+.L_CorrectorLoopInnerKepler\@:
     kepler_step
     decq            %r9
-    jnz             .L_CorrectorLoopInnerKepler
+    jnz             .L_CorrectorLoopInnerKepler\@
     addq            $8, %r8
     
     cmpq            %rdx, %r8
-    jne             .L_CorrectorLoopI
+    jne             .L_CorrectorLoopI\@
 
     free_stack64
     reb_asm512_store_results
     ret
+.endm
+
+reb_asm512_corrector_step_gr: corrector_step 1
+reb_asm512_corrector_step_nogr: corrector_step 0
 
 reb_asm512_kepler_step:
     reb_asm512_init_registers
@@ -714,14 +720,22 @@ reb_asm512_kepler_step:
     reb_asm512_store_results
     ret
 
-reb_asm512_interaction_step:
+reb_asm512_interaction_step_gr:
     reb_asm512_init_registers
-    # Allocate space on stack for matrix multiplications
     alloc_stack64 192
-    interaction_step 2
+    interaction_step 1
     reb_asm512_store_results
     free_stack64
     ret
+
+reb_asm512_interaction_step_nogr:
+    reb_asm512_init_registers
+    alloc_stack64 192
+    interaction_step 0
+    reb_asm512_store_results
+    free_stack64
+    ret
+ 
  
 
 # Macro creates two functions for branchless GR/no-GR
@@ -755,7 +769,6 @@ reb_asm512_interaction_step:
 .endm
 
 reb_asm512_full_steps_gr: full_steps 1
-
 reb_asm512_full_steps_nogr: full_steps 0
 
 
