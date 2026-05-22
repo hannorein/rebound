@@ -58,6 +58,7 @@ void setup_sim(char* integrator, int corrector){
         r->G = 1.;
         r->exact_finish_time = 0;
         reb_simulation_add_fmt(r, "solarsystem");
+        reb_simulation_move_to_com(r);
         reb_simulation_set_integrator(r, integrator);
         if (strcmp(integrator,"asm512")==0){
             struct reb_integrator_asm512_state* asm512 = r->integrator.state;

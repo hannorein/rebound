@@ -85,6 +85,27 @@
 .set SIGN_ABS_MASK, %zmm10  # Only used once per step.
 .set MM0_DT, %zmm9          # -dt*M0 Only used once per step.
 
+#####################################
+# Stack initialization 
+#####################################
+.macro alloc_stack64 bytes
+    # Safe old base pointer
+    pushq   %rbp
+    movq    %rsp, %rbp
+    # realign stack to nearest multiple of 64 bytes
+    andq    $-64, %rsp
+    subq    $\bytes, %rsp
+.endm
+
+.macro free_stack64
+    # restore old base pointer
+    movq    %rbp, %rsp
+    popq    %rbp
+.endm
+
+#####################################
+# Register initialization 
+#####################################
 .macro reb_asm512_init_registers
     # Ignore exceptions
     subq $8, %rsp
@@ -124,88 +145,10 @@
     vmovapd    Z, P512_Z(%rdi)
 .endm
 
-.macro gravity_prefactor multiplier=ONE
-    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
-    # Output: zmm6 = multiplier / r^3
-    
-    vmulpd      %zmm0, %zmm0, %zmm6     
-    vfmadd231pd %zmm1, %zmm1, %zmm6      
-    vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 is now r^2
-    
-    vsqrtpd     %zmm6, %zmm7             
-    vmulpd      %zmm6, %zmm7, %zmm6     # zmm6 is r^3
-   
-    vdivpd      %zmm6, \multiplier, %zmm6      
-.endm
 
-
-.macro REDUCE_ADD_AND_BROADCAST reg, temp_reg
-    vshuff64x2 $0x4E, \reg, \reg, \temp_reg         # 01234567 -> 45670123
-    vaddpd     \reg, \temp_reg, \temp_reg    
-    vshufpd    $0x55, \temp_reg, \temp_reg, \reg    # 01234567 -> 10325476
-    vaddpd     \reg, \temp_reg, \temp_reg
-    vpermpd    $0x4E, \temp_reg, \reg               # 01234567 -> 23016745
-    vaddpd     \reg, \temp_reg, \reg
-.endm
-        
-.macro mat8_mul3 in0, in1, in2, out0, out1, out2
-    # 8x8 matrix multiplied with 3 different 8 vectors
-    # in: rax = vector to 64 matrix elements
-    # zmm0, zmm1, zmm2  input and output vectors
-    # uses: zmm3-zmm7
-    # The idea is to use embedded broadcast loads
-    # Note: matrix needs to be transposed.
-    vmovapd \in0,   0(%rsp)
-    vmovapd \in1,  64(%rsp)
-    vmovapd \in2, 128(%rsp)
-
-    # Keeping six independent FMA chains going
-    vmovapd        (%rax), %zmm4
-    vmovapd      64(%rax), %zmm3
-    vmulpd        0(%rsp){1to8}, %zmm4, \out0
-    vmulpd       64(%rsp){1to8}, %zmm4, \out1
-    vmulpd      128(%rsp){1to8}, %zmm4, \out2
-
-    vmulpd        8(%rsp){1to8}, %zmm3, %zmm5
-    vmulpd       72(%rsp){1to8}, %zmm3, %zmm6
-    vmulpd      136(%rsp){1to8}, %zmm3, %zmm7
-
-    vmovapd     128(%rax), %zmm4
-    vmovapd     192(%rax), %zmm3
-    vfmadd231pd  16(%rsp){1to8}, %zmm4, \out0
-    vfmadd231pd  80(%rsp){1to8}, %zmm4, \out1
-    vfmadd231pd 144(%rsp){1to8}, %zmm4, \out2
-    
-    vfmadd231pd  24(%rsp){1to8}, %zmm3, %zmm5
-    vfmadd231pd  88(%rsp){1to8}, %zmm3, %zmm6
-    vfmadd231pd 152(%rsp){1to8}, %zmm3, %zmm7
-    
-    vmovapd     256(%rax), %zmm4
-    vmovapd     320(%rax), %zmm3
-    vfmadd231pd  32(%rsp){1to8}, %zmm4, \out0
-    vfmadd231pd  96(%rsp){1to8}, %zmm4, \out1
-    vfmadd231pd 160(%rsp){1to8}, %zmm4, \out2
-    
-    vfmadd231pd  40(%rsp){1to8}, %zmm3, %zmm5
-    vfmadd231pd 104(%rsp){1to8}, %zmm3, %zmm6
-    vfmadd231pd 168(%rsp){1to8}, %zmm3, %zmm7
-    
-    vmovapd     384(%rax), %zmm4
-    vmovapd     448(%rax), %zmm3
-    vfmadd231pd  48(%rsp){1to8}, %zmm4, \out0
-    vfmadd231pd 112(%rsp){1to8}, %zmm4, \out1
-    vfmadd231pd 176(%rsp){1to8}, %zmm4, \out2
-    
-    vfmadd231pd  56(%rsp){1to8}, %zmm3, %zmm5
-    vfmadd231pd 120(%rsp){1to8}, %zmm3, %zmm6
-    vfmadd231pd 184(%rsp){1to8}, %zmm3, %zmm7
-
-    # Using two accumulators, adding at end
-    vaddpd  %zmm5, \out0, \out0
-    vaddpd  %zmm6, \out1, \out1
-    vaddpd  %zmm7, \out2, \out2
-   .endm
-
+#####################################
+# Macros for Kepler step
+#####################################
 .macro vfnmadd_auto_inc reg1 reg2
     vfnmadd213pd    .IF0+(IF_offset*8)(%rip){1to8}, \reg1, \reg2
     .set IF_offset, IF_offset - 1
@@ -442,6 +385,91 @@
     vmovapd    %zmm5, Z
 .endm
 
+#####################################
+# Macros for interaction step
+#####################################
+.macro gravity_prefactor multiplier=ONE
+    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
+    # Output: zmm6 = multiplier / r^3
+    
+    vmulpd      %zmm0, %zmm0, %zmm6     
+    vfmadd231pd %zmm1, %zmm1, %zmm6      
+    vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 is now r^2
+    
+    vsqrtpd     %zmm6, %zmm7             
+    vmulpd      %zmm6, %zmm7, %zmm6     # zmm6 is r^3
+   
+    vdivpd      %zmm6, \multiplier, %zmm6      
+.endm
+
+
+.macro REDUCE_ADD_AND_BROADCAST reg, temp_reg
+    vshuff64x2 $0x4E, \reg, \reg, \temp_reg         # 01234567 -> 45670123
+    vaddpd     \reg, \temp_reg, \temp_reg    
+    vshufpd    $0x55, \temp_reg, \temp_reg, \reg    # 01234567 -> 10325476
+    vaddpd     \reg, \temp_reg, \temp_reg
+    vpermpd    $0x4E, \temp_reg, \reg               # 01234567 -> 23016745
+    vaddpd     \reg, \temp_reg, \reg
+.endm
+        
+.macro mat8_mul3 in0, in1, in2, out0, out1, out2
+    # 8x8 matrix multiplied with 3 different 8 vectors
+    # in: rax = vector to 64 matrix elements
+    # zmm0, zmm1, zmm2  input and output vectors
+    # uses: zmm3-zmm7
+    # The idea is to use embedded broadcast loads
+    # Note: matrix needs to be transposed.
+    vmovapd \in0,   0(%rsp)
+    vmovapd \in1,  64(%rsp)
+    vmovapd \in2, 128(%rsp)
+
+    # Keeping six independent FMA chains going
+    vmovapd        (%rax), %zmm4
+    vmovapd      64(%rax), %zmm3
+    vmulpd        0(%rsp){1to8}, %zmm4, \out0
+    vmulpd       64(%rsp){1to8}, %zmm4, \out1
+    vmulpd      128(%rsp){1to8}, %zmm4, \out2
+
+    vmulpd        8(%rsp){1to8}, %zmm3, %zmm5
+    vmulpd       72(%rsp){1to8}, %zmm3, %zmm6
+    vmulpd      136(%rsp){1to8}, %zmm3, %zmm7
+
+    vmovapd     128(%rax), %zmm4
+    vmovapd     192(%rax), %zmm3
+    vfmadd231pd  16(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd  80(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 144(%rsp){1to8}, %zmm4, \out2
+    
+    vfmadd231pd  24(%rsp){1to8}, %zmm3, %zmm5
+    vfmadd231pd  88(%rsp){1to8}, %zmm3, %zmm6
+    vfmadd231pd 152(%rsp){1to8}, %zmm3, %zmm7
+    
+    vmovapd     256(%rax), %zmm4
+    vmovapd     320(%rax), %zmm3
+    vfmadd231pd  32(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd  96(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 160(%rsp){1to8}, %zmm4, \out2
+    
+    vfmadd231pd  40(%rsp){1to8}, %zmm3, %zmm5
+    vfmadd231pd 104(%rsp){1to8}, %zmm3, %zmm6
+    vfmadd231pd 168(%rsp){1to8}, %zmm3, %zmm7
+    
+    vmovapd     384(%rax), %zmm4
+    vmovapd     448(%rax), %zmm3
+    vfmadd231pd  48(%rsp){1to8}, %zmm4, \out0
+    vfmadd231pd 112(%rsp){1to8}, %zmm4, \out1
+    vfmadd231pd 176(%rsp){1to8}, %zmm4, \out2
+    
+    vfmadd231pd  56(%rsp){1to8}, %zmm3, %zmm5
+    vfmadd231pd 120(%rsp){1to8}, %zmm3, %zmm6
+    vfmadd231pd 184(%rsp){1to8}, %zmm3, %zmm7
+
+    # Using two accumulators, adding at end
+    vaddpd  %zmm5, \out0, \out0
+    vaddpd  %zmm6, \out1, \out1
+    vaddpd  %zmm7, \out2, \out2
+   .endm
+
 ###############################################################################
 # Interaction Step
 ###############################################################################
@@ -656,21 +684,6 @@
 # Global functions
 ###############################################################################
 
-.macro alloc_stack64 bytes
-    # Safe old base pointer
-    pushq   %rbp
-    movq    %rsp, %rbp
-    # realign stack to nearest multiple of 64 bytes
-    andq    $-64, %rsp
-    subq    $\bytes, %rsp
-.endm
-
-.macro free_stack64
-    # restore old base pointer
-    movq    %rbp, %rsp
-    popq    %rbp
-.endm
-
 .macro corrector_step grflag
     reb_asm512_init_registers                   # does not overwrite xmm0
     alloc_stack64   256                         # space for matricies (192) and direction (8), rounded up to nearest 64bytes
@@ -694,9 +707,9 @@
 .L_CorrectorLoopK\@:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          P512_DT(%rdi), %zmm0, DT
-    vmulpd          DT, HALF, DT # Reduce timestep for better convergence
+    vmulpd          DT, HALF, DT                # Reduce timestep for better convergence
     vmulpd          DT, HALF, DT
-    movq            $4, %r9
+    movq            $4, %r9                     # Counter number of Kepler steps
 .L_CorrectorLoopInnerKepler\@:
     kepler_step
     decq            %r9

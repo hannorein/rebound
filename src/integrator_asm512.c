@@ -278,7 +278,6 @@ extern void reb_asm512_full_steps_nogr(struct simd_data* data, long N_steps, int
 extern void reb_asm512_corrector_step_gr(struct simd_data* data, double inv);
 extern void reb_asm512_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_asm512_kepler_step(struct simd_data* data);
-extern void reb_asm512_interactior_step(struct simd_data* data);
 
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
