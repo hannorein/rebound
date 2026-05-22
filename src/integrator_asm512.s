@@ -670,12 +670,12 @@
 .endm
 
 reb_asm512_corrector_step:
-    reb_asm512_init_registers       # does not overwrite xmm0
-    alloc_stack64 256               # space for matricies (192) and direction (8), rounded up to nearest 64bytes
-    movsd       %xmm0, 192(%rsp)    # store direction (1 or -1)
-    leaq        .CORRECTOR17_AB(%rip), %r8
-    leaq        504(%r8), %rdx      # end of array 63*8
-    jmp .L_CorrectorLoopK           # start with Kepler step
+    reb_asm512_init_registers                   # does not overwrite xmm0
+    alloc_stack64   256                         # space for matricies (192) and direction (8), rounded up to nearest 64bytes
+    movsd           %xmm0, 192(%rsp)            # store direction (1 or -1)
+    leaq            .CORRECTOR17_AB(%rip), %r8
+    leaq            504(%r8), %rdx              # end of array 63*8
+    jmp             .L_CorrectorLoopK           # start with Kepler step
 
 .L_CorrectorLoopI:
     vbroadcastsd    (%r8), %zmm0
@@ -692,7 +692,7 @@ reb_asm512_corrector_step:
 .L_CorrectorLoopK:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          P512_DT(%rdi), %zmm0, DT
-    vmulpd          DT, HALF, DT # Reduce timestep for convergence
+    vmulpd          DT, HALF, DT # Reduce timestep for better convergence
     vmulpd          DT, HALF, DT
     movq            $4, %r9
 .L_CorrectorLoopInnerKepler:
