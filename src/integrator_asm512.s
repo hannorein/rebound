@@ -735,7 +735,7 @@ reb_asm512_interaction_step:
     reb_asm512_init_registers
     # Allocate space on stack for matrix multiplications
     alloc_stack64 192
-    # Ignore first Kepler step (half timestep done manually)
+    # Ignore first Kepler step (if half timestep done manually)
     cmpq    $1, %rdx
     je      .LSkipFirstKeplerStep\grflag
 
