@@ -153,9 +153,9 @@
     # uses: zmm3-zmm7
     # The idea is to use embedded broadcast loads
     # Note: matrix needs to be transposed.
-    vmovupd \in0,   0(%rsp)
-    vmovupd \in1,  64(%rsp)
-    vmovupd \in2, 128(%rsp)
+    vmovapd \in0,   0(%rsp)
+    vmovapd \in1,  64(%rsp)
+    vmovapd \in2, 128(%rsp)
 
     # Keeping six independent FMA chains going
     vmovapd        (%rax), %zmm4
@@ -656,25 +656,34 @@
 ###############################################################################
 # Global functions
 ###############################################################################
-reb_asm512_kepler_step:
-    reb_asm512_init_registers
-    kepler_step 2
-    reb_asm512_store_results
-    ret
+
+.macro alloc_stack64 bytes
+    # Safe old base pointer
+    pushq   %rbp
+    movq    %rsp, %rbp
+    # realign stack to nearest multiple of 64 bytes
+    andq    $-64, %rsp
+    subq    $\bytes, %rsp
+.endm
+
+.macro free_stack64
+    # restore old base pointer
+    movq    %rbp, %rsp
+    popq    %rbp
+.endm
 
 reb_asm512_corrector_step:
-    reb_asm512_init_registers # does not overwrite xmm0
-    subq        $200, %rsp
-    movsd       %xmm0, 192(%rsp) # store direction (1 or -1)
+    reb_asm512_init_registers       # does not overwrite xmm0
+    alloc_stack64 256               # space for matricies (192) and direction (8), rounded up to nearest 64bytes
+    movsd       %xmm0, 192(%rsp)    # store direction (1 or -1)
     leaq        .CORRECTOR17_AB(%rip), %r8
-    leaq        504(%r8), %rdx #end of array 63*8
-
-    jmp .L_CorrectorLoopK
+    leaq        504(%r8), %rdx      # end of array 63*8
+    jmp .L_CorrectorLoopK           # start with Kepler step
 
 .L_CorrectorLoopI:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
-    # Interaction uses DT, M_DT, MM0_DT
+    # Interaction step uses DT, M_DT, MM0_DT
     vmulpd          P512_DT(%rdi), %zmm0, DT
     vmulpd          DT, M, M_DT
     vmovapd         P512_M0(%rdi), MM0_DT
@@ -698,17 +707,23 @@ reb_asm512_corrector_step:
     cmpq            %rdx, %r8
     jne             .L_CorrectorLoopI
 
-    addq            $200, %rsp
+    free_stack64
+    reb_asm512_store_results
+    ret
+
+reb_asm512_kepler_step:
+    reb_asm512_init_registers
+    kepler_step 2
     reb_asm512_store_results
     ret
 
 reb_asm512_interaction_step:
     reb_asm512_init_registers
     # Allocate space on stack for matrix multiplications
-    subq    $192, %rsp
+    alloc_stack64 192
     interaction_step 2
     reb_asm512_store_results
-    addq    $192, %rsp
+    free_stack64
     ret
  
 
@@ -722,7 +737,7 @@ reb_asm512_interaction_step:
     # Load constants
     reb_asm512_init_registers
     # Allocate space on stack for matrix multiplications
-    subq    $192, %rsp
+    alloc_stack64 192
     # Ignore first Kepler step (half timestep done manually)
     cmpq    $1, %rdx
     je      .LSkipFirstKeplerStep\grflag
@@ -738,7 +753,7 @@ reb_asm512_interaction_step:
     # Store final data in P512 structure
     reb_asm512_store_results
 
-    addq    $192, %rsp
+    free_stack64
     ret
 .endm
 
