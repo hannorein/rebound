@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
     struct timeval time_beginning;
     struct timeval time_end;
     double tmax_years = 1e5;
+    double walltime[3];
 
     for (int i=0; i<3; i++){
         char* integrator = "asm512";
@@ -61,11 +62,16 @@ int main(int argc, char* argv[]) {
         gettimeofday(&time_beginning,NULL);
         reb_simulation_integrate(r, tmax_years*M_PI*2.0);
         gettimeofday(&time_end,NULL);
-        double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
-        printf("time:           %.8f seconds\n", walltime);
-        printf("time to 5 Gyr:  %.8f hours\n", walltime/(r->t/2/M_PI) * 5e9/60./60.);
+        walltime[i] = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
+        printf("time:           %.8f seconds\n", walltime[i]);
+        printf("time to 5 Gyr:  %.8f hours\n", walltime[i]/(r->t/2/M_PI) * 5e9/60./60.);
         
         reb_simulation_free(r);
     }
+
+    printf("###################################\n");
+    printf("speedup asm512/whfast512 = %.5fx\n", walltime[1]/walltime[0]);
+    printf("speedup asm512/whfast    = %.5fx\n", walltime[2]/walltime[0]);
+
     return 1;
 }
