@@ -478,7 +478,7 @@
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-    vdivpd      %zmm4, M_DT, %zmm6  # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
+    vdivpd      %zmm4, M_DT, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
     
     vfmadd231pd     X, %zmm6, VX{%k1}{z} 
     vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
@@ -513,7 +513,7 @@
         vmulpd    %zmm6, %zmm4, HVY{%k1}{z}
         vmulpd    %zmm7, %zmm4, HVZ{%k1}{z}
 
-        REDUCE_ADD_AND_BROADCAST HVX, %zmm4
+        REDUCE_ADD_AND_BROADCAST HVX, %zmm4         # HVX = backreaction
         REDUCE_ADD_AND_BROADCAST HVY, %zmm4
         REDUCE_ADD_AND_BROADCAST HVZ, %zmm4
 

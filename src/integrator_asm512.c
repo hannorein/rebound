@@ -389,20 +389,6 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
             }
         }
     }
-    //// Quick transpose test
-    //// TODO Cleanup.
-    //double tmp[64];
-    //for (unsigned int i=0; i<8; i++){
-    //    for (unsigned int j=0; j<8; j++){
-    //        tmp[i+8*j] = data->mat8_jacobi_to_heliocentric[i+8*j];
-    //    }
-    //}
-    //for (unsigned int i=0; i<8; i++){
-    //    for (unsigned int j=0; j<8; j++){
-    //        data->mat8_jacobi_to_heliocentric[i+8*j] = tmp[j+8*i];
-    //        data->mat8_inertial_to_jacobi_T[i+8*j] = data->mat8_inertial_to_jacobi[j+8*i];
-    //    }
-    //}
 
     data->M = _mm512_loadu_pd(&M);
     data->M0 = _mm512_loadu_pd(&M0); //  = particles[0].m 
@@ -419,6 +405,7 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
         double m0 = r->particles[s*N_per_system].m;
         for (unsigned int p=1; p<N_per_system; p++){
             _gr_prefac[s*p_per_system+(p-1)] = -6.*m0*m0/(c*c);
+// TODO!  No backreaction works better 
             _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m / m0;
         }
     }
