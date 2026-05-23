@@ -5,5 +5,7 @@
 #include "integrator_asm512.h"
 
 extern const struct reb_integrator reb_integrator_asm512_opt;
+extern const struct reb_integrator reb_integrator_asm512_mom;
+extern const struct reb_integrator reb_integrator_asm512_fused;
 
 #endif

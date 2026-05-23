@@ -2,6 +2,10 @@
 .section .text
 .globl reb_asm512_opt_full_steps_gr
 .globl reb_asm512_opt_full_steps_nogr
+.globl reb_asm512_mom_full_steps_gr
+.globl reb_asm512_mom_full_steps_nogr
+.globl reb_asm512_fused_full_steps_gr
+.globl reb_asm512_fused_full_steps_nogr
 .globl reb_asm512_opt_kepler_step
 .globl reb_asm512_opt_corrector_step_gr
 .globl reb_asm512_opt_corrector_step_nogr
@@ -300,13 +304,11 @@
     # Required precision reached? abs(Delta XX) < eps
     vcmppd          $0x11, EPS, %zmm7, %k4      # $11 = less than, ordered (nans fail), quiet
     #vcmppd         $25, EPS, %zmm7, %k4        # $25 = Not greater or equal, unordered (nans pass), quiet
-#START DEBUG COUNTER:
-#    knotb           %k4, %k4
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#    knotb           %k4, %k4
-#END DEBUG COUNTER
+    knotb           %k4, %k4
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+    knotb           %k4, %k4
 
     kmovb           %k4, %eax
     cmpb            $0xFF, %al
@@ -337,11 +339,9 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\@:
-#START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#END DEBUG COUNTER
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
     mm_stiefel_Gs13_avx512
     vmulpd          R, XX, %zmm2                # r0*X
     vfmadd231pd     GS2, ETA, %zmm2
@@ -782,43 +782,36 @@ reb_asm512_opt_interaction_step_nogr:
  
  
 
-# Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag
-    # Input:   
-    #           rdi = p512
-    #           rsi = Number of steps (counting down)
-    #           rdx = skip_first_kepler_step
-
-    # Load constants
+.macro full_steps grflag use_momentum use_fused_jacobi
     reb_asm512_init_registers
-    # Allocate space on stack for matrix multiplications + Jacobi stash
     alloc_stack64 256
 
     vxorpd      %zmm0, %zmm0, %zmm0
     vmovapd     %zmm0, .X_prev(%rip)
     vmovapd     %zmm0, .X_prev2(%rip)
 
-    # Ignore first Kepler step (if half timestep done manually)
     cmpq    $1, %rdx
     je      .LSkipFirstKeplerStep\@
 
-    # Main loop
 .LMainLoop\@:    
-    kepler_step 1
+    kepler_step \use_momentum
 .LSkipFirstKeplerStep\@:
-    interaction_step \grflag 1
+    interaction_step \grflag \use_fused_jacobi
     subq    $1, %rsi
     jnz     .LMainLoop\@
 
-    # Store final data in P512 structure
     reb_asm512_store_results
 
     free_stack64
     ret
 .endm
 
-reb_asm512_opt_full_steps_gr: full_steps 1
-reb_asm512_opt_full_steps_nogr: full_steps 0
+reb_asm512_opt_full_steps_gr:     full_steps 1 1 1
+reb_asm512_opt_full_steps_nogr:   full_steps 0 1 1
+reb_asm512_mom_full_steps_gr:     full_steps 1 1 0
+reb_asm512_mom_full_steps_nogr:   full_steps 0 1 0
+reb_asm512_fused_full_steps_gr:   full_steps 1 0 1
+reb_asm512_fused_full_steps_nogr: full_steps 0 0 1
 
 
 

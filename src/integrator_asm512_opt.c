@@ -235,9 +235,15 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
 
 extern void reb_asm512_opt_full_steps_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
 extern void reb_asm512_opt_full_steps_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_asm512_mom_full_steps_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_asm512_mom_full_steps_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_asm512_fused_full_steps_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_asm512_fused_full_steps_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
 extern void reb_asm512_opt_corrector_step_gr(struct simd_data* data, double inv);
 extern void reb_asm512_opt_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_asm512_opt_kepler_step(struct simd_data* data);
+
+typedef void (*asm512_full_steps_fn)(struct simd_data*, long, int);
 
 static int verify_setup_opt(struct reb_simulation* const r){
     struct reb_integrator_asm512_state* asm512 = r->integrator.state;
@@ -256,7 +262,9 @@ static int verify_setup_opt(struct reb_simulation* const r){
     return 0;
 }
 
-static void integrator_asm512_opt_step(struct reb_simulation* const r, void* state){
+static void asm512_variant_step(struct reb_simulation* const r, void* state,
+                                asm512_full_steps_fn fn_gr,
+                                asm512_full_steps_fn fn_nogr){
     struct reb_integrator_asm512_state* asm512 = state;
     const double dt = r->dt;
     const unsigned int N_steps = asm512->concatenate_steps;
@@ -284,13 +292,23 @@ static void integrator_asm512_opt_step(struct reb_simulation* const r, void* sta
         data->dt = _mm512_set1_pd(dt);
     }
     if (asm512->gr_potential){
-        reb_asm512_opt_full_steps_gr(asm512->data, N_steps, skip_first_kepler_step);
+        fn_gr(asm512->data, N_steps, skip_first_kepler_step);
     }else{
-        reb_asm512_opt_full_steps_nogr(asm512->data, N_steps, skip_first_kepler_step);
+        fn_nogr(asm512->data, N_steps, skip_first_kepler_step);
     }
     r->is_synchronized = 0;
     r->t += dt*N_steps;
     r->dt_last_done = dt;
+}
+
+static void integrator_asm512_opt_step(struct reb_simulation* const r, void* state){
+    asm512_variant_step(r, state, reb_asm512_opt_full_steps_gr, reb_asm512_opt_full_steps_nogr);
+}
+static void integrator_asm512_mom_step(struct reb_simulation* const r, void* state){
+    asm512_variant_step(r, state, reb_asm512_mom_full_steps_gr, reb_asm512_mom_full_steps_nogr);
+}
+static void integrator_asm512_fused_step(struct reb_simulation* const r, void* state){
+    asm512_variant_step(r, state, reb_asm512_fused_full_steps_gr, reb_asm512_fused_full_steps_nogr);
 }
 
 static void integrator_asm512_opt_synchronize(struct reb_simulation* const r, void* state){
@@ -318,6 +336,16 @@ static void integrator_asm512_opt_step(struct reb_simulation* const r, void* sta
     reb_simulation_error(r, "asm512_opt requires AVX512.");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
+static void integrator_asm512_mom_step(struct reb_simulation* const r, void* state){
+    (void)state;
+    reb_simulation_error(r, "asm512_mom requires AVX512.");
+    r->status = REB_STATUS_GENERIC_ERROR;
+}
+static void integrator_asm512_fused_step(struct reb_simulation* const r, void* state){
+    (void)state;
+    reb_simulation_error(r, "asm512_fused requires AVX512.");
+    r->status = REB_STATUS_GENERIC_ERROR;
+}
 
 static void integrator_asm512_opt_synchronize(struct reb_simulation* const r, void* state){
     (void)r; (void)state;
@@ -334,6 +362,22 @@ static const struct reb_binarydata_field_descriptor asm512_opt_fields[] = {
 
 const struct reb_integrator reb_integrator_asm512_opt = {
     .step                  = integrator_asm512_opt_step,
+    .create                = reb_integrator_asm512_create,
+    .free                  = reb_integrator_asm512_free,
+    .synchronize           = integrator_asm512_opt_synchronize,
+    .field_descriptor_list = asm512_opt_fields,
+};
+
+const struct reb_integrator reb_integrator_asm512_mom = {
+    .step                  = integrator_asm512_mom_step,
+    .create                = reb_integrator_asm512_create,
+    .free                  = reb_integrator_asm512_free,
+    .synchronize           = integrator_asm512_opt_synchronize,
+    .field_descriptor_list = asm512_opt_fields,
+};
+
+const struct reb_integrator reb_integrator_asm512_fused = {
+    .step                  = integrator_asm512_fused_step,
     .create                = reb_integrator_asm512_create,
     .free                  = reb_integrator_asm512_free,
     .synchronize           = integrator_asm512_opt_synchronize,
