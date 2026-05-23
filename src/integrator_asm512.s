@@ -274,7 +274,7 @@
     mm_stiefel_Gs03_avx512
     halley
   
-    movq $0, %rcx                               # Newton loop counter
+    movq            $0, %rcx                    # Newton loop counter
 .NewtonLoop\@:    
     vmovapd         XX,     %zmm7               # Store old XX
     mm_stiefel_Gs13_avx512
@@ -287,9 +287,9 @@
     vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
     #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
 #START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
 #END DEBUG COUNTER
 
     kortestw        %k4, %k4
@@ -320,9 +320,9 @@
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\@:
 #START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
 #END DEBUG COUNTER
     mm_stiefel_Gs13_avx512
     vmulpd          R, XX, %zmm2                # r0*X
