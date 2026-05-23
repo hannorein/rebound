@@ -1,6 +1,6 @@
 include Makefile.defs
 
-SOURCES=rebound.c tree.c particle.c gravity.c integrator_whfast.c integrator_whfast512.c integrator_asm512.c integrator_saba.c integrator_ias15.c integrator_sei.c integrator_bs.c integrator_leapfrog.c integrator_mercurius.c integrator_trace.c integrator_eos.c boundary.c binarydata.c output.c collision.c communication_mpi.c display.c tools.c rotations.c simulation.c derivatives.c simulationarchive.c glad.c integrator_janus.c transformations.c fmemopen.c server.c frequency_analysis.c
+SOURCES=rebound.c tree.c particle.c gravity.c integrator_whfast.c integrator_whfast512.c integrator_asm512.c integrator_asm512_opt.c integrator_saba.c integrator_ias15.c integrator_sei.c integrator_bs.c integrator_leapfrog.c integrator_mercurius.c integrator_trace.c integrator_eos.c boundary.c binarydata.c output.c collision.c communication_mpi.c display.c tools.c rotations.c simulation.c derivatives.c simulationarchive.c glad.c integrator_janus.c transformations.c fmemopen.c server.c frequency_analysis.c
 OBJECTS=$(SOURCES:.c=.$(OBJFILEEXT))
 HEADERS=$(SOURCES:.c=.h) rebound_internal.h
 
@@ -16,10 +16,14 @@ integrator_asm512.asm_o: integrator_asm512.s
 	@echo "Assembling source file integrator_asm512.s ..."
 	as -g -o $@ $<
 
-$(LIBREBOUND): $(OBJECTS) integrator_asm512.asm_o
+integrator_asm512_opt.asm_o: integrator_asm512_opt.s
+	@echo "Assembling source file integrator_asm512_opt.s ..."
+	as -g -o $@ $<
+
+$(LIBREBOUND): $(OBJECTS) integrator_asm512.asm_o integrator_asm512_opt.asm_o
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) integrator_asm512.asm_o $(LIB) -o $@ 
+	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) integrator_asm512.asm_o integrator_asm512_opt.asm_o $(LIB) -o $@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."
