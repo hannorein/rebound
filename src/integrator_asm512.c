@@ -42,7 +42,7 @@ void reb_integrator_asm512_step(struct reb_simulation* r, void* state);
 void reb_integrator_asm512_synchronize(struct reb_simulation* r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descriptor_list[];
 
-#define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(gr_prefac2) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
+#define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
     X(mat8_inertial_to_jacobi) \
     X(mat8_jacobi_to_heliocentric) \
     X(M0) X(mask) \
@@ -54,7 +54,6 @@ struct simd_data{
     __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
     __m512d dt __attribute__ ((aligned (64)));                  //  Timestep
     __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
-    __m512d gr_prefac2 __attribute__ ((aligned (64)));          //  Prefactor for GR
     __m512d m __attribute__ ((aligned (64)));
     __m512d x __attribute__ ((aligned (64)));
     __m512d y __attribute__ ((aligned (64)));
@@ -396,21 +395,16 @@ static void recalculate_constants(struct reb_simulation* r, struct simd_data* da
     // GR prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
     double _gr_prefac[8];
-    double _gr_prefac2[8];
     for(unsigned int i=0;i<8;i++){
         _gr_prefac[i] = 0; // for when N<8
-        _gr_prefac2[i] = 0;
     }
     for (unsigned int s=0; s<N_systems; s++){
         double m0 = r->particles[s*N_per_system].m;
         for (unsigned int p=1; p<N_per_system; p++){
             _gr_prefac[s*p_per_system+(p-1)] = -6.*m0*m0/(c*c);
-// TODO!  No backreaction works better 
-            _gr_prefac2[s*p_per_system+(p-1)] = -r->particles[s*N_per_system+p].m / m0;
         }
     }
     data->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
-    data->gr_prefac2 = _mm512_loadu_pd(&_gr_prefac2);
     data->dt = _mm512_set1_pd(r->dt); 
 #define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
 //    SIMD_DATA_MEMBERS

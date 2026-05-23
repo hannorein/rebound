@@ -12,19 +12,18 @@
 .set P512_M, 0
 .set P512_DT, 64
 .set P512_GR_PREFAC, 128
-.set P512_GR_PREFAC2, 192
-.set P512_m, 256
-.set P512_X, 320
-.set P512_Y, 384
-.set P512_Z, 448
-.set P512_VX, 512
-.set P512_VY, 576
-.set P512_VZ, 640
-.set P512_MAT8_INERTIAL_TO_JACOBI, 704
-.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1216
-.set P512_M0, 1728
-.set P512_MASK, 1792
-.set P512_COUNTER, 2368
+.set P512_m, 192
+.set P512_X, 256
+.set P512_Y, 320
+.set P512_Z, 384
+.set P512_VX, 448
+.set P512_VY, 512
+.set P512_VZ, 576
+.set P512_MAT8_INERTIAL_TO_JACOBI, 640
+.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1152
+.set P512_M0, 1664
+.set P512_MASK, 1728
+.set P512_COUNTER, 2304
 
 #####################################
 # Register use
@@ -496,38 +495,21 @@
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
     vdivpd    %zmm7, MM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
+        
+    vmulpd    %zmm8, HX, HVX                # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+    vmulpd    %zmm8, HY, HVY
+    vmulpd    %zmm8, HZ, HVZ
 
+    # GR term
     .if \grflag == 1
-        # GR term
         vmulpd    P512_GR_PREFAC(%rdi), DT, %zmm3
-        vmovapd   P512_GR_PREFAC2(%rdi), %zmm4
 
-        vmulpd    %zmm6, %zmm6, %zmm5               # r^4
-        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}       # -dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm6, %zmm6, %zmm5           # r^4
+        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}   # -dt*6*m0*m0/(c*c) /r^4
 
-        vmulpd    %zmm7, HX, %zmm5                  # -x_j*dt*6*m0*m0/(c*c) /r^4
-        vmulpd    %zmm7, HY, %zmm6
-        vmulpd    %zmm7, HZ, %zmm7
-        
-        vmulpd    %zmm5, %zmm4, HVX{%k1}{z}         # x_j*dt*6*m0*m/(c*c) /r^4 
-        vmulpd    %zmm6, %zmm4, HVY{%k1}{z}
-        vmulpd    %zmm7, %zmm4, HVZ{%k1}{z}
-
-        REDUCE_ADD_AND_BROADCAST HVX, %zmm4         # HVX = backreaction
-        REDUCE_ADD_AND_BROADCAST HVY, %zmm4
-        REDUCE_ADD_AND_BROADCAST HVZ, %zmm4
-
-        vfmadd231pd  %zmm8, HX, HVX          # delta v_x due to Jacobi term + GR backreaction
-        vfmadd231pd  %zmm8, HY, HVY
-        vfmadd231pd  %zmm8, HZ, HVZ
-        
-        vaddpd    %zmm5, HVX, HVX            # delta v_x due to Jacobi term + GR backreaction + GR
-        vaddpd    %zmm6, HVY, HVY
-        vaddpd    %zmm7, HVZ, HVZ
-    .else
-        vmulpd    %zmm8, HX, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
-        vmulpd    %zmm8, HY, HVY
-        vmulpd    %zmm8, HZ, HVZ
+        vfmadd231pd  %zmm7, HX, HVX{%k1}{z}     # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vfmadd231pd  %zmm7, HY, HVY{%k1}{z}
+        vfmadd231pd  %zmm7, HZ, HVZ{%k1}{z}
     .endif
 
     #################################################################
