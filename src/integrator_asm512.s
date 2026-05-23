@@ -284,19 +284,16 @@
     vpandq          SIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta XX)
 
     # Required precision reached? abs(Delta XX) < eps
-    vcmppd          $0x11, EPS, %zmm7, %k4      # $11 = less than, ordered (nans fail), quiet
-    #vcmppd         $25, EPS, %zmm7, %k4        # $25 = Not greater or equal, unordered (nans pass), quiet
+    vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
+    #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
 #START DEBUG COUNTER:
-#    knotb           %k4, %k4
 #    vmovdqa64       P512_COUNTER(%rdi), %zmm4
 #    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
 #    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#    knotb           %k4, %k4
 #END DEBUG COUNTER
 
-    kmovb           %k4, %eax
-    cmpb            $0xFF, %al
-    je              .NewtonLoopDone\@
+    kortestw        %k4, %k4
+    jz              .NewtonLoopDone\@
 
     # Maximum iterations reached?
     incq            %rcx
@@ -304,7 +301,6 @@
     jne             .NewtonLoop\@
 
     # If not converged yet, fall back to bisection
-    knotb           %k4, %k4                    # Only update failed particles
     movq            $0, %rcx
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     
