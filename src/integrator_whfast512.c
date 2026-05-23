@@ -506,25 +506,6 @@ static void reb_whfast512_interaction_step_8planets(struct reb_simulation * r, d
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
-
-        // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(gr_prefac2, dvz); 
-
-        dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
-        dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
-        dvx = _mm512_add_pd(_mm512_shuffle_f64x2(dvx,dvx, 78), dvx);
-        dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
-        dvy = _mm512_add_pd(_mm512_permutex_pd(dvy, _MM_PERM_ABCD), dvy);
-        dvy = _mm512_add_pd(_mm512_shuffle_f64x2(dvy,dvy, 78), dvy);
-        dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
-        dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
-        dvz = _mm512_add_pd(_mm512_shuffle_f64x2(dvz,dvz, 78), dvz);
-
-        p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
-        p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
-        p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
     }
 
 
@@ -701,22 +682,6 @@ static void reb_whfast512_interaction_step_4planets(struct reb_simulation * r, d
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
-
-        // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(gr_prefac2, dvz); 
-
-        dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
-        dvx = _mm512_add_pd(_mm512_permutex_pd(dvx, _MM_PERM_ABCD), dvx);
-        dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
-        dvy = _mm512_add_pd(_mm512_permutex_pd(dvy, _MM_PERM_ABCD), dvy);
-        dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
-        dvz = _mm512_add_pd(_mm512_permutex_pd(dvz, _MM_PERM_ABCD), dvz);
-
-        p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
-        p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
-        p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
     }
 
 
@@ -804,19 +769,6 @@ static void reb_whfast512_interaction_step_2planets(struct reb_simulation * r, d
         __m512d dvx = _mm512_mul_pd(prefac, x_j); 
         __m512d dvy = _mm512_mul_pd(prefac, y_j); 
         __m512d dvz = _mm512_mul_pd(prefac, z_j); 
-        p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
-        p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
-        p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
-
-        // Calculate back reaction onto star and apply them to planets (heliocentric) 
-        dvx = _mm512_mul_pd(gr_prefac2, dvx); 
-        dvy = _mm512_mul_pd(gr_prefac2, dvy); 
-        dvz = _mm512_mul_pd(gr_prefac2, dvz); 
-
-        dvx = _mm512_add_pd(_mm512_shuffle_pd(dvx, dvx, 0x55), dvx); // Swapping neighbouring elements
-        dvy = _mm512_add_pd(_mm512_shuffle_pd(dvy, dvy, 0x55), dvy);
-        dvz = _mm512_add_pd(_mm512_shuffle_pd(dvz, dvz, 0x55), dvz);
-
         p_jh->vx  = _mm512_sub_pd(p_jh->vx, dvx);
         p_jh->vy  = _mm512_sub_pd(p_jh->vy, dvy);
         p_jh->vz  = _mm512_sub_pd(p_jh->vz, dvz);
