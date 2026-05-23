@@ -398,15 +398,6 @@
 .endm
 
 
-.macro REDUCE_ADD_AND_BROADCAST reg, temp_reg
-    vshuff64x2 $0x4E, \reg, \reg, \temp_reg         # 01234567 -> 45670123
-    vaddpd     \reg, \temp_reg, \temp_reg    
-    vshufpd    $0x55, \temp_reg, \temp_reg, \reg    # 01234567 -> 10325476
-    vaddpd     \reg, \temp_reg, \temp_reg
-    vpermpd    $0x4E, \temp_reg, \reg               # 01234567 -> 23016745
-    vaddpd     \reg, \temp_reg, \reg
-.endm
-        
 .macro mat8_mul3 in0, in1, in2, out0, out1, out2
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
