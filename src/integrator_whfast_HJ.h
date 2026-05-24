@@ -3,12 +3,6 @@
 
 extern const struct reb_integrator reb_integrator_whfast_hj;
 
-struct reb_integrator_whfast_hj_state {
-    // Internal use
-    size_t N_allocated;
-    struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
-};
-
 struct hj_node
 {
     struct reb_particle barycenter_particle;
@@ -19,4 +13,10 @@ struct hj_node
 
     int particle_index; // -1 for wrapper, >= 0 for leaf
 };
+
+struct reb_integrator_whfast_hj_state {
+    // Internal use
+    struct hj_node root;
+};
+
 #endif

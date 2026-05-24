@@ -16,6 +16,7 @@
 void* reb_integrator_whfast_hj_create();
 void reb_integrator_whfast_hj_free(void* state);
 void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state);
+static void reb_integrator_whfast_hj_node_free(struct hj_node* const node);
 
 const struct reb_integrator reb_integrator_whfast_hj = {
     .step = reb_integrator_whfast_hj_step,
@@ -23,31 +24,196 @@ const struct reb_integrator reb_integrator_whfast_hj = {
     .free = reb_integrator_whfast_hj_free,
 };
 
-
+// create and free
 void* reb_integrator_whfast_hj_create(){
     // Allocate memory and set default parameters.
     struct reb_integrator_whfast_hj_state* whfast = calloc(sizeof(struct reb_integrator_whfast_hj_state),1);
     return whfast;
 }
 
+static void reb_integrator_whfast_hj_node_free(struct hj_node *const node)
+{
+    for (int i = 0; i < node->N_children; i++)
+    {
+        reb_integrator_whfast_hj_node_free(&node->children[i]);
+    }
+    free(node->children);
+    *node = (struct hj_node){0};
+    node->particle_index = -1;
+}
+
 void reb_integrator_whfast_hj_free(void* p){
     struct reb_integrator_whfast_hj_state* whfast = p;
-    free(whfast->p_jh);
+    reb_integrator_whfast_hj_node_free(&whfast->root);
     free(whfast);
 }
 
-int reb_integrator_whfast_hj_init(struct reb_simulation *const r, struct reb_integrator_whfast_hj_state *whfast)
+
+// helper function 
+static int close_encounter(const struct reb_simulation* const r, const struct reb_particle pi, const struct reb_particle pj)
 {
-    const size_t N = r->N;
-    if (whfast->N_allocated != N)
+    const struct reb_particle primary = r->particles[0];
+    const struct reb_orbit oi = reb_orbit_from_particle(r->G, pi, primary);
+    const struct reb_orbit oj = reb_orbit_from_particle(r->G, pj, primary);
+    const double rhill = MAX(fabs(oi.rhill), fabs(oj.rhill));
+
+    const double dx = pi.x - pj.x;
+    const double dy = pi.y - pj.y;
+    const double dz = pi.z - pj.z;
+    const double d2 = dx*dx + dy*dy + dz*dz;
+
+    return d2 <= 9.*rhill*rhill;
+}
+
+static struct reb_particle barycenter_particle(const struct hj_node *const children, const int N_children)
+{
+    struct reb_particle barycenter = {0};
+
+    for (int i = 0; i < N_children; i++)
     {
-        whfast->N_allocated = N;
-        whfast->p_jh = realloc(whfast->p_jh, sizeof(struct reb_particle) * N);
-        r->did_modify_particles = 1;
+        const struct reb_particle pi = children[i].barycenter_particle;
+        const double m = pi.m;
+
+        barycenter.x += m * pi.x;
+        barycenter.y += m * pi.y;
+        barycenter.z += m * pi.z;
+        barycenter.vx += m * pi.vx;
+        barycenter.vy += m * pi.vy;
+        barycenter.vz += m * pi.vz;
+        barycenter.ax += m * pi.ax;
+        barycenter.ay += m * pi.ay;
+        barycenter.az += m * pi.az;
+        barycenter.m += m;
     }
+
+    if (barycenter.m > 0.)
+    {
+        const double minv = 1. / barycenter.m;
+        barycenter.x *= minv;
+        barycenter.y *= minv;
+        barycenter.z *= minv;
+        barycenter.vx *= minv;
+        barycenter.vy *= minv;
+        barycenter.vz *= minv;
+        barycenter.ax *= minv;
+        barycenter.ay *= minv;
+        barycenter.az *= minv;
+    }
+
+    return barycenter;
+}
+
+
+
+
+
+
+//----------------------------------------------------------------------------
+// Need to be checked  
+
+// build tree 
+static struct hj_node* reb_integrator_whfast_hj_node_add_child(struct hj_node* const node)
+{
+    if (node->N_children == node->N_allocated){
+        const int N_allocated_new = node->N_allocated ? 2*node->N_allocated : 1;
+        struct hj_node* const children_new = realloc(node->children, sizeof(struct hj_node)*N_allocated_new);
+        if (children_new == NULL){
+            return NULL;
+        }
+        node->children = children_new;
+        node->N_allocated = N_allocated_new;
+    }
+
+    struct hj_node* const child = &node->children[node->N_children++];
+    *child = (struct hj_node){0};
+    child->particle_index = -1;
+    return child;
+}
+
+static void reb_integrator_whfast_hj_node_set_leaf(struct hj_node* const node, const struct reb_particle particle, const int particle_index)
+{
+    reb_integrator_whfast_hj_node_free(node);
+    node->barycenter_particle = particle;
+    node->particle_index = particle_index;
+}
+
+
+static int reb_integrator_whfast_hj_build_tree_dfs(const struct reb_simulation* const r, const size_t i, struct hj_node* const cluster_node, int* const visited)
+{
+    struct hj_node* const leaf_node = reb_integrator_whfast_hj_node_add_child(cluster_node);
+    if (leaf_node == NULL){
+        return 1;
+    }
+    reb_integrator_whfast_hj_node_set_leaf(leaf_node, r->particles[i], (int)i);
+    visited[i] = 1;
+
+    for (size_t j=1; j<r->N; j++){
+        if (!visited[j] && close_encounter(r, r->particles[i], r->particles[j])){
+            struct hj_node* const child_cluster_node = reb_integrator_whfast_hj_node_add_child(cluster_node);
+            if (child_cluster_node == NULL){
+                return 1;
+            }
+            if (reb_integrator_whfast_hj_build_tree_dfs(r, j, child_cluster_node, visited)){
+                return 1;
+            }
+        }
+    }
+
+    cluster_node->barycenter_particle = barycenter_particle(cluster_node->children, cluster_node->N_children);
     return 0;
 }
 
+static int reb_integrator_whfast_hj_build_tree(struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast)
+{
+    reb_integrator_whfast_hj_node_free(&whfast->root);
+
+    if (r->N == 0){
+        return 0;
+    }
+
+    int* const visited = calloc(r->N, sizeof(int));
+    if (visited == NULL){
+        return 1;
+    }
+
+    struct hj_node* const central_node = reb_integrator_whfast_hj_node_add_child(&whfast->root);
+    if (central_node == NULL){
+        free(visited);
+        return 1;
+    }
+    reb_integrator_whfast_hj_node_set_leaf(central_node, r->particles[0], 0);
+    visited[0] = 1;
+
+    for (size_t i=1; i<r->N; i++){
+        if (!visited[i]){
+            struct hj_node* const cluster_node = reb_integrator_whfast_hj_node_add_child(&whfast->root); // check 
+            if (cluster_node == NULL){
+                free(visited);
+                reb_integrator_whfast_hj_node_free(&whfast->root);
+                return 1;
+            }
+            if (reb_integrator_whfast_hj_build_tree_dfs(r, i, cluster_node, visited)){
+                free(visited);
+                reb_integrator_whfast_hj_node_free(&whfast->root);
+                return 1;
+            }
+        }
+    }
+
+    whfast->root.barycenter_particle = barycenter_particle(whfast->root.children, whfast->root.N_children);
+    free(visited);
+    return 0;
+}
+//----------------------------------------------------------------------------
+
+
+
+
+
+
+
+//----------------------------------------------------------------------------
+// need to be changed  
 void reb_integrator_whfast_hj_from_inertial(struct reb_simulation *const r, struct reb_particle *p_jh)
 {
     struct reb_particle *restrict const particles = r->particles;
@@ -123,37 +289,57 @@ void reb_integrator_whfast_hj_com_step(const struct reb_simulation* const r, str
     p_jh[0].y += _dt*p_jh[0].vy;
     p_jh[0].z += _dt*p_jh[0].vz;
 }
+//----------------------------------------------------------------------------
+
+
 
 void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast_hj_state* whfast = state;
-    const double dt = r->dt;
-    if (reb_integrator_whfast_hj_init(r, whfast)){
-        // Non recoverable error occurred.
+    if (reb_integrator_whfast_hj_build_tree(r, whfast)){
+        reb_simulation_error(r, "WHFast HJ was not able to allocate memory for the tree.");
         return;
     }
-    // H_A half step
-    reb_integrator_whfast_hj_from_inertial(r, whfast->p_jh);
-    reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);    
-    reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
-    reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
 
-    // H_B full step
-    reb_simulation_update_acceleration(r);
-    reb_integrator_whfast_hj_interaction_step(r, whfast->p_jh, dt);
+    // TODO: transform inertial coordinates into the HJ tree.
+    // TODO: apply the recursive H_A half step.
+    // TODO: transform tree coordinates back to inertial coordinates.
+    // TODO: update accelerations and apply the recursive H_B full step.
+    // TODO: apply the recursive H_A half step.
+    // TODO: transform tree coordinates back to inertial coordinates.
+    // TODO: advance r->t and r->dt_last_done.
 
-    // H_A half step
-    reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);    
-    reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
-    
-    reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
+    /*
+     * Reference: old flat Jacobi WHFast-HJ step.
+     *
+     * const double dt = r->dt;
+     *
+     * // H_A half step
+     * reb_integrator_whfast_hj_from_inertial(r, whfast->p_jh);
+     * reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);
+     * reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
+     * reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
+     *
+     * // H_B full step
+     * reb_simulation_update_acceleration(r);
+     * reb_integrator_whfast_hj_interaction_step(r, whfast->p_jh, dt);
+     *
+     * // H_A half step
+     * reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);
+     * reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
+     *
+     * reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
+     *
+     * //   0 1 2 3 4 5
+     * // 0   x x x x x
+     * // 1 x   x x x x
+     * // 2 x x   x x x
+     * // 3 x x x   x x
+     * // 4 x x x x   x
+     * // 5 x x x x x
+     * r->t += r->dt;
+     * r->dt_last_done = r->dt;
+     */
 
-    //   0 1 2 3 4 5
-    // 0   x x x x x
-    // 1 x   x x x x
-    // 2 x x   x x x
-    // 3 x x x   x x
-    // 4 x x x x   x
-    // 5 x x x x x
-    r->t+=r->dt;
-    r->dt_last_done = r->dt;
+    reb_simulation_error(r, "WHFast HJ tree stepping is not implemented yet.");
+    r->status = REB_STATUS_GENERIC_ERROR;
 }
