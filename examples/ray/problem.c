@@ -8,6 +8,7 @@ int main(int argc, char* argv[]){
     // Setup constants
     r->dt                   = 0.1;      
     reb_simulation_set_integrator(r, "whfast_hj");
+    // reb_simulation_set_integrator(r, "whfast");
 
     // Initial conditions
     reb_simulation_add_fmt(r, "solar system"); // Built in dataset for testing.
@@ -19,4 +20,5 @@ int main(int argc, char* argv[]){
     printf("dE = %e\n", fabs((E0-E1)/E0));
 }
 
-
+// dE = 4.464914e-10 whfast_hj
+// dE = 4.464980e-10 whfast

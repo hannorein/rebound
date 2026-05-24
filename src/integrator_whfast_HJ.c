@@ -36,6 +36,37 @@ void reb_integrator_whfast_hj_free(void* p){
     free(whfast);
 }
 
+int reb_integrator_whfast_hj_init(struct reb_simulation *const r, struct reb_integrator_whfast_hj_state *whfast)
+{
+    const size_t N = r->N;
+    if (whfast->N_allocated != N)
+    {
+        whfast->N_allocated = N;
+        whfast->p_jh = realloc(whfast->p_jh, sizeof(struct reb_particle) * N);
+        r->did_modify_particles = 1;
+    }
+    return 0;
+}
+
+void reb_integrator_whfast_hj_from_inertial(struct reb_simulation *const r, struct reb_particle *p_jh)
+{
+    struct reb_particle *restrict const particles = r->particles;
+    const size_t N = r->N;
+    const size_t N_active = (r->N_active == SIZE_MAX || r->testparticle_type == 1) ? N : r->N_active;
+    
+
+
+
+    reb_transformations_inertial_to_jacobi_posvel(particles, p_jh, particles, N, N_active);
+}
+
+void reb_integrator_whfast_hj_to_inertial(struct reb_simulation *const r, struct reb_particle *p_jh)
+{
+    struct reb_particle *restrict const particles = r->particles;
+    const size_t N = r->N;
+    const size_t N_active = (r->N_active == SIZE_MAX || r->testparticle_type == 1) ? N : r->N_active;
+    reb_transformations_jacobi_to_inertial_posvel(particles, p_jh, particles, N, N_active);
+}
 
 /***************************** 
  * Interaction Hamiltonian  */
@@ -93,30 +124,6 @@ void reb_integrator_whfast_hj_com_step(const struct reb_simulation* const r, str
     p_jh[0].z += _dt*p_jh[0].vz;
 }
 
-int reb_integrator_whfast_hj_init(struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* whfast){
-    const size_t N = r->N;
-    if (whfast->N_allocated != N){
-        whfast->N_allocated = N;
-        whfast->p_jh = realloc(whfast->p_jh,sizeof(struct reb_particle)*N);
-        r->did_modify_particles = 1;
-    }
-    return 0;
-}
-
-void reb_integrator_whfast_hj_from_inertial(struct reb_simulation* const r, struct reb_particle* p_jh){
-    struct reb_particle* restrict const particles = r->particles;
-    const size_t N = r->N;
-    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
-    reb_transformations_inertial_to_jacobi_posvel(particles, p_jh, particles, N, N_active);
-}
-
-void reb_integrator_whfast_hj_to_inertial(struct reb_simulation* const r, struct reb_particle* p_jh){
-    struct reb_particle* restrict const particles = r->particles;
-    const size_t N = r->N;
-    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?N:r->N_active;
-    reb_transformations_jacobi_to_inertial_posvel(particles, p_jh, particles, N, N_active);
-}
-
 void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast_hj_state* whfast = state;
     const double dt = r->dt;
@@ -124,27 +131,29 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state){
         // Non recoverable error occurred.
         return;
     }
-
+    // H_A half step
     reb_integrator_whfast_hj_from_inertial(r, whfast->p_jh);
-    
     reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);    
     reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
-
     reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
+
+    // H_B full step
     reb_simulation_update_acceleration(r);
+    reb_integrator_whfast_hj_interaction_step(r, whfast->p_jh, dt);
+
+    // H_A half step
+    reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);    
+    reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
+    
+    reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
+
     //   0 1 2 3 4 5
     // 0   x x x x x
     // 1 x   x x x x
-    // 2 x x   x x x 
+    // 2 x x   x x x
     // 3 x x x   x x
     // 4 x x x x   x
     // 5 x x x x x
-    reb_integrator_whfast_hj_interaction_step(r, whfast->p_jh, dt);
-
-    reb_integrator_whfast_hj_kepler_step(r, whfast->p_jh, r->dt/2.);    
-    reb_integrator_whfast_hj_com_step(r, whfast->p_jh, r->dt/2.);
-    reb_integrator_whfast_hj_to_inertial(r, whfast->p_jh);
-
     r->t+=r->dt;
     r->dt_last_done = r->dt;
 }
