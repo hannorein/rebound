@@ -55,6 +55,7 @@ void setup_sim(char* integrator, int corrector){
         r = reb_simulation_create();
         // Setup constants
         r->dt = 6.0/365.25*2*M_PI;
+        int concatenate = 1e4;
         r->G = 1.;
         r->exact_finish_time = 0;
         reb_simulation_add_fmt(r, "solarsystem");
@@ -63,7 +64,7 @@ void setup_sim(char* integrator, int corrector){
         if (strcmp(integrator,"asm512")==0){
             struct reb_integrator_asm512_state* asm512 = r->integrator.state;
             asm512->gr_potential = 0;
-            asm512->concatenate_steps = 1e4;
+            asm512->concatenate_steps = concatenate;
             asm512->corrector = corrector;
             asm512->gr_potential = gr;
         }
@@ -79,11 +80,12 @@ void setup_sim(char* integrator, int corrector){
         }
         double E0 = reb_simulation_energy(r);
         if (gr) E0+= gr_potential(r);
-        reb_simulation_integrate(r, 1e2*M_PI*2);
+        reb_simulation_integrate(r, concatenate*r->dt);
         double E1 = reb_simulation_energy(r);
         if (gr) E1+= gr_potential(r);
         if (!gr) printf("no-");
         printf("gr= %.16e ", fabs((E0-E1)/E0));
+        if (gr) printf("x=%.9f", r->particles[1].x);
         reb_simulation_free(r);
     }
     printf("\n");
