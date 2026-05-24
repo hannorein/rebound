@@ -216,8 +216,8 @@
     vfmadd132pd     ZETA, GS0, GS1          # fpp
 
     vmulpd          GS1, GS3, GS1           # f*fpp
-    # Next instruction uses exponent trick to speed up multiplication by 0.5 by using integer subtraction
-    vmulpd          HALF, GS1, GS1          # 0.5*f*fpp
+    # 0.5*f*fpp via integer subtract of 1 from the exponent (4-cycle vmulpd -> 1-cycle vpsubq)
+    vpsubq          .HALF_EXP_DECR(%rip){1to8}, GS1, GS1
     vfmsub231pd     GS2, GS2, GS1           # fp*fp-0.5*f*fpp
     vmulpd          GS3, GS2, GS3           # f*fp
     vdivpd          GS1, GS3, GS3
@@ -383,17 +383,31 @@
 # Macros for interaction step
 #####################################
 .macro gravity_prefactor multiplier=ONE
-    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
+    # Input:  zmm0=dx, zmm1=dy, zmm2=dz
     # Output: zmm6 = multiplier / r^3
-    
-    vmulpd      %zmm0, %zmm0, %zmm6     
-    vfmadd231pd %zmm1, %zmm1, %zmm6      
-    vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 is now r^2
-    
-    vsqrtpd     %zmm6, %zmm7             
-    vmulpd      %zmm6, %zmm7, %zmm6     # zmm6 is r^3
-   
-    vdivpd      %zmm6, \multiplier, %zmm6      
+    vmulpd      %zmm0, %zmm0, %zmm6
+    vfmadd231pd %zmm1, %zmm1, %zmm6
+    vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 = r^2 = a
+
+    vrsqrt14pd  %zmm6, %zmm7            # zmm7 = y_0 ~ 1/sqrt(a), ~14 bits
+    vmulpd      HALF, %zmm6, %zmm8      # zmm8 = 0.5 * a  (constant across iters)
+
+    # Newton iter 1
+    vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_0^2
+    vfnmadd213pd .ONE_AND_A_HALF(%rip){1to8}, %zmm8, %zmm5
+                                        # zmm5 = -zmm5*zmm8 + 1.5 = 1.5 - 0.5*a*y_0^2
+    vmulpd      %zmm7, %zmm5, %zmm7     # y_1 = y_0 * (1.5 - 0.5*a*y_0^2)
+
+    # Newton iter 2
+    vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_1^2
+    vfnmadd213pd .ONE_AND_A_HALF(%rip){1to8}, %zmm8, %zmm5
+                                        # zmm5 = 1.5 - 0.5*a*y_1^2
+    vmulpd      %zmm7, %zmm5, %zmm7     # y_2 ~ 1/sqrt(a) to ~56 bits
+
+    # Cube and multiply: 1/r^3 = y_2^3, then * multiplier
+    vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_2^2
+    vmulpd      %zmm7, %zmm5, %zmm6     # zmm6 = y_2^3 ~ 1/r^3
+    vmulpd      \multiplier, %zmm6, %zmm6
 .endm
 
 
@@ -785,6 +799,14 @@ b34mergeidx:
 .align 64
 .HALF:
     .quad 0x3fe0000000000000
+.align 64
+# Exponent decrement: subtracting this from a normal double divides it by 2
+.HALF_EXP_DECR:
+    .quad 0x0010000000000000
+.align 64
+# 1.5 — Newton-Raphson constant for rsqrt iteration: y' = y*(1.5 - 0.5*a*y*y)
+.ONE_AND_A_HALF:
+    .quad 0x3ff8000000000000
 .align 64
 # Inverse factorial table
 .IF0:
