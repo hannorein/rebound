@@ -149,12 +149,29 @@ static int reb_integrator_whfast_hj_build_tree_dfs(const struct reb_simulation* 
 
     for (size_t j=1; j<r->N; j++){
         if (!visited[j] && close_encounter(r, r->particles[i], r->particles[j])){
-            struct hj_node* const child_cluster_node = reb_integrator_whfast_hj_node_add_child(cluster_node);
-            if (child_cluster_node == NULL){
-                return 1;
+            int has_close_child = 0;
+            for (size_t k=1; k<r->N; k++){
+                if (!visited[k] && k != j && close_encounter(r, r->particles[j], r->particles[k])){
+                    has_close_child = 1;
+                    break;
+                }
             }
-            if (reb_integrator_whfast_hj_build_tree_dfs(r, j, child_cluster_node, visited)){
-                return 1;
+
+            if (has_close_child){
+                struct hj_node* const child_cluster_node = reb_integrator_whfast_hj_node_add_child(cluster_node);
+                if (child_cluster_node == NULL){
+                    return 1;
+                }
+                if (reb_integrator_whfast_hj_build_tree_dfs(r, j, child_cluster_node, visited)){
+                    return 1;
+                }
+            }else{
+                struct hj_node* const child_leaf_node = reb_integrator_whfast_hj_node_add_child(cluster_node);
+                if (child_leaf_node == NULL){
+                    return 1;
+                }
+                reb_integrator_whfast_hj_node_set_leaf(child_leaf_node, r->particles[j], (int)j);
+                visited[j] = 1;
             }
         }
     }
@@ -186,6 +203,26 @@ static int reb_integrator_whfast_hj_build_tree(struct reb_simulation* const r, s
 
     for (size_t i=1; i<r->N; i++){
         if (!visited[i]){
+            int has_close_child = 0;
+            for (size_t j=1; j<r->N; j++){
+                if (!visited[j] && j != i && close_encounter(r, r->particles[i], r->particles[j])){
+                    has_close_child = 1;
+                    break;
+                }
+            }
+
+            if (!has_close_child){
+                struct hj_node* const leaf_node = reb_integrator_whfast_hj_node_add_child(&whfast->root);
+                if (leaf_node == NULL){
+                    free(visited);
+                    reb_integrator_whfast_hj_node_free(&whfast->root);
+                    return 1;
+                }
+                reb_integrator_whfast_hj_node_set_leaf(leaf_node, r->particles[i], (int)i);
+                visited[i] = 1;
+                continue;
+            }
+
             struct hj_node* const cluster_node = reb_integrator_whfast_hj_node_add_child(&whfast->root); // check 
             if (cluster_node == NULL){
                 free(visited);
