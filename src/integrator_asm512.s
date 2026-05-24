@@ -401,7 +401,7 @@
 .macro mat8_mul3 in0, in1, in2, out0, out1, out2
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
-    # zmm0, zmm1, zmm2  input and output vectors
+    # Does not alter inputs
     # uses: zmm3-zmm7
     # The idea is to use embedded broadcast loads
     # Note: matrix needs to be transposed.
