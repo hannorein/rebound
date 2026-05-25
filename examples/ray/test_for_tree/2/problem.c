@@ -213,6 +213,24 @@ static int assert_no_close_encounter_tree(const struct hj_node* const root){
     return 1;
 }
 
+static int assert_jacobi_link_matches_particles(const struct hj_node* const node,
+        const struct reb_particle primary, const struct reb_particle secondary){
+    if (!assert_internal(node)){
+        return 0;
+    }
+    const struct reb_particle link = node->jacobi_particle;
+    if (!nearly_equal(link.m, secondary.m)
+            || !nearly_equal(link.x, secondary.x - primary.x)
+            || !nearly_equal(link.y, secondary.y - primary.y)
+            || !nearly_equal(link.z, secondary.z - primary.z)
+            || !nearly_equal(link.vx, secondary.vx - primary.vx)
+            || !nearly_equal(link.vy, secondary.vy - primary.vy)
+            || !nearly_equal(link.vz, secondary.vz - primary.vz)){
+        return fail("local Jacobi link does not match secondary minus primary");
+    }
+    return 1;
+}
+
 static int test_build_tree_empty_simulation(void){
     struct reb_simulation* const r = reb_simulation_create();
     struct reb_integrator_whfast_hj_state whfast = {0};
@@ -274,6 +292,53 @@ cleanup:
     return ok;
 }
 
+static int test_tree_jacobi_roundtrip(void){
+    struct reb_simulation* const r = setup_no_close_encounter_simulation();
+    struct reb_integrator_whfast_hj_state whfast = {0};
+    struct reb_particle original[N_PARTICLES];
+
+    for (int i=0; i<N_PARTICLES; i++){
+        original[i] = r->particles[i];
+    }
+
+    int ok = 1;
+    if (reb_integrator_whfast_hj_build_tree(r, &whfast) != 0){
+        ok = fail("reb_integrator_whfast_hj_build_tree returned an error");
+        goto cleanup;
+    }
+    reb_integrator_whfast_hj_from_inertial(r, whfast.root);
+
+    const struct hj_node* const node_01 = whfast.root->primary->primary->primary;
+    if (!assert_jacobi_link_matches_particles(node_01, original[0], original[1])){
+        ok = 0;
+        goto cleanup;
+    }
+    if (!assert_tree_invariants(whfast.root)){
+        ok = 0;
+        goto cleanup;
+    }
+
+    for (int i=0; i<N_PARTICLES; i++){
+        r->particles[i].x += 100. + i;
+        r->particles[i].y -= 50. + i;
+        r->particles[i].vx -= 10. + i;
+        r->particles[i].vy += 20. + i;
+    }
+
+    reb_integrator_whfast_hj_to_inertial(r, whfast.root);
+    for (int i=0; i<N_PARTICLES; i++){
+        if (!assert_particle_close(r->particles[i], original[i], "round-tripped particle")){
+            ok = 0;
+            goto cleanup;
+        }
+    }
+
+cleanup:
+    reb_integrator_whfast_hj_node_free(whfast.root);
+    reb_simulation_free(r);
+    return ok;
+}
+
 static int test_build_tree_twice(void){
     struct reb_simulation* const r = setup_no_close_encounter_simulation();
     struct reb_integrator_whfast_hj_state whfast = {0};
@@ -314,6 +379,9 @@ int main(void){
         return 1;
     }
     if (!test_build_tree_no_close_encounters()){
+        return 1;
+    }
+    if (!test_tree_jacobi_roundtrip()){
         return 1;
     }
     if (!test_build_tree_twice()){
