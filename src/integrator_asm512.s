@@ -343,11 +343,10 @@
     mm_stiefel_Gs13_avx512
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    # Calculate 1/r
-    vmulpd          GS1, ETA, %zmm2
-    vfmadd231pd     GS2, ZETA, %zmm2
-    vaddpd          R, %zmm2, XX
-    vdivpd          XX, ONE, %zmm4          # 1/r
+    # Calculate r_new = R + GS1*ETA + GS2*ZETA, then 1/r.
+    vfmadd231pd     GS1, ETA, R
+    vfmadd231pd     GS2, ZETA, R
+    vdivpd          R, ONE, %zmm4          # 1/r
     
     # Calculate f and g functions
     vmulpd          GS2, M, %zmm5
