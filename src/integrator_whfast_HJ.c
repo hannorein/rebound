@@ -67,6 +67,7 @@ static int close_encounter(const struct reb_simulation* const r, const struct re
 
 static struct reb_particle barycenter_particle(const struct hj_node *const children, const int N_children)
 {
+    // TODO: for now, this does not handle the case that all particles are zero-mass.
     struct reb_particle barycenter = {0};
 
     for (int i = 0; i < N_children; i++)
@@ -109,8 +110,6 @@ static struct reb_particle barycenter_particle(const struct hj_node *const child
 
 
 //----------------------------------------------------------------------------
-// Need to be checked  
-
 // build tree 
 static struct hj_node* reb_integrator_whfast_hj_node_add_child(struct hj_node* const node)
 {
