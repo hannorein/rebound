@@ -1,18 +1,21 @@
 /**
  * Unit test for reb_integrator_whfast_hj_build_tree().
  *
- * Five total particles, with no close encounters between non-central
- * particles. The expected tree is root -> one direct leaf child for every
- * particle.
+ * Five total particles: particle 0 is the central mass, and particles 1-4
+ * are on increasingly wider circular orbits with no close encounters between
+ * non-central particles.
  *
- * Expected tree:
+ * Expected binary tree:
  *
  * root
- * |-- leaf: particle 0
- * |-- leaf: particle 1
- * |-- leaf: particle 2
- * |-- leaf: particle 3
- * `-- leaf: particle 4
+ * |-- primary: internal {0, 1, 2, 3}
+ * |   |-- primary: internal {0, 1, 2}
+ * |   |   |-- primary: internal {0, 1}
+ * |   |   |   |-- primary: leaf particle 0
+ * |   |   |   `-- secondary: leaf particle 1
+ * |   |   `-- secondary: leaf particle 2
+ * |   `-- secondary: leaf particle 3
+ * `-- secondary: leaf particle 4
  */
 
 #include <math.h>
@@ -28,19 +31,42 @@ static int fail(const char* const message){
     return 0;
 }
 
+static int nearly_equal(const double a, const double b){
+    const double scale = 1. + fabs(a) + fabs(b);
+    return fabs(a - b) <= 1.e-12*scale;
+}
+
+static int assert_particle_close(const struct reb_particle actual, const struct reb_particle expected, const char* const label){
+    if (!nearly_equal(actual.m, expected.m)
+            || !nearly_equal(actual.x, expected.x)
+            || !nearly_equal(actual.y, expected.y)
+            || !nearly_equal(actual.z, expected.z)
+            || !nearly_equal(actual.vx, expected.vx)
+            || !nearly_equal(actual.vy, expected.vy)
+            || !nearly_equal(actual.vz, expected.vz)
+            || !nearly_equal(actual.ax, expected.ax)
+            || !nearly_equal(actual.ay, expected.ay)
+            || !nearly_equal(actual.az, expected.az)){
+        fprintf(stderr, "FAIL: %s barycenter does not match its children\n", label);
+        return 0;
+    }
+    return 1;
+}
+
 static void add_central_particle(struct reb_simulation* const r){
     struct reb_particle p = {0};
     p.m = 1.0;
     reb_simulation_add(r, p);
 }
 
-static void add_circular_particle(struct reb_simulation* const r, const double mass, const double f){
+static void add_circular_particle(struct reb_simulation* const r, const double mass, const double radius, const double f){
     struct reb_particle p = {0};
     p.m = mass;
-    p.x = cos(f);
-    p.y = sin(f);
-    p.vx = -sin(f);
-    p.vy = cos(f);
+    p.x = radius*cos(f);
+    p.y = radius*sin(f);
+    const double speed = sqrt(1.0/radius);
+    p.vx = -speed*sin(f);
+    p.vy = speed*cos(f);
     reb_simulation_add(r, p);
 }
 
@@ -51,20 +77,20 @@ static struct reb_simulation* setup_no_close_encounter_simulation(void){
     add_central_particle(r);
 
     const double m = 5.e-8;
-    add_circular_particle(r, m, 0.00);
-    add_circular_particle(r, m, 0.05);
-    add_circular_particle(r, m, 0.10);
-    add_circular_particle(r, m, 0.15);
+    add_circular_particle(r, m, 1.0, 0.0);
+    add_circular_particle(r, m, 2.0, 0.0);
+    add_circular_particle(r, m, 3.0, 0.0);
+    add_circular_particle(r, m, 4.0, 0.0);
 
     return r;
 }
 
 static int assert_leaf(const struct hj_node* const node, const int particle_index){
-    if (node->N_children != 0){
-        return fail("expected a leaf node");
+    if (node == NULL){
+        return fail("expected a leaf node but found NULL");
     }
-    if (node->children != NULL){
-        return fail("leaf node should not have children");
+    if (node->primary != NULL || node->secondary != NULL){
+        return fail("expected a leaf node");
     }
     if (node->particle_index != particle_index){
         return fail("leaf node has wrong particle_index");
@@ -72,23 +98,160 @@ static int assert_leaf(const struct hj_node* const node, const int particle_inde
     return 1;
 }
 
-static int assert_no_close_encounter_tree(const struct hj_node* const root){
-    if (root->particle_index != -1){
-        return fail("root should be a wrapper node");
+static int assert_internal(const struct hj_node* const node){
+    if (node == NULL){
+        return fail("expected an internal node but found NULL");
     }
-    if (root->N_children != N_PARTICLES){
-        return fail("root should have one direct leaf child for every particle");
+    if (node->particle_index != -1){
+        return fail("internal node should have particle_index == -1");
     }
-    if (root->children == NULL){
-        return fail("root has children count but NULL children pointer");
+    if (node->primary == NULL || node->secondary == NULL){
+        return fail("internal node should have primary and secondary children");
     }
+    return 1;
+}
 
+static int collect_leaf_counts(const struct hj_node* const node, int counts[N_PARTICLES]){
+    if (node == NULL){
+        return fail("encountered NULL tree node");
+    }
+    if (node->primary == NULL && node->secondary == NULL){
+        if (node->particle_index < 0 || node->particle_index >= N_PARTICLES){
+            return fail("leaf has invalid particle_index");
+        }
+        counts[node->particle_index]++;
+        return 1;
+    }
+    if (!assert_internal(node)){
+        return 0;
+    }
+    return collect_leaf_counts(node->primary, counts)
+        && collect_leaf_counts(node->secondary, counts);
+}
+
+static int assert_each_particle_once(const struct hj_node* const root){
+    int counts[N_PARTICLES] = {0};
+    if (!collect_leaf_counts(root, counts)){
+        return 0;
+    }
     for (int i=0; i<N_PARTICLES; i++){
-        if (!assert_leaf(&root->children[i], i)){
-            return 0;
+        if (counts[i] != 1){
+            return fail("each particle should appear exactly once in the tree");
         }
     }
     return 1;
+}
+
+static int assert_particles_0_to_n_minus_1_once(const struct hj_node* const root, const int N_expected){
+    int counts[N_PARTICLES] = {0};
+    if (N_expected < 0 || N_expected > N_PARTICLES){
+        return fail("invalid expected particle count");
+    }
+    if (!collect_leaf_counts(root, counts)){
+        return 0;
+    }
+    for (int i=0; i<N_PARTICLES; i++){
+        const int expected_count = i < N_expected ? 1 : 0;
+        if (counts[i] != expected_count){
+            return fail("tree does not contain the expected particle index set");
+        }
+    }
+    return 1;
+}
+
+static int assert_tree_invariants(const struct hj_node* const node){
+    if (node == NULL){
+        return fail("root should not be NULL");
+    }
+    if (node->primary == NULL && node->secondary == NULL){
+        if (node->particle_index < 0 || node->particle_index >= N_PARTICLES){
+            return fail("leaf has invalid particle_index");
+        }
+        return 1;
+    }
+    if (!assert_internal(node)){
+        return 0;
+    }
+    if (node->primary->barycenter_particle.m + 1.e-15 < node->secondary->barycenter_particle.m){
+        return fail("primary child should be at least as massive as secondary child");
+    }
+
+    const struct reb_particle expected = reb_particle_com_of_pair(
+        node->primary->barycenter_particle,
+        node->secondary->barycenter_particle
+    );
+    if (!assert_particle_close(node->barycenter_particle, expected, "internal node")){
+        return 0;
+    }
+    return assert_tree_invariants(node->primary)
+        && assert_tree_invariants(node->secondary);
+}
+
+static int assert_no_close_encounter_tree(const struct hj_node* const root){
+    if (!assert_internal(root)){
+        return 0;
+    }
+
+    const struct hj_node* const node_0123 = root->primary;
+    if (!assert_internal(node_0123) || !assert_leaf(root->secondary, 4)){
+        return 0;
+    }
+
+    const struct hj_node* const node_012 = node_0123->primary;
+    if (!assert_internal(node_012) || !assert_leaf(node_0123->secondary, 3)){
+        return 0;
+    }
+
+    const struct hj_node* const node_01 = node_012->primary;
+    if (!assert_internal(node_01) || !assert_leaf(node_012->secondary, 2)){
+        return 0;
+    }
+
+    if (!assert_leaf(node_01->primary, 0) || !assert_leaf(node_01->secondary, 1)){
+        return 0;
+    }
+    return 1;
+}
+
+static int test_build_tree_empty_simulation(void){
+    struct reb_simulation* const r = reb_simulation_create();
+    struct reb_integrator_whfast_hj_state whfast = {0};
+
+    int ok = 1;
+    if (reb_integrator_whfast_hj_build_tree(r, &whfast) != 0){
+        ok = fail("reb_integrator_whfast_hj_build_tree returned an error for empty simulation");
+        goto cleanup;
+    }
+    if (whfast.root != NULL){
+        ok = fail("empty simulation should leave root NULL");
+    }
+
+cleanup:
+    reb_integrator_whfast_hj_node_free(whfast.root);
+    reb_simulation_free(r);
+    return ok;
+}
+
+static int test_build_tree_single_particle(void){
+    struct reb_simulation* const r = reb_simulation_create();
+    struct reb_integrator_whfast_hj_state whfast = {0};
+
+    add_central_particle(r);
+
+    int ok = 1;
+    if (reb_integrator_whfast_hj_build_tree(r, &whfast) != 0){
+        ok = fail("reb_integrator_whfast_hj_build_tree returned an error for one particle");
+        goto cleanup;
+    }
+
+    ok = assert_leaf(whfast.root, 0)
+        && assert_tree_invariants(whfast.root)
+        && assert_particles_0_to_n_minus_1_once(whfast.root, 1);
+
+cleanup:
+    reb_integrator_whfast_hj_node_free(whfast.root);
+    reb_simulation_free(r);
+    return ok;
 }
 
 static int test_build_tree_no_close_encounters(void){
@@ -101,18 +264,61 @@ static int test_build_tree_no_close_encounters(void){
         goto cleanup;
     }
 
-    ok = assert_no_close_encounter_tree(&whfast.root);
+    ok = assert_tree_invariants(whfast.root)
+        && assert_each_particle_once(whfast.root)
+        && assert_no_close_encounter_tree(whfast.root);
 
 cleanup:
-    reb_integrator_whfast_hj_node_free(&whfast.root);
+    reb_integrator_whfast_hj_node_free(whfast.root);
+    reb_simulation_free(r);
+    return ok;
+}
+
+static int test_build_tree_twice(void){
+    struct reb_simulation* const r = setup_no_close_encounter_simulation();
+    struct reb_integrator_whfast_hj_state whfast = {0};
+
+    int ok = 1;
+    if (reb_integrator_whfast_hj_build_tree(r, &whfast) != 0){
+        ok = fail("first reb_integrator_whfast_hj_build_tree call returned an error");
+        goto cleanup;
+    }
+    if (!assert_tree_invariants(whfast.root) || !assert_each_particle_once(whfast.root)){
+        ok = 0;
+        goto cleanup;
+    }
+
+    r->particles[4].x = 8.0;
+    r->particles[4].y = 0.0;
+    r->particles[4].vx = 0.0;
+    r->particles[4].vy = sqrt(1.0/8.0);
+
+    if (reb_integrator_whfast_hj_build_tree(r, &whfast) != 0){
+        ok = fail("second reb_integrator_whfast_hj_build_tree call returned an error");
+        goto cleanup;
+    }
+    ok = assert_tree_invariants(whfast.root)
+        && assert_each_particle_once(whfast.root);
+
+cleanup:
+    reb_integrator_whfast_hj_node_free(whfast.root);
     reb_simulation_free(r);
     return ok;
 }
 
 int main(void){
+    if (!test_build_tree_empty_simulation()){
+        return 1;
+    }
+    if (!test_build_tree_single_particle()){
+        return 1;
+    }
     if (!test_build_tree_no_close_encounters()){
         return 1;
     }
-    puts("reb_integrator_whfast_hj_build_tree no-close-encounter test passed.");
+    if (!test_build_tree_twice()){
+        return 1;
+    }
+    puts("reb_integrator_whfast_hj_build_tree count/rebuild tests passed.");
     return 0;
 }
