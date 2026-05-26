@@ -404,10 +404,10 @@
                                         # zmm5 = 1.5 - 0.5*a*y_1^2
     vmulpd      %zmm7, %zmm5, %zmm7     # y_2 ~ 1/sqrt(a) to ~56 bits
 
-    # Cube and multiply: 1/r^3 = y_2^3, then * multiplier
-    vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_2^2
-    vmulpd      %zmm7, %zmm5, %zmm6     # zmm6 = y_2^3 ~ 1/r^3
-    vmulpd      \multiplier, %zmm6, %zmm6
+    # y2*y2 -> *y2 -> *mult implemented as (y2*y2) || (mult*y2) -> mul.
+    vmulpd      %zmm7, %zmm7, %zmm5         # zmm5 = y_2^2
+    vmulpd      \multiplier, %zmm7, %zmm6   # zmm6 = mult * y_2  (parallel)
+    vmulpd      %zmm5, %zmm6, %zmm6         # zmm6 = mult * y_2^3 ~ mult / r^3
 .endm
 
 
