@@ -20,5 +20,6 @@ int main(int argc, char* argv[]){
     printf("dE = %e\n", fabs((E0-E1)/E0));
 }
 
-// dE = 4.464914e-10 whfast_hj
+// dE = 4.464914e-10 whfast_hj before implementing
 // dE = 4.464980e-10 whfast
+// dE = 4.507626e-10 whfast_hj after implementing
