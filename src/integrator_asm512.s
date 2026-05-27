@@ -406,8 +406,12 @@
 
     # y2*y2 -> *y2 -> *mult implemented as (y2*y2) || (mult*y2) -> mul.
     vmulpd      %zmm7, %zmm7, %zmm5         # zmm5 = y_2^2
+    .ifc \multiplier,ONE
+    vmulpd      %zmm5, %zmm7, %zmm6         # zmm6 = y_2^3 ~ mult / r^3
+    .else
     vmulpd      \multiplier, %zmm7, %zmm6   # zmm6 = mult * y_2  (parallel)
     vmulpd      %zmm5, %zmm6, %zmm6         # zmm6 = mult * y_2^3 ~ mult / r^3
+    .endif
 .endm
 
 
