@@ -91,10 +91,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descrip
     { "", REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_asm512_state, gr_potential), 0, 0, 0},
     { "", REB_UINT,        "N_systems",       offsetof(struct reb_integrator_asm512_state, N_systems), 0, 0, 0},
     { "", REB_POINTER_ALIGNED, "data",        offsetof(struct reb_integrator_asm512_state, data), offsetof(struct reb_integrator_asm512_state, N_allocated), sizeof(struct simd_data), 0},
-    { "", REB_PARTICLE,    "pjh0_0",          offsetof(struct reb_integrator_asm512_state, p_jh0[0]), 0, 0, 0},
-    { "", REB_PARTICLE,    "pjh0_1",          offsetof(struct reb_integrator_asm512_state, p_jh0[1]), 0, 0, 0},
-    { "", REB_PARTICLE,    "pjh0_2",          offsetof(struct reb_integrator_asm512_state, p_jh0[2]), 0, 0, 0},
-    { "", REB_PARTICLE,    "pjh0_3",          offsetof(struct reb_integrator_asm512_state, p_jh0[3]), 0, 0, 0},
+    { "", REB_DOUBLE,      "last_synchronization", offsetof(struct reb_integrator_asm512_state, last_synchronization), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
@@ -510,6 +507,7 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
     if (r->is_synchronized){
         // Use WHFast to apply the correctors.
         inertial_to_jacobi_posvel(r, data, asm512->N_systems);
+        asm512->last_synchronization = r->t;
         if (asm512->corrector){
             if (asm512->gr_potential){
                 reb_asm512_corrector_step_gr(data, 1.0);
@@ -543,16 +541,7 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
 void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* state){
     struct reb_integrator_asm512_state* const asm512 = state;
     if (!r->is_synchronized){
-        //struct reb_particle_avx512* sync_pj = NULL;
         struct simd_data * data = asm512->data;
-        //if (asm512->keep_unsynchronized){
-        //    free(asm512->particles_keep_unsynchronized);
-        //    asm512->particles_keep_unsynchronized = malloc(sizeof(struct reb_particle)*r->N);
-        //    memcpy(asm512->particles_keep_unsynchronized, r->particles, sizeof(struct reb_particle)*r->N);
-        //    asm512->N_allocated_particles_keep_unsynchronized = r->N;
-        //    sync_pj = aligned_alloc(64,sizeof(struct reb_particle_avx512));
-        //    memcpy(sync_pj,asm512->p512, sizeof(struct reb_particle_avx512));
-        //}
         data->dt = _mm512_set1_pd(r->dt/2.0); 
         reb_asm512_kepler_step(data);    
         data->dt = _mm512_set1_pd(r->dt); // Reset
@@ -564,16 +553,10 @@ void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* sta
                 reb_asm512_corrector_step_nogr(data, -1.0);
             }
         }
-        jacobi_to_inertial_posvel_and_com(r, data, 0.0, asm512->N_systems);
-        // Use WHFast to applyt the correctors
-        //apply_corrector(r, -1.0);
-        //if (asm512->keep_unsynchronized){
-         //   memcpy(data, sync_pj, sizeof(struct reb_particle_avx512));
-         //   free(sync_pj);
-        //}else{
-            r->is_synchronized = 1;
-            //asm512->time_of_last_synchronize = r->t;
-        //}
+        double dt_com = r->t - asm512->last_synchronization;
+        jacobi_to_inertial_posvel_and_com(r, data, dt_com, asm512->N_systems);
+        asm512->last_synchronization = r->t;
+        r->is_synchronized = 1;
     }
 }
 
