@@ -1,7 +1,9 @@
 # file: integrator_asm512.s
 .section .text
-.globl reb_asm512_full_steps_gr
-.globl reb_asm512_full_steps_nogr
+.globl reb_asm512_full_steps_jacobi_gr
+.globl reb_asm512_full_steps_jacobi_nogr
+.globl reb_asm512_full_steps_democraticheliocentric_gr
+.globl reb_asm512_full_steps_democraticheliocentric_nogr
 .globl reb_asm512_kepler_step
 .globl reb_asm512_corrector_step_gr
 .globl reb_asm512_corrector_step_nogr
@@ -476,7 +478,7 @@
 ###############################################################################
 # Interaction Step
 ###############################################################################
-.macro interaction_step grflag
+.macro interaction_step grflag coordinates=0
     # TODO: Floating point error accumulation might be less if Jacobi and GR are added after P-P perturbations
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
@@ -738,11 +740,12 @@ reb_asm512_interaction_step_nogr:
  
 
 # Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag
+.macro full_steps grflag coordinates
     # Input:   
     #           rdi = p512
     #           rsi = Number of steps (counting down)
     #           rdx = skip_first_kepler_step
+    #           coordinates = 0 (jacobi) / 1 (democratic heliocentric)
 
     # Load constants
     reb_asm512_init_registers
@@ -767,9 +770,11 @@ reb_asm512_interaction_step_nogr:
     ret
 .endm
 
-reb_asm512_full_steps_gr: full_steps 1
-reb_asm512_full_steps_nogr: full_steps 0
+reb_asm512_full_steps_democraticheliocentric_gr: full_steps 1 1
+reb_asm512_full_steps_democraticheliocentric_nogr: full_steps 0 1
 
+reb_asm512_full_steps_jacobi_gr: full_steps 1 0
+reb_asm512_full_steps_jacobi_nogr: full_steps 0 0
 
 
 .section    .rodata
