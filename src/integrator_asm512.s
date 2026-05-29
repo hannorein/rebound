@@ -224,6 +224,56 @@
     vsubpd          GS3, XX, XX
 .endm
 
+# Scalar Halley step for lane 0 only
+.macro scalar_halley_lane0 numTerms=11
+    # -Polynomial evaluation
+    vmulsd          %xmm17, %xmm17, %xmm2          # X^2
+    vmulsd          %xmm21, %xmm2, %xmm6           # alpha = X^2 * BETA
+    vmovsd          .IF0+(\numTerms*8)(%rip), %xmm3
+    vmovsd          .IF0+((\numTerms-1)*8)(%rip), %xmm4
+    .set IF_OFF, \numTerms - 2
+    .rept (\numTerms - 5) / 2
+    vfnmadd213sd    .IF0+(IF_OFF*8)(%rip), %xmm6, %xmm3
+    .set IF_OFF, IF_OFF - 1
+    vfnmadd213sd    .IF0+(IF_OFF*8)(%rip), %xmm6, %xmm4
+    .set IF_OFF, IF_OFF - 1
+    .endr
+    vfnmadd213sd    .IF0+(3*8)(%rip), %xmm6, %xmm3
+    vmovsd          %xmm4, %xmm4, %xmm7            # save xmm4 -> will become GS0
+    vfnmadd213sd    .IF0+(2*8)(%rip), %xmm6, %xmm4
+    vfnmadd213sd    .IF0+(1*8)(%rip), %xmm6, %xmm7 # GS0 partial in xmm7
+
+    vmulsd          %xmm4, %xmm2, %xmm8            # GS2 = xmm4 * X^2  (in xmm8)
+    vmulsd          %xmm3, %xmm17, %xmm3           # xmm3 *= X
+    vmulsd          %xmm3, %xmm2, %xmm5            # GS3 = xmm3 * X^2  (in xmm5)
+    vfnmadd132sd    %xmm3, %xmm17, %xmm6           # GS1 = X - alpha*xmm3 (in xmm6)
+    # GS0=xmm7, GS1=xmm6, GS2=xmm8, GS3=xmm5
+
+    # Halley scalar step
+    vfmsub213sd     %xmm29, %xmm15, %xmm5          # xmm5 = ZETA*GS3 - DT
+    vfmadd231sd     %xmm8, %xmm16, %xmm5           # xmm5 += ETA*GS2
+    vfmadd231sd     %xmm17, %xmm13, %xmm5          # xmm5 += R*XX = f
+
+    vfmadd132sd     %xmm15, %xmm13, %xmm8          # xmm8 = ZETA*GS2 + R
+    vfmadd231sd     %xmm16, %xmm6, %xmm8           # xmm8 += ETA*GS1 = f'
+
+    vmulsd          %xmm16, %xmm7, %xmm7           # xmm7 = ETA*GS0
+    vfmadd132sd     %xmm15, %xmm7, %xmm6           # xmm6 = ZETA*GS1 + ETA*GS0 = f''
+
+    vmulsd          %xmm5, %xmm6, %xmm6            # xmm6 = f * f''
+    vmulsd          %xmm30, %xmm6, %xmm6           # xmm6 *= HALF
+    vfmsub231sd     %xmm8, %xmm8, %xmm6            # xmm6 = f'^2 - 0.5*f*f''
+    vmulsd          %xmm5, %xmm8, %xmm5            # xmm5 = f * f'
+    vdivsd          %xmm6, %xmm5, %xmm5            # xmm5 = (f*f') / (f'^2 - 0.5*f*f'')
+    vsubsd          %xmm5, %xmm17, %xmm2           # xmm2 = XX[0] - delta   = refined XX[0]
+
+    # Blend refined value back into lane 0 of zmm17
+    vbroadcastsd    %xmm2, %zmm2
+    movw            $1, %ax
+    kmovw           %eax, %k5
+    vmovapd         %zmm2, %zmm17{%k5}
+.endm
+
 .macro newton
     # In: GS1,GS2,GS3
     # Out: XX
@@ -270,8 +320,7 @@
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     mm_stiefel_Gs03_avx512 9
     halley
-    mm_stiefel_Gs03_avx512 11
-    halley
+    scalar_halley_lane0 11
   
     movq            $0, %rcx                    # Newton loop counter
 .NewtonLoop\@:    
