@@ -87,7 +87,6 @@ const struct reb_integrator reb_integrator_asm512 = {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_asm512_field_descriptor_list[] = {
-    { "", REB_UINT,        "keep_unsynchronized", offsetof(struct reb_integrator_asm512_state, keep_unsynchronized), 0, 0, 0},
     { "", REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_asm512_state, gr_potential), 0, 0, 0},
     { "", REB_UINT,        "N_systems",       offsetof(struct reb_integrator_asm512_state, N_systems), 0, 0, 0},
     { "", REB_POINTER_ALIGNED, "data",        offsetof(struct reb_integrator_asm512_state, data), offsetof(struct reb_integrator_asm512_state, N_allocated), sizeof(struct simd_data), 0},
@@ -101,15 +100,7 @@ void* reb_integrator_asm512_create(){
     struct reb_integrator_asm512_state* asm512 = calloc(sizeof(struct reb_integrator_asm512_state),1);
     asm512->N_systems = 1;
     asm512->gr_potential = 0;
-    asm512->keep_unsynchronized = 0;
-    asm512->recalculate_constants = 1;
     asm512->concatenate_steps = 1;
-    asm512->data = aligned_alloc(64,sizeof(struct simd_data));
-    memset(asm512->data, 0, sizeof(struct simd_data));
-    if (!asm512->data){
-        reb_simulation_error(NULL, "WHFast512 was not able to allocate memory.");
-        return NULL;
-    }
     return asm512;
 }
 
@@ -312,7 +303,17 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data
 
 
 // Precalculate various constants and put them in 512 bit vectors.
-static void recalculate_constants(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
+static void recalculate_constants(struct reb_simulation* r, unsigned int N_systems){
+    struct reb_integrator_asm512_state* asm512 = r->integrator.state;
+    free(asm512->data); // free in case previously allocated
+    asm512->data = aligned_alloc(64,sizeof(struct simd_data));
+    asm512->N_allocated=1;
+    memset(asm512->data, 0, sizeof(struct simd_data));
+    if (!asm512->data){
+        reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
+        return;
+    }
+    struct simd_data* data = asm512->data;
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
@@ -469,20 +470,22 @@ static int reb_integrator_asm512_verify_setup(struct reb_simulation* const r){
     if (r->exit_min_distance || r->exit_max_distance){
         reb_simulation_warning(r, "You are using WHFast512 together with the flags exit_min_distance and/or exit_max_distance. With the current implementation, these flags will only check the last synchronized positions. In addition they might slow down WHFast512 significantly. If you need to use these flags, please open an issue on GitHub for further advice.");
     }
-    asm512->N_allocated=1;
     r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
     return 0; // success
 }
 
 void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_steps){
     struct reb_integrator_asm512_state* asm512 = r->integrator.state;
-    recalculate_constants(r, asm512->data, asm512->N_systems);
+    recalculate_constants(r, asm512->N_systems);
     inertial_to_jacobi_posvel(r, asm512->data, asm512->N_systems);
     struct simd_data* data = asm512->data;
     for (int i=0; i<N_steps; i++){
         reb_asm512_kepler_step(data);    
     }
     jacobi_to_inertial_posvel_and_com(r, asm512->data, 0.0, asm512->N_systems);
+    // This will leak memory. Cannot free because of counter access
+    //free(asm512->data);
+    //asm512->data = NULL;
 }
 
 // Optimized main loops allowing for concatenate_steps
@@ -495,16 +498,10 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
         return; // Error occured
     }
 
-    if (asm512->recalculate_constants){
-        recalculate_constants(r, asm512->data, asm512->N_systems);
-        asm512->recalculate_constants = 0;
-    }
-
-    struct simd_data* data = asm512->data;
-
-    // Normal initial synchronize step (not trigger when synchronize was kalled with keep_unsynchronized=1)
     int skip_first_kepler_step = 0;
     if (r->is_synchronized){
+        recalculate_constants(r, asm512->N_systems);
+        struct simd_data* data = asm512->data;
         // Use WHFast to apply the correctors.
         inertial_to_jacobi_posvel(r, data, asm512->N_systems);
         asm512->last_synchronization = r->t;
@@ -515,7 +512,7 @@ void reb_integrator_asm512_step(struct reb_simulation* const r, void* state){
                 reb_asm512_corrector_step_nogr(data, 1.0);
             }
         }
-        // First half DRIFT step. Note negative sign. We will do a full step below.
+        // First half DRIFT step.
         skip_first_kepler_step = 1;
         data->dt = _mm512_set1_pd(dt/2.0); 
         reb_asm512_kepler_step(data);    
@@ -542,6 +539,10 @@ void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* sta
     struct reb_integrator_asm512_state* const asm512 = state;
     if (!r->is_synchronized){
         struct simd_data * data = asm512->data;
+        if (!data){
+            reb_simulation_error(r, "ASM512 is unable to synchronize. data is NULL.");
+            return;
+        }
         data->dt = _mm512_set1_pd(r->dt/2.0); 
         reb_asm512_kepler_step(data);    
         data->dt = _mm512_set1_pd(r->dt); // Reset
@@ -557,6 +558,8 @@ void reb_integrator_asm512_synchronize(struct reb_simulation* const r, void* sta
         jacobi_to_inertial_posvel_and_com(r, data, dt_com, asm512->N_systems);
         asm512->last_synchronization = r->t;
         r->is_synchronized = 1;
+        free(asm512->data);
+        asm512->data = NULL;
     }
 }
 

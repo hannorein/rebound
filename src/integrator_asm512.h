@@ -42,14 +42,12 @@ extern const struct reb_integrator reb_integrator_asm512;
 struct reb_integrator_asm512_state {
     unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
     unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
-    unsigned int keep_unsynchronized;   // 1: continue from unsynchronized state after synchronization 
     unsigned int corrector;
     unsigned int concatenate_steps;
 
     // Internal use
     size_t N_allocated;
     double last_synchronization;        // Time of last synchronization (required to advance com)
-    unsigned int recalculate_constants;
     void* data; // alligned SIMD data
 };
 
