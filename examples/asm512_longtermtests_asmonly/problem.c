@@ -51,18 +51,27 @@ extern uint64_t reb_asm512_counter(struct reb_simulation* r, int test_p);
 
 int main(int argc, char* argv[]) {
     struct reb_simulation* r_asm = setup_sim();
-    double E0 = reb_simulation_energy(r_asm) + gr_potential(r_asm);
+    double E0 = reb_simulation_energy(r_asm);
     reb_simulation_set_integrator(r_asm, "asm512");
     struct reb_integrator_asm512_state* asm512 = r_asm->integrator.state;
-    asm512->gr_potential = 1;
+    asm512->gr_potential = 0;
     asm512->concatenate_steps = 1e6;
     asm512->corrector = 17;
+    if (asm512->gr_potential){
+        E0 += gr_potential(r_asm);
+    }
     for (double dT=1e1; r_asm->t<5e9*2*M_PI; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
-        double E1_asm = reb_simulation_energy(r_asm) + gr_potential(r_asm);
+        double E1_asm = reb_simulation_energy(r_asm);
         char* mode = "a";
         if (dT==1e1) mode = "w";
-        FILE* f = fopen("out_gr.txt",mode);
+        FILE* f;
+        if (asm512->gr_potential){
+           E1_asm += gr_potential(r_asm);
+           f = fopen("out_gr.txt",mode);
+        }else{
+           f = fopen("out.txt",mode);
+        }
         fprintf(f,"%e %e\n", r_asm->t, fabs((E0-E1_asm)/E0));
         fclose(f);
     }
