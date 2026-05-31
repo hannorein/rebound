@@ -60,8 +60,12 @@ void setup_sim(char* integrator, int corrector){
         r->exact_finish_time = 0;
         reb_simulation_add_fmt(r, "solarsystem");
         reb_simulation_move_to_com(r);
-        reb_simulation_set_integrator(r, integrator);
+        //for(int i=0;i<r->N;i++){
+        //    r->particles[i].x += 10.1;
+        //    r->particles[i].vx += 1.1;
+        //}
         if (strcmp(integrator,"asm512")==0){
+            reb_simulation_set_integrator(r, integrator);
             struct reb_integrator_asm512_state* asm512 = r->integrator.state;
             asm512->gr_potential = 0;
             asm512->concatenate_steps = concatenate;
@@ -69,10 +73,12 @@ void setup_sim(char* integrator, int corrector){
             asm512->gr_potential = gr;
         }
         if (strcmp(integrator,"whfast512")==0){
+            reb_simulation_set_integrator(r, integrator);
             struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
             whfast512->gr_potential = gr;
         }
         if (strcmp(integrator,"whfast")==0){
+            reb_simulation_set_integrator(r, integrator);
             struct reb_integrator_whfast_state* whfast = r->integrator.state;
             whfast->safe_mode = 0;
             whfast->corrector = corrector;
