@@ -55,3 +55,4 @@ rebound.html
 tags
 .nfs*
 *.asm_o
+.venv/

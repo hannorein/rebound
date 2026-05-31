@@ -199,11 +199,12 @@ struct reb_integrator_configuration {
 #include "integrator_bs.h"           /* Gragg-Bulirsch-Stoer                                                               */
 #include "integrator_whfast512.h"    /* WHFast integrator, optimized for AVX512                                            */
 #include "integrator_asm512.h"       /* ASM version of WHFast512                                                           */
+#include "integrator_asm512_opt.h"   /* asm512 + momentum guess + fused stellar/Jacobi correction                          */
 #include "integrator_trace.h"        /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */
 extern const struct reb_integrator reb_integrator_none; /* Does nothing other than advance time. Defined in rebound.c      */
 
 // List of built-in integrators for X macros
-#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(asm512) X(trace) X(none) 
+#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(asm512) X(asm512_opt) X(asm512_mom) X(asm512_fused) X(trace) X(none) 
 
 
 // Available return values for collision resolve functions

@@ -1,0 +1,7 @@
+# setup=solar, corrector=17, no GR, tmax=1e+05 yr, trials=5
+# counter = extra Newton iters (above first convergence) summed over all steps + lanes
+config            walltime_s      E_rel_err      counter_total  ctr/step/lane
+asm512                1.8387     2.1110e-13                  0            nan
+asm512_mom            1.8390     7.8926e-13                  9       0.000000
+asm512_fused          1.8525     2.4876e-13                  1       0.000000
+asm512_opt            1.8546     4.3343e-13                  9       0.000000

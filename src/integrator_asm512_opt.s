@@ -1,31 +1,34 @@
 # file: integrator_asm512.s
 .section .text
-.globl reb_asm512_full_steps_jacobi_gr
-.globl reb_asm512_full_steps_jacobi_nogr
-.globl reb_asm512_full_steps_democraticheliocentric_gr
-.globl reb_asm512_full_steps_democraticheliocentric_nogr
-.globl reb_asm512_kepler_step
-.globl reb_asm512_corrector_step_gr
-.globl reb_asm512_corrector_step_nogr
-.globl reb_asm512_interaction_step_gr
-.globl reb_asm512_interaction_step_nogr
+.globl reb_asm512_opt_full_steps_gr
+.globl reb_asm512_opt_full_steps_nogr
+.globl reb_asm512_mom_full_steps_gr
+.globl reb_asm512_mom_full_steps_nogr
+.globl reb_asm512_fused_full_steps_gr
+.globl reb_asm512_fused_full_steps_nogr
+.globl reb_asm512_opt_kepler_step
+.globl reb_asm512_opt_corrector_step_gr
+.globl reb_asm512_opt_corrector_step_nogr
+.globl reb_asm512_opt_interaction_step_gr
+.globl reb_asm512_opt_interaction_step_nogr
 
 #P512 Structure offsets
 .set P512_M, 0
 .set P512_DT, 64
 .set P512_GR_PREFAC, 128
-.set P512_m, 192
-.set P512_X, 256
-.set P512_Y, 320
-.set P512_Z, 384
-.set P512_VX, 448
-.set P512_VY, 512
-.set P512_VZ, 576
-.set P512_MAT8_INERTIAL_TO_JACOBI, 640
-.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1152
-.set P512_M0, 1664
-.set P512_MASK, 1728
-.set P512_COUNTER, 2304
+.set P512_GR_PREFAC2, 192
+.set P512_m, 256
+.set P512_X, 320
+.set P512_Y, 384
+.set P512_Z, 448
+.set P512_VX, 512
+.set P512_VY, 576
+.set P512_VZ, 640
+.set P512_MAT8_INERTIAL_TO_JACOBI, 704
+.set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1216
+.set P512_M0, 1728
+.set P512_MASK, 1792
+.set P512_COUNTER, 2368
 
 #####################################
 # Register use
@@ -218,62 +221,12 @@
     vfmadd132pd     ZETA, GS0, GS1          # fpp
 
     vmulpd          GS1, GS3, GS1           # f*fpp
-    # 0.5*f*fpp via integer subtract of 1 from the exponent (4-cycle vmulpd -> 1-cycle vpsubq)
-    vpsubq          .HALF_EXP_DECR(%rip){1to8}, GS1, GS1
+    # Next instruction uses exponent trick to speed up multiplication by 0.5 by using integer subtraction
+    vmulpd          HALF, GS1, GS1          # 0.5*f*fpp
     vfmsub231pd     GS2, GS2, GS1           # fp*fp-0.5*f*fpp
     vmulpd          GS3, GS2, GS3           # f*fp
     vdivpd          GS1, GS3, GS3
     vsubpd          GS3, XX, XX
-.endm
-
-# Scalar Halley step for lane 0 only
-.macro scalar_halley_lane0 numTerms=11
-    # -Polynomial evaluation
-    vmulsd          %xmm17, %xmm17, %xmm2          # X^2
-    vmulsd          %xmm21, %xmm2, %xmm6           # alpha = X^2 * BETA
-    vmovsd          .IF0+(\numTerms*8)(%rip), %xmm3
-    vmovsd          .IF0+((\numTerms-1)*8)(%rip), %xmm4
-    .set IF_OFF, \numTerms - 2
-    .rept (\numTerms - 5) / 2
-    vfnmadd213sd    .IF0+(IF_OFF*8)(%rip), %xmm6, %xmm3
-    .set IF_OFF, IF_OFF - 1
-    vfnmadd213sd    .IF0+(IF_OFF*8)(%rip), %xmm6, %xmm4
-    .set IF_OFF, IF_OFF - 1
-    .endr
-    vfnmadd213sd    .IF0+(3*8)(%rip), %xmm6, %xmm3
-    vmovsd          %xmm4, %xmm4, %xmm7            # save xmm4 -> will become GS0
-    vfnmadd213sd    .IF0+(2*8)(%rip), %xmm6, %xmm4
-    vfnmadd213sd    .IF0+(1*8)(%rip), %xmm6, %xmm7 # GS0 partial in xmm7
-
-    vmulsd          %xmm4, %xmm2, %xmm8            # GS2 = xmm4 * X^2  (in xmm8)
-    vmulsd          %xmm3, %xmm17, %xmm3           # xmm3 *= X
-    vmulsd          %xmm3, %xmm2, %xmm5            # GS3 = xmm3 * X^2  (in xmm5)
-    vfnmadd132sd    %xmm3, %xmm17, %xmm6           # GS1 = X - alpha*xmm3 (in xmm6)
-    # GS0=xmm7, GS1=xmm6, GS2=xmm8, GS3=xmm5
-
-    # Halley scalar step
-    vfmsub213sd     %xmm29, %xmm15, %xmm5          # xmm5 = ZETA*GS3 - DT
-    vfmadd231sd     %xmm8, %xmm16, %xmm5           # xmm5 += ETA*GS2
-    vfmadd231sd     %xmm17, %xmm13, %xmm5          # xmm5 += R*XX = f
-
-    vfmadd132sd     %xmm15, %xmm13, %xmm8          # xmm8 = ZETA*GS2 + R
-    vfmadd231sd     %xmm16, %xmm6, %xmm8           # xmm8 += ETA*GS1 = f'
-
-    vmulsd          %xmm16, %xmm7, %xmm7           # xmm7 = ETA*GS0
-    vfmadd132sd     %xmm15, %xmm7, %xmm6           # xmm6 = ZETA*GS1 + ETA*GS0 = f''
-
-    vmulsd          %xmm5, %xmm6, %xmm6            # xmm6 = f * f''
-    vmulsd          %xmm30, %xmm6, %xmm6           # xmm6 *= HALF
-    vfmsub231sd     %xmm8, %xmm8, %xmm6            # xmm6 = f'^2 - 0.5*f*f''
-    vmulsd          %xmm5, %xmm8, %xmm5            # xmm5 = f * f'
-    vdivsd          %xmm6, %xmm5, %xmm5            # xmm5 = (f*f') / (f'^2 - 0.5*f*f'')
-    vsubsd          %xmm5, %xmm17, %xmm2           # xmm2 = XX[0] - delta   = refined XX[0]
-
-    # Blend refined value back into lane 0 of zmm17
-    vbroadcastsd    %xmm2, %zmm2
-    movw            $1, %ax
-    kmovw           %eax, %k5
-    vmovapd         %zmm2, %zmm17{%k5}
 .endm
 
 .macro newton
@@ -295,7 +248,7 @@
 # Kepler Step
 ###############################################################################
 
-.macro kepler_step 
+.macro kepler_step use_momentum=0
     vmulpd          X, X, %zmm0
     vmulpd          VX, VX, %zmm1
     vfmadd231pd     Y, Y, %zmm0
@@ -317,14 +270,29 @@
     #    vmulpd          HALF, %zmm4, %zmm4     # 0.5*eta*dt/r
     #    vfnmadd132pd    RI, ONE, %zmm4        
     #    vmulpd          %zmm5, %zmm4, XX       # XX (second order initial guess)
-    
+
+    .if \use_momentum != 0
+        vmovapd         .X_prev(%rip), %zmm6
+        vxorpd          %zmm7, %zmm7, %zmm7
+        vcmppd          $4, %zmm7, %zmm6, %k2
+        kmovb           %k2, %eax
+        cmpb            $0xFF, %al
+        jne             .SkipMomentum\@
+        vmovapd         .X_prev2(%rip), %zmm6
+        vmovapd         .X_prev(%rip), %zmm7
+        vaddpd          %zmm7, %zmm7, %zmm7
+        vsubpd          %zmm6, %zmm7, XX            # 2*X_prev - X_prev2
+    .SkipMomentum\@:
+    .endif
+
     # Iterations to improve X
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    mm_stiefel_Gs03_avx512 9
+    mm_stiefel_Gs03_avx512
     halley
-    scalar_halley_lane0 11
+    mm_stiefel_Gs03_avx512
+    halley
   
-    movq            $0, %rcx                    # Newton loop counter
+    movq $0, %rcx                               # Newton loop counter
 .NewtonLoop\@:    
     vmovapd         XX,     %zmm7               # Store old XX
     mm_stiefel_Gs13_avx512
@@ -334,16 +302,17 @@
     vpandq          SIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta XX)
 
     # Required precision reached? abs(Delta XX) < eps
-    vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
-    #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
-#START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#END DEBUG COUNTER
+    vcmppd          $0x11, EPS, %zmm7, %k4      # $11 = less than, ordered (nans fail), quiet
+    #vcmppd         $25, EPS, %zmm7, %k4        # $25 = Not greater or equal, unordered (nans pass), quiet
+    knotb           %k4, %k4
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+    knotb           %k4, %k4
 
-    kortestw        %k4, %k4
-    jz              .NewtonLoopDone\@
+    kmovb           %k4, %eax
+    cmpb            $0xFF, %al
+    je              .NewtonLoopDone\@
 
     # Maximum iterations reached?
     incq            %rcx
@@ -351,6 +320,7 @@
     jne             .NewtonLoop\@
 
     # If not converged yet, fall back to bisection
+    knotb           %k4, %k4                    # Only update failed particles
     movq            $0, %rcx
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     
@@ -369,11 +339,9 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\@:
-#START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#END DEBUG COUNTER
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
     mm_stiefel_Gs13_avx512
     vmulpd          R, XX, %zmm2                # r0*X
     vfmadd231pd     GS2, ETA, %zmm2
@@ -391,13 +359,20 @@
     jl .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
+    .if \use_momentum != 0
+        vmovapd         .X_prev(%rip), %zmm7
+        vmovapd         %zmm7, .X_prev2(%rip)
+        vmovapd         XX,    .X_prev(%rip)
+    .endif
+
     mm_stiefel_Gs13_avx512
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    # Calculate r_new = R + GS1*ETA + GS2*ZETA, then 1/r.
-    vfmadd231pd     GS1, ETA, R
-    vfmadd231pd     GS2, ZETA, R
-    vdivpd          R, ONE, %zmm4          # 1/r
+    # Calculate 1/r
+    vmulpd          GS1, ETA, %zmm2
+    vfmadd231pd     GS2, ZETA, %zmm2
+    vaddpd          R, %zmm2, XX
+    vdivpd          XX, ONE, %zmm4          # 1/r
     
     # Calculate f and g functions
     vmulpd          GS2, M, %zmm5
@@ -434,42 +409,33 @@
 # Macros for interaction step
 #####################################
 .macro gravity_prefactor multiplier=ONE
-    # Input:  zmm0=dx, zmm1=dy, zmm2=dz
+    # Input:  zmm0=dx, zmm1=dy, zmm2=dy
     # Output: zmm6 = multiplier / r^3
-    vmulpd      %zmm0, %zmm0, %zmm6
-    vfmadd231pd %zmm1, %zmm1, %zmm6
-    vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 = r^2 = a
-
-    vrsqrt14pd  %zmm6, %zmm7            # zmm7 = y_0 ~ 1/sqrt(a), ~14 bits
-    vmulpd      HALF, %zmm6, %zmm8      # zmm8 = 0.5 * a  (constant across iters)
-
-    # Newton iter 1
-    vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_0^2
-    vfnmadd213pd .ONE_AND_A_HALF(%rip){1to8}, %zmm8, %zmm5
-                                        # zmm5 = -zmm5*zmm8 + 1.5 = 1.5 - 0.5*a*y_0^2
-    vmulpd      %zmm7, %zmm5, %zmm7     # y_1 = y_0 * (1.5 - 0.5*a*y_0^2)
-
-    # Newton iter 2
-    vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_1^2
-    vfnmadd213pd .ONE_AND_A_HALF(%rip){1to8}, %zmm8, %zmm5
-                                        # zmm5 = 1.5 - 0.5*a*y_1^2
-    vmulpd      %zmm7, %zmm5, %zmm7     # y_2 ~ 1/sqrt(a) to ~56 bits
-
-    # y2*y2 -> *y2 -> *mult implemented as (y2*y2) || (mult*y2) -> mul.
-    vmulpd      %zmm7, %zmm7, %zmm5         # zmm5 = y_2^2
-    .ifc \multiplier,ONE
-    vmulpd      %zmm5, %zmm7, %zmm6         # zmm6 = y_2^3 ~ mult / r^3
-    .else
-    vmulpd      \multiplier, %zmm7, %zmm6   # zmm6 = mult * y_2  (parallel)
-    vmulpd      %zmm5, %zmm6, %zmm6         # zmm6 = mult * y_2^3 ~ mult / r^3
-    .endif
+    
+    vmulpd      %zmm0, %zmm0, %zmm6     
+    vfmadd231pd %zmm1, %zmm1, %zmm6      
+    vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 is now r^2
+    
+    vsqrtpd     %zmm6, %zmm7             
+    vmulpd      %zmm6, %zmm7, %zmm6     # zmm6 is r^3
+   
+    vdivpd      %zmm6, \multiplier, %zmm6      
 .endm
 
 
+.macro REDUCE_ADD_AND_BROADCAST reg, temp_reg
+    vshuff64x2 $0x4E, \reg, \reg, \temp_reg         # 01234567 -> 45670123
+    vaddpd     \reg, \temp_reg, \temp_reg    
+    vshufpd    $0x55, \temp_reg, \temp_reg, \reg    # 01234567 -> 10325476
+    vaddpd     \reg, \temp_reg, \temp_reg
+    vpermpd    $0x4E, \temp_reg, \reg               # 01234567 -> 23016745
+    vaddpd     \reg, \temp_reg, \reg
+.endm
+        
 .macro mat8_mul3 in0, in1, in2, out0, out1, out2
     # 8x8 matrix multiplied with 3 different 8 vectors
     # in: rax = vector to 64 matrix elements
-    # Does not alter inputs
+    # zmm0, zmm1, zmm2  input and output vectors
     # uses: zmm3-zmm7
     # The idea is to use embedded broadcast loads
     # Note: matrix needs to be transposed.
@@ -527,7 +493,7 @@
 ###############################################################################
 # Interaction Step
 ###############################################################################
-.macro interaction_step grflag coordinates=0
+.macro interaction_step grflag use_fused_jacobi=0
     # TODO: Floating point error accumulation might be less if Jacobi and GR are added after P-P perturbations
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
@@ -536,11 +502,15 @@
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-    vdivpd      %zmm4, M_DT, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
-    
-    vfmadd231pd     X, %zmm6, VX{%k1}{z} 
-    vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
-    vfmadd231pd     Z, %zmm6, VZ{%k1}{z} 
+    vdivpd      %zmm4, M_DT, %zmm6  # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
+
+    .if \use_fused_jacobi != 0
+        vmovupd         %zmm6, 192(%rsp)            # stash for end-of-step fused FMA
+    .else
+        vfmadd231pd     X, %zmm6, VX{%k1}{z}
+        vfmadd231pd     Y, %zmm6, VY{%k1}{z}
+        vfmadd231pd     Z, %zmm6, VZ{%k1}{z}
+    .endif
     
     leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rax  # mat8_inertial_to_jacobi
     mat8_mul3 X, Y, Z, HX, HY, HZ
@@ -554,21 +524,38 @@
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
     vdivpd    %zmm7, MM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
-        
-    vmulpd    %zmm8, HX, HVX                # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
-    vmulpd    %zmm8, HY, HVY
-    vmulpd    %zmm8, HZ, HVZ
 
-    # GR term
     .if \grflag == 1
+        # GR term
         vmulpd    P512_GR_PREFAC(%rdi), DT, %zmm3
+        vmovapd   P512_GR_PREFAC2(%rdi), %zmm4
 
-        vmulpd    %zmm6, %zmm6, %zmm5           # r^4
-        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}   # -dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm6, %zmm6, %zmm5               # r^4
+        vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}       # -dt*6*m0*m0/(c*c) /r^4
 
-        vfmadd231pd  %zmm7, HX, HVX{%k1}{z}     # -x_j*dt*6*m0*m0/(c*c) /r^4
-        vfmadd231pd  %zmm7, HY, HVY{%k1}{z}
-        vfmadd231pd  %zmm7, HZ, HVZ{%k1}{z}
+        vmulpd    %zmm7, HX, %zmm5                  # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vmulpd    %zmm7, HY, %zmm6
+        vmulpd    %zmm7, HZ, %zmm7
+        
+        vmulpd    %zmm5, %zmm4, HVX{%k1}{z}         # x_j*dt*6*m0*m/(c*c) /r^4 
+        vmulpd    %zmm6, %zmm4, HVY{%k1}{z}
+        vmulpd    %zmm7, %zmm4, HVZ{%k1}{z}
+
+        REDUCE_ADD_AND_BROADCAST HVX, %zmm4
+        REDUCE_ADD_AND_BROADCAST HVY, %zmm4
+        REDUCE_ADD_AND_BROADCAST HVZ, %zmm4
+
+        vfmadd231pd  %zmm8, HX, HVX          # delta v_x due to Jacobi term + GR backreaction
+        vfmadd231pd  %zmm8, HY, HVY
+        vfmadd231pd  %zmm8, HZ, HVZ
+        
+        vaddpd    %zmm5, HVX, HVX            # delta v_x due to Jacobi term + GR backreaction + GR
+        vaddpd    %zmm6, HVY, HVY
+        vaddpd    %zmm7, HVZ, HVZ
+    .else
+        vmulpd    %zmm8, HX, HVX             # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+        vmulpd    %zmm8, HY, HVY
+        vmulpd    %zmm8, HZ, HVZ
     .endif
 
     #################################################################
@@ -707,6 +694,13 @@
    
     mat8_mul3 %zmm0, %zmm1, %zmm2, %zmm0, %zmm1, %zmm2
 
+    .if \use_fused_jacobi != 0
+        vmovupd         192(%rsp), %zmm3
+        vfmadd231pd     X, %zmm3, %zmm0{%k1}{z}
+        vfmadd231pd     Y, %zmm3, %zmm1{%k1}{z}
+        vfmadd231pd     Z, %zmm3, %zmm2{%k1}{z}
+    .endif
+
     # Update velocities
     # This could be combined with mat8_mul3.
     # However, that would increase floating point errors because sum(DVX) << VX
@@ -738,7 +732,7 @@
     vmovapd         P512_M0(%rdi), MM0_DT
     vmulpd          DT, MM0_DT, MM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
-    interaction_step \grflag
+    interaction_step \grflag 0
     addq            $8, %r8
 
 .L_CorrectorLoopK\@:
@@ -748,7 +742,7 @@
     vmulpd          DT, HALF, DT
     movq            $4, %r9                     # Counter number of Kepler steps
 .L_CorrectorLoopInnerKepler\@:
-    kepler_step
+    kepler_step 0
     decq            %r9
     jnz             .L_CorrectorLoopInnerKepler\@
     addq            $8, %r8
@@ -761,69 +755,64 @@
     ret
 .endm
 
-reb_asm512_corrector_step_gr: corrector_step 1
-reb_asm512_corrector_step_nogr: corrector_step 0
+reb_asm512_opt_corrector_step_gr: corrector_step 1
+reb_asm512_opt_corrector_step_nogr: corrector_step 0
 
-reb_asm512_kepler_step:
+reb_asm512_opt_kepler_step:
     reb_asm512_init_registers
-    kepler_step
+    kepler_step 0
     reb_asm512_store_results
     ret
 
-reb_asm512_interaction_step_gr:
+reb_asm512_opt_interaction_step_gr:
     reb_asm512_init_registers
     alloc_stack64 192
-    interaction_step 1
+    interaction_step 1 0
     reb_asm512_store_results
     free_stack64
     ret
 
-reb_asm512_interaction_step_nogr:
+reb_asm512_opt_interaction_step_nogr:
     reb_asm512_init_registers
     alloc_stack64 192
-    interaction_step 0
+    interaction_step 0 0
     reb_asm512_store_results
     free_stack64
     ret
  
  
 
-# Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag coordinates
-    # Input:   
-    #           rdi = p512
-    #           rsi = Number of steps (counting down)
-    #           rdx = skip_first_kepler_step
-    #           coordinates = 0 (jacobi) / 1 (democratic heliocentric)
-
-    # Load constants
+.macro full_steps grflag use_momentum use_fused_jacobi
     reb_asm512_init_registers
-    # Allocate space on stack for matrix multiplications
-    alloc_stack64 192
-    # Ignore first Kepler step (if half timestep done manually)
+    alloc_stack64 256
+
+    vxorpd      %zmm0, %zmm0, %zmm0
+    vmovapd     %zmm0, .X_prev(%rip)
+    vmovapd     %zmm0, .X_prev2(%rip)
+
     cmpq    $1, %rdx
     je      .LSkipFirstKeplerStep\@
 
-    # Main loop
 .LMainLoop\@:    
-    kepler_step
+    kepler_step \use_momentum
 .LSkipFirstKeplerStep\@:
-    interaction_step \grflag
+    interaction_step \grflag \use_fused_jacobi
     subq    $1, %rsi
     jnz     .LMainLoop\@
 
-    # Store final data in P512 structure
     reb_asm512_store_results
 
     free_stack64
     ret
 .endm
 
-reb_asm512_full_steps_democraticheliocentric_gr: full_steps 1 1
-reb_asm512_full_steps_democraticheliocentric_nogr: full_steps 0 1
+reb_asm512_opt_full_steps_gr:     full_steps 1 1 1
+reb_asm512_opt_full_steps_nogr:   full_steps 0 1 1
+reb_asm512_mom_full_steps_gr:     full_steps 1 1 0
+reb_asm512_mom_full_steps_nogr:   full_steps 0 1 0
+reb_asm512_fused_full_steps_gr:   full_steps 1 0 1
+reb_asm512_fused_full_steps_nogr: full_steps 0 0 1
 
-reb_asm512_full_steps_jacobi_gr: full_steps 1 0
-reb_asm512_full_steps_jacobi_nogr: full_steps 0 0
 
 
 .section    .rodata
@@ -857,14 +846,6 @@ b34mergeidx:
 .align 64
 .HALF:
     .quad 0x3fe0000000000000
-.align 64
-# Exponent decrement: subtracting this from a normal double divides it by 2
-.HALF_EXP_DECR:
-    .quad 0x0010000000000000
-.align 64
-# 1.5 — Newton-Raphson constant for rsqrt iteration: y' = y*(1.5 - 0.5*a*y*y)
-.ONE_AND_A_HALF:
-    .quad 0x3ff8000000000000
 .align 64
 # Inverse factorial table
 .IF0:
@@ -1006,5 +987,12 @@ b34mergeidx:
     .quad 0xC01AC5EB3F7AB2F8    # Kepler
     .quad 0xBED22E64AF0557FF    # Interaction
     .quad 0x400AC5EB3F7AB2F8    # Kepler
+
+.section .bss
+.align 64
+.X_prev:
+    .zero 64
+.X_prev2:
+    .zero 64
 
 .section .note.GNU-stack,"",@progbits
