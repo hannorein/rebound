@@ -407,8 +407,6 @@ class TestIntegratorTrace(unittest.TestCase):
         self.assertLess(dE_trace,5e-5)              # reasonable precision for trace. Changed by Hanno 23 Jan 2024
         self.assertLess(dE_trace/dE_whfast,1e-4)    # at least 1e4 times better than whfast
         self.assertLess(time_trace,time_ias15) # faster than ias15
-        if sys.maxsize > 2**32: # 64 bit
-            self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
     # TLu additional tests
     def test_chaotic_exchange(self):

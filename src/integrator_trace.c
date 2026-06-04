@@ -593,6 +593,164 @@ void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
 }
 
 static void reb_integrator_trace_calculate_acceleration_mode_interaction_wb(struct reb_simulation* r){
+    struct reb_particle* const particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const size_t N = r->N;
+    const double G = r->G;
+    const double softening2 = r->softening*r->softening;
+    const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
+    const int _testparticle_type   = r->testparticle_type;
+
+    const int idxA = 0;
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+    const int has_binary = (idxB != -1);
+    const double mA = particles[idxA].m;
+    const double mB = has_binary ? particles[idxB].m : 0.0;
+
+    // little s, equation (13)
+    struct reb_vec3d s = {0};
+    double mtotA = mA;
+    for (int i=0; i<N; i++){
+        particles[i].ax = 0;
+        particles[i].ay = 0;
+        particles[i].az = 0;
+
+        if (i != idxA && i < N_active){ // only loop over active planets
+            if (i==idxB) continue; // skip binary companion
+            s.x += particles[i].m * particles[i].x;
+            s.y += particles[i].m * particles[i].y;
+            s.z += particles[i].m * particles[i].z;
+            mtotA += particles[i].m;
+        }
+    }
+
+    s.x /= mtotA;
+    s.y /= mtotA;
+    s.z /= mtotA;
+
+    // Binary-related quantities (only if binary exists)
+    double dbx = 0.0, dby = 0.0, dbz = 0.0;
+    double _rb = 1.0, _Rb = 1.0;
+    double prefact1 = 0.0;
+
+    if (has_binary){
+        dbx = particles[idxB].x + s.x;
+        dby = particles[idxB].y + s.y;
+        dbz = particles[idxB].z + s.z;
+        _rb = sqrt(dbx*dbx + dby*dby + dbz*dbz);
+        _Rb = sqrt(particles[idxB].x*particles[idxB].x + particles[idxB].y*particles[idxB].y + particles[idxB].z*particles[idxB].z);
+        prefact1 = -G*mA*mB/mtotA / (_rb*_rb*_rb);
+
+        // Acceleration of the binary due to star A
+        const double prefactorb1 = G*mA / (_Rb*_Rb*_Rb);
+        const double prefactorb2 = G*mA / (_rb*_rb*_rb);
+        particles[idxB].ax += prefactorb1*particles[idxB].x - prefactorb2*dbx;
+        particles[idxB].ay += prefactorb1*particles[idxB].y - prefactorb2*dby;
+        particles[idxB].az += prefactorb1*particles[idxB].z - prefactorb2*dbz;
+    }
+
+    // Second term in Equation 14 compute C = sum_i m_i * (Xb - Xi + s)/|...|^3
+    struct reb_vec3d C = {0};
+
+    // Active-active planet interactions
+    for (int i=2; i<N_active;i++){
+        if (reb_sigint > 1) return;
+        if (i == idxB) continue;
+        for (int j=1;j<i;j++){
+            if (j == idxB) continue;
+            // Pairwise planet interactions
+            if (trace->current_Ks[j*r->N+i]) continue;
+            const double dx = particles[i].x - particles[j].x;
+            const double dy = particles[i].y - particles[j].y;
+            const double dz = particles[i].z - particles[j].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz);
+
+            // Last term of Equation (14)
+            const double prefact = G / (_r*_r*_r);
+            const double prefactj = -prefact*particles[j].m;
+            const double prefacti = prefact*particles[i].m;
+            particles[i].ax    += prefactj*dx;
+            particles[i].ay    += prefactj*dy;
+            particles[i].az    += prefactj*dz;
+            particles[j].ax    += prefacti*dx;
+            particles[j].ay    += prefacti*dy;
+            particles[j].az    += prefacti*dz;
+        }
+    }
+
+    // Repurposing this loop. Outer loop is used to add in the binary terms too.
+    const int startitestp = MAX(N_active,2);
+    for (int i=1; i<N; i++){
+        if (reb_sigint > 1) return;
+        if (i == idxB) continue; // to avoid double counting the binary
+
+        // All the binary interactions
+        // Xb - Xi + Sx
+        if (has_binary){
+            // Xb - Xi + Sx
+            const double dbix = dbx - particles[i].x;
+            const double dbiy = dby - particles[i].y;
+            const double dbiz = dbz - particles[i].z;
+            const double _rbi = sqrt(dbix*dbix + dbiy*dbiy + dbiz*dbiz);
+
+            const double rx = (particles[idxB].x + s.x) - particles[i].x;
+            const double ry = (particles[idxB].y + s.y) - particles[i].y;
+            const double rz = (particles[idxB].z + s.z) - particles[i].z;
+            const double _rs  = sqrt(rx*rx + ry*ry + rz*rz);
+            const double invr3 = 1.0/(_rs*_rs*_rs);
+
+            C.x += particles[i].m * rx * invr3;
+            C.y += particles[i].m * ry * invr3;
+            C.z += particles[i].m * rz * invr3;
+
+            // accelerations on particle i due to binary
+            const double prefact3 = G*mB / (_rbi*_rbi*_rbi);
+            particles[i].ax += prefact1*dbx + prefact3*dbix;
+            particles[i].ay += prefact1*dby + prefact3*dbiy;
+            particles[i].az += prefact1*dbz + prefact3*dbiz;
+
+            // acceleration on the binary due to i
+            const double prefactorb1i = G*particles[i].m/(_Rb*_Rb*_Rb);
+            const double prefactorb2i = G*particles[i].m/(_rbi*_rbi*_rbi);
+            particles[idxB].ax += prefactorb1i*particles[idxB].x - prefactorb2i*dbix;
+            particles[idxB].ay += prefactorb1i*particles[idxB].y - prefactorb2i*dbiy;
+            particles[idxB].az += prefactorb1i*particles[idxB].z - prefactorb2i*dbiz;
+        }
+
+        // Inner loop for active-test particle interactions
+        if (i >= startitestp){
+            for (int j=1; j<N_active; j++){
+                if (j == idxB) continue;
+                if (trace->current_Ks[j*r->N+i]) continue;
+                const double dx = particles[i].x - particles[j].x;
+                const double dy = particles[i].y - particles[j].y;
+                const double dz = particles[i].z - particles[j].z;
+                const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                const double prefact = G / (_r*_r*_r);
+                const double prefactj = -prefact*particles[j].m;
+                particles[i].ax    += prefactj*dx;
+                particles[i].ay    += prefactj*dy;
+                particles[i].az    += prefactj*dz;
+                if (_testparticle_type){
+                    const double prefacti = prefact*particles[i].m;
+                    particles[j].ax    += prefacti*dx;
+                    particles[j].ay    += prefacti*dy;
+                    particles[j].az    += prefacti*dz;
+                }
+            }
+        }
+    }
+
+    if (has_binary){
+        const double common = -G * mB / mtotA;
+        for (int k=1; k<N; k++){
+            if (k == idxB) continue;
+            particles[k].ax += common * C.x;
+            particles[k].ay += common * C.y;
+            particles[k].az += common * C.z;
+        }
+    }
+
 }
 
 static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct reb_simulation* r){
@@ -716,8 +874,9 @@ static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct 
     }
 }
 
-static void reb_integrator_trace_calculate_acceleration_mode_kepler_wb(struct reb_simulation* r){
-}
+//static void reb_integrator_trace_calculate_acceleration_mode_kepler_wb(struct reb_simulation* r){
+    
+//}
 
 static void reb_integrator_trace_calculate_acceleration_mode_kepler(struct reb_simulation* r){
     // Kepler Step
@@ -889,8 +1048,11 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     // If TP type 1, use r->N. Else, use N_active.
     const size_t N = r->testparticle_type==0 ? N_active: r->N;
 
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+
     double px=0., py=0., pz=0.;
     for (size_t i=1;i<N;i++){
+        if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && i==idxB) continue; // skip star B
         px += r->particles[i].vx*r->particles[i].m; // in dh
         py += r->particles[i].vy*r->particles[i].m;
         pz += r->particles[i].vz*r->particles[i].m;
@@ -901,6 +1063,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
 
     const size_t N_all = r->N;
     for (size_t i=1;i<N_all;i++){
+        if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && i==idxB) continue; // skip star B
         particles[i].x += px;
         particles[i].y += py;
         particles[i].z += pz;
@@ -971,11 +1134,11 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
     reb_integrator_trace_update_particles(r, y);
-    if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
-        reb_integrator_trace_calculate_acceleration_mode_kepler_wb(r);
-    }else{
-        reb_integrator_trace_calculate_acceleration_mode_kepler(r);
-    }
+    //if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+    //    reb_integrator_trace_calculate_acceleration_mode_kepler_wb(r);
+    //}else{
+    reb_integrator_trace_calculate_acceleration_mode_kepler(r);
+    //}
 
     double px=0., py=0., pz=0.;
     size_t* map = trace->encounter_map;
@@ -1050,11 +1213,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     r->map = trace->encounter_map; // for collision search
     r->N_map = trace->encounter_N;
     r->gravity = REB_GRAVITY_CUSTOM;
-    if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
-        r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler_wb;
-    }else{
-        r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
-    }
+    //if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+        //r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler_wb;
+    //}else{
+    r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
+    //}
 
     // Only Partial BS uses this step 
     if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS || !trace->current_C){
