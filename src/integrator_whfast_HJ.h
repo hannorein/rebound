@@ -2,6 +2,7 @@
 #define _INTEGRATOR_WHFAST_HJ_H
 
 extern const struct reb_integrator reb_integrator_whfast_hj;
+REB_API int reb_integrator_whfast_hj_tree_to_string(struct reb_simulation* const r, char* const buffer, const size_t buffer_size);
 
 struct hj_node
 {

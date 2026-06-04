@@ -2,6 +2,8 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <string.h>
+#include <stdio.h>
+#include <limits.h>
 #include <math.h>
 #include "transformations.h"
 #include "particle.h"
@@ -179,7 +181,17 @@ static int reb_integrator_whfast_hj_build_tree(struct reb_simulation* const r, s
 
         for (size_t i=1; i<N; i++){
             for (size_t j=0; j<i; j++){
-                const double P = reb_integrator_whfast_hj_bound_pair_timescale(r->G, nodes[i], nodes[j]);
+                double P = reb_integrator_whfast_hj_bound_pair_timescale(r->G, nodes[i], nodes[j]);
+                if (P == INFINITY)
+                {
+                    double Pperi = reb_integrator_whfast_hj_unbound_pair_timescale(r->G, nodes[i], nodes[j]);
+                    if (Pperi < Pmin && reb_integrator_whfast_hj_pair_distance(nodes[i], nodes[j]) < WHFAST_HJ_UNBOUND_DISTANCE_FACTOR * dmin_bound)
+                    {
+                        Pmin = Pperi;
+                        imin = i;
+                        jmin = j;
+                    }
+                }
                 if (P < Pmin){
                     Pmin = P;
                     imin = i;
@@ -226,6 +238,64 @@ static int reb_integrator_whfast_hj_build_tree(struct reb_simulation* const r, s
 static int reb_integrator_whfast_hj_node_is_leaf(const struct hj_node* const node)
 {
     return node != NULL && node->primary == NULL && node->secondary == NULL;
+}
+
+static void reb_integrator_whfast_hj_tree_append(char* const buffer, const size_t buffer_size, size_t* const required, const char* const text)
+{
+    const size_t len = strlen(text);
+    if (buffer != NULL && buffer_size > 0 && *required < buffer_size - 1){
+        size_t copy_len = buffer_size - 1 - *required;
+        if (copy_len > len){
+            copy_len = len;
+        }
+        memcpy(buffer + *required, text, copy_len);
+        buffer[*required + copy_len] = '\0';
+    }
+    *required += len;
+}
+
+static void reb_integrator_whfast_hj_tree_node_to_string(const struct hj_node* const node, char* const buffer, const size_t buffer_size, size_t* const required)
+{
+    if (reb_integrator_whfast_hj_node_is_leaf(node)){
+        char leaf[32];
+        snprintf(leaf, sizeof(leaf), "%d", node->particle_index + 1);
+        reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, leaf);
+        return;
+    }
+
+    reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, "[");
+    reb_integrator_whfast_hj_tree_node_to_string(node->primary, buffer, buffer_size, required);
+    reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, ",");
+    reb_integrator_whfast_hj_tree_node_to_string(node->secondary, buffer, buffer_size, required);
+    reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, "]");
+}
+
+REB_API int reb_integrator_whfast_hj_tree_to_string(struct reb_simulation* const r, char* const buffer, const size_t buffer_size)
+{
+    if (buffer != NULL && buffer_size > 0){
+        buffer[0] = '\0';
+    }
+    if (r == NULL){
+        return -1;
+    }
+
+    struct reb_integrator_whfast_hj_state whfast = {0};
+    if (reb_integrator_whfast_hj_build_tree(r, &whfast) != 0){
+        return -1;
+    }
+
+    size_t required = 0;
+    if (whfast.root == NULL){
+        reb_integrator_whfast_hj_tree_append(buffer, buffer_size, &required, "[]");
+    }else{
+        reb_integrator_whfast_hj_tree_node_to_string(whfast.root, buffer, buffer_size, &required);
+    }
+
+    reb_integrator_whfast_hj_node_free(whfast.root);
+    if (required > (size_t)INT_MAX){
+        return -1;
+    }
+    return (int)required;
 }
 
 void reb_integrator_whfast_hj_from_inertial(struct reb_simulation* const r, struct hj_node* const node)
