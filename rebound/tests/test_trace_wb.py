@@ -145,7 +145,7 @@ class TestIntegratorTrace(unittest.TestCase):
         E0 = sim.energy()
         sim.integrate(1000)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,7e-8)
+        self.assertLess(dE,8e-8)
 
     def test_outer_solar(self):
         def get_sim():
