@@ -81,7 +81,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
     { "This flag determines how TRACE integrates close approaches with the central star.", 
         REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
-    { "Coordinates system.", 
+    { "Coordinates system. Possible options are DEMOCRATICHELIOCENTRIC (default) and WB (Wide binary).", 
         REB_INT,         "coordinates",      offsetof(struct reb_integrator_trace_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_COORDINATES)},
     { "This is a function pointer to the switching function for close encounters between "
         "non-central bodies. If NULL (the default), the default switching function will be used."
