@@ -87,6 +87,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.integrator = "trace"
         sim.integrator.coordinates = 'widebinary'
         sim.dt = (8./365.)*2.*math.pi
+        sim.integrator.r_crit_hill = 5
         sim.save_to_file("test.bin", step=10,delete_file=True)
         sim.integrate(1000.,exact_finish_time=0)
 
@@ -145,7 +146,7 @@ class TestIntegratorTrace(unittest.TestCase):
         E0 = sim.energy()
         sim.integrate(1000)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,8e-8)
+        self.assertLess(dE,7e-8)
 
     def test_outer_solar(self):
         def get_sim():
