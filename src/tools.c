@@ -898,6 +898,9 @@ void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
         return;
     }
     if (reb_strcmp_ignore_whitespace("outer solar system", fmt)==0){
+        if (r->G!=1.0){
+            reb_simulation_warning(r, "G should be 1.0 when using a built-in test dataset.");
+        }
         reb_simulation_add(r, reb_particle_solarsystem[0]);
         for (size_t i=5; i<9; i++){
             reb_simulation_add(r, reb_particle_solarsystem[i]);
@@ -905,6 +908,9 @@ void reb_simulation_add_fmt(struct reb_simulation* r, const char* fmt, ...){
         return;
     }
     if (reb_strcmp_ignore_whitespace("solar system", fmt)==0){
+        if (r->G!=1.0){
+            reb_simulation_warning(r, "G should be 1.0 when using a built-in test dataset.");
+        }
         for (size_t i=0; i<9; i++){
             reb_simulation_add(r, reb_particle_solarsystem[i]);
         }
