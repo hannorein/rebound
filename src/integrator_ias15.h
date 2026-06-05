@@ -27,14 +27,20 @@ extern const struct reb_integrator reb_integrator_ias15;
 struct reb_integrator_ias15_state {
     double epsilon;                 // Precision control parameter
     double min_dt;                  // Minimal timestep
-#define REB_IAS15_ADAPTIVEMODE(X,Y) \
+#define REB_INTEGRATOR_IAS15_ADAPTIVEMODE(X,Y) \
     X(Y, 0, INDIVIDUAL)     /* fractional error is calculated separately for each particle              */ \
     X(Y, 1, GLOBAL)         /* fractional error is calculated globally (was default until 01/2024)      */ \
     X(Y, 2, PRS23)          /* Pham, Rein & Spiegel (2023) timestep criterion (default since 01/2024)   */ \
     X(Y, 3, AARSETH85)       /* Aarseth (1985) timestep criterion                                        */
     enum {
-        REB_GENERATE_ENUM(REB_IAS15_ADAPTIVEMODE)
+        REB_GENERATE_ENUM(REB_INTEGRATOR_IAS15_ADAPTIVEMODE)
     } adaptive_mode;                    // Determines how the timestep is chosen
+#define REB_INTEGRATOR_IAS15_OPTIMIZATION(X,Y) \
+    X(Y, 0, DEFAULT)     /* Default */ \
+    X(Y, 1, NO_CS)       /* No compensated summation */
+    enum {
+        REB_GENERATE_ENUM(REB_INTEGRATOR_IAS15_OPTIMIZATION)
+    } optimization;                     // Optimization mode
     uint64_t iterations_max_exceeded;   // Counter how many times the iteration did not converge. 
     size_t N_allocated;          
     double* REB_RESTRICT at;

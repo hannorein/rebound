@@ -106,7 +106,9 @@ const struct reb_binarydata_field_descriptor reb_integrator_ias15_field_descript
         "where the maximum is taken over all particles and the timestep criterion of "
         "[Rein & Spiegel (2015)] is used. This was the default until January 2024. "
         "If set to AARSETH85, then the criterion of [Aarseth (1985)]) is used.",
-        REB_UINT,         "adaptive_mode",       offsetof(struct reb_integrator_ias15_state, adaptive_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_IAS15_ADAPTIVEMODE)},
+        REB_UINT,         "adaptive_mode",       offsetof(struct reb_integrator_ias15_state, adaptive_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_IAS15_ADAPTIVEMODE)},
+    { "This flag determines if any optimizations are used.",
+        REB_UINT,         "optimization",        offsetof(struct reb_integrator_ias15_state, optimization), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_IAS15_OPTIMIZATION)},
     { "", REB_UINT64,       "iterations_max_exceeded", offsetof(struct reb_integrator_ias15_state, iterations_max_exceeded), 0, 0, 0},
     { "", REB_POINTER,      "at",                  offsetof(struct reb_integrator_ias15_state, at), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
     { "", REB_POINTER,      "x0",                  offsetof(struct reb_integrator_ias15_state, x0), offsetof(struct reb_integrator_ias15_state, N_allocated), sizeof(double), 0},
@@ -128,7 +130,7 @@ void* reb_integrator_ias15_create(){
     struct reb_integrator_ias15_state* ias15 = calloc(sizeof(struct reb_integrator_ias15_state),1);
     ias15->epsilon = 1e-9;
     ias15->min_dt = 0.0;
-    ias15->adaptive_mode = REB_IAS15_ADAPTIVEMODE_PRS23; // new default since January 2024
+    ias15->adaptive_mode = REB_INTEGRATOR_IAS15_ADAPTIVEMODE_PRS23; // new default since January 2024
     return ias15;
 }
 
@@ -295,6 +297,14 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     const size_t N3 = 3*(N+N_var);
 
     reb_simulation_update_acceleration(r);
+
+    switch (ias15->optimization){
+        case REB_INTEGRATOR_IAS15_OPTIMIZATION_DEFAULT:
+            break;
+        case REB_INTEGRATOR_IAS15_OPTIMIZATION_NO_CS:
+            break;
+
+    }
 
     double* REB_RESTRICT const csx = ias15->csx; 
     double* REB_RESTRICT const csv = ias15->csv; 
@@ -577,7 +587,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
                             add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
 
                             // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
-                            if (ias15->adaptive_mode!=REB_IAS15_ADAPTIVEMODE_INDIVIDUAL){
+                            if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
                                 const double ak  = fabs(at[k]);
                                 if (isnormal(ak) && ak>maxak){
                                     maxak = ak;
@@ -595,7 +605,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
                                 }
                             }
                         } 
-                        if (ias15->adaptive_mode!=REB_IAS15_ADAPTIVEMODE_INDIVIDUAL){
+                        if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
                             predictor_corrector_error = maxb6ktmp/maxak;
                         }
 
@@ -613,18 +623,18 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     if (ias15->epsilon>0){
         // Estimate error (given by last term in series expansion) 
         // There are two options:
-        // ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_GLOBAL (used to be default until January 2024)
+        // ias15->adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_GLOBAL (used to be default until January 2024)
         //   First, we determine the maximum acceleration and the maximum of the last term in the series. 
         //   Then, the two are divided.
-        // ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_INDIVIDUAL
+        // ias15->adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL
         //   Here, the fractional error is calculated for each particle individually and we use the maximum of the fractional error.
         //   This might fail in cases where a particle does not experience any (physical) acceleration besides roundoff errors. 
-        // ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_PRS23
+        // ias15->adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_PRS23
         //   Here, the acceleration, jerk and snap are used to estimate the new timestep. 
         //   The method is described in detail in Pham, Rein, Spiegel 2023
-        if (ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_INDIVIDUAL || ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_GLOBAL){ // Old adaptive timestepping methods
+        if (ias15->adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL || ias15->adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_GLOBAL){ // Old adaptive timestepping methods
             double integrator_error = 0.0; // Try to estimate integrator error based on last polynomial
-            if (ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_GLOBAL){
+            if (ias15->adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_GLOBAL){
                 double maxa = 0.0;
                 double maxj = 0.0;
                 for(size_t i=0;i<N;i++){ // Looping over all particles and all 3 components of the acceleration. 
@@ -645,7 +655,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
                     }
                     integrator_error = maxj/maxa;
                 }
-            }else{ // adaptive_mode == REB_IAS15_ADAPTIVEMODE_INDIVIDUAL
+            }else{ // adaptive_mode == REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL
                 for(size_t k=0;k<N3;k++) {
                     const double ak  = at[k];
                     const double bk = b.p6[k];
@@ -686,9 +696,9 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
                     continue;
                 }
                 double timescale2 = 0;
-                if (ias15->adaptive_mode == REB_IAS15_ADAPTIVEMODE_PRS23){
+                if (ias15->adaptive_mode == REB_INTEGRATOR_IAS15_ADAPTIVEMODE_PRS23){
                     timescale2 = 2.*y2/(y3+sqrt(y4*y2)); // PRS23
-                }else if (ias15->adaptive_mode == REB_IAS15_ADAPTIVEMODE_AARSETH85){
+                }else if (ias15->adaptive_mode == REB_INTEGRATOR_IAS15_ADAPTIVEMODE_AARSETH85){
                     timescale2 = (sqrt(y2*y4)+y3) / (sqrt(y3*y5)+y4); // A85
                 }
 
@@ -697,7 +707,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
                 }
             }
             if (isnormal(min_timescale2)){
-                // Numerical factor below is there to match timestep to that of adaptive_mode==REB_IAS15_ADAPTIVEMODE_GLOBAL and default epsilon
+                // Numerical factor below is there to match timestep to that of adaptive_mode==REB_INTEGRATOR_IAS15_ADAPTIVEMODE_GLOBAL and default epsilon
                 dt_new = sqrt(min_timescale2) * dt_done * sqrt7(ias15->epsilon*5040.0);
             }else{
                 dt_new = dt_done/safety_factor; // by default, increase timestep a little
