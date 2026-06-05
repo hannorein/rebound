@@ -297,22 +297,13 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     const size_t N3 = 3*(N+N_var);
 
     reb_simulation_update_acceleration(r);
-
-    switch (ias15->optimization){
-        case REB_INTEGRATOR_IAS15_OPTIMIZATION_DEFAULT:
-            break;
-        case REB_INTEGRATOR_IAS15_OPTIMIZATION_NO_CS:
-            break;
-
-    }
-
-    double* REB_RESTRICT const csx = ias15->csx; 
-    double* REB_RESTRICT const csv = ias15->csv; 
-    double* REB_RESTRICT const csa0 = ias15->csa0; 
     double* REB_RESTRICT const at = ias15->at; 
     double* REB_RESTRICT const x0 = ias15->x0; 
     double* REB_RESTRICT const v0 = ias15->v0; 
     double* REB_RESTRICT const a0 = ias15->a0; 
+    double* REB_RESTRICT const csa0 = ias15->csa0; 
+    double* REB_RESTRICT const csx = ias15->csx; 
+    double* REB_RESTRICT const csv = ias15->csv; 
     struct reb_vec3d* gravity_cs = r->gravity_cs; 
     const struct reb_dpconst7 g  = dpcast(ias15->g, N3);
     const struct reb_dpconst7 e  = dpcast(ias15->e, N3);
@@ -320,6 +311,7 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     const struct reb_dpconst7 csb= dpcast(ias15->csb, N3);
     const struct reb_dpconst7 er = dpcast(ias15->er, N3);
     const struct reb_dpconst7 br = dpcast(ias15->br, N3);
+                
     for(size_t k=0;k<N;k++) {
         size_t mk = map ? map[k] : k;
         x0[3*k]   = particles[mk].x;
@@ -344,28 +336,31 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
         a0[3*k+1] = particles_var[mk].ay; 
         a0[3*k+2] = particles_var[mk].az;
     }
-    if (r->gravity==REB_GRAVITY_COMPENSATED){
-        for(size_t k=0;k<N+N_var;k++) {
-            size_t mk = map ? map[k] : k;
-            csa0[3*k]   = gravity_cs[mk].x;
-            csa0[3*k+1] = gravity_cs[mk].y;  
-            csa0[3*k+2] = gravity_cs[mk].z;
+
+    if (ias15->optimization == REB_INTEGRATOR_IAS15_OPTIMIZATION_DEFAULT){
+        if (r->gravity==REB_GRAVITY_COMPENSATED){
+            for(size_t k=0;k<N+N_var;k++) {
+                size_t mk = map ? map[k] : k;
+                csa0[3*k]   = gravity_cs[mk].x;
+                csa0[3*k+1] = gravity_cs[mk].y;  
+                csa0[3*k+2] = gravity_cs[mk].z;
+            }
+        }else{
+            gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
+            for(size_t k=0;k<N3;k++) {
+                csa0[k]   = 0;
+            }
         }
-    }else{
-        gravity_cs = (struct reb_vec3d*)csa0; // Always 0.
-        for(size_t k=0;k<N3;k++) {
-            csa0[k]   = 0;
+        for (size_t k=0;k<N3;k++){
+            // Memset might be faster!
+            csb.p0[k] = 0.;
+            csb.p1[k] = 0.;
+            csb.p2[k] = 0.;
+            csb.p3[k] = 0.;
+            csb.p4[k] = 0.;
+            csb.p5[k] = 0.;
+            csb.p6[k] = 0.;
         }
-    }
-    for (size_t k=0;k<N3;k++){
-        // Memset might be faster!
-        csb.p0[k] = 0.;
-        csb.p1[k] = 0.;
-        csb.p2[k] = 0.;
-        csb.p3[k] = 0.;
-        csb.p4[k] = 0.;
-        csb.p5[k] = 0.;
-        csb.p6[k] = 0.;
     }
 
     for(size_t k=0;k<N3;k++) {
@@ -388,231 +383,437 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     double predictor_corrector_error = 1e300;
     double predictor_corrector_error_last = 2;
     size_t iterations = 0; 
+
     // Predictor corrector loop
     // Stops if one of the following conditions is satisfied: 
     //   1) predictor_corrector_error better than 1e-16 
     //   2) predictor_corrector_error starts to oscillate
     //   3) more than 12 iterations
-    while(1){
-        if(predictor_corrector_error<1e-16){
-            break;
-        }
-        if(iterations > 2 && predictor_corrector_error_last <= predictor_corrector_error){
-            break;
-        }
-        if (iterations>=12){
-            ias15->iterations_max_exceeded++;
-            const size_t integrator_iterations_warning = 10;
-            if (ias15->iterations_max_exceeded==integrator_iterations_warning ){
-                reb_simulation_warning(r, "At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
-            }
-            break;                              // Quit predictor corrector loop
-        }
-        predictor_corrector_error_last = predictor_corrector_error;
-        predictor_corrector_error = 0;
-        iterations++;
-
-        integrator_megno_thisdt = integrator_megno_thisdt_init;
-
-        for(size_t n=1;n<8;n++) {                          // Loop over interval using Gauss-Radau spacings
-            r->t = t_beginning + r->dt * h[n];
-
-            // Prepare particles arrays for force calculation
-            for(size_t i=0;i<N+N_var;i++) {                      // Predict positions at interval n using b values
-                const size_t k0 = 3*i+0;
-                const size_t k1 = 3*i+1;
-                const size_t k2 = 3*i+2;
-
-                double xk0;
-                double xk1;
-                double xk2;
-                xk0 = -csx[k0] + ((((((((b.p6[k0]*7.*h[n]/9. + b.p5[k0])*3.*h[n]/4. + b.p4[k0])*5.*h[n]/7. + b.p3[k0])*2.*h[n]/3. + b.p2[k0])*3.*h[n]/5. + b.p1[k0])*h[n]/2. + b.p0[k0])*h[n]/3. + a0[k0])*r->dt*h[n]/2. + v0[k0])*r->dt*h[n];
-                xk1 = -csx[k1] + ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
-                xk2 = -csx[k2] + ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
-                if (i<N){
-                    size_t mi = map ? map[i] : i;
-                    particles[mi].x = xk0 + x0[k0];
-                    particles[mi].y = xk1 + x0[k1];
-                    particles[mi].z = xk2 + x0[k2];
-                }else{
-                    size_t mi = i-N;
-                    particles_var[mi].x = xk0 + x0[k0];
-                    particles_var[mi].y = xk1 + x0[k1];
-                    particles_var[mi].z = xk2 + x0[k2];
+    switch (ias15->optimization){
+        case REB_INTEGRATOR_IAS15_OPTIMIZATION_DEFAULT:
+            while(1){
+                if(predictor_corrector_error<1e-16){
+                    break;
                 }
-            }
-            if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
-                for(size_t i=0;i<N+N_var;i++) {                  // Predict velocities at interval n using b values
-                    const size_t k0 = 3*i+0;
-                    const size_t k1 = 3*i+1;
-                    const size_t k2 = 3*i+2;
+                if(iterations > 2 && predictor_corrector_error_last <= predictor_corrector_error){
+                    break;
+                }
+                if (iterations>=12){
+                    ias15->iterations_max_exceeded++;
+                    const size_t integrator_iterations_warning = 10;
+                    if (ias15->iterations_max_exceeded==integrator_iterations_warning ){
+                        reb_simulation_warning(r, "At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
+                    }
+                    break;                              // Quit predictor corrector loop
+                }
+                predictor_corrector_error_last = predictor_corrector_error;
+                predictor_corrector_error = 0;
+                iterations++;
 
-                    double vk0;
-                    double vk1;
-                    double vk2;
-                    vk0 =  -csv[k0] + (((((((b.p6[k0]*7.*h[n]/8. + b.p5[k0])*6.*h[n]/7. + b.p4[k0])*5.*h[n]/6. + b.p3[k0])*4.*h[n]/5. + b.p2[k0])*3.*h[n]/4. + b.p1[k0])*2.*h[n]/3. + b.p0[k0])*h[n]/2. + a0[k0])*r->dt*h[n];
-                    vk1 =  -csv[k1] + (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
-                    vk2 =  -csv[k2] + (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
-                    if (i<N){
-                        size_t mi = map ? map[i] : i;
-                        particles[mi].vx = vk0 + v0[k0];
-                        particles[mi].vy = vk1 + v0[k1];
-                        particles[mi].vz = vk2 + v0[k2];
-                    }else{
-                        size_t mi = i-N;
-                        particles_var[mi].vx = vk0 + v0[k0];
-                        particles_var[mi].vy = vk1 + v0[k1];
-                        particles_var[mi].vz = vk2 + v0[k2];
+                integrator_megno_thisdt = integrator_megno_thisdt_init;
+
+                for(size_t n=1;n<8;n++) {                          // Loop over interval using Gauss-Radau spacings
+                    r->t = t_beginning + r->dt * h[n];
+
+                    // Prepare particles arrays for force calculation
+                    for(size_t i=0;i<N+N_var;i++) {                      // Predict positions at interval n using b values
+                        const size_t k0 = 3*i+0;
+                        const size_t k1 = 3*i+1;
+                        const size_t k2 = 3*i+2;
+
+                        double xk0;
+                        double xk1;
+                        double xk2;
+                        xk0 = -csx[k0] + ((((((((b.p6[k0]*7.*h[n]/9. + b.p5[k0])*3.*h[n]/4. + b.p4[k0])*5.*h[n]/7. + b.p3[k0])*2.*h[n]/3. + b.p2[k0])*3.*h[n]/5. + b.p1[k0])*h[n]/2. + b.p0[k0])*h[n]/3. + a0[k0])*r->dt*h[n]/2. + v0[k0])*r->dt*h[n];
+                        xk1 = -csx[k1] + ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
+                        xk2 = -csx[k2] + ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
+                        if (i<N){
+                            size_t mi = map ? map[i] : i;
+                            particles[mi].x = xk0 + x0[k0];
+                            particles[mi].y = xk1 + x0[k1];
+                            particles[mi].z = xk2 + x0[k2];
+                        }else{
+                            size_t mi = i-N;
+                            particles_var[mi].x = xk0 + x0[k0];
+                            particles_var[mi].y = xk1 + x0[k1];
+                            particles_var[mi].z = xk2 + x0[k2];
+                        }
+                    }
+                    if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
+                        for(size_t i=0;i<N+N_var;i++) {                  // Predict velocities at interval n using b values
+                            const size_t k0 = 3*i+0;
+                            const size_t k1 = 3*i+1;
+                            const size_t k2 = 3*i+2;
+
+                            double vk0;
+                            double vk1;
+                            double vk2;
+                            vk0 =  -csv[k0] + (((((((b.p6[k0]*7.*h[n]/8. + b.p5[k0])*6.*h[n]/7. + b.p4[k0])*5.*h[n]/6. + b.p3[k0])*4.*h[n]/5. + b.p2[k0])*3.*h[n]/4. + b.p1[k0])*2.*h[n]/3. + b.p0[k0])*h[n]/2. + a0[k0])*r->dt*h[n];
+                            vk1 =  -csv[k1] + (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
+                            vk2 =  -csv[k2] + (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
+                            if (i<N){
+                                size_t mi = map ? map[i] : i;
+                                particles[mi].vx = vk0 + v0[k0];
+                                particles[mi].vy = vk1 + v0[k1];
+                                particles[mi].vz = vk2 + v0[k2];
+                            }else{
+                                size_t mi = i-N;
+                                particles_var[mi].vx = vk0 + v0[k0];
+                                particles_var[mi].vy = vk1 + v0[k1];
+                                particles_var[mi].vz = vk2 + v0[k2];
+                            }
+                        }
+                    }
+
+
+                    reb_simulation_update_acceleration(r);             // Calculate forces at interval n
+                    if (r->calculate_megno){
+                        integrator_megno_thisdt += w[n] * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
+                    }
+
+                    for(size_t k=0;k<N;++k) {
+                        size_t mk = map ? map[k] : k;
+                        at[3*k]   = particles[mk].ax;
+                        at[3*k+1] = particles[mk].ay;  
+                        at[3*k+2] = particles[mk].az;
+                    }
+                    for(size_t mk=0;mk<N_var;++mk) {
+                        size_t k = mk+N;;
+                        at[3*k]   = particles_var[mk].ax;
+                        at[3*k+1] = particles_var[mk].ay;  
+                        at[3*k+2] = particles_var[mk].az;
+                    }
+                    switch (n) {                            // Improve b and g values
+                        case 1: 
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p0[k];
+                                double gk = at[k];
+                                double gk_cs = ((double*)(gravity_cs))[k];
+                                add_cs(&gk, &gk_cs, -a0[k]);
+                                add_cs(&gk, &gk_cs, csa0[k]);
+                                g.p0[k]  = gk/rr[0];
+                                add_cs(&(b.p0[k]), &(csb.p0[k]), g.p0[k]-tmp);
+                            } break;
+                        case 2: 
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p1[k];
+                                double gk = at[k];
+                                double gk_cs = ((double*)(gravity_cs))[k];
+                                add_cs(&gk, &gk_cs, -a0[k]);
+                                add_cs(&gk, &gk_cs, csa0[k]);
+                                g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
+                                tmp = g.p1[k] - tmp;
+                                add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[0]);
+                                add_cs(&(b.p1[k]), &(csb.p1[k]), tmp);
+                            } break;
+                        case 3: 
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p2[k];
+                                double gk = at[k];
+                                double gk_cs = ((double*)(gravity_cs))[k];
+                                add_cs(&gk, &gk_cs, -a0[k]);
+                                add_cs(&gk, &gk_cs, csa0[k]);
+                                g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
+                                tmp = g.p2[k] - tmp;
+                                add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[1]);
+                                add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[2]);
+                                add_cs(&(b.p2[k]), &(csb.p2[k]), tmp);
+                            } break;
+                        case 4:
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p3[k];
+                                double gk = at[k];
+                                double gk_cs = ((double*)(gravity_cs))[k];
+                                add_cs(&gk, &gk_cs, -a0[k]);
+                                add_cs(&gk, &gk_cs, csa0[k]);
+                                g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
+                                tmp = g.p3[k] - tmp;
+                                add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[3]);
+                                add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[4]);
+                                add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[5]);
+                                add_cs(&(b.p3[k]), &(csb.p3[k]), tmp);
+                            } break;
+                        case 5:
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p4[k];
+                                double gk = at[k];
+                                double gk_cs = ((double*)(gravity_cs))[k];
+                                add_cs(&gk, &gk_cs, -a0[k]);
+                                add_cs(&gk, &gk_cs, csa0[k]);
+                                g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
+                                tmp = g.p4[k] - tmp;
+                                add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[6]);
+                                add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[7]);
+                                add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[8]);
+                                add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[9]);
+                                add_cs(&(b.p4[k]), &(csb.p4[k]), tmp);
+                            } break;
+                        case 6:
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p5[k];
+                                double gk = at[k];
+                                double gk_cs = ((double*)(gravity_cs))[k];
+                                add_cs(&gk, &gk_cs, -a0[k]);
+                                add_cs(&gk, &gk_cs, csa0[k]);
+                                g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
+                                tmp = g.p5[k] - tmp;
+                                add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[10]);
+                                add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[11]);
+                                add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[12]);
+                                add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[13]);
+                                add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[14]);
+                                add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
+                            } break;
+                        case 7:
+                            {
+                                double maxak = 0.0;
+                                double maxb6ktmp = 0.0;
+                                for(size_t k=0;k<N3;++k) {
+                                    double tmp = g.p6[k];
+                                    double gk = at[k];
+                                    double gk_cs = ((double*)(gravity_cs))[k];
+                                    add_cs(&gk, &gk_cs, -a0[k]);
+                                    add_cs(&gk, &gk_cs, csa0[k]);
+                                    g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+                                    tmp = g.p6[k] - tmp;    
+                                    add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
+                                    add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
+                                    add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
+                                    add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
+                                    add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
+                                    add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
+                                    add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
+
+                                    // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+                                    if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
+                                        const double ak  = fabs(at[k]);
+                                        if (isnormal(ak) && ak>maxak){
+                                            maxak = ak;
+                                        }
+                                        const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
+                                        if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
+                                            maxb6ktmp = b6ktmp;
+                                        }
+                                    }else{
+                                        const double ak  = at[k];
+                                        const double b6ktmp = tmp; 
+                                        const double errork = fabs(b6ktmp/ak);
+                                        if (isnormal(errork) && errork>predictor_corrector_error){
+                                            predictor_corrector_error = errork;
+                                        }
+                                    }
+                                } 
+                                if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
+                                    predictor_corrector_error = maxb6ktmp/maxak;
+                                }
+
+                                break;
+                            }
                     }
                 }
             }
+            break;
+        case REB_INTEGRATOR_IAS15_OPTIMIZATION_NO_CS:
+            while(1){
+                if(predictor_corrector_error<1e-15){
+                    break;
+                }
+                if(iterations > 2 && predictor_corrector_error_last <= predictor_corrector_error){
+                    break;
+                }
+                if (iterations>=12){
+                    ias15->iterations_max_exceeded++;
+                    const size_t integrator_iterations_warning = 10;
+                    if (ias15->iterations_max_exceeded==integrator_iterations_warning ){
+                        reb_simulation_warning(r, "At least 10 predictor corrector loops in IAS15 did not converge. This is typically an indication of the timestep being too large.");
+                    }
+                    break;                              // Quit predictor corrector loop
+                }
+                predictor_corrector_error_last = predictor_corrector_error;
+                predictor_corrector_error = 0;
+                iterations++;
 
+                integrator_megno_thisdt = integrator_megno_thisdt_init;
 
-            reb_simulation_update_acceleration(r);             // Calculate forces at interval n
-            if (r->calculate_megno){
-                integrator_megno_thisdt += w[n] * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
-            }
+                for(size_t n=1;n<8;n++) {                          // Loop over interval using Gauss-Radau spacings
+                    r->t = t_beginning + r->dt * h[n];
 
-            for(size_t k=0;k<N;++k) {
-                size_t mk = map ? map[k] : k;
-                at[3*k]   = particles[mk].ax;
-                at[3*k+1] = particles[mk].ay;  
-                at[3*k+2] = particles[mk].az;
-            }
-            for(size_t mk=0;mk<N_var;++mk) {
-                size_t k = mk+N;;
-                at[3*k]   = particles_var[mk].ax;
-                at[3*k+1] = particles_var[mk].ay;  
-                at[3*k+2] = particles_var[mk].az;
-            }
-            switch (n) {                            // Improve b and g values
-                case 1: 
-                    for(size_t k=0;k<N3;++k) {
-                        double tmp = g.p0[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p0[k]  = gk/rr[0];
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), g.p0[k]-tmp);
-                    } break;
-                case 2: 
-                    for(size_t k=0;k<N3;++k) {
-                        double tmp = g.p1[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
-                        tmp = g.p1[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[0]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp);
-                    } break;
-                case 3: 
-                    for(size_t k=0;k<N3;++k) {
-                        double tmp = g.p2[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
-                        tmp = g.p2[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[1]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[2]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp);
-                    } break;
-                case 4:
-                    for(size_t k=0;k<N3;++k) {
-                        double tmp = g.p3[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
-                        tmp = g.p3[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[3]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[4]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[5]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp);
-                    } break;
-                case 5:
-                    for(size_t k=0;k<N3;++k) {
-                        double tmp = g.p4[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
-                        tmp = g.p4[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[6]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[7]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[8]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[9]);
-                        add_cs(&(b.p4[k]), &(csb.p4[k]), tmp);
-                    } break;
-                case 6:
-                    for(size_t k=0;k<N3;++k) {
-                        double tmp = g.p5[k];
-                        double gk = at[k];
-                        double gk_cs = ((double*)(gravity_cs))[k];
-                        add_cs(&gk, &gk_cs, -a0[k]);
-                        add_cs(&gk, &gk_cs, csa0[k]);
-                        g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
-                        tmp = g.p5[k] - tmp;
-                        add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[10]);
-                        add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[11]);
-                        add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[12]);
-                        add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[13]);
-                        add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[14]);
-                        add_cs(&(b.p5[k]), &(csb.p5[k]), tmp);
-                    } break;
-                case 7:
-                    {
-                        double maxak = 0.0;
-                        double maxb6ktmp = 0.0;
-                        for(size_t k=0;k<N3;++k) {
-                            double tmp = g.p6[k];
-                            double gk = at[k];
-                            double gk_cs = ((double*)(gravity_cs))[k];
-                            add_cs(&gk, &gk_cs, -a0[k]);
-                            add_cs(&gk, &gk_cs, csa0[k]);
-                            g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
-                            tmp = g.p6[k] - tmp;    
-                            add_cs(&(b.p0[k]), &(csb.p0[k]), tmp * c[15]);
-                            add_cs(&(b.p1[k]), &(csb.p1[k]), tmp * c[16]);
-                            add_cs(&(b.p2[k]), &(csb.p2[k]), tmp * c[17]);
-                            add_cs(&(b.p3[k]), &(csb.p3[k]), tmp * c[18]);
-                            add_cs(&(b.p4[k]), &(csb.p4[k]), tmp * c[19]);
-                            add_cs(&(b.p5[k]), &(csb.p5[k]), tmp * c[20]);
-                            add_cs(&(b.p6[k]), &(csb.p6[k]), tmp);
+                    // Prepare particles arrays for force calculation
+                    for(size_t i=0;i<N+N_var;i++) {                      // Predict positions at interval n using b values
+                        const size_t k0 = 3*i+0;
+                        const size_t k1 = 3*i+1;
+                        const size_t k2 = 3*i+2;
 
-                            // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
-                            if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
-                                const double ak  = fabs(at[k]);
-                                if (isnormal(ak) && ak>maxak){
-                                    maxak = ak;
-                                }
-                                const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
-                                if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
-                                    maxb6ktmp = b6ktmp;
-                                }
+                        double xk0;
+                        double xk1;
+                        double xk2;
+                        xk0 = ((((((((b.p6[k0]*7.*h[n]/9. + b.p5[k0])*3.*h[n]/4. + b.p4[k0])*5.*h[n]/7. + b.p3[k0])*2.*h[n]/3. + b.p2[k0])*3.*h[n]/5. + b.p1[k0])*h[n]/2. + b.p0[k0])*h[n]/3. + a0[k0])*r->dt*h[n]/2. + v0[k0])*r->dt*h[n];
+                        xk1 = ((((((((b.p6[k1]*7.*h[n]/9. + b.p5[k1])*3.*h[n]/4. + b.p4[k1])*5.*h[n]/7. + b.p3[k1])*2.*h[n]/3. + b.p2[k1])*3.*h[n]/5. + b.p1[k1])*h[n]/2. + b.p0[k1])*h[n]/3. + a0[k1])*r->dt*h[n]/2. + v0[k1])*r->dt*h[n];
+                        xk2 = ((((((((b.p6[k2]*7.*h[n]/9. + b.p5[k2])*3.*h[n]/4. + b.p4[k2])*5.*h[n]/7. + b.p3[k2])*2.*h[n]/3. + b.p2[k2])*3.*h[n]/5. + b.p1[k2])*h[n]/2. + b.p0[k2])*h[n]/3. + a0[k2])*r->dt*h[n]/2. + v0[k2])*r->dt*h[n];
+                        if (i<N){
+                            size_t mi = map ? map[i] : i;
+                            particles[mi].x = xk0 + x0[k0];
+                            particles[mi].y = xk1 + x0[k1];
+                            particles[mi].z = xk2 + x0[k2];
+                        }else{
+                            size_t mi = i-N;
+                            particles_var[mi].x = xk0 + x0[k0];
+                            particles_var[mi].y = xk1 + x0[k1];
+                            particles_var[mi].z = xk2 + x0[k2];
+                        }
+                    }
+                    if (r->calculate_megno || (r->additional_forces && r->force_is_velocity_dependent)){
+                        for(size_t i=0;i<N+N_var;i++) {                  // Predict velocities at interval n using b values
+                            const size_t k0 = 3*i+0;
+                            const size_t k1 = 3*i+1;
+                            const size_t k2 = 3*i+2;
+
+                            double vk0;
+                            double vk1;
+                            double vk2;
+                            vk0 =  (((((((b.p6[k0]*7.*h[n]/8. + b.p5[k0])*6.*h[n]/7. + b.p4[k0])*5.*h[n]/6. + b.p3[k0])*4.*h[n]/5. + b.p2[k0])*3.*h[n]/4. + b.p1[k0])*2.*h[n]/3. + b.p0[k0])*h[n]/2. + a0[k0])*r->dt*h[n];
+                            vk1 =  (((((((b.p6[k1]*7.*h[n]/8. + b.p5[k1])*6.*h[n]/7. + b.p4[k1])*5.*h[n]/6. + b.p3[k1])*4.*h[n]/5. + b.p2[k1])*3.*h[n]/4. + b.p1[k1])*2.*h[n]/3. + b.p0[k1])*h[n]/2. + a0[k1])*r->dt*h[n];
+                            vk2 =  (((((((b.p6[k2]*7.*h[n]/8. + b.p5[k2])*6.*h[n]/7. + b.p4[k2])*5.*h[n]/6. + b.p3[k2])*4.*h[n]/5. + b.p2[k2])*3.*h[n]/4. + b.p1[k2])*2.*h[n]/3. + b.p0[k2])*h[n]/2. + a0[k2])*r->dt*h[n];
+                            if (i<N){
+                                size_t mi = map ? map[i] : i;
+                                particles[mi].vx = vk0 + v0[k0];
+                                particles[mi].vy = vk1 + v0[k1];
+                                particles[mi].vz = vk2 + v0[k2];
                             }else{
-                                const double ak  = at[k];
-                                const double b6ktmp = tmp; 
-                                const double errork = fabs(b6ktmp/ak);
-                                if (isnormal(errork) && errork>predictor_corrector_error){
-                                    predictor_corrector_error = errork;
+                                size_t mi = i-N;
+                                particles_var[mi].vx = vk0 + v0[k0];
+                                particles_var[mi].vy = vk1 + v0[k1];
+                                particles_var[mi].vz = vk2 + v0[k2];
+                            }
+                        }
+                    }
+
+
+                    reb_simulation_update_acceleration(r);             // Calculate forces at interval n
+                    if (r->calculate_megno){
+                        integrator_megno_thisdt += w[n] * (r->t-r->megno_initial_t) * reb_tools_megno_deltad_delta(r);
+                    }
+
+                    for(size_t k=0;k<N;++k) {
+                        size_t mk = map ? map[k] : k;
+                        at[3*k]   = particles[mk].ax;
+                        at[3*k+1] = particles[mk].ay;  
+                        at[3*k+2] = particles[mk].az;
+                    }
+                    for(size_t mk=0;mk<N_var;++mk) {
+                        size_t k = mk+N;;
+                        at[3*k]   = particles_var[mk].ax;
+                        at[3*k+1] = particles_var[mk].ay;  
+                        at[3*k+2] = particles_var[mk].az;
+                    }
+                    switch (n) {                            // Improve b and g values
+                        case 1: 
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p0[k];
+                                double gk = at[k] - a0[k];
+                                g.p0[k]  = gk/rr[0];
+                                b.p0[k] += g.p0[k]-tmp;
+                            } break;
+                        case 2: 
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p1[k];
+                                double gk = at[k]-a0[k];
+                                g.p1[k] = (gk/rr[1] - g.p0[k])/rr[2];
+                                tmp = g.p1[k] - tmp;
+                                b.p0[k] += tmp * c[0];
+                                b.p1[k] += tmp;
+                            } break;
+                        case 3: 
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p2[k];
+                                double gk = at[k]-a0[k];
+                                g.p2[k] = ((gk/rr[3] - g.p0[k])/rr[4] - g.p1[k])/rr[5];
+                                tmp = g.p2[k] - tmp;
+                                b.p0[k] += tmp * c[1];
+                                b.p1[k] += tmp * c[2];
+                                b.p2[k] += tmp;
+                            } break;
+                        case 4:
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p3[k];
+                                double gk = at[k]-a0[k];
+                                g.p3[k] = (((gk/rr[6] - g.p0[k])/rr[7] - g.p1[k])/rr[8] - g.p2[k])/rr[9];
+                                tmp = g.p3[k] - tmp;
+                                b.p0[k] += tmp * c[3];
+                                b.p1[k] += tmp * c[4];
+                                b.p2[k] += tmp * c[5];
+                                b.p3[k] += tmp;
+                            } break;
+                        case 5:
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p4[k];
+                                double gk = at[k]-a0[k];
+                                g.p4[k] = ((((gk/rr[10] - g.p0[k])/rr[11] - g.p1[k])/rr[12] - g.p2[k])/rr[13] - g.p3[k])/rr[14];
+                                tmp = g.p4[k] - tmp;
+                                b.p0[k] += tmp * c[6];
+                                b.p1[k] += tmp * c[7];
+                                b.p2[k] += tmp * c[8];
+                                b.p3[k] += tmp * c[9];
+                                b.p4[k] += tmp;
+                            } break;
+                        case 6:
+                            for(size_t k=0;k<N3;++k) {
+                                double tmp = g.p5[k];
+                                double gk = at[k]-a0[k];
+                                g.p5[k] = (((((gk/rr[15] - g.p0[k])/rr[16] - g.p1[k])/rr[17] - g.p2[k])/rr[18] - g.p3[k])/rr[19] - g.p4[k])/rr[20];
+                                tmp = g.p5[k] - tmp;
+                                b.p0[k] += tmp * c[10];
+                                b.p1[k] += tmp * c[11];
+                                b.p2[k] += tmp * c[12];
+                                b.p3[k] += tmp * c[13];
+                                b.p4[k] += tmp * c[14];
+                                b.p5[k] += tmp;
+                            } break;
+                        case 7:
+                            {
+                                double maxak = 0.0;
+                                double maxb6ktmp = 0.0;
+                                for(size_t k=0;k<N3;++k) {
+                                    double tmp = g.p6[k];
+                                    double gk = at[k]-a0[k];
+                                    g.p6[k] = ((((((gk/rr[21] - g.p0[k])/rr[22] - g.p1[k])/rr[23] - g.p2[k])/rr[24] - g.p3[k])/rr[25] - g.p4[k])/rr[26] - g.p5[k])/rr[27];
+                                    tmp = g.p6[k] - tmp;    
+                                    b.p0[k] += tmp * c[15];
+                                    b.p1[k] += tmp * c[16];
+                                    b.p2[k] += tmp * c[17];
+                                    b.p3[k] += tmp * c[18];
+                                    b.p4[k] += tmp * c[19];
+                                    b.p5[k] += tmp * c[20];
+                                    b.p6[k] += tmp;
+
+                                    // Monitor change in b.p6[k] relative to at[k]. The predictor corrector scheme is converged if it is close to 0.
+                                    if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
+                                        const double ak  = fabs(at[k]);
+                                        if (isnormal(ak) && ak>maxak){
+                                            maxak = ak;
+                                        }
+                                        const double b6ktmp = fabs(tmp);  // change of b6ktmp coefficient
+                                        if (isnormal(b6ktmp) && b6ktmp>maxb6ktmp){
+                                            maxb6ktmp = b6ktmp;
+                                        }
+                                    }else{
+                                        const double ak  = at[k];
+                                        const double b6ktmp = tmp; 
+                                        const double errork = fabs(b6ktmp/ak);
+                                        if (isnormal(errork) && errork>predictor_corrector_error){
+                                            predictor_corrector_error = errork;
+                                        }
+                                    }
+                                } 
+                                if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
+                                    predictor_corrector_error = maxb6ktmp/maxak;
                                 }
                             }
-                        } 
-                        if (ias15->adaptive_mode!=REB_INTEGRATOR_IAS15_ADAPTIVEMODE_INDIVIDUAL){
-                            predictor_corrector_error = maxb6ktmp/maxak;
-                        }
-
-                        break;
+                            break;
                     }
+                }
             }
-        }
+            break;
     }
     // Set time back to initial value (will be updated below) 
     r->t = t_beginning;
@@ -763,26 +964,51 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     }
 
     // Find new position and velocity values at end of the sequence
-    for(size_t k=0;k<N3;++k) {
-        // Note: dt_done*dt_done is not precalculated to avoid 
-        //       biased round-off errors when a fixed timestep is used.
-        add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done*dt_done);
-        add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p6[k]/8.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p5[k]/7.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p4[k]/6.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p3[k]/5.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p2[k]/4.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p1[k]/3.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), b.p0[k]/2.*dt_done);
-        add_cs(&(v0[k]), &(csv[k]), a0[k]*dt_done);
+    // Note: dt_done*dt_done is not precalculated to avoid 
+    //       biased round-off errors when a fixed timestep is used.
+    switch (ias15->optimization){
+        case REB_INTEGRATOR_IAS15_OPTIMIZATION_DEFAULT:         
+            for(size_t k=0;k<N3;++k) {
+                add_cs(&(x0[k]), &(csx[k]), b.p6[k]/72.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), b.p5[k]/56.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), b.p4[k]/42.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), b.p3[k]/30.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), b.p2[k]/20.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), b.p1[k]/12.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), b.p0[k]/6.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), a0[k]/2.*dt_done*dt_done);
+                add_cs(&(x0[k]), &(csx[k]), v0[k]*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p6[k]/8.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p5[k]/7.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p4[k]/6.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p3[k]/5.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p2[k]/4.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p1[k]/3.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), b.p0[k]/2.*dt_done);
+                add_cs(&(v0[k]), &(csv[k]), a0[k]*dt_done);
+            }
+            break;
+        case REB_INTEGRATOR_IAS15_OPTIMIZATION_NO_CS:
+            for(size_t k=0;k<N3;++k) {
+                x0[k] += b.p6[k]/72.*dt_done*dt_done;
+                x0[k] += b.p5[k]/56.*dt_done*dt_done;
+                x0[k] += b.p4[k]/42.*dt_done*dt_done;
+                x0[k] += b.p3[k]/30.*dt_done*dt_done;
+                x0[k] += b.p2[k]/20.*dt_done*dt_done;
+                x0[k] += b.p1[k]/12.*dt_done*dt_done;
+                x0[k] += b.p0[k]/6.*dt_done*dt_done;
+                x0[k] += a0[k]/2.*dt_done*dt_done;
+                x0[k] += v0[k]*dt_done;
+                v0[k] += b.p6[k]/8.*dt_done;
+                v0[k] += b.p5[k]/7.*dt_done;
+                v0[k] += b.p4[k]/6.*dt_done;
+                v0[k] += b.p3[k]/5.*dt_done;
+                v0[k] += b.p2[k]/4.*dt_done;
+                v0[k] += b.p1[k]/3.*dt_done;
+                v0[k] += b.p0[k]/2.*dt_done;
+                v0[k] += a0[k]*dt_done;
+            }
+            break;
     }
 
     r->t += dt_done;
