@@ -875,7 +875,7 @@ static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct 
 }
 
 //static void reb_integrator_trace_calculate_acceleration_mode_kepler_wb(struct reb_simulation* r){
-    
+
 //}
 
 static void reb_integrator_trace_calculate_acceleration_mode_kepler(struct reb_simulation* r){
@@ -1082,7 +1082,7 @@ void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt)
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     const int N_active = r->N_active==SIZE_MAX?r->N:r->N_active;
-    
+
     const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
     const int has_binary = (idxB != -1);
     struct reb_particle* p = r->particles;
@@ -1214,7 +1214,7 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     r->N_map = trace->encounter_N;
     r->gravity = REB_GRAVITY_CUSTOM;
     //if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
-        //r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler_wb;
+    //r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler_wb;
     //}else{
     r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
     //}
@@ -1443,10 +1443,10 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     if (!trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timestep.
         for (size_t j = 1; j < Nactive; j++){
-            
+
             // in WB coordinates this is checked against the WB itself
             if (j == idxB && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue;
-            
+
             if (_switch_peri(r, j)){
                 trace->current_C = 1;
                 new_close_encounter = 1;
@@ -1590,7 +1590,7 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         }
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
-        
+
         if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
         else reb_integrator_trace_inertial_to_dh(r);
     }

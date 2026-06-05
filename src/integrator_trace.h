@@ -35,7 +35,7 @@ struct reb_integrator_trace_state {
     enum {
         REB_GENERATE_ENUM(REB_INTEGRATOR_TRACE_PERIMODE)
     } peri_mode;
-    
+
 #define REB_INTEGRATOR_TRACE_COORDINATES(X,Y) \
     X(Y, 1, DEMOCRATICHELIOCENTRIC) \
     X(Y, 2, WIDEBINARY)
