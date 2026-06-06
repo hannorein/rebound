@@ -20,10 +20,6 @@
  *
  */
 
-#ifndef AVX512
-#define AVX512
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -31,6 +27,7 @@
 #include <string.h>
 #include <linux/perf_event.h>
 #include <asm/unistd.h>
+#include <immintrin.h>
 #include "rebound.h"
 #include "particle.h"
 #include "tools.h"
@@ -155,7 +152,6 @@ static inline void printmat8(double* a) {
     }
 }
 
-#ifdef AVX512
 // 8x8 matrix multiplication using avx512
 static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
     __m512d v_i = _mm512_set1_pd(vector[0]);
@@ -224,13 +220,11 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
     _mm512_store_pd(tmp, tmp512);
     for (int s=0; s<N_systems; s++){
         for (unsigned int i=1; i<N_per_system; i++){
-            *(double*)((char*)(&particles[s*N_per_system+i])+offset) = tmp[s*p_per_system+i-1]; 
+            *(double*)((char*)(&particles[s*N_per_system+i])+offset) = tmp[s*p_per_system+i-1];
         }
     }
 }
-#endif
 
-                
 // Convert jacobi coordinates to inertial coordinates
 // Also performs com step (assume original particles are unmodified)
 // Note: Speed is not a concern here 
@@ -240,7 +234,6 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
     for (unsigned s=0;s<N_systems;s++){
         com[s] = reb_simulation_com_range(r,s*N_per_system, (s+1)*N_per_system); // original com
     }
-#ifdef AVX512
     struct reb_particle* particles = r->particles;
     load_from_m512d(r, offsetof(struct reb_particle, x), data->mat8_jacobi_to_inertial, N_systems, data->x);
     load_from_m512d(r, offsetof(struct reb_particle, y), data->mat8_jacobi_to_inertial, N_systems, data->y);
@@ -272,9 +265,6 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
             particles[s*N_per_system+i].vz += com[s].vz;
         }
     }
-#else  // AVX512
-    reb_simulation_error(r, "Fallback for Jacobi transformations in asm512 not yet implemented.");
-#endif // AVX512
 }
 
 
