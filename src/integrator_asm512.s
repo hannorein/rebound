@@ -232,13 +232,13 @@
     # No other registers used. Destroys input.
     vmulpd          GS1, ETA, GS1
     vfmadd231pd     GS2, ZETA, GS1
-    vmulpd          GS1, XX, XX
+    vmulpd          GS1, XX, XX{%k4}
     vfnmadd132pd    ETA, XX, GS2
-    vaddpd          R, GS1, XX
-    vdivpd          XX, ONE, XX         # TODO: Hot spot
+    vaddpd          R, GS1, XX{%k4}
+    vdivpd          XX, ONE, XX{%k4}    # TODO: Hot spot
     vfnmadd231pd    GS3, ZETA, GS2
     vaddpd          GS2, DT, GS2
-    vmulpd          GS2, XX, XX
+    vmulpd          GS2, XX, XX{%k4}
 .endm
 
 ###############################################################################
@@ -276,14 +276,11 @@
     halley
   
     movq            $0, %rcx                    # Newton loop counter
-    kxorw           %k5, %k5, %k5               # k5 is already-converged lanes
+    kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
     vmovapd         XX,     %zmm7               # Store old XX
     mm_stiefel_Gs13_avx512
-    newton
-
-    # fix already-converged lanes i.e. restore their old XX
-    vmovapd         %zmm7, XX{%k5}
+    newton                                      # only updates XX for lanes still in k4
 
     vsubpd          XX, %zmm7, %zmm7            # Delta XX
     vpandq          SIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta XX)
@@ -291,8 +288,6 @@
     # Required precision reached? abs(Delta XX) < eps
     vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
     #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
-    knotw           %k4, %k6                    # k6=1 for lanes converged this iteration
-    korw            %k5, %k6, %k5
 #START DEBUG COUNTER:
 #    vmovdqa64       P512_COUNTER(%rdi), %zmm4
 #    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
