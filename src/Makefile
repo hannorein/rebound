@@ -6,11 +6,18 @@ HEADERS=$(SOURCES:.c=.h) rebound_internal.h
 
 all: $(SOURCES) $(LIBREBOUND)
 
-ifneq ($(OS),Windows_NT) 
+ifneq ($(OS),Windows_NT)
 # Linux, MacOS
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."
 	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) -o $@ $<
+
+# build AVX512 files with AVX512 instructions
+AVX512FLAGS = -DAVX512 -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl
+integrator_asm512.$(OBJFILEEXT): integrator_asm512.c $(HEADERS)
+	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) $(AVX512FLAGS) -o $@ $<
+integrator_whfast512.$(OBJFILEEXT): integrator_whfast512.c $(HEADERS)
+	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) $(AVX512FLAGS) -o $@ $<
 
 integrator_asm512.asm_o: integrator_asm512.s
 	@echo "Assembling source file integrator_asm512.s ..."

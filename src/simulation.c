@@ -25,6 +25,7 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #ifdef MPI
@@ -214,9 +215,25 @@ static void* set_integrator(struct reb_simulation* r, const char* name, struct r
 }
 
 
+// Returns 1 if this CPU can run the AVX512 asm512 integrator
+int reb_simulation_avx512_available(void){
+    if (getenv("NO_AVX512")) return 0;
+#if defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__))
+    __builtin_cpu_init();
+    return __builtin_cpu_supports("avx512f") && __builtin_cpu_supports("avx512dq");
+#else
+    return 0;
+#endif
+}
+
 void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name){
     if (r->integrator.name && !r->is_synchronized){
         reb_simulation_warning(r, "Changing integrators while simulation is not synchronized results in undefined behaviour.");
+    }
+    // asm512 needs AVX512
+    if (strcmp(name, "asm512")==0 && !reb_simulation_avx512_available()){
+        reb_simulation_warning(r, "asm512 requires AVX512, which this CPU does not support.");
+        return set_integrator(r, "whfast", reb_integrator_whfast);
     }
     // All built-in integrators
 #define X(iname) if (strcmp(name, #iname)==0) { return set_integrator(r, #iname, reb_integrator_##iname); }
