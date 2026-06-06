@@ -20,6 +20,10 @@
  *
  */
 
+#ifndef AVX512
+#define AVX512
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -34,6 +38,8 @@
 #include "boundary.h"
 #include "integrator_whfast.h"
 #include "integrator_asm512.h"
+
+#pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
 
 
 void reb_integrator_asm512_free(void* state);		
