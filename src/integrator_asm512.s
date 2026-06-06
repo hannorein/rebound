@@ -276,10 +276,14 @@
     halley
   
     movq            $0, %rcx                    # Newton loop counter
-.NewtonLoop\@:    
+    kxorw           %k5, %k5, %k5               # k5 is already-converged lanes
+.NewtonLoop\@:
     vmovapd         XX,     %zmm7               # Store old XX
     mm_stiefel_Gs13_avx512
-    newton 
+    newton
+
+    # fix already-converged lanes i.e. restore their old XX
+    vmovapd         %zmm7, XX{%k5}
 
     vsubpd          XX, %zmm7, %zmm7            # Delta XX
     vpandq          SIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta XX)
@@ -287,6 +291,8 @@
     # Required precision reached? abs(Delta XX) < eps
     vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
     #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
+    knotw           %k4, %k6                    # k6=1 for lanes converged this iteration
+    korw            %k5, %k6, %k5
 #START DEBUG COUNTER:
 #    vmovdqa64       P512_COUNTER(%rdi), %zmm4
 #    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
