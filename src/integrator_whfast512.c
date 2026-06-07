@@ -155,6 +155,7 @@ static inline void printmat8(double* a) {
 #endif // DEBUG_AVX512
 
 // 8x8 matrix multiplication using avx512
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
     __m512d v_i = _mm512_set1_pd(vector[0]);
     __m512d col_i = _mm512_load_pd(matrix);
@@ -169,6 +170,7 @@ static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector
 
 // Three 8x8 matrix multiplications with the same matrix using avx512
 // Used for coordinate transformations in x, y, and z
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2, const __m512d in3, __m512d* out1, __m512d* out2, __m512d* out3){
     __m512d col_i = _mm512_load_pd(matrix);
     __m512d vin1 = _mm512_set1_pd(in1[0]);
@@ -189,6 +191,7 @@ void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2
 }
    
 // Hepler function to load particle data into avx512 registers
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
@@ -208,6 +211,7 @@ static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const do
 }
 
 // Hepler function to load particle data from avx512 registers
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void load_from_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems, __m512d vector){
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
@@ -230,6 +234,7 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
 // Convert jacobi coordinates to inertial coordinates
 // Also performs com step (assume original particles are unmodified)
 // Note: Speed is not a concern here 
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct simd_data* data, double dt_com, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
     struct reb_particle com[4];
@@ -278,6 +283,7 @@ extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_whfast512_kepler_step(struct simd_data* data);
 
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
     // Transformations assume system is in COM frame.
@@ -313,6 +319,7 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data
 
 
 // Precalculate various constants and put them in 512 bit vectors.
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void recalculate_constants(struct reb_simulation* r, unsigned int N_systems){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     free(whfast512->data); // free in case previously allocated
@@ -422,6 +429,7 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
 
 }
 
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     // Check if all assumptions are satisfied.
@@ -484,6 +492,7 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
     return 0; // success
 }
 
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r, int N_steps){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     recalculate_constants(r, whfast512->N_systems);
@@ -499,6 +508,7 @@ void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r, int N_
 }
 
 // Optimized main loops allowing for concatenate_steps
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast512_state* whfast512 = state;
     const double dt = r->dt;
@@ -545,6 +555,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
 }
 
 // Synchronization routine. Called every time an output is needed.
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast512_state* const whfast512 = state;
     if (!r->is_synchronized){
