@@ -774,7 +774,7 @@ next_field:
                     size_t* pointer_N = (size_t*)fd.offset_N;
                     if (fd.dtype == REB_POINTER_ALIGNED){
                         if (*pointer) free(*pointer);
-#if defined(_WIN32) || !defined(AVX512)
+#if defined(_WIN32)
                         // WHFast512 not supported on Windows!
                         *pointer = malloc(field.size_data);
 #else 
