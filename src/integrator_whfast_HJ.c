@@ -182,16 +182,16 @@ static int reb_integrator_whfast_hj_build_tree(struct reb_simulation* const r, s
         for (size_t i=1; i<N; i++){
             for (size_t j=0; j<i; j++){
                 double P = reb_integrator_whfast_hj_bound_pair_timescale(r->G, nodes[i], nodes[j]);
-                if (P == INFINITY)
-                {
-                    double Pperi = reb_integrator_whfast_hj_unbound_pair_timescale(r->G, nodes[i], nodes[j]);
-                    if (Pperi < Pmin && reb_integrator_whfast_hj_pair_distance(nodes[i], nodes[j]) < WHFAST_HJ_UNBOUND_DISTANCE_FACTOR * dmin_bound)
-                    {
-                        Pmin = Pperi;
-                        imin = i;
-                        jmin = j;
-                    }
-                }
+                // if (P == INFINITY)
+                // {
+                //     double Pperi = reb_integrator_whfast_hj_unbound_pair_timescale(r->G, nodes[i], nodes[j]);
+                //     if (Pperi < Pmin && reb_integrator_whfast_hj_pair_distance(nodes[i], nodes[j]) < WHFAST_HJ_UNBOUND_DISTANCE_FACTOR * dmin_bound)
+                //     {
+                //         Pmin = Pperi;
+                //         imin = i;
+                //         jmin = j;
+                //     }
+                // }
                 if (P < Pmin){
                     Pmin = P;
                     imin = i;
