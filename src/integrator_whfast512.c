@@ -573,5 +573,13 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
     }
 }
 
+#else // defined(__i386__) || defined(__x86_64__)
+void reb_integrator_whfast512_step(struct reb_simulation* r, void* state){
+    (void)state;
+    reb_simulation_error(r, "AVX512 is not supported on your platform");
+}
+void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state){
+    (void)state;
+    reb_simulation_error(r, "AVX512 is not supported on your platform");
+}
 #endif // defined(__i386__) || defined(__x86_64__)
-       // TODO: Implement fallback for non_AVX512 systems

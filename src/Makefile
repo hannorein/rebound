@@ -16,10 +16,10 @@ integrator_whfast512.asm_o: integrator_whfast512.s
 	@echo "Assembling source file integrator_asm512.s ..."
 	as -g -o $@ $<
 
-$(LIBREBOUND): $(OBJECTS) integrator_whfast512.asm_o
+$(LIBREBOUND): $(OBJECTS) $(OBJECTS_ASM)
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) integrator_whfast512.asm_o $(LIB) -o $@ 
+	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) $(OBJECTS_ASM) $(LIB) -o $@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."

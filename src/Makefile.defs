@@ -10,6 +10,11 @@ ifneq ($(OS), Windows_NT)
 	LINKORCOPYLIBREBOUND=ln -s -f ../../src/$(LIBREBOUND) .
 	LINKORCOPYLIBREBOUNDMAIN=ln -s -f src/$(LIBREBOUND) .
 	CCPROBLEM=$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) $< -L. -lrebound $(LIB) -o $(EXEREBOUND)
+	UNAME_M := $(shell uname -m)
+	# Only include AVX-512 assembly if on x86_64
+	ifeq ($(UNAME_M),x86_64)
+		OBJECTS_ASM=integrator_whfast512.asm_o
+	endif
 else
 ifeq ($(OPENGL), 1)
 $(warning OpenGL not supported on Windows. Setting OPENGL=0)
@@ -20,9 +25,6 @@ $(error MPI currently not supported on Windows. Please set MPI=0)
 endif
 ifeq ($(OPENMP), 1)
 $(error OPENMP currently not supported on Windows. Please set OPENMP=0)
-endif
-ifeq ($(AVX512), 1)
-$(error AVX512 currently not supported on Windows. Please set AVX512=0)
 endif
 	OPT+= /D_GNU_SOURCE /Ox /fp:precise 
 	OBJFILEEXT=obj

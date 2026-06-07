@@ -10,6 +10,8 @@
 .globl reb_whfast512_interaction_step_gr
 .globl reb_whfast512_interaction_step_nogr
 
+.arch .skylake-avx512
+
 #P512 Structure offsets
 .set P512_M, 0
 .set P512_DT, 64
