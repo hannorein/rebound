@@ -25,7 +25,18 @@
 #include <stddef.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#if defined(__i386__) || defined(__x86_64__)
 #include <immintrin.h>
+#pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
+#else
+typedef struct {
+        double lanes[8];
+} __attribute__((aligned(64))) __m512d;
+typedef struct {
+        uint64_t lanes[8];
+} __attribute__((aligned(64))) __m512i;
+typedef char  __attribute__((aligned(64))) __mmask8; 
+#endif
 #include "rebound.h"
 #include "particle.h"
 #include "tools.h"
@@ -34,8 +45,8 @@
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 
-#pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
 
+//#define DEBUG_AVX512 1
 
 void reb_integrator_whfast512_free(void* state);		
 void* reb_integrator_whfast512_create();		
@@ -68,16 +79,10 @@ struct simd_data{
     // Mask for cases with less than 8 planets
     __mmask8 mask __attribute__ ((aligned (64)));
     double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
+#ifdef DEBUG_AVX512
     __m512i counter __attribute__ ((aligned (64)));
+#endif // DEBUG_AVX512
 };
-
-uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
-    struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
-    struct simd_data* data = whfast512->data;
-    uint64_t i[8];
-    _mm512_store_epi64(&i[0], data->counter);
-    return i[test_p];
-}
 
 const struct reb_integrator reb_integrator_whfast512 = {
     .step = reb_integrator_whfast512_step,
@@ -112,6 +117,16 @@ void reb_integrator_whfast512_free(void* state){
 }
 
 
+#if defined(__i386__) || defined(__x86_64__)
+#ifdef DEBUG_AVX512
+uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
+    struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
+    struct simd_data* data = whfast512->data;
+    uint64_t i[8];
+    _mm512_store_epi64(&i[0], data->counter);
+    return i[test_p];
+}
+
 // Debug function to print vectors
 static inline void printavx512(__m512d a) {
     double _nax[8];
@@ -137,6 +152,7 @@ static inline void printmat8(double* a) {
         printf("\n");
     }
 }
+#endif // DEBUG_AVX512
 
 // 8x8 matrix multiplication using avx512
 static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
@@ -557,3 +573,5 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
     }
 }
 
+#endif // defined(__i386__) || defined(__x86_64__)
+       // TODO: Implement fallback for non_AVX512 systems
