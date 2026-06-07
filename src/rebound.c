@@ -197,6 +197,17 @@ void reb_sigint_handler(int signum) {
     }
 }
 
+// Returns 1 if this CPU can run the AVX512 asm512 integrator
+int reb_avx512_available(void){
+#if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
+    __builtin_cpu_init();
+    return __builtin_cpu_supports("avx512f") && __builtin_cpu_supports("avx512dq");
+#else
+    return 0;
+#endif
+}
+
+
 // Checks if floating point contractions are on. 
 // If so, this will prevent unit tests from passing and bit-wise reproducibility will fail.
 int reb_check_fp_contract(){

@@ -97,6 +97,8 @@ enum REB_MESSAGE_TYPE {
 void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg);
 // Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
 REB_API int reb_check_fp_contract(); 
+// Return s1 if the CPU supports the AVX512.
+REB_API int reb_avx512_available();
 // Wrapper method to set number of OpenMP threads from python.
 REB_API void reb_omp_set_num_threads(int num_threads);
 // Helper function for comparing strings

@@ -38,6 +38,7 @@ typedef struct {
 typedef char  __attribute__((aligned(64))) __mmask8; 
 #endif
 #include "rebound.h"
+#include "rebound_internal.h"
 #include "particle.h"
 #include "tools.h"
 #include "gravity.h"
@@ -437,52 +438,46 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
     // So it is possible for the user to screw things up.
 //    if (r->dt<0.0){
 //        reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
-//        r->status = REB_STATUS_GENERIC_ERROR;
 //        return 1;
 //    }
+    if (!reb_avx512_available()){
+        reb_simulation_error(r, "AVX512 is not supported by your CPU.");
+        return 1;
+    }
     if (r->N_var!=0){
         reb_simulation_error(r, "WHFast512 does not support variational particles.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->exact_finish_time!=0){
         reb_simulation_error(r, "WHFast512 requires exact_finish_time=0.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->N>9 && whfast512->N_systems == 1) {
         reb_simulation_error(r, "WHFast512 supports a maximum of 9 particles when N_systems is set to 1.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->N>10 && whfast512->N_systems == 2) {
         reb_simulation_error(r, "WHFast512 supports a maximum of 10 particles when N_systems is set to 2.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->N>12 && whfast512->N_systems == 4) {
         reb_simulation_error(r, "WHFast512 supports a maximum of 12 particles when N_systems is set to 4.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (whfast512->N_systems != 1 && whfast512->N_systems !=2 && whfast512->N_systems != 4){
         reb_simulation_error(r, "WHFast512 supports 1, 2, or 4 systems only.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->N % whfast512->N_systems != 0){
         reb_simulation_error(r, "Number of particles must be a multiple of whfast512.N_systems.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->G!=1.0){
         reb_simulation_error(r, "WHFast512 requires units in which G=1. Please rescale your system.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->N_active!=SIZE_MAX && r->N_active!=r->N){
         reb_simulation_error(r, "WHFast512 does not support test particles.");
-        r->status = REB_STATUS_GENERIC_ERROR;
         return 1;
     }
     if (r->exit_min_distance || r->exit_max_distance){
@@ -515,6 +510,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
     const unsigned int N_steps = whfast512->concatenate_steps;
 
     if (reb_integrator_whfast512_verify_setup(r)){
+        r->status = REB_STATUS_GENERIC_ERROR;
         return; // Error occured
     }
 
@@ -557,6 +553,10 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
 // Synchronization routine. Called every time an output is needed.
 __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* state){
+    if (!reb_avx512_available()){
+        reb_simulation_error(r, "AVX512 is not supported by your CPU.");
+        return;
+    }
     struct reb_integrator_whfast512_state* const whfast512 = state;
     if (!r->is_synchronized){
         struct simd_data * data = whfast512->data;

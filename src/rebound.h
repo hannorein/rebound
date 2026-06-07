@@ -442,8 +442,6 @@ REB_API void reb_simulation_stop_server(struct reb_simulation* r);
 
 // This function sets the integrator of the simulation to the one with the matching name. 
 REB_API void* reb_simulation_set_integrator(struct reb_simulation* r, const char* name);
-// Return 1 if the CPU supports the AVX512.
-REB_API int reb_simulation_avx512_available(void);
 // This function registers a user provided integrator with a unique name. A user provided integrator must be called before the integrator is set.
 REB_API void reb_integrator_register(const struct reb_integrator integrator, const char* name);
 
