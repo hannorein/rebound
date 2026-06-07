@@ -42,8 +42,8 @@ if os.environ.get("FFP_CONTRACT_OFF"):
 class build_ext_avx512(build_ext):
     def build_extensions(self):
         os.makedirs(self.build_temp, exist_ok=True)
-        asm = os.path.join(self.build_temp, "integrator_asm512.o")
-        self.compiler.spawn(["as", "-g", "-o", asm, "src/integrator_asm512.s"])
+        asm = os.path.join(self.build_temp, "integrator_whfast512.asm_o")
+        self.compiler.spawn(["as", "-g", "-o", asm, "src/integrator_whfast512.s"])
         for ext in self.extensions:
             ext.extra_objects = (ext.extra_objects or []) + [asm]
         super().build_extensions()

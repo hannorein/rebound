@@ -1,14 +1,14 @@
-# file: integrator_asm512.s
+# file: integrator_whfast512.s
 .section .text
-.globl reb_asm512_full_steps_jacobi_gr
-.globl reb_asm512_full_steps_jacobi_nogr
-.globl reb_asm512_full_steps_democraticheliocentric_gr
-.globl reb_asm512_full_steps_democraticheliocentric_nogr
-.globl reb_asm512_kepler_step
-.globl reb_asm512_corrector_step_gr
-.globl reb_asm512_corrector_step_nogr
-.globl reb_asm512_interaction_step_gr
-.globl reb_asm512_interaction_step_nogr
+.globl reb_whfast512_full_steps_jacobi_gr
+.globl reb_whfast512_full_steps_jacobi_nogr
+.globl reb_whfast512_full_steps_democraticheliocentric_gr
+.globl reb_whfast512_full_steps_democraticheliocentric_nogr
+.globl reb_whfast512_kepler_step
+.globl reb_whfast512_corrector_step_gr
+.globl reb_whfast512_corrector_step_nogr
+.globl reb_whfast512_interaction_step_gr
+.globl reb_whfast512_interaction_step_nogr
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -107,7 +107,7 @@
 #####################################
 # Register initialization 
 #####################################
-.macro reb_asm512_init_registers
+.macro reb_whfast512_init_registers
     # Ignore exceptions
     subq $8, %rsp
     stmxcsr (%rsp)
@@ -137,7 +137,7 @@
     vmovapd     P512_VZ(%rdi), VZ
 .endm  
 
-.macro reb_asm512_store_results
+.macro reb_whfast512_store_results
     vmovapd    VX, P512_VX(%rdi)
     vmovapd    VY, P512_VY(%rdi)
     vmovapd    VZ, P512_VZ(%rdi)
@@ -674,7 +674,7 @@
 ###############################################################################
 
 .macro corrector_step grflag
-    reb_asm512_init_registers                   # does not overwrite xmm0
+    reb_whfast512_init_registers                   # does not overwrite xmm0
     alloc_stack64   256                         # space for matricies (192) and direction (8), rounded up to nearest 64bytes
     movsd           %xmm0, 192(%rsp)            # store direction (1 or -1)
     leaq            .CORRECTOR17_AB(%rip), %r8
@@ -709,32 +709,32 @@
     jne             .L_CorrectorLoopI\@
 
     free_stack64
-    reb_asm512_store_results
+    reb_whfast512_store_results
     ret
 .endm
 
-reb_asm512_corrector_step_gr: corrector_step 1
-reb_asm512_corrector_step_nogr: corrector_step 0
+reb_whfast512_corrector_step_gr: corrector_step 1
+reb_whfast512_corrector_step_nogr: corrector_step 0
 
-reb_asm512_kepler_step:
-    reb_asm512_init_registers
+reb_whfast512_kepler_step:
+    reb_whfast512_init_registers
     kepler_step
-    reb_asm512_store_results
+    reb_whfast512_store_results
     ret
 
-reb_asm512_interaction_step_gr:
-    reb_asm512_init_registers
+reb_whfast512_interaction_step_gr:
+    reb_whfast512_init_registers
     alloc_stack64 192
     interaction_step 1
-    reb_asm512_store_results
+    reb_whfast512_store_results
     free_stack64
     ret
 
-reb_asm512_interaction_step_nogr:
-    reb_asm512_init_registers
+reb_whfast512_interaction_step_nogr:
+    reb_whfast512_init_registers
     alloc_stack64 192
     interaction_step 0
-    reb_asm512_store_results
+    reb_whfast512_store_results
     free_stack64
     ret
  
@@ -749,7 +749,7 @@ reb_asm512_interaction_step_nogr:
     #           coordinates = 0 (jacobi) / 1 (democratic heliocentric)
 
     # Load constants
-    reb_asm512_init_registers
+    reb_whfast512_init_registers
     # Allocate space on stack for matrix multiplications
     alloc_stack64 192
     # Ignore first Kepler step (if half timestep done manually)
@@ -765,17 +765,17 @@ reb_asm512_interaction_step_nogr:
     jnz     .LMainLoop\@
 
     # Store final data in P512 structure
-    reb_asm512_store_results
+    reb_whfast512_store_results
 
     free_stack64
     ret
 .endm
 
-reb_asm512_full_steps_democraticheliocentric_gr: full_steps 1 1
-reb_asm512_full_steps_democraticheliocentric_nogr: full_steps 0 1
+reb_whfast512_full_steps_democraticheliocentric_gr: full_steps 1 1
+reb_whfast512_full_steps_democraticheliocentric_nogr: full_steps 0 1
 
-reb_asm512_full_steps_jacobi_gr: full_steps 1 0
-reb_asm512_full_steps_jacobi_nogr: full_steps 0 0
+reb_whfast512_full_steps_jacobi_gr: full_steps 1 0
+reb_whfast512_full_steps_jacobi_nogr: full_steps 0 0
 
 
 .section    .rodata
