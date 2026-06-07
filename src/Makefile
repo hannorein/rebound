@@ -6,7 +6,7 @@ HEADERS=$(SOURCES:.c=.h) rebound_internal.h
 
 all: $(SOURCES) $(LIBREBOUND)
 
-ifneq ($(OS),Windows_NT) 
+ifneq ($(OS),Windows_NT)
 # Linux, MacOS
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."

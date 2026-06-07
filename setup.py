@@ -2,6 +2,7 @@
 # All project metadata lives in pyproject.toml.
 
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 from glob import glob
 import os
 import sys
@@ -38,8 +39,14 @@ else:
 if os.environ.get("FFP_CONTRACT_OFF"):
     extra_compile_args.append("-ffp-contract=off")
 
-if os.environ.get("AVX512"):
-    extra_compile_args += ["-march=native", "-DAVX512"]
+class build_ext_avx512(build_ext):
+    def build_extensions(self):
+        os.makedirs(self.build_temp, exist_ok=True)
+        asm = os.path.join(self.build_temp, "integrator_asm512.o")
+        self.compiler.spawn(["as", "-g", "-o", asm, "src/integrator_asm512.s"])
+        for ext in self.extensions:
+            ext.extra_objects = (ext.extra_objects or []) + [asm]
+        super().build_extensions()
 
 ##### C Extension
 libreboundmodule = Extension(
@@ -50,4 +57,4 @@ libreboundmodule = Extension(
     extra_compile_args=extra_compile_args,
 )
 
-setup(ext_modules=[libreboundmodule])
+setup(ext_modules=[libreboundmodule], cmdclass={"build_ext": build_ext_avx512})

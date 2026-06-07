@@ -26,6 +26,10 @@
  *
  */
 
+#ifndef AVX512
+#define AVX512
+#endif
+
 #include <string.h>
 #include "rebound.h"
 #include <math.h>
@@ -37,6 +41,8 @@
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 #include "binarydata.h"
+
+#pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
 
 void reb_integrator_whfast512_free(void* state);		
 void* reb_integrator_whfast512_create();		

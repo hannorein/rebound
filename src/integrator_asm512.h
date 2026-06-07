@@ -24,19 +24,6 @@
 
 #include "rebound.h"
 
-#ifdef AVX512
-#include <immintrin.h>
-
-#if defined(__GNUC__) || defined(__clang__)
-#define REB_ALIGNED_64 __attribute__((aligned(64)))
-#elif defined(_MSC_VER)
-#define REB_ALIGNED_64 __declspec(align(64))
-#else
-#define REB_ALIGNED_64
-#warning "Alignment not supported on this compiler"
-#endif
-#endif // AVX512
-
 extern const struct reb_integrator reb_integrator_asm512;
 
 struct reb_integrator_asm512_state {
