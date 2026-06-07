@@ -2,14 +2,21 @@
 .section .text
 .globl reb_whfast512_full_steps_jacobi_gr
 .globl reb_whfast512_full_steps_jacobi_nogr
+.globl reb_whfast512_full_steps_jacobi_gr_n2
+.globl reb_whfast512_full_steps_jacobi_nogr_n2
+.globl reb_whfast512_full_steps_jacobi_gr_n4
+.globl reb_whfast512_full_steps_jacobi_nogr_n4
 .globl reb_whfast512_full_steps_democraticheliocentric_gr
 .globl reb_whfast512_full_steps_democraticheliocentric_nogr
 .globl reb_whfast512_kepler_step
 .globl reb_whfast512_corrector_step_gr
 .globl reb_whfast512_corrector_step_nogr
+.globl reb_whfast512_corrector_step_gr_n2
+.globl reb_whfast512_corrector_step_nogr_n2
+.globl reb_whfast512_corrector_step_gr_n4
+.globl reb_whfast512_corrector_step_nogr_n4
 .globl reb_whfast512_interaction_step_gr
 .globl reb_whfast512_interaction_step_nogr
-
 
 #P512 Structure offsets
 .set P512_M, 0
@@ -480,7 +487,7 @@
 ###############################################################################
 # Interaction Step
 ###############################################################################
-.macro interaction_step grflag coordinates=0
+.macro interaction_step grflag nsys=1
     # TODO: Floating point error accumulation might be less if Jacobi and GR are added after P-P perturbations
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
@@ -530,6 +537,7 @@
 
     vmulpd  P512_m(%rdi), DT, %zmm3         # dt*m
 
+  .if \nsys < 4                             # skip for 2-planet systems
     vpermpd $0x4B, HX, %zmm0                # 01234567 -> 32017645
     vpermpd $0x4B, HY, %zmm1
     vpermpd $0x4B, HZ, %zmm2
@@ -538,10 +546,10 @@
     vsubpd  %zmm0, HX, %zmm0                # d_x
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
-    
+
     gravity_prefactor                       # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
-    
+
     vfnmadd231pd %zmm5, %zmm0,  HVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
@@ -554,10 +562,11 @@
 
     #// 0123 4567
     #// 2310 6754
-    
+
     vfmadd231pd %zmm5, %zmm0,  HVX
     vfmadd231pd %zmm5, %zmm1,  HVY
     vfmadd231pd %zmm5, %zmm2,  HVZ
+  .endif
 
     #################################################################
     #// 0123 4567
@@ -578,10 +587,11 @@
     vfnmadd231pd %zmm6, %zmm1,  HVY
     vfnmadd231pd %zmm6, %zmm2,  HVZ
 
+  .if \nsys == 1                                # only for a single 8-planet system
     #################################################################
     #// 0123 4567
     #// 4567 1230
-    
+
     vmovdqa64 b3idx(%rip), %zmm7
 
     vpermpd HX, %zmm7, %zmm0                    # 01234567 -> 45671230 
@@ -654,6 +664,11 @@
     vaddpd %zmm0, HVX, %zmm0{%k1}{z}
     vaddpd %zmm1, HVY, %zmm1{%k1}{z}
     vaddpd %zmm2, HVZ, %zmm2{%k1}{z}
+  .else                                        # for nsys 2 or 4
+    vmovapd HVX, %zmm0{%k1}{z}
+    vmovapd HVY, %zmm1{%k1}{z}
+    vmovapd HVZ, %zmm2{%k1}{z}
+  .endif
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
     leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
@@ -674,7 +689,7 @@
 # Global functions
 ###############################################################################
 
-.macro corrector_step grflag
+.macro corrector_step grflag nsys=1
     reb_whfast512_init_registers                   # does not overwrite xmm0
     alloc_stack64   256                         # space for matricies (192) and direction (8), rounded up to nearest 64bytes
     movsd           %xmm0, 192(%rsp)            # store direction (1 or -1)
@@ -691,7 +706,7 @@
     vmovapd         P512_M0(%rdi), MM0_DT
     vmulpd          DT, MM0_DT, MM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
-    interaction_step \grflag
+    interaction_step \grflag \nsys
     addq            $8, %r8
 
 .L_CorrectorLoopK\@:
@@ -716,6 +731,10 @@
 
 reb_whfast512_corrector_step_gr: corrector_step 1
 reb_whfast512_corrector_step_nogr: corrector_step 0
+reb_whfast512_corrector_step_gr_n2: corrector_step 1 2
+reb_whfast512_corrector_step_nogr_n2: corrector_step 0 2
+reb_whfast512_corrector_step_gr_n4: corrector_step 1 4
+reb_whfast512_corrector_step_nogr_n4: corrector_step 0 4
 
 reb_whfast512_kepler_step:
     reb_whfast512_init_registers
@@ -742,8 +761,8 @@ reb_whfast512_interaction_step_nogr:
  
 
 # Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag coordinates
-    # Input:   
+.macro full_steps grflag coordinates nsys=1
+    # Input:
     #           rdi = p512
     #           rsi = Number of steps (counting down)
     #           rdx = skip_first_kepler_step
@@ -761,7 +780,7 @@ reb_whfast512_interaction_step_nogr:
 .LMainLoop\@:    
     kepler_step
 .LSkipFirstKeplerStep\@:
-    interaction_step \grflag
+    interaction_step \grflag \nsys
     subq    $1, %rsi
     jnz     .LMainLoop\@
 
@@ -777,6 +796,10 @@ reb_whfast512_full_steps_democraticheliocentric_nogr: full_steps 0 1
 
 reb_whfast512_full_steps_jacobi_gr: full_steps 1 0
 reb_whfast512_full_steps_jacobi_nogr: full_steps 0 0
+reb_whfast512_full_steps_jacobi_gr_n2: full_steps 1 0 2
+reb_whfast512_full_steps_jacobi_nogr_n2: full_steps 0 0 2
+reb_whfast512_full_steps_jacobi_gr_n4: full_steps 1 0 4
+reb_whfast512_full_steps_jacobi_nogr_n4: full_steps 0 0 4
 
 
 .section    .rodata

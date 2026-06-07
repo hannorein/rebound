@@ -284,6 +284,50 @@ extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_whfast512_kepler_step(struct simd_data* data);
 
+// _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
+extern void reb_whfast512_full_steps_jacobi_gr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_whfast512_full_steps_jacobi_nogr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_whfast512_full_steps_jacobi_gr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_whfast512_full_steps_jacobi_nogr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
+extern void reb_whfast512_corrector_step_nogr_n2(struct simd_data* data, double inv);
+extern void reb_whfast512_corrector_step_gr_n4(struct simd_data* data, double inv);
+extern void reb_whfast512_corrector_step_nogr_n4(struct simd_data* data, double inv);
+
+static void whfast512_full_steps(struct reb_integrator_whfast512_state* whfast512, long N_steps, int skip){
+    struct simd_data* data = whfast512->data;
+    if (whfast512->gr_potential){
+        switch (whfast512->N_systems){
+            case 2: reb_whfast512_full_steps_jacobi_gr_n2(data, N_steps, skip); break;
+            case 4: reb_whfast512_full_steps_jacobi_gr_n4(data, N_steps, skip); break;
+            default: reb_whfast512_full_steps_jacobi_gr(data, N_steps, skip); break;
+        }
+    }else{
+        switch (whfast512->N_systems){
+            case 2: reb_whfast512_full_steps_jacobi_nogr_n2(data, N_steps, skip); break;
+            case 4: reb_whfast512_full_steps_jacobi_nogr_n4(data, N_steps, skip); break;
+            default: reb_whfast512_full_steps_jacobi_nogr(data, N_steps, skip); break;
+        }
+    }
+}
+
+static void whfast512_corrector_step(struct reb_integrator_whfast512_state* whfast512, double inv){
+    struct simd_data* data = whfast512->data;
+    if (whfast512->gr_potential){
+        switch (whfast512->N_systems){
+            case 2: reb_whfast512_corrector_step_gr_n2(data, inv); break;
+            case 4: reb_whfast512_corrector_step_gr_n4(data, inv); break;
+            default: reb_whfast512_corrector_step_gr(data, inv); break;
+        }
+    }else{
+        switch (whfast512->N_systems){
+            case 2: reb_whfast512_corrector_step_nogr_n2(data, inv); break;
+            case 4: reb_whfast512_corrector_step_nogr_n4(data, inv); break;
+            default: reb_whfast512_corrector_step_nogr(data, inv); break;
+        }
+    }
+}
+
 __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
@@ -522,11 +566,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         inertial_to_jacobi_posvel(r, data, whfast512->N_systems);
         whfast512->last_synchronization = r->t;
         if (whfast512->corrector){
-            if (whfast512->gr_potential){
-                reb_whfast512_corrector_step_gr(data, 1.0);
-            }else{
-                reb_whfast512_corrector_step_nogr(data, 1.0);
-            }
+            whfast512_corrector_step(whfast512, 1.0);
         }
         // First half DRIFT step.
         skip_first_kepler_step = 1;
@@ -535,15 +575,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         data->dt = _mm512_set1_pd(dt); // Reset
     }
 
-    if (whfast512->N_systems==1){
-        if (whfast512->gr_potential){
-            reb_whfast512_full_steps_jacobi_gr(whfast512->data, N_steps, skip_first_kepler_step);
-        }else{
-            reb_whfast512_full_steps_jacobi_nogr(whfast512->data, N_steps, skip_first_kepler_step);
-        }
-    }else if (whfast512->N_systems==2){
-    }else if (whfast512->N_systems==4){
-    }
+    whfast512_full_steps(whfast512, N_steps, skip_first_kepler_step);
 
     r->is_synchronized = 0;
     r->t += dt*N_steps;
@@ -569,11 +601,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
         data->dt = _mm512_set1_pd(r->dt); // Reset
                                          // TODO Add COM step
         if (whfast512->corrector){
-            if (whfast512->gr_potential){
-                reb_whfast512_corrector_step_gr(data, -1.0);
-            }else{
-                reb_whfast512_corrector_step_nogr(data, -1.0);
-            }
+            whfast512_corrector_step(whfast512, -1.0);
         }
         double dt_com = r->t - whfast512->last_synchronization;
         jacobi_to_inertial_posvel_and_com(r, data, dt_com, whfast512->N_systems);
