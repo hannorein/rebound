@@ -28,6 +28,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         sim.exact_finish_time = 0
         e0 = sim.energy()
         sim.steps(1)
+        self.assertTrue(sim.is_synchronized)
         e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e0),5e-11)
         sim.integrator.concatenate_steps = 100000
@@ -89,6 +90,31 @@ class TestIntegratorWHFast512(unittest.TestCase):
         sim.steps(1)
         e1 = sim.energy() + gr_potential(sim)
         self.assertLess(math.fabs((e0-e1)/e0),1e-11)
+
+    def test_whfast512_independent_kepler_solvers(self):
+        if not rebound.avx512_available: return
+        def getSim(innera):
+            sim = rebound.Simulation()
+            sim.add(m=1)
+            sim.add(a=innera, e=0.8)
+            sim.add(a=1.2, e=0.01)
+            sim.integrator = "whfast512"
+            sim.dt = 6.0/365.25*2*math.pi
+            sim.exact_finish_time = 0
+            sim.steps(1)
+            return sim
+        sim1 = getSim(0.01)
+        sim2 = getSim(0.1)
+        sim3 = getSim(1.0)
+        self.assertEqual(sim1.particles[2].x, sim2.particles[2].x)
+        self.assertEqual(sim1.particles[2].x, sim3.particles[2].x)
+        self.assertEqual(sim1.particles[2].vx, sim2.particles[2].vx)
+        self.assertEqual(sim1.particles[2].vx, sim3.particles[2].vx)
+        self.assertNotEqual(sim1.particles[1].x, sim2.particles[1].x)
+        self.assertNotEqual(sim1.particles[1].x, sim3.particles[1].x)
+        self.assertNotEqual(sim1.particles[1].vx, sim2.particles[1].vx)
+        self.assertNotEqual(sim1.particles[1].vx, sim3.particles[1].vx)
+
 
 
 if __name__ == "__main__":
