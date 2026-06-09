@@ -453,6 +453,9 @@ struct reb_particle reb_simulation_com(struct reb_simulation* r){
 
 struct reb_particle reb_simulation_jacobi_com(struct reb_particle* p){
     size_t p_index = reb_simulation_particle_index(p);
+    if (p_index == SIZE_MAX){
+        return reb_particle_nan();
+    }
     struct reb_simulation* r = p->sim;
     return reb_simulation_com_range(r, 0, p_index);
 }
