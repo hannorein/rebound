@@ -116,6 +116,24 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertNotEqual(sim1.particles[1].vx, sim3.particles[1].vx)
 
 
+    def test_whfast512_high_e_kepler_solver(self):
+        if not rebound.avx512_available: return
+        def getSim(e, integrator, f):
+            sim = rebound.Simulation()
+            sim.add(m=1)
+            sim.add(a=1, e=e, f=f, omega=0.53, inc=0.3)
+            sim.integrator = integrator
+            sim.dt = 6/365.25*2*math.pi
+            sim.exact_finish_time = 0
+            sim.steps(1)
+            return sim
+        for f in [0,math.pi,0.1234,0.2355]:
+            for i in range(100):
+                e = i/100
+                sim = getSim(e, "whfast", f)
+                sim512 = getSim(e, "whfast512", f)
+                self.assertAlmostEqual(sim.particles[1].x, sim512.particles[1].x, 15)
+
 
 if __name__ == "__main__":
     unittest.main()
