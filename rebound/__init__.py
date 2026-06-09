@@ -54,7 +54,7 @@ if moduleversion != libreboundversion:
         
 # Max string size for error messages, field descriptors, etc.
 string_size_max = c_uint32.in_dll(clibrebound, "reb_string_size_max").value
-        
+
 # Exceptions
 class GenericError(Exception):
     """The simulation exited with a generic error."""
@@ -88,6 +88,10 @@ class ParticleNotFound(Exception):
 def omp_set_num_threads(num_threads):
     clibrebound.reb_omp_set_num_threads(c_int(num_threads))
 
+# Is AVX512 available?
+avx512_available = (clibrebound.reb_avx512_available() == 1)
+        
+# Imports from other files
 from .tools import mod2pi, M_to_f, E_to_f, M_to_E, spherical_to_xyz, xyz_to_spherical
 from .simulation import Simulation, Variation, ODE, Vec3d, Vec3dBasic, CollisionS # CollisionS is the collision struct, not the exception
 from .rotation import Rotation
