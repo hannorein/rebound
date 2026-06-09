@@ -185,8 +185,8 @@ class TestIntegratorWHFast512(unittest.TestCase):
             
             sim = getSim(Nplanets)
             sim.integrator = "whfast512"
-            #sim.integrator.corrector = 1
-            #sim.integrator.gr_potential = 1
+            sim.integrator.corrector = 1
+            sim.integrator.gr_potential = 1
             sim.dt = 6/365.25*2*math.pi
             sim.exact_finish_time = 0
 
@@ -212,6 +212,27 @@ class TestIntegratorWHFast512(unittest.TestCase):
                 self.assertEqual(sim.particles[1+i].vx, sim2.particles[2+Nplanets+i].vx)
                 self.assertEqual(sim.particles[1+i].vx, sim2.particles[3+2*Nplanets+i].vx)
                 self.assertEqual(sim.particles[1+i].vx, sim2.particles[4+3*Nplanets+i].vx)
+
+    def test_whfast512_com(self):
+        if not rebound.avx512_available: return
+        sim = rebound.Simulation()
+        sim.add("solar system")
+        for p in sim.particles:
+            p.vx += 0.1
+        sim.integrator = "whfast512"
+        sim.integrator.corrector = 17
+        sim.integrator.gr_potential = 1
+        sim.dt = 6/365.25*2*math.pi
+        sim.exact_finish_time = 0
+        e0 = sim.energy() + gr_potential(sim)
+        sim.integrator.concatenate_steps = 100000
+        sim.steps(1)
+        e1 = sim.energy() + gr_potential(sim)
+        self.assertLess(math.fabs((e0-e1)/e0),4e-14)
+        com = sim.com()
+        self.assertAlmostEqual(com.vx, 0.1, 16)
+        self.assertAlmostEqual(com.x, com.vx*sim.t, 12)
+
 
        
 
