@@ -134,6 +134,86 @@ class TestIntegratorWHFast512(unittest.TestCase):
                 sim512 = getSim(e, "whfast512", f)
                 self.assertAlmostEqual(sim.particles[1].x, sim512.particles[1].x, 15)
 
+    def test_whfast512_Nsystems_2(self):
+        if not rebound.avx512_available: return
+        for Nplanets in [1,2,3,4]:
+            def getSim(Nplanets):
+                sim = rebound.Simulation()
+                sim.add(m=1)
+                sim.add(m=1e-3, a=1, e=0.1, f=0.5, omega=0.53, inc=0.3)
+                if Nplanets>1:
+                    sim.add(m=1e-3, a=2.3, e=0.1, f=0.15, omega=1.53, inc=0.12)
+                if Nplanets>2:
+                    sim.add(m=1e-3, a=3.4, e=0.051, f=0.15, omega=2.53, inc=0.2)
+                if Nplanets>3:
+                    sim.add(m=1e-3, a=5.4, e=0.01, f=0.35, omega=3.53, inc=0.0)
+                return sim
+            
+            sim = getSim(Nplanets)
+            sim.integrator = "whfast512"
+            sim.integrator.corrector = 1
+            sim.integrator.gr_potential = 1
+            sim.dt = 6/365.25*2*math.pi
+            sim.exact_finish_time = 0
+
+            sim2 = sim.copy()
+            sim2.integrator.N_systems = 2
+            for p in sim.particles:
+                sim2.add(p)
+
+            sim.steps(1)
+            sim2.steps(1)
+
+            self.assertEqual(sim.particles[0].x, sim2.particles[0].x)
+            self.assertEqual(sim.particles[0].x, sim2.particles[1+Nplanets].x)
+            for i in range(Nplanets):
+                self.assertEqual(sim.particles[1+i].x, sim2.particles[1+i].x)
+                self.assertEqual(sim.particles[1+i].x, sim2.particles[2+Nplanets+i].x)
+                self.assertEqual(sim.particles[1+i].vx, sim2.particles[1+i].vx)
+                self.assertEqual(sim.particles[1+i].vx, sim2.particles[2+Nplanets+i].vx)
+
+    def test_whfast512_Nsystems_4(self):
+        if not rebound.avx512_available: return
+        for Nplanets in [1,2]:
+            def getSim(Nplanets):
+                sim = rebound.Simulation()
+                sim.add(m=1)
+                sim.add(m=1e-3, a=1, e=0.1, f=0.5, omega=0.53, inc=0.3)
+                if Nplanets>1:
+                    sim.add(m=1e-3, a=2.3, e=0.1, f=0.15, omega=1.53, inc=0.12)
+                return sim
+            
+            sim = getSim(Nplanets)
+            sim.integrator = "whfast512"
+            #sim.integrator.corrector = 1
+            #sim.integrator.gr_potential = 1
+            sim.dt = 6/365.25*2*math.pi
+            sim.exact_finish_time = 0
+
+            sim2 = sim.copy()
+            sim2.integrator.N_systems = 4
+            for i in range(3):
+                for p in sim.particles:
+                    sim2.add(p)
+
+            sim.steps(1)
+            sim2.steps(1)
+
+            self.assertEqual(sim.particles[0].x, sim2.particles[0].x)
+            self.assertEqual(sim.particles[0].x, sim2.particles[1+Nplanets].x)
+            self.assertEqual(sim.particles[0].x, sim2.particles[2+2*Nplanets].x)
+            self.assertEqual(sim.particles[0].x, sim2.particles[3+3*Nplanets].x)
+            for i in range(Nplanets):
+                self.assertEqual(sim.particles[1+i].x, sim2.particles[1+i].x)
+                self.assertEqual(sim.particles[1+i].x, sim2.particles[2+Nplanets+i].x)
+                self.assertEqual(sim.particles[1+i].x, sim2.particles[3+2*Nplanets+i].x)
+                self.assertEqual(sim.particles[1+i].x, sim2.particles[4+3*Nplanets+i].x)
+                self.assertEqual(sim.particles[1+i].vx, sim2.particles[1+i].vx)
+                self.assertEqual(sim.particles[1+i].vx, sim2.particles[2+Nplanets+i].vx)
+                self.assertEqual(sim.particles[1+i].vx, sim2.particles[3+2*Nplanets+i].vx)
+                self.assertEqual(sim.particles[1+i].vx, sim2.particles[4+3*Nplanets+i].vx)
+
+       
 
 if __name__ == "__main__":
     unittest.main()
