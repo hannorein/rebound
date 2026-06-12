@@ -44,7 +44,7 @@
 # 64    32    16   8      
 # rax   eax   ax   ah,al    Newton   matmul
 # rbx   ebx   bx   bh,bl  
-# rcx   ecx   cx   ch,cl    Newton 
+# rcx   ecx   cx   ch,cl                           Interrupt pointer
 # rdx   edx   dx   dh,dl                           skip_first_kepler, corrector
 # rsi   esi   si   sil                             number_of_steps 
 # rdi   edi   di   dil      ------------pointer to simd_data--------- 
@@ -52,6 +52,7 @@
 # rsp   esp   sp   spl      ------------stack pointer----------------
 # r8    r8d   r8w  r8b                             corrector 
 # r9    r9d   r9w  r9b                             corrector
+# r10   r10d  r10w r10b     Newton
 
 
 #####################################
@@ -286,7 +287,7 @@
     mm_stiefel_Gs03_avx512 11
     halley
   
-    movq            $0, %rcx                    # Newton loop counter
+    movq            $0, %r10                    # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
     vmovapd         XX,     %zmm7               # Store old XX
@@ -309,12 +310,12 @@
     jz              .NewtonLoopDone\@
 
     # Maximum iterations reached?
-    incq            %rcx
-    cmpq            $5, %rcx                    # max Newton iterations
+    incq            %r10
+    cmpq            $5, %r10                    # max Newton iterations
     jne             .NewtonLoop\@
 
     # If not converged yet, fall back to bisection
-    movq            $0, %rcx
+    movq            $0, %r10
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     
     vsqrtpd         BETA, %zmm1
@@ -349,8 +350,8 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X
     
-    incq %rcx
-    cmpq $52, %rcx                              # max Bisection iterations (=number of significant bits)
+    incq %r10
+    cmpq $52, %r10                              # max Bisection iterations (=number of significant bits)
     jl .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
