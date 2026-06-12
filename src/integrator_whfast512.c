@@ -47,7 +47,7 @@ typedef char  __attribute__((aligned(64))) __mmask8;
 #include "integrator_whfast512.h"
 
 
-//#define DEBUG_AVX512 1
+#define DEBUG_AVX512 1
 
 void reb_integrator_whfast512_free(void* state);		
 void* reb_integrator_whfast512_create();		

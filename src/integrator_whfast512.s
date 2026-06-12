@@ -18,6 +18,9 @@
 .globl reb_whfast512_interaction_step_gr
 .globl reb_whfast512_interaction_step_nogr
 
+# Enable debug counter?
+.equ DEBUG_AVX512, 1
+
 #P512 Structure offsets
 .set P512_M, 0
 .set P512_DT, 64
@@ -296,11 +299,11 @@
     # Required precision reached? abs(Delta XX) < eps
     vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
     #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
-#START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#END DEBUG COUNTER
+.if DEBUG_AVX512 == 1 
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+.endif
 
     kortestw        %k4, %k4
     jz              .NewtonLoopDone\@
@@ -329,11 +332,11 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\@:
-#START DEBUG COUNTER:
-#    vmovdqa64       P512_COUNTER(%rdi), %zmm4
-#    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
-#    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
-#END DEBUG COUNTER
+.if DEBUG_AVX512 == 1 
+    vmovdqa64       P512_COUNTER(%rdi), %zmm4
+    vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
+    vmovdqa64       %zmm4, P512_COUNTER(%rdi)
+.endif
     mm_stiefel_Gs13_avx512
     vmulpd          R, XX, %zmm2                # r0*X
     vfmadd231pd     GS2, ETA, %zmm2
@@ -805,9 +808,12 @@ reb_whfast512_full_steps_jacobi_nogr_n4: full_steps 0 0 4
 .section    .rodata
 
 
+.if DEBUG_AVX512 == 1
 .align 64
-.ONE_QUAD: # TODO DEBUG ONLY
+.ONE_QUAD:
     .quad 1
+.endif
+
 # Shuffle Indicies
 # Each is eight 64-bit integers
 .align 64
