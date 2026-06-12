@@ -6,8 +6,6 @@
 .globl reb_whfast512_full_steps_jacobi_nogr_n2
 .globl reb_whfast512_full_steps_jacobi_gr_n4
 .globl reb_whfast512_full_steps_jacobi_nogr_n4
-.globl reb_whfast512_full_steps_democraticheliocentric_gr
-.globl reb_whfast512_full_steps_democraticheliocentric_nogr
 .globl reb_whfast512_kepler_step
 .globl reb_whfast512_corrector_step_gr
 .globl reb_whfast512_corrector_step_nogr
@@ -770,7 +768,7 @@ reb_whfast512_interaction_step_nogr:
     #           rdi = p512
     #           rsi = Number of steps (counting down)
     #           rdx = skip_first_kepler_step
-    #           coordinates = 0 (jacobi) / 1 (democratic heliocentric)
+    #           rcx = pointer to reb_sigint (to check for interrupt)
 
     # Load constants
     reb_whfast512_init_registers
@@ -785,18 +783,18 @@ reb_whfast512_interaction_step_nogr:
     kepler_step
 .LSkipFirstKeplerStep\@:
     interaction_step \grflag \nsys
+    cmpq    $0, (%rcx)
+    jnz     .LInterruptOccured\@
     subq    $1, %rsi
     jnz     .LMainLoop\@
 
+.LInterruptOccured\@:
     # Store final data in P512 structure
     reb_whfast512_store_results
 
     free_stack64
     ret
 .endm
-
-reb_whfast512_full_steps_democraticheliocentric_gr: full_steps 1 1
-reb_whfast512_full_steps_democraticheliocentric_nogr: full_steps 0 1
 
 reb_whfast512_full_steps_jacobi_gr: full_steps 1 0
 reb_whfast512_full_steps_jacobi_nogr: full_steps 0 0

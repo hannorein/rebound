@@ -278,19 +278,17 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 }
 
 
-extern void reb_whfast512_full_steps_democraticheliocentric_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void reb_whfast512_full_steps_democraticheliocentric_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void reb_whfast512_full_steps_jacobi_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void reb_whfast512_full_steps_jacobi_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_whfast512_full_steps_jacobi_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern void reb_whfast512_full_steps_jacobi_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_whfast512_kepler_step(struct simd_data* data);
 
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
-extern void reb_whfast512_full_steps_jacobi_gr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void reb_whfast512_full_steps_jacobi_nogr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void reb_whfast512_full_steps_jacobi_gr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step);
-extern void reb_whfast512_full_steps_jacobi_nogr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step);
+extern void reb_whfast512_full_steps_jacobi_gr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern void reb_whfast512_full_steps_jacobi_nogr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern void reb_whfast512_full_steps_jacobi_gr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern void reb_whfast512_full_steps_jacobi_nogr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr_n2(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n4(struct simd_data* data, double inv);
@@ -300,15 +298,15 @@ static void whfast512_full_steps(struct reb_integrator_whfast512_state* whfast51
     struct simd_data* data = whfast512->data;
     if (whfast512->gr_potential){
         switch (whfast512->N_systems){
-            case 2: reb_whfast512_full_steps_jacobi_gr_n2(data, N_steps, skip); break;
-            case 4: reb_whfast512_full_steps_jacobi_gr_n4(data, N_steps, skip); break;
-            default: reb_whfast512_full_steps_jacobi_gr(data, N_steps, skip); break;
+            case 2: reb_whfast512_full_steps_jacobi_gr_n2(data, N_steps, skip, &reb_sigint); break;
+            case 4: reb_whfast512_full_steps_jacobi_gr_n4(data, N_steps, skip, &reb_sigint); break;
+            default: reb_whfast512_full_steps_jacobi_gr(data, N_steps, skip, &reb_sigint); break;
         }
     }else{
         switch (whfast512->N_systems){
-            case 2: reb_whfast512_full_steps_jacobi_nogr_n2(data, N_steps, skip); break;
-            case 4: reb_whfast512_full_steps_jacobi_nogr_n4(data, N_steps, skip); break;
-            default: reb_whfast512_full_steps_jacobi_nogr(data, N_steps, skip); break;
+            case 2: reb_whfast512_full_steps_jacobi_nogr_n2(data, N_steps, skip, &reb_sigint); break;
+            case 4: reb_whfast512_full_steps_jacobi_nogr_n4(data, N_steps, skip, &reb_sigint); break;
+            default: reb_whfast512_full_steps_jacobi_nogr(data, N_steps, skip, &reb_sigint); break;
         }
     }
 }
