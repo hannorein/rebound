@@ -64,17 +64,12 @@ void setup_sim(char* integrator, int corrector){
         //    r->particles[i].x += 10.1;
         //    r->particles[i].vx += 1.1;
         //}
-        if (strcmp(integrator,"asm512")==0){
-            reb_simulation_set_integrator(r, integrator);
-            struct reb_integrator_asm512_state* asm512 = r->integrator.state;
-            asm512->gr_potential = 0;
-            asm512->concatenate_steps = concatenate;
-            asm512->corrector = corrector;
-            asm512->gr_potential = gr;
-        }
         if (strcmp(integrator,"whfast512")==0){
             reb_simulation_set_integrator(r, integrator);
             struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
+            whfast512->gr_potential = 0;
+            whfast512->concatenate_steps = concatenate;
+            whfast512->corrector = corrector;
             whfast512->gr_potential = gr;
         }
         if (strcmp(integrator,"whfast")==0){
@@ -99,14 +94,11 @@ void setup_sim(char* integrator, int corrector){
 
 
 
-extern void reb_integrator_asm512_kepler_step(struct reb_simulation* const r, int N_steps);
-extern uint64_t reb_asm512_counter(struct reb_simulation* r, int test_p);
 
 int main(int argc, char* argv[]) {
-    setup_sim("asm512", 0);
-    setup_sim("asm512", 17);
+    setup_sim("whfast512", 0);
+    setup_sim("whfast512", 17);
     setup_sim("whfast", 0);
     setup_sim("whfast", 17);
-    setup_sim("whfast512", 0);
 
 }
