@@ -19,7 +19,7 @@
 .globl reb_whfast512_interaction_step_nogr
 
 # Enable debug counter?
-.equ DEBUG_AVX512, 1
+.equ DEBUG_AVX512, 0
 
 #P512 Structure offsets
 .set P512_M, 0
