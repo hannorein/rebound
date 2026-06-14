@@ -1023,14 +1023,16 @@ void reb_integrator_whfast_to_inertial(struct reb_simulation* const r, struct re
     }
 }
 
-void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,double dt){
+void reb_integrator_whfast_debug_operator_kepler(struct reb_simulation* const r,double dt, size_t Nsteps){
     struct reb_integrator_whfast_state* whfast = r->integrator.state;
     if (reb_integrator_whfast_init(r, whfast)){
         // Non recoverable error occurred.
         return;
     }
     reb_integrator_whfast_from_inertial(r, whfast->p_jh, whfast->coordinates);
-    reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, dt);    // half timestep
+    for (size_t i = 0;i<Nsteps;i++){
+        reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, dt);
+    }
     reb_integrator_whfast_com_step(r, whfast->p_jh, dt);
     reb_integrator_whfast_to_inertial(r, whfast->p_jh, whfast->coordinates);
 }

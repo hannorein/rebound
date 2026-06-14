@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
             double a = 0.05 + (0.95-0.05)*(double)ia/(double)(Na-1);
             double e = 0.0 + (0.99-0.0)*(double)ie/(double)(Ne-1);
             printf("%e %e ", a, e);
-            int Nsteps = 1; // 10 years
+            int Nsteps = 1000; // 10 years
             struct reb_simulation* r = setup_sim(a,e);
             reb_integrator_whfast512_kepler_step(r, Nsteps);
             int test_p = rand_r(&r->rand_seed) % 8;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
             if (a-o.a<0.0){
                 s = -1.0;
             }
-            uint64_t counter  = reb_whfast512_counter(r, test_p);
+            uint64_t counter  = 0;// reb_whfast512_counter(r, test_p);
             printf("%e %e %e ", fabs((a-o.a)/a), s, ((double)counter)/((double)Nsteps));
             reb_simulation_free(r);
             printf("\n");

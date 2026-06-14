@@ -40,12 +40,17 @@ struct reb_simulation* setup_sim(int i){
     r->exact_finish_time = 0;
    
     reb_simulation_add_fmt(r, "solarsystem");
+    for (size_t i=1;i<r->N;i++){
+        r->particles[i].m = 0;
+    }
     r->particles[3].x += 1e-15*i;
     reb_simulation_move_to_com(r);
 
     return r;
 }
 
+double a0[8];
+double a1[8];
 
 int main(int argc, char* argv[]) {
     int id = 0;
@@ -53,6 +58,10 @@ int main(int argc, char* argv[]) {
         id = atoi(argv[1]);
     }
     struct reb_simulation* r_asm = setup_sim(id);
+    for (size_t i=1;i<r_asm->N;i++){
+        struct reb_orbit o = reb_orbit_from_particle(r_asm->G, r_asm->particles[i], r_asm->particles[0]);
+        a0[i-1] = o.a;
+    }
     double E0 = reb_simulation_energy(r_asm);
     reb_simulation_set_integrator(r_asm, "whfast512");
     struct reb_integrator_whfast512_state* whfast512 = r_asm->integrator.state;
@@ -63,10 +72,14 @@ int main(int argc, char* argv[]) {
         E0 += gr_potential(r_asm);
     }
     char filename[1024];
-    sprintf(filename, "/scratch/rein/whfast512_tests/out_nogr_%03d.txt", id);
+    sprintf(filename, "/scratch/rein/whfast512_tests/out_as_stiefel27_%03d.txt", id);
     for (double dT=1e1; r_asm->t<2*5e9*2*M_PI && r_asm->status <=0; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
         double E1_asm = reb_simulation_energy(r_asm);
+        for (size_t i=1;i<r_asm->N;i++){
+            struct reb_orbit o = reb_orbit_from_particle(r_asm->G, r_asm->particles[i], r_asm->particles[0]);
+            a1[i-1] = o.a;
+        }
         char* mode = "a";
         if (dT==1e1) mode = "w";
         FILE* f;
@@ -74,7 +87,11 @@ int main(int argc, char* argv[]) {
            E1_asm += gr_potential(r_asm);
         }
         f = fopen(filename,mode);
-        fprintf(f,"%e %e\n", r_asm->t, fabs((E0-E1_asm)/E0));
+        fprintf(f,"%e ", r_asm->t);
+        for (size_t i=1;i<r_asm->N;i++){
+            fprintf(f,"%e ", fabs((a0[i-1]-a1[i-1])/a0[i-1]));
+        }
+        fprintf(f,"\n");
         fclose(f);
     }
     reb_simulation_free(r_asm);
