@@ -31,6 +31,7 @@
 #include "boundary.h"
 #include "integrator_whfast.h"
 #include "binarydata.h"
+#include <gmp.h>
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b

@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <sched.h>
 #include <stdbool.h>
+#include <gmp.h>
 
 struct reb_simulation* setup_sim(double a, double e){
     struct reb_simulation* r = reb_simulation_create();
@@ -27,6 +28,7 @@ struct reb_simulation* setup_sim(double a, double e){
 extern void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r, int N_steps);
 
 int main(int argc, char* argv[]) {
+    mpf_set_default_prec(200);
     double a = 0.4;
     double e = 0.2;
     setbuf(stdout, NULL);
