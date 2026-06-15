@@ -32,6 +32,8 @@
 #include "integrator_whfast.h"
 #include "binarydata.h"
 #include <gmp.h>
+#include <mpfr.h>
+#include <fenv.h>
 
 #define MAX(a, b) ((a) < (b) ? (b) : (a))   ///< Returns the maximum of a and b
 #define MIN(a, b) ((a) > (b) ? (b) : (a))   ///< Returns the minimum of a and b
@@ -187,32 +189,77 @@ static void stumpff_cs(double *restrict cs, double z) {
     }
     cs[0] = invfactorial[0]  - z *cs[2];
 }
-static void stumpff_cs3(double *restrict cs, double z) {
+
+void mpfr_invfactorial(mpfr_t fac, unsigned int i){
+    mpfr_set_d(fac, 1.0, MPFR_RNDN);
+    for(size_t l=2;l<=i;l++){
+        mpfr_mul_ui(fac, fac, l, MPFR_RNDN);
+    }
+    mpfr_ui_div(fac, 1, fac, MPFR_RNDN);
+}
+
+mpfr_t ifac, c_odd, c_even, z, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd;
+void init_mpfr(){
+    mpfr_init2(mX,200);
+    mpfr_init2(z,200);
+    mpfr_init2(mf,200);
+    mpfr_init2(mg,200);
+    mpfr_init2(mgd,200);
+    mpfr_init2(mfd,200);
+    mpfr_init2(mri,200);
+    mpfr_init2(cs0,200);
+    mpfr_init2(cs1,200);
+    mpfr_init2(cs2,200);
+    mpfr_init2(cs3,200);
+    mpfr_init2(tmp,200);
+    mpfr_init2(ifac,200);
+    mpfr_init2(c_odd,200);
+    mpfr_init2(c_even,200);
+}
+static void stumpff_cs3(double *restrict cs, double _z) {
     unsigned int n = 0;
-    while(fabs(z)>0.1){
-        z = z/4.;
+    while(1){
+        mpfr_abs(tmp, z, MPFR_RNDN);
+        if (mpfr_cmp_d(tmp, 0.1)<0.0) break;
+        mpfr_div_ui(z, z, 4, MPFR_RNDN);
         n++;
     }
-    const int nmax = 13;
-    double c_odd  = invfactorial[nmax];
-    double c_even = invfactorial[nmax-1];
+    const int nmax = 15;
+    mpfr_invfactorial(c_odd, nmax);
+    mpfr_mul_ui(c_even, c_odd, nmax, MPFR_RNDN);
+    mpfr_set(ifac, c_even, MPFR_RNDN);
+
     for(int np=nmax-2;np>=3;np-=2){
-        c_odd  = invfactorial[np]    - z *c_odd;
-        c_even = invfactorial[np-1]  - z *c_even;
+        mpfr_mul_ui(ifac, ifac, np+1, MPFR_RNDN);
+        mpfr_mul(c_odd, c_odd, z, MPFR_RNDN);
+        mpfr_sub(c_odd, ifac, c_odd, MPFR_RNDN);
+        mpfr_mul_ui(ifac, ifac, np, MPFR_RNDN);
+        mpfr_mul(c_even, c_even, z, MPFR_RNDN);
+        mpfr_sub(c_even, ifac, c_even, MPFR_RNDN);
     }
-    cs[3] = c_odd;
-    cs[2] = c_even;
-    cs[1] = invfactorial[1]  - z *c_odd;
-    cs[0] = invfactorial[0]  - z *c_even;
+    mpfr_set(cs3,c_odd, MPFR_RNDN);
+    mpfr_set(cs2,c_even, MPFR_RNDN);
+    mpfr_mul(c_odd, c_odd, z, MPFR_RNDN);
+    mpfr_mul(c_even, c_even, z, MPFR_RNDN);
+    mpfr_ui_sub(c_odd, 1, c_odd, MPFR_RNDN);
+    mpfr_ui_sub(c_even, 1, c_even, MPFR_RNDN);
+    mpfr_set(cs1,c_odd, MPFR_RNDN);
+    mpfr_set(cs0,c_even, MPFR_RNDN);
     for (;n>0;n--){ 
-        cs[3] = (cs[2]+cs[0]*cs[3])*0.25;
-        cs[2] = cs[1]*cs[1]*0.5;
-        cs[1] = cs[0]*cs[1];
-        cs[0] = 2.*cs[0]*cs[0]-1.;
+        mpfr_mul(cs3, cs3, cs0, MPFR_RNDN);
+        mpfr_add(cs3, cs3, cs2, MPFR_RNDN);
+        mpfr_div_ui(cs3, cs3, 4, MPFR_RNDN);
+        mpfr_mul(cs2, cs1, cs1, MPFR_RNDN);
+        mpfr_div_ui(cs2, cs2, 2, MPFR_RNDN);
+        mpfr_mul(cs1, cs1, cs0, MPFR_RNDN);
+        mpfr_mul(cs0, cs1, cs0, MPFR_RNDN);
+        mpfr_mul_ui(cs0, cs0, 2, MPFR_RNDN);
+        mpfr_sub_ui(cs0, cs0, 1, MPFR_RNDN);
     }
 }
 
 static void stiefel_Gs(double *restrict Gs, double beta, double X) {
+    // Only variations use this
     double X2 = X*X;
     stumpff_cs(Gs, beta*X2);
     Gs[1] *= X; 
@@ -227,11 +274,20 @@ static void stiefel_Gs(double *restrict Gs, double beta, double X) {
 }
 
 static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
-    double X2 = X*X;
-    stumpff_cs3(Gs, beta*X2);
-    Gs[1] *= X; 
-    Gs[2] *= X2; 
-    Gs[3] *= X2*X;
+    mpfr_set_d(mX, X, MPFR_RNDN);
+    mpfr_mul(z, mX, mX, MPFR_RNDN);
+    mpfr_mul_d(z, z, beta, MPFR_RNDN);
+    stumpff_cs3(NULL, 0);
+    Gs[0] = mpfr_get_d(cs0, MPFR_RNDN);
+    mpfr_mul(cs1, cs1, mX, MPFR_RNDN);
+    Gs[1] = mpfr_get_d(cs1, MPFR_RNDN);
+    mpfr_mul(cs2, cs2, mX, MPFR_RNDN);
+    mpfr_mul(cs2, cs2, mX, MPFR_RNDN);
+    Gs[2] = mpfr_get_d(cs2, MPFR_RNDN);
+    mpfr_mul(cs3, cs3, mX, MPFR_RNDN);
+    mpfr_mul(cs3, cs3, mX, MPFR_RNDN);
+    mpfr_mul(cs3, cs3, mX, MPFR_RNDN);
+    Gs[3] = mpfr_get_d(cs3, MPFR_RNDN);
     return;
 }
 
@@ -281,7 +337,7 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
 
     // Do one Newton step
     stiefel_Gs3(Gs, beta, X);
-    const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
+    double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
     double ri = 1./(r0 + eta0Gs1zeta0Gs2);
     X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
 
@@ -376,11 +432,31 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
         Gs[3] = 0.;
     }
 
+//    int original_mode = fegetround();
+//    fesetround(FE_TOWARDZERO);
+    stiefel_Gs3(Gs, beta, X);
+    mpfr_mul_d(mri, cs1, eta0, MPFR_RNDN);
+    mpfr_mul_d(tmp, cs2, zeta0, MPFR_RNDN);
+    mpfr_add(mri, mri, tmp, MPFR_RNDN);
+    mpfr_add_d(mri, mri, r0, MPFR_RNDN);
+    mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
+    mpfr_mul(mf, cs2,mri, MPFR_RNDN);
+    mpfr_neg(mf, mf, MPFR_RNDN);
+    mpfr_d_sub(mg, dt,cs3, MPFR_RNDN);
+
+    
+            ri = mpfr_get_d(mri, MPFR_RNDN);
     // Note: These are not the traditional f and g functions.
     double f = -mu*Gs[2]*r0i;
     double g = dt - mu*Gs[3];
     double fd = -mu*Gs[1]*r0i*ri; 
     double gd = -mu*Gs[2]*ri; 
+    //double eps = f+gd+f*gd-fd*g;
+    //double delta = -eps/2.;
+    //f += delta*(1.+f);
+    //gd += delta*(1.+gd);
+    //g = g*(1.+delta);
+    //fd = fd*(1.+delta);
 
     p->x += f*p1.x + g*p1.vx;
     p->y += f*p1.y + g*p1.vy;
@@ -389,6 +465,7 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     p->vx += fd*p1.x + gd*p1.vx;
     p->vy += fd*p1.y + gd*p1.vy;
     p->vz += fd*p1.z + gd*p1.vz;
+//    fesetround(original_mode);
 
     //Variations
     for (size_t v=0;r && v<r->N_var_config;v++){

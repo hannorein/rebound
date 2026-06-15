@@ -1,6 +1,6 @@
 export OPENGL=0
 export SERVER=0
-export OPT=-march=native -O3 -fmax-errors=5 -lgmp
+export OPT=-march=native -O3 -fmax-errors=5 -lgmp -lmpfr
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for
@@ -8,7 +8,7 @@ include ../../src/Makefile.defs
 .PHONY: all librebound
 all: problem.c librebound
 	@echo "Compiling $< ..."
-	$(CCPROBLEM) -lgmp
+	$(CCPROBLEM) -lgmp -lmpfr
 	@echo ""
 	@echo "Compilation successful. To run REBOUND, execute the file '$(EXEREBOUND)'."
 	@echo ""

@@ -29,6 +29,7 @@ extern void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r,
 
 int main(int argc, char* argv[]) {
     mpf_set_default_prec(200);
+    init_mpfr();
     double a = 0.4;
     double e = 0.2;
     setbuf(stdout, NULL);
@@ -42,6 +43,7 @@ int main(int argc, char* argv[]) {
         r->t += i*r->dt;
         struct reb_orbit o = reb_orbit_from_particle(1., r->particles[1], r->particles[0]);
         printf("%e %e %e \n", r->t, fabs((a-o.a)/a), fabs((e-o.e)/e));
+        fflush(stdout);
         
     }
     return 1;
