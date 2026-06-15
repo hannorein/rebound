@@ -198,25 +198,33 @@ void mpfr_invfactorial(mpfr_t fac, unsigned int i){
     mpfr_ui_div(fac, 1, fac, MPFR_RNDN);
 }
 
-mpfr_t ifac, c_odd, c_even, z, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd;
+mpfr_t ifac, c_odd, c_even, z, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd, mr0i, mr0, mbeta, mzeta0, mv2, meta0;
 void init_mpfr(){
-    mpfr_init2(mX,200);
-    mpfr_init2(z,200);
-    mpfr_init2(mf,200);
-    mpfr_init2(mg,200);
-    mpfr_init2(mgd,200);
-    mpfr_init2(mfd,200);
-    mpfr_init2(mri,200);
-    mpfr_init2(cs0,200);
-    mpfr_init2(cs1,200);
-    mpfr_init2(cs2,200);
-    mpfr_init2(cs3,200);
-    mpfr_init2(tmp,200);
-    mpfr_init2(ifac,200);
-    mpfr_init2(c_odd,200);
-    mpfr_init2(c_even,200);
+    mpfr_init2(mX,300);
+    mpfr_init2(mr0i,300);
+    mpfr_init2(z,300);
+    mpfr_init2(mr0,300);
+    mpfr_init2(mbeta,300);
+    mpfr_init2(meta0,300);
+    mpfr_init2(mzeta0,300);
+    mpfr_init2(mv2,300);
+    mpfr_init2(mf,300);
+    mpfr_init2(mg,300);
+    mpfr_init2(mgd,300);
+    mpfr_init2(mfd,300);
+    mpfr_init2(mri,300);
+    mpfr_init2(cs0,300);
+    mpfr_init2(cs1,300);
+    mpfr_init2(cs2,300);
+    mpfr_init2(cs3,300);
+    mpfr_init2(tmp,300);
+    mpfr_init2(ifac,300);
+    mpfr_init2(c_odd,300);
+    mpfr_init2(c_even,300);
 }
 static void stumpff_cs3(double *restrict cs, double _z) {
+    (void)cs;
+    (void)_z;
     unsigned int n = 0;
     while(1){
         mpfr_abs(tmp, z, MPFR_RNDN);
@@ -297,10 +305,43 @@ static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
                                 // r only needed for variational particles and warning. Can be NULL.
 void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
+    mpfr_set_d(mr0, p1.x, MPFR_RNDN);
+    mpfr_mul(mr0, mr0, mr0, MPFR_RNDN);
+    mpfr_set_d(tmp, p1.y, MPFR_RNDN);
+    mpfr_fma(mr0, tmp, tmp, mr0, MPFR_RNDN);
+    mpfr_set_d(tmp, p1.z, MPFR_RNDN);
+    mpfr_fma(mr0, tmp, tmp, mr0, MPFR_RNDN);
+    mpfr_sqrt(mr0, mr0, MPFR_RNDN);
+    mpfr_ui_div(mr0i, 1, mr0, MPFR_RNDN);
 
     const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
-    const double r0i = 1./r0;
+    const double r0i = mpfr_get_d(mr0i, MPFR_RNDN);
     const double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
+    
+    mpfr_set_d(mv2, p1.vx, MPFR_RNDN);
+    mpfr_mul(mv2, mv2, mv2, MPFR_RNDN);
+    mpfr_set_d(tmp, p1.vy, MPFR_RNDN);
+    mpfr_fma(mv2, tmp, tmp, mv2, MPFR_RNDN);
+    mpfr_set_d(tmp, p1.vz, MPFR_RNDN);
+    mpfr_fma(mv2, tmp, tmp, mv2, MPFR_RNDN);
+    
+    mpfr_mul_ui(mbeta, mr0i, 2, MPFR_RNDN);
+    mpfr_sub(mbeta, mbeta, mv2, MPFR_RNDN);
+
+    mpfr_set_d(tmp, p1.x, MPFR_RNDN);
+    mpfr_mul_d(meta0, tmp, p1.vx, MPFR_RNDN);
+    mpfr_set_d(tmp, p1.y, MPFR_RNDN);
+    mpfr_mul_d(tmp, tmp, p1.vy, MPFR_RNDN);
+    mpfr_add(meta0, tmp,meta0, MPFR_RNDN);
+    mpfr_set_d(tmp, p1.z, MPFR_RNDN);
+    mpfr_mul_d(tmp, tmp, p1.vz, MPFR_RNDN);
+    mpfr_add(meta0, tmp,meta0, MPFR_RNDN);
+
+    mpfr_mul(tmp, mbeta, mr0, MPFR_RNDN);
+    mpfr_ui_sub(mzeta0, 1.0, tmp, MPFR_RNDN);
+
+
+
     const double beta = 2.*mu*r0i - v2;
     const double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
     const double zeta0 = mu - beta*r0;
@@ -434,29 +475,33 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
 
 //    int original_mode = fegetround();
 //    fesetround(FE_TOWARDZERO);
-    stiefel_Gs3(Gs, beta, X);
-    mpfr_mul_d(mri, cs1, eta0, MPFR_RNDN);
-    mpfr_mul_d(tmp, cs2, zeta0, MPFR_RNDN);
+//    stiefel_Gs(Gs, beta, X);
+//    mpfr_set_d(cs0, Gs[0], MPFR_RNDN);
+//    mpfr_set_d(cs1, Gs[1], MPFR_RNDN);
+//    mpfr_set_d(cs2, Gs[2], MPFR_RNDN);
+//    mpfr_set_d(cs3, Gs[3], MPFR_RNDN);
+    mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
+    mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
     mpfr_add(mri, mri, tmp, MPFR_RNDN);
-    mpfr_add_d(mri, mri, r0, MPFR_RNDN);
+    mpfr_add(mri, mri, mr0, MPFR_RNDN);
     mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
-    mpfr_mul(mf, cs2,mri, MPFR_RNDN);
+
+    mpfr_mul(mf, cs2,mr0i, MPFR_RNDN);
     mpfr_neg(mf, mf, MPFR_RNDN);
     mpfr_d_sub(mg, dt,cs3, MPFR_RNDN);
+    mpfr_mul(mfd, cs1,mri, MPFR_RNDN);
+    mpfr_mul(mfd, cs1,mr0i, MPFR_RNDN);
+    mpfr_neg(mfd, mfd, MPFR_RNDN);
+    mpfr_mul(mfd, mfd,mri, MPFR_RNDN);
+    mpfr_mul(mgd, cs2, mri, MPFR_RNDN);
+    mpfr_neg(mgd, mgd, MPFR_RNDN);
 
     
-            ri = mpfr_get_d(mri, MPFR_RNDN);
-    // Note: These are not the traditional f and g functions.
-    double f = -mu*Gs[2]*r0i;
-    double g = dt - mu*Gs[3];
-    double fd = -mu*Gs[1]*r0i*ri; 
-    double gd = -mu*Gs[2]*ri; 
-    //double eps = f+gd+f*gd-fd*g;
-    //double delta = -eps/2.;
-    //f += delta*(1.+f);
-    //gd += delta*(1.+gd);
-    //g = g*(1.+delta);
-    //fd = fd*(1.+delta);
+    ri = mpfr_get_d(mri, MPFR_RNDN);
+    double f = mpfr_get_d(mf, MPFR_RNDN);
+    double g = mpfr_get_d(mg, MPFR_RNDN);
+    double fd = mpfr_get_d(mfd, MPFR_RNDN);
+    double gd = mpfr_get_d(mgd, MPFR_RNDN);
 
     p->x += f*p1.x + g*p1.vx;
     p->y += f*p1.y + g*p1.vy;

@@ -27,11 +27,12 @@ struct reb_simulation* setup_sim(double a, double e){
 }
 extern void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r, int N_steps);
 
+   void init_mpfr();
 int main(int argc, char* argv[]) {
     mpf_set_default_prec(200);
     init_mpfr();
     double a = 0.4;
-    double e = 0.2;
+    double e = 0.01;
     setbuf(stdout, NULL);
     struct reb_simulation* r = setup_sim(a,e);
     for (size_t i = 100; r->t<1e9*M_PI*2.0; i*=1.01){
