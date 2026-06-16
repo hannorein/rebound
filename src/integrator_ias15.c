@@ -235,9 +235,8 @@ static void realloc_dp7(double* REB_RESTRICT * p, const size_t N3){
 }
 
 static inline void add_cs(double* p, double* csp, double inp){
-    const double y = inp - *csp;
-    const double t = *p + y;
-    *csp = (t - *p) - y;
+    const double t = *p + (inp - *csp);
+    *csp += (t - *p) - inp;
     *p = t;
 }
 
