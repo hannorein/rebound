@@ -155,40 +155,11 @@ static const double reb_whfast_corrector_b_171 = -0.0000043347415473373580190650
 static const double reb_whfast_corrector2_b = 0.03486083443891981449909050107438281205803;
 
 // Fast inverse factorial lookup table
-static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
 
 static inline double fastabs(double x){
     return (x > 0.) ? x : -x;
 }
 
-static void stumpff_cs(double *restrict cs, double z) {
-    unsigned int n = 0;
-    while(fastabs(z)>0.1){
-        z = z/4.;
-        n++;
-    }
-    const int nmax = 15;
-    double c_odd  = invfactorial[nmax];
-    double c_even = invfactorial[nmax-1];
-    for(int np=nmax-2;np>=5;np-=2){
-        c_odd  = invfactorial[np]    - z *c_odd;
-        c_even = invfactorial[np-1]  - z *c_even;
-    }
-    cs[5] = c_odd;
-    cs[4] = c_even;
-    cs[3] = invfactorial[3]  - z *cs[5];
-    cs[2] = invfactorial[2]  - z *cs[4];
-    cs[1] = invfactorial[1]  - z *cs[3];
-    for (;n>0;n--){ 
-        z = z*4.;
-        cs[5] = (cs[5]+cs[4]+cs[3]*cs[2])*0.0625;
-        cs[4] = (1.+cs[1])*cs[3]*0.125;
-        cs[3] = 1./6.-z*cs[5];
-        cs[2] = 0.5-z*cs[4];
-        cs[1] = 1.-z*cs[3];
-    }
-    cs[0] = invfactorial[0]  - z *cs[2];
-}
 
 void mpfr_invfactorial(mpfr_t fac, unsigned int i){
     mpfr_set_d(fac, 1.0, MPFR_RNDN);
@@ -198,11 +169,20 @@ void mpfr_invfactorial(mpfr_t fac, unsigned int i){
     mpfr_ui_div(fac, 1, fac, MPFR_RNDN);
 }
 
-mpfr_t ifac, c_odd, c_even, z, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd, mr0i, mr0, mbeta, mzeta0, mv2, meta0;
+mpfr_t ifac, c_odd, c_even, z, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd, mr0i, mr0, mbeta, mzeta0, mv2, meta0, mx, my, mz, mvx, mvy, mvz, tmpx, tmpy, tmpz;
 void init_mpfr(){
     mpfr_init2(mX,300);
     mpfr_init2(mr0i,300);
     mpfr_init2(z,300);
+    mpfr_init2(mx,300);
+    mpfr_init2(my,300);
+    mpfr_init2(mz,300);
+    mpfr_init2(tmpx,300);
+    mpfr_init2(tmpy,300);
+    mpfr_init2(tmpz,300);
+    mpfr_init2(mvx,300);
+    mpfr_init2(mvy,300);
+    mpfr_init2(mvz,300);
     mpfr_init2(mr0,300);
     mpfr_init2(mbeta,300);
     mpfr_init2(meta0,300);
@@ -266,75 +246,79 @@ static void stumpff_cs3(double *restrict cs, double _z) {
     }
 }
 
-static void stiefel_Gs(double *restrict Gs, double beta, double X) {
-    // Only variations use this
-    double X2 = X*X;
-    stumpff_cs(Gs, beta*X2);
-    Gs[1] *= X; 
-    Gs[2] *= X2; 
-    double _pow = X2*X;
-    Gs[3] *= _pow; 
-    _pow *= X;
-    Gs[4] *= _pow; 
-    _pow *= X;
-    Gs[5] *= _pow; 
-    return;
-}
+//static void stiefel_Gs(double *restrict Gs, double beta, double X) {
+//    // Only variations use this
+//    double X2 = X*X;
+//    stumpff_cs(Gs, beta*X2);
+//    Gs[1] *= X; 
+//    Gs[2] *= X2; 
+//    double _pow = X2*X;
+//    Gs[3] *= _pow; 
+//    _pow *= X;
+//    Gs[4] *= _pow; 
+//    _pow *= X;
+//    Gs[5] *= _pow; 
+//    return;
+//}
 
-static void stiefel_Gs3(double *restrict Gs, double beta, double X) {
-    mpfr_set_d(mX, X, MPFR_RNDN);
+static void stiefel_Gs3() {
+    //mpfr_set_d(mX, X, MPFR_RNDN);
     mpfr_mul(z, mX, mX, MPFR_RNDN);
-    mpfr_mul_d(z, z, beta, MPFR_RNDN);
+    mpfr_mul(z, z, mbeta, MPFR_RNDN);
     stumpff_cs3(NULL, 0);
-    Gs[0] = mpfr_get_d(cs0, MPFR_RNDN);
     mpfr_mul(cs1, cs1, mX, MPFR_RNDN);
-    Gs[1] = mpfr_get_d(cs1, MPFR_RNDN);
     mpfr_mul(cs2, cs2, mX, MPFR_RNDN);
     mpfr_mul(cs2, cs2, mX, MPFR_RNDN);
-    Gs[2] = mpfr_get_d(cs2, MPFR_RNDN);
     mpfr_mul(cs3, cs3, mX, MPFR_RNDN);
     mpfr_mul(cs3, cs3, mX, MPFR_RNDN);
     mpfr_mul(cs3, cs3, mX, MPFR_RNDN);
-    Gs[3] = mpfr_get_d(cs3, MPFR_RNDN);
     return;
 }
 
 #define WHFAST_NMAX_QUART 64    ///< Maximum number of iterations for quartic solver
-#define WHFAST_NMAX_NEWT  32    ///< Maximum number of iterations for Newton's method
+#define WHFAST_NMAX_NEWT  10    ///< Maximum number of iterations for Newton's method
                                 // Keplerian motion for one planet                       
                                 // r only needed for variational particles and warning. Can be NULL.
 void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
-    mpfr_set_d(mr0, p1.x, MPFR_RNDN);
+
+    if (r->t==0){
+        mpfr_set_d(mx, p1.x, MPFR_RNDN);
+        mpfr_set_d(my, p1.y, MPFR_RNDN);
+        mpfr_set_d(mz, p1.z, MPFR_RNDN);
+        mpfr_set_d(mvx, p1.vx, MPFR_RNDN);
+        mpfr_set_d(mvy, p1.vy, MPFR_RNDN);
+        mpfr_set_d(mvz, p1.vz, MPFR_RNDN);
+    }
+
+    mpfr_set(mr0, mx, MPFR_RNDN);
     mpfr_mul(mr0, mr0, mr0, MPFR_RNDN);
-    mpfr_set_d(tmp, p1.y, MPFR_RNDN);
+    mpfr_set(tmp, my, MPFR_RNDN);
     mpfr_fma(mr0, tmp, tmp, mr0, MPFR_RNDN);
-    mpfr_set_d(tmp, p1.z, MPFR_RNDN);
+    mpfr_set(tmp, mz, MPFR_RNDN);
     mpfr_fma(mr0, tmp, tmp, mr0, MPFR_RNDN);
     mpfr_sqrt(mr0, mr0, MPFR_RNDN);
     mpfr_ui_div(mr0i, 1, mr0, MPFR_RNDN);
 
-    const double r0 = sqrt(p1.x*p1.x + p1.y*p1.y + p1.z*p1.z);
     const double r0i = mpfr_get_d(mr0i, MPFR_RNDN);
-    const double v2 =  p1.vx*p1.vx + p1.vy*p1.vy + p1.vz*p1.vz;
     
-    mpfr_set_d(mv2, p1.vx, MPFR_RNDN);
+    mpfr_set(mv2, mvx, MPFR_RNDN);
     mpfr_mul(mv2, mv2, mv2, MPFR_RNDN);
-    mpfr_set_d(tmp, p1.vy, MPFR_RNDN);
+    mpfr_set(tmp, mvy, MPFR_RNDN);
     mpfr_fma(mv2, tmp, tmp, mv2, MPFR_RNDN);
-    mpfr_set_d(tmp, p1.vz, MPFR_RNDN);
+    mpfr_set(tmp, mvz, MPFR_RNDN);
     mpfr_fma(mv2, tmp, tmp, mv2, MPFR_RNDN);
     
     mpfr_mul_ui(mbeta, mr0i, 2, MPFR_RNDN);
     mpfr_sub(mbeta, mbeta, mv2, MPFR_RNDN);
 
-    mpfr_set_d(tmp, p1.x, MPFR_RNDN);
-    mpfr_mul_d(meta0, tmp, p1.vx, MPFR_RNDN);
-    mpfr_set_d(tmp, p1.y, MPFR_RNDN);
-    mpfr_mul_d(tmp, tmp, p1.vy, MPFR_RNDN);
+    mpfr_set(tmp, mx, MPFR_RNDN);
+    mpfr_mul(meta0, tmp, mvx, MPFR_RNDN);
+    mpfr_set(tmp, my, MPFR_RNDN);
+    mpfr_mul(tmp, tmp, mvy, MPFR_RNDN);
     mpfr_add(meta0, tmp,meta0, MPFR_RNDN);
-    mpfr_set_d(tmp, p1.z, MPFR_RNDN);
-    mpfr_mul_d(tmp, tmp, p1.vz, MPFR_RNDN);
+    mpfr_set(tmp, mz, MPFR_RNDN);
+    mpfr_mul(tmp, tmp, mvz, MPFR_RNDN);
     mpfr_add(meta0, tmp,meta0, MPFR_RNDN);
 
     mpfr_mul(tmp, mbeta, mr0, MPFR_RNDN);
@@ -342,19 +326,15 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
 
 
 
-    const double beta = 2.*mu*r0i - v2;
-    const double eta0 = p1.x*p1.vx + p1.y*p1.vy + p1.z*p1.vz;
-    const double zeta0 = mu - beta*r0;
+    const double beta = mpfr_get_d(mbeta,MPFR_RNDN);
+    const double eta0 = mpfr_get_d(meta0, MPFR_RNDN);
     double X;
-    double Gs[6]; 
     double invperiod=0;  // only used for beta>0. Set to 0 only to suppress compiler warnings.
-    double X_per_period = nan(""); // only used for beta>0. nan triggers Newton's method for beta<0.
 
     if (beta>0.){
         // Elliptic orbit
         const double sqrt_beta = sqrt(beta);
         invperiod = sqrt_beta*beta/(2.*M_PI*mu);
-        X_per_period = 2.*M_PI/sqrt_beta;
         if (fabs(dt)*invperiod>1.){
             if (r && !(r->messages_timestep_warning & 1)){
                 ((struct reb_simulation*)r)->messages_timestep_warning |= 1; // casting away const qualifier is ok here.
@@ -369,117 +349,40 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
                                                //X = dtr0i *(1.- 0.5*dtr0i*r0i*(eta0-dtr0i*(eta0*eta0*r0i-1./3.*zeta0))); // third order guess
                                                //X = dt*beta/mu + eta0/mu*(0.85*sqrt(1.+zeta0*zeta0/beta/eta0/eta0) - 1.);  // Dan's version 
     }else{
-        // Hyperbolic orbit
-        X = 0.; // Initial guess 
+        printf("hyperbolic\n");
+        exit(1);
     }
+    mpfr_set_d(mX, X, MPFR_RNDN);
 
-    unsigned int converged = 0;
-    double oldX = X; 
+    for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
+        stiefel_Gs3();
+        mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
+        mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
+        mpfr_add(tmp, mri, tmp, MPFR_RNDN);
+        mpfr_add(mri, tmp, mr0, MPFR_RNDN);
+        mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
 
-    // Do one Newton step
-    stiefel_Gs3(Gs, beta, X);
-    double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
-    double ri = 1./(r0 + eta0Gs1zeta0Gs2);
-    X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
+        mpfr_mul(mX,tmp,mX, MPFR_RNDN);
+        mpfr_mul(tmp,meta0,cs2, MPFR_RNDN);
+        mpfr_sub(mX, mX,tmp, MPFR_RNDN);
+        mpfr_mul(tmp,mzeta0,cs3, MPFR_RNDN);
+        mpfr_sub(mX, mX,tmp, MPFR_RNDN);
+        mpfr_add_d(mX, mX, dt, MPFR_RNDN);
+        mpfr_mul(mX, mX, mri, MPFR_RNDN);
+        //const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
+        //double ri = 1./(r0 + eta0Gs1zeta0Gs2);
+        //X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
 
-    // Choose solver depending on estimated step size
-    // Note, for hyperbolic orbits this uses Newton's method.
-    if(fastabs(X-oldX) > 0.01*X_per_period){
-        // Quartic solver
-        // Linear initial guess
-        X = beta*dt/mu;
-        double prevX[WHFAST_NMAX_QUART+1];
-        for(int n_lag=1; n_lag < WHFAST_NMAX_QUART; n_lag++){
-            stiefel_Gs3(Gs, beta, X);
-            const double f = r0*X + eta0*Gs[2] + zeta0*Gs[3] - dt;
-            const double fp = r0 + eta0*Gs[1] + zeta0*Gs[2];
-            const double fpp = eta0*Gs[0] + zeta0*Gs[1];
-            const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
-            X = (X*denom - 5.*f)/denom;
-            for(int i=1;i<n_lag;i++){
-                if(X==prevX[i]){
-                    // Converged. Exit.
-                    n_lag = WHFAST_NMAX_QUART;
-                    converged = 1;
-                    break;
-                }
-            }
-            prevX[n_lag] = X;
-        }
-        const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
-        ri = 1./(r0 + eta0Gs1zeta0Gs2);
-    }else{
-        // Newton's method
-        double oldX2 = nan("");             
-        for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
-            oldX2 = oldX;
-            oldX = X;
-            stiefel_Gs3(Gs, beta, X);
-            const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
-            ri = 1./(r0 + eta0Gs1zeta0Gs2);
-            X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
-
-            if (X==oldX||X==oldX2){
-                // Converged. Exit.
-                converged = 1;
-                break; 
-            }
-        }
-    }
-
-    // If solver did not work, fallback to bisection 
-    if (converged == 0){ 
-        double X_min, X_max;
-        if (beta>0.){
-            //Elliptic
-            X_min = X_per_period * floor(dt*invperiod);
-            X_max = X_min + X_per_period;
-        }else{
-            //Hyperbolic
-            double h2 = r0*r0*v2-eta0*eta0;
-            double q = h2/mu/(1.+sqrt(1.-h2*beta/(mu*mu)));
-            double vq = copysign( sqrt(h2)/q, dt);
-            // X_max and X_min correspond to dt/r_min and dt/r_max
-            // which are reachable in this timestep
-            // r_max = vq*dt+r0
-            // r_min = pericenter
-            X_min = dt/(fastabs(vq*dt)+r0); 
-            X_max = dt/q;
-            if (dt<0.){
-                double temp = X_min;
-                X_min = X_max;
-                X_max = temp;
-            }
-        }
-        X = (X_max + X_min)/2.;
-        do{
-            stiefel_Gs3(Gs, beta, X);
-            double s   = r0*X + eta0*Gs[2] + zeta0*Gs[3]-dt;
-            if (s>=0.){
-                X_max = X;
-            }else{
-                X_min = X;
-            }
-            X = (X_max + X_min)/2.;
-        }while (fastabs((X_max-X_min))>fastabs((X_max+X_min)*1e-15));
-        const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
-        ri = 1./(r0 + eta0Gs1zeta0Gs2);
-    }
-    if (isnan(ri)){
-        // Exception for (almost) straight line motion in hyperbolic case
-        ri = 0.;
-        Gs[1] = 0.;
-        Gs[2] = 0.;
-        Gs[3] = 0.;
+        //if (X==oldX||X==oldX2){
+        //    // Converged. Exit.
+        //    converged = 1;
+        //    break; 
+        //}
     }
 
 //    int original_mode = fegetround();
 //    fesetround(FE_TOWARDZERO);
 //    stiefel_Gs(Gs, beta, X);
-//    mpfr_set_d(cs0, Gs[0], MPFR_RNDN);
-//    mpfr_set_d(cs1, Gs[1], MPFR_RNDN);
-//    mpfr_set_d(cs2, Gs[2], MPFR_RNDN);
-//    mpfr_set_d(cs3, Gs[3], MPFR_RNDN);
     mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
     mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
     mpfr_add(mri, mri, tmp, MPFR_RNDN);
@@ -497,56 +400,33 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     mpfr_neg(mgd, mgd, MPFR_RNDN);
 
     
-    ri = mpfr_get_d(mri, MPFR_RNDN);
-    double f = mpfr_get_d(mf, MPFR_RNDN);
-    double g = mpfr_get_d(mg, MPFR_RNDN);
-    double fd = mpfr_get_d(mfd, MPFR_RNDN);
-    double gd = mpfr_get_d(mgd, MPFR_RNDN);
+    //f = fd*g-f*gd-gd;
+    mpfr_fma(tmpx, mf, mx, mx, MPFR_RNDN);
+    mpfr_fma(tmpy, mf, my, my, MPFR_RNDN);
+    mpfr_fma(tmpz, mf, mz, mz, MPFR_RNDN);
+    mpfr_fma(tmpx, mg, mvx, tmpx, MPFR_RNDN);
+    mpfr_fma(tmpy, mg, mvy, tmpy, MPFR_RNDN);
+    mpfr_fma(tmpz, mg, mvz, tmpz, MPFR_RNDN);
+    
+    mpfr_fma(mvx, mgd, mvx, mvx, MPFR_RNDN);
+    mpfr_fma(mvy, mgd, mvy, mvy, MPFR_RNDN);
+    mpfr_fma(mvz, mgd, mvz, mvz, MPFR_RNDN);
+    mpfr_fma(mvx, mfd, mx, mvx, MPFR_RNDN);
+    mpfr_fma(mvy, mfd, my, mvy, MPFR_RNDN);
+    mpfr_fma(mvz, mfd, mz, mvz, MPFR_RNDN);
 
-    p->x += f*p1.x + g*p1.vx;
-    p->y += f*p1.y + g*p1.vy;
-    p->z += f*p1.z + g*p1.vz;
+    mpfr_set(mx, tmpx, MPFR_RNDN);
+    mpfr_set(my, tmpy, MPFR_RNDN);
+    mpfr_set(mz, tmpz, MPFR_RNDN);
 
-    p->vx += fd*p1.x + gd*p1.vx;
-    p->vy += fd*p1.y + gd*p1.vy;
-    p->vz += fd*p1.z + gd*p1.vz;
+    p->x =  mpfr_get_d(mx, MPFR_RNDN);
+    p->y =  mpfr_get_d(my, MPFR_RNDN);
+    p->z =  mpfr_get_d(mz, MPFR_RNDN);
+    p->vx = mpfr_get_d(mvx,MPFR_RNDN);
+    p->vy = mpfr_get_d(mvy,MPFR_RNDN);
+    p->vz = mpfr_get_d(mvz,MPFR_RNDN);
 //    fesetround(original_mode);
 
-    //Variations
-    for (size_t v=0;r && v<r->N_var_config;v++){
-        struct reb_variational_configuration const vc = r->var_config[v];
-        struct reb_integrator_whfast_state* whfast = r->integrator.state;
-        const size_t pindex = p - whfast->p_jh;
-        struct reb_particle* dp1p = whfast->p_jh_var + pindex + vc.index;
-        struct reb_particle dp1 = *dp1p;
-        stiefel_Gs(Gs, beta, X);    // Recalculate (to get Gs[4] and Gs[5])
-        double dr0 = (dp1.x*p1.x + dp1.y*p1.y + dp1.z*p1.z)*r0i;
-        double dbeta = -2.*mu*dr0*r0i*r0i - 2.* (dp1.vx*p1.vx + dp1.vy*p1.vy + dp1.vz*p1.vz);
-        double deta0 = dp1.x*p1.vx + dp1.y*p1.vy + dp1.z*p1.vz
-        + p1.x*dp1.vx + p1.y*dp1.vy + p1.z*dp1.vz;
-        double dzeta0 = -beta*dr0 - r0*dbeta;
-        double G3beta = 0.5*(3.*Gs[5]-X*Gs[4]);
-        double G2beta = 0.5*(2.*Gs[4]-X*Gs[3]);
-        double G1beta = 0.5*(Gs[3]-X*Gs[2]);
-        double tbeta = eta0*G2beta + zeta0*G3beta;
-        double dX = -1.*ri*(X*dr0 + Gs[2]*deta0+Gs[3]*dzeta0+tbeta*dbeta);
-        double dG1 = Gs[0]*dX + G1beta*dbeta; 
-        double dG2 = Gs[1]*dX + G2beta*dbeta;
-        double dG3 = Gs[2]*dX + G3beta*dbeta;
-        double dr = dr0 + Gs[1]*deta0 + Gs[2]*dzeta0 + eta0*dG1 + zeta0*dG2;
-        double df = mu*Gs[2]*dr0*r0i*r0i - mu*dG2*r0i;
-        double dg = -mu*dG3;
-        double dfd = -mu*dG1*r0i*ri + mu*Gs[1]*(dr0*r0i+dr*ri)*r0i*ri;
-        double dgd = -mu*dG2*ri + mu*Gs[2]*dr*ri*ri;
-
-        dp1p->x += f*dp1.x + g*dp1.vx + df*p1.x + dg*p1.vx;
-        dp1p->y += f*dp1.y + g*dp1.vy + df*p1.y + dg*p1.vy;
-        dp1p->z += f*dp1.z + g*dp1.vz + df*p1.z + dg*p1.vz;
-
-        dp1p->vx += fd*dp1.x + gd*dp1.vx + dfd*p1.x + dgd*p1.vx;
-        dp1p->vy += fd*dp1.y + gd*dp1.vy + dfd*p1.y + dgd*p1.vy;
-        dp1p->vz += fd*dp1.z + gd*dp1.vz + dfd*p1.z + dgd*p1.vz;
-    }
 }
 
 /***************************** 

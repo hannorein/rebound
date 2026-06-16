@@ -40,8 +40,8 @@ int main(int argc, char* argv[]) {
         //reb_integrator_whfast512_kepler_step(r, i);
         for (size_t s=0; s<i; s++){
             reb_integrator_whfast_kepler_solver(&r->particles[1], 1.0, r->dt, r);
+            r->t += r->dt;
         }
-        r->t += i*r->dt;
         struct reb_orbit o = reb_orbit_from_particle(1., r->particles[1], r->particles[0]);
         printf("%e %e %e \n", r->t, fabs((a-o.a)/a), fabs((e-o.e)/e));
         fflush(stdout);
