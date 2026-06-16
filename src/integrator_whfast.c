@@ -276,7 +276,7 @@ static void stiefel_Gs3() {
 }
 
 #define WHFAST_NMAX_QUART 64    ///< Maximum number of iterations for quartic solver
-#define WHFAST_NMAX_NEWT  10    ///< Maximum number of iterations for Newton's method
+#define WHFAST_NMAX_NEWT  15    ///< Maximum number of iterations for Newton's method
                                 // Keplerian motion for one planet                       
                                 // r only needed for variational particles and warning. Can be NULL.
 void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
@@ -302,6 +302,13 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
 
     const double r0i = mpfr_get_d(mr0i, MPFR_RNDN);
     
+///DEGRADE START  
+{
+    double __temp;
+    __temp = mpfr_get_d(mr0i, MPFR_RNDN);
+    mpfr_set_d(mr0i, __temp, MPFR_RNDN);
+}
+///DEGRADE END
     mpfr_set(mv2, mvx, MPFR_RNDN);
     mpfr_mul(mv2, mv2, mv2, MPFR_RNDN);
     mpfr_set(tmp, mvy, MPFR_RNDN);
@@ -311,6 +318,13 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     
     mpfr_mul_ui(mbeta, mr0i, 2, MPFR_RNDN);
     mpfr_sub(mbeta, mbeta, mv2, MPFR_RNDN);
+///DEGRADE START  
+{
+    double __temp;
+    __temp = mpfr_get_d(mbeta, MPFR_RNDN);
+    mpfr_set_d(mbeta, __temp, MPFR_RNDN);
+}
+///DEGRADE END
 
     mpfr_set(tmp, mx, MPFR_RNDN);
     mpfr_mul(meta0, tmp, mvx, MPFR_RNDN);
@@ -324,6 +338,15 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     mpfr_mul(tmp, mbeta, mr0, MPFR_RNDN);
     mpfr_ui_sub(mzeta0, 1.0, tmp, MPFR_RNDN);
 
+///DEGRADE START  
+{
+    double __temp;
+    __temp = mpfr_get_d(meta0, MPFR_RNDN);
+    mpfr_set_d(meta0, __temp, MPFR_RNDN);
+    __temp = mpfr_get_d(mzeta0, MPFR_RNDN);
+    mpfr_set_d(mzeta0, __temp, MPFR_RNDN);
+}
+///DEGRADE END
 
 
     const double beta = mpfr_get_d(mbeta,MPFR_RNDN);
@@ -379,7 +402,8 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
         //    break; 
         //}
     }
-
+        
+    
 //    int original_mode = fegetround();
 //    fesetround(FE_TOWARDZERO);
 //    stiefel_Gs(Gs, beta, X);
@@ -407,6 +431,17 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     mpfr_fma(tmpx, mg, mvx, tmpx, MPFR_RNDN);
     mpfr_fma(tmpy, mg, mvy, tmpy, MPFR_RNDN);
     mpfr_fma(tmpz, mg, mvz, tmpz, MPFR_RNDN);
+
+    ///DEGRADE START  
+{
+    double __temp;
+    __temp = mpfr_get_d(tmpx, MPFR_RNDN);
+    mpfr_set_d(tmpx, __temp, MPFR_RNDN);
+    __temp = mpfr_get_d(tmpy, MPFR_RNDN);
+    mpfr_set_d(tmpy, __temp, MPFR_RNDN);
+    __temp = mpfr_get_d(tmpz, MPFR_RNDN);
+    mpfr_set_d(tmpz, __temp, MPFR_RNDN);
+}
     
     mpfr_fma(mvx, mgd, mvx, mvx, MPFR_RNDN);
     mpfr_fma(mvy, mgd, mvy, mvy, MPFR_RNDN);
