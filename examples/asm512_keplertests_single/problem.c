@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
             r->t += r->dt;
         }
         struct reb_orbit o = reb_orbit_from_particle(1., r->particles[1], r->particles[0]);
-        printf("%e %e %e \n", r->t, fabs((a-o.a)/a), fabs((e-o.e)/e));
-        fflush(stdout);
+        //printf("%e %e %e \n", r->t, fabs((a-o.a)/a), fabs((e-o.e)/e));
+        //fflush(stdout);
         
     }
     return 1;
