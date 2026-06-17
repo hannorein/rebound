@@ -154,13 +154,22 @@ static const double reb_whfast_corrector_b_172 = 0.00007643635522793573836324184
 static const double reb_whfast_corrector_b_171 = -0.0000043347415473373580190650223498124944896789841432241; 
 static const double reb_whfast_corrector2_b = 0.03486083443891981449909050107438281205803;
 // Fast inverse factorial lookup table
-static const double invfactorial[35] = {1., 1., 1./2., 1./6., 1./24., 1./120., 1./720., 1./5040., 1./40320., 1./362880., 1./3628800., 1./39916800., 1./479001600., 1./6227020800., 1./87178291200., 1./1307674368000., 1./20922789888000., 1./355687428096000., 1./6402373705728000., 1./121645100408832000., 1./2432902008176640000., 1./51090942171709440000., 1./1124000727777607680000., 1./25852016738884976640000., 1./620448401733239439360000., 1./15511210043330985984000000., 1./403291461126605635584000000., 1./10888869450418352160768000000., 1./304888344611713860501504000000., 1./8841761993739701954543616000000., 1./265252859812191058636308480000000., 1./8222838654177922817725562880000000., 1./263130836933693530167218012160000000., 1./8683317618811886495518194401280000000., 1./295232799039604140847618609643520000000.};
+double invfactorial[45];
+double invfactorial_err[45];
+
+static const uint64_t invfactorial_long[45] = {
+  0x3ff0000000000000,   0x3ff0000000000000,   0x3fe0000000000000,   0x3fc5555555555555,   0x3fa5555555555555,   0x3f81111111111111,   0x3f56c16c16c16c16,   0x3f2a01a01a01a01a,   0x3efa01a01a01a01a,   0x3ec71de3a556c733,   0x3e927e4fb7789f5c,   0x3e5ae64567f544e3,   0x3e21eed8eff8d897,   0x3de6124613a86d09,   0x3da93974a8c07c9d,   0x3d6ae7f3e733b81f,   0x3d2ae7f3e733b81f,   0x3ce952c77030ad4a,   0x3ca6827863b97d97,   0x3c62f49b46814157,   0x3c1e542ba4020225,   0x3bd71b8ef6dcf571,   0x3b90ce396db7f852,   0x3b4761b413163819,   0x3aff2cf01972f577,   0x3ab3f3ccdd165fa8,   0x3a688e85fc6a4e59,   0x3a1d1ab1c2dccea3,   0x39d0a18a2635085d,   0x398259f98b4358ad,   0x3933932c5047d60e,   0x38e434d2e783f5bc,   0x389434d2e783f5bc,   0x3843981254dd0d51,   0x37f2710231c0fd7a,   0x37a0dc59c716d91f,   0x374df983290c2ca9,   0x36f9ec8d1c94e85a,   0x36a5d4acb9c0c3aa,   0x3651e99449a4bacd,   0x35fca8ed42a12ae3,   0x35a65e61c39d0240,   0x35510af527530de8,   0x34f95db45257e512,   0x34a272b1b03fec6a,
+};
+
+static const uint64_t invfactorial_long_err[45] = {
+  0x0000000000000000,   0x0000000000000000,   0x0000000000000000,   0xbc65555555555555,   0xbc45555555555555,   0xbc01111111111111,   0xbc082d82d82d82d8,   0xbb6a01a01a01a01a,   0xbb3a01a01a01a01a,   0xbb71f5583911ca00,   0xbb3cbbc05b4fa999,   0xbb01fce8fc9706fb,   0xbad6a89b530f59fd,   0xba8f28e0cc748ebd,   0xba305d6f8a2efd1f,   0xb9e1d8656b0ee8ca,   0xb9a1d8656b0ee8ca,   0xb98ac981465ddc6b,   0xb94eec01221a8b0a,   0xb8f2650f61dbdcb3,   0xb87ea72b4afe3c2e,   0xb8817de28df9dcdc,   0xb8428a19216fe671,   0xb7fb2f70e09bafec,   0xb7a9949680cf953b,   0xb76a9c894832eede,   0xb71471e40a174d60,   0xb6a054d0c78aea13,   0xb66b9e2e28e1aa54,   0xb62eaf8c39dd9bc4,   0xb5d832b7b530a627,   0xb580b87b91be9aff,   0xb530b87b91be9aff,   0xb4f6a7059bff52e8,   0xb473f8a2b4af9d6b,   0xb43419e3fad3f031,   0xb3d5835c6895393a,   0xb3ae98f162b87b13,   0xb35d227a6e149d89,   0xb30c02088ed5d698,   0xb1fa07244abad2ab,   0xb258fc4b9fa36365,   0xb1eb626c912ee5c8,   0xb186e5d72b6f79b9,   0xb143f67cc9f9fdb7
+};
 
 static inline double fastabs(double x){
     return (x > 0.) ? x : -x;
 }
 
-static void old_stumpff_cs3(double *restrict cs, double z) {
+static void old_stumpff_cs3_old(double *restrict cs, double z) {
     unsigned int n = 0;
     while(fabs(z)>0.1){
         z = z/4.;
@@ -186,6 +195,109 @@ static void old_stumpff_cs3(double *restrict cs, double z) {
 }
 
 
+#include <math.h>
+
+// Simple double-double type definition
+typedef struct {
+    double hi;
+    double lo;
+} dd_t;
+
+// --- Double-Double Inline Arithmetic Helpers (FMA Optimized) ---
+
+// Error-free transformation for adding two standard doubles
+static inline dd_t two_sum(double a, double b) {
+    double s = a + b;
+    double v = s - a;
+    double e = (a - (s - v)) + (b - v);
+    return (dd_t){s, e};
+}
+
+// Quick addition when |a| >= |b| or for combining intermediate residuals
+static inline dd_t quick_two_sum(double a, double b) {
+    double s = a + b;
+    double e = b - (s - a);
+    return (dd_t){s, e};
+}
+
+// Error-free transformation for multiplying two standard doubles using FMA
+static inline dd_t two_prod(double a, double b) {
+    double p = a * b;
+    double e = fma(a, b, -p);
+    return (dd_t){p, e};
+}
+
+// Add a double-double to a double-double
+static inline dd_t dd_add(dd_t a, dd_t b) {
+    dd_t s = two_sum(a.hi, b.hi);
+    s.lo += a.lo + b.lo;
+    return quick_two_sum(s.hi, s.lo);
+}
+
+// Multiply a double-double by a standard double
+static inline dd_t dd_mul_d(dd_t a, double b) {
+    dd_t p = two_prod(a.hi, b);
+    p.lo += a.lo * b;
+    return quick_two_sum(p.hi, p.lo);
+}
+
+// Multiply a double-double by a double-double
+static inline dd_t dd_mul(dd_t a, dd_t b) {
+    dd_t p = two_prod(a.hi, b.hi);
+    p.lo += (a.hi * b.lo + a.lo * b.hi);
+    return quick_two_sum(p.hi, p.lo);
+}
+
+// --- Main Stumpff Solver ---
+
+void old_stumpff_cs3(double *restrict cs, double z) {
+    // Dynamically determine how many terms we need based on the magnitude of z.
+    // This replaces the fixed nmax and eliminates the need for z = z/4 scaling.
+    double abs_z = fabs(z);
+    int nmax = 15; // Safe baseline for small z
+
+    if (abs_z > 0.1) {
+        // Dynamically scale the number of Taylor terms up if z is large,
+        // rather than shrinking z down and squaring the errors later.
+        nmax = 15 + (int)(4.0 * sqrt(abs_z));
+    }
+
+    // Ensure nmax is odd to align cleanly with our unrolled loop structure
+    if (nmax % 2 == 0) {
+        nmax++;
+    }
+
+    // We evaluate the series starting from the highest term down to 0.
+    // Instead of precalculated invfactorial[k], we compute the next coefficient
+    // directly by factoring in the required 1/k! step during the iteration.
+
+    double c_odd  = 0.0;
+    double c_even = 0.0;
+
+    // Step 1: Compute c2 and c3 simultaneously using an optimized backward loop
+    for (int k = nmax; k >= 4; k -= 2) {
+        // For c_odd (series for c3): coefficient behaves like 1 / k!
+        // We accumulate the factorial division directly into the running sum
+        c_odd  = (1.0 - z * c_odd)  / (double)(k * (k - 1));
+
+        // For c_even (series for c2): coefficient behaves like 1 / (k-1)!
+        c_even = (1.0 - z * c_even) / (double)((k - 1) * (k - 2));
+    }
+
+    // Step 2: Handle the final specific terms for the requested outputs
+    // c3 series ends at 1/3! = 1/6
+    cs[3] = (1.0 - z * c_odd) / 6.0;
+
+    // c2 series ends at 1/2! = 1/2
+    cs[2] = (1.0 - z * c_even) / 2.0;
+
+    // c1 series is exactly: 1 - z * c3
+    cs[1] = 1.0 - z * cs[3];
+
+    // c0 series is exactly: 1 - z * c2
+    cs[0] = 1.0 - z * cs[2];
+}
+
 static void old_stiefel_Gs3(double *restrict Gs, double beta, double X) {
     double X2 = X*X;
     old_stumpff_cs3(Gs, beta*X2);
@@ -203,8 +315,9 @@ void mpfr_invfactorial(mpfr_t fac, unsigned int i){
     mpfr_ui_div(fac, 1, fac, MPFR_RNDN);
 }
 
-mpfr_t ifac, c_odd, c_even, z, tmp2, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd, mr0i, mr0, mbeta, mzeta0, mv2, meta0, mx, my, mz, mvx, mvy, mvz, tmpx, tmpy, tmpz;
+mpfr_t mE0, ifac, c_odd, c_even, z, tmp2, tmp, cs0, cs1, cs2, cs3, mX, mri, mf, mg, mfd, mgd, mr0i, mr0, mbeta, mzeta0, mv2, meta0, mx, my, mz, mvx, mvy, mvz, tmpx, tmpy, tmpz;
 void init_mpfr(){
+    mpfr_init2(mE0,300);
     mpfr_init2(mX,300);
     mpfr_init2(mr0i,300);
     mpfr_init2(z,300);
@@ -314,10 +427,13 @@ static void stiefel_Gs3() {
 #define WHFAST_NMAX_NEWT  15    ///< Maximum number of iterations for Newton's method
                                 // Keplerian motion for one planet                       
                                 // r only needed for variational particles and warning. Can be NULL.
+                     double nextT = 1;
 void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, double mu, double dt, const struct reb_simulation* const r){
     const struct reb_particle p1 = *p; // Copy of particle
 
     if (r->t==0){
+        memcpy(invfactorial, invfactorial_long, sizeof(uint64_t)*45);
+        memcpy(invfactorial_err, invfactorial_long_err, sizeof(uint64_t)*45);
         mpfr_set_d(mx, p1.x, MPFR_RNDN);
         mpfr_set_d(my, p1.y, MPFR_RNDN);
         mpfr_set_d(mz, p1.z, MPFR_RNDN);
@@ -343,6 +459,21 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     mpfr_fma(mv2, tmp, tmp, mv2, MPFR_RNDN);
     mpfr_set(tmp, mvz, MPFR_RNDN);
     mpfr_fma(mv2, tmp, tmp, mv2, MPFR_RNDN);
+
+    //energy
+    mpfr_mul_d(tmp, mv2, 0.5, MPFR_RNDN);
+    mpfr_sub(tmp, tmp, mr0i, MPFR_RNDN);
+    if (r->t==0){
+        mpfr_set(mE0, tmp, MPFR_RNDN);
+    }
+    if (nextT<r->t){
+        nextT*=1.01;
+        mpfr_sub(tmp, mE0, tmp, MPFR_RNDN);
+        mpfr_div(tmp, tmp, mE0, MPFR_RNDN);
+        mpfr_abs(tmp, tmp, MPFR_RNDN);
+        mpfr_printf("%e %.5Re\n", r->t, tmp);
+    }
+
     
     mpfr_mul_ui(mbeta, mr0i, 2, MPFR_RNDN);
     mpfr_sub(mbeta, mbeta, mv2, MPFR_RNDN);
@@ -422,7 +553,7 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     double g = dt - mu*Gs[3]; // mean error: -5e-20
     double fd = -mu*Gs[1]*r0i*ri;
     double gd = -mu*Gs[2]*ri;
-
+//
     for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
         stiefel_Gs3();
         mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
@@ -441,28 +572,39 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
         
        
     }
+
         
 //    int original_mode = fegetround();
 //    fesetround(FE_TOWARDZERO);
-//    stiefel_Gs(Gs, beta, X);
-    mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
-    mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
-    mpfr_add(mri, mri, tmp, MPFR_RNDN);
-    mpfr_add(mri, mri, mr0, MPFR_RNDN);
-    mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
+    
+    //double __temp = mpfr_get_d(mX, MPFR_RNDN);
+    //mpfr_set_d(mX, __temp, MPFR_RNDN);
+    //mpfr_add_d(mX, mX, 2e-18, MPFR_RNDN);
+    //stiefel_Gs3();
+    //mpfr_printf("%.50Re\n", tmp);
+    
+    //mpfr_set_d(mX, X, MPFR_RNDN);
+//    mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
+//    mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
+//    mpfr_add(mri, mri, tmp, MPFR_RNDN);
+//    mpfr_add(mri, mri, mr0, MPFR_RNDN);
+//    mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
+//
+//    mpfr_mul(mf, cs2,mr0i, MPFR_RNDN);
+//    mpfr_neg(mf, mf, MPFR_RNDN);
+//    mpfr_d_sub(mg, dt,cs3, MPFR_RNDN);
+//    mpfr_mul(mfd, cs1,mri, MPFR_RNDN);
+//    mpfr_mul(mfd, cs1,mr0i, MPFR_RNDN);
+//    mpfr_neg(mfd, mfd, MPFR_RNDN);
+//    mpfr_mul(mfd, mfd,mri, MPFR_RNDN);
+//    mpfr_mul(mgd, cs2, mri, MPFR_RNDN);
+//    mpfr_neg(mgd, mgd, MPFR_RNDN);
 
-    mpfr_mul(mf, cs2,mr0i, MPFR_RNDN);
-    mpfr_neg(mf, mf, MPFR_RNDN);
-    mpfr_d_sub(mg, dt,cs3, MPFR_RNDN);
-    mpfr_mul(mfd, cs1,mri, MPFR_RNDN);
-    mpfr_mul(mfd, cs1,mr0i, MPFR_RNDN);
-    mpfr_neg(mfd, mfd, MPFR_RNDN);
-    mpfr_mul(mfd, mfd,mri, MPFR_RNDN);
-    mpfr_mul(mgd, cs2, mri, MPFR_RNDN);
-    mpfr_neg(mgd, mgd, MPFR_RNDN);
+    mpfr_set_d(mf, f, MPFR_RNDN);
+    mpfr_set_d(mg, g, MPFR_RNDN);
+    mpfr_set_d(mfd, fd, MPFR_RNDN);
+    mpfr_set_d(mgd, gd, MPFR_RNDN);
 
-    mpfr_sub_d(tmp, cs3, Gs[3], MPFR_RNDN);
-    mpfr_printf("%.50Re\n", tmp);
     //mpfr_set_d(tmp, f, MPFR_RNDN);
     //mpfr_add_d(tmp, tmp, gd, MPFR_RNDN);
     //mpfr_set_d(tmp2, f, MPFR_RNDN);
