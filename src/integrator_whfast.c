@@ -169,13 +169,13 @@ static inline double fastabs(double x){
     return (x > 0.) ? x : -x;
 }
 
-static void old_stumpff_cs3_old(double *restrict cs, double z) {
+static void old_stumpff_cs3(double *restrict cs, double z) {
     unsigned int n = 0;
     while(fabs(z)>0.1){
         z = z/4.;
         n++;
     }
-    const int nmax = 17;
+    const int nmax = 17; // orig: 13
     double c_odd  = invfactorial[nmax];
     double c_even = invfactorial[nmax-1];
     for(int np=nmax-2;np>=3;np-=2){
@@ -250,7 +250,7 @@ static inline dd_t dd_mul(dd_t a, dd_t b) {
 
 // --- Main Stumpff Solver ---
 
-void old_stumpff_cs3(double *restrict cs, double z) {
+void llm_old_stumpff_cs3(double *restrict cs, double z) {
     // Dynamically determine how many terms we need based on the magnitude of z.
     // This replaces the fixed nmax and eliminates the need for z = z/4 scaling.
     double abs_z = fabs(z);
@@ -554,24 +554,24 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
     double fd = -mu*Gs[1]*r0i*ri;
     double gd = -mu*Gs[2]*ri;
 //
-    for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
-        stiefel_Gs3();
-        mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
-        mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
-        mpfr_add(tmp, mri, tmp, MPFR_RNDN);
-        mpfr_add(mri, tmp, mr0, MPFR_RNDN);
-        mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
+ //   for (int n_hg=1;n_hg<WHFAST_NMAX_NEWT;n_hg++){
+ //       stiefel_Gs3();
+ //       mpfr_mul(mri, cs1, meta0, MPFR_RNDN);
+ //       mpfr_mul(tmp, cs2, mzeta0, MPFR_RNDN);
+ //       mpfr_add(tmp, mri, tmp, MPFR_RNDN);
+ //       mpfr_add(mri, tmp, mr0, MPFR_RNDN);
+ //       mpfr_ui_div(mri, 1, mri, MPFR_RNDN);
 
-        mpfr_mul(mX,tmp,mX, MPFR_RNDN);
-        mpfr_mul(tmp,meta0,cs2, MPFR_RNDN);
-        mpfr_sub(mX, mX,tmp, MPFR_RNDN);
-        mpfr_mul(tmp,mzeta0,cs3, MPFR_RNDN);
-        mpfr_sub(mX, mX,tmp, MPFR_RNDN);
-        mpfr_add_d(mX, mX, dt, MPFR_RNDN);
-        mpfr_mul(mX, mX, mri, MPFR_RNDN);
-        
-       
-    }
+ //       mpfr_mul(mX,tmp,mX, MPFR_RNDN);
+ //       mpfr_mul(tmp,meta0,cs2, MPFR_RNDN);
+ //       mpfr_sub(mX, mX,tmp, MPFR_RNDN);
+ //       mpfr_mul(tmp,mzeta0,cs3, MPFR_RNDN);
+ //       mpfr_sub(mX, mX,tmp, MPFR_RNDN);
+ //       mpfr_add_d(mX, mX, dt, MPFR_RNDN);
+ //       mpfr_mul(mX, mX, mri, MPFR_RNDN);
+ //       
+ //      
+ //   }
 
         
 //    int original_mode = fegetround();
