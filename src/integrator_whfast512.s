@@ -187,6 +187,50 @@
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
 .endm
 
+.macro comp_horner_step C, CLO, ifoff
+    vmulpd          %zmm0, \C, %zmm7                 # P = z*C
+    vmovapd         %zmm7, %zmm8                     # zmm8 = P
+    vfmsub231pd     %zmm0, \C, %zmm8                 # pe = z*C - P
+    vbroadcastsd    .IF0+(\ifoff*8)(%rip), %zmm1     # IF[k]
+    vsubpd          %zmm7, %zmm1, %zmm9              # Cn = IF[k] - P
+    vsubpd          %zmm9, %zmm1, %zmm1              # IF[k] - Cn
+    vsubpd          %zmm7, %zmm1, %zmm1              # se = (IF[k]-Cn) - P
+    vbroadcastsd    .IF0_err+(\ifoff*8)(%rip), %zmm7 # err[k] = rounded-true
+    vsubpd          %zmm7, %zmm1, %zmm7             # se - err
+    vsubpd          %zmm8, %zmm7, %zmm7             # se - err - pe
+    vfnmadd231pd    %zmm0, \CLO, %zmm7             
+    vmovapd         %zmm9, \C
+    vmovapd         %zmm7, \CLO
+.endm
+
+# similar to mm_stiefel_Gs13_avx512
+.macro mm_stiefel_Gs13_comp numTerms=19
+    .set IF_offset, \numTerms
+    vmulpd          XX, XX, %zmm2     # X^2
+    vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
+    .set IF_offset, IF_offset - 1
+    vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm4
+    .set IF_offset, IF_offset - 1
+    vmulpd          %zmm2, BETA, %zmm0
+    .set GS_iterations, (IF_offset -1)/2 - 2     # leave last 2 terms
+    .rept GS_iterations
+    vfnmadd_auto_inc %zmm0, %zmm3
+    vfnmadd_auto_inc %zmm0, %zmm4
+    .endr
+    vxorpd          %zmm5, %zmm5, %zmm5          # cs3 lo = 0
+    vxorpd          %zmm6, %zmm6, %zmm6          # cs2 lo = 0
+    comp_horner_step %zmm3, %zmm5, 5
+    comp_horner_step %zmm4, %zmm6, 4
+    comp_horner_step %zmm3, %zmm5, 3
+    comp_horner_step %zmm4, %zmm6, 2
+    vaddpd          %zmm5, %zmm3, %zmm3
+    vaddpd          %zmm6, %zmm4, %zmm4
+    vmulpd          %zmm4, %zmm2, GS2
+    vmulpd          %zmm3, XX, %zmm3
+    vmulpd          %zmm3, %zmm2, GS3
+    vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
+.endm
+
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: GS0, GS1==%zmm0, GS2, GS3
 # numTerms must be an odd number
@@ -353,7 +397,7 @@
     jl .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
-    mm_stiefel_Gs13_avx512
+    mm_stiefel_Gs13_comp
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     # Calculate r_new = R + GS1*ETA + GS2*ZETA, then 1/r.
@@ -885,6 +929,22 @@ b34mergeidx:
     .quad 0x389434d2e783f5bc  # = 3.8004e-36 = 1/263130836933693530167218012160000000
     .quad 0x3843981254dd0d51  # = 1.1516e-37 = 1/8683317618811886495518194401280000000
     .quad 0x37f2710231c0fd7a  # = 3.3872e-39 = 1/295232799039604140847618609643520000000
+
+.align 64
+# rounding error of each .IF0 entry (true 1/k! - rounded double)
+.IF0_err:
+    .quad 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
+    .quad 0xbc65555555555555, 0xbc45555555555555, 0xbc01111111111111
+    .quad 0xbc082d82d82d82d8, 0xbb6a01a01a01a01a, 0xbb3a01a01a01a01a
+    .quad 0xbb71f5583911ca00, 0xbb3cbbc05b4fa999, 0xbb01fce8fc9706fb
+    .quad 0xbad6a89b530f59fd, 0xba8f28e0cc748ebd, 0xba305d6f8a2efd1f
+    .quad 0xb9e1d8656b0ee8ca, 0xb9a1d8656b0ee8ca, 0xb98ac981465ddc6b
+    .quad 0xb94eec01221a8b0a, 0xb8f2650f61dbdcb3, 0xb87ea72b4afe3c2e
+    .quad 0xb8817de28df9dcdc, 0xb8428a19216fe671, 0xb7fb2f70e09bafec
+    .quad 0xb7a9949680cf953b, 0xb76a9c894832eede, 0xb71471e40a174d60
+    .quad 0xb6a054d0c78aea13, 0xb66b9e2e28e1aa54, 0xb62eaf8c39dd9bc4
+    .quad 0xb5d832b7b530a627, 0xb580b87b91be9aff, 0xb530b87b91be9aff
+    .quad 0xb4f6a7059bff52e8, 0xb473f8a2b4af9d6b
 
 .align 8
 .CORRECTOR17_AB:        # 63 coefficients for 17th order corrector
