@@ -192,14 +192,13 @@
     vmovapd         %zmm7, %zmm8                     # zmm8 = P
     vfmsub231pd     %zmm0, \C, %zmm8                 # pe = z*C - P
     vbroadcastsd    .IF0+(\ifoff*8)(%rip), %zmm1     # IF[k]
-    vsubpd          %zmm7, %zmm1, %zmm9              # Cn = IF[k] - P
-    vsubpd          %zmm9, %zmm1, %zmm1              # IF[k] - Cn
+    vsubpd          %zmm7, %zmm1, \C                 # Cn = IF[k] - P
+    vsubpd          \C, %zmm1, %zmm1                 # IF[k] - Cn
     vsubpd          %zmm7, %zmm1, %zmm1              # se = (IF[k]-Cn) - P
     vbroadcastsd    .IF0_err+(\ifoff*8)(%rip), %zmm7 # err[k] = rounded-true
     vsubpd          %zmm7, %zmm1, %zmm7             # se - err
     vsubpd          %zmm8, %zmm7, %zmm7             # se - err - pe
-    vfnmadd231pd    %zmm0, \CLO, %zmm7             
-    vmovapd         %zmm9, \C
+    vfnmadd231pd    %zmm0, \CLO, %zmm7             # -z*CLO + (se-err-pe) = CLO_new
     vmovapd         %zmm7, \CLO
 .endm
 
