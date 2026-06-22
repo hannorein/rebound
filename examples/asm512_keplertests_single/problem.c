@@ -19,10 +19,10 @@ struct reb_simulation* setup_sim(double a, double e){
         reb_simulation_add_fmt(r, "a e uniform(f)", a, e);
     }
 
-    reb_simulation_set_integrator(r, "whfast");
-    //reb_simulation_set_integrator(r, "whfast512");
-    //struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
-    //whfast512->gr_potential = 0;
+    //reb_simulation_set_integrator(r, "whfast");
+    reb_simulation_set_integrator(r, "whfast512");
+    struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
+    whfast512->gr_potential = 0;
     return r;
 }
 extern void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r, int N_steps);
