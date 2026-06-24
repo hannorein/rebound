@@ -55,14 +55,14 @@ int main(int argc, char* argv[]) {
     double E0 = reb_simulation_energy(r_asm);
     reb_simulation_set_integrator(r_asm, "whfast512");
     struct reb_integrator_whfast512_state* whfast512 = r_asm->integrator.state;
-    whfast512->gr_potential = 0;
+    whfast512->gr_potential = 1;
     whfast512->concatenate_steps = 1e8;
     whfast512->corrector = 17;
     if (whfast512->gr_potential){
         E0 += gr_potential(r_asm);
     }
     char filename[1024];
-    sprintf(filename, "/scratch/rein/whfast512_tests/out_rishit_%03d.txt", id);
+    sprintf(filename, "/scratch/rein/whfast512_tests/out_rishit2_%03d.txt", id);
     for (double dT=1e1; r_asm->t<2*5e9*2*M_PI && r_asm->status <=0; dT=dT*1.05){
         reb_simulation_integrate(r_asm, r_asm->t+dT);
         double E1_asm = reb_simulation_energy(r_asm);
