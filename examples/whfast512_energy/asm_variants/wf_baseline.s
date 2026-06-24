@@ -187,7 +187,7 @@
     vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
 .endm
 
-.macro comp_horner_step C, CLO, ifoff
+.macro comp_horner_step C, CLO, ifoff, has_err=1
     vmulpd          %zmm0, \C, %zmm7                 # P = z*C
     vmovapd         %zmm7, %zmm8                     # zmm8 = P
     vfmsub231pd     %zmm0, \C, %zmm8                 # pe = z*C - P
@@ -195,11 +195,12 @@
     vsubpd          %zmm7, %zmm1, \C                 # Cn = IF[k] - P
     vsubpd          \C, %zmm1, %zmm1                 # IF[k] - Cn
     vsubpd          %zmm7, %zmm1, %zmm1              # se = (IF[k]-Cn) - P
+    .if \has_err
     vbroadcastsd    .IF0_err+(\ifoff*8)(%rip), %zmm7 # err[k] = rounded-true
-    vsubpd          %zmm7, %zmm1, %zmm7             # se - err
-    vsubpd          %zmm8, %zmm7, %zmm7             # se - err - pe
-    vfnmadd231pd    %zmm0, \CLO, %zmm7             # -z*CLO + (se-err-pe) = CLO_new
-    vmovapd         %zmm7, \CLO
+    vsubpd          %zmm7, %zmm1, %zmm1             # se - err
+    .endif
+    vsubpd          %zmm8, %zmm1, %zmm7             # (se[-err]) - pe
+    vfnmadd213pd    %zmm7, %zmm0, \CLO             # \CLO = -z*\CLO + (se[-err]) - pe
 .endm
 
 # similar to mm_stiefel_Gs13_avx512
@@ -221,7 +222,7 @@
     comp_horner_step %zmm3, %zmm5, 5
     comp_horner_step %zmm4, %zmm6, 4
     comp_horner_step %zmm3, %zmm5, 3
-    comp_horner_step %zmm4, %zmm6, 2
+    comp_horner_step %zmm4, %zmm6, 2, 0          # .IF0_err[2]==0
     vaddpd          %zmm5, %zmm3, %zmm3
     vaddpd          %zmm6, %zmm4, %zmm4
     vmulpd          %zmm4, %zmm2, GS2
