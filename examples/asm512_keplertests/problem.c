@@ -14,7 +14,7 @@
 #include <sched.h>
 #include <stdbool.h>
 
-struct reb_simulation* setup_sim(double a, double e){
+struct reb_simulation* setup_sim(double a, double e, double de){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
     r->dt = 5.0/365.25*2*M_PI;
@@ -23,7 +23,7 @@ struct reb_simulation* setup_sim(double a, double e){
    
     reb_simulation_add_fmt(r, "m", 1.0);
     for (int i=0; i<8; i++){
-        reb_simulation_add_fmt(r, "a e uniform(f)", a, e);
+        reb_simulation_add_fmt(r, "a e uniform(f)", a, e+de*i);
     }
 
     reb_simulation_set_integrator(r, "whfast512");
@@ -37,30 +37,42 @@ extern uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p);
 
 
 int main(int argc, char* argv[]) {
-    int Na = 100;
-    int Ne = 100;
-    for (int ia=0; ia<Na; ia++){
-        for (int ie=0; ie<Ne; ie++){
+    int Na = 8*12;
+    int Ne = 8*12;
+    int id = -1;
+    int ia_start = 0;
+    int ia_end = Na;
+    if (argc>=2){
+        id = atoi(argv[1]);
+        ia_start = id;
+        ia_end = id+1;
+    }
+    char filename[1024];
+    sprintf(filename, "out_parallel_%2d.txt", id);
+    FILE* f = fopen(filename, "w");
+    for (int ia=ia_start; ia<ia_end; ia++){
+        for (int ie=0; ie<Ne; ie+=8){
             double a = 0.05 + (0.95-0.05)*(double)ia/(double)(Na-1);
-            double e = 0.0 + (0.99-0.0)*(double)ie/(double)(Ne-1);
-            printf("%e %e ", a, e);
-            int Nsteps = 1000; // 10 years
-            struct reb_simulation* r = setup_sim(a,e);
+            double de = (0.99-0.0)/(double)(Ne-1);
+            double e = 0.0 + de*(double)ie;
+            int Nsteps = 1e4*365.25/5.0;
+            struct reb_simulation* r = setup_sim(a,e, de);
             reb_integrator_whfast512_kepler_step(r, Nsteps);
-            int test_p = rand_r(&r->rand_seed) % 8;
-            struct reb_orbit o = reb_orbit_from_particle(1., r->particles[test_p+1], r->particles[0]);
-            double s = 0;
-            if (a-o.a>0.0){
-                s = 1.0;
+            for (int k=0; k<8; k++){
+                struct reb_orbit o = reb_orbit_from_particle(1., r->particles[k+1], r->particles[0]);
+                double s = 0;
+                if (a-o.a>0.0){
+                    s = 1.0;
+                }
+                if (a-o.a<0.0){
+                    s = -1.0;
+                }
+                fprintf(f, "%e %e %e %e \n", a, e+k*de, fabs((a-o.a)/a), s);
+
             }
-            if (a-o.a<0.0){
-                s = -1.0;
-            }
-            uint64_t counter  = 0;// reb_whfast512_counter(r, test_p);
-            printf("%e %e %e ", fabs((a-o.a)/a), s, ((double)counter)/((double)Nsteps));
             reb_simulation_free(r);
-            printf("\n");
         }
     }
+    fclose(f);
     return 1;
 }
