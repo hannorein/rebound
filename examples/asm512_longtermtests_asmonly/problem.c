@@ -35,7 +35,7 @@ double gr_potential(struct reb_simulation* const r){
 struct reb_simulation* setup_sim(int i){
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
-    r->dt = 6.0/365.25*2*M_PI;
+    r->dt = 5.0/365.25*2*M_PI;
     r->G = 1.;
     r->exact_finish_time = 0;
    
@@ -56,18 +56,19 @@ int main(int argc, char* argv[]) {
     reb_simulation_set_integrator(r_asm, "whfast512");
     struct reb_integrator_whfast512_state* whfast512 = r_asm->integrator.state;
     whfast512->gr_potential = 1;
-    whfast512->concatenate_steps = 1e8;
     whfast512->corrector = 17;
     if (whfast512->gr_potential){
         E0 += gr_potential(r_asm);
     }
     char filename[1024];
-    sprintf(filename, "/scratch/rein/whfast512_tests/out_rishit2_%03d.txt", id);
-    for (double dT=1e1; r_asm->t<2*5e9*2*M_PI && r_asm->status <=0; dT=dT*1.05){
-        reb_simulation_integrate(r_asm, r_asm->t+dT);
+    sprintf(filename, "/scratch/rein/whfast512_tests/out_paper_5day_%03d.txt", id);
+    for (double dT=1e5; r_asm->t<2*5e9*2*M_PI && r_asm->status <=0; dT=dT*1.05){
+        whfast512->concatenate_steps = dT/r_asm->dt;
+        reb_simulation_steps(r_asm, 1);
+        //reb_simulation_integrate(r_asm, r_asm->t+dT);
         double E1_asm = reb_simulation_energy(r_asm);
         char* mode = "a";
-        if (dT==1e1) mode = "w";
+        if (dT==1e5) mode = "w";
         FILE* f;
         if (whfast512->gr_potential){
            E1_asm += gr_potential(r_asm);

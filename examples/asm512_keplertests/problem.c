@@ -53,10 +53,11 @@ int main(int argc, char* argv[]) {
     for (int ia=ia_start; ia<ia_end; ia++){
         for (int ie=0; ie<Ne; ie+=8){
             double a = 0.05 + (0.95-0.05)*(double)ia/(double)(Na-1);
+            double P = M_PI*2.*powf(a,3./2.);
             double de = (0.99-0.0)/(double)(Ne-1);
             double e = 0.0 + de*(double)ie;
-            int Nsteps = 1e4*365.25/5.0;
             struct reb_simulation* r = setup_sim(a,e, de);
+            int Nsteps = 1000.0*P/r->dt;//1e2*365.25/5.0;
             reb_integrator_whfast512_kepler_step(r, Nsteps);
             for (int k=0; k<8; k++){
                 struct reb_orbit o = reb_orbit_from_particle(1., r->particles[k+1], r->particles[0]);
@@ -67,7 +68,8 @@ int main(int argc, char* argv[]) {
                 if (a-o.a<0.0){
                     s = -1.0;
                 }
-                fprintf(f, "%e %e %e %e \n", a, e+k*de, fabs((a-o.a)/a), s);
+                uint64_t c = (double)reb_whfast512_counter(r, k);
+                fprintf(f, "%e %e %e %e %ld \n", a, e+k*de, fabs((a-o.a)/a), s, c);
 
             }
             reb_simulation_free(r);
