@@ -112,13 +112,13 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
     { "If this flag is set to 17 (default is 0), then symplectic correctors are used.", 
         REB_UINT,        "corrector",       offsetof(struct reb_integrator_whfast512_state, corrector), 0, 0, 0},
     { "If this is set to a number other than 1 (default), then timesteps are combined. "
-       "By doing multiple timesteps in a row, WHFast512 can keep all simulation data in registers which significantly speeds up the calculation. "
-       "This number should be as large as the output cadence allows. ",
-       REB_UINT,        "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
+        "By doing multiple timesteps in a row, WHFast512 can keep all simulation data in registers which significantly speeds up the calculation. "
+        "This number should be as large as the output cadence allows. ",
+        REB_UINT,        "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
     { "By default this value is set to 1, implying all 8 particles in the simulation correspond to one system. "
-       "By setting N_systems to either 2 or 4, one can integrate multiple planetary systems with 2, 3, or 4 particles at the same time. "
-       "See the example problems on how to setup the particles for this case. ",
-       REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
+        "By setting N_systems to either 2 or 4, one can integrate multiple planetary systems with 2, 3, or 4 particles at the same time. "
+        "See the example problems on how to setup the particles for this case. ",
+        REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
     { "", REB_POINTER_ALIGNED, "data",        offsetof(struct reb_integrator_whfast512_state, data), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct simd_data), 0},
     { "", REB_DOUBLE,      "last_synchronization", offsetof(struct reb_integrator_whfast512_state, last_synchronization), 0, 0, 0},
     { 0 }, // Null terminated list
