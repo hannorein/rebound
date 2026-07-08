@@ -86,6 +86,17 @@ struct simd_data{
 };
 
 const struct reb_integrator reb_integrator_whfast512 = {
+    .documentation =
+    "WHFast512 is a highly optimized implementation of the symplectic [Wisdom & Holman (1991)] integrator. " 
+    "It supports simulations with up to 9 particles (8 planets + 1 central object). " 
+    "Note that one needs to set `concatenate_steps` to a large value, i.e. 1e6 to achieve good performance. "
+    "\n\n"
+    "The algorithm is described in two papers [Javaheri et al. (2023)] and [Dagli & Rein (in prep)]. "
+    "\n\n"
+    "[Wisdom & Holman (1991)]: https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/abstract\n"
+    "[Javaheri et al. (2023)]: https://ui.adsabs.harvard.edu/abs/2023OJAp....6E..29J/abstract\n"
+    "[Dagli & Rein (in prep)]: https://hanno-rein.de/publications.html\n"
+    ,
     .step = reb_integrator_whfast512_step,
     .create = reb_integrator_whfast512_create,
     .free = reb_integrator_whfast512_free,
@@ -94,10 +105,20 @@ const struct reb_integrator reb_integrator_whfast512 = {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[] = {
-    { "", REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
-    { "", REB_UINT,        "corrector",       offsetof(struct reb_integrator_whfast512_state, corrector), 0, 0, 0},
-    { "", REB_UINT,        "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
-    { "", REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
+    { "If this flag is set to 1 (default is 0) then general relativistic corrections are included. ", 
+        "The corrections are in the form of an additional potential term and reproduce the correct precession rate. ", 
+        "The constants are hard coded for this effect and assume that the simulation is in units of G=1 and one length unit corresponds to one astronomical unit. ",
+        REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
+    { "If this flag is set to 17 (default is 0), then symplectic correctors are used.", 
+        REB_UINT,        "corrector",       offsetof(struct reb_integrator_whfast512_state, corrector), 0, 0, 0},
+    { "If this is set to a number other than 1 (default), then timesteps are combined. ",
+       "By doing multiple timesteps in a row, WHFast512 can keep all simulation data in registers which significantly speeds up the calculation. ",
+       "This number should be as large as the output cadence allows. ",
+       REB_UINT,        "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
+    { "By default this value is set to 1, implying all 8 particles in the simulation correspond to one system. ",
+       "By setting N_systems to either 2 or 4, one can integrate multiple planetary systems with 2, 3, or 4 particles at the same time. ",
+       "See the example problems on how to setup the particles for this case. ",
+       REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
     { "", REB_POINTER_ALIGNED, "data",        offsetof(struct reb_integrator_whfast512_state, data), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct simd_data), 0},
     { "", REB_DOUBLE,      "last_synchronization", offsetof(struct reb_integrator_whfast512_state, last_synchronization), 0, 0, 0},
     { 0 }, // Null terminated list
