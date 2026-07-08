@@ -30,10 +30,10 @@
 #pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
 #else
 typedef struct {
-        double lanes[8];
+    double lanes[8];
 } __attribute__((aligned(64))) __m512d;
 typedef struct {
-        uint64_t lanes[8];
+    uint64_t lanes[8];
 } __attribute__((aligned(64))) __m512i;
 typedef char  __attribute__((aligned(64))) __mmask8; 
 #endif
@@ -56,11 +56,11 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state)
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[];
 
 #define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
-    X(mat8_inertial_to_jacobi) \
-    X(mat8_jacobi_to_heliocentric) \
-    X(M0) X(mask) \
-    X(mat8_jacobi_to_inertial)\
-    X(counter) 
+X(mat8_inertial_to_jacobi) \
+X(mat8_jacobi_to_heliocentric) \
+X(M0) X(mask) \
+X(mat8_jacobi_to_inertial)\
+X(counter) 
 
 struct simd_data{
     // Various constants
@@ -77,7 +77,7 @@ struct simd_data{
     double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
     double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
     __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
-    // Mask for cases with less than 8 planets
+                                                                 // Mask for cases with less than 8 planets
     __mmask8 mask __attribute__ ((aligned (64)));
     double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
 #ifdef DEBUG_AVX512
@@ -192,7 +192,7 @@ void mat8_mul3_avx512(const double* matrix, const __m512d in1, const __m512d in2
         *out3 = _mm512_fmadd_pd(vin3, col_i, *out3);
     }
 }
-   
+
 // Hepler function to load particle data into avx512 registers
 __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
@@ -469,7 +469,7 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
     data->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
     data->dt = _mm512_set1_pd(r->dt); 
 #define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
-//    SIMD_DATA_MEMBERS
+    //    SIMD_DATA_MEMBERS
 #undef X
 
 }
@@ -480,10 +480,10 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
     // Check if all assumptions are satisfied.
     // Note: These are not checked every timestep. 
     // So it is possible for the user to screw things up.
-//    if (r->dt<0.0){
-//        reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
-//        return 1;
-//    }
+    //    if (r->dt<0.0){
+    //        reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
+    //        return 1;
+    //    }
     if (!reb_avx512_available()){
         reb_simulation_error(r, "AVX512 is not supported by your CPU.");
         return 1;
@@ -599,7 +599,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
         data->dt = _mm512_set1_pd(r->dt/2.0); 
         reb_whfast512_kepler_step(data);    
         data->dt = _mm512_set1_pd(r->dt); // Reset
-                                         // TODO Add COM step
+                                          // TODO Add COM step
         if (whfast512->corrector){
             whfast512_corrector_step(whfast512, -1.0);
         }
