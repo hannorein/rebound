@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <sys/ioctl.h>
 #include <string.h>
 #if defined(__i386__) || defined(__x86_64__)
 #include <immintrin.h>
@@ -55,6 +54,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* r, void* state);
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[];
 
+// Helper macro to print out offsets in structure for assembly code
 #define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
 X(mat8_inertial_to_jacobi) \
 X(mat8_jacobi_to_heliocentric) \
@@ -62,6 +62,7 @@ X(M0) X(mask) \
 X(mat8_jacobi_to_inertial)\
 X(counter) 
 
+// The main datasctructure. We pass this as a pointer to the assembly code.
 struct simd_data{
     // Various constants
     __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
