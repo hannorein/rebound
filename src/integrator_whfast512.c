@@ -1,7 +1,7 @@
 /**
  * integrator_whfast512.c: ASM version of WHFast512
  * 
- * Copyright (c) 2025 Hanno Rein
+ * Copyright (c) 2026 Rishit Dagli, Hanno Rein
  *
  * This file is part of rebound.
  *
