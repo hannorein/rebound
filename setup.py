@@ -51,6 +51,11 @@ def avx512_supported():
 class build_ext_avx512(build_ext):
     def build_extensions(self):
         os.makedirs(self.build_temp, exist_ok=True)
+        if sys.platform == "darwin":
+            if hasattr(self.compiler, 'linker_so'):
+                for i, flag in enumerate(self.compiler.linker_so):
+                    if flag == '-bundle':
+                        self.compiler.linker_so[i] = '-shared'
         if avx512_supported():
             asm = os.path.join(self.build_temp, "integrator_whfast512.asm_o")
             self.compiler.spawn(["as", "-g", "-o", asm, "src/integrator_whfast512.s"])
