@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/rebound-v5.0.0-green.svg?style=flat)](https://rebound.hanno-rein.de)
+[![Version](https://img.shields.io/badge/rebound-v5.0.1-green.svg?style=flat)](https://rebound.hanno-rein.de)
 [![PyPI](https://badge.fury.io/py/rebound.svg)](https://badge.fury.io/py/rebound)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/hannorein/rebound/blob/main/LICENSE)
 [![Docs](https://img.shields.io/badge/Documentation-green.svg?style=flat)](https://rebound.hanno-rein.de/)

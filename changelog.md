@@ -4,6 +4,11 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.0.1
+* Optimized Lazy Kernel method in WHFast.
+* Fixed bug in WHFast512 when GR is enabled, related to backreaction.
+* Fixed size of integers in collision structure in python. 
+
 ### Version 5.0.0
 * This release incorporates major updates and breaks backwards compatability. 
 * Particles can now be identified with a name. The names can be any string. The memory for names is managed by REBOUND. Names are automatically stored in Simulationarchives. Hashes are now longer available to identify particles.
