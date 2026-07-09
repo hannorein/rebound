@@ -36,10 +36,10 @@ BINARY_WARNINGS = [
 
 # Note: name conflict with exception "Collision"
 class CollisionS(Structure):
-    _fields_ = [("p1", c_int),
-                ("p2", c_int),
+    _fields_ = [("p1", c_size_t),
+                ("p2", c_size_t),
                 ("gb", Vec6d),
-                ("ri", c_int)]
+                ("ri", c_size_t)]
     
     def __repr__(self):
         return '<{0}.{1} object at {2}, p1={3}, p2={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.p1, self.p2)
