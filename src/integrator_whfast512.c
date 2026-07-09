@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
 #include <immintrin.h>
 #pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
 #else
@@ -141,8 +141,7 @@ void reb_integrator_whfast512_free(void* state){
     free(whfast512);
 }
 
-
-#if defined(__i386__) || defined(__x86_64__)
+#if (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
 #ifdef DEBUG_AVX512
 uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
@@ -612,7 +611,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
     }
 }
 
-#else // defined(__i386__) || defined(__x86_64__)
+#else // (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state){
     (void)state;
     reb_simulation_error(r, "AVX512 is not supported on your platform");
@@ -621,4 +620,4 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state)
     (void)state;
     reb_simulation_error(r, "AVX512 is not supported on your platform");
 }
-#endif // defined(__i386__) || defined(__x86_64__)
+#endif // (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
