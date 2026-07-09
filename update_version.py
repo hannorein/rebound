@@ -38,7 +38,7 @@ with open("setup.py") as f:
 with open("pyproject.toml") as f:
     setuplines = f.readlines()
     for i,l in enumerate(setuplines):
-        if "version = \""
+        if "version = \"" in l:
             setuplines[i] = "version = \""+reboundversion+"\"\n"
 
     with open("pyproject.toml", "w") as f:
