@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include "rebound.h"
+#include "rebound_internal.h"
 #if !defined(_WIN32)
 #define REB_ATTRIBUTE_ALIGNED_64 __attribute__((aligned(64)))
 #else
@@ -41,8 +43,6 @@ typedef struct {
 } REB_ATTRIBUTE_ALIGNED_64 __m512i;
 typedef char  REB_ATTRIBUTE_ALIGNED_64 __mmask8; 
 #endif
-#include "rebound.h"
-#include "rebound_internal.h"
 #include "particle.h"
 #include "tools.h"
 #include "gravity.h"
@@ -83,7 +83,7 @@ struct simd_data{
     double mat8_inertial_to_jacobi[64] REB_ATTRIBUTE_ALIGNED_64; // Coordinate transformation matricies. Can be recalculated from particle masses.
     double mat8_jacobi_to_heliocentric[64] REB_ATTRIBUTE_ALIGNED_64;
     __m512d M0 REB_ATTRIBUTE_ALIGNED_64;                   //  Masses used in Jacobi Term
-                                                                 // Mask for cases with less than 8 planets
+                                                           // Mask for cases with less than 8 planets
     __mmask8 mask REB_ATTRIBUTE_ALIGNED_64;
     double mat8_jacobi_to_inertial[64] REB_ATTRIBUTE_ALIGNED_64;
 #ifdef DEBUG_AVX512
