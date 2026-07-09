@@ -24,17 +24,22 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#if !defined(_WIN32)
+#define REB_ATTRIBUTE_ALIGNED_64 __attribute__((aligned(64)))
+#else
+#define REB_ATTRIBUTE_ALIGNED_64
+#endif
 #if (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
 #include <immintrin.h>
 #pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
 #else
 typedef struct {
     double lanes[8];
-} __attribute__((aligned(64))) __m512d;
+} REB_ATTRIBUTE_ALIGNED_64 __m512d;
 typedef struct {
     uint64_t lanes[8];
-} __attribute__((aligned(64))) __m512i;
-typedef char  __attribute__((aligned(64))) __mmask8; 
+} REB_ATTRIBUTE_ALIGNED_64 __m512i;
+typedef char  REB_ATTRIBUTE_ALIGNED_64 __mmask8; 
 #endif
 #include "rebound.h"
 #include "rebound_internal.h"
@@ -65,24 +70,24 @@ X(counter)
 // The main datasctructure. We pass this as a pointer to the assembly code.
 struct simd_data{
     // Various constants
-    __m512d M __attribute__ ((aligned (64)));                   //  Masses used in Kepler-Solver
-    __m512d dt __attribute__ ((aligned (64)));                  //  Timestep
-    __m512d gr_prefac __attribute__ ((aligned (64)));           //  Prefactor for GR
-    __m512d m __attribute__ ((aligned (64)));
-    __m512d x __attribute__ ((aligned (64)));
-    __m512d y __attribute__ ((aligned (64)));
-    __m512d z __attribute__ ((aligned (64)));
-    __m512d vx __attribute__ ((aligned (64)));
-    __m512d vy __attribute__ ((aligned (64)));
-    __m512d vz __attribute__ ((aligned (64)));
-    double mat8_inertial_to_jacobi[64] __attribute__ ((aligned (64))); // Coordinate transformation matricies. Can be recalculated from particle masses.
-    double mat8_jacobi_to_heliocentric[64] __attribute__ ((aligned (64)));
-    __m512d M0 __attribute__ ((aligned (64)));                   //  Masses used in Jacobi Term
+    __m512d M REB_ATTRIBUTE_ALIGNED_64;                   //  Masses used in Kepler-Solver
+    __m512d dt REB_ATTRIBUTE_ALIGNED_64;                  //  Timestep
+    __m512d gr_prefac REB_ATTRIBUTE_ALIGNED_64;           //  Prefactor for GR
+    __m512d m REB_ATTRIBUTE_ALIGNED_64;
+    __m512d x REB_ATTRIBUTE_ALIGNED_64;
+    __m512d y REB_ATTRIBUTE_ALIGNED_64;
+    __m512d z REB_ATTRIBUTE_ALIGNED_64;
+    __m512d vx REB_ATTRIBUTE_ALIGNED_64;
+    __m512d vy REB_ATTRIBUTE_ALIGNED_64;
+    __m512d vz REB_ATTRIBUTE_ALIGNED_64;
+    double mat8_inertial_to_jacobi[64] REB_ATTRIBUTE_ALIGNED_64; // Coordinate transformation matricies. Can be recalculated from particle masses.
+    double mat8_jacobi_to_heliocentric[64] REB_ATTRIBUTE_ALIGNED_64;
+    __m512d M0 REB_ATTRIBUTE_ALIGNED_64;                   //  Masses used in Jacobi Term
                                                                  // Mask for cases with less than 8 planets
-    __mmask8 mask __attribute__ ((aligned (64)));
-    double mat8_jacobi_to_inertial[64] __attribute__ ((aligned (64)));
+    __mmask8 mask REB_ATTRIBUTE_ALIGNED_64;
+    double mat8_jacobi_to_inertial[64] REB_ATTRIBUTE_ALIGNED_64;
 #ifdef DEBUG_AVX512
-    __m512i counter __attribute__ ((aligned (64)));
+    __m512i counter REB_ATTRIBUTE_ALIGNED_64;
 #endif // DEBUG_AVX512
 };
 
