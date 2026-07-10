@@ -323,6 +323,7 @@ static void whfast512_corrector_step(struct reb_integrator_whfast512_state* whfa
     }
 }
 
+__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
     // Transformations assume system is in COM frame.
