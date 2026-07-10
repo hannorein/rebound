@@ -323,7 +323,6 @@ static void whfast512_corrector_step(struct reb_integrator_whfast512_state* whfa
     }
 }
 
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
     // Transformations assume system is in COM frame.
@@ -526,21 +525,6 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
     return 0; // success
 }
 
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
-void reb_integrator_whfast512_kepler_step(struct reb_simulation* const r, int N_steps){
-    struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
-    recalculate_constants(r, whfast512->N_systems);
-    inertial_to_jacobi_posvel(r, whfast512->data, whfast512->N_systems);
-    struct simd_data* data = whfast512->data;
-    for (int i=0; i<N_steps; i++){
-        reb_whfast512_kepler_step(data);    
-    }
-    jacobi_to_inertial_posvel_and_com(r, whfast512->data, 0.0, whfast512->N_systems);
-    // This will leak memory. Cannot free because of counter access
-    //free(whfast512->data);
-    //whfast512->data = NULL;
-}
-
 // Optimized main loops allowing for concatenate_steps
 __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
@@ -594,7 +578,6 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
         data->dt = _mm512_set1_pd(r->dt/2.0); 
         reb_whfast512_kepler_step(data);    
         data->dt = _mm512_set1_pd(r->dt); // Reset
-                                          // TODO Add COM step
         if (whfast512->corrector){
             whfast512_corrector_step(whfast512, -1.0);
         }
