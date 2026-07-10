@@ -214,8 +214,8 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
-    double tmp[8] __attribute__((aligned(64)));
-    _mm512_store_pd(tmp, vector);
+    double tmp[8];
+    _mm512_storeu_pd(tmp, vector);
     double tmp2[8] = {0}; 
     for (int i=0; i<8; i++) {
         for (int j=0; j<8; j++) {
