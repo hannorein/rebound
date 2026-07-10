@@ -21,12 +21,12 @@
 #
 #
 .section .text
-.globl reb_whfast512_full_steps_jacobi_gr
-.globl reb_whfast512_full_steps_jacobi_nogr
-.globl reb_whfast512_full_steps_jacobi_gr_n2
-.globl reb_whfast512_full_steps_jacobi_nogr_n2
-.globl reb_whfast512_full_steps_jacobi_gr_n4
-.globl reb_whfast512_full_steps_jacobi_nogr_n4
+.globl reb_whfast512_full_steps_gr
+.globl reb_whfast512_full_steps_nogr
+.globl reb_whfast512_full_steps_gr_n2
+.globl reb_whfast512_full_steps_nogr_n2
+.globl reb_whfast512_full_steps_gr_n4
+.globl reb_whfast512_full_steps_nogr_n4
 .globl reb_whfast512_kepler_step
 .globl reb_whfast512_corrector_step_gr
 .globl reb_whfast512_corrector_step_nogr
@@ -861,12 +861,12 @@ reb_whfast512_interaction_step_nogr:
     ret
 .endm
 
-reb_whfast512_full_steps_jacobi_gr: full_steps 1 0
-reb_whfast512_full_steps_jacobi_nogr: full_steps 0 0
-reb_whfast512_full_steps_jacobi_gr_n2: full_steps 1 0 2
-reb_whfast512_full_steps_jacobi_nogr_n2: full_steps 0 0 2
-reb_whfast512_full_steps_jacobi_gr_n4: full_steps 1 0 4
-reb_whfast512_full_steps_jacobi_nogr_n4: full_steps 0 0 4
+reb_whfast512_full_steps_gr: full_steps 1 0
+reb_whfast512_full_steps_nogr: full_steps 0 0
+reb_whfast512_full_steps_gr_n2: full_steps 1 0 2
+reb_whfast512_full_steps_nogr_n2: full_steps 0 0 2
+reb_whfast512_full_steps_gr_n4: full_steps 1 0 4
+reb_whfast512_full_steps_nogr_n4: full_steps 0 0 4
 
 
 .section    .rodata
