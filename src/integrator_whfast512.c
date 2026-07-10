@@ -183,20 +183,6 @@ static inline void printmat8(double* a) {
 }
 #endif // DEBUG_AVX512
 
-// 8x8 matrix multiplication using avx512
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
-static inline __m512d mat8_mul_avx512(const double* matrix, const __m512d vector) {
-    __m512d v_i = _mm512_set1_pd(vector[0]);
-    __m512d col_i = _mm512_load_pd(matrix);
-    __m512d res = _mm512_mul_pd(v_i, col_i);
-    for (int i = 1; i < 8; i++) {
-        __m512d v_i = _mm512_set1_pd(vector[i]);
-        __m512d col_i = _mm512_load_pd(&matrix[i * 8]);
-        res = _mm512_fmadd_pd(v_i, col_i, res);
-    }
-    return res;
-}
-
 // Hepler function to load particle data into avx512 registers
 __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
@@ -209,11 +195,16 @@ static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const do
             tmp[s*p_per_system+i-1] = *(double*)((char*)(&particles[s*N_per_system+i])+offset);
         }
     }
-    __m512d tmp512 = _mm512_loadu_pd(tmp);
     if (transformation != NULL){
-        return mat8_mul_avx512(transformation, tmp512);
+        double tmp2[8] = {0}; 
+        for (int i=0; i<8; i++) {
+            for (int j=0; j<8; j++) {
+                tmp2[i] += tmp[j]*transformation[8*j+i];
+            }
+        }
+        return _mm512_loadu_pd(tmp2);
     }else{
-        return tmp512;
+        return _mm512_loadu_pd(tmp);
     }
 }
 
@@ -223,17 +214,17 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
-    double tmp[8] __attribute__((aligned(64)));; 
-    __m512d tmp512;
-    if (transformation != NULL){
-        tmp512 = mat8_mul_avx512(transformation, vector);
-    }else{
-        tmp512 = vector;
+    double tmp[8] __attribute__((aligned(64)));
+    _mm512_store_pd(tmp, vector);
+    double tmp2[8] = {0}; 
+    for (int i=0; i<8; i++) {
+        for (int j=0; j<8; j++) {
+            tmp2[i] += tmp[j]*transformation[8*j+i];
+        }
     }
-    _mm512_store_pd(tmp, tmp512);
     for (int s=0; s<N_systems; s++){
         for (unsigned int i=1; i<N_per_system; i++){
-            *(double*)((char*)(&particles[s*N_per_system+i])+offset) = tmp[s*p_per_system+i-1];
+            *(double*)((char*)(&particles[s*N_per_system+i])+offset) = tmp2[s*p_per_system+i-1];
         }
     }
 }
