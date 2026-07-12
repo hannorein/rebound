@@ -242,6 +242,28 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertAlmostEqual(com.x, com.vx*sim.t, 12)
 
 
+    def test_whfast512_restart(self):
+        if not rebound.avx512_available: return
+        sim = rebound.Simulation()
+        sim.add("solar system")
+        sim.integrator = "whfast512"
+        sim.integrator.concatenate_steps = 5
+        sim.integrator.gr_potential = True
+        sim.integrator.corrector = 17
+        sim.dt = 6/365.25*2*math.pi
+        sim.exact_finish_time = 0
+        sim.steps(3)
+        sim.save_to_file("test.bin",delete_file=True)
+        sim.steps(4)
+        sim2 = rebound.Simulation("test.bin")
+        sim2.steps(4)
+      
+        self.assertEqual(sim.integrator, sim2.integrator)
+        self.assertEqual(sim.t, sim2.t)
+        for i in range(sim.N):
+            self.assertEqual(sim.particles[i].m, sim2.particles[i].m)
+            self.assertEqual(sim.particles[i].x, sim2.particles[i].x)
+            self.assertEqual(sim.particles[i].vx, sim2.particles[i].vx)
        
 
 if __name__ == "__main__":
