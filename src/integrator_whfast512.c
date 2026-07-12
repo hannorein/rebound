@@ -1,7 +1,7 @@
 /**
- * integrator_whfast512.c: ASM version of WHFast512
+ * integrator_whfast512.c: ASM version of WHFast512 in Jacobi Coordinates
  * 
- * Copyright (c) 2026 Rishit Dagli, Hanno Rein
+ * Copyright (c) 2026 Rishit Dagli, Hanno Rein, Pejvak Javaheri
  *
  * This file is part of rebound.
  *
@@ -50,7 +50,6 @@ typedef char  REB_ATTRIBUTE_ALIGNED_64 __mmask8;
 #include "integrator_whfast.h"
 #include "integrator_whfast512.h"
 
-
 //#define DEBUG_AVX512 1
 
 void reb_integrator_whfast512_free(void* state);		
@@ -58,14 +57,6 @@ void* reb_integrator_whfast512_create();
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state);
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[];
-
-// Helper macro to print out offsets in structure for assembly code
-#define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
-X(mat8_inertial_to_jacobi) \
-X(mat8_jacobi_to_heliocentric) \
-X(M0) X(mask) \
-X(mat8_jacobi_to_inertial)\
-X(counter) 
 
 // The main datasctructure. We pass this as a pointer to the assembly code.
 struct simd_data{
@@ -95,9 +86,13 @@ const struct reb_integrator reb_integrator_whfast512 = {
     .documentation =
     "WHFast512 is a highly optimized implementation of the symplectic [Wisdom & Holman (1991)] integrator. " 
     "It supports simulations with up to 9 particles (8 planets + 1 central object). " 
-    "Note that one needs to set `concatenate_steps` to a large value, i.e. 1e6 to achieve good performance. "
+    "Note that by default WHFast512 combines 1e6 timesteps to improve speed. "
+    "You can set `concatenate_steps` to a lower value for more fine grained output. "
+    "WHFast512 uses Jacobi coordinates and support symplectic correctors as well as general relativistic corrections. "
     "\n\n"
     "The algorithm is described in two papers [Javaheri et al. (2023)] and [Dagli & Rein (in prep)]. "
+    "Note that in July 2026 significant changes have been made. "
+    "See [Dagli & Rein (in prep)] for details on WHFast512 version 2. "
     "\n\n"
     "[Wisdom & Holman (1991)]: https://ui.adsabs.harvard.edu/abs/1991AJ....102.1528W/abstract\n"
     "[Javaheri et al. (2023)]: https://ui.adsabs.harvard.edu/abs/2023OJAp....6E..29J/abstract\n"
@@ -117,9 +112,10 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
         REB_UINT,        "gr_potential",    offsetof(struct reb_integrator_whfast512_state, gr_potential), 0, 0, 0},
     { "If this flag is set to 17 (default is 0), then symplectic correctors are used.", 
         REB_UINT,        "corrector",       offsetof(struct reb_integrator_whfast512_state, corrector), 0, 0, 0},
-    { "If this is set to a number other than 1 (default), then timesteps are combined. "
+    { "If this is set to a number other than 1 then timesteps are combined. "
         "By doing multiple timesteps in a row, WHFast512 can keep all simulation data in registers which significantly speeds up the calculation. "
-        "This number should be as large as the output cadence allows. ",
+        "This number should be as large as the output cadence allows. "
+        "The default is 1e6. ",
         REB_UINT,        "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
     { "By default this value is set to 1, implying all 8 particles in the simulation correspond to one system. "
         "By setting N_systems to either 2 or 4, one can integrate multiple planetary systems with 2, 3, or 4 particles at the same time. "
@@ -130,13 +126,11 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
     { 0 }, // Null terminated list
 };
 
-
-
 void* reb_integrator_whfast512_create(){
     struct reb_integrator_whfast512_state* whfast512 = calloc(sizeof(struct reb_integrator_whfast512_state),1);
     whfast512->N_systems = 1;
     whfast512->gr_potential = 0;
-    whfast512->concatenate_steps = 1;
+    whfast512->concatenate_steps = 1e6;
     return whfast512;
 }
 
@@ -147,6 +141,14 @@ void reb_integrator_whfast512_free(void* state){
 }
 
 #if (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
+// Helper macro to print out offsets in structure for assembly code
+#define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
+X(mat8_inertial_to_jacobi) \
+X(mat8_jacobi_to_heliocentric) \
+X(M0) X(mask) \
+X(mat8_jacobi_to_inertial)\
+X(counter) 
+
 #ifdef DEBUG_AVX512
 uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
@@ -272,18 +274,17 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
     }
 }
 
-
+// External functions. Implemented in integrator_whfast512.s.
+// _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
+extern void reb_whfast512_kepler_step(struct simd_data* data);
 extern void reb_whfast512_full_steps_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_full_steps_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
-extern void reb_whfast512_kepler_step(struct simd_data* data);
-
-// _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
 extern void reb_whfast512_full_steps_gr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_full_steps_nogr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_full_steps_gr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_full_steps_nogr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
+extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr_n2(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n4(struct simd_data* data, double inv);
@@ -475,10 +476,6 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
     // Check if all assumptions are satisfied.
     // Note: These are not checked every timestep. 
     // So it is possible for the user to screw things up.
-    //    if (r->dt<0.0){
-    //        reb_simulation_error(r, "WHFast512 does not support negative timesteps. To integrate backwards, flip the sign of the velocities.");
-    //        return 1;
-    //    }
     if (!reb_avx512_available()){
         reb_simulation_error(r, "AVX512 is not supported by your CPU.");
         return 1;

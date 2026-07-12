@@ -1,7 +1,7 @@
 /**
  * integrator_whfast512.h: The AVX512 accelerated symplectic integrator WHFast512 in ASM
  * 
- * Copyright (c) 2025 Hanno Rein
+ * Copyright (c) 2026 Hanno Rein, Rishit Dagli, Pejvak Javaheri
  *
  * This file is part of rebound.
  *
@@ -27,15 +27,15 @@
 extern const struct reb_integrator reb_integrator_whfast512;
 
 struct reb_integrator_whfast512_state {
-    unsigned int gr_potential;          // 1: Turn on GR potential of central object, 0 (default): no GR potential
-    unsigned int N_systems;             // Number of systems to be integrator in parallel: 1 (default, up to 8 planets), 2 (up to 4 planets each), 4 (2 planets each)
-    unsigned int corrector;
+    unsigned int gr_potential;
+    unsigned int N_systems;
+    unsigned int corrector;             
     unsigned int concatenate_steps;
 
     // Internal use
     size_t N_allocated;
-    double last_synchronization;        // Time of last synchronization (required to advance com)
-    void* data; // alligned SIMD data
+    double last_synchronization;
+    void* data;
 };
 
 #endif
