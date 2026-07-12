@@ -27,6 +27,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         sim.dt = 6/365.25*2*math.pi
         sim.exact_finish_time = 0
         e0 = sim.energy()
+        sim.integrator.concatenate_steps = 1
         sim.steps(1)
         self.assertTrue(sim.is_synchronized)
         e1 = sim.energy()
@@ -46,6 +47,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         sim.dt = 6/365.25*2*math.pi
         sim.exact_finish_time = 0
         e0 = sim.energy()
+        sim.integrator.concatenate_steps = 1
         sim.steps(1)
         e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e0),6e-15)
@@ -64,6 +66,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         sim.dt = 6/365.25*2*math.pi
         sim.exact_finish_time = 0
         e0 = sim.energy() + gr_potential(sim)
+        sim.integrator.concatenate_steps = 1
         sim.steps(1)
         e1 = sim.energy() + gr_potential(sim)
         self.assertLess(math.fabs((e0-e1)/e0),6e-15)
@@ -83,6 +86,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         sim.dt = 20.0/365.25*2*math.pi
         sim.exact_finish_time = 0
         e0 = sim.energy() + gr_potential(sim)
+        sim.integrator.concatenate_steps = 1
         sim.steps(1)
         e1 = sim.energy() + gr_potential(sim)
         self.assertLess(math.fabs((e0-e1)/e0),4e-14)
@@ -125,6 +129,8 @@ class TestIntegratorWHFast512(unittest.TestCase):
             sim.integrator = integrator
             sim.dt = 6/365.25*2*math.pi
             sim.exact_finish_time = 0
+            if sim.integrator=="whfast512":
+                sim.integrator.concatenate_steps = 1
             sim.steps(1)
             return sim
         for f in [0,math.pi,0.1234,0.2355]:
@@ -153,6 +159,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
             sim.integrator = "whfast512"
             sim.integrator.corrector = 1
             sim.integrator.gr_potential = 1
+            sim.integrator.concatenate_steps = 1
             sim.dt = 6/365.25*2*math.pi
             sim.exact_finish_time = 0
 
@@ -187,6 +194,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
             sim.integrator = "whfast512"
             sim.integrator.corrector = 1
             sim.integrator.gr_potential = 1
+            sim.integrator.concatenate_steps = 1
             sim.dt = 6/365.25*2*math.pi
             sim.exact_finish_time = 0
 

@@ -33,7 +33,6 @@ struct reb_integrator_whfast512_state {
     unsigned int concatenate_steps;
 
     // Internal use
-    size_t N_allocated;
     double last_synchronization;
     void* data;
 };

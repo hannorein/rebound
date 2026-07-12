@@ -121,7 +121,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
         "By setting N_systems to either 2 or 4, one can integrate multiple planetary systems with 2, 3, or 4 particles at the same time. "
         "See the example problems on how to setup the particles for this case. ",
         REB_UINT,        "N_systems",       offsetof(struct reb_integrator_whfast512_state, N_systems), 0, 0, 0},
-    { "", REB_POINTER_ALIGNED, "data",        offsetof(struct reb_integrator_whfast512_state, data), offsetof(struct reb_integrator_whfast512_state, N_allocated), sizeof(struct simd_data), 0},
+    { "", REB_POINTER_ALIGNED, "data",        offsetof(struct reb_integrator_whfast512_state, data), SIZE_MAX, sizeof(struct simd_data), 0},
     { "", REB_DOUBLE,      "last_synchronization", offsetof(struct reb_integrator_whfast512_state, last_synchronization), 0, 0, 0},
     { 0 }, // Null terminated list
 };
@@ -365,7 +365,6 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     free(whfast512->data); // free in case previously allocated
     whfast512->data = aligned_alloc(64,sizeof(struct simd_data));
-    whfast512->N_allocated=1;
     memset(whfast512->data, 0, sizeof(struct simd_data));
     if (!whfast512->data){
         reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
