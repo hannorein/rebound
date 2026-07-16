@@ -276,53 +276,56 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
     }
 }
 
-// External functions. Implemented in integrator_whfast512.s.
+// External function definitions. Implemented in integrator_whfast512.s.
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
+// Because there are so many combinations (32 in total), the function definitions are implemented using precompiler macros.
 
-#define MACRO_4(gr, sys, mind, maxd) \
-    extern enum REB_STATUS reb_whfast512_full_steps_##gr##_n##sys##_##encounter##_##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-
-#define MACRO_3(gr, sys, encounter) \
-    MACRO_4(gr, sys, encounter, escape) \
-    MACRO_4(gr, sys, encounter, noescape)
-
-#define MACRO_2(gr, sys) \
-    MACRO_3(gr, nsys, encounter) \
-    MACRO_3(gr, nsys, noencounter) 
-
-#define MACRO_1(gr) \
-    MACRO_2(gr, 1) \
-    MACRO_2(gr, 2) \
-    MACRO_2(gr, 4) 
-
-#define MACRO_0() \
-    MACRO_1(0) \
-    MACRO_1(1)
-
-MACRO_0()
+#define FUNCDEF_3(nsys, encounter, escape) \
+    extern enum REB_STATUS reb_whfast512_full_steps_gr_n##nsys##_##encounter##_##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint); \
+    extern enum REB_STATUS reb_whfast512_full_steps_nogr_n##nsys##_##encounter##_##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+#define FUNCDEF_2(nsys, encounter) \
+    FUNCDEF_3(nsys, encounter, escape) \
+    FUNCDEF_3(nsys, encounter, noescape)
+#define FUNCDEF_1(nsys) \
+    FUNCDEF_2(nsys, encounter) \
+    FUNCDEF_2(nsys, noencounter) \
+    extern void reb_whfast512_corrector_step_gr_n##nsys(struct simd_data* data, double inv);\
+    extern void reb_whfast512_corrector_step_nogr_n##nsys(struct simd_data* data, double inv);
+FUNCDEF_1(1)
+FUNCDEF_1(2)
+FUNCDEF_1(4) 
 
 
 extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
-extern void reb_whfast512_corrector_step_gr_n1(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_nogr_n1(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_nogr_n2(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr_n4(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_nogr_n4(struct simd_data* data, double inv);
 
-static enum REB_STATUS whfast512_full_steps(struct reb_integrator_whfast512_state* whfast512, uint64_t* N_steps, int skip){
+static enum REB_STATUS whfast512_full_steps(struct reb_simulation* r, struct reb_integrator_whfast512_state* whfast512, uint64_t* N_steps, int skip){
     struct simd_data* data = whfast512->data;
-    if (whfast512->gr_potential){
-        switch (whfast512->N_systems){
-            case 2: return reb_whfast512_full_steps_gr_n2(data, N_steps, skip, &reb_sigint); break;
-            case 4: return reb_whfast512_full_steps_gr_n4(data, N_steps, skip, &reb_sigint); break;
-            default: return reb_whfast512_full_steps_gr_n1(data, N_steps, skip, &reb_sigint); break;
+    // Similar to above, all the 24 possible options are implemented as macros.
+#define MACRO_5(encounter,escape) \
+    if (whfast512->gr_potential){\
+        switch (whfast512->N_systems){\
+            case 2: return reb_whfast512_full_steps_gr_n2_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+            case 4: return reb_whfast512_full_steps_gr_n4_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+            default: return reb_whfast512_full_steps_gr_n1_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+        }\
+    }else{\
+        switch (whfast512->N_systems){\
+            case 2: return reb_whfast512_full_steps_nogr_n2_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+            case 4: return reb_whfast512_full_steps_nogr_n4_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+            default: return reb_whfast512_full_steps_nogr_n1_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+        }\
+    }
+    if (r->exit_min_distance){
+        if (r->exit_max_distance){
+            MACRO_5(encounter,escape)
+        }else{
+            MACRO_5(encounter,noescape)
         }
     }else{
-        switch (whfast512->N_systems){
-            case 2: return reb_whfast512_full_steps_nogr_n2(data, N_steps, skip, &reb_sigint); break;
-            case 4: return reb_whfast512_full_steps_nogr_n4(data, N_steps, skip, &reb_sigint); break;
-            default: return reb_whfast512_full_steps_nogr_n1(data, N_steps, skip, &reb_sigint); break;
+        if (r->exit_max_distance){
+            MACRO_5(noencounter,escape)
+        }else{
+            MACRO_5(noencounter,noescape)
         }
     }
 }
@@ -570,7 +573,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         data->dt = _mm512_set1_pd(dt); // Reset
     }
 
-    r->status = whfast512_full_steps(whfast512, &N_steps, skip_first_kepler_step);
+    r->status = whfast512_full_steps(r, whfast512, &N_steps, skip_first_kepler_step);
 
     r->is_synchronized = 0;
     r->t += dt*N_steps;     // Note: N_steps might have been changed by whfast512_full_steps.
