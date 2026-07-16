@@ -446,7 +446,7 @@
 #####################################
 # Macros for interaction step
 #####################################
-.macro gravity_prefactor multiplier=ONE
+.macro gravity_prefactor multiplier encounterflag
     # Input:  zmm0=dx, zmm1=dy, zmm2=dz
     # Output: zmm6 = multiplier / r^3
     vmulpd      %zmm0, %zmm0, %zmm6
@@ -468,15 +468,14 @@
                                         # zmm5 = 1.5 - 0.5*a*y_1^2
     vmulpd      %zmm7, %zmm5, %zmm7     # y_2 ~ 1/sqrt(a) to ~56 bits
     
-
-
+    # Check for close encounters
+    .if \encounterflag == 1
     vcmppd          $0x1E, P512_EXIT_MIN_DISTANCE_R(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
     kmovw           %k4, %r9d
     negq            %r9                     # If r9 =0, Carry Flag will be set
     movq            $3, %r9
     cmovnzq         %r9, %rax               # Set return value to REB_STATUS_ENCOUNTER
-
-
+    .endif
 
     # y2*y2 -> *y2 -> *mult implemented as (y2*y2) || (mult*y2) -> mul.
     vmulpd      %zmm7, %zmm7, %zmm5         # zmm5 = y_2^2
@@ -550,7 +549,7 @@
 ###############################################################################
 # Interaction Step
 ###############################################################################
-.macro interaction_step grflag nsys=1
+.macro interaction_step grflag nsys encounterflag escapeflag
     # TODO: Floating point error accumulation might be less if Jacobi and GR are added after P-P perturbations
     # Add Jacobi term in Jacobi coordinates
     vmulpd      X, X, %zmm4     
@@ -574,11 +573,14 @@
     vfmadd231pd HZ, HZ, %zmm6               # r^2
     vsqrtpd     %zmm6, %zmm7                # r
     
+    # Check for escapes 
+    .if \escapeflag == 1
     vcmppd          $0x1E, P512_EXIT_MAX_DISTANCE(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
     kmovw           %k4, %r9d
     negq            %r9                     # If r9 =0, Carry Flag will be set
     movq            $4, %r9
     cmovnzq         %r9, %rax               # Set return value to REB_STATUS_EJECTION
+    .endif
 
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
@@ -616,7 +618,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
 
-    gravity_prefactor                       # zmm6 is 1/r^3
+    gravity_prefactor ONE \encounterflag    # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
 
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -650,7 +652,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    gravity_prefactor %zmm4                     # zmm6 is 1/r^3
+    gravity_prefactor %zmm4 \encounterflag      # zmm6 is 1/r^3
     
     vfnmadd231pd %zmm6, %zmm0,  HVX
     vfnmadd231pd %zmm6, %zmm1,  HVY
@@ -672,7 +674,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    gravity_prefactor                           # zmm6 is 1/r^3
+    gravity_prefactor ONE \encounterflag        # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -702,7 +704,7 @@
     vsubpd  %zmm1, HY, %zmm1
     vsubpd  %zmm2, HZ, %zmm2
     
-    gravity_prefactor                           # zmm6 is 1/r^3
+    gravity_prefactor ONE \encounterflag        # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  HVX
@@ -775,7 +777,7 @@
     vmovapd         P512_M0(%rdi), MM0_DT
     vmulpd          DT, MM0_DT, MM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
-    interaction_step \grflag \nsys
+    interaction_step \grflag \nsys 0 0
     addq            $8, %r8
 
 .L_CorrectorLoopK\@:
@@ -805,7 +807,10 @@ reb_whfast512_kepler_step:
     ret
 
 
-# Macro creates two functions for branchless GR/no-GR
+# Generate actual functions using macros
+# We do this to avoid branching during the inner loops.
+# There is a GNU as bug which limits the number of nested irp loops, so we need to refactor this into macros.
+# The basic idea is that we programatically create functions with all possible combinations of gr, nsys, encounter, and escape.
 .macro full_steps grflag nsys encounterflag escapeflag
     # Input:
     #           rdi = p512
@@ -814,6 +819,15 @@ reb_whfast512_kepler_step:
     #           rcx = pointer to reb_sigint (to check for interrupt)
     # Output: 
     #           rsi = pointer contains number of steps actually done
+    
+    .set ExceptionsCanOccur, 0
+    .if \encounterflag == 1
+    .set ExceptionsCanOccur, 1
+    .endif
+    .if \escapeflag == 1
+    .set ExceptionsCanOccur, 1
+    .endif
+    
     movq        (%rsi), %r10    # counting down number of steps
     movq        $0, %rax        # set return value to 0 
 
@@ -829,10 +843,10 @@ reb_whfast512_kepler_step:
 .LMainLoop\@:    
     kepler_step
 .LSkipFirstKeplerStep\@:
-    interaction_step \grflag \nsys
+    interaction_step \grflag \nsys \encounterflag \escapeflag
     cmpq    $0, (%rcx)
     jnz     .LInterruptOccured\@
-    .ifc encounterflag,"encounter" || .ifc escapeflag,"escape"
+    .if ExceptionsCanOccur == 1
     testq   %rax, %rax
     jnz     .LExceptionOccured\@
     .endif
@@ -852,31 +866,28 @@ reb_whfast512_kepler_step:
     ret
 .endm
 
-# Generate actual functions using macros
-# There is a GNU as bug which limits the number of nested irp loops, so we need to refactor this into macros.
-# The basic idea is that we programatically create functions with all possible combinations of gr, nsys, encounter, and escape.
 .macro reb_whfast512_full_steps_macro3 gr, nsys, encounterflag
-.irp escapeflag, "escape","noescape"
-.globl reb_whfast512_full_steps_\gr\()_n\nsys\()_\encounterflag\()_\escapeflag
-reb_whfast512_full_steps_\gr\()_n\nsys\()_\encounterflag\()_\escapeflag: full_steps \gr \nsys \encounterflag \escapeflag
+.irp escapeflag,0,1
+.globl reb_whfast512_full_steps_gr\gr\()_n\nsys\()_encounter\encounterflag\()_escape\escapeflag
+reb_whfast512_full_steps_gr\gr\()_n\nsys\()_encounter\encounterflag\()_escape\escapeflag: full_steps \gr \nsys \encounterflag \escapeflag
 .endr
 .endm
 
 .macro reb_whfast512_full_steps_macro2 gr, nsys
-.irp encounterflag,"encounter","noencounter"
-reb_whfast512_full_steps_macro3 \gr, \nsys, \encounterflag
+.irp encounterflag,0,1
+reb_whfast512_full_steps_macro3 \gr \nsys \encounterflag
 .endr
 .endm
 
 .macro reb_whfast512_full_steps_macro1 gr
-.irp nsys, 1,2,4
+.irp nsys,1,2,4
 reb_whfast512_full_steps_macro2 \gr, \nsys
-.global reb_whfast512_corrector_step_\gr\()_n\nsys
-reb_whfast512_corrector_step_\gr\()_n\nsys: corrector_step \gr \nsys
+.global reb_whfast512_corrector_step_gr\gr\()_n\nsys
+reb_whfast512_corrector_step_gr\gr\()_n\nsys: corrector_step \gr \nsys
 .endr
 .endm
 
-.irp gr, "gr","nogr"
+.irp gr,0,1
 reb_whfast512_full_steps_macro1 \gr
 .endr
 

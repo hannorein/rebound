@@ -281,16 +281,16 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 // Because there are so many combinations (32 in total), the function definitions are implemented using precompiler macros.
 
 #define FUNCDEF_3(nsys, encounter, escape) \
-    extern enum REB_STATUS reb_whfast512_full_steps_gr_n##nsys##_##encounter##_##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint); \
-    extern enum REB_STATUS reb_whfast512_full_steps_nogr_n##nsys##_##encounter##_##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+    extern enum REB_STATUS reb_whfast512_full_steps_gr0_n##nsys##_encounter##encounter##_escape##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint); \
+    extern enum REB_STATUS reb_whfast512_full_steps_gr1_n##nsys##_encounter##encounter##_escape##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 #define FUNCDEF_2(nsys, encounter) \
-    FUNCDEF_3(nsys, encounter, escape) \
-    FUNCDEF_3(nsys, encounter, noescape)
+    FUNCDEF_3(nsys, encounter, 1) \
+    FUNCDEF_3(nsys, encounter, 0)
 #define FUNCDEF_1(nsys) \
-    FUNCDEF_2(nsys, encounter) \
-    FUNCDEF_2(nsys, noencounter) \
-    extern void reb_whfast512_corrector_step_gr_n##nsys(struct simd_data* data, double inv);\
-    extern void reb_whfast512_corrector_step_nogr_n##nsys(struct simd_data* data, double inv);
+    FUNCDEF_2(nsys, 1) \
+    FUNCDEF_2(nsys, 0) \
+    extern void reb_whfast512_corrector_step_gr0_n##nsys(struct simd_data* data, double inv);\
+    extern void reb_whfast512_corrector_step_gr1_n##nsys(struct simd_data* data, double inv);
 FUNCDEF_1(1)
 FUNCDEF_1(2)
 FUNCDEF_1(4) 
@@ -304,28 +304,28 @@ static enum REB_STATUS whfast512_full_steps(struct reb_simulation* r, struct reb
 #define MACRO_5(encounter,escape) \
     if (whfast512->gr_potential){\
         switch (whfast512->N_systems){\
-            case 2: return reb_whfast512_full_steps_gr_n2_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
-            case 4: return reb_whfast512_full_steps_gr_n4_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
-            default: return reb_whfast512_full_steps_gr_n1_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+            case 2: return reb_whfast512_full_steps_gr1_n2_encounter##encounter##_escape##escape(data, N_steps, skip, &reb_sigint); break;\
+            case 4: return reb_whfast512_full_steps_gr1_n4_encounter##encounter##_escape##escape(data, N_steps, skip, &reb_sigint); break;\
+            default: return reb_whfast512_full_steps_gr1_n1_encounter##encounter##_escape##escape(data, N_steps, skip, &reb_sigint); break;\
         }\
     }else{\
         switch (whfast512->N_systems){\
-            case 2: return reb_whfast512_full_steps_nogr_n2_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
-            case 4: return reb_whfast512_full_steps_nogr_n4_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
-            default: return reb_whfast512_full_steps_nogr_n1_##encounter##_##escape(data, N_steps, skip, &reb_sigint); break;\
+            case 2: return reb_whfast512_full_steps_gr0_n2_encounter##encounter##_escape##escape(data, N_steps, skip, &reb_sigint); break;\
+            case 4: return reb_whfast512_full_steps_gr0_n4_encounter##encounter##_escape##escape(data, N_steps, skip, &reb_sigint); break;\
+            default: return reb_whfast512_full_steps_gr0_n1_encounter##encounter##_escape##escape(data, N_steps, skip, &reb_sigint); break;\
         }\
     }
     if (r->exit_min_distance){
         if (r->exit_max_distance){
-            MACRO_5(encounter,escape)
+            MACRO_5(1,1)
         }else{
-            MACRO_5(encounter,noescape)
+            MACRO_5(1,0)
         }
     }else{
         if (r->exit_max_distance){
-            MACRO_5(noencounter,escape)
+            MACRO_5(0,1)
         }else{
-            MACRO_5(noencounter,noescape)
+            MACRO_5(0,0)
         }
     }
 }
@@ -334,15 +334,15 @@ static void whfast512_corrector_step(struct reb_integrator_whfast512_state* whfa
     struct simd_data* data = whfast512->data;
     if (whfast512->gr_potential){
         switch (whfast512->N_systems){
-            case 2: reb_whfast512_corrector_step_gr_n2(data, inv); break;
-            case 4: reb_whfast512_corrector_step_gr_n4(data, inv); break;
-            default: reb_whfast512_corrector_step_gr_n1(data, inv); break;
+            case 2: reb_whfast512_corrector_step_gr1_n2(data, inv); break;
+            case 4: reb_whfast512_corrector_step_gr1_n4(data, inv); break;
+            default: reb_whfast512_corrector_step_gr1_n1(data, inv); break;
         }
     }else{
         switch (whfast512->N_systems){
-            case 2: reb_whfast512_corrector_step_nogr_n2(data, inv); break;
-            case 4: reb_whfast512_corrector_step_nogr_n4(data, inv); break;
-            default: reb_whfast512_corrector_step_nogr_n1(data, inv); break;
+            case 2: reb_whfast512_corrector_step_gr0_n2(data, inv); break;
+            case 4: reb_whfast512_corrector_step_gr0_n4(data, inv); break;
+            default: reb_whfast512_corrector_step_gr0_n1(data, inv); break;
         }
     }
 }
