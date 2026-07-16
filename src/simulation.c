@@ -501,7 +501,7 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     return r->status;
 }
 
-void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
+enum REB_STATUS reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
     run_heartbeat(r);
     for (size_t i=0;i<N_steps && r->status<=0;i++){
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
@@ -510,6 +510,7 @@ void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
     }
     reb_simulation_synchronize(r);
     if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
+    return r->status;
 }
 static void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime

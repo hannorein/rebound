@@ -487,7 +487,7 @@ REB_API int reb_simulation_output_screenshot(struct reb_simulation* r, const cha
 // Timestepping
 
 // Advance simulation by N_steps timesteps.
-REB_API void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps);
+REB_API enum REB_STATUS reb_simulation_steps(struct reb_simulation* const r, size_t N_steps);
 // Integrate simulation to at least time tmax (see exact_finish_time).
 REB_API enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax);
 // Synchronize simulation if safe_mode is turned off by integrator to get physical coordinates.
