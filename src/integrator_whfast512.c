@@ -279,14 +279,14 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 // External functions. Implemented in integrator_whfast512.s.
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
 extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
-extern enum REB_STATUS reb_whfast512_full_steps_gr(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_nogr(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_gr_n1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_nogr_n1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern enum REB_STATUS reb_whfast512_full_steps_gr_n2(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern enum REB_STATUS reb_whfast512_full_steps_nogr_n2(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern enum REB_STATUS reb_whfast512_full_steps_gr_n4(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern enum REB_STATUS reb_whfast512_full_steps_nogr_n4(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
+extern void reb_whfast512_corrector_step_gr_n1(struct simd_data* data, double inv);
+extern void reb_whfast512_corrector_step_nogr_n1(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr_n2(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n4(struct simd_data* data, double inv);
@@ -298,13 +298,13 @@ static enum REB_STATUS whfast512_full_steps(struct reb_integrator_whfast512_stat
         switch (whfast512->N_systems){
             case 2: return reb_whfast512_full_steps_gr_n2(data, N_steps, skip, &reb_sigint); break;
             case 4: return reb_whfast512_full_steps_gr_n4(data, N_steps, skip, &reb_sigint); break;
-            default: return reb_whfast512_full_steps_gr(data, N_steps, skip, &reb_sigint); break;
+            default: return reb_whfast512_full_steps_gr_n1(data, N_steps, skip, &reb_sigint); break;
         }
     }else{
         switch (whfast512->N_systems){
             case 2: return reb_whfast512_full_steps_nogr_n2(data, N_steps, skip, &reb_sigint); break;
             case 4: return reb_whfast512_full_steps_nogr_n4(data, N_steps, skip, &reb_sigint); break;
-            default: return reb_whfast512_full_steps_nogr(data, N_steps, skip, &reb_sigint); break;
+            default: return reb_whfast512_full_steps_nogr_n1(data, N_steps, skip, &reb_sigint); break;
         }
     }
 }
@@ -315,13 +315,13 @@ static void whfast512_corrector_step(struct reb_integrator_whfast512_state* whfa
         switch (whfast512->N_systems){
             case 2: reb_whfast512_corrector_step_gr_n2(data, inv); break;
             case 4: reb_whfast512_corrector_step_gr_n4(data, inv); break;
-            default: reb_whfast512_corrector_step_gr(data, inv); break;
+            default: reb_whfast512_corrector_step_gr_n1(data, inv); break;
         }
     }else{
         switch (whfast512->N_systems){
             case 2: reb_whfast512_corrector_step_nogr_n2(data, inv); break;
             case 4: reb_whfast512_corrector_step_nogr_n4(data, inv); break;
-            default: reb_whfast512_corrector_step_nogr(data, inv); break;
+            default: reb_whfast512_corrector_step_nogr_n1(data, inv); break;
         }
     }
 }

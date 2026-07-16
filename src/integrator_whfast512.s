@@ -21,15 +21,15 @@
 #
 #
 .section .text
-.globl reb_whfast512_full_steps_gr
-.globl reb_whfast512_full_steps_nogr
+.globl reb_whfast512_full_steps_gr_n1
+.globl reb_whfast512_full_steps_nogr_n1
 .globl reb_whfast512_full_steps_gr_n2
 .globl reb_whfast512_full_steps_nogr_n2
 .globl reb_whfast512_full_steps_gr_n4
 .globl reb_whfast512_full_steps_nogr_n4
 .globl reb_whfast512_kepler_step
-.globl reb_whfast512_corrector_step_gr
-.globl reb_whfast512_corrector_step_nogr
+.globl reb_whfast512_corrector_step_gr_n1
+.globl reb_whfast512_corrector_step_nogr_n1
 .globl reb_whfast512_corrector_step_gr_n2
 .globl reb_whfast512_corrector_step_nogr_n2
 .globl reb_whfast512_corrector_step_gr_n4
@@ -605,7 +605,7 @@
     vmulpd    %zmm8, HZ, HVZ
 
     # GR term
-    .if \grflag == 1
+    .ifc \grflag,"gr"
         vmulpd    P512_GR_PREFAC(%rdi), DT, %zmm3
 
         vmulpd    %zmm6, %zmm6, %zmm5           # r^4
@@ -774,7 +774,7 @@
 # Global functions
 ###############################################################################
 
-.macro corrector_step grflag nsys=1
+.macro corrector_step grflag nsys
     reb_whfast512_init_registers                   # does not overwrite xmm0
     alloc_stack64   256                         # space for matricies (192) and direction (8), rounded up to nearest 64bytes
     movsd           %xmm0, 192(%rsp)            # store direction (1 or -1)
@@ -814,13 +814,6 @@
     ret
 .endm
 
-reb_whfast512_corrector_step_gr: corrector_step 1
-reb_whfast512_corrector_step_nogr: corrector_step 0
-reb_whfast512_corrector_step_gr_n2: corrector_step 1 2
-reb_whfast512_corrector_step_nogr_n2: corrector_step 0 2
-reb_whfast512_corrector_step_gr_n4: corrector_step 1 4
-reb_whfast512_corrector_step_nogr_n4: corrector_step 0 4
-
 reb_whfast512_kepler_step:
     reb_whfast512_init_registers
     kepler_step
@@ -846,7 +839,7 @@ reb_whfast512_interaction_step_nogr:
  
 
 # Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag nsys
+.macro full_steps grflag nsys encounter escape
     # Input:
     #           rdi = p512
     #           rsi = pointer to number of steps
@@ -872,8 +865,10 @@ reb_whfast512_interaction_step_nogr:
     interaction_step \grflag \nsys
     cmpq    $0, (%rcx)
     jnz     .LInterruptOccured\@
+    .if (\encounter == 1) || (\escape == 1)
     testq   %rax, %rax
     jnz     .LExceptionOccured\@
+    .endif
     subq    $1, %r10
     jg      .LMainLoop\@
     jmp     .LSuccess\@
@@ -890,13 +885,13 @@ reb_whfast512_interaction_step_nogr:
     ret
 .endm
 
-reb_whfast512_full_steps_gr: full_steps 1 1
-reb_whfast512_full_steps_nogr: full_steps 0 1
-reb_whfast512_full_steps_gr_n2: full_steps 1 2
-reb_whfast512_full_steps_nogr_n2: full_steps 0 2
-reb_whfast512_full_steps_gr_n4: full_steps 1 4
-reb_whfast512_full_steps_nogr_n4: full_steps 0 4
-
+# Generate actual functions using macros
+.irp gr, "gr","nogr"
+.irp nsys, 1,2,4
+reb_whfast512_full_steps_\gr\()_n\nsys: full_steps \gr \nsys 0 0
+reb_whfast512_corrector_step_\gr\()_n\nsys: corrector_step \gr \nsys
+.endr
+.endr
 
 .section    .rodata
 
