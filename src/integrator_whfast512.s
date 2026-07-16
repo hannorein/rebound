@@ -591,7 +591,7 @@
     vmulpd    %zmm8, HZ, HVZ
 
     # GR term
-    .ifc \grflag,"gr"
+    .if \grflag == 1
         vmulpd    P512_GR_PREFAC(%rdi), DT, %zmm3
 
         vmulpd    %zmm6, %zmm6, %zmm5           # r^4
