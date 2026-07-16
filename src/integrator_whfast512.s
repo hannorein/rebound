@@ -55,7 +55,9 @@
 .set P512_MAT8_JACOBI_TO_HELIOCENTRIC, 1152
 .set P512_M0, 1664
 .set P512_MASK, 1728
-.set P512_COUNTER, 2304
+.set P512_EXIT_MAX_DISTANCE, 1792
+.set P512_EXIT_MIN_DISTANCE, 1856
+.set P512_COUNTER, 2432
 
 #####################################
 # Register use

@@ -61,9 +61,9 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
 // The main datasctructure. We pass this as a pointer to the assembly code.
 struct simd_data{
     // Various constants
-    __m512d M REB_ATTRIBUTE_ALIGNED_64;                   //  Masses used in Kepler-Solver
-    __m512d dt REB_ATTRIBUTE_ALIGNED_64;                  //  Timestep
-    __m512d gr_prefac REB_ATTRIBUTE_ALIGNED_64;           //  Prefactor for GR
+    __m512d M REB_ATTRIBUTE_ALIGNED_64;             //  Masses used in Kepler-Solver
+    __m512d dt REB_ATTRIBUTE_ALIGNED_64;            //  Timestep
+    __m512d gr_prefac REB_ATTRIBUTE_ALIGNED_64;     //  Prefactor for GR
     __m512d m REB_ATTRIBUTE_ALIGNED_64;
     __m512d x REB_ATTRIBUTE_ALIGNED_64;
     __m512d y REB_ATTRIBUTE_ALIGNED_64;
@@ -73,9 +73,10 @@ struct simd_data{
     __m512d vz REB_ATTRIBUTE_ALIGNED_64;
     double mat8_inertial_to_jacobi[64] REB_ATTRIBUTE_ALIGNED_64; // Coordinate transformation matricies. Can be recalculated from particle masses.
     double mat8_jacobi_to_heliocentric[64] REB_ATTRIBUTE_ALIGNED_64;
-    __m512d M0 REB_ATTRIBUTE_ALIGNED_64;                   //  Masses used in Jacobi Term
-                                                           // Mask for cases with less than 8 planets
-    __mmask8 mask REB_ATTRIBUTE_ALIGNED_64;
+    __m512d M0 REB_ATTRIBUTE_ALIGNED_64;            //  Masses used in Jacobi Term
+    __mmask8 mask REB_ATTRIBUTE_ALIGNED_64;         // Mask for cases with less than 8 planets
+    __m512d exit_max_distance REB_ATTRIBUTE_ALIGNED_64;
+    __m512d exit_min_distance REB_ATTRIBUTE_ALIGNED_64;
     double mat8_jacobi_to_inertial[64] REB_ATTRIBUTE_ALIGNED_64;
 #ifdef DEBUG_AVX512
     __m512i counter REB_ATTRIBUTE_ALIGNED_64;
@@ -146,6 +147,7 @@ void reb_integrator_whfast512_free(void* state){
 X(mat8_inertial_to_jacobi) \
 X(mat8_jacobi_to_heliocentric) \
 X(M0) X(mask) \
+X(exit_max_distance) X(exit_min_distance) \
 X(mat8_jacobi_to_inertial)\
 X(counter) 
 
@@ -463,6 +465,8 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
     }
     data->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
     data->dt = _mm512_set1_pd(r->dt); 
+    data->exit_max_distance = _mm512_set1_pd(r->exit_max_distance);
+    data->exit_min_distance = _mm512_set1_pd(r->exit_min_distance);
 #define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
     //    SIMD_DATA_MEMBERS
 #undef X
@@ -514,9 +518,6 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
     if (r->N_active!=SIZE_MAX && r->N_active!=r->N){
         reb_simulation_error(r, "WHFast512 does not support test particles.");
         return 1;
-    }
-    if (r->exit_min_distance || r->exit_max_distance){
-        reb_simulation_warning(r, "You are using WHFast512 together with the flags exit_min_distance and/or exit_max_distance. With the current implementation, these flags will only check the last synchronized positions. In addition they might slow down WHFast512 significantly. If you need to use these flags, please open an issue on GitHub for further advice.");
     }
     r->gravity = REB_GRAVITY_NONE; // WHFast512 uses its own gravity routine.
     return 0; // success
