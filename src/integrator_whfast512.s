@@ -21,22 +21,6 @@
 #
 #
 .section .text
-.globl reb_whfast512_full_steps_gr_n1
-.globl reb_whfast512_full_steps_nogr_n1
-.globl reb_whfast512_full_steps_gr_n2
-.globl reb_whfast512_full_steps_nogr_n2
-.globl reb_whfast512_full_steps_gr_n4
-.globl reb_whfast512_full_steps_nogr_n4
-.globl reb_whfast512_kepler_step
-.globl reb_whfast512_corrector_step_gr_n1
-.globl reb_whfast512_corrector_step_nogr_n1
-.globl reb_whfast512_corrector_step_gr_n2
-.globl reb_whfast512_corrector_step_nogr_n2
-.globl reb_whfast512_corrector_step_gr_n4
-.globl reb_whfast512_corrector_step_nogr_n4
-.globl reb_whfast512_interaction_step_gr
-.globl reb_whfast512_interaction_step_nogr
-
 # Enable debug counter?
 .equ DEBUG_AVX512, 0
 
@@ -820,26 +804,9 @@ reb_whfast512_kepler_step:
     reb_whfast512_store_results
     ret
 
-reb_whfast512_interaction_step_gr:
-    reb_whfast512_init_registers
-    alloc_stack64 192
-    interaction_step 1
-    reb_whfast512_store_results
-    free_stack64
-    ret
-
-reb_whfast512_interaction_step_nogr:
-    reb_whfast512_init_registers
-    alloc_stack64 192
-    interaction_step 0
-    reb_whfast512_store_results
-    free_stack64
-    ret
- 
- 
 
 # Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag nsys encounter escape
+.macro full_steps grflag nsys encounterflag escapeflag
     # Input:
     #           rdi = p512
     #           rsi = pointer to number of steps
@@ -865,7 +832,7 @@ reb_whfast512_interaction_step_nogr:
     interaction_step \grflag \nsys
     cmpq    $0, (%rcx)
     jnz     .LInterruptOccured\@
-    .if (\encounter == 1) || (\escape == 1)
+    .ifc encounterflag,"encounter" || .ifc escapeflag,"escape"
     testq   %rax, %rax
     jnz     .LExceptionOccured\@
     .endif
@@ -875,7 +842,7 @@ reb_whfast512_interaction_step_nogr:
 
 .LInterruptOccured\@:
     movq    $6, %rax        # status = REB_STATUS_SIGINT
-.LExceptionOccured\@:       # close encounter or ejection
+.LExceptionOccured\@:       # close mindistance or ejection
     subq    $1, %r10        # number of steps remaining (could be zero, but can't be negative)
     subq    %r10, (%rsi)    # steps done
 .LSuccess\@:
@@ -886,12 +853,37 @@ reb_whfast512_interaction_step_nogr:
 .endm
 
 # Generate actual functions using macros
-.irp gr, "gr","nogr"
+# There is a GNU as bug which limits the number of nested irp loops, so we need to refactor this into macros.
+# The basic idea is that we programatically create functions with all possible combinations of gr, nsys, encounter, and escape.
+.macro reb_whfast512_full_steps_macro3 gr, nsys, encounterflag
+.irp escapeflag, "escape","noescape"
+.globl reb_whfast512_full_steps_\gr\()_n\nsys\()_\encounterflag\()_\escapeflag
+reb_whfast512_full_steps_\gr\()_n\nsys\()_\encounterflag\()_\escapeflag: full_steps \gr \nsys \encounterflag \escapeflag
+.endr
+.endm
+
+.macro reb_whfast512_full_steps_macro2 gr, nsys
+.irp encounterflag,"encounter","noencounter"
+reb_whfast512_full_steps_macro3 \gr, \nsys, \encounterflag
+.endr
+.endm
+
+.macro reb_whfast512_full_steps_macro1 gr
 .irp nsys, 1,2,4
-reb_whfast512_full_steps_\gr\()_n\nsys: full_steps \gr \nsys 0 0
+reb_whfast512_full_steps_macro2 \gr, \nsys
+.global reb_whfast512_corrector_step_\gr\()_n\nsys
 reb_whfast512_corrector_step_\gr\()_n\nsys: corrector_step \gr \nsys
 .endr
+.endm
+
+.irp gr, "gr","nogr"
+reb_whfast512_full_steps_macro1 \gr
 .endr
+
+# Also make the Kepler step available (for synchronization)
+.globl reb_whfast512_kepler_step
+
+
 
 .section    .rodata
 

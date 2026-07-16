@@ -278,13 +278,31 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 
 // External functions. Implemented in integrator_whfast512.s.
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
+
+#define MACRO_4(gr, sys, mind, maxd) \
+    extern enum REB_STATUS reb_whfast512_full_steps_##gr##_n##sys##_##encounter##_##escape(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+
+#define MACRO_3(gr, sys, encounter) \
+    MACRO_4(gr, sys, encounter, escape) \
+    MACRO_4(gr, sys, encounter, noescape)
+
+#define MACRO_2(gr, sys) \
+    MACRO_3(gr, nsys, encounter) \
+    MACRO_3(gr, nsys, noencounter) 
+
+#define MACRO_1(gr) \
+    MACRO_2(gr, 1) \
+    MACRO_2(gr, 2) \
+    MACRO_2(gr, 4) 
+
+#define MACRO_0() \
+    MACRO_1(0) \
+    MACRO_1(1)
+
+MACRO_0()
+
+
 extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
-extern enum REB_STATUS reb_whfast512_full_steps_gr_n1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_nogr_n1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr_n2(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_nogr_n2(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr_n4(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_nogr_n4(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_corrector_step_gr_n1(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr_n1(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
