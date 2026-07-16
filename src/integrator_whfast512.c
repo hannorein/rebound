@@ -117,7 +117,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_desc
         "By doing multiple timesteps in a row, WHFast512 can keep all simulation data in registers which significantly speeds up the calculation. "
         "This number should be as large as the output cadence allows. "
         "The default is 1e6. ",
-        REB_UINT,        "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
+        REB_UINT64,      "concatenate_steps", offsetof(struct reb_integrator_whfast512_state, concatenate_steps), 0, 0, 0},
     { "By default this value is set to 1, implying all 8 particles in the simulation correspond to one system. "
         "By setting N_systems to either 2 or 4, one can integrate multiple planetary systems with 2, 3, or 4 particles at the same time. "
         "See the example problems on how to setup the particles for this case. ",
@@ -278,13 +278,13 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 
 // External functions. Implemented in integrator_whfast512.s.
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
-extern void reb_whfast512_kepler_step(struct simd_data* data);
-extern void reb_whfast512_full_steps_gr(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_full_steps_nogr(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_full_steps_gr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_full_steps_nogr_n2(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_full_steps_gr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_full_steps_nogr_n4(struct simd_data* data, long N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
+extern enum REB_STATUS reb_whfast512_full_steps_gr(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_nogr(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_gr_n2(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_nogr_n2(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_gr_n4(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+extern enum REB_STATUS reb_whfast512_full_steps_nogr_n4(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
 extern void reb_whfast512_corrector_step_gr(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_gr_n2(struct simd_data* data, double inv);
@@ -292,19 +292,19 @@ extern void reb_whfast512_corrector_step_nogr_n2(struct simd_data* data, double 
 extern void reb_whfast512_corrector_step_gr_n4(struct simd_data* data, double inv);
 extern void reb_whfast512_corrector_step_nogr_n4(struct simd_data* data, double inv);
 
-static void whfast512_full_steps(struct reb_integrator_whfast512_state* whfast512, long N_steps, int skip){
+static enum REB_STATUS whfast512_full_steps(struct reb_integrator_whfast512_state* whfast512, uint64_t* N_steps, int skip){
     struct simd_data* data = whfast512->data;
     if (whfast512->gr_potential){
         switch (whfast512->N_systems){
-            case 2: reb_whfast512_full_steps_gr_n2(data, N_steps, skip, &reb_sigint); break;
-            case 4: reb_whfast512_full_steps_gr_n4(data, N_steps, skip, &reb_sigint); break;
-            default: reb_whfast512_full_steps_gr(data, N_steps, skip, &reb_sigint); break;
+            case 2: return reb_whfast512_full_steps_gr_n2(data, N_steps, skip, &reb_sigint); break;
+            case 4: return reb_whfast512_full_steps_gr_n4(data, N_steps, skip, &reb_sigint); break;
+            default: return reb_whfast512_full_steps_gr(data, N_steps, skip, &reb_sigint); break;
         }
     }else{
         switch (whfast512->N_systems){
-            case 2: reb_whfast512_full_steps_nogr_n2(data, N_steps, skip, &reb_sigint); break;
-            case 4: reb_whfast512_full_steps_nogr_n4(data, N_steps, skip, &reb_sigint); break;
-            default: reb_whfast512_full_steps_nogr(data, N_steps, skip, &reb_sigint); break;
+            case 2: return reb_whfast512_full_steps_nogr_n2(data, N_steps, skip, &reb_sigint); break;
+            case 4: return reb_whfast512_full_steps_nogr_n4(data, N_steps, skip, &reb_sigint); break;
+            default: return reb_whfast512_full_steps_nogr(data, N_steps, skip, &reb_sigint); break;
         }
     }
 }
@@ -528,7 +528,7 @@ __attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast512_state* whfast512 = state;
     const double dt = r->dt;
-    const unsigned int N_steps = whfast512->concatenate_steps;
+    uint64_t N_steps = whfast512->concatenate_steps;
 
     if (reb_integrator_whfast512_verify_setup(r)){
         r->status = REB_STATUS_GENERIC_ERROR;
@@ -552,10 +552,10 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         data->dt = _mm512_set1_pd(dt); // Reset
     }
 
-    whfast512_full_steps(whfast512, N_steps, skip_first_kepler_step);
+    r->status = whfast512_full_steps(whfast512, &N_steps, skip_first_kepler_step);
 
     r->is_synchronized = 0;
-    r->t += dt*N_steps;
+    r->t += dt*N_steps;     // Note: N_steps might have been changed by whfast512_full_steps.
     r->dt_last_done = dt;
 }
 

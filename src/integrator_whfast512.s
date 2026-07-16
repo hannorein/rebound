@@ -63,7 +63,7 @@
 # Register use
 #                           Kepler   Interaction   Other
 # 64    32    16   8      
-# rax   eax   ax   ah,al    Newton   matmul
+# rax   eax   ax   ah,al    Netwon   matmul        return value
 # rbx   ebx   bx   bh,bl  
 # rcx   ecx   cx   ch,cl                           Interrupt pointer
 # rdx   edx   dx   dh,dl                           skip_first_kepler, corrector
@@ -73,7 +73,7 @@
 # rsp   esp   sp   spl      ------------stack pointer----------------
 # r8    r8d   r8w  r8b                             corrector 
 # r9    r9d   r9w  r9b                             corrector
-# r10   r10d  r10w r10b     Newton
+# r10   r10d  r10w r10b
 
 
 #####################################
@@ -330,6 +330,14 @@
     vfmadd231pd     Z, Z, %zmm0                 # r^2
     vfmadd231pd     VZ, VZ, %zmm1               # v^2
     vsqrtpd         %zmm0, R                    # r
+    # Test EXIT_MAX_DISTANCE
+    vcmppd          $0x1E, P512_EXIT_MAX_DISTANCE(%rdi), R, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    kmovw           %k4, %eax
+    negq            %rax                        # If rax=0, Carry Flag is set
+    sbbq            %rax, %rax                  # rax now either 0 or 0xFFF...
+    xorq            %rdi, %r10                  # Bit hack to flip sign depending on rax without a branch
+    subq            %rdi, %r10                  # Step counter now negative number to trigger exit after this step if condition met
+
     vdivpd          R, ONE, RI                  # 1/r
     vaddpd          M, M, BETA                  # 2*M
     vfmsub132pd     RI, %zmm1, BETA             # beta
@@ -352,7 +360,7 @@
     mm_stiefel_Gs03_avx512 11
     halley
   
-    movq            $0, %r10                    # Newton loop counter
+    movq            $0, %rax                    # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
     vmovapd         XX,     %zmm7               # Store old XX
@@ -375,12 +383,12 @@
     jz              .NewtonLoopDone\@
 
     # Maximum iterations reached?
-    incq            %r10
-    cmpq            $5, %r10                    # max Newton iterations
+    incq            %rax
+    cmpq            $5, %rax                    # max Newton iterations
     jne             .NewtonLoop\@
 
     # If not converged yet, fall back to bisection
-    movq            $0, %r10
+    movq            $0, %rax
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     
     vsqrtpd         BETA, %zmm1
@@ -415,8 +423,8 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X
     
-    incq %r10
-    cmpq $52, %r10                              # max Bisection iterations (=number of significant bits)
+    incq %rax
+    cmpq $52, %rax                              # max Bisection iterations (=number of significant bits)
     jl .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
@@ -579,6 +587,11 @@
     vfmadd231pd HY, HY, %zmm6
     vfmadd231pd HZ, HZ, %zmm6               # r^2
     vsqrtpd     %zmm6, %zmm7                # r
+#    vcmppd      $0x1E, P512_EXIT_MIN_DISTANCE(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance<exit_min_distance
+#    kortestw    %k4, %k4
+#    jz          .EXIT_MIN_DISTANCE_NOT_TRIGGERED\@
+#    movq        $-2, %rsi                   # Set step counter to negative number to trigger exit after this step
+#.EXIT_MIN_DISTANCE_NOT_TRIGGERED\@:
         
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
@@ -833,9 +846,12 @@ reb_whfast512_interaction_step_nogr:
 .macro full_steps grflag coordinates nsys=1
     # Input:
     #           rdi = p512
-    #           rsi = Number of steps (counting down)
+    #           rsi = pointer to number of steps
     #           rdx = skip_first_kepler_step
     #           rcx = pointer to reb_sigint (to check for interrupt)
+    # Output: 
+    #           rsi = pointer contains number of steps actually done
+    movq        (%rsi), %r10    # counting down number of steps
 
     # Load constants
     reb_whfast512_init_registers
@@ -852,14 +868,38 @@ reb_whfast512_interaction_step_nogr:
     interaction_step \grflag \nsys
     cmpq    $0, (%rcx)
     jnz     .LInterruptOccured\@
-    subq    $1, %rsi
-    jnz     .LMainLoop\@
+    subq    $1, %r10
+    jg      .LMainLoop\@
 
 .LInterruptOccured\@:
     # Store final data in P512 structure
     reb_whfast512_store_results
 
     free_stack64
+    # Set return value to number of steps not finished.
+    testq   %r10, %r10
+    jz      .LSuccess\@
+    js      .LException\@ 
+        
+# We are here if %r10 is positive. An interrupt occured.
+    subq    $1, %r10
+    negq    %r10            # minus number of steps remaining (could be zero!)
+    addq    %r10, (%rsi)    # steps remaining    
+    movq    $6, %rax        # status = REB_STATUS_SIGINT
+    ret
+
+.LException\@:              # close encounter or ejection
+    addq    $2, %r10        # minus number of steps remaining (could be zero!)
+    addq    %r10, (%rsi)    # steps remaining    
+ 
+    needs to be steps done.
+
+    movq    $9, %rax        # exception code
+    ret
+    
+.LSuccess\@:
+    # (%rsi) remains unchaned. did all the steps. 
+    movq    $0, %rax        # no exception
     ret
 .endm
 

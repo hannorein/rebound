@@ -30,7 +30,7 @@ struct reb_integrator_whfast512_state {
     unsigned int gr_potential;
     unsigned int N_systems;
     unsigned int corrector;             
-    unsigned int concatenate_steps;
+    uint64_t concatenate_steps;
 
     // Internal use
     double last_synchronization;
