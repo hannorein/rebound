@@ -581,6 +581,13 @@
     movq            $4, %r9
     cmovnzq         %r9, %rax               # Set return value to REB_STATUS_EJECTION
     .endif
+    .if \encounterflag == 1
+    vcmppd          $0x1E, P512_EXIT_MIN_DISTANCE_R(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    kmovw           %k4, %r9d
+    negq            %r9                     # If r9 =0, Carry Flag will be set
+    movq            $3, %r9
+    cmovnzq         %r9, %rax               # Set return value to REB_STATUS_ENCOUNTER
+    .endif
 
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
