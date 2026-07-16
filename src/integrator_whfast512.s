@@ -56,14 +56,14 @@
 .set P512_M0, 1664
 .set P512_MASK, 1728
 .set P512_EXIT_MAX_DISTANCE, 1792
-.set P512_EXIT_MIN_DISTANCE, 1856
+.set P512_EXIT_MIN_DISTANCE_R, 1856
 .set P512_COUNTER, 2432
 
 #####################################
 # Register use
 #                           Kepler   Interaction   Other
 # 64    32    16   8      
-# rax   eax   ax   ah,al    Netwon   matmul        return value
+# rax   eax   ax   ah,al                           return value 
 # rbx   ebx   bx   bh,bl  
 # rcx   ecx   cx   ch,cl                           Interrupt pointer
 # rdx   edx   dx   dh,dl                           skip_first_kepler, corrector
@@ -71,9 +71,9 @@
 # rdi   edi   di   dil      ------------pointer to simd_data--------- 
 # rbp   ebp   bp   bpl      ------------frame pointer----------------
 # rsp   esp   sp   spl      ------------stack pointer----------------
-# r8    r8d   r8w  r8b                             corrector 
-# r9    r9d   r9w  r9b                             corrector
-# r10   r10d  r10w r10b
+# r8    r8d   r8w  r8b                             corrector, status flag for encounters, ejections 
+# r9    r9d   r9w  r9b      Netwon   matmul, exceptions        
+# r10   r10d  r10w r10b                            corrector, step counter
 
 
 #####################################
@@ -330,14 +330,6 @@
     vfmadd231pd     Z, Z, %zmm0                 # r^2
     vfmadd231pd     VZ, VZ, %zmm1               # v^2
     vsqrtpd         %zmm0, R                    # r
-    # Test EXIT_MAX_DISTANCE
-    vcmppd          $0x1E, P512_EXIT_MAX_DISTANCE(%rdi), R, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
-    kmovw           %k4, %eax
-    negq            %rax                        # If rax=0, Carry Flag is set
-    sbbq            %rax, %rax                  # rax now either 0 or 0xFFF...
-    xorq            %rdi, %r10                  # Bit hack to flip sign depending on rax without a branch
-    subq            %rdi, %r10                  # Step counter now negative number to trigger exit after this step if condition met
-
     vdivpd          R, ONE, RI                  # 1/r
     vaddpd          M, M, BETA                  # 2*M
     vfmsub132pd     RI, %zmm1, BETA             # beta
@@ -360,7 +352,7 @@
     mm_stiefel_Gs03_avx512 11
     halley
   
-    movq            $0, %rax                    # Newton loop counter
+    movq            $0, %r9                     # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
     vmovapd         XX,     %zmm7               # Store old XX
@@ -383,12 +375,12 @@
     jz              .NewtonLoopDone\@
 
     # Maximum iterations reached?
-    incq            %rax
-    cmpq            $5, %rax                    # max Newton iterations
+    incq            %r9 
+    cmpq            $5, %r9                     # max Newton iterations
     jne             .NewtonLoop\@
 
     # If not converged yet, fall back to bisection
-    movq            $0, %rax
+    movq            $0, %r9 
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     
     vsqrtpd         BETA, %zmm1
@@ -423,8 +415,8 @@
     vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
     vmulpd          HALF, XX, XX{%k4}           # X
     
-    incq %rax
-    cmpq $52, %rax                              # max Bisection iterations (=number of significant bits)
+    incq %r9 
+    cmpq $52, %r9                               # max Bisection iterations (=number of significant bits)
     jl .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
@@ -491,6 +483,16 @@
     vfnmadd213pd .ONE_AND_A_HALF(%rip){1to8}, %zmm8, %zmm5
                                         # zmm5 = 1.5 - 0.5*a*y_1^2
     vmulpd      %zmm7, %zmm5, %zmm7     # y_2 ~ 1/sqrt(a) to ~56 bits
+    
+
+
+    vcmppd          $0x1E, P512_EXIT_MIN_DISTANCE_R(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    kmovw           %k4, %r9d
+    negq            %r9                     # If r9 =0, Carry Flag will be set
+    movq            $3, %r9
+    cmovnzq         %r9, %rax               # Set return value to REB_STATUS_ENCOUNTER
+
+
 
     # y2*y2 -> *y2 -> *mult implemented as (y2*y2) || (mult*y2) -> mul.
     vmulpd      %zmm7, %zmm7, %zmm5         # zmm5 = y_2^2
@@ -505,7 +507,7 @@
 
 .macro mat8_mul3 in0, in1, in2, out0, out1, out2
     # 8x8 matrix multiplied with 3 different 8 vectors
-    # in: rax = vector to 64 matrix elements
+    # in: r9  = vector to 64 matrix elements
     # Does not alter inputs
     # uses: zmm3-zmm7
     # The idea is to use embedded broadcast loads
@@ -515,8 +517,8 @@
     vmovapd \in2, 128(%rsp)
 
     # Keeping six independent FMA chains going
-    vmovapd        (%rax), %zmm4
-    vmovapd      64(%rax), %zmm3
+    vmovapd        (%r9 ), %zmm4
+    vmovapd      64(%r9 ), %zmm3
     vmulpd        0(%rsp){1to8}, %zmm4, \out0
     vmulpd       64(%rsp){1to8}, %zmm4, \out1
     vmulpd      128(%rsp){1to8}, %zmm4, \out2
@@ -525,8 +527,8 @@
     vmulpd       72(%rsp){1to8}, %zmm3, %zmm6
     vmulpd      136(%rsp){1to8}, %zmm3, %zmm7
 
-    vmovapd     128(%rax), %zmm4
-    vmovapd     192(%rax), %zmm3
+    vmovapd     128(%r9 ), %zmm4
+    vmovapd     192(%r9 ), %zmm3
     vfmadd231pd  16(%rsp){1to8}, %zmm4, \out0
     vfmadd231pd  80(%rsp){1to8}, %zmm4, \out1
     vfmadd231pd 144(%rsp){1to8}, %zmm4, \out2
@@ -535,8 +537,8 @@
     vfmadd231pd  88(%rsp){1to8}, %zmm3, %zmm6
     vfmadd231pd 152(%rsp){1to8}, %zmm3, %zmm7
     
-    vmovapd     256(%rax), %zmm4
-    vmovapd     320(%rax), %zmm3
+    vmovapd     256(%r9 ), %zmm4
+    vmovapd     320(%r9 ), %zmm3
     vfmadd231pd  32(%rsp){1to8}, %zmm4, \out0
     vfmadd231pd  96(%rsp){1to8}, %zmm4, \out1
     vfmadd231pd 160(%rsp){1to8}, %zmm4, \out2
@@ -545,8 +547,8 @@
     vfmadd231pd 104(%rsp){1to8}, %zmm3, %zmm6
     vfmadd231pd 168(%rsp){1to8}, %zmm3, %zmm7
     
-    vmovapd     384(%rax), %zmm4
-    vmovapd     448(%rax), %zmm3
+    vmovapd     384(%r9 ), %zmm4
+    vmovapd     448(%r9 ), %zmm3
     vfmadd231pd  48(%rsp){1to8}, %zmm4, \out0
     vfmadd231pd 112(%rsp){1to8}, %zmm4, \out1
     vfmadd231pd 176(%rsp){1to8}, %zmm4, \out2
@@ -579,7 +581,7 @@
     vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
     vfmadd231pd     Z, %zmm6, VZ{%k1}{z} 
     
-    leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %rax  # mat8_inertial_to_jacobi
+    leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %r9   # mat8_inertial_to_jacobi
     mat8_mul3 X, Y, Z, HX, HY, HZ
     
     # Calculating r, r^2, r^3 for Jacobi term and GR
@@ -587,12 +589,13 @@
     vfmadd231pd HY, HY, %zmm6
     vfmadd231pd HZ, HZ, %zmm6               # r^2
     vsqrtpd     %zmm6, %zmm7                # r
-#    vcmppd      $0x1E, P512_EXIT_MIN_DISTANCE(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance<exit_min_distance
-#    kortestw    %k4, %k4
-#    jz          .EXIT_MIN_DISTANCE_NOT_TRIGGERED\@
-#    movq        $-2, %rsi                   # Set step counter to negative number to trigger exit after this step
-#.EXIT_MIN_DISTANCE_NOT_TRIGGERED\@:
-        
+    
+    vcmppd          $0x1E, P512_EXIT_MAX_DISTANCE(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    kmovw           %k4, %r9d
+    negq            %r9                     # If r9 =0, Carry Flag will be set
+    movq            $4, %r9
+    cmovnzq         %r9, %rax               # Set return value to REB_STATUS_EJECTION
+
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
     vdivpd    %zmm7, MM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
@@ -753,7 +756,7 @@
   .endif
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
-    leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %rax  # mat8_inertial_to_jacobi
+    leaq P512_MAT8_INERTIAL_TO_JACOBI(%rdi), %r9   # mat8_inertial_to_jacobi
    
     mat8_mul3 %zmm0, %zmm1, %zmm2, %zmm0, %zmm1, %zmm2
 
@@ -796,10 +799,10 @@
     vmulpd          P512_DT(%rdi), %zmm0, DT
     vmulpd          DT, HALF, DT                # Reduce timestep for better convergence
     vmulpd          DT, HALF, DT
-    movq            $4, %r9                     # Counter number of Kepler steps
+    movq            $4, %r10                     # Counter number of Kepler steps
 .L_CorrectorLoopInnerKepler\@:
     kepler_step
-    decq            %r9
+    decq            %r10
     jnz             .L_CorrectorLoopInnerKepler\@
     addq            $8, %r8
     
@@ -843,7 +846,7 @@ reb_whfast512_interaction_step_nogr:
  
 
 # Macro creates two functions for branchless GR/no-GR
-.macro full_steps grflag coordinates nsys=1
+.macro full_steps grflag nsys
     # Input:
     #           rdi = p512
     #           rsi = pointer to number of steps
@@ -852,6 +855,7 @@ reb_whfast512_interaction_step_nogr:
     # Output: 
     #           rsi = pointer contains number of steps actually done
     movq        (%rsi), %r10    # counting down number of steps
+    movq        $0, %rax        # set return value to 0 
 
     # Load constants
     reb_whfast512_init_registers
@@ -868,47 +872,30 @@ reb_whfast512_interaction_step_nogr:
     interaction_step \grflag \nsys
     cmpq    $0, (%rcx)
     jnz     .LInterruptOccured\@
+    testq   %rax, %rax
+    jnz     .LExceptionOccured\@
     subq    $1, %r10
     jg      .LMainLoop\@
+    jmp     .LSuccess\@
 
 .LInterruptOccured\@:
+    movq    $6, %rax        # status = REB_STATUS_SIGINT
+.LExceptionOccured\@:       # close encounter or ejection
+    subq    $1, %r10        # number of steps remaining (could be zero, but can't be negative)
+    subq    %r10, (%rsi)    # steps done
+.LSuccess\@:
     # Store final data in P512 structure
     reb_whfast512_store_results
-
     free_stack64
-    # Set return value to number of steps not finished.
-    testq   %r10, %r10
-    jz      .LSuccess\@
-    js      .LException\@ 
-        
-# We are here if %r10 is positive. An interrupt occured.
-    subq    $1, %r10
-    negq    %r10            # minus number of steps remaining (could be zero!)
-    addq    %r10, (%rsi)    # steps remaining    
-    movq    $6, %rax        # status = REB_STATUS_SIGINT
-    ret
-
-.LException\@:              # close encounter or ejection
-    addq    $2, %r10        # minus number of steps remaining (could be zero!)
-    addq    %r10, (%rsi)    # steps remaining    
- 
-    needs to be steps done.
-
-    movq    $9, %rax        # exception code
-    ret
-    
-.LSuccess\@:
-    # (%rsi) remains unchaned. did all the steps. 
-    movq    $0, %rax        # no exception
     ret
 .endm
 
-reb_whfast512_full_steps_gr: full_steps 1 0
-reb_whfast512_full_steps_nogr: full_steps 0 0
-reb_whfast512_full_steps_gr_n2: full_steps 1 0 2
-reb_whfast512_full_steps_nogr_n2: full_steps 0 0 2
-reb_whfast512_full_steps_gr_n4: full_steps 1 0 4
-reb_whfast512_full_steps_nogr_n4: full_steps 0 0 4
+reb_whfast512_full_steps_gr: full_steps 1 1
+reb_whfast512_full_steps_nogr: full_steps 0 1
+reb_whfast512_full_steps_gr_n2: full_steps 1 2
+reb_whfast512_full_steps_nogr_n2: full_steps 0 2
+reb_whfast512_full_steps_gr_n4: full_steps 1 4
+reb_whfast512_full_steps_nogr_n4: full_steps 0 4
 
 
 .section    .rodata
