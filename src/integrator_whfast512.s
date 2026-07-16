@@ -40,8 +40,9 @@
 .set P512_M0, 1664
 .set P512_MASK, 1728
 .set P512_EXIT_MAX_DISTANCE, 1792
-.set P512_EXIT_MIN_DISTANCE_R, 1856
-.set P512_COUNTER, 2432
+.set P512_EXIT_MIN_DISTANCE, 1856
+.set P512_EXIT_MIN_DISTANCE_R, 1920
+.set P512_COUNTER, 2496
 
 #####################################
 # Register use
@@ -470,7 +471,7 @@
     
     # Check for close encounters
     .if \encounterflag == 1
-    vcmppd          $0x1E, P512_EXIT_MIN_DISTANCE_R(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    vcmppd          $0x1E, P512_EXIT_MIN_DISTANCE_R(%rdi), %zmm7, %k4{%k1} # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance<exit_min_distance
     kmovw           %k4, %r9d
     negq            %r9                     # If r9 =0, Carry Flag will be set
     movq            $3, %r9
@@ -575,14 +576,14 @@
     
     # Check for escapes 
     .if \escapeflag == 1
-    vcmppd          $0x1E, P512_EXIT_MAX_DISTANCE(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    vcmppd          $0x1E, P512_EXIT_MAX_DISTANCE(%rdi), %zmm7, %k4{%k1} # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
     kmovw           %k4, %r9d
     negq            %r9                     # If r9 =0, Carry Flag will be set
     movq            $4, %r9
     cmovnzq         %r9, %rax               # Set return value to REB_STATUS_EJECTION
     .endif
     .if \encounterflag == 1
-    vcmppd          $0x1E, P512_EXIT_MIN_DISTANCE_R(%rdi), %zmm7, %k4      # $1E = greater than, ordered (nans fail), quiet, k4=1 if distance>exit_max_distance
+    vcmppd          $0x11, P512_EXIT_MIN_DISTANCE(%rdi), %zmm7, %k4{%k1} # $11 = less than, ordered (nans fail), quiet, k4=1 if distance<exit_min_distance
     kmovw           %k4, %r9d
     negq            %r9                     # If r9 =0, Carry Flag will be set
     movq            $3, %r9
