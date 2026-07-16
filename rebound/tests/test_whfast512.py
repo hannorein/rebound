@@ -279,6 +279,20 @@ class TestIntegratorWHFast512(unittest.TestCase):
         with self.assertRaises(rebound.Encounter):
             sim.steps(1)
         self.assertAlmostEqual(sim.t,11.456, 2)
+    
+    def test_whfast512_exit_min_distance_star(self):
+        if not rebound.avx512_available: return
+        sim = rebound.Simulation()
+        sim.add(m=1)
+        sim.add(m=1e-8,a=1, e=0.9, f=math.pi)
+        sim.integrator = "whfast512"
+        sim.integrator.concatenate_steps = 1000
+        sim.dt = 6/365.25*2*math.pi
+        sim.exact_finish_time = 0
+        sim.exit_min_distance = 0.5
+        with self.assertRaises(rebound.Encounter):
+            sim.steps(1)
+        self.assertAlmostEqual(sim.t,2.99322, 2)
 
     def test_whfast512_exit_max_distance(self):
         if not rebound.avx512_available: return
