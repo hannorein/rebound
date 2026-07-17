@@ -14,6 +14,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -47,6 +49,3 @@ jobs:
         run: |
           python python_examples/longtermtest/problem.py
           python python_examples/megno/problem.py
-      - name: Setup tmate session on failure
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
