@@ -225,7 +225,7 @@ static inline void printmat8(double* a) {
 #endif // DEBUG_AVX512
 
 // Hepler function to load particle data into avx512 registers
-void load_into_m512d(void* destination, struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
+static void load_into_m512d(void* destination, struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
