@@ -66,7 +66,7 @@
 #####################################
 
 # Only used in Interaction step:
-.set HVX, %zmm13
+.set .LHVX, %zmm13
 .set HVY, %zmm14
 .set HVZ, %zmm15
 .set HVXC, %zmm16
@@ -594,7 +594,7 @@
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
     vdivpd    %zmm7, MM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
         
-    vmulpd    %zmm8, HX, HVX                # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+    vmulpd    %zmm8, HX, .LHVX                # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
     vmulpd    %zmm8, HY, HVY
     vmulpd    %zmm8, HZ, HVZ
 
@@ -605,7 +605,7 @@
         vmulpd    %zmm6, %zmm6, %zmm5           # r^4
         vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}   # -dt*6*m0*m0/(c*c) /r^4
 
-        vfmadd231pd  %zmm7, HX, HVX{%k1}{z}     # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vfmadd231pd  %zmm7, HX, .LHVX{%k1}{z}     # -x_j*dt*6*m0*m0/(c*c) /r^4
         vfmadd231pd  %zmm7, HY, HVY{%k1}{z}
         vfmadd231pd  %zmm7, HZ, HVZ{%k1}{z}
     .endif
@@ -629,7 +629,7 @@
     gravity_prefactor ONE \encounterflag    # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
 
-    vfnmadd231pd %zmm5, %zmm0,  HVX
+    vfnmadd231pd %zmm5, %zmm0,  .LHVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
@@ -642,7 +642,7 @@
     #// 0123 4567
     #// 2310 6754
 
-    vfmadd231pd %zmm5, %zmm0,  HVX
+    vfmadd231pd %zmm5, %zmm0,  .LHVX
     vfmadd231pd %zmm5, %zmm1,  HVY
     vfmadd231pd %zmm5, %zmm2,  HVZ
   .endif
@@ -662,7 +662,7 @@
     
     gravity_prefactor %zmm4 \encounterflag      # zmm6 is 1/r^3
     
-    vfnmadd231pd %zmm6, %zmm0,  HVX
+    vfnmadd231pd %zmm6, %zmm0,  .LHVX
     vfnmadd231pd %zmm6, %zmm1,  HVY
     vfnmadd231pd %zmm6, %zmm2,  HVZ
 
@@ -685,7 +685,7 @@
     gravity_prefactor ONE \encounterflag        # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
-    vfnmadd231pd %zmm5, %zmm0,  HVX
+    vfnmadd231pd %zmm5, %zmm0,  .LHVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
@@ -715,7 +715,7 @@
     gravity_prefactor ONE \encounterflag        # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
-    vfnmadd231pd %zmm5, %zmm0,  HVX
+    vfnmadd231pd %zmm5, %zmm0,  .LHVX
     vfnmadd231pd %zmm5, %zmm1,  HVY
     vfnmadd231pd %zmm5, %zmm2,  HVZ
 
@@ -740,11 +740,11 @@
     vpermpd HVYC, %zmm7, %zmm1
     vpermpd HVZC, %zmm7, %zmm2
 
-    vaddpd %zmm0, HVX, %zmm0{%k1}{z}
+    vaddpd %zmm0, .LHVX, %zmm0{%k1}{z}
     vaddpd %zmm1, HVY, %zmm1{%k1}{z}
     vaddpd %zmm2, HVZ, %zmm2{%k1}{z}
   .else                                        # for nsys 2 or 4
-    vmovapd HVX, %zmm0{%k1}{z}
+    vmovapd .LHVX, %zmm0{%k1}{z}
     vmovapd HVY, %zmm1{%k1}{z}
     vmovapd HVZ, %zmm2{%k1}{z}
   .endif
