@@ -24,6 +24,7 @@
 #include <ctype.h>
 #ifdef _WIN32
 #include <io.h>
+#include <malloc.h>
 #define isatty _isatty
 #define STDERR_FILENO 2
 #else
@@ -241,6 +242,26 @@ int reb_strcmp_ignore_whitespace(const char *s1, const char *s2) {
 }
 
 
+#ifndef _WIN32
+void* reb_aligned_alloc(size_t alignment, size_t size) {
+    size_t remainder = size % alignment;
+    if (remainder != 0) {
+        size += (alignment - remainder);
+    }
+    void *ptr = NULL;
+    if (posix_memalign(&ptr, alignment, size) != 0) {
+        return NULL;
+    }
+    return ptr;
+}
+
+void reb_aligned_free(void *ptr) {
+    free(ptr);
+}
+#endif
+
+
+
 #ifdef _WIN32
 
 void PyInit_librebound() {};
@@ -269,6 +290,14 @@ int rand_r(unsigned int *seed) {
     return result;
 }
 
+
+void* reb_aligned_alloc(size_t alignment, size_t size) {
+    return _aligned_malloc(size, alignment);
+}
+
+void reb_aligned_free(void *ptr) {
+    _aligned_free(ptr);
+}
 
 // Source: https://stackoverflow.com/a/40160038/115102
 int vasprintf(char **strp, const char *fmt, va_list ap) {

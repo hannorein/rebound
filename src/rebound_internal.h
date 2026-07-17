@@ -84,6 +84,9 @@ REB_API extern const unsigned int reb_favicon_len;
 REB_API extern const size_t reb_messages_max_N;
 REB_API extern const uint32_t reb_string_size_max; // defined in rebound.c
 
+// Alligned alloc/free. Linux/Max/Windows
+REB_API void* reb_aligned_alloc(size_t alignment, size_t size);
+REB_API void reb_aligned_free(void *ptr);
 // Free any pointer. Alias for free(). Used by python.
 REB_API void reb_free(void* p);
 // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.

@@ -139,7 +139,7 @@ void* reb_integrator_whfast512_create(){
 
 void reb_integrator_whfast512_free(void* state){
     struct reb_integrator_whfast512_state* whfast512 = state;
-    free(whfast512->data);
+    reb_aligned_free(whfast512->data);
     free(whfast512);
 }
 
@@ -399,8 +399,8 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data
 // Precalculate various constants and put them in 512 bit vectors.
 static void recalculate_constants(struct reb_simulation* r, unsigned int N_systems){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
-    free(whfast512->data); // free in case previously allocated
-    whfast512->data = aligned_alloc(64,sizeof(struct simd_data));
+    reb_aligned_free(whfast512->data); // free in case previously allocated
+    whfast512->data = reb_aligned_alloc(64,sizeof(struct simd_data));
     memset(whfast512->data, 0, sizeof(struct simd_data));
     if (!whfast512->data){
         reb_simulation_error(r, "WHFast512 was not able to allocate memory.");
@@ -616,7 +616,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
         jacobi_to_inertial_posvel_and_com(r, data, dt_com, whfast512->N_systems);
         whfast512->last_synchronization = r->t;
         r->is_synchronized = 1;
-        free(whfast512->data);
+        reb_aligned_free(whfast512->data);
         whfast512->data = NULL;
     }
 }
