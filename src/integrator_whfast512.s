@@ -858,7 +858,9 @@ reb_whfast512_movu_pd:
     .endif
     
     movq        (%rsi), %r10    # counting down number of steps
-    movq        $0, %rax        # set return value to 0 
+    .if ExceptionsCanOccur == 1
+    movq        $0, %rax        # flag to set return value
+    .endif
 
     # Load constants
     reb_whfast512_init_registers
@@ -881,6 +883,7 @@ reb_whfast512_movu_pd:
     .endif
     subq    $1, %r10
     jg      .LMainLoop\@
+    movq    $-1, %rax       # Successfull completion of timestep status = REB_STATUS_RUNNING
     jmp     .LSuccess\@
 
 .LInterruptOccured\@:

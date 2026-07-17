@@ -584,7 +584,6 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         reb_whfast512_kepler_step(data);    
         reb_whfast512_set1_pd(&data->dt, dt); // Reset
     }
-
     r->status = whfast512_full_steps(r, whfast512, &N_steps, skip_first_kepler_step);
 
     r->is_synchronized = 0;

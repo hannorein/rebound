@@ -76,8 +76,8 @@ void gr_force(struct reb_simulation* r){
 
 
 double run(int use_whfast512){
-    struct timeval time_beginning;
-    struct timeval time_end;
+    struct reb_timeval time_beginning;
+    struct reb_timeval time_end;
     
     struct reb_simulation* r = reb_simulation_create();
     // Setup constants
@@ -89,10 +89,10 @@ double run(int use_whfast512){
         reb_simulation_set_integrator(r, "whfast512");
         struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
         whfast512->gr_potential = 1;
+        whfast512->concatenate_steps = 1e6;
     }else{
         reb_simulation_set_integrator(r, "whfast");
         struct reb_integrator_whfast_state* whfast = r->integrator.state;
-        whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
         whfast->safe_mode = 0;
         r->additional_forces = gr_force;
     }
@@ -110,25 +110,24 @@ double run(int use_whfast512){
     reb_simulation_move_to_com(r);
 
 
+    double tmax = 2.*M_PI*1e5;
+    printf("Integrating for %.2f Myr with %s:\n", tmax/2.0/M_PI/1e6, r->integrator.name);
     gettimeofday(&time_beginning,NULL);
-    double tmax = 2.*M_PI*1e6; // 1 Myr
-    int err = reb_simulation_integrate(r,  tmax);
-    if (err>0){
+    enum REB_STATUS status = reb_simulation_integrate(r,  tmax);
+    if (status>0){
         printf("An error occurred during the integration.\n");
         exit(EXIT_FAILURE);
     }
     gettimeofday(&time_end,NULL);
 
     double walltime = time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
-    double gypday = 1e-9*(tmax/M_PI/2.)/walltime*86400;
+    double gypday = 1e-9*(r->t/M_PI/2.)/walltime*86400;
     printf("walltime= %.2fs  (time required to integrate to 5 Gyr= %.2fdays)\n", walltime, 5./gypday);
     return walltime;
 }
 
 int main(int argc, char* argv[]) {
-    printf("Integrating for 1 Myr with WHFast512:\n");
     double w1= run(1);
-    printf("Integrating for 1 Myr with WHFast:\n");
     double w0= run(0);
     printf("\nSpeedup: %.2fx\n", w0/w1);
     return EXIT_SUCCESS;
