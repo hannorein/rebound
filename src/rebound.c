@@ -199,6 +199,8 @@ void reb_sigint_handler(int signum) {
 }
 
 // Returns 1 if this CPU can run the AVX512 asm512 integrator
+// As usual, things are a bit more complicated on Windows.
+#ifndef _WIN32
 int reb_avx512_available(void){
 #if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
     __builtin_cpu_init();
@@ -207,7 +209,53 @@ int reb_avx512_available(void){
     return 0;
 #endif
 }
+#else // _WIN32
+static void run_cpuid(int32_t leaf, int32_t subleaf, int32_t cpu_info[4]) {
+#if defined(_MSC_VER) || defined(__clang__)
+    __cpuidex(cpu_info, leaf, subleaf);
+#else // GCC (untested)
+    __asm__ __volatile__(
+        "cpuid"
+        : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
+        : "a"(leaf), "c"(subleaf)
+    );
+#endif
+}
 
+static uint64_t run_xgetbv(uint32_t xcr) {
+#if defined(_MSC_VER) || defined(__clang__)
+    return _xgetbv(xcr);
+#else // GCC (untested)
+    uint32_t eax, edx;
+    __asm__ __volatile__("xgetbv" : "=a"(eax), "=d"(edx) : "c"(xcr));
+    return ((uint64_t)edx << 32) | eax;
+#endif
+}
+
+int reb_avx512_available(void) {
+    int32_t cpu_info[4];
+    run_cpuid(0, 0, cpu_info);
+    if (cpu_info[0] < 7) {
+        return 0; 
+    }
+    run_cpuid(1, 0, cpu_info);
+    int osxsave = (cpu_info[2] & (1 << 27)) != 0;
+    int avx_hardware = (cpu_info[2] & (1 << 28)) != 0;
+    if (!osxsave || !avx_hardware) {
+        return 0;
+    }
+    uint64_t xcr0 = run_xgetbv(0);
+    int avx_os = (xcr0 & 0x6) == 0x6; 
+    int avx512_os = (xcr0 & 0xE0) == 0xE0; 
+    if (!avx_os || !avx512_os) {
+        return 0; 
+    }
+    run_cpuid(7, 0, cpu_info);
+    int avx512f = (cpu_info[1] & (1 << 16)) != 0;
+    int avx512dq = (cpu_info[1] & (1 << 17)) != 0;
+    return avx512f && avx512dq;
+}
+#endif // _WIN32
 
 // Checks if floating point contractions are on. 
 // If so, this will prevent unit tests from passing and bit-wise reproducibility will fail.
