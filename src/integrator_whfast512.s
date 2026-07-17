@@ -814,6 +814,32 @@ reb_whfast512_kepler_step:
     reb_whfast512_store_results
     ret
 
+.globl reb_whfast512_set1_pd
+reb_whfast512_set1_pd:
+    # Input:
+    #           rdi = pointer to 512bit memory
+    #           xmm0 = double
+    vpbroadcastq    %xmm0, %zmm0
+    vmovapd         %zmm0, (%rdi)
+    ret 
+
+.globl reb_whfast512_loadu_pd
+reb_whfast512_loadu_pd:
+    # Input:
+    #           rdi = pointer to 512bit memory
+    # Output:
+    #           zmm0 = value loaded
+    vmovupd     (%rdi), %zmm0
+    ret
+
+.globl reb_whfast512_storeu_pd
+reb_whfast512_storeu_pd:
+    # Input:
+    #           rdi = pointer to 512bit memory
+    #           zmm0 = value
+    vmovupd     %zmm0, (%rdi)
+    ret
+
 
 # Generate actual functions using macros
 # We do this to avoid branching during the inner loops.

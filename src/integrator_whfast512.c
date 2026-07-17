@@ -152,19 +152,25 @@ X(exit_max_distance) X(exit_min_distance_r) \
 X(mat8_jacobi_to_inertial)\
 X(counter) 
 
+// External function definitions. Implemented in integrator_whfast512.s.
+extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
+extern void reb_whfast512_set1_pd(void* address, double value);
+extern void reb_whfast512_storeu_pd(void* address, __m512d value);
+extern __m512d reb_whfast512_loadu_pd(void* address);
+
 #ifdef DEBUG_AVX512
 uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     struct simd_data* data = whfast512->data;
     uint64_t i[8];
-    _mm512_store_epi64(&i[0], data->counter);
+    reb_whfast512_store_epi64(&i[0], data->counter);
     return i[test_p];
 }
 
 // Debug function to print vectors
 static inline void printavx512(__m512d a) {
     double _nax[8];
-    _mm512_storeu_pd(&_nax[0], a);
+    reb_whfast512_storeu_pd(&_nax[0], a);
     printf("avx = {%.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g}\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
 }
 
@@ -207,9 +213,9 @@ static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const do
                 tmp2[i] += tmp[j]*transformation[8*j+i];
             }
         }
-        return _mm512_loadu_pd(tmp2);
+        return reb_whfast512_loadu_pd(tmp2);
     }else{
-        return _mm512_loadu_pd(tmp);
+        return reb_whfast512_loadu_pd(tmp);
     }
 }
 
@@ -220,7 +226,7 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
     double tmp[8];
-    _mm512_storeu_pd(tmp, vector);
+    reb_whfast512_storeu_pd(tmp, vector);
     double tmp2[8] = {0}; 
     for (int i=0; i<8; i++) {
         for (int j=0; j<8; j++) {
@@ -278,7 +284,6 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
 }
 
 // External function definitions. Implemented in integrator_whfast512.s.
-extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
 // Because there are so many combinations (32 in total), the following function definitions are implemented using precompiler macros.
 #define FUNCDEF_3(nsys, encounter, escape) \
@@ -469,8 +474,8 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
         }
     }
 
-    data->M = _mm512_loadu_pd(&M);
-    data->M0 = _mm512_loadu_pd(&M0); //  = particles[0].m 
+    data->M = reb_whfast512_loadu_pd(&M);
+    data->M0 = reb_whfast512_loadu_pd(&M0); //  = particles[0].m 
 
     // GR prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
@@ -484,11 +489,11 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
             _gr_prefac[s*p_per_system+(p-1)] = -6.*m0*m0/(c*c);
         }
     }
-    data->gr_prefac = _mm512_loadu_pd(&_gr_prefac);
-    data->dt = _mm512_set1_pd(r->dt); 
-    data->exit_max_distance = _mm512_set1_pd(r->exit_max_distance);
-    data->exit_min_distance = _mm512_set1_pd(r->exit_min_distance);
-    data->exit_min_distance_r = _mm512_set1_pd(1.0/r->exit_min_distance);
+    data->gr_prefac = reb_whfast512_loadu_pd(&_gr_prefac);
+    reb_whfast512_set1_pd(&data->dt,r->dt); 
+    reb_whfast512_set1_pd(&data->exit_max_distance, r->exit_max_distance);
+    reb_whfast512_set1_pd(&data->exit_min_distance, r->exit_min_distance);
+    reb_whfast512_set1_pd(&data->exit_min_distance_r, 1.0/r->exit_min_distance);
 #define X(name) printf(".set P512_" #name ", %zu\n", offsetof(struct simd_data, name));
     //    SIMD_DATA_MEMBERS
 #undef X
@@ -569,9 +574,9 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
         }
         // First half DRIFT step.
         skip_first_kepler_step = 1;
-        data->dt = _mm512_set1_pd(dt/2.0); 
+        reb_whfast512_set1_pd(&data->dt, dt/2.0); 
         reb_whfast512_kepler_step(data);    
-        data->dt = _mm512_set1_pd(dt); // Reset
+        reb_whfast512_set1_pd(&data->dt, dt); // Reset
     }
 
     r->status = whfast512_full_steps(r, whfast512, &N_steps, skip_first_kepler_step);
@@ -595,9 +600,9 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
             reb_simulation_error(r, "ASM512 is unable to synchronize. data is NULL.");
             return;
         }
-        data->dt = _mm512_set1_pd(r->dt/2.0); 
+        reb_whfast512_set1_pd(&data->dt, r->dt/2.0); 
         reb_whfast512_kepler_step(data);    
-        data->dt = _mm512_set1_pd(r->dt); // Reset
+        reb_whfast512_set1_pd(&data->dt, r->dt); // Reset
         if (whfast512->corrector){
             whfast512_corrector_step(whfast512, -1.0);
         }
