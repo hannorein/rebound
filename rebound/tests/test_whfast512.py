@@ -21,7 +21,9 @@ def gr_potential(sim):
 class TestIntegratorWHFast512(unittest.TestCase):
     def test_whfast512_avx512_available(self):
         if not rebound.avx512_available:
-            print("\n::warning:: AVX512 is not supported by this CPU. Cannot run WHFast512 unit tests.")
+            print("\n::error:: AVX512 is not supported by this CPU. Cannot run WHFast512 unit tests.")
+        else:
+            print("\n::notice:: AVX512 is supported by this CPU. Running WHFast512 units tests.")
 
     def test_whfast512_basic(self):
         if not rebound.avx512_available: return
