@@ -1,24 +1,25 @@
 ifndef OS
-	OS=$(shell uname)
+    OS=$(shell uname)
 endif
 ifneq ($(OS), Windows_NT)
-	OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -fPIC
-	OBJFILEEXT=o
-	LIBREBOUND=librebound.so
-	EXEREBOUND=rebound
-	RM=rm -f
-	LINKORCOPYLIBREBOUND=ln -s -f ../../src/$(LIBREBOUND) .
-	LINKORCOPYLIBREBOUNDMAIN=ln -s -f src/$(LIBREBOUND) .
-	CCPROBLEM=$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) $< -L. -lrebound $(LIB) -o $(EXEREBOUND)
-	UNAME_M := $(shell uname -m)
-	# Only include AVX-512 assembly if on x86_64
-	ifeq ($(UNAME_M),x86_64)
-		OBJECTS_ASM=integrator_whfast512.asm_o
-	endif
+    OPT+= -std=c99 -Wpointer-arith -D_GNU_SOURCE -fPIC
+    OBJFILEEXT=o
+    LIBREBOUND=librebound.so
+    EXEREBOUND=rebound
+    RM=rm -f
+    LINKORCOPYLIBREBOUND=ln -s -f ../../src/$(LIBREBOUND) .
+    LINKORCOPYLIBREBOUNDMAIN=ln -s -f src/$(LIBREBOUND) .
+    CCPROBLEM=$(CC) -I../../src/ -Wl,-rpath,./ $(OPT) $(PREDEF) $< -L. -lrebound $(LIB) -o $(EXEREBOUND)
+    UNAME_M := $(shell uname -m)
+    # Only include AVX-512 assembly if on x86_64
+    ifeq ($(UNAME_M),x86_64)
+        AS?=as --noexecstack -g -o $@ $<
+        OBJECTS_ASM=integrator_whfast512.asm_o
+    endif
 else
 ifeq ($(OPENGL), 1)
 $(warning OpenGL not supported on Windows. Setting OPENGL=0)
-	OPENGL=0
+    OPENGL=0
 endif
 ifeq ($(MPI), 1)
 $(error MPI currently not supported on Windows. Please set MPI=0)
@@ -26,48 +27,60 @@ endif
 ifeq ($(OPENMP), 1)
 $(error OPENMP currently not supported on Windows. Please set OPENMP=0)
 endif
-	OPT+= /D_GNU_SOURCE /Ox /fp:precise 
-	OBJFILEEXT=obj
-	LIBREBOUND=librebound.dll
-	EXEREBOUND=rebound.exe
-	SHELL=cmd.exe
-	RM=del /q
-	LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
-	LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
-	CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
+    OPT+= /D_GNU_SOURCE /Ox /fp:precise 
+    OBJFILEEXT=obj
+    LIBREBOUND=librebound.dll
+    EXEREBOUND=rebound.exe
+    SHELL=cmd.exe
+    RM=del /q
+    LINKORCOPYLIBREBOUND=copy ..\..\src\librebound.* . 
+    LINKORCOPYLIBREBOUNDMAIN=copy src\librebound.* . 
+    CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
+    # Only include AVX-512 assembly if on x86_64
+    ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+        IS_64BIT = yes
+    else ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+        IS_64BIT = yes
+    else
+        IS_64BIT = no
+    endif
+    #ifeq ($(IS_64BIT),yes)
+        AS=clang -c $< -o $@
+        OBJECTS_ASM=integrator_whfast512.asm_o
+    #endif
 endif
 ifeq ($(OS), Linux)
-	OPT+= -O3 -Wall -Wpedantic -Wno-strict-prototypes -g 
-	OPTLIB+= -Wextra
-	LIB+= -lm -lrt
+    OPT+= -O3 -Wall -Wpedantic -Wno-strict-prototypes -g 
+    OPTLIB+= -Wextra
+    LIB+= -lm -lrt
 endif
 ifeq ($(OS), Darwin)
-	OPT+= -O3 -I/usr/local/include -Wall -Wpedantic -Wno-strict-prototypes -g
-	OPTLIB+= -Wextra
-	PREDEF+= -D_APPLE
-	LIB+= -L/usr/local/lib
+    OPT+= -O3 -I/usr/local/include -Wall -Wpedantic -Wno-strict-prototypes -g
+    OPTLIB+= -Wextra
+    PREDEF+= -D_APPLE
+    LIB+= -L/usr/local/lib
 endif
 
 ifeq ($(MPI), 1)
-	ifeq ($(origin CC),default)
-		CC:=mpicc
-	else
-		CC?=mpicc
-	endif
-	PREDEF+= -DMPI
+    ifeq ($(origin CC),default)
+        CC:=mpicc
+    else
+        CC?=mpicc
+    endif
+    PREDEF+= -DMPI
 else
-	ifeq ($(OS),Windows_NT) 
-		ifeq ($(origin CC),default)
-			CC:=cl
-		endif
-	else
-		CC?=cc
-	endif
+    ifeq ($(OS),Windows_NT) 
+        ifeq ($(origin CC),default)
+            CC:=cl
+        endif
+    else
+        CC?=cc
+    endif
 endif
 
 ifeq ($(FFTW), 1)
-	PREDEF+= -DFFTW
-	LIB+= -lfftw3
+    PREDEF+= -DFFTW
+    LIB+= -lfftw3
 endif
 
 ifneq ($(SERVER), 0)
@@ -77,45 +90,45 @@ endif
 ifeq ($(OPENGL), 1)
 PREDEF+= -DOPENGL
 ifeq ($(OS), Darwin)
-	OPT+= -I/opt/homebrew/include
-	LIB+= -L/opt/homebrew/lib
-	LIB+= -lglfw -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
+    OPT+= -I/opt/homebrew/include
+    LIB+= -L/opt/homebrew/lib
+    LIB+= -lglfw -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
 else
-	LIB+= -lglfw
+    LIB+= -lglfw
 endif
 endif
 
 
 ifeq ($(QUADRUPOLE), 1)
-	PREDEF+= -DQUADRUPOLE
+    PREDEF+= -DQUADRUPOLE
 endif
 
 ifeq ($(PROFILING), 1)
-	PREDEF+= -DPROFILING
+    PREDEF+= -DPROFILING
 endif
 
 ifeq ($(OPENMP), 1)
-	PREDEF+= -DOPENMP
+    PREDEF+= -DOPENMP
 ifeq ($(CC), icc)
-	OPT+= -openmp
-	LIB+= -openmp
+    OPT+= -openmp
+    LIB+= -openmp
 else
-	OPT+= -fopenmp
-	LIB+= -fopenmp
+    OPT+= -fopenmp
+    LIB+= -fopenmp
 endif
 else
 ifeq ($(OPENMPCLANG), 1)
-	PREDEF+= -DOPENMP
-	OPT+= -I$(brew --prefix libomp)/include -Xpreprocessor -fopenmp
-	LIB+= -lomp
+    PREDEF+= -DOPENMP
+    OPT+= -I$(brew --prefix libomp)/include -Xpreprocessor -fopenmp
+    LIB+= -lomp
 else
-	ifneq ($(OS), Windows_NT)
-		OPT+= -Wno-unknown-pragmas
-	endif
+    ifneq ($(OS), Windows_NT)
+        OPT+= -Wno-unknown-pragmas
+    endif
 endif
 endif
 
 ifndef GITHASH
-	GITHASH = $(shell git rev-parse HEAD || echo '0000000000gitnotfound0000000000000000000')
-	PREDEF+= -DGITHASH=$(GITHASH)
+    GITHASH = $(shell git rev-parse HEAD || echo '0000000000gitnotfound0000000000000000000')
+    PREDEF+= -DGITHASH=$(GITHASH)
 endif
