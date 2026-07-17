@@ -30,8 +30,8 @@ jobs:
       - name: Output package contents
         run: | 
           pip show rebound -vf
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+          #- name: Setup tmate session
+          #uses: mxschmitt/action-tmate@v3
       - name: Running unittests
         run: |
           python -m unittest discover -s rebound/tests/ -v
