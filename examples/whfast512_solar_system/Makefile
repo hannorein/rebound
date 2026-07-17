@@ -1,6 +1,5 @@
 export OPENGL=0
 export SERVER=0
-export OPT=-march=native
 include ../../src/Makefile.defs
 
 # CCPROBLEM is defined in Makefile.defs to allow for
