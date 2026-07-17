@@ -210,6 +210,9 @@ int reb_avx512_available(void){
 #endif
 }
 #else // _WIN32
+#if defined(_M_X64) || defined(_M_IX86)
+#include <intrin.h>
+#include <immintrin.h>
 static void run_cpuid(int32_t leaf, int32_t subleaf, int32_t cpu_info[4]) {
 #if defined(_MSC_VER) || defined(__clang__)
     __cpuidex(cpu_info, leaf, subleaf);
@@ -255,6 +258,11 @@ int reb_avx512_available(void) {
     int avx512dq = (cpu_info[1] & (1 << 17)) != 0;
     return avx512f && avx512dq;
 }
+#else // #if defined(_M_X64) || defined(_M_IX86)
+int reb_avx512_available(void) {
+    return 0; // None x86
+}
+#endif // #if defined(_M_X64) || defined(_M_IX86)
 #endif // _WIN32
 
 // Checks if floating point contractions are on. 
