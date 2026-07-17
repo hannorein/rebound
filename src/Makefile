@@ -51,4 +51,3 @@ clean:
 	@echo "Removing coverage files ..."
 	@-$(RM) *.gcda
 	@-$(RM) *.gcno
-	

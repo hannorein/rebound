@@ -143,7 +143,7 @@ void reb_integrator_whfast512_free(void* state){
     free(whfast512);
 }
 
-#if defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_AMD64)
 // Helper macro to print out offsets in structure for assembly code
 #define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
 X(mat8_inertial_to_jacobi) \

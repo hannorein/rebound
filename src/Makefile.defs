@@ -38,16 +38,15 @@ endif
     CCPROBLEM=$(CC) /I"../../src" $(OPT) $(PREDEF) $< librebound.lib /Fe: $(EXEREBOUND)
     # Only include AVX-512 assembly if on x86_64
     ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
-        IS_64BIT = yes
-    else ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
-        IS_64BIT = yes
-    else
-        IS_64BIT = no
+        IS_64BIT=yes
     endif
-    #ifeq ($(IS_64BIT),yes)
+    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+        IS_64BIT=yes
+    endif
+    ifeq ($(IS_64BIT),yes)
         AS=clang -c $< -o $@
         OBJECTS_ASM=integrator_whfast512.asm_o
-    #endif
+    endif
 endif
 ifeq ($(OS), Linux)
     OPT+= -O3 -Wall -Wpedantic -Wno-strict-prototypes -g 
