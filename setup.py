@@ -58,7 +58,7 @@ class build_ext_avx512(build_ext):
                         self.compiler.linker_so[i] = '-shared'
         if avx512_supported():
             asm = os.path.join(self.build_temp, "integrator_whfast512.asm_o")
-            self.compiler.spawn(["as", "-g", "-o", asm, "src/integrator_whfast512.s"])
+            self.compiler.spawn(["as", "--noexecstack", "-g", "-o", asm, "src/integrator_whfast512.s"])
             for ext in self.extensions:
                 ext.extra_objects = (ext.extra_objects or []) + [asm]
         super().build_extensions()
