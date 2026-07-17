@@ -13,7 +13,7 @@ ifneq ($(OS), Windows_NT)
     UNAME_M := $(shell uname -m)
     # Only include AVX-512 assembly if on x86_64
     ifeq ($(UNAME_M),x86_64)
-        AS?=as --noexecstack -g -o $@ $<
+        AS=as --noexecstack -g -o $@ $<
         OBJECTS_ASM=integrator_whfast512.asm_o
     endif
 else
