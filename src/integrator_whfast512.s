@@ -1091,4 +1091,5 @@ b34mergeidx:
     .quad 0xBED22E64AF0557FF    # Interaction
     .quad 0x400AC5EB3F7AB2F8    # Kepler
 
-.section .note.GNU-stack,"",@progbits
+# Now passed via --noexecstack to as
+#.section .note.GNU-stack,"",@progbits
