@@ -14,8 +14,6 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -32,6 +30,8 @@ jobs:
       - name: Output package contents
         run: | 
           pip show rebound -vf
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - name: Running unittests
         run: |
           python -m unittest discover -s rebound/tests/ -v
