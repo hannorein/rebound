@@ -808,12 +808,15 @@
     ret
 .endm
 
+# Also make the Kepler step available (for synchronization)
+.globl reb_whfast512_kepler_step
 reb_whfast512_kepler_step:
     reb_whfast512_init_registers
     kepler_step
     reb_whfast512_store_results
     ret
 
+# Helper functions to load and move data
 .globl reb_whfast512_set1_pd
 reb_whfast512_set1_pd:
     # Input:
@@ -833,7 +836,7 @@ reb_whfast512_movu_pd:
     ret
 
 
-# Generate actual functions using macros
+# Generate actual integration functions using macros.
 # We do this to avoid branching during the inner loops.
 # There is a GNU as bug which limits the number of nested irp loops, so we need to refactor this into macros.
 # The basic idea is that we programatically create functions with all possible combinations of gr, nsys, encounter, and escape.
@@ -916,10 +919,6 @@ reb_whfast512_corrector_step_gr\gr\()_n\nsys: corrector_step \gr \nsys
 .irp gr,0,1
 reb_whfast512_full_steps_macro1 \gr
 .endr
-
-# Also make the Kepler step available (for synchronization)
-.globl reb_whfast512_kepler_step
-
 
 
 .section    .rodata
