@@ -215,10 +215,10 @@ static void run_cpuid(int32_t leaf, int32_t subleaf, int32_t cpu_info[4]) {
     __cpuidex(cpu_info, leaf, subleaf);
 #else // GCC (untested)
     __asm__ __volatile__(
-        "cpuid"
-        : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
-        : "a"(leaf), "c"(subleaf)
-    );
+            "cpuid"
+            : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
+            : "a"(leaf), "c"(subleaf)
+            );
 #endif
 }
 
