@@ -47,3 +47,6 @@ jobs:
         run: |
           python python_examples/longtermtest/problem.py
           python python_examples/megno/problem.py
+      - name: Setup tmate session on failure
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
