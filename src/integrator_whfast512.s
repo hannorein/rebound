@@ -823,20 +823,12 @@ reb_whfast512_set1_pd:
     vmovapd         %zmm0, (%rdi)
     ret 
 
-.globl reb_whfast512_loadu_pd
-reb_whfast512_loadu_pd:
+.globl reb_whfast512_movu_pd
+reb_whfast512_movu_pd:
     # Input:
-    #           rdi = pointer to 512bit memory
-    # Output:
-    #           zmm0 = value loaded
-    vmovupd     (%rdi), %zmm0
-    ret
-
-.globl reb_whfast512_storeu_pd
-reb_whfast512_storeu_pd:
-    # Input:
-    #           rdi = pointer to 512bit memory
-    #           zmm0 = value
+    #           rdi = destination
+    #           rsi = source
+    vmovupd     (%rsi), %zmm0
     vmovupd     %zmm0, (%rdi)
     ret
 

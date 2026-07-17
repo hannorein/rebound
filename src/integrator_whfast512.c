@@ -29,19 +29,7 @@
 #if !defined(_WIN32)
 #define REB_ATTRIBUTE_ALIGNED_64 __attribute__((aligned(64)))
 #else
-#define REB_ATTRIBUTE_ALIGNED_64
-#endif
-#if (defined(__i386__) || defined(__x86_64__)) && !defined(_WIN32)
-#include <immintrin.h>
-#pragma GCC target("avx512f,avx512dq,avx512bw,avx512cd,avx512vl")
-#else
-typedef struct {
-    double lanes[8];
-} REB_ATTRIBUTE_ALIGNED_64 __m512d;
-typedef struct {
-    uint64_t lanes[8];
-} REB_ATTRIBUTE_ALIGNED_64 __m512i;
-typedef char  REB_ATTRIBUTE_ALIGNED_64 __mmask8; 
+#define REB_ATTRIBUTE_ALIGNED_64 __declspec(align(64))
 #endif
 #include "particle.h"
 #include "tools.h"
@@ -57,6 +45,17 @@ void* reb_integrator_whfast512_create();
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state);
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[];
+
+// We define __m512d ourselves.
+// This way we don't have to compile this file with AVX512 support which helps
+// simplify the build system on windows.
+typedef struct {
+    double lanes[8];
+} REB_ATTRIBUTE_ALIGNED_64 __m512d;
+typedef struct {
+    uint64_t lanes[8];
+} REB_ATTRIBUTE_ALIGNED_64 __m512i;
+typedef unsigned char  REB_ATTRIBUTE_ALIGNED_64 __mmask8; 
 
 // The main datasctructure. We pass this as a pointer to the assembly code.
 struct simd_data{
@@ -155,8 +154,7 @@ X(counter)
 // External function definitions. Implemented in integrator_whfast512.s.
 extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
 extern void reb_whfast512_set1_pd(void* address, double value);
-extern void reb_whfast512_storeu_pd(void* address, __m512d value);
-extern __m512d reb_whfast512_loadu_pd(void* address);
+extern void reb_whfast512_movu_pd(void* destination, void* source);
 
 #ifdef DEBUG_AVX512
 uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
@@ -168,9 +166,9 @@ uint64_t reb_whfast512_counter(struct reb_simulation* r, int test_p){
 }
 
 // Debug function to print vectors
-static inline void printavx512(__m512d a) {
+static inline void printavx512(void* a) {
     double _nax[8];
-    reb_whfast512_storeu_pd(&_nax[0], a);
+    reb_whfast512_movu_pd(&_nax[0], a);
     printf("avx = {%.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g, %.17g}\n", _nax[0], _nax[1], _nax[2], _nax[3], _nax[4], _nax[5], _nax[6], _nax[7]);
 }
 
@@ -195,8 +193,7 @@ static inline void printmat8(double* a) {
 #endif // DEBUG_AVX512
 
 // Hepler function to load particle data into avx512 registers
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
-static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
+void load_into_m512d(void* destination, struct reb_simulation* r, size_t offset, const double* transformation, int N_systems){
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
@@ -213,20 +210,19 @@ static __m512d load_into_m512d(struct reb_simulation* r, size_t offset, const do
                 tmp2[i] += tmp[j]*transformation[8*j+i];
             }
         }
-        return reb_whfast512_loadu_pd(tmp2);
+        reb_whfast512_movu_pd(destination, tmp2);
     }else{
-        return reb_whfast512_loadu_pd(tmp);
+        reb_whfast512_movu_pd(destination, tmp);
     }
 }
 
 // Hepler function to load particle data from avx512 registers
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
-static void load_from_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems, __m512d vector){
+static void load_from_m512d(struct reb_simulation* r, size_t offset, const double* transformation, int N_systems, void* vector){
     struct reb_particle* particles = r->particles;
     const unsigned int p_per_system = 8/N_systems;
     const unsigned int N_per_system = r->N/N_systems;
     double tmp[8];
-    reb_whfast512_storeu_pd(tmp, vector);
+    reb_whfast512_movu_pd(tmp, vector);
     double tmp2[8] = {0}; 
     for (int i=0; i<8; i++) {
         for (int j=0; j<8; j++) {
@@ -243,7 +239,6 @@ static void load_from_m512d(struct reb_simulation* r, size_t offset, const doubl
 // Convert jacobi coordinates to inertial coordinates
 // Also performs com step (assume original particles are unmodified)
 // Note: Speed is not a concern here 
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct simd_data* data, double dt_com, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
     struct reb_particle com[4];
@@ -251,12 +246,12 @@ static void jacobi_to_inertial_posvel_and_com(struct reb_simulation* r, struct s
         com[s] = reb_simulation_com_range(r,s*N_per_system, (s+1)*N_per_system); // original com
     }
     struct reb_particle* particles = r->particles;
-    load_from_m512d(r, offsetof(struct reb_particle, x), data->mat8_jacobi_to_inertial, N_systems, data->x);
-    load_from_m512d(r, offsetof(struct reb_particle, y), data->mat8_jacobi_to_inertial, N_systems, data->y);
-    load_from_m512d(r, offsetof(struct reb_particle, z), data->mat8_jacobi_to_inertial, N_systems, data->z);
-    load_from_m512d(r, offsetof(struct reb_particle, vx), data->mat8_jacobi_to_inertial, N_systems, data->vx);
-    load_from_m512d(r, offsetof(struct reb_particle, vy), data->mat8_jacobi_to_inertial, N_systems, data->vy);
-    load_from_m512d(r, offsetof(struct reb_particle, vz), data->mat8_jacobi_to_inertial, N_systems, data->vz);
+    load_from_m512d(r, offsetof(struct reb_particle, x), data->mat8_jacobi_to_inertial, N_systems, &data->x);
+    load_from_m512d(r, offsetof(struct reb_particle, y), data->mat8_jacobi_to_inertial, N_systems, &data->y);
+    load_from_m512d(r, offsetof(struct reb_particle, z), data->mat8_jacobi_to_inertial, N_systems, &data->z);
+    load_from_m512d(r, offsetof(struct reb_particle, vx), data->mat8_jacobi_to_inertial, N_systems, &data->vx);
+    load_from_m512d(r, offsetof(struct reb_particle, vy), data->mat8_jacobi_to_inertial, N_systems, &data->vy);
+    load_from_m512d(r, offsetof(struct reb_particle, vz), data->mat8_jacobi_to_inertial, N_systems, &data->vz);
     for (unsigned s=0;s<N_systems;s++){
         particles[s*N_per_system+0].x  = 0.0;
         particles[s*N_per_system+0].y  = 0.0;
@@ -352,7 +347,6 @@ static void whfast512_corrector_step(struct reb_integrator_whfast512_state* whfa
     }
 }
 
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data* data, unsigned int N_systems){
     const unsigned int N_per_system = r->N/N_systems;
     // Transformations assume system is in COM frame.
@@ -374,13 +368,13 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data
     }
     reb_simulation_move_to_com(r);
     // Same layout as for democratic heliocentric
-    data->x = load_into_m512d(r, offsetof(struct reb_particle,x),data->mat8_inertial_to_jacobi, N_systems);
-    data->y = load_into_m512d(r, offsetof(struct reb_particle,y),data->mat8_inertial_to_jacobi, N_systems);
-    data->z = load_into_m512d(r, offsetof(struct reb_particle,z),data->mat8_inertial_to_jacobi, N_systems);
-    data->vx = load_into_m512d(r, offsetof(struct reb_particle,vx),data->mat8_inertial_to_jacobi, N_systems);
-    data->vy = load_into_m512d(r, offsetof(struct reb_particle,vy),data->mat8_inertial_to_jacobi, N_systems);
-    data->vz = load_into_m512d(r, offsetof(struct reb_particle,vz),data->mat8_inertial_to_jacobi, N_systems);
-    data->m = load_into_m512d(r, offsetof(struct reb_particle,m),NULL, N_systems);
+    load_into_m512d(&data->x,  r, offsetof(struct reb_particle,x),data->mat8_inertial_to_jacobi, N_systems);
+    load_into_m512d(&data->y,  r, offsetof(struct reb_particle,y),data->mat8_inertial_to_jacobi, N_systems);
+    load_into_m512d(&data->z,  r, offsetof(struct reb_particle,z),data->mat8_inertial_to_jacobi, N_systems);
+    load_into_m512d(&data->vx, r, offsetof(struct reb_particle,vx),data->mat8_inertial_to_jacobi, N_systems);
+    load_into_m512d(&data->vy, r, offsetof(struct reb_particle,vy),data->mat8_inertial_to_jacobi, N_systems);
+    load_into_m512d(&data->vz, r, offsetof(struct reb_particle,vz),data->mat8_inertial_to_jacobi, N_systems);
+    load_into_m512d(&data->m,  r, offsetof(struct reb_particle,m),NULL, N_systems);
     // Undo COM transformation. COM will be applied in jacobi_to_inertial_posvel_and_com().
     memcpy(r->particles, p_tmp, sizeof(struct reb_particle)*r->N);
     free(p_tmp);
@@ -388,7 +382,6 @@ static void inertial_to_jacobi_posvel(struct reb_simulation* r, struct simd_data
 
 
 // Precalculate various constants and put them in 512 bit vectors.
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static void recalculate_constants(struct reb_simulation* r, unsigned int N_systems){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     free(whfast512->data); // free in case previously allocated
@@ -474,8 +467,8 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
         }
     }
 
-    data->M = reb_whfast512_loadu_pd(&M);
-    data->M0 = reb_whfast512_loadu_pd(&M0); //  = particles[0].m 
+    reb_whfast512_movu_pd(&data->M, &M);
+    reb_whfast512_movu_pd(&data->M0, &M0); //  = particles[0].m 
 
     // GR prefactors. Note: assumes units of AU, year/2pi.
     double c = 10065.32;
@@ -489,7 +482,7 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
             _gr_prefac[s*p_per_system+(p-1)] = -6.*m0*m0/(c*c);
         }
     }
-    data->gr_prefac = reb_whfast512_loadu_pd(&_gr_prefac);
+    reb_whfast512_movu_pd(&data->gr_prefac, &_gr_prefac);
     reb_whfast512_set1_pd(&data->dt,r->dt); 
     reb_whfast512_set1_pd(&data->exit_max_distance, r->exit_max_distance);
     reb_whfast512_set1_pd(&data->exit_min_distance, r->exit_min_distance);
@@ -500,7 +493,6 @@ static void recalculate_constants(struct reb_simulation* r, unsigned int N_syste
 
 }
 
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r){
     struct reb_integrator_whfast512_state* whfast512 = r->integrator.state;
     // Check if all assumptions are satisfied.
@@ -551,7 +543,6 @@ static int reb_integrator_whfast512_verify_setup(struct reb_simulation* const r)
 }
 
 // Optimized main loops allowing for concatenate_steps
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
     struct reb_integrator_whfast512_state* whfast512 = state;
     const double dt = r->dt;
@@ -587,7 +578,6 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
 }
 
 // Synchronization routine. Called every time an output is needed.
-__attribute__((target("avx512f,avx512vl,avx512bw,avx512dq")))
 void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* state){
     if (!reb_avx512_available()){
         reb_simulation_error(r, "AVX512 is not supported by your CPU.");
