@@ -46,40 +46,42 @@ void reb_integrator_whfast512_step(struct reb_simulation* r, void* state);
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state);
 const struct reb_binarydata_field_descriptor reb_integrator_whfast512_field_descriptor_list[];
 
-// We define __m512d ourselves.
+// We define __mmask8 and __m512d ourselves.
 // This way we don't have to compile this file with AVX512 support which helps
 // simplify the build system on windows.
+typedef unsigned char  REB_ATTRIBUTE_ALIGNED_64 __mmask8; 
 typedef struct {
     double lanes[8];
 } REB_ATTRIBUTE_ALIGNED_64 __m512d;
+#ifdef DEBUG_AVX512
 typedef struct {
     uint64_t lanes[8];
 } REB_ATTRIBUTE_ALIGNED_64 __m512i;
-typedef unsigned char  REB_ATTRIBUTE_ALIGNED_64 __mmask8; 
+#endif // DEBUG_AVX512
 
 // The main datasctructure. We pass this as a pointer to the assembly code.
 struct simd_data{
     // Various constants
-    __m512d M REB_ATTRIBUTE_ALIGNED_64;             //  Masses used in Kepler-Solver
-    __m512d dt REB_ATTRIBUTE_ALIGNED_64;            //  Timestep
-    __m512d gr_prefac REB_ATTRIBUTE_ALIGNED_64;     //  Prefactor for GR
-    __m512d m REB_ATTRIBUTE_ALIGNED_64;
-    __m512d x REB_ATTRIBUTE_ALIGNED_64;
-    __m512d y REB_ATTRIBUTE_ALIGNED_64;
-    __m512d z REB_ATTRIBUTE_ALIGNED_64;
-    __m512d vx REB_ATTRIBUTE_ALIGNED_64;
-    __m512d vy REB_ATTRIBUTE_ALIGNED_64;
-    __m512d vz REB_ATTRIBUTE_ALIGNED_64;
-    double mat8_inertial_to_jacobi[64] REB_ATTRIBUTE_ALIGNED_64; // Coordinate transformation matricies. Can be recalculated from particle masses.
-    double mat8_jacobi_to_heliocentric[64] REB_ATTRIBUTE_ALIGNED_64;
-    __m512d M0 REB_ATTRIBUTE_ALIGNED_64;            //  Masses used in Jacobi Term
-    __mmask8 mask REB_ATTRIBUTE_ALIGNED_64;         // Mask for cases with less than 8 planets
-    __m512d exit_max_distance REB_ATTRIBUTE_ALIGNED_64;
-    __m512d exit_min_distance REB_ATTRIBUTE_ALIGNED_64;
-    __m512d exit_min_distance_r REB_ATTRIBUTE_ALIGNED_64; // Inverse of exit_min_distance
-    double mat8_jacobi_to_inertial[64] REB_ATTRIBUTE_ALIGNED_64;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d M;             //  Masses used in Kepler-Solver
+    REB_ATTRIBUTE_ALIGNED_64 __m512d dt;            //  Timestep
+    REB_ATTRIBUTE_ALIGNED_64 __m512d gr_prefac;     //  Prefactor for GR
+    REB_ATTRIBUTE_ALIGNED_64 __m512d m;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d x;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d y;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d z;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d vx;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d vy;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d vz;
+    REB_ATTRIBUTE_ALIGNED_64 double mat8_inertial_to_jacobi[64]; // Coordinate transformation matricies. Can be recalculated from particle masses.
+    REB_ATTRIBUTE_ALIGNED_64 double mat8_jacobi_to_heliocentric[64];
+    REB_ATTRIBUTE_ALIGNED_64 __m512d M0;            //  Masses used in Jacobi Term
+    REB_ATTRIBUTE_ALIGNED_64 __mmask8 mask;         // Mask for cases with less than 8 planets
+    REB_ATTRIBUTE_ALIGNED_64 __m512d exit_max_distance;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d exit_min_distance;
+    REB_ATTRIBUTE_ALIGNED_64 __m512d exit_min_distance_r; // Inverse of exit_min_distance
+    REB_ATTRIBUTE_ALIGNED_64 double mat8_jacobi_to_inertial[64];
 #ifdef DEBUG_AVX512
-    __m512i counter REB_ATTRIBUTE_ALIGNED_64;
+    REB_ATTRIBUTE_ALIGNED_64 __m512i counter;
 #endif // DEBUG_AVX512
 };
 
