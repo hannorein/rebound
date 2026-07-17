@@ -35,18 +35,16 @@ else:
         extra_link_args   += ["-fprofile-arcs", "-ftest-coverage", "--coverage"]
     else:
         extra_compile_args.append("-O3")
-
-##### Turn off floating point contractions for bitwise reproducibility
-if os.environ.get("FFP_CONTRACT_OFF"):
-    extra_compile_args.append("-ffp-contract=off")
+    ##### Turn off floating point contractions for bitwise reproducibility
+    if os.environ.get("FFP_CONTRACT_OFF"):
+        extra_compile_args.append("-ffp-contract=off")
 
 
 ##### AVX512 where supported
 def avx512_supported():
     machine = platform.machine().lower()
     is_x86_64 = "x86_64" in machine or "amd64" in machine
-    is_linux = sys.platform.startswith('linux')
-    return is_x86_64 and is_linux
+    return is_x86_64
 
 class build_ext_avx512(build_ext):
     def build_extensions(self):
@@ -58,7 +56,10 @@ class build_ext_avx512(build_ext):
                         self.compiler.linker_so[i] = '-shared'
         if avx512_supported():
             asm = os.path.join(self.build_temp, "integrator_whfast512.asm_o")
-            self.compiler.spawn(["as", "--noexecstack", "-g", "-o", asm, "src/integrator_whfast512.s"])
+            if sys.platform == "win32":
+                self.compiler.spawn(["clang", "-c", "src/integrator_whfast512.s", "-o", asm])
+            else:
+                self.compiler.spawn(["as", "--noexecstack", "-g", "-o", asm, "src/integrator_whfast512.s"])
             for ext in self.extensions:
                 ext.extra_objects = (ext.extra_objects or []) + [asm]
         super().build_extensions()
