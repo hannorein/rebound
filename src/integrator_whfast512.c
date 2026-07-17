@@ -143,7 +143,7 @@ void reb_integrator_whfast512_free(void* state){
     free(whfast512);
 }
 
-#if (defined(__i386__) || defined(__x86_64__))
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
 // Helper macro to print out offsets in structure for assembly code
 #define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
 X(mat8_inertial_to_jacobi) \
@@ -621,7 +621,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
     }
 }
 
-#else // (defined(__i386__) || defined(__x86_64__))
+#else // defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state){
     (void)state;
     reb_simulation_error(r, "AVX512 is not supported on your platform");
@@ -632,4 +632,4 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state)
     reb_simulation_error(r, "AVX512 is not supported on your platform");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
-#endif // (defined(__i386__) || defined(__x86_64__))
+#endif // defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
