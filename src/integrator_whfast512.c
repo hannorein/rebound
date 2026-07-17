@@ -595,6 +595,7 @@ void reb_integrator_whfast512_step(struct reb_simulation* const r, void* state){
 void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* state){
     if (!reb_avx512_available()){
         reb_simulation_error(r, "AVX512 is not supported by your CPU.");
+        r->status = REB_STATUS_GENERIC_ERROR;
         return;
     }
     struct reb_integrator_whfast512_state* const whfast512 = state;
@@ -602,6 +603,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
         struct simd_data * data = whfast512->data;
         if (!data){
             reb_simulation_error(r, "ASM512 is unable to synchronize. data is NULL.");
+            r->status = REB_STATUS_GENERIC_ERROR;
             return;
         }
         reb_whfast512_set1_pd(&data->dt, r->dt/2.0); 
@@ -623,9 +625,11 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state){
     (void)state;
     reb_simulation_error(r, "AVX512 is not supported on your platform");
+    r->status = REB_STATUS_GENERIC_ERROR;
 }
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state){
     (void)state;
     reb_simulation_error(r, "AVX512 is not supported on your platform");
+    r->status = REB_STATUS_GENERIC_ERROR;
 }
 #endif // (defined(__i386__) || defined(__x86_64__))
