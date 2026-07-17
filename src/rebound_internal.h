@@ -36,7 +36,7 @@ typedef struct reb_timeval {
     int64_t tv_sec;
     int64_t tv_usec;
 } reb_timeval;
-int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
+REB_API int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
 #include <stdarg.h>
 int asprintf(char **strp, const char *fmt, ...);
 int vasprintf(char **strp, const char *fmt, va_list ap);
