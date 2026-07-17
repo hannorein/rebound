@@ -6,12 +6,12 @@ from setuptools.command.build_ext import build_ext
 from glob import glob
 import platform
 import os
+import subprocess
 import sys
 import sysconfig
 
 ##### Git hash
 try:
-    import subprocess
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
     ghash_arg = f"-DGITHASH={ghash}"
 except Exception:
@@ -55,10 +55,16 @@ class build_ext_avx512(build_ext):
                     if flag == '-bundle':
                         self.compiler.linker_so[i] = '-shared'
         if avx512_supported():
-            asm = os.path.join(self.build_temp, "integrator_whfast512.asm_o")
             if sys.platform == "win32":
-                self.compiler.spawn(["clang", "-c", "src/integrator_whfast512.s", "-o", asm])
+                asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
+                cmd = ["clang", "-c", "src/integrator_whfast512.s", "-o", asm, "-target", "x86_64-pc-windows-msvc"]
+                try:
+                    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                except subprocess.CalledProcessError as e:
+                    print(f"Assembly compilation failed: {e.stderr.decode()}", file=sys.stderr)
+                    raise
             else:
+                asm = os.path.join(self.build_temp, "integrator_whfast512_asm.o")
                 self.compiler.spawn(["as", "--noexecstack", "-g", "-o", asm, "src/integrator_whfast512.s"])
             for ext in self.extensions:
                 ext.extra_objects = (ext.extra_objects or []) + [asm]
