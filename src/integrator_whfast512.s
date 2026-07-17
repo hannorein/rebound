@@ -67,42 +67,42 @@
 
 # Only used in Interaction step:
 .set .LHVX, %zmm13
-.set HVY, %zmm14
-.set HVZ, %zmm15
-.set HVXC, %zmm16
-.set HVYC, %zmm17
-.set HVZC, %zmm18
-.set HX, %zmm19
-.set HY, %zmm20
-.set HZ, %zmm21
+.set .LHVY, %zmm14
+.set .LHVZ, %zmm15
+.set .LHVXC, %zmm16
+.set .LHVYC, %zmm17
+.set .LHVZC, %zmm18
+.set .LHX, %zmm19
+.set .LHY, %zmm20
+.set .LHZ, %zmm21
 
 # Only used in Kepler step:
-.set R, %zmm13
-.set RI, %zmm14
-.set ZETA, %zmm15
-.set ETA, %zmm16
-.set XX, %zmm17
-.set GS0, %zmm18
-.set GS1, %zmm0     # Note: reusing register zmm0
-.set GS2, %zmm19
-.set GS3, %zmm20
-.set BETA, %zmm21
+.set .LR, %zmm13
+.set .LIR, %zmm14
+.set .LZETA, %zmm15
+.set .LETA, %zmm16
+.set .LXX, %zmm17
+.set .LGS0, %zmm18
+.set .LGS1, %zmm0     # Note: reusing register zmm0
+.set .LGS2, %zmm19
+.set .LGS3, %zmm20
+.set .LBETA, %zmm21
 
 # Common register use
-.set X, %zmm22
-.set Y, %zmm23
-.set Z, %zmm24
-.set VX, %zmm25
-.set VY, %zmm26
-.set VZ, %zmm27
-.set ONE, %zmm28
-.set DT, %zmm29
-.set HALF, %zmm30
-.set M, %zmm31
-.set M_DT, %zmm12           # Only used once per step.
-.set EPS, %zmm11
-.set SIGN_ABS_MASK, %zmm10  # Only used once per step.
-.set MM0_DT, %zmm9          # -dt*M0 Only used once per step.
+.set .LX, %zmm22
+.set .LY, %zmm23
+.set .LZ, %zmm24
+.set .LVX, %zmm25
+.set .LVY, %zmm26
+.set .LVZ, %zmm27
+.set .LONE, %zmm28
+.set .LDT, %zmm29
+.set .LHALF, %zmm30
+.set .LM, %zmm31
+.set .LM_DT, %zmm12           # Only used once per step.
+.set .LEPS, %zmm11
+.set .LSIGN_ABS_MASK, %zmm10  # Only used once per step.
+.set .LMM0_DT, %zmm9          # -dt*M0 Only used once per step.
 
 #####################################
 # Stack initialization 
@@ -135,33 +135,33 @@
 
     # Load data
     kmovw           P512_MASK(%rdi), %k1
-    vmovapd         P512_DT(%rdi), DT
-    vmovapd         P512_M(%rdi), M
-    vmulpd          DT, M, M_DT
-    vmovapd         P512_M0(%rdi), MM0_DT
-    vmulpd          DT, MM0_DT, MM0_DT
-    vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
-    vbroadcastsd    .DOUBLE_ONE(%rip), ONE
-    vbroadcastsd    .HALF(%rip), HALF
-    vbroadcastsd    .EPS(%rip), EPS
-    vbroadcastsd    .SIGN_ABS_MASK(%rip), SIGN_ABS_MASK
+    vmovapd         P512_DT(%rdi), .LDT
+    vmovapd         P512_M(%rdi), .LM
+    vmulpd          .LDT, .LM, .LM_DT
+    vmovapd         P512_M0(%rdi), .LMM0_DT
+    vmulpd          .LDT, .LMM0_DT, .LMM0_DT
+    vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, .LMM0_DT, .LMM0_DT
+    vbroadcastsd    .DOUBLE_ONE(%rip), .LONE
+    vbroadcastsd    ..LHALF(%rip), .LHALF
+    vbroadcastsd    .EPS(%rip), .LEPS
+    vbroadcastsd    .SIGN_ABS_MASK(%rip), .LSIGN_ABS_MASK
     
-    vmovapd     P512_X(%rdi), X
-    vmovapd     P512_Y(%rdi), Y
-    vmovapd     P512_Z(%rdi), Z
+    vmovapd     P512_X(%rdi), .LX
+    vmovapd     P512_Y(%rdi), .LY
+    vmovapd     P512_Z(%rdi), .LZ
     
-    vmovapd     P512_VX(%rdi), VX
-    vmovapd     P512_VY(%rdi), VY
-    vmovapd     P512_VZ(%rdi), VZ
+    vmovapd     P512_VX(%rdi), .LVX
+    vmovapd     P512_VY(%rdi), .LVY
+    vmovapd     P512_VZ(%rdi), .LVZ
 .endm  
 
 .macro reb_whfast512_store_results
-    vmovapd    VX, P512_VX(%rdi)
-    vmovapd    VY, P512_VY(%rdi)
-    vmovapd    VZ, P512_VZ(%rdi)
-    vmovapd    X, P512_X(%rdi)
-    vmovapd    Y, P512_Y(%rdi)
-    vmovapd    Z, P512_Z(%rdi)
+    vmovapd    .LVX, P512_VX(%rdi)
+    vmovapd    .LVY, P512_VY(%rdi)
+    vmovapd    .LVZ, P512_VZ(%rdi)
+    vmovapd    .LX, P512_X(%rdi)
+    vmovapd    .LY, P512_Y(%rdi)
+    vmovapd    .LZ, P512_Z(%rdi)
 .endm
 
 
@@ -174,25 +174,25 @@
 .endm
 
 # High accuracy: (Gs1, Gs2, Gs3)
-# Output: GS1==%zmm0, GS2, GS3
+# Output: .LGS1==%zmm0, .LGS2, .LGS3
 # numTerms must be an odd number
 .macro mm_stiefel_Gs13_avx512 numTerms=19
     .set IF_offset, \numTerms
-    vmulpd          XX, XX, %zmm2     # X^2
+    vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
     .set IF_offset, IF_offset - 1
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm4
     .set IF_offset, IF_offset - 1
-    vmulpd          %zmm2, BETA, %zmm0
+    vmulpd          %zmm2, .LBETA, %zmm0
     .set GS_iterations, (IF_offset -1)/2
     .rept GS_iterations
     vfnmadd_auto_inc %zmm0, %zmm3
     vfnmadd_auto_inc %zmm0, %zmm4
     .endr
-    vmulpd          %zmm4, %zmm2, GS2
-    vmulpd          %zmm3, XX, %zmm3
-    vmulpd          %zmm3, %zmm2, GS3
-    vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
+    vmulpd          %zmm4, %zmm2, .LGS2
+    vmulpd          %zmm3, .LXX, %zmm3
+    vmulpd          %zmm3, %zmm2, .LGS3
+    vfnmadd132pd    %zmm3, .LXX, %zmm0 # = .LGS1
 .endm
 
 .macro comp_horner_step C, CLO, ifoff, has_err=1
@@ -214,12 +214,12 @@
 # similar to mm_stiefel_Gs13_avx512
 .macro mm_stiefel_Gs13_comp numTerms=19
     .set IF_offset, \numTerms
-    vmulpd          XX, XX, %zmm2     # X^2
+    vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
     .set IF_offset, IF_offset - 1
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm4
     .set IF_offset, IF_offset - 1
-    vmulpd          %zmm2, BETA, %zmm0
+    vmulpd          %zmm2, .LBETA, %zmm0
     .set GS_iterations, (IF_offset -1)/2 - 2     # leave last 2 terms
     .rept GS_iterations
     vfnmadd_auto_inc %zmm0, %zmm3
@@ -233,74 +233,74 @@
     comp_horner_step %zmm4, %zmm6, 2, 0          # .IF0_err[2]==0
     vaddpd          %zmm5, %zmm3, %zmm3
     vaddpd          %zmm6, %zmm4, %zmm4
-    vmulpd          %zmm4, %zmm2, GS2
-    vmulpd          %zmm3, XX, %zmm3
-    vmulpd          %zmm3, %zmm2, GS3
-    vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
+    vmulpd          %zmm4, %zmm2, .LGS2
+    vmulpd          %zmm3, .LXX, %zmm3
+    vmulpd          %zmm3, %zmm2, .LGS3
+    vfnmadd132pd    %zmm3, .LXX, %zmm0 # = .LGS1
 .endm
 
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
-# Output: GS0, GS1==%zmm0, GS2, GS3
+# Output: .LGS0, .LGS1==%zmm0, .LGS2, .LGS3
 # numTerms must be an odd number
 .macro mm_stiefel_Gs03_avx512 numTerms=11
     .set IF_offset, \numTerms
-    vmulpd          XX, XX, %zmm2     # X^2
+    vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
     .set IF_offset, IF_offset - 1
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm4
     .set IF_offset, IF_offset - 1
-    vmulpd          %zmm2, BETA, %zmm0
+    vmulpd          %zmm2, .LBETA, %zmm0
     .set GS_iterations, (IF_offset -1)/2 -1
     .rept GS_iterations
     vfnmadd_auto_inc %zmm0, %zmm3
     vfnmadd_auto_inc %zmm0, %zmm4
     .endr
     vfnmadd213pd    .IF0+(3*8)(%rip){1to8}, %zmm0, %zmm3
-    vmovapd         %zmm4, GS0
+    vmovapd         %zmm4, .LGS0
     vfnmadd213pd    .IF0+(2*8)(%rip){1to8}, %zmm0, %zmm4
-    vfnmadd213pd    .IF0+(1*8)(%rip){1to8}, %zmm0, GS0
-    vmulpd          %zmm4, %zmm2, GS2
-    vmulpd          %zmm3, XX, %zmm3
-    vmulpd          %zmm3, %zmm2, GS3
-    vfnmadd132pd    %zmm3, XX, %zmm0 # = GS1
+    vfnmadd213pd    .IF0+(1*8)(%rip){1to8}, %zmm0, .LGS0
+    vmulpd          %zmm4, %zmm2, .LGS2
+    vmulpd          %zmm3, .LXX, %zmm3
+    vmulpd          %zmm3, %zmm2, .LGS3
+    vfnmadd132pd    %zmm3, .LXX, %zmm0 # = .LGS1
 .endm
 
 .macro halley
-    # In: GS0,GS1,GS2,GS3
-    # Out: XX
+    # In: .LGS0,.LGS1,.LGS2,.LGS3
+    # Out: .LXX
     # No other registers used. Destroys input.
-    vfmsub213pd     DT, ZETA, GS3
-    vfmadd231pd     GS2, ETA, GS3
-    vfmadd231pd     XX, R, GS3              # f
+    vfmsub213pd     .LDT, .LZETA, .LGS3
+    vfmadd231pd     .LGS2, .LETA, .LGS3
+    vfmadd231pd     .LXX, .LR, .LGS3              # f
 
-    vfmadd132pd     ZETA, R, GS2
-    vfmadd231pd     ETA, GS1, GS2           # fp
+    vfmadd132pd     .LZETA, .LR, .LGS2
+    vfmadd231pd     .LETA, .LGS1, .LGS2           # fp
 
-    vmulpd          GS0, ETA, GS0
-    vfmadd132pd     ZETA, GS0, GS1          # fpp
+    vmulpd          .LGS0, .LETA, .LGS0
+    vfmadd132pd     .LZETA, .LGS0, .LGS1          # fpp
 
-    vmulpd          GS1, GS3, GS1           # f*fpp
+    vmulpd          .LGS1, .LGS3, .LGS1           # f*fpp
     # 0.5*f*fpp via integer subtract of 1 from the exponent (4-cycle vmulpd -> 1-cycle vpsubq)
-    vpsubq          .HALF_EXP_DECR(%rip){1to8}, GS1, GS1
-    vfmsub231pd     GS2, GS2, GS1           # fp*fp-0.5*f*fpp
-    vmulpd          GS3, GS2, GS3           # f*fp
-    vdivpd          GS1, GS3, GS3
-    vsubpd          GS3, XX, XX
+    vpsubq          .HALF_EXP_DECR(%rip){1to8}, .LGS1, .LGS1
+    vfmsub231pd     .LGS2, .LGS2, .LGS1           # fp*fp-0.5*f*fpp
+    vmulpd          .LGS3, .LGS2, .LGS3           # f*fp
+    vdivpd          .LGS1, .LGS3, .LGS3
+    vsubpd          .LGS3, .LXX, .LXX
 .endm
 
 .macro newton
-    # In: GS1,GS2,GS3
-    # Out: XX
+    # In: .LGS1,.LGS2,.LGS3
+    # Out: .LXX
     # No other registers used. Destroys input.
-    vmulpd          GS1, ETA, GS1
-    vfmadd231pd     GS2, ZETA, GS1
-    vmulpd          GS1, XX, XX{%k4}
-    vfnmadd132pd    ETA, XX, GS2
-    vaddpd          R, GS1, XX{%k4}
-    vdivpd          XX, ONE, XX{%k4}    # TODO: Hot spot
-    vfnmadd231pd    GS3, ZETA, GS2
-    vaddpd          GS2, DT, GS2
-    vmulpd          GS2, XX, XX{%k4}
+    vmulpd          .LGS1, .LETA, .LGS1
+    vfmadd231pd     .LGS2, .LZETA, .LGS1
+    vmulpd          .LGS1, .LXX, .LXX{%k4}
+    vfnmadd132pd    .LETA, .LXX, .LGS2
+    vaddpd          .LR, .LGS1, .LXX{%k4}
+    vdivpd          .LXX, .LONE, .LXX{%k4}    # TODO: Hot spot
+    vfnmadd231pd    .LGS3, .LZETA, .LGS2
+    vaddpd          .LGS2, .LDT, .LGS2
+    vmulpd          .LGS2, .LXX, .LXX{%k4}
 .endm
 
 ###############################################################################
@@ -308,27 +308,27 @@
 ###############################################################################
 
 .macro kepler_step 
-    vmulpd          X, X, %zmm0
-    vmulpd          VX, VX, %zmm1
-    vfmadd231pd     Y, Y, %zmm0
-    vfmadd231pd     VY, VY, %zmm1
-    vfmadd231pd     Z, Z, %zmm0                 # r^2
-    vfmadd231pd     VZ, VZ, %zmm1               # v^2
-    vsqrtpd         %zmm0, R                    # r
-    vdivpd          R, ONE, RI                  # 1/r
-    vaddpd          M, M, BETA                  # 2*M
-    vfmsub132pd     RI, %zmm1, BETA             # beta
-    vmulpd          VX, X, ETA
-    vfmadd231pd     VY, Y, ETA
-    vfmadd231pd     VZ, Z, ETA                  # eta
-    vmovapd         BETA, ZETA
-    vfnmadd132pd    R, M, ZETA                  # zeta
-    vmulpd          RI, DT, XX                  # dt/r  = first order guess for XX
+    vmulpd          .LX, .LX, %zmm0
+    vmulpd          .LVX, .LVX, %zmm1
+    vfmadd231pd     .LY, .LY, %zmm0
+    vfmadd231pd     .LVY, .LVY, %zmm1
+    vfmadd231pd     .LZ, .LZ, %zmm0                 # r^2
+    vfmadd231pd     .LVZ, .LVZ, %zmm1               # v^2
+    vsqrtpd         %zmm0, .LR                    # r
+    vdivpd          .LR, .LONE, .LIR                  # 1/r
+    vaddpd          .LM, .LM, .LBETA                  # 2*M
+    vfmsub132pd     .LIR, %zmm1, .LBETA             # beta
+    vmulpd          .LVX, .LX, .LETA
+    vfmadd231pd     .LVY, .LY, .LETA
+    vfmadd231pd     .LVZ, .LZ, .LETA                  # eta
+    vmovapd         .LBETA, .LZETA
+    vfnmadd132pd    .LR, .LM, .LZETA                  # zeta
+    vmulpd          .LIR, .LDT, .LXX                  # dt/r  = first order guess for .LXX
     # Second order alternative
-    #    vmulpd          ETA, %zmm5, %zmm4      # eta*dt/r
-    #    vmulpd          HALF, %zmm4, %zmm4     # 0.5*eta*dt/r
-    #    vfnmadd132pd    RI, ONE, %zmm4        
-    #    vmulpd          %zmm5, %zmm4, XX       # XX (second order initial guess)
+    #    vmulpd          .LETA, %zmm5, %zmm4      # eta*dt/r
+    #    vmulpd          .LHALF, %zmm4, %zmm4     # 0.5*eta*dt/r
+    #    vfnmadd132pd    .LIR, .LONE, %zmm4        
+    #    vmulpd          %zmm5, %zmm4, .LXX       # .LXX (second order initial guess)
     
     # Iterations to improve X
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -340,16 +340,16 @@
     movq            $0, %r9                     # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
-    vmovapd         XX,     %zmm7               # Store old XX
+    vmovapd         .LXX,     %zmm7               # Store old .LXX
     mm_stiefel_Gs13_avx512
-    newton                                      # only updates XX for lanes still in k4
+    newton                                      # only updates .LXX for lanes still in k4
 
-    vsubpd          XX, %zmm7, %zmm7            # Delta XX
-    vpandq          SIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta XX)
+    vsubpd          .LXX, %zmm7, %zmm7            # Delta .LXX
+    vpandq          .LSIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta .LXX)
 
-    # Required precision reached? abs(Delta XX) < eps
-    vcmppd          $0x11, %zmm7, EPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
-    #vcmppd         $25, %zmm7, EPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
+    # Required precision reached? abs(Delta .LXX) < eps
+    vcmppd          $0x11, %zmm7, .LEPS, %k4      # $11 = less than, ordered (nans fail), quiet, k4=1 for failed particles
+    #vcmppd         $25, %zmm7, .LEPS, %k 4       # $25 = Not greater or equal, unordered (nans pass), quiet
 .if DEBUG_AVX512 == 1 
     vmovdqa64       P512_COUNTER(%rdi), %zmm4
     vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
@@ -368,20 +368,20 @@
     movq            $0, %r9 
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
     
-    vsqrtpd         BETA, %zmm1
-    vmulpd          %zmm1, BETA, %zmm2          # sqrt(BETA)*BETA
-    vmulpd          .TWOPI(%rip){1to8}, M, %zmm3
+    vsqrtpd         .LBETA, %zmm1
+    vmulpd          %zmm1, .LBETA, %zmm2          # sqrt(.LBETA)*.LBETA
+    vmulpd          .TWOPI(%rip){1to8}, .LM, %zmm3
     vdivpd          %zmm3, %zmm2, %zmm2         # invperiod
-    vmulpd          %zmm2, DT, %zmm2
+    vmulpd          %zmm2, .LDT, %zmm2
     vrndscalepd     $0x1, %zmm2, %zmm2          # floor(dt*invperiod)
 
     vbroadcastsd    .TWOPI(%rip), %zmm3
-    vdivpd          %zmm1, %zmm3, %zmm1         # X_per_period = 2*pi/sqrt(BETA)
+    vdivpd          %zmm1, %zmm3, %zmm1         # X_per_period = 2*pi/sqrt(.LBETA)
     vmulpd          %zmm1, %zmm2, %zmm5         # X_MIN = X_per_period*floor(dt_invperiod)
     vaddpd          %zmm1, %zmm5, %zmm1         # X_MAX = X_MIN + X_per_period
 
-    vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
-    vmulpd          HALF, XX, XX{%k4}           # X = (X_MIN + X_MAX)/2
+    vaddpd          %zmm5, %zmm1, .LXX{%k4}       # X_MIN + X_MAX
+    vmulpd          .LHALF, .LXX, .LXX{%k4}           # X = (X_MIN + X_MAX)/2
 .FallbackBisectionLoop\@:
 .if DEBUG_AVX512 == 1 
     vmovdqa64       P512_COUNTER(%rdi), %zmm4
@@ -389,16 +389,16 @@
     vmovdqa64       %zmm4, P512_COUNTER(%rdi)
 .endif
     mm_stiefel_Gs13_avx512
-    vmulpd          R, XX, %zmm2                # r0*X
-    vfmadd231pd     GS2, ETA, %zmm2
-    vfmadd231pd     GS3, ZETA, %zmm2            # r0*X + eta0*Gs2 + zeta0*Gs3
+    vmulpd          .LR, .LXX, %zmm2                # r0*X
+    vfmadd231pd     .LGS2, .LETA, %zmm2
+    vfmadd231pd     .LGS3, .LZETA, %zmm2            # r0*X + eta0*Gs2 + zeta0*Gs3
 
-    vcmppd          $30, DT, %zmm2, %k2         # $30 = Greater than, ordered, quiet
+    vcmppd          $30, .LDT, %zmm2, %k2         # $30 = Greater than, ordered, quiet
     knotb           %k2, %k3
-    vmovapd         XX, %zmm1{%k2}
-    vmovapd         XX, %zmm5{%k3}
-    vaddpd          %zmm5, %zmm1, XX{%k4}       # X_MIN + X_MAX
-    vmulpd          HALF, XX, XX{%k4}           # X
+    vmovapd         .LXX, %zmm1{%k2}
+    vmovapd         .LXX, %zmm5{%k3}
+    vaddpd          %zmm5, %zmm1, .LXX{%k4}       # X_MIN + X_MAX
+    vmulpd          .LHALF, .LXX, .LXX{%k4}           # X
     
     incq %r9 
     cmpq $52, %r9                               # max Bisection iterations (=number of significant bits)
@@ -408,40 +408,40 @@
     mm_stiefel_Gs13_comp
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    # Calculate r_new = R + GS1*ETA + GS2*ZETA, then 1/r.
-    vfmadd231pd     GS1, ETA, R
-    vfmadd231pd     GS2, ZETA, R
-    vdivpd          R, ONE, %zmm4          # 1/r
+    # Calculate r_new = .LR + .LGS1*.LETA + .LGS2*.LZETA, then 1/r.
+    vfmadd231pd     .LGS1, .LETA, .LR
+    vfmadd231pd     .LGS2, .LZETA, .LR
+    vdivpd          .LR, .LONE, %zmm4          # 1/r
     
     # Calculate f and g functions
-    vmulpd          GS2, M, %zmm5
-    vmulpd          RI, %zmm5, %zmm3        # negative f
+    vmulpd          .LGS2, .LM, %zmm5
+    vmulpd          .LIR, %zmm5, %zmm3        # negative f
     vmulpd          %zmm5, %zmm4, %zmm2     # negative gd
-    vmovapd         DT, %zmm1
-    vfnmadd231pd    GS3, M, %zmm1           # g 
-    vmulpd          GS1, M, %zmm0
-    vmulpd          RI, %zmm0, %zmm0
+    vmovapd         .LDT, %zmm1
+    vfnmadd231pd    .LGS3, .LM, %zmm1           # g 
+    vmulpd          .LGS1, .LM, %zmm0
+    vmulpd          .LIR, %zmm0, %zmm0
     vmulpd          %zmm4, %zmm0, %zmm0     # negative fd
 
     vmovapd         %zmm3, %zmm4
     vmovapd         %zmm3, %zmm5
     // Calculate new x y z
-    vfnmadd132pd    X, X, %zmm3
-    vfnmadd132pd    Y, Y, %zmm4
-    vfnmadd132pd    Z, Z, %zmm5
-    vfmadd231pd     VX, %zmm1, %zmm3{%k1}{z}
-    vfmadd231pd     VY, %zmm1, %zmm4{%k1}{z}
-    vfmadd231pd     VZ, %zmm1, %zmm5{%k1}{z}
+    vfnmadd132pd    .LX, .LX, %zmm3
+    vfnmadd132pd    .LY, .LY, %zmm4
+    vfnmadd132pd    .LZ, .LZ, %zmm5
+    vfmadd231pd     .LVX, %zmm1, %zmm3{%k1}{z}
+    vfmadd231pd     .LVY, %zmm1, %zmm4{%k1}{z}
+    vfmadd231pd     .LVZ, %zmm1, %zmm5{%k1}{z}
     // Calculate new vx vy vz
-    vfnmadd132pd    %zmm2, VX, VX
-    vfnmadd132pd    %zmm2, VY, VY
-    vfnmadd132pd    %zmm2, VZ, VZ
-    vfnmadd231pd    %zmm0, X, VX{%k1}{z}
-    vfnmadd231pd    %zmm0, Y, VY{%k1}{z}
-    vfnmadd231pd    %zmm0, Z, VZ{%k1}{z}
-    vmovapd    %zmm3, X 
-    vmovapd    %zmm4, Y
-    vmovapd    %zmm5, Z
+    vfnmadd132pd    %zmm2, .LVX, .LVX
+    vfnmadd132pd    %zmm2, .LVY, .LVY
+    vfnmadd132pd    %zmm2, .LVZ, .LVZ
+    vfnmadd231pd    %zmm0, .LX, .LVX{%k1}{z}
+    vfnmadd231pd    %zmm0, .LY, .LVY{%k1}{z}
+    vfnmadd231pd    %zmm0, .LZ, .LVZ{%k1}{z}
+    vmovapd    %zmm3, .LX 
+    vmovapd    %zmm4, .LY
+    vmovapd    %zmm5, .LZ
 .endm
 
 #####################################
@@ -455,7 +455,7 @@
     vfmadd231pd %zmm2, %zmm2, %zmm6     # zmm6 = r^2 = a
 
     vrsqrt14pd  %zmm6, %zmm7            # zmm7 = y_0 ~ 1/sqrt(a), ~14 bits
-    vmulpd      HALF, %zmm6, %zmm8      # zmm8 = 0.5 * a  (constant across iters)
+    vmulpd      .LHALF, %zmm6, %zmm8      # zmm8 = 0.5 * a  (constant across iters)
 
     # Newton iter 1
     vmulpd      %zmm7, %zmm7, %zmm5     # zmm5 = y_0^2
@@ -480,7 +480,7 @@
 
     # y2*y2 -> *y2 -> *mult implemented as (y2*y2) || (mult*y2) -> mul.
     vmulpd      %zmm7, %zmm7, %zmm5         # zmm5 = y_2^2
-    .ifc \multiplier,ONE
+    .ifc \multiplier,.LONE
     vmulpd      %zmm5, %zmm7, %zmm6         # zmm6 = y_2^3 ~ mult / r^3
     .else
     vmulpd      \multiplier, %zmm7, %zmm6   # zmm6 = mult * y_2  (parallel)
@@ -553,25 +553,25 @@
 .macro interaction_step grflag nsys encounterflag escapeflag
     # TODO: Floating point error accumulation might be less if Jacobi and GR are added after P-P perturbations
     # Add Jacobi term in Jacobi coordinates
-    vmulpd      X, X, %zmm4     
-    vfmadd231pd Y, Y, %zmm4      
-    vfmadd231pd Z, Z, %zmm4             # r^2
+    vmulpd      .LX, .LX, %zmm4     
+    vfmadd231pd .LY, .LY, %zmm4      
+    vfmadd231pd .LZ, .LZ, %zmm4             # r^2
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-    vdivpd      %zmm4, M_DT, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
+    vdivpd      %zmm4, .LM_DT, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
     
-    vfmadd231pd     X, %zmm6, VX{%k1}{z} 
-    vfmadd231pd     Y, %zmm6, VY{%k1}{z} 
-    vfmadd231pd     Z, %zmm6, VZ{%k1}{z} 
+    vfmadd231pd     .LX, %zmm6, .LVX{%k1}{z} 
+    vfmadd231pd     .LY, %zmm6, .LVY{%k1}{z} 
+    vfmadd231pd     .LZ, %zmm6, .LVZ{%k1}{z} 
     
     leaq P512_MAT8_JACOBI_TO_HELIOCENTRIC(%rdi), %r9   # mat8_inertial_to_jacobi
-    mat8_mul3 X, Y, Z, HX, HY, HZ
+    mat8_mul3 .LX, .LY, .LZ, .LHX, .LHY, .LHZ
     
     # Calculating r, r^2, r^3 for Jacobi term and GR
-    vmulpd      HX, HX, %zmm6
-    vfmadd231pd HY, HY, %zmm6
-    vfmadd231pd HZ, HZ, %zmm6               # r^2
+    vmulpd      .LHX, .LHX, %zmm6
+    vfmadd231pd .LHY, .LHY, %zmm6
+    vfmadd231pd .LHZ, .LHZ, %zmm6               # r^2
     vsqrtpd     %zmm6, %zmm7                # r
     
     # Check for escapes 
@@ -592,46 +592,46 @@
 
     # Jacobi term
     vmulpd    %zmm6, %zmm7, %zmm7           # r^3    
-    vdivpd    %zmm7, MM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
+    vdivpd    %zmm7, .LMM0_DT, %zmm8{%k1}{z}  # -m0*dt/r^3 (jacobi term)
         
-    vmulpd    %zmm8, HX, .LHVX                # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
-    vmulpd    %zmm8, HY, HVY
-    vmulpd    %zmm8, HZ, HVZ
+    vmulpd    %zmm8, .LHX, .LHVX                # delta v_x due to Jacobi term, -x_j*m0*dt/r^3
+    vmulpd    %zmm8, .LHY, .LHVY
+    vmulpd    %zmm8, .LHZ, .LHVZ
 
     # GR term
     .if \grflag == 1
-        vmulpd    P512_GR_PREFAC(%rdi), DT, %zmm3
+        vmulpd    P512_GR_PREFAC(%rdi), .LDT, %zmm3
 
         vmulpd    %zmm6, %zmm6, %zmm5           # r^4
         vdivpd    %zmm5, %zmm3, %zmm7{%k1}{z}   # -dt*6*m0*m0/(c*c) /r^4
 
-        vfmadd231pd  %zmm7, HX, .LHVX{%k1}{z}     # -x_j*dt*6*m0*m0/(c*c) /r^4
-        vfmadd231pd  %zmm7, HY, HVY{%k1}{z}
-        vfmadd231pd  %zmm7, HZ, HVZ{%k1}{z}
+        vfmadd231pd  %zmm7, .LHX, .LHVX{%k1}{z}     # -x_j*dt*6*m0*m0/(c*c) /r^4
+        vfmadd231pd  %zmm7, .LHY, .LHVY{%k1}{z}
+        vfmadd231pd  %zmm7, .LHZ, .LHVZ{%k1}{z}
     .endif
 
     #################################################################
     #// 0123 4567
     #// 3201 7645
 
-    vmulpd  P512_m(%rdi), DT, %zmm3         # dt*m
+    vmulpd  P512_m(%rdi), .LDT, %zmm3         # dt*m
 
   .if \nsys < 4                             # skip for 2-planet systems
-    vpermpd $0x4B, HX, %zmm0                # 01234567 -> 32017645
-    vpermpd $0x4B, HY, %zmm1
-    vpermpd $0x4B, HZ, %zmm2
+    vpermpd $0x4B, .LHX, %zmm0                # 01234567 -> 32017645
+    vpermpd $0x4B, .LHY, %zmm1
+    vpermpd $0x4B, .LHZ, %zmm2
     vpermpd $0x4B, %zmm3, %zmm4
 
-    vsubpd  %zmm0, HX, %zmm0                # d_x
-    vsubpd  %zmm1, HY, %zmm1
-    vsubpd  %zmm2, HZ, %zmm2
+    vsubpd  %zmm0, .LHX, %zmm0                # d_x
+    vsubpd  %zmm1, .LHY, %zmm1
+    vsubpd  %zmm2, .LHZ, %zmm2
 
-    gravity_prefactor ONE \encounterflag    # zmm6 is 1/r^3
+    gravity_prefactor .LONE \encounterflag    # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5         # dt*m/r^3
 
     vfnmadd231pd %zmm5, %zmm0,  .LHVX
-    vfnmadd231pd %zmm5, %zmm1,  HVY
-    vfnmadd231pd %zmm5, %zmm2,  HVZ
+    vfnmadd231pd %zmm5, %zmm1,  .LHVY
+    vfnmadd231pd %zmm5, %zmm2,  .LHVZ
 
     vmulpd      %zmm6, %zmm3, %zmm5         # dt*m/r^3
     vpermpd $0x1E, %zmm0, %zmm0             # 32017645 -> 01234567
@@ -643,28 +643,28 @@
     #// 2310 6754
 
     vfmadd231pd %zmm5, %zmm0,  .LHVX
-    vfmadd231pd %zmm5, %zmm1,  HVY
-    vfmadd231pd %zmm5, %zmm2,  HVZ
+    vfmadd231pd %zmm5, %zmm1,  .LHVY
+    vfmadd231pd %zmm5, %zmm2,  .LHVZ
   .endif
 
     #################################################################
     #// 0123 4567
     #// 1032 5476
     
-    vshufpd $0x55, HX, HX, %zmm0                # 01234567 -> 10325476
-    vshufpd $0x55, HY, HY, %zmm1                # Using vshufpd (1 cycle) rather than vpermpd (3 cycles) 
-    vshufpd $0x55, HZ, HZ, %zmm2
+    vshufpd $0x55, .LHX, .LHX, %zmm0                # 01234567 -> 10325476
+    vshufpd $0x55, .LHY, .LHY, %zmm1                # Using vshufpd (1 cycle) rather than vpermpd (3 cycles) 
+    vshufpd $0x55, .LHZ, .LHZ, %zmm2
     vshufpd $0x55, %zmm3, %zmm3, %zmm4 
 
-    vsubpd  %zmm0, HX, %zmm0                    # d_x
-    vsubpd  %zmm1, HY, %zmm1
-    vsubpd  %zmm2, HZ, %zmm2
+    vsubpd  %zmm0, .LHX, %zmm0                    # d_x
+    vsubpd  %zmm1, .LHY, %zmm1
+    vsubpd  %zmm2, .LHZ, %zmm2
     
     gravity_prefactor %zmm4 \encounterflag      # zmm6 is 1/r^3
     
     vfnmadd231pd %zmm6, %zmm0,  .LHVX
-    vfnmadd231pd %zmm6, %zmm1,  HVY
-    vfnmadd231pd %zmm6, %zmm2,  HVZ
+    vfnmadd231pd %zmm6, %zmm1,  .LHVY
+    vfnmadd231pd %zmm6, %zmm2,  .LHVZ
 
   .if \nsys == 1                                # only for a single 8-planet system
     #################################################################
@@ -673,29 +673,29 @@
 
     vmovdqa64 b3idx(%rip), %zmm7
 
-    vpermpd HX, %zmm7, %zmm0                    # 01234567 -> 45671230 
-    vpermpd HY, %zmm7, %zmm1
-    vpermpd HZ, %zmm7, %zmm2
+    vpermpd .LHX, %zmm7, %zmm0                    # 01234567 -> 45671230 
+    vpermpd .LHY, %zmm7, %zmm1
+    vpermpd .LHZ, %zmm7, %zmm2
     vpermpd %zmm3, %zmm7, %zmm4 
 
-    vsubpd  %zmm0, HX, %zmm0                    # d_x
-    vsubpd  %zmm1, HY, %zmm1
-    vsubpd  %zmm2, HZ, %zmm2
+    vsubpd  %zmm0, .LHX, %zmm0                    # d_x
+    vsubpd  %zmm1, .LHY, %zmm1
+    vsubpd  %zmm2, .LHZ, %zmm2
     
-    gravity_prefactor ONE \encounterflag        # zmm6 is 1/r^3
+    gravity_prefactor .LONE \encounterflag        # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  .LHVX
-    vfnmadd231pd %zmm5, %zmm1,  HVY
-    vfnmadd231pd %zmm5, %zmm2,  HVZ
+    vfnmadd231pd %zmm5, %zmm1,  .LHVY
+    vfnmadd231pd %zmm5, %zmm2,  .LHVZ
 
     vmulpd      %zmm6, %zmm3, %zmm5             # m/r^3
     
     #// 4567 1230
     #// 0123 4567
-    vmulpd %zmm5, %zmm0,  HVXC
-    vmulpd %zmm5, %zmm1,  HVYC
-    vmulpd %zmm5, %zmm2,  HVZC
+    vmulpd %zmm5, %zmm0,  .LHVXC
+    vmulpd %zmm5, %zmm1,  .LHVYC
+    vmulpd %zmm5, %zmm2,  .LHVZC
 
     #################################################################
     #// 0123 4567
@@ -703,21 +703,21 @@
     
     vmovdqa64 b4idx(%rip), %zmm7
 
-    vpermpd HX, %zmm7, %zmm0                    # 01234567 -> 56742301  
-    vpermpd HY, %zmm7, %zmm1                    # TODO: Make this an in-line shuffle by reusing block3 data
-    vpermpd HZ, %zmm7, %zmm2
+    vpermpd .LHX, %zmm7, %zmm0                    # 01234567 -> 56742301  
+    vpermpd .LHY, %zmm7, %zmm1                    # TODO: Make this an in-line shuffle by reusing block3 data
+    vpermpd .LHZ, %zmm7, %zmm2
     vpermpd %zmm3, %zmm7, %zmm4 
 
-    vsubpd  %zmm0, HX, %zmm0                    # d_x
-    vsubpd  %zmm1, HY, %zmm1
-    vsubpd  %zmm2, HZ, %zmm2
+    vsubpd  %zmm0, .LHX, %zmm0                    # d_x
+    vsubpd  %zmm1, .LHY, %zmm1
+    vsubpd  %zmm2, .LHZ, %zmm2
     
-    gravity_prefactor ONE \encounterflag        # zmm6 is 1/r^3
+    gravity_prefactor .LONE \encounterflag        # zmm6 is 1/r^3
     vmulpd      %zmm6, %zmm4, %zmm5             # m/r^3
   
     vfnmadd231pd %zmm5, %zmm0,  .LHVX
-    vfnmadd231pd %zmm5, %zmm1,  HVY
-    vfnmadd231pd %zmm5, %zmm2,  HVZ
+    vfnmadd231pd %zmm5, %zmm1,  .LHVY
+    vfnmadd231pd %zmm5, %zmm2,  .LHVZ
 
     vmulpd      %zmm6, %zmm3, %zmm5             # m/r^3
     vpermpd $0x93, %zmm0, %zmm0                 # 5674 2301 -> 4567 1230
@@ -728,25 +728,25 @@
     #// 4567 1230
     #// 3012 7456
     
-    vfmadd231pd %zmm5, %zmm0,  HVXC
-    vfmadd231pd %zmm5, %zmm1,  HVYC
-    vfmadd231pd %zmm5, %zmm2,  HVZC
+    vfmadd231pd %zmm5, %zmm0,  .LHVXC
+    vfmadd231pd %zmm5, %zmm1,  .LHVYC
+    vfmadd231pd %zmm5, %zmm2,  .LHVZC
     
     #################################################################
     ## Final 256 bit lane crossing and add
     vmovdqa64 b34mergeidx(%rip), %zmm7
 
-    vpermpd HVXC, %zmm7, %zmm0
-    vpermpd HVYC, %zmm7, %zmm1
-    vpermpd HVZC, %zmm7, %zmm2
+    vpermpd .LHVXC, %zmm7, %zmm0
+    vpermpd .LHVYC, %zmm7, %zmm1
+    vpermpd .LHVZC, %zmm7, %zmm2
 
     vaddpd %zmm0, .LHVX, %zmm0{%k1}{z}
-    vaddpd %zmm1, HVY, %zmm1{%k1}{z}
-    vaddpd %zmm2, HVZ, %zmm2{%k1}{z}
+    vaddpd %zmm1, .LHVY, %zmm1{%k1}{z}
+    vaddpd %zmm2, .LHVZ, %zmm2{%k1}{z}
   .else                                        # for nsys 2 or 4
     vmovapd .LHVX, %zmm0{%k1}{z}
-    vmovapd HVY, %zmm1{%k1}{z}
-    vmovapd HVZ, %zmm2{%k1}{z}
+    vmovapd .LHVY, %zmm1{%k1}{z}
+    vmovapd .LHVZ, %zmm2{%k1}{z}
   .endif
 
     # Convert accelerations (delta v) from heliocentric to Jacobi.
@@ -756,10 +756,10 @@
 
     # Update velocities
     # This could be combined with mat8_mul3.
-    # However, that would increase floating point errors because sum(DVX) << VX
-    vaddpd    VX, %zmm0, VX        
-    vaddpd    VY, %zmm1, VY
-    vaddpd    VZ, %zmm2, VZ
+    # However, that would increase floating point errors because sum(DVX) << .LVX
+    vaddpd    .LVX, %zmm0, .LVX        
+    vaddpd    .LVY, %zmm1, .LVY
+    vaddpd    .LVZ, %zmm2, .LVZ
 .endm 
 
 
@@ -779,20 +779,20 @@
 .L_CorrectorLoopI\@:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
-    # Interaction step uses DT, M_DT, MM0_DT
-    vmulpd          P512_DT(%rdi), %zmm0, DT
-    vmulpd          DT, M, M_DT
-    vmovapd         P512_M0(%rdi), MM0_DT
-    vmulpd          DT, MM0_DT, MM0_DT
-    vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, MM0_DT, MM0_DT
+    # Interaction step uses .LDT, .LM_DT, .LMM0_DT
+    vmulpd          P512_DT(%rdi), %zmm0, .LDT
+    vmulpd          .LDT, .LM, .LM_DT
+    vmovapd         P512_M0(%rdi), .LMM0_DT
+    vmulpd          .LDT, .LMM0_DT, .LMM0_DT
+    vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, .LMM0_DT, .LMM0_DT
     interaction_step \grflag \nsys 0 0
     addq            $8, %r8
 
 .L_CorrectorLoopK\@:
     vbroadcastsd    (%r8), %zmm0
-    vmulpd          P512_DT(%rdi), %zmm0, DT
-    vmulpd          DT, HALF, DT                # Reduce timestep for better convergence
-    vmulpd          DT, HALF, DT
+    vmulpd          P512_DT(%rdi), %zmm0, .LDT
+    vmulpd          .LDT, .LHALF, .LDT                # Reduce timestep for better convergence
+    vmulpd          .LDT, .LHALF, .LDT
     movq            $4, %r10                     # Counter number of Kepler steps
 .L_CorrectorLoopInnerKepler\@:
     kepler_step
@@ -956,7 +956,7 @@ b34mergeidx:
 .TWOPI:
     .quad 0x401921fb54442d18
 .align 64
-.HALF:
+..LHALF:
     .quad 0x3fe0000000000000
 .align 64
 # Exponent decrement: subtracting this from a normal double divides it by 2
