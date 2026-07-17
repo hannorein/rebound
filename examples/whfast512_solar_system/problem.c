@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <sched.h>
-#include <stdbool.h>
 
 // Initial conditions for the Solar System
 // from NASA horizons
