@@ -44,8 +44,13 @@ endif
         IS_64BIT=yes
     endif
     ifeq ($(IS_64BIT),yes)
-        AS=clang -target x86_64-pc-windows-msvc -c $< -o $@
-        OBJECTS_ASM=integrator_whfast512_asm.$(OBJFILEEXT)
+        CLANG_IS64BIT:=$(shell clang-cl -v 2>&1)
+        ifneq ($(findstring x86_64,$(CLANG_IS64BIT)),)
+            # AVX512 enabled if 64bit CPU, CLANG is available, and CLANG is 64 bit
+            CC=clang-cl
+            AS=clang -c $< -o $@
+            OBJECTS_ASM=integrator_whfast512_asm.$(OBJFILEEXT)
+       endif
     endif
 endif
 ifeq ($(OS), Linux)

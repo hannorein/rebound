@@ -31,6 +31,11 @@
 #else
 #define REB_ATTRIBUTE_ALIGNED_64 __declspec(align(64))
 #endif
+#if defined(__GNUC__) || defined(__clang__)
+#define REB_SYSV_ABI __attribute__((sysv_abi))
+#else // defined(__GNUC__) || defined(__clang__)
+#define REB_SYSV_ABI 
+#endif // defined(__GNUC__) || defined(__clang__)
 #include "particle.h"
 #include "tools.h"
 #include "gravity.h"
@@ -143,7 +148,7 @@ void reb_integrator_whfast512_free(void* state){
     free(whfast512);
 }
 
-#if defined(__i386__) || defined(__x86_64__) || defined(_M_AMD64)
+#if (defined(__i386__) || defined(__x86_64__) || defined(_M_AMD64)) && ((defined(__GNUC__) || defined(__clang__)) || !defined(_WIN32))
 // Helper macro to print out offsets in structure for assembly code
 #define SIMD_DATA_MEMBERS X(M) X(dt) X(gr_prefac) X(m) X(x) X(y) X(z) X(vx) X(vy) X(vz) \
 X(mat8_inertial_to_jacobi) \
@@ -154,40 +159,40 @@ X(mat8_jacobi_to_inertial)\
 X(counter) 
 
 // External function definitions. Implemented in integrator_whfast512.s.
-extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
-extern void reb_whfast512_set1_pd(void* address, double value);
-extern void reb_whfast512_movu_pd(void* destination, void* source);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_kepler_step(struct simd_data* data);
+REB_SYSV_ABI extern void reb_whfast512_set1_pd(void* address, double value);
+REB_SYSV_ABI extern void reb_whfast512_movu_pd(void* destination, void* source);
 // _n2 = two systems of up to 4 planets, _n4 = four systems of 2 planets.
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
-extern void reb_whfast512_corrector_step_gr0_n1(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr0_n2(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr0_n4(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr1_n1(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr1_n2(struct simd_data* data, double inv);
-extern void reb_whfast512_corrector_step_gr1_n4(struct simd_data* data, double inv);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n1_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n2_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr0_n4_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n1_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n2_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter0_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter1_escape0(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter0_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern enum REB_STATUS reb_whfast512_full_steps_gr1_n4_encounter1_escape1(struct simd_data* data, uint64_t* N_steps, int skip_first_kepler_step, volatile sig_atomic_t* sigint);
+REB_SYSV_ABI extern void reb_whfast512_corrector_step_gr0_n1(struct simd_data* data, double inv);
+REB_SYSV_ABI extern void reb_whfast512_corrector_step_gr0_n2(struct simd_data* data, double inv);
+REB_SYSV_ABI extern void reb_whfast512_corrector_step_gr0_n4(struct simd_data* data, double inv);
+REB_SYSV_ABI extern void reb_whfast512_corrector_step_gr1_n1(struct simd_data* data, double inv);
+REB_SYSV_ABI extern void reb_whfast512_corrector_step_gr1_n2(struct simd_data* data, double inv);
+REB_SYSV_ABI extern void reb_whfast512_corrector_step_gr1_n4(struct simd_data* data, double inv);
 
 
 #ifdef DEBUG_AVX512
@@ -621,7 +626,7 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
     }
 }
 
-#else // defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
+#else // Not 64 bit, Windows + cl
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state){
     (void)state;
     reb_simulation_error(r, "AVX512 is not supported on your platform");
@@ -632,4 +637,4 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state)
     reb_simulation_error(r, "AVX512 is not supported on your platform");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
-#endif // defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
+#endif

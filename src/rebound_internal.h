@@ -36,13 +36,14 @@ typedef struct reb_timeval {
     int64_t tv_sec;
     int64_t tv_usec;
 } reb_timeval;
-REB_API int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
+REB_API int gettimeofday(struct reb_timeval * tp, void* tzp);
 #include <stdarg.h>
 int asprintf(char **strp, const char *fmt, ...);
 int vasprintf(char **strp, const char *fmt, va_list ap);
 int rand_r (unsigned int *seed);
 void usleep(__int64 usec);
 #include <io.h>
+#include <process.h> // for getpid()
 #define REB_STR_RED
 #define REB_STR_RED_BOLD
 #define REB_STR_YELLOW_BOLD
