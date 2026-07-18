@@ -44,7 +44,14 @@ else:
 def avx512_supported():
     machine = platform.machine().lower()
     is_x86_64 = "x86_64" in machine or "amd64" in machine
-    return is_x86_64
+    if not is_x86_64:
+        return False
+    if sys.platform == "win32":
+        import shutil
+        clang = shutil.which("clang-cl")
+        if not clang:
+            return False
+    return True
 
 class build_ext_avx512(build_ext):
     def build_extensions(self):
@@ -60,6 +67,7 @@ class build_ext_avx512(build_ext):
                 def new_spawn(cmd, **kwargs):
                     if cmd and "cl.exe" in cmd[0].lower():
                         cmd[0] = "clang-cl"
+                        cmd = [arg for arg in cmd if arg.upper() != "/GL"]
                     return orig_spawn(cmd, **kwargs)
                 self.compiler.spawn = new_spawn
                 asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
