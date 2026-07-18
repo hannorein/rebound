@@ -44,8 +44,8 @@ endif
         IS_64BIT=yes
     endif
     ifeq ($(IS_64BIT),yes)
-        AS=clang -c $< -o $@
-        OBJECTS_ASM=integrator_whfast512.asm_o
+        AS=clang -target x86_64-pc-windows-msvc -c $< -o $@
+        OBJECTS_ASM=integrator_whfast512_asm.$(OBJFILEEXT)
     endif
 endif
 ifeq ($(OS), Linux)

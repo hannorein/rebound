@@ -27,9 +27,9 @@ else
 # Windows
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."
-	$(CC) -c  /DBUILDINGLIBREBOUND $(OPT) $(OPTLIB) $(PREDEF) /Fo: $@ $<
+	$(CC) -c  /DBUILDINGLIBREBOUND $(OPT) $(OPTLIB) $(PREDEF) /Fo:$@ $<
 
-integrator_whfast512.asm_o: integrator_whfast512.s
+integrator_whfast512_asm.$(OBJFILEEXT): integrator_whfast512.s
 	@echo "Assembling source file integrator_asm512.s ..."
 	$(AS)
 
