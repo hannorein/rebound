@@ -56,6 +56,12 @@ class build_ext_avx512(build_ext):
                         self.compiler.linker_so[i] = '-shared'
         if avx512_supported():
             if sys.platform == "win32":
+                orig_spawn = self.compiler.spawn
+                def new_spawn(cmd, **kwargs):
+                    if cmd and "cl.exe" in cmd[0].lower():
+                        cmd[0] = "clang-cl"
+                    return orig_spawn(cmd, **kwargs)
+                self.compiler.spawn = new_spawn
                 asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
                 cmd = ["clang", "-c", "src/integrator_whfast512.s", "-o", asm, "-target", "x86_64-pc-windows-msvc"]
                 try:
