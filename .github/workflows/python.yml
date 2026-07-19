@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest multiprocess matplotlib numpy
       - name: Build package
-        run: pip install -e .
+        run: pip install -e . -v
         env: 
           FFP_CONTRACT_OFF: 1
       - name: Output package contents
