@@ -5,10 +5,23 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from glob import glob
 import platform
+import struct
 import os
 import subprocess
 import sys
 import sysconfig
+import shutil
+
+
+##### Compile with AVX512 if we are on x86 with 64bit.
+##### On Windows, we also need clang.
+def is_x86_64():
+    if sys.platform == "darwin":
+        return False
+    if sys.platform == "win32":
+        if not shutil.which("clang-cl"):
+            return False
+    return struct.calcsize("P")*8 == 64
 
 ##### Git hash
 try:
@@ -23,7 +36,7 @@ if sys.platform == "darwin":
     cfg = sysconfig.get_config_vars()
     cfg["LDSHARED"] = cfg["LDSHARED"].replace("-bundle", "-shared")
     suffix = sysconfig.get_config_var("EXT_SUFFIX") or ".so"
-    extra_link_args = [f"-Wl,-install_name,@rpath/librebound{suffix}"]
+    extra_link_args += [f"-Wl,-install_name,@rpath/librebound{suffix}"]
 
 ##### Compile args
 if sys.platform == "win32":
@@ -32,26 +45,13 @@ else:
     extra_compile_args = [ "-fstrict-aliasing", "-std=c99", "-Wno-unreachable-code", "-Wno-unknown-pragmas", ghash_arg, "-D_GNU_SOURCE", "-DSERVER", "-fPIC"]
     if os.environ.get("COVERAGE"):
         extra_compile_args += ["-O1", "-fprofile-arcs", "-ftest-coverage", "--coverage"]
-        extra_link_args   += ["-fprofile-arcs", "-ftest-coverage", "--coverage"]
+        extra_link_args += ["-fprofile-arcs", "-ftest-coverage", "--coverage"]
     else:
         extra_compile_args.append("-O3")
     ##### Turn off floating point contractions for bitwise reproducibility
     if os.environ.get("FFP_CONTRACT_OFF"):
         extra_compile_args.append("-ffp-contract=off")
 
-
-##### AVX512 where supported
-def avx512_supported():
-    machine = platform.machine().lower()
-    is_x86_64 = "x86_64" in machine or "amd64" in machine
-    if not is_x86_64:
-        return False
-    if sys.platform == "win32":
-        import shutil
-        clang = shutil.which("clang-cl")
-        if not clang:
-            return False
-    return True
 
 class build_ext_avx512(build_ext):
     def build_extensions(self):
@@ -61,14 +61,17 @@ class build_ext_avx512(build_ext):
                 for i, flag in enumerate(self.compiler.linker_so):
                     if flag == '-bundle':
                         self.compiler.linker_so[i] = '-shared'
-        if avx512_supported():
+        if is_x86_64():
             if sys.platform == "win32":
                 orig_spawn = self.compiler.spawn
                 def new_spawn(cmd, **kwargs):
+                    if cmd and "link.exe" in cmd[0].lower():
+                        cmd[0] = "lld-link"
                     if cmd and "cl.exe" in cmd[0].lower():
                         cmd[0] = "clang-cl"
                         cmd = [arg for arg in cmd if arg.upper() != "/GL"]
-                    cmd.append("-ffp-contract=off")
+                        cmd += ["-target", "x86_64-pc-windows-msvc"]
+                        cmd.append("/clang:-ffp-contract=off")
                     return orig_spawn(cmd, **kwargs)
                 self.compiler.spawn = new_spawn
                 asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
@@ -79,6 +82,7 @@ class build_ext_avx512(build_ext):
                     print(f"Assembly compilation failed: {e.stderr.decode()}", file=sys.stderr)
                     raise
             else:
+                # Linux
                 asm = os.path.join(self.build_temp, "integrator_whfast512_asm.o")
                 self.compiler.spawn(["as", "--noexecstack", "-g", "-o", asm, "src/integrator_whfast512.s"])
             for ext in self.extensions:
