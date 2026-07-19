@@ -27,7 +27,7 @@ endif
 ifeq ($(OPENMP), 1)
 $(error OPENMP currently not supported on Windows. Please set OPENMP=0)
 endif
-    OPT+= /D_GNU_SOURCE /Ox /fp:precise 
+    OPT+= /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /Ox /fp:precise 
     OBJFILEEXT=obj
     LIBREBOUND=librebound.dll
     EXEREBOUND=rebound.exe
@@ -44,7 +44,7 @@ endif
         IS_64BIT=yes
     endif
     ifeq ($(IS_64BIT),yes)
-        CLANG_IS64BIT:=$(shell clang-cl -v 2>&1)
+        CLANG_IS64BIT:=$(shell cccclang-cl -v 2>&1)
         ifneq ($(findstring x86_64,$(CLANG_IS64BIT)),)
             # AVX512 enabled if 64bit CPU, CLANG is available, and CLANG is 64 bit
             CC=clang-cl

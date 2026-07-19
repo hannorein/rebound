@@ -629,12 +629,12 @@ void reb_integrator_whfast512_synchronize(struct reb_simulation* const r, void* 
 #else // Not 64 bit, Windows + cl
 void reb_integrator_whfast512_step(struct reb_simulation* r, void* state){
     (void)state;
-    reb_simulation_error(r, "AVX512 is not supported on your platform");
+    reb_simulation_error(r, "AVX512 is not supported on your platform.");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
 void reb_integrator_whfast512_synchronize(struct reb_simulation* r, void* state){
     (void)state;
-    reb_simulation_error(r, "AVX512 is not supported on your platform");
+    reb_simulation_error(r, "AVX512 is not supported on your platform.");
     r->status = REB_STATUS_GENERIC_ERROR;
 }
 #endif
