@@ -63,6 +63,7 @@ class build_ext_avx512(build_ext):
                         self.compiler.linker_so[i] = '-shared'
         if is_x86_64():
             if sys.platform == "win32":
+                # Force clang compiler. 
                 orig_spawn = self.compiler.spawn
                 def new_spawn(cmd, **kwargs):
                     if cmd and "link.exe" in cmd[0].lower():
@@ -70,12 +71,11 @@ class build_ext_avx512(build_ext):
                     if cmd and "cl.exe" in cmd[0].lower():
                         cmd[0] = "clang-cl"
                         cmd = [arg for arg in cmd if arg.upper() != "/GL"]
-                        cmd += ["-target", "x86_64-pc-windows-msvc"]
                         cmd.append("/clang:-ffp-contract=off")
                     return orig_spawn(cmd, **kwargs)
                 self.compiler.spawn = new_spawn
                 asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
-                cmd = ["clang", "-c", "src/integrator_whfast512.s", "-o", asm, "-target", "x86_64-pc-windows-msvc"]
+                cmd = ["clang", "-c", "src/integrator_whfast512.s", "-o", asm]
                 try:
                     subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except subprocess.CalledProcessError as e:
