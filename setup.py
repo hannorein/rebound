@@ -60,6 +60,7 @@ class build_ext_avx512(build_ext):
                 def new_spawn(cmd, **kwargs):
                     if cmd and "cl.exe" in cmd[0].lower():
                         cmd[0] = "clang-cl"
+                    cmd.append("-ffp-contract=off")
                     return orig_spawn(cmd, **kwargs)
                 self.compiler.spawn = new_spawn
                 asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
