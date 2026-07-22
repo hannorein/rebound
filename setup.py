@@ -94,6 +94,7 @@ libreboundmodule = Extension(
     "librebound",
     sources=sorted(glob("src/*.c")),
     include_dirs=["src"],
+    depends=sorted(glob("src/*.s")),
     extra_link_args=extra_link_args,
     extra_compile_args=extra_compile_args,
 )
