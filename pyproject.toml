@@ -41,8 +41,5 @@ exclude = ["reboundx*","utsc_nfs*"]
 [tool.setuptools.package-data]
 rebound = ["../src/*.h"]
 
-[tool.cibuildwheel]
-skip = ["cp36-*", "cp37-*", "cp38-*"]
-
 [tool.cibuildwheel.windows]
 environment = { CC = "clang-cl" }
