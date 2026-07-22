@@ -14,9 +14,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -24,12 +24,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest multiprocess matplotlib numpy
       - name: Build package
-        run: pip install -e .
+        run: pip install -e . -v
         env: 
           FFP_CONTRACT_OFF: 1
       - name: Output package contents
         run: | 
           pip show rebound -vf
+          #- name: Setup tmate session
+          #uses: mxschmitt/action-tmate@v3
       - name: Running unittests
         run: |
           python -m unittest discover -s rebound/tests/ -v

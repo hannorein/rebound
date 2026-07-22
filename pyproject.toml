@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rebound"
-version = "5.0.1"
+version = "5.1.0"
 description = "An open-source multi-purpose N-body code"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "GPL-3.0-only"
@@ -43,3 +43,6 @@ rebound = ["../src/*.h"]
 
 [tool.cibuildwheel]
 skip = ["cp36-*", "cp37-*", "cp38-*"]
+
+[tool.cibuildwheel.windows]
+environment = { CC = "clang-cl" }

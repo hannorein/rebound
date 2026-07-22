@@ -97,6 +97,7 @@ nav:
         - ipython_examples/PrimordialEarth.ipynb
       - "Advanced topics":
         - ipython_examples/AdvWHFast.ipynb
+        - ipython_examples/WHFast512.ipynb
         - c_examples/high_order_symplectic.md
         - c_examples/custom_integrator.md
         - c_examples/custom_integrator_with_data.md

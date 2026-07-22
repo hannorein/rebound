@@ -24,6 +24,7 @@
 #include <ctype.h>
 #ifdef _WIN32
 #include <io.h>
+#include <malloc.h>
 #define isatty _isatty
 #define STDERR_FILENO 2
 #else
@@ -39,7 +40,7 @@
 const uint32_t reb_string_size_max = REB_STRING_SIZE_MAX; // defined in rebound.h
 const size_t reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "5.0.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "5.1.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 // NULL terminated list of custom registered integrators.
@@ -197,6 +198,73 @@ void reb_sigint_handler(int signum) {
     }
 }
 
+// Returns 1 if this CPU can run the AVX512 asm512 integrator
+// As usual, things are a bit more complicated on Windows.
+#ifndef _WIN32
+int reb_avx512_available(void){
+#if (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
+    __builtin_cpu_init();
+    return __builtin_cpu_supports("avx512f") && __builtin_cpu_supports("avx512dq");
+#else
+    return 0;
+#endif
+}
+#else // _WIN32
+#if defined(_M_X64) || defined(_M_IX86)
+#include <intrin.h>
+#include <immintrin.h>
+static void run_cpuid(int32_t leaf, int32_t subleaf, int32_t cpu_info[4]) {
+#if defined(_MSC_VER) || defined(__clang__)
+    __cpuidex(cpu_info, leaf, subleaf);
+#else // GCC (untested)
+    __asm__ __volatile__(
+            "cpuid"
+            : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
+            : "a"(leaf), "c"(subleaf)
+            );
+#endif
+}
+
+static uint64_t run_xgetbv(uint32_t xcr) {
+#if defined(_MSC_VER) || defined(__clang__)
+    return _xgetbv(xcr);
+#else // GCC (untested)
+    uint32_t eax, edx;
+    __asm__ __volatile__("xgetbv" : "=a"(eax), "=d"(edx) : "c"(xcr));
+    return ((uint64_t)edx << 32) | eax;
+#endif
+}
+
+int reb_avx512_available(void) {
+    int32_t cpu_info[4];
+    run_cpuid(0, 0, cpu_info);
+    if (cpu_info[0] < 7) {
+        return 0; 
+    }
+    run_cpuid(1, 0, cpu_info);
+    int osxsave = (cpu_info[2] & (1 << 27)) != 0;
+    int avx_hardware = (cpu_info[2] & (1 << 28)) != 0;
+    if (!osxsave || !avx_hardware) {
+        return 0;
+    }
+    uint64_t xcr0 = run_xgetbv(0);
+    int avx_os = (xcr0 & 0x6) == 0x6; 
+    int avx512_os = (xcr0 & 0xE0) == 0xE0; 
+    if (!avx_os || !avx512_os) {
+        return 0; 
+    }
+    run_cpuid(7, 0, cpu_info);
+    int avx512f = (cpu_info[1] & (1 << 16)) != 0;
+    int avx512dq = (cpu_info[1] & (1 << 17)) != 0;
+    return avx512f && avx512dq;
+}
+#else // #if defined(_M_X64) || defined(_M_IX86)
+int reb_avx512_available(void) {
+    return 0; // None x86
+}
+#endif // #if defined(_M_X64) || defined(_M_IX86)
+#endif // _WIN32
+
 // Checks if floating point contractions are on. 
 // If so, this will prevent unit tests from passing and bit-wise reproducibility will fail.
 int reb_check_fp_contract(){
@@ -230,6 +298,26 @@ int reb_strcmp_ignore_whitespace(const char *s1, const char *s2) {
 }
 
 
+#ifndef _WIN32
+void* reb_aligned_alloc(size_t alignment, size_t size) {
+    size_t remainder = size % alignment;
+    if (remainder != 0) {
+        size += (alignment - remainder);
+    }
+    void *ptr = NULL;
+    if (posix_memalign(&ptr, alignment, size) != 0) {
+        return NULL;
+    }
+    return ptr;
+}
+
+void reb_aligned_free(void *ptr) {
+    free(ptr);
+}
+#endif
+
+
+
 #ifdef _WIN32
 
 void PyInit_librebound() {};
@@ -258,6 +346,14 @@ int rand_r(unsigned int *seed) {
     return result;
 }
 
+
+void* reb_aligned_alloc(size_t alignment, size_t size) {
+    return _aligned_malloc(size, alignment);
+}
+
+void reb_aligned_free(void *ptr) {
+    _aligned_free(ptr);
+}
 
 // Source: https://stackoverflow.com/a/40160038/115102
 int vasprintf(char **strp, const char *fmt, va_list ap) {
@@ -292,7 +388,7 @@ int asprintf(char **strp, const char *fmt, ...) {
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <stdint.h> // portable: uint64_t   MSVC: __int64
-int gettimeofday(struct reb_timeval * tp, struct timezone * tzp)
+int gettimeofday(struct reb_timeval * tp, void* tzp)
 {
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
     // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
