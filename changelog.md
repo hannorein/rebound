@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.1.1
+* Fixed python source dist.
+* Added python wheels for 3.13 and 3.14.
+
 ### Version 5.1.0
 * Updated WHFast512. See Dagli and Rein (in prep) for details. WHFast512 is now written in x86 assembly, it uses Jacobi coordinates, supports symplectic correctors, and close encounter and ejection checks. The accuracy of the scheme is up to 5 orders of magnitude better and long term bias in the Kepler solver has been reduced. The walltime required to integrate the Solar System for 5Gyr has been reduced to only 8.7 hours.
 * Updated build system for both C and python to support assembly code on Linux and Windows. MacOS does not support 64bit x86 CPUs.
