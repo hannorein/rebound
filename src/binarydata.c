@@ -773,13 +773,8 @@ next_field:
                     }
                     size_t* pointer_N = (size_t*)fd.offset_N;
                     if (fd.dtype == REB_POINTER_ALIGNED){
-                        if (*pointer) free(*pointer);
-#if defined(_WIN32) || !defined(AVX512)
-                        // WHFast512 not supported on Windows!
-                        *pointer = malloc(field.size_data);
-#else 
-                        *pointer = aligned_alloc(64, field.size_data);
-#endif // _WIN32
+                        if (*pointer) reb_aligned_free(*pointer);
+                        *pointer = reb_aligned_alloc(64, field.size_data);
                     }else{ // normal malloc
                         *pointer = realloc(*pointer, field.size_data);
                     }

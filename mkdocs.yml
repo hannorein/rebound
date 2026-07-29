@@ -97,6 +97,7 @@ nav:
         - ipython_examples/PrimordialEarth.ipynb
       - "Advanced topics":
         - ipython_examples/AdvWHFast.ipynb
+        - ipython_examples/WHFast512.ipynb
         - c_examples/high_order_symplectic.md
         - c_examples/custom_integrator.md
         - c_examples/custom_integrator_with_data.md
@@ -195,7 +196,6 @@ markdown_extensions:
   - wikilinks
 extra_javascript:
   - javascripts/config.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js      
 extra_css:
   - stylesheets/extra.css  
@@ -208,7 +208,7 @@ extra:
 not_in_nav: "exclude"
 plugins:
   - search
-  #- mkdocs-jupyter
+  - mkdocs-jupyter
     # Note: Newer version doesn't render math due to a bug. Using mkdocs-jupyter==0.24.7 to fix this for now.
     # See https://github.com/danielfrg/mkdocs-jupyter/issues/212
   - mkdocs-video:

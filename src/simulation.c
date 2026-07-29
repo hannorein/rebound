@@ -501,15 +501,18 @@ enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double 
     return r->status;
 }
 
-void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
+enum REB_STATUS reb_simulation_steps(struct reb_simulation* const r, size_t N_steps){
+    r->status = REB_STATUS_RUNNING; 
     run_heartbeat(r);
-    for (size_t i=0;i<N_steps;i++){
+    for (size_t i=0;i<N_steps && r->status<0;i++){
         if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
         reb_simulation_step(r);
         run_heartbeat(r);
     }
     reb_simulation_synchronize(r);
     if (r->simulationarchive_filename){ reb_simulationarchive_heartbeat(r);}
+    if (r->status <= 0) r->status = REB_STATUS_SUCCESS; // No error occurred. Success.
+    return r->status;
 }
 static void reb_simulation_step(struct reb_simulation* const r){
     // Update walltime

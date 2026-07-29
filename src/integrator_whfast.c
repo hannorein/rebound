@@ -118,7 +118,6 @@ void reb_integrator_whfast_free(void* p){
     struct reb_integrator_whfast_state* whfast = p;
     free(whfast->p_jh);
     free(whfast->p_jh_var);
-    free(whfast->p_temp);
     free(whfast);
 }
 
@@ -299,6 +298,9 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
             const double fpp = eta0*Gs[0] + zeta0*Gs[1];
             const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
             X = (X*denom - 5.*f)/denom;
+            if (!isnormal(X)){
+                break;
+            }
             for(int i=1;i<n_lag;i++){
                 if(X==prevX[i]){
                     // Converged. Exit.
@@ -321,7 +323,9 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
             const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
             ri = 1./(r0 + eta0Gs1zeta0Gs2);
             X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
-
+            if (!isnormal(X)){
+                break;
+            }
             if (X==oldX||X==oldX2){
                 // Converged. Exit.
                 converged = 1;
@@ -1220,39 +1224,20 @@ void reb_integrator_whfast_step(struct reb_simulation* const r, void* state){
             break;
         case REB_INTEGRATOR_WHFAST_KERNEL_LAZY: 
             {
-                // Need temporary array to store old positions
-                if (whfast->N_allocated_temp != N){
-                    whfast->N_allocated_temp = N;
-                    whfast->p_temp = realloc(whfast->p_temp,sizeof(struct reb_particle)*N);
-                }
-                struct reb_particle* p_temp = whfast->p_temp;
-
-                // Calculate normal kick
                 // Accelerations already calculated
-                reb_transformations_inertial_to_jacobi_acc(r->particles, p_jh, r->particles, N, N_active);
-
-                // make copy of original positions
-                memcpy(p_temp,p_jh,r->N*sizeof(struct reb_particle));
-
                 // WHT Eq 10.6
                 for (size_t i=1;i<N;i++){
                     const double prefac1 = dt*dt/12.; 
-                    p_jh[i].x += prefac1 * p_temp[i].ax;
-                    p_jh[i].y += prefac1 * p_temp[i].ay;
-                    p_jh[i].z += prefac1 * p_temp[i].az;
+                    r->particles[i].x += prefac1 * r->particles[i].ax;
+                    r->particles[i].y += prefac1 * r->particles[i].ay;
+                    r->particles[i].z += prefac1 * r->particles[i].az;
                 }
+                // Position will be overwritten in next jacobi_to_inertial transformation.
 
                 // recalculate kick 
-                reb_transformations_jacobi_to_inertial_pos(particles, p_jh, particles, N, N_active);
                 reb_simulation_update_acceleration(r);
                 reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, dt);
 
-                for (size_t i=1;i<N;i++){
-                    // reset positions
-                    p_jh[i].x = p_temp[i].x;
-                    p_jh[i].y = p_temp[i].y;
-                    p_jh[i].z = p_temp[i].z;
-                }
             }
             break;
         default:

@@ -36,13 +36,14 @@ typedef struct reb_timeval {
     int64_t tv_sec;
     int64_t tv_usec;
 } reb_timeval;
-int gettimeofday(struct reb_timeval * tp, struct timezone * tzp);
+REB_API int gettimeofday(struct reb_timeval * tp, void* tzp);
 #include <stdarg.h>
 int asprintf(char **strp, const char *fmt, ...);
 int vasprintf(char **strp, const char *fmt, va_list ap);
 int rand_r (unsigned int *seed);
 void usleep(__int64 usec);
 #include <io.h>
+#include <process.h> // for getpid()
 #define REB_STR_RED
 #define REB_STR_RED_BOLD
 #define REB_STR_YELLOW_BOLD
@@ -84,6 +85,9 @@ REB_API extern const unsigned int reb_favicon_len;
 REB_API extern const size_t reb_messages_max_N;
 REB_API extern const uint32_t reb_string_size_max; // defined in rebound.c
 
+// Alligned alloc/free. Linux/Max/Windows
+REB_API void* reb_aligned_alloc(size_t alignment, size_t size);
+REB_API void reb_aligned_free(void *ptr);
 // Free any pointer. Alias for free(). Used by python.
 REB_API void reb_free(void* p);
 // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
@@ -97,6 +101,8 @@ enum REB_MESSAGE_TYPE {
 void reb_message(char*** messages, int save_messages, enum REB_MESSAGE_TYPE type, const char* const msg);
 // Returns 1 if floating point contraction are enabled. 0 otherwise. For unit testing.
 REB_API int reb_check_fp_contract(); 
+// Returns 1 if the CPU supports the AVX512.
+REB_API int reb_avx512_available();
 // Wrapper method to set number of OpenMP threads from python.
 REB_API void reb_omp_set_num_threads(int num_threads);
 // Helper function for comparing strings

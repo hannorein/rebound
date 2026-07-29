@@ -198,7 +198,7 @@ struct reb_integrator_configuration {
 #include "integrator_saba.h"         /* SABA integrator family (Laskar and Robutel 2001)                                   */
 #include "integrator_eos.h"          /* Embedded Operator Splitting (EOS) integrator family (Rein 2019)                    */
 #include "integrator_bs.h"           /* Gragg-Bulirsch-Stoer                                                               */
-#include "integrator_whfast512.h"    /* WHFast integrator, optimized for AVX512                                            */
+#include "integrator_whfast512.h"    /* ASM version of WHFast512                                                           */
 #include "integrator_trace.h"        /* TRACE integrator (Lu, Hernandez and Rein 2024)                                     */
 extern const struct reb_integrator reb_integrator_none; /* Does nothing other than advance time. Defined in rebound.c      */
 
@@ -488,7 +488,7 @@ REB_API int reb_simulation_output_screenshot(struct reb_simulation* r, const cha
 // Timestepping
 
 // Advance simulation by N_steps timesteps.
-REB_API void reb_simulation_steps(struct reb_simulation* const r, size_t N_steps);
+REB_API enum REB_STATUS reb_simulation_steps(struct reb_simulation* const r, size_t N_steps);
 // Integrate simulation to at least time tmax (see exact_finish_time).
 REB_API enum REB_STATUS reb_simulation_integrate(struct reb_simulation* const r, double tmax);
 // Synchronize simulation if safe_mode is turned off by integrator to get physical coordinates.

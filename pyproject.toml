@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rebound"
-version = "5.0.0"
+version = "5.1.1"
 description = "An open-source multi-purpose N-body code"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "GPL-3.0-only"
@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
     "Programming Language :: Python :: 3",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = []
 
 [project.urls]
@@ -36,7 +36,10 @@ Homepage = "https://github.com/hannorein/rebound/"
 
 [tool.setuptools.packages.find]
 include = ["rebound*"]
-exclude = ["reboundx*"]
+exclude = ["reboundx*","utsc_nfs*"]
 
 [tool.setuptools.package-data]
 rebound = ["../src/*.h"]
+
+[tool.cibuildwheel.windows]
+environment = { CC = "clang-cl" }

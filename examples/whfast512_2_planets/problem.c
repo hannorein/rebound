@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <sched.h>
-#include <stdbool.h>
 
 // Initial conditions for the Sun, Mercury, and Venus
 // from NASA horizons
@@ -49,8 +47,8 @@ struct reb_simulation* setup_single(){
 }
 
 double run(int use_whfast512){
-    struct timeval time_beginning;
-    struct timeval time_end;
+    struct reb_timeval time_beginning;
+    struct reb_timeval time_end;
     double tmax = 2.*M_PI*1e5; // 100 kyr
     
     // We integrate four 2 planet systems in parallel. 

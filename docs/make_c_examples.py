@@ -74,9 +74,9 @@ for l in config:
                 print("Compiling with emscripten...") 
                 if server_used == 0:
                     if "--fast" not in sys.argv:
-                        os.system("source ../emsdk/emsdk_env.sh > /dev/null 2>&1; emcc -O3 -Isrc/ src/*.c examples/"+name+"/problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -s -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_console.html -o docs/c_examples_emscripten/"+name+"/index.html")
+                        os.system("bash -c 'source ../emsdk/emsdk_env.sh ; emcc -O3 -Isrc/ src/*.c examples/"+name+"/problem.c -DSERVERHIDEWARNING -sSTACK_SIZE=655360 -s -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_console.html -o docs/c_examples_emscripten/"+name+"/index.html'")
                 else:
                     if "--fast" not in sys.argv:
-                        os.system("source ../emsdk/emsdk_env.sh > /dev/null 2>&1; emcc -O3 -Isrc/ src/*.c examples/"+name+"/problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_webgl.html -o docs/c_examples_emscripten/"+name+"/index.html")
+                        os.system("bash -c 'source ../emsdk/emsdk_env.sh ; emcc -O3 -Isrc/ src/*.c examples/"+name+"/problem.c -DSERVERHIDEWARNING -DOPENGL=1 -sSTACK_SIZE=655360 -s USE_GLFW=3 -s FULL_ES3=1 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=\"callMain\" --shell-file web_client/shell_rebound_webgl.html -o docs/c_examples_emscripten/"+name+"/index.html'")
 
 print("Converted %d C examples."%count)
