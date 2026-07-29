@@ -298,6 +298,9 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
             const double fpp = eta0*Gs[0] + zeta0*Gs[1];
             const double denom = fp + sqrt(fabs(16.*fp*fp - 20.*f*fpp));
             X = (X*denom - 5.*f)/denom;
+            if (!isnormal(X)){
+                break;
+            }
             for(int i=1;i<n_lag;i++){
                 if(X==prevX[i]){
                     // Converged. Exit.
@@ -320,7 +323,9 @@ void reb_integrator_whfast_kepler_solver(struct reb_particle* const restrict p, 
             const double eta0Gs1zeta0Gs2 = eta0*Gs[1] + zeta0*Gs[2];
             ri = 1./(r0 + eta0Gs1zeta0Gs2);
             X  = ri*(X*eta0Gs1zeta0Gs2-eta0*Gs[2]-zeta0*Gs[3]+dt);
-
+            if (!isnormal(X)){
+                break;
+            }
             if (X==oldX||X==oldX2){
                 // Converged. Exit.
                 converged = 1;
