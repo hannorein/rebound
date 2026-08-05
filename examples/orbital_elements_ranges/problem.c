@@ -109,9 +109,9 @@ int main(void){
     // Assert expected ranges
     printf("\nAsserting expected ranges for orbital elements...\n");
     assert(ranges[INC].min >= 0. && ranges[INC].max <= pi);
-    assert(ranges[OMEGA].min > -pi && ranges[OMEGA].max <= pi);
+    assert(ranges[OMEGA].min >= 0. && ranges[OMEGA].max < pi2);
     assert(ranges[ARG_PERI].min >= 0. && ranges[ARG_PERI].max < pi2);
-    assert(ranges[POMEGA].min > -pi2 && ranges[POMEGA].max <= pi2);
+    assert(ranges[POMEGA].min >= 0. && ranges[POMEGA].max < pi2);
     assert(ranges[THETA].min >= 0. && ranges[THETA].max < pi2);
     assert(ranges[TRUE_ANOM].min >= 0. && ranges[TRUE_ANOM].max < pi2);
     assert(ranges[MEAN_ANOM].min >= 0. && ranges[MEAN_ANOM].max < pi2);
