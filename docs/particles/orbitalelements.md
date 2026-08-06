@@ -27,7 +27,7 @@ Variable name   | Description
 `pomega`        | longitude of pericenter, in $[0,2\pi)$
 `f`             | true anomaly, in $[0,2\pi)$
 `M`             | mean anomaly, in $[0,2\pi)$
-`E`             | Eccentric anomaly, in $[0,2\pi)$. Because this requires solving Kepler's equation it is only calculated when needed in python and never calculated in C. To get the eccentric anomaly in C, use the function `double reb_M_to_E(double e, double M)`
+`E`             | Eccentric anomaly (elliptic; for $e<1$ in $[0,2\pi)$; for $e>1$ `reb_M_to_E` returns the hyperbolic anomaly, unbounded). Because this requires solving Kepler's equation it is only calculated when needed in python and never calculated in C. To get the eccentric anomaly in C, use the function `double reb_M_to_E(double e, double M)`
 `l`             | mean longitude = Omega + omega + M, in $[0,2\pi)$
 `theta`         | true longitude = Omega + omega + f, in $[0,2\pi)$
 `T`             | time of pericenter passage
