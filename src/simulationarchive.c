@@ -99,7 +99,9 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
     struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file_with_messages(filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
+        free(sa->filename);
         free(sa);
+        reb_simulation_free(r);
         return NULL;
     }else{
         reb_binarydata_process_warnings(NULL, warnings);
@@ -309,7 +311,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 sa->t = NULL;
                 free(sa->offset);
                 sa->offset = NULL;
-                free(sa);
                 *warnings |= REB_BINARYDATA_ERROR_SEEK;
                 return;
             }
@@ -318,7 +319,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file_with_messages(const char* filename,  enum REB_BINARYDATA_ERROR_CODE* warnings){
-    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
+    struct reb_simulationarchive* sa = calloc(1, sizeof(struct reb_simulationarchive));
     // Somewhat complicated calls for backwards compatibility.
 #ifdef MPI
     int initialized;
@@ -347,6 +348,7 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char*
     struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file_with_messages(filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
+        free(sa->filename);
         free(sa);
         sa = NULL;
     }else{
@@ -356,7 +358,7 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char*
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_buffer_with_messages(char* buffer, size_t size,  enum REB_BINARYDATA_ERROR_CODE* warnings){
-    struct reb_simulationarchive* sa = malloc(sizeof(struct reb_simulationarchive));
+    struct reb_simulationarchive* sa = calloc(1, sizeof(struct reb_simulationarchive));
     sa->inf = reb_fmemopen(buffer, size, "rb");
     sa->filename = NULL;
     reb_simulationarchive_read_from_stream_with_messages(sa, warnings);

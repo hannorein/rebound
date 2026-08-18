@@ -6,6 +6,7 @@ jobs:
   build:
 
     name: Checking test coverage
+    if: github.event.repository.fork == false # don't have CODECOV_TOKEN on fork
     runs-on: ubuntu-latest
 
     steps:
