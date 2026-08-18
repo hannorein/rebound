@@ -6,6 +6,7 @@ jobs:
   build:
 
     name: Checking test coverage
+    if: github.event.repository.fork == false # don't have CODECOV_TOKEN on fork
     runs-on: ubuntu-latest
 
     steps:
@@ -44,7 +45,5 @@ jobs:
         run: |
           lcov --capture --directory src --output-file coverage.info 
       - name: Upload coverage reports
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          ./codecov --verbose upload-process
+          ./codecov --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }}
