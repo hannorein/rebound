@@ -74,6 +74,7 @@ class Simulationarchive(Structure):
         for majorerror, value, message in BINARY_WARNINGS:
             if w.value & value:
                 if majorerror:
+                    clibrebound.reb_simulationarchive_free(ptr)
                     raise RuntimeError(message)
                 else:  
                     if process_warnings:

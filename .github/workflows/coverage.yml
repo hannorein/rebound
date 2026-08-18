@@ -44,5 +44,7 @@ jobs:
         run: |
           lcov --capture --directory src --output-file coverage.info 
       - name: Upload coverage reports
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
-          ./codecov --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }}
+          ./codecov --verbose upload-process
