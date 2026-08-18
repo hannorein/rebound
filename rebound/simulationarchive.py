@@ -92,9 +92,8 @@ class Simulationarchive(Structure):
 
         """
         self.process_warnings = process_warnings
-        w = c_int(0)
         if self.nblobs<1:
-            RuntimeError("Something went wrong. Simulationarchive is empty.")
+            raise RuntimeError("Something went wrong. Simulationarchive is empty.")
         self.tmin = self.t[0]
         self.tmax = self.t[self.nblobs-1]
 

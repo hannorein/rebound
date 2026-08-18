@@ -99,6 +99,7 @@ struct reb_simulation* reb_simulation_create_from_file(char* filename, int64_t s
     struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file_with_messages(filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
+        free(sa->filename);
         free(sa);
         return NULL;
     }else{
@@ -309,7 +310,6 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
                 sa->t = NULL;
                 free(sa->offset);
                 sa->offset = NULL;
-                free(sa);
                 *warnings |= REB_BINARYDATA_ERROR_SEEK;
                 return;
             }
@@ -347,6 +347,7 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char*
     struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file_with_messages(filename, &warnings);
     if (warnings & REB_BINARYDATA_ERROR_NOFILE){
         // Don't output an error if file does not exist, just return NULL.
+        free(sa->filename);
         free(sa);
         sa = NULL;
     }else{
