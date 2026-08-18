@@ -319,7 +319,7 @@ void reb_simulationarchive_read_from_stream_with_messages(struct reb_simulationa
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_file_with_messages(const char* filename,  enum REB_BINARYDATA_ERROR_CODE* warnings){
-    struct reb_simulationarchive* sa = calloc(sizeof(struct reb_simulationarchive));
+    struct reb_simulationarchive* sa = calloc(1, sizeof(struct reb_simulationarchive));
     // Somewhat complicated calls for backwards compatibility.
 #ifdef MPI
     int initialized;
@@ -358,7 +358,7 @@ struct reb_simulationarchive* reb_simulationarchive_create_from_file(const char*
 }
 
 struct reb_simulationarchive* reb_simulationarchive_create_from_buffer_with_messages(char* buffer, size_t size,  enum REB_BINARYDATA_ERROR_CODE* warnings){
-    struct reb_simulationarchive* sa = calloc(sizeof(struct reb_simulationarchive));
+    struct reb_simulationarchive* sa = calloc(1, sizeof(struct reb_simulationarchive));
     sa->inf = reb_fmemopen(buffer, size, "rb");
     sa->filename = NULL;
     reb_simulationarchive_read_from_stream_with_messages(sa, warnings);
