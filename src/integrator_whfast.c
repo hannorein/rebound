@@ -686,8 +686,22 @@ static void reb_whfast_corrector_Z(struct reb_simulation* r, const double a, con
             reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, b);
             reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
             break;
-        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
         case REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC:
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
+            reb_integrator_whfast_jump_step(r, whfast, -b/2.0);
+            reb_transformations_democraticheliocentric_to_inertial_pos(particles, whfast->p_jh, N, N_active);
+            reb_simulation_update_acceleration(r);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, -b);
+            reb_integrator_whfast_jump_step(r, whfast, -b/2.0);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, -2.*a);
+            reb_integrator_whfast_jump_step(r, whfast, b/2.0);
+            reb_transformations_democraticheliocentric_to_inertial_pos(particles, whfast->p_jh, N, N_active);
+            reb_simulation_update_acceleration(r);
+            reb_integrator_whfast_interaction_step(r, whfast->p_jh, whfast->coordinates, b);
+            reb_integrator_whfast_jump_step(r, whfast, b/2.0);
+            reb_integrator_whfast_kepler_step(r, whfast->p_jh, whfast->coordinates, a);
+            break;
+        case REB_INTEGRATOR_WHFAST_COORDINATES_WHDS:
             reb_simulation_error(r, "Coordinate system not supported.");
             break;
     }
@@ -915,8 +929,8 @@ int reb_integrator_whfast_init(struct reb_simulation* const r, struct reb_integr
         reb_simulation_error(r, "Kernel method must be 0 (default), 1 (exact modified kick), 2 (composition kernel), or 3 (lazy implementer's modified kick). ");
         return 1; // Error
     }
-    if (whfast->corrector!=0 && (whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI && whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC) ){
-        reb_simulation_error(r, "Symplectic correctors are only compatible with Jacobi and Barycentric coordinates.");
+    if (whfast->corrector!=0 && (whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI && whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC && whfast->coordinates!=REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC) ){
+        reb_simulation_error(r, "Symplectic correctors are only compatible with Jacobi, Democratic Heliocentric, and Barycentric coordinates.");
         return 1; // Error
     }
     if (whfast->corrector!=0 && whfast->corrector!=3 && whfast->corrector!=5  && whfast->corrector!=7 && whfast->corrector!=11 && whfast->corrector!=17 ){
