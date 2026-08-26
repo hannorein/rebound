@@ -13,6 +13,18 @@ import warnings
 class allocated_c_char_p(c_char_p):
     pass
 
+def _whfast_hj_tree_to_string(tree):
+    if isinstance(tree, str):
+        return tree
+    if isinstance(tree, (list, tuple)):
+        if len(tree) != 2:
+            raise ValueError("WHFast HJ tree nodes must be binary pairs.")
+        return "[" + _whfast_hj_tree_to_string(tree[0]) + "," + _whfast_hj_tree_to_string(tree[1]) + "]"
+    try:
+        return str(tree.__index__())
+    except AttributeError:
+        raise TypeError("WHFast HJ tree leaves must be particle indices, and internal nodes must be binary pairs.")
+
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
@@ -1294,7 +1306,7 @@ class Simulation(Structure):
             raise Collision("Two particles collided (d < r1+r2)")
         self.process_messages()
 
-    def integrate(self, tmax, exact_finish_time=1):
+    def integrate(self, tmax, exact_finish_time=1, given_tree=False, tree=None):
         """
         Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps.
         
@@ -1304,6 +1316,10 @@ class Simulation(Structure):
             The final time of your simulation. If the current time is 100, and tmax=200, then after the calling the integrate routine, the time has advanced to t=200. If tmax is larger than or equal to the current time, no integration will be performed.
         exact_finish_time: int, optional
             This argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if one starts at t=0, has a timestep of dt=10 and wants to integrate to tmax=25. With ``exact_finish_time=1``, the integrator will choose the last timestep such that t is exactly 25 after the integration, otherwise t=30. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
+        given_tree: bool, optional
+            Only used by the ``whfast_hj`` integrator. If true, use the user-supplied HJ tree instead of rebuilding the tree every timestep.
+        tree: str or nested tuple/list, optional
+            The HJ tree to use when ``given_tree=True``. Leaves are 1-based particle indices, for example ``"[[1,2],3]"`` or ``[[1, 2], 3]``. The special string ``"binary_plus_particles"`` builds ``[[[1,2],3],...]`` directly in C.
         
         Exceptions
         ----------
@@ -1321,6 +1337,36 @@ class Simulation(Structure):
         >>>     perform_output(sim)
         
         """
+        if given_tree or tree is not None:
+            if str(self.integrator) != "whfast_hj":
+                raise ValueError("given_tree is only supported by the whfast_hj integrator.")
+            if not given_tree:
+                raise ValueError("tree was provided, but given_tree is False.")
+            if tree is None:
+                raise ValueError("tree must be provided when given_tree is True.")
+
+            tree_string = _whfast_hj_tree_to_string(tree)
+            try:
+                tree_bytes = tree_string.encode("ascii")
+            except UnicodeEncodeError:
+                raise ValueError("WHFast HJ tree strings must contain only ASCII characters.")
+
+            if tree_string == "binary_plus_particles":
+                clibrebound.reb_integrator_whfast_hj_set_binary_plus_particles_tree.argtypes = [POINTER(Simulation)]
+                clibrebound.reb_integrator_whfast_hj_set_binary_plus_particles_tree.restype = c_int
+                ret_tree = clibrebound.reb_integrator_whfast_hj_set_binary_plus_particles_tree(byref(self))
+            else:
+                clibrebound.reb_integrator_whfast_hj_set_tree.argtypes = [POINTER(Simulation), c_char_p]
+                clibrebound.reb_integrator_whfast_hj_set_tree.restype = c_int
+                ret_tree = clibrebound.reb_integrator_whfast_hj_set_tree(byref(self), c_char_p(tree_bytes))
+            if ret_tree != 0:
+                self.process_messages()
+                raise GenericError("Could not set WHFast HJ tree.")
+            self.process_messages()
+        elif str(self.integrator) == "whfast_hj":
+            clibrebound.reb_integrator_whfast_hj_clear_tree.argtypes = [POINTER(Simulation)]
+            clibrebound.reb_integrator_whfast_hj_clear_tree(byref(self))
+
         self.exact_finish_time = c_int(exact_finish_time)
         ret_value = clibrebound.reb_simulation_integrate(byref(self), c_double(tmax))
         if ret_value == 1:
