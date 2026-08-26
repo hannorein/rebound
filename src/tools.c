@@ -1188,6 +1188,8 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
     o.T = t0 - o.M/fabs(o.n);               // time of pericenter passage (M = n(t-T).  Works for hyperbolic orbits using fabs and n as defined above).
 
     // move some of the angles into [0,2pi) range
+    o.Omega = reb_mod2pi(o.Omega);
+    o.pomega = reb_mod2pi(o.pomega);
     o.f = reb_mod2pi(o.f);
     o.l = reb_mod2pi(o.l);
     o.M = reb_mod2pi(o.M);
