@@ -367,18 +367,68 @@
     # If not converged yet, fall back to bisection
     movq            $0, %r9 
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
-    
-    vsqrtpd         .LBETA, %zmm1
-    vmulpd          %zmm1, .LBETA, %zmm2          # sqrt(.LBETA)*.LBETA
+
+    # select lanes that require fallback
+    vxorpd          %zmm0, %zmm0, %zmm0
+    vcmppd          $0x12, %zmm0, .LBETA, %k5    # beta <= 0
+    kandw           %k4, %k5, %k5
+    knotw           %k5, %k6
+    kandw           %k4, %k6, %k6
+
+    # Elliptic bounds.
+    vsqrtpd         .LBETA, %zmm1{%k6}{z}
+    vmulpd          %zmm1, .LBETA, %zmm2{%k6}{z}  # sqrt(.LBETA)*.LBETA
     vmulpd          .TWOPI(%rip){1to8}, .LM, %zmm3
-    vdivpd          %zmm3, %zmm2, %zmm2         # invperiod
-    vmulpd          %zmm2, .LDT, %zmm2
-    vrndscalepd     $0x1, %zmm2, %zmm2          # floor(dt*invperiod)
+    vdivpd          %zmm3, %zmm2, %zmm2{%k6}{z}  # invperiod
+    vmulpd          %zmm2, .LDT, %zmm2{%k6}{z}
+    vrndscalepd     $0x1, %zmm2, %zmm2{%k6}{z}   # floor(dt*invperiod)
 
     vbroadcastsd    .TWOPI(%rip), %zmm3
-    vdivpd          %zmm1, %zmm3, %zmm1         # X_per_period = 2*pi/sqrt(.LBETA)
-    vmulpd          %zmm1, %zmm2, %zmm5         # X_MIN = X_per_period*floor(dt_invperiod)
-    vaddpd          %zmm1, %zmm5, %zmm1         # X_MAX = X_MIN + X_per_period
+    vdivpd          %zmm1, %zmm3, %zmm1{%k6}{z}  # X_per_period = 2*pi/sqrt(.LBETA)
+    vmulpd          %zmm1, %zmm2, %zmm5{%k6}     # X_MIN = X_per_period*floor(dt_invperiod)
+    vaddpd          %zmm1, %zmm5, %zmm1{%k6}     # X_MAX = X_MIN + X_per_period
+
+    # Hyperbolic bounds.
+    kortestw        %k5, %k5
+    jz              .FallbackBoundsDone\@
+
+    vmulpd          .LY, .LVZ, %zmm6{%k5}{z}
+    vfnmadd231pd    .LZ, .LVY, %zmm6{%k5}        # h_x = y*vz - z*vy
+    vmulpd          .LZ, .LVX, %zmm7{%k5}{z}
+    vfnmadd231pd    .LX, .LVZ, %zmm7{%k5}        # h_y = z*vx - x*vz
+    vmulpd          .LX, .LVY, %zmm8{%k5}{z}
+    vfnmadd231pd    .LY, .LVX, %zmm8{%k5}        # h_z = x*vy - y*vx
+    vmulpd          %zmm6, %zmm6, %zmm6{%k5}
+    vfmadd231pd     %zmm7, %zmm7, %zmm6{%k5}
+    vfmadd231pd     %zmm8, %zmm8, %zmm6{%k5}     # h^2
+    vmovapd         %zmm6, %zmm7{%k5}{z}
+
+    vmulpd          .LM, .LM, %zmm8{%k5}{z}
+    vmulpd          .LBETA, %zmm7, %zmm2{%k5}{z}
+    vdivpd          %zmm8, %zmm2, %zmm2{%k5}{z}
+    vsubpd          %zmm2, .LONE, %zmm2{%k5}{z}  # 1 - h^2*beta/M^2
+    vsqrtpd         %zmm2, %zmm2{%k5}{z}
+    vaddpd          .LONE, %zmm2, %zmm2{%k5}{z}  # 1 + e
+
+    vdivpd          .LM, %zmm7, %zmm6{%k5}{z}
+    vdivpd          %zmm2, %zmm6, %zmm6{%k5}{z}  # q = h^2/M/(1+e)
+    vsqrtpd         %zmm7, %zmm7{%k5}{z}
+    vdivpd          %zmm6, %zmm7, %zmm7{%k5}{z}  # vq = sqrt(h^2)/q
+
+    vmulpd          .LDT, %zmm7, %zmm8{%k5}{z}
+    vpandq          .LSIGN_ABS_MASK, %zmm8, %zmm8
+    vaddpd          .LR, %zmm8, %zmm8{%k5}{z}
+    vdivpd          %zmm8, .LDT, %zmm5{%k5}      # X_MIN = dt/(abs(vq*dt)+r0)
+    vdivpd          %zmm6, .LDT, %zmm1{%k5}      # X_MAX = dt/q
+
+    vxorpd          %zmm0, %zmm0, %zmm0
+    vcmppd          $0x11, %zmm0, .LDT, %k7      # dt < 0
+    kandw           %k5, %k7, %k7
+    vmovapd         %zmm5, %zmm2
+    vmovapd         %zmm1, %zmm5{%k7}
+    vmovapd         %zmm2, %zmm1{%k7}
+
+.FallbackBoundsDone\@:
 
     vaddpd          %zmm5, %zmm1, .LXX{%k4}       # X_MIN + X_MAX
     vmulpd          .LHALF, .LXX, .LXX{%k4}           # X = (X_MIN + X_MAX)/2
@@ -401,8 +451,22 @@
     vmulpd          .LHALF, .LXX, .LXX{%k4}           # X
     
     incq %r9 
-    cmpq $52, %r9                               # max Bisection iterations (=number of significant bits)
+    cmpq $52, %r9                               # Elliptic lanes use 52 bisection iterations.
     jl .FallbackBisectionLoop\@
+
+    # for hyperbolic lanes, continue until stopping criterion.
+    vsubpd          %zmm5, %zmm1, %zmm6
+    vpandq          .LSIGN_ABS_MASK, %zmm6, %zmm6
+    vaddpd          %zmm5, %zmm1, %zmm7
+    vpandq          .LSIGN_ABS_MASK, %zmm7, %zmm7
+    vmulpd          .BISECTION_EPS(%rip){1to8}, %zmm7, %zmm7
+    vcmppd          $0x11, %zmm6, %zmm7, %k4    # tolerance < abs(X_MAX-X_MIN)
+    kandw           %k5, %k4, %k4
+    kortestw        %k4, %k4
+    jz              .NewtonLoopDone\@
+
+    cmpq            $2200, %r9
+    jl              .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
     mm_stiefel_Gs13_comp
@@ -952,6 +1016,9 @@ b34mergeidx:
 .align 64
 .EPS:
     .double 1e-11
+.align 64
+.BISECTION_EPS:
+    .double 1e-15
 .align 64
 .TWOPI:
     .quad 0x401921fb54442d18
