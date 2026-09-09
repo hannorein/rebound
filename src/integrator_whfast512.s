@@ -465,8 +465,7 @@
     kortestw        %k4, %k4
     jz              .NewtonLoopDone\@
 
-    cmpq            $2200, %r9
-    jl              .FallbackBisectionLoop\@
+    jmp             .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
     mm_stiefel_Gs13_comp
