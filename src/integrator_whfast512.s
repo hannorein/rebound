@@ -340,11 +340,12 @@
     movq            $0, %r9                     # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
-    vmovapd         .LXX,     %zmm7               # Store old .LXX
-    mm_stiefel_Gs13_avx512
+    vmovapd         .LXX, .LSIGN_ABS_MASK        # Store old .LXX
+    mm_stiefel_Gs13_comp                         # Same evaluation as final map.
     newton                                      # only updates .LXX for lanes still in k4
 
-    vsubpd          .LXX, %zmm7, %zmm7            # Delta .LXX
+    vsubpd          .LXX, .LSIGN_ABS_MASK, %zmm7 # Delta .LXX
+    vbroadcastsd    .SIGN_ABS_MASK(%rip), .LSIGN_ABS_MASK
     vpandq          .LSIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta .LXX)
 
     # Required precision reached? abs(Delta .LXX) < eps
