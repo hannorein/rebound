@@ -766,7 +766,24 @@ void reb_render_frame(void* p){
                     if (data->r_copy->boundary == REB_BOUNDARY_NONE){
                         glDrawArrays(GL_LINES, 0, 6);
                     }else{
-                        glDrawArrays(GL_LINES, 0, 24);
+                        // x-direction box edges
+                        glDrawArrays(GL_LINES, 0, 2);
+                        glDrawArrays(GL_LINES, 4, 2);
+                        glDrawArrays(GL_LINES, 8, 2);
+                        glDrawArrays(GL_LINES, 12, 2);
+
+                        // y-direction box edges
+                        glUniform4f(data->shader_box.color_location, 0.,1.,0.,1.);
+                        glDrawArrays(GL_LINES, 2, 2);
+                        glDrawArrays(GL_LINES, 6, 2);
+                        glDrawArrays(GL_LINES, 10, 2);
+                        glDrawArrays(GL_LINES, 14, 2);
+
+                        // z-direction box edges
+                        glUniform4f(data->shader_box.color_location, 0.,0.,1.,1.);
+                        glDrawArrays(GL_LINES, 16, 8);
+
+                        glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.); // back to red
                     }
                     glBindVertexArray(0);
                 }
