@@ -174,7 +174,7 @@
 # High accuracy: (Gs1, Gs2, Gs3)
 # Output: .LGS1==%zmm0, .LGS2, .LGS3
 # numTerms must be an odd number
-.macro mm_stiefel_Gs13_avx512 numTerms=19
+.macro mm_stiefel_Gs13 numTerms
     .set IF_offset, \numTerms
     vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
@@ -209,8 +209,8 @@
     vfnmadd213pd    %zmm7, %zmm0, \CLO             # \CLO = -z*\CLO + (se[-err]) - pe
 .endm
 
-# similar to mm_stiefel_Gs13_avx512
-.macro mm_stiefel_Gs13_comp numTerms=19
+# similar to mm_stiefel_Gs13
+.macro mm_stiefel_Gs13_comp numTerms
     .set IF_offset, \numTerms
     vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
@@ -240,7 +240,7 @@
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: .LGS0, .LGS1==%zmm0, .LGS2, .LGS3
 # numTerms must be an odd number
-.macro mm_stiefel_Gs03_avx512 numTerms=11
+.macro mm_stiefel_Gs03 numTerms
     .set IF_offset, \numTerms
     vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
@@ -330,16 +330,16 @@
     
     # Iterations to improve X
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    mm_stiefel_Gs03_avx512 9
+    mm_stiefel_Gs03 9
     halley
-    mm_stiefel_Gs03_avx512 11
+    mm_stiefel_Gs03 11
     halley
   
     movq            $0, %r9                     # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
     vmovapd         .LXX, %zmm12                 # Store old .LXX
-    mm_stiefel_Gs13_comp                         # Same evaluation as final map.
+    mm_stiefel_Gs13_comp 19                      # Same evaluation as final map.
     newton                                      # only updates .LXX for lanes still in k4
 
     vsubpd          .LXX, %zmm12, %zmm7           # Delta .LXX
@@ -436,7 +436,7 @@
     vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
     vmovdqa64       %zmm4, P512_COUNTER(%rdi)
 .endif
-    mm_stiefel_Gs13_avx512
+    mm_stiefel_Gs13 19
     vmulpd          .LR, .LXX, %zmm2                # r0*X
     vfmadd231pd     .LGS2, .LETA, %zmm2
     vfmadd231pd     .LGS3, .LZETA, %zmm2            # r0*X + eta0*Gs2 + zeta0*Gs3
@@ -466,7 +466,7 @@
     jmp             .FallbackBisectionLoop\@
 
 .NewtonLoopDone\@:
-    mm_stiefel_Gs13_comp
+    mm_stiefel_Gs13_comp 19
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     # Calculate r_new = .LR + .LGS1*.LETA + .LGS2*.LZETA, then 1/r.
