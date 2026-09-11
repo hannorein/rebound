@@ -99,7 +99,6 @@
 .set .LDT, %zmm29
 .set .LHALF, %zmm30
 .set .LM, %zmm31
-.set .LM_DT, %zmm12           # Only used once per step.
 .set .LEPS, %zmm11
 .set .LSIGN_ABS_MASK, %zmm10  # Only used once per step.
 .set .LMM0_DT, %zmm9          # -dt*M0 Only used once per step.
@@ -137,7 +136,6 @@
     kmovw           P512_MASK(%rdi), %k1
     vmovapd         P512_DT(%rdi), .LDT
     vmovapd         P512_M(%rdi), .LM
-    vmulpd          .LDT, .LM, .LM_DT
     vmovapd         P512_M0(%rdi), .LMM0_DT
     vmulpd          .LDT, .LMM0_DT, .LMM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, .LMM0_DT, .LMM0_DT
@@ -340,12 +338,11 @@
     movq            $0, %r9                     # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
-    vmovapd         .LXX, .LSIGN_ABS_MASK        # Store old .LXX
+    vmovapd         .LXX, %zmm12                 # Store old .LXX
     mm_stiefel_Gs13_comp                         # Same evaluation as final map.
     newton                                      # only updates .LXX for lanes still in k4
 
-    vsubpd          .LXX, .LSIGN_ABS_MASK, %zmm7 # Delta .LXX
-    vbroadcastsd    .SIGN_ABS_MASK(%rip), .LSIGN_ABS_MASK
+    vsubpd          .LXX, %zmm12, %zmm7           # Delta .LXX
     vpandq          .LSIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta .LXX)
 
     # Required precision reached? abs(Delta .LXX) < eps
@@ -623,7 +620,8 @@
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-    vdivpd      %zmm4, .LM_DT, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd      .LDT, .LM, %zmm6
+    vdivpd      %zmm4, %zmm6, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
     
     vfmadd231pd     .LX, %zmm6, .LVX{%k1}{z} 
     vfmadd231pd     .LY, %zmm6, .LVY{%k1}{z} 
@@ -843,9 +841,8 @@
 .L_CorrectorLoopI\@:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
-    # Interaction step uses .LDT, .LM_DT, .LMM0_DT
+    # Interaction step uses .LDT, .LMM0_DT
     vmulpd          P512_DT(%rdi), %zmm0, .LDT
-    vmulpd          .LDT, .LM, .LM_DT
     vmovapd         P512_M0(%rdi), .LMM0_DT
     vmulpd          .LDT, .LMM0_DT, .LMM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, .LMM0_DT, .LMM0_DT
