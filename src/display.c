@@ -764,7 +764,12 @@ void reb_render_frame(void* p){
                     glUniformMatrix4fv(data->shader_box.mvp_location, 1, GL_TRUE, (GLfloat*) mvp.m);
                     glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
                     if (data->r_copy->boundary == REB_BOUNDARY_NONE){
-                        glDrawArrays(GL_LINES, 0, 6);
+                        glDrawArrays(GL_LINES, 0, 2); // x-direction
+                        glUniform4f(data->shader_box.color_location, 0.,1.,0.,1.);
+                        glDrawArrays(GL_LINES, 2, 2); // y-direction
+                        glUniform4f(data->shader_box.color_location, 0.,0.,1.,1.);
+                        glDrawArrays(GL_LINES, 4, 2); // z-direction
+                        glUniform4f(data->shader_box.color_location, 1.,0.,0.,1.);
                     }else{
                         // x-direction box edges
                         glDrawArrays(GL_LINES, 0, 2);
