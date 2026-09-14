@@ -1037,9 +1037,8 @@ struct reb_orbit reb_orbit_nan(void){
 
 
                             // Calculates right quadrant for acos(num/denom) using a disambiguator that is < 0 when acos in the range (0, -pi)
-static double acos2(double num, double denom, double disambiguator){
+static double acos2(double cosine, double disambiguator){
     double val;
-    double cosine = num/denom;
     if(cosine > -1. && cosine < 1.){
         val = acos(cosine);
         if(disambiguator < 0.){
@@ -1103,7 +1102,7 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
     o.n = o.a/fabs(o.a)*sqrt(fabs(mu/(o.a*o.a*o.a)));	// mean motion (negative if hyperbolic)
     o.P = 2*M_PI/o.n;									// period (negative if hyperbolic)
 
-    o.inc = acos2(hz, o.h, 1.);			// cosi = dot product of h and z unit vectors.  Always in [0,pi], so pass dummy disambiguator
+    o.inc = acos2(hz/o.h, 1.);			// cosi = dot product of h and z unit vectors.  Always in [0,pi], so pass dummy disambiguator
                                         // will = 0 if h is 0.
 
     nx = -hy;							// vector pointing along the ascending node = zhat cross h
@@ -1111,10 +1110,10 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
     n = sqrt( nx*nx + ny*ny );
 
     // Omega, pomega and theta are measured from x axis, so we can always use y component to disambiguate if in the range [0,pi] or [pi,2pi]
-    o.Omega = acos2(nx, n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
+    o.Omega = acos2(nx/n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
 
     if(o.e < 1.){
-        ea = acos2(1.-o.d/o.a, o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
+        ea = acos2((1.-o.d)/(o.a*o.e), vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
         o.M = ea - o.e*sin(ea);			// mean anomaly (Kepler's equation)
     }
     else{
@@ -1128,8 +1127,8 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
     // in the near-planar case, the true longitude is always well defined for the position, and pomega for the pericenter if e!= 0
     // we therefore calculate those and calculate the remaining angles from them
     if(o.inc < MIN_INC || o.inc > M_PI - MIN_INC){	// nearly planar.  Use longitudes rather than angles referenced to node for numerical stability.
-        o.theta = acos2(dx, o.d, dy);		// cos theta is dot product of x and r vectors (true longitude). 
-        o.pomega = acos2(ex, o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
+        o.theta = acos2(dx/o.d, dy);		// cos theta is dot product of x and r vectors (true longitude). 
+        o.pomega = acos2(ex/o.e, ey);		// cos pomega is dot product of x and e unit vectors.  Will = 0 if e=0.
 
         if(o.inc < M_PI/2.){
             o.omega = o.pomega - o.Omega;
@@ -1155,8 +1154,8 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
     }
     // in the non-planar case, we can't calculate the broken angles from vectors like above.  omega+f is always well defined, and omega if e!=0
     else{
-        double wpf = acos2(nx*dx + ny*dy, n*o.d, dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
-        o.omega = acos2(nx*ex + ny*ey, n*o.e, ez);
+        double wpf = acos2((nx*dx + ny*dy)/(n*o.d), dz);	// omega plus f.  Both angles measured in orbital plane, and always well defined for i!=0.
+        o.omega = acos2((nx*ex + ny*ey)/(n*o.e), ez);
         if(o.inc < M_PI/2.){
             o.pomega = o.Omega + o.omega;
             o.f = wpf - o.omega;
@@ -1580,6 +1579,6 @@ struct reb_vec3d reb_tools_spherical_to_xyz(const double magnitude, const double
 
 void reb_tools_xyz_to_spherical(const struct reb_vec3d xyz, double* magnitude, double* theta, double* phi){
     *magnitude = sqrt(xyz.x*xyz.x + xyz.y*xyz.y + xyz.z*xyz.z);
-    *theta = acos2(xyz.z, *magnitude, 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
+    *theta = acos2(xyz.z/(*magnitude), 1.);    // theta always in [0,pi] so pass dummy disambiguator=1
     *phi = atan2(xyz.y, xyz.x);
 }
