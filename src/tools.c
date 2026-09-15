@@ -1113,7 +1113,20 @@ struct reb_orbit reb_orbit_from_particle_err(double G, struct reb_particle p, st
     o.Omega = acos2(nx/n, ny);			// cos Omega is dot product of x and n unit vectors. Will = 0 if i=0.
 
     if(o.e < 1.){
-        ea = acos2((1.-o.d)/(o.a*o.e), vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
+        //ea = acos2((1.-o.d/o.a)/o.e, vr);// from definition of eccentric anomaly.  If vr < 0, must be going from apo to peri, so ea = [pi, 2pi] so ea = -acos(cosea)
+        // 2026-09-14: New calculation for eccentric anomaly that avoids catastrophic cancellation near pericenter.
+        double arg = vr*o.d/(o.n*o.a*o.a*o.e);
+        if (fabs(arg)>TINY){
+            ea = asin(arg);
+            if ((o.a-o.d) < 0.0){
+                ea = M_PI-ea;
+            }
+            if (ea>M_PI*2.0){
+                ea -= M_PI*2.0;
+            }
+        }else{
+            ea = 0; // Cannot determine eccentric anomaly for circular orbit.
+        }
         o.M = ea - o.e*sin(ea);			// mean anomaly (Kepler's equation)
     }
     else{
