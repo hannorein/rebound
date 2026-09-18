@@ -190,6 +190,7 @@ struct reb_integrator_configuration {
 // See individual files for configuration options.
 #include "integrator_ias15.h"        /* IAS15 integrator, 15th order, non-symplectic (default)                             */
 #include "integrator_whfast.h"       /* WHFast integrator, symplectic, 2nd order, up to 11th order correctors              */
+#include "integrator_whfast_HJ.h"    /* WHFast HJ integrator variant                                                       */
 #include "integrator_sei.h"          /* SEI integrator for shearing sheet simulations, symplectic, needs OMEGA variable    */
 #include "integrator_leapfrog.h"     /* LEAPFROG integrator, simple, 2nd order, symplectic                                 */
 #include "integrator_janus.h"        /* Bit-wise reversible JANUS integrator.                                              */
@@ -202,7 +203,7 @@ struct reb_integrator_configuration {
 extern const struct reb_integrator reb_integrator_none; /* Does nothing other than advance time. Defined in rebound.c      */
 
 // List of built-in integrators for X macros
-#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(trace) X(none) 
+#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(whfast_hj) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(trace) X(none) 
 
 
 // Available return values for collision resolve functions

@@ -1,0 +1,41 @@
+{
+  "id": "candidate_0155",
+  "family": "stable_2plus2",
+  "tree": "[[1,2],[3,4]]",
+  "masses": [
+    1.0,
+    0.2,
+    0.8,
+    0.15
+  ],
+  "a_inner": [
+    1.0,
+    0.55
+  ],
+  "e_inner": [
+    0.5,
+    0.4
+  ],
+  "a_outer": 80.0,
+  "e_outer": 0.5,
+  "mutual_inc_deg": 35.0,
+  "phases_deg": [
+    73.0,
+    211.0,
+    179.0
+  ],
+  "dt_divisor": 20,
+  "reference_period": 2.62943294445679,
+  "dt": 0.1314716472228395,
+  "duration": 688.2884651454572,
+  "n_steps": 5236,
+  "hierarchy_margin": 26.666666666666668,
+  "whfast_failure": null,
+  "whfast_max_error": 0.014637065519746468,
+  "whfast_rms_error": 0.006741721876343654,
+  "whfast_hj_failure": null,
+  "whfast_hj_max_error": 8.173703576103307e-09,
+  "whfast_hj_rms_error": 2.0849373630509687e-09,
+  "improvement": 1790750.7145890985,
+  "runtime_seconds": 0.03412983299999972
+}
