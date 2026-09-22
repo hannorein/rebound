@@ -19,14 +19,32 @@ def gr_potential(sim):
     return H
     
 class TestIntegratorWHFast512(unittest.TestCase):
+    def avx512_available(self):
+        if not rebound.avx512_available: return False
+        try:
+            sim = rebound.Simulation()
+            sim.add("solar system")
+            sim.integrator = "whfast512"
+            sim.dt = 6/365.25*2*math.pi
+            sim.exact_finish_time = 0
+            sim.integrator.concatenate_steps = 1
+            sim.steps(1)
+        except RuntimeError:
+            return False
+        return True
+
+
     def test_whfast512_avx512_available(self):
         if not rebound.avx512_available:
             print("\n::error:: AVX512 is not supported by this CPU. Cannot run WHFast512 unit tests.")
         else:
-            print("\n::notice:: AVX512 is supported by this CPU. Running WHFast512 units tests.")
+            if not self.avx512_available():
+                print("\n::notice:: AVX512 should be available according to the C functio reb_avx512_available(), but a test simulation returns an error.")
+            else:
+                print("\n::notice:: AVX512 is supported by this CPU. Running WHFast512 units tests.")
 
     def test_whfast512_basic(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add("solar system")
         sim.integrator = "whfast512"
@@ -45,7 +63,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertLess(math.fabs((e0-e1)/e0),2e-9)
 
     def test_whfast512_corrector(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add("solar system")
         sim.integrator = "whfast512"
@@ -63,7 +81,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertLess(math.fabs((e0-e1)/e0),2e-12)
 
     def test_whfast512_gr(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add("solar system")
         sim.integrator = "whfast512"
@@ -83,7 +101,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
 
     
     def test_whfast512_fewer_than_8_particles(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add("outer solar system")
         sim.integrator = "whfast512"
@@ -102,7 +120,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertLess(math.fabs((e0-e1)/e0),1e-11)
 
     def test_whfast512_independent_kepler_solvers(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         def getSim(innera):
             sim = rebound.Simulation()
             sim.add(m=1)
@@ -127,7 +145,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
 
 
     def test_whfast512_high_e_kepler_solver(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         def getSim(e, integrator, f):
             sim = rebound.Simulation()
             sim.add(m=1)
@@ -147,7 +165,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
                 self.assertAlmostEqual(sim.particles[1].x, sim512.particles[1].x, 15)
 
     def test_whfast512_Nsystems_2(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         for Nplanets in [1,2,3,4]:
             def getSim(Nplanets):
                 sim = rebound.Simulation()
@@ -186,7 +204,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
                 self.assertEqual(sim.particles[1+i].vx, sim2.particles[2+Nplanets+i].vx)
 
     def test_whfast512_Nsystems_4(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         for Nplanets in [1,2]:
             def getSim(Nplanets):
                 sim = rebound.Simulation()
@@ -228,7 +246,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
                 self.assertEqual(sim.particles[1+i].vx, sim2.particles[4+3*Nplanets+i].vx)
 
     def test_whfast512_com(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add("solar system")
         for p in sim.particles:
@@ -249,7 +267,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
 
 
     def test_whfast512_restart(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add("solar system")
         sim.integrator = "whfast512"
@@ -272,7 +290,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
             self.assertEqual(sim.particles[i].vx, sim2.particles[i].vx)
     
     def test_whfast512_exit_min_distance(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-8,a=1)
@@ -287,7 +305,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertAlmostEqual(sim.t,11.456, 2)
     
     def test_whfast512_exit_min_distance_star(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-8,a=1, e=0.9, f=math.pi)
@@ -301,7 +319,7 @@ class TestIntegratorWHFast512(unittest.TestCase):
         self.assertAlmostEqual(sim.t,2.99322, 2)
 
     def test_whfast512_exit_max_distance(self):
-        if not rebound.avx512_available: return
+        if not self.avx512_available(): return
         sim = rebound.Simulation()
         sim.add(m=1)
         sim.add(m=1e-8,a=1, e=0.9, f=0)
