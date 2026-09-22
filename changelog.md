@@ -4,6 +4,14 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.2.0
+* Improved WHFast512 Kepler solver for highly eccentric and hyperbolic orbits.
+* Added symplectic correctors for WHFast with Democratic Heliocentric Coordinates.
+* Fixed an edge case where WHFast's Kepler solver might get stuck in an infinite loop.
+* Improved accuracy in phase calculation of orbital parameters.
+* Wrap Omega and pomega to [0, 2pi) range.
+* Added colours to bounding box and origin marker in visualizations.
+
 ### Version 5.1.1
 * Fixed python source dist.
 * Added python wheels for 3.13 and 3.14.

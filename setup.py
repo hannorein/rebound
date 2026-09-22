@@ -28,7 +28,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
     ghash_arg = f"-DGITHASH={ghash}"
 except Exception:
-    ghash_arg = "-DGITHASH=b0c25d434ff6fd54814efe1fa669738b9e5cc407" #GITHASHAUTOUPDATE
+    ghash_arg = "-DGITHASH=93021857a3b7dea042430b2a282488db5799ac20" #GITHASHAUTOUPDATE
 
 ##### Link args
 extra_link_args = []
