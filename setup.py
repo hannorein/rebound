@@ -21,6 +21,13 @@ def is_x86_64():
     if sys.platform == "win32":
         if not shutil.which("clang-cl"):
             return False
+    if sys.platform == "linux":
+        import platform
+        arch = platform.machine().lower()
+        if not ("x86" in arch or "amd64" in arch):
+            return False
+        if "arm" in arch or "aarch" in arch:
+            return False
     return struct.calcsize("P")*8 == 64
 
 ##### Git hash
