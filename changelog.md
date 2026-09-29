@@ -4,6 +4,9 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.2.1
+* Support python on arm based linux systems (no wheels yet).
+
 ### Version 5.2.0
 * Improved WHFast512 Kepler solver for highly eccentric and hyperbolic orbits.
 * Added symplectic correctors for WHFast with Democratic Heliocentric Coordinates.
