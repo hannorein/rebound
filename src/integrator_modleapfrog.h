@@ -1,0 +1,38 @@
+/**
+ * @file 	integrator_leapfrog.h
+ * @brief 	Interface for numerical particle integrator
+ * @author 	Hanno Rein <hanno@hanno-rein.de>
+ * 
+ * @section 	LICENSE
+ * Copyright (c) 2015 Hanno Rein
+ *
+ * This file is part of rebound.
+ *
+ * rebound is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * rebound is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rebound.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+#ifndef _INTEGRATOR_LEAPFROG_H
+#define _INTEGRATOR_LEAPFROG_H
+
+extern const struct reb_integrator reb_integrator_leapfrog;
+
+struct reb_integrator_leapfrog_state {
+    unsigned int order;
+};
+
+// Constants also used by EOS.
+extern const double reb_integrator_leapfrog_lf4_a;
+extern const double reb_integrator_leapfrog_lf6_a[5];
+extern const double reb_integrator_leapfrog_lf8_a[9];
+#endif
