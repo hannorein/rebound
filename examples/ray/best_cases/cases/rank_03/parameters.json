@@ -1,0 +1,41 @@
+{
+  "id": "candidate_0210",
+  "family": "stable_2plus2",
+  "tree": "[[1,2],[3,4]]",
+  "masses": [
+    1.3,
+    0.3,
+    0.7,
+    0.7
+  ],
+  "a_inner": [
+    1.0,
+    0.8
+  ],
+  "e_inner": [
+    0.5,
+    0.4
+  ],
+  "a_outer": 80.0,
+  "e_outer": 0.5,
+  "mutual_inc_deg": 145.0,
+  "phases_deg": [
+    73.0,
+    211.0,
+    179.0
+  ],
+  "dt_divisor": 40,
+  "reference_period": 3.7997133175159234,
+  "dt": 0.09499283293789809,
+  "duration": 596.0752959477661,
+  "n_steps": 6275,
+  "hierarchy_margin": 26.666666666666668,
+  "whfast_failure": null,
+  "whfast_max_error": 0.004856921687687135,
+  "whfast_rms_error": 0.00217882755594667,
+  "whfast_hj_failure": null,
+  "whfast_hj_max_error": 2.3877045353824126e-09,
+  "whfast_hj_rms_error": 4.046806991069052e-10,
+  "improvement": 2034138.4856100944,
+  "runtime_seconds": 0.04112266699999978
+}

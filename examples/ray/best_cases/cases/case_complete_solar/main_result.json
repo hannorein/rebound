@@ -1,0 +1,18 @@
+{
+  "dt_divisor": 20,
+  "dt_years": 0.00024219692629106764,
+  "dt_days": 0.08846242732781245,
+  "years": 5.0,
+  "n_steps": 20645,
+  "whfast_max_error": 5.711408892226063e-08,
+  "hj_max_error": 4.2836431242798666e-11,
+  "improvement": 1333.3064231830053,
+  "whfast_runtime_seconds": 0.12110845799999997,
+  "hj_runtime_seconds": 0.147323875,
+  "ias15_max_error": 7.041990998322976e-15,
+  "whfast_position_error": 0.00015094982380392015,
+  "whfast_velocity_error": 0.3943519000277999,
+  "hj_position_error": 6.458541987698798e-09,
+  "hj_velocity_error": 1.0636902121959033e-05,
+  "ias15_runtime_seconds": 2.106798542
+}
