@@ -4,6 +4,10 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.2.2
+* Fixed a bug that occured when setting a heartbeat function from python. 
+* Fixed a bug that occured when reading a Simulationarchive when WHFast512 is used.
+
 ### Version 5.2.1
 * Support python on arm based linux systems (no wheels yet).
 
