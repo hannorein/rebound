@@ -1,0 +1,16 @@
+{
+  "id": "candidate_0210",
+  "ias15_epsilon": 1e-12,
+  "samples": 1001,
+  "ias15_max_energy_error": 4.1155282825571944e-14,
+  "whfast": {
+    "hierarchy_position_rms_error": 0.011463078693520666,
+    "hierarchy_velocity_rms_error": 1.060856034409277,
+    "sampled_max_energy_error": 0.004856784995151319
+  },
+  "whfast_hj": {
+    "hierarchy_position_rms_error": 2.820263383071583e-10,
+    "hierarchy_velocity_rms_error": 3.452843865278535e-08,
+    "sampled_max_energy_error": 1.9470835800361123e-09
+  }
+}
