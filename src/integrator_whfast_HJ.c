@@ -250,7 +250,7 @@ static void reb_integrator_whfast_hj_com_step( struct reb_simulation* const r, s
 void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     const double dt = r->dt;
-    
+
     if (!whfast->tree_N){
         reb_integrator_whfast_hj_set_tree(r, whfast->tree);
     }
