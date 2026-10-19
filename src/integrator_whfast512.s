@@ -99,7 +99,6 @@
 .set .LDT, %zmm29
 .set .LHALF, %zmm30
 .set .LM, %zmm31
-.set .LM_DT, %zmm12           # Only used once per step.
 .set .LEPS, %zmm11
 .set .LSIGN_ABS_MASK, %zmm10  # Only used once per step.
 .set .LMM0_DT, %zmm9          # -dt*M0 Only used once per step.
@@ -137,7 +136,6 @@
     kmovw           P512_MASK(%rdi), %k1
     vmovapd         P512_DT(%rdi), .LDT
     vmovapd         P512_M(%rdi), .LM
-    vmulpd          .LDT, .LM, .LM_DT
     vmovapd         P512_M0(%rdi), .LMM0_DT
     vmulpd          .LDT, .LMM0_DT, .LMM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, .LMM0_DT, .LMM0_DT
@@ -176,7 +174,7 @@
 # High accuracy: (Gs1, Gs2, Gs3)
 # Output: .LGS1==%zmm0, .LGS2, .LGS3
 # numTerms must be an odd number
-.macro mm_stiefel_Gs13_avx512 numTerms=19
+.macro mm_stiefel_Gs13 numTerms
     .set IF_offset, \numTerms
     vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
@@ -211,8 +209,8 @@
     vfnmadd213pd    %zmm7, %zmm0, \CLO             # \CLO = -z*\CLO + (se[-err]) - pe
 .endm
 
-# similar to mm_stiefel_Gs13_avx512
-.macro mm_stiefel_Gs13_comp numTerms=19
+# similar to mm_stiefel_Gs13
+.macro mm_stiefel_Gs13_comp numTerms
     .set IF_offset, \numTerms
     vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
@@ -242,7 +240,7 @@
 # Low accuracy: (Gs0, Gs1, Gs2, Gs3)
 # Output: .LGS0, .LGS1==%zmm0, .LGS2, .LGS3
 # numTerms must be an odd number
-.macro mm_stiefel_Gs03_avx512 numTerms=11
+.macro mm_stiefel_Gs03 numTerms
     .set IF_offset, \numTerms
     vmulpd          .LXX, .LXX, %zmm2     # X^2
     vbroadcastsd    .IF0+(IF_offset*8)(%rip), %zmm3
@@ -332,19 +330,19 @@
     
     # Iterations to improve X
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    mm_stiefel_Gs03_avx512 9
+    mm_stiefel_Gs03 9
     halley
-    mm_stiefel_Gs03_avx512 11
+    mm_stiefel_Gs03 11
     halley
   
     movq            $0, %r9                     # Newton loop counter
     kxnorw          %k4, %k4, %k4               # k4 = all lanes active
 .NewtonLoop\@:
-    vmovapd         .LXX,     %zmm7               # Store old .LXX
-    mm_stiefel_Gs13_avx512
+    vmovapd         .LXX, %zmm12                 # Store old .LXX
+    mm_stiefel_Gs13_comp 19                      # Same evaluation as final map.
     newton                                      # only updates .LXX for lanes still in k4
 
-    vsubpd          .LXX, %zmm7, %zmm7            # Delta .LXX
+    vsubpd          .LXX, %zmm12, %zmm7           # Delta .LXX
     vpandq          .LSIGN_ABS_MASK, %zmm7, %zmm7 # abs(Delta .LXX)
 
     # Required precision reached? abs(Delta .LXX) < eps
@@ -367,18 +365,68 @@
     # If not converged yet, fall back to bisection
     movq            $0, %r9 
     vxorpd          %zmm5, %zmm5, %zmm5         # X_MIN = 0
-    
-    vsqrtpd         .LBETA, %zmm1
-    vmulpd          %zmm1, .LBETA, %zmm2          # sqrt(.LBETA)*.LBETA
+
+    # select lanes that require fallback
+    vxorpd          %zmm0, %zmm0, %zmm0
+    vcmppd          $0x12, %zmm0, .LBETA, %k5    # beta <= 0
+    kandw           %k4, %k5, %k5
+    knotw           %k5, %k6
+    kandw           %k4, %k6, %k6
+
+    # Elliptic bounds.
+    vsqrtpd         .LBETA, %zmm1{%k6}{z}
+    vmulpd          %zmm1, .LBETA, %zmm2{%k6}{z}  # sqrt(.LBETA)*.LBETA
     vmulpd          .TWOPI(%rip){1to8}, .LM, %zmm3
-    vdivpd          %zmm3, %zmm2, %zmm2         # invperiod
-    vmulpd          %zmm2, .LDT, %zmm2
-    vrndscalepd     $0x1, %zmm2, %zmm2          # floor(dt*invperiod)
+    vdivpd          %zmm3, %zmm2, %zmm2{%k6}{z}  # invperiod
+    vmulpd          %zmm2, .LDT, %zmm2{%k6}{z}
+    vrndscalepd     $0x1, %zmm2, %zmm2{%k6}{z}   # floor(dt*invperiod)
 
     vbroadcastsd    .TWOPI(%rip), %zmm3
-    vdivpd          %zmm1, %zmm3, %zmm1         # X_per_period = 2*pi/sqrt(.LBETA)
-    vmulpd          %zmm1, %zmm2, %zmm5         # X_MIN = X_per_period*floor(dt_invperiod)
-    vaddpd          %zmm1, %zmm5, %zmm1         # X_MAX = X_MIN + X_per_period
+    vdivpd          %zmm1, %zmm3, %zmm1{%k6}{z}  # X_per_period = 2*pi/sqrt(.LBETA)
+    vmulpd          %zmm1, %zmm2, %zmm5{%k6}     # X_MIN = X_per_period*floor(dt_invperiod)
+    vaddpd          %zmm1, %zmm5, %zmm1{%k6}     # X_MAX = X_MIN + X_per_period
+
+    # Hyperbolic bounds.
+    kortestw        %k5, %k5
+    jz              .FallbackBoundsDone\@
+
+    vmulpd          .LY, .LVZ, %zmm6{%k5}{z}
+    vfnmadd231pd    .LZ, .LVY, %zmm6{%k5}        # h_x = y*vz - z*vy
+    vmulpd          .LZ, .LVX, %zmm7{%k5}{z}
+    vfnmadd231pd    .LX, .LVZ, %zmm7{%k5}        # h_y = z*vx - x*vz
+    vmulpd          .LX, .LVY, %zmm8{%k5}{z}
+    vfnmadd231pd    .LY, .LVX, %zmm8{%k5}        # h_z = x*vy - y*vx
+    vmulpd          %zmm6, %zmm6, %zmm6{%k5}
+    vfmadd231pd     %zmm7, %zmm7, %zmm6{%k5}
+    vfmadd231pd     %zmm8, %zmm8, %zmm6{%k5}     # h^2
+    vmovapd         %zmm6, %zmm7{%k5}{z}
+
+    vmulpd          .LM, .LM, %zmm8{%k5}{z}
+    vmulpd          .LBETA, %zmm7, %zmm2{%k5}{z}
+    vdivpd          %zmm8, %zmm2, %zmm2{%k5}{z}
+    vsubpd          %zmm2, .LONE, %zmm2{%k5}{z}  # 1 - h^2*beta/M^2
+    vsqrtpd         %zmm2, %zmm2{%k5}{z}
+    vaddpd          .LONE, %zmm2, %zmm2{%k5}{z}  # 1 + e
+
+    vdivpd          .LM, %zmm7, %zmm6{%k5}{z}
+    vdivpd          %zmm2, %zmm6, %zmm6{%k5}{z}  # q = h^2/M/(1+e)
+    vsqrtpd         %zmm7, %zmm7{%k5}{z}
+    vdivpd          %zmm6, %zmm7, %zmm7{%k5}{z}  # vq = sqrt(h^2)/q
+
+    vmulpd          .LDT, %zmm7, %zmm8{%k5}{z}
+    vpandq          .LSIGN_ABS_MASK, %zmm8, %zmm8
+    vaddpd          .LR, %zmm8, %zmm8{%k5}{z}
+    vdivpd          %zmm8, .LDT, %zmm5{%k5}      # X_MIN = dt/(abs(vq*dt)+r0)
+    vdivpd          %zmm6, .LDT, %zmm1{%k5}      # X_MAX = dt/q
+
+    vxorpd          %zmm0, %zmm0, %zmm0
+    vcmppd          $0x11, %zmm0, .LDT, %k7      # dt < 0
+    kandw           %k5, %k7, %k7
+    vmovapd         %zmm5, %zmm2
+    vmovapd         %zmm1, %zmm5{%k7}
+    vmovapd         %zmm2, %zmm1{%k7}
+
+.FallbackBoundsDone\@:
 
     vaddpd          %zmm5, %zmm1, .LXX{%k4}       # X_MIN + X_MAX
     vmulpd          .LHALF, .LXX, .LXX{%k4}           # X = (X_MIN + X_MAX)/2
@@ -388,7 +436,7 @@
     vpaddq          .ONE_QUAD(%rip){1to8}, %zmm4, %zmm4{%k4}
     vmovdqa64       %zmm4, P512_COUNTER(%rdi)
 .endif
-    mm_stiefel_Gs13_avx512
+    mm_stiefel_Gs13 19
     vmulpd          .LR, .LXX, %zmm2                # r0*X
     vfmadd231pd     .LGS2, .LETA, %zmm2
     vfmadd231pd     .LGS3, .LZETA, %zmm2            # r0*X + eta0*Gs2 + zeta0*Gs3
@@ -401,11 +449,24 @@
     vmulpd          .LHALF, .LXX, .LXX{%k4}           # X
     
     incq %r9 
-    cmpq $52, %r9                               # max Bisection iterations (=number of significant bits)
+    cmpq $52, %r9                               # Elliptic lanes use 52 bisection iterations.
     jl .FallbackBisectionLoop\@
 
+    # for hyperbolic lanes, continue until stopping criterion.
+    vsubpd          %zmm5, %zmm1, %zmm6
+    vpandq          .LSIGN_ABS_MASK, %zmm6, %zmm6
+    vaddpd          %zmm5, %zmm1, %zmm7
+    vpandq          .LSIGN_ABS_MASK, %zmm7, %zmm7
+    vmulpd          .BISECTION_EPS(%rip){1to8}, %zmm7, %zmm7
+    vcmppd          $0x11, %zmm6, %zmm7, %k4    # tolerance < abs(X_MAX-X_MIN)
+    kandw           %k5, %k4, %k4
+    kortestw        %k4, %k4
+    jz              .NewtonLoopDone\@
+
+    jmp             .FallbackBisectionLoop\@
+
 .NewtonLoopDone\@:
-    mm_stiefel_Gs13_comp
+    mm_stiefel_Gs13_comp 19
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     # Calculate r_new = .LR + .LGS1*.LETA + .LGS2*.LZETA, then 1/r.
@@ -559,7 +620,8 @@
     vsqrtpd     %zmm4, %zmm5            # r 
     vmulpd      %zmm4, %zmm5, %zmm4     # r^3
   
-    vdivpd      %zmm4, .LM_DT, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
+    vmulpd      .LDT, .LM, %zmm6
+    vdivpd      %zmm4, %zmm6, %zmm6      # M*dt/r^3 (where M=(m0, m0+m1, m0+m1+m2,...)
     
     vfmadd231pd     .LX, %zmm6, .LVX{%k1}{z} 
     vfmadd231pd     .LY, %zmm6, .LVY{%k1}{z} 
@@ -779,9 +841,8 @@
 .L_CorrectorLoopI\@:
     vbroadcastsd    (%r8), %zmm0
     vmulpd          192(%rsp){1to8}, %zmm0, %zmm0
-    # Interaction step uses .LDT, .LM_DT, .LMM0_DT
+    # Interaction step uses .LDT, .LMM0_DT
     vmulpd          P512_DT(%rdi), %zmm0, .LDT
-    vmulpd          .LDT, .LM, .LM_DT
     vmovapd         P512_M0(%rdi), .LMM0_DT
     vmulpd          .LDT, .LMM0_DT, .LMM0_DT
     vxorpd          .SIGN_FLIP_MASK(%rip){1to8}, .LMM0_DT, .LMM0_DT
@@ -952,6 +1013,9 @@ b34mergeidx:
 .align 64
 .EPS:
     .double 1e-11
+.align 64
+.BISECTION_EPS:
+    .double 1e-15
 .align 64
 .TWOPI:
     .quad 0x401921fb54442d18

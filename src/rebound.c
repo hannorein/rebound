@@ -40,7 +40,7 @@
 const uint32_t reb_string_size_max = REB_STRING_SIZE_MAX; // defined in rebound.h
 const size_t reb_messages_max_N = 10;
 const char* reb_build_str = __DATE__ " " __TIME__;  // Date and time build string. 
-const char* reb_version_str = "5.1.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* reb_version_str = "5.2.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* reb_githash_str = STRINGIFY(GITHASH);             // This line gets updated automatically. Do not edit manually.
 
 // NULL terminated list of custom registered integrators.
@@ -282,6 +282,11 @@ int reb_check_fp_contract(){
 // Wrapper to free pointers from python.
 void reb_free(void* p){
     free(p);
+}
+
+// Wrapper to copy strings from python.
+char* reb_strdup(const char* p){
+    return strdup(p);
 }
 
 // Helper function to check for equal strings with whitespace ignored

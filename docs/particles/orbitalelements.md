@@ -21,15 +21,15 @@ Variable name   | Description
 `n`             | mean motion    (negative if hyperbolic)
 `a`             | semi-major axis
 `e`             | eccentricity
-`inc`           | inclination
-`Omega`         | longitude of ascending node
-`omega`         | argument of pericenter
-`pomega`        | longitude of pericenter
-`f`             | true anomaly
-`M`             | mean anomaly
-`E`             | Eccentric anomaly. Because this requires solving Kepler's equation it is only calculated when needed in python and never calculated in C. To get the eccentric anomaly in C, use the function `double reb_M_to_E(double e, double M)`
-`l`             | mean longitude = Omega + omega + M
-`theta`         | true longitude = Omega + omega + f
+`inc`           | inclination, in $[0,\pi]$
+`Omega`         | longitude of ascending node, in $[0,2\pi)$
+`omega`         | argument of pericenter, in $[0,2\pi)$
+`pomega`        | longitude of pericenter, in $[0,2\pi)$
+`f`             | true anomaly, in $[0,2\pi)$
+`M`             | mean anomaly, in $[0,2\pi)$
+`E`             | Eccentric anomaly (in $[0,2\pi)$ for $e<1$; unbounded for $e>1$). Because this requires solving Kepler's equation it is only calculated when needed in python and never calculated in C. To get the eccentric anomaly in C, use the function `double reb_M_to_E(double e, double M)`
+`l`             | mean longitude = Omega + omega + M, in $[0,2\pi)$
+`theta`         | true longitude = Omega + omega + f, in $[0,2\pi)$
 `T`             | time of pericenter passage
 `rhill`         | Hill radius, $r_{\rm hill} =a\sqrt[3]{\frac{m}{3M}}$
 `pal_h`         | Cartesian component of the eccentricity, $h = e\cdot \sin(pomega)$

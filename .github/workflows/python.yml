@@ -38,7 +38,6 @@ jobs:
       - name: Running python examples
         run: |
           python python_examples/dragforce/problem.py
-          python python_examples/horizons/problem.py
           python python_examples/megno_simple/problem.py
           python python_examples/orbital_elements/problem.py
           python python_examples/outersolarsystem/problem.py
