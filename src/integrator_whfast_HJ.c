@@ -27,7 +27,8 @@ const struct reb_integrator reb_integrator_whfast_hj = {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_hj_field_descriptor_list[] = {
-    { "Tree. For example: [[1,2],3]",
+    { "Tree structure. Format example: [[1,2],3]. The tree can only be set once. "
+    { "To change the tree aftwards, you need to first reset the integrator.",
         REB_STRING, "tree", offsetof(struct reb_integrator_whfast_hj_state, tree), 0, 0, 0},
     { 0 },
 };
@@ -135,7 +136,10 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whf
     return particle_number - 1;
 }
 
-static void reb_integrator_whfast_hj_allocate_fixed_tree( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast){
+int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
+    struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
+    reb_integrator_whfast_hj_allocate_fixed_tree(r, whfast);
+    
     whfast->tree_N = r->N;
     const size_t orbit_count = r->N - 1;
     whfast->masses = calloc(r->N, sizeof(*whfast->masses));
@@ -144,16 +148,9 @@ static void reb_integrator_whfast_hj_allocate_fixed_tree( struct reb_simulation*
     size_t massive_count = 0;
     for (size_t i=0; i<r->N; i++){
         massive_count += r->particles[i].m != 0.;
-    }
-    whfast->barycenters = calloc(massive_count - 1, sizeof(*whfast->barycenters));
-    for (size_t i=0; i<r->N; i++){
         whfast->masses[i] = r->particles[i].m;
     }
-}
-
-int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
-    struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
-    reb_integrator_whfast_hj_allocate_fixed_tree(r, whfast);
+    whfast->barycenters = calloc(massive_count - 1, sizeof(*whfast->barycenters));
 
     struct reb_integrator_whfast_hj_tree_parser parser = {
         .whfast = whfast,
@@ -252,18 +249,16 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) 
     const double dt = r->dt;
 
     if (!whfast->tree_N){
+        if (!whfast->tree){
+            reb_simulation_error(r, "WHFast HJ requires a fixed tree to be set.");
+            return;
+        }
         reb_integrator_whfast_hj_set_tree(r, whfast->tree);
     }
 
     if (whfast->tree_N != r->N){
         reb_simulation_error(r, "WHFast HJ particle count changed after the fixed tree was set.");
         return;
-    }
-    for (size_t i=0; i<whfast->tree_N; i++){
-        if (r->particles[i].m != whfast->masses[i]){
-            reb_simulation_error(r, "WHFast HJ requires fixed particle masses after the hierarchy is set.");
-            return;
-        }
     }
     reb_integrator_whfast_hj_from_inertial(r, whfast, 0);
 
