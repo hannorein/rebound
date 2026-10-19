@@ -42,21 +42,16 @@ void* reb_integrator_whfast_hj_create(void)
     return calloc(1, sizeof(struct reb_integrator_whfast_hj_state));
 }
 
-static void reb_integrator_whfast_hj_clear_state(struct reb_integrator_whfast_hj_state* const whfast)
-{
-    free(whfast->nodes);
-    free(whfast->barycenters);
-    free(whfast->masses);
-    *whfast = (struct reb_integrator_whfast_hj_state){0};
-}
-
 void reb_integrator_whfast_hj_free(void* state)
 {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     if (whfast == NULL){
         return;
     }
-    reb_integrator_whfast_hj_clear_state(whfast);
+    free(whfast->nodes);
+    free(whfast->barycenters);
+    free(whfast->masses);
+    free(whfast->tree);
     free(whfast);
 }
 
@@ -173,19 +168,16 @@ static void reb_integrator_whfast_hj_allocate_fixed_tree( struct reb_simulation*
 }
 
 int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
-    struct reb_integrator_whfast_hj_state candidate = {0};
-    reb_integrator_whfast_hj_allocate_fixed_tree(r, &candidate);
+    struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
+    reb_integrator_whfast_hj_allocate_fixed_tree(r, whfast);
 
     struct reb_integrator_whfast_hj_tree_parser parser = {
-        .whfast = &candidate,
+        .whfast = whfast,
         .cursor = tree,
         .next_internal = r->N,
     };
     reb_integrator_whfast_hj_parse_tree_node(&parser);
 
-    struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
-    reb_integrator_whfast_hj_clear_state(whfast);
-    *whfast = candidate;
     return 0;
 }
 
