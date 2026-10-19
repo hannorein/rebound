@@ -138,7 +138,7 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whf
 
 int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
     struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
-    
+
     whfast->tree_N = r->N;
     const size_t orbit_count = r->N - 1;
     whfast->masses = calloc(r->N, sizeof(*whfast->masses));
