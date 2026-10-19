@@ -32,18 +32,15 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_hj_field_desc
     { 0 },
 };
 
-static size_t reb_integrator_whfast_hj_node_count(const size_t N)
-{
+static size_t reb_integrator_whfast_hj_node_count(const size_t N) {
     return N == 0 ? 0 : 2*N - 1;
 }
 
-void* reb_integrator_whfast_hj_create(void)
-{
+void* reb_integrator_whfast_hj_create(void) {
     return calloc(1, sizeof(struct reb_integrator_whfast_hj_state));
 }
 
-void reb_integrator_whfast_hj_free(void* state)
-{
+void reb_integrator_whfast_hj_free(void* state) {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     if (whfast == NULL){
         return;
@@ -57,31 +54,20 @@ void reb_integrator_whfast_hj_free(void* state)
 
 // Resolve a subtree to its shared barycenter. A massless attachment aliases
 // its massive child, so a chain of test particles adds no barycenter work.
-static size_t reb_integrator_whfast_hj_barycenter_index(
-    const struct reb_integrator_whfast_hj_state* const whfast, const size_t index
-){
+static size_t reb_integrator_whfast_hj_barycenter_index( const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
     return index < whfast->tree_N ? index : whfast->nodes[index - whfast->tree_N].barycenter;
 }
 
-static struct reb_particle* reb_integrator_whfast_hj_barycenter(
-    struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index
-){
+static struct reb_particle* reb_integrator_whfast_hj_barycenter( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
     const size_t host = reb_integrator_whfast_hj_barycenter_index(whfast, index);
     return host < whfast->tree_N ? &r->particles[host] : &whfast->barycenters[host - whfast->tree_N];
 }
 
-static double reb_integrator_whfast_hj_subtree_mass(
-    const struct reb_integrator_whfast_hj_state* const whfast, const size_t index
-){
+static double reb_integrator_whfast_hj_subtree_mass( const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
     return index < whfast->tree_N ? whfast->masses[index] : whfast->nodes[index - whfast->tree_N].q.m;
 }
 
-static void reb_integrator_whfast_hj_initialize_internal(
-    struct reb_integrator_whfast_hj_state* const whfast,
-    const size_t index,
-    const size_t primary,
-    const size_t secondary
-){
+static void reb_integrator_whfast_hj_initialize_internal( struct reb_integrator_whfast_hj_state* const whfast, const size_t index, const size_t primary, const size_t secondary){
     struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
     const double primary_mass = reb_integrator_whfast_hj_subtree_mass(whfast, primary);
     const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(whfast, secondary);
@@ -106,8 +92,7 @@ struct reb_integrator_whfast_hj_tree_parser {
     size_t next_internal;
 };
 
-static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrator_whfast_hj_tree_parser* const parser)
-{
+static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrator_whfast_hj_tree_parser* const parser) {
     while (isspace((unsigned char)*parser->cursor)){
         parser->cursor++;
     }
@@ -117,8 +102,7 @@ static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrato
 // Recursion is used only while compiling a user-supplied tree, never per timestep.
 // The caller supplies valid syntax, each particle exactly once, and positive
 // total mass for every binary. Whitespace is allowed between tokens.
-static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whfast_hj_tree_parser* const parser)
-{
+static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whfast_hj_tree_parser* const parser) {
     reb_integrator_whfast_hj_tree_parser_skip_space(parser);
 
     if (*parser->cursor == '['){
@@ -184,11 +168,7 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
 // Positions/velocities and accelerations have separate passes: the gravity
 // evaluation changes only accelerations, so there is no midpoint round trip
 // for the already-current Jacobi positions and velocities.
-static void reb_integrator_whfast_hj_from_inertial(
-    struct reb_simulation* const r,
-    struct reb_integrator_whfast_hj_state* const whfast,
-    const int accelerations
-){
+static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const int accelerations){
     for (size_t i=0; i+1<whfast->tree_N; i++){
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i];
         const struct reb_particle* const primary = reb_integrator_whfast_hj_barycenter(r, whfast, node->primary);
@@ -209,10 +189,7 @@ static void reb_integrator_whfast_hj_from_inertial(
     }
 }
 
-static void reb_integrator_whfast_hj_to_inertial(
-    struct reb_simulation* const r,
-    struct reb_integrator_whfast_hj_state* const whfast
-){
+static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast){
     for (size_t i=whfast->tree_N > 0 ? whfast->tree_N - 1 : 0; i-- > 0;){
         const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i];
         struct reb_particle* const primary = reb_integrator_whfast_hj_barycenter(r, whfast, node->primary);
@@ -236,11 +213,7 @@ static void reb_integrator_whfast_hj_to_inertial(
     }
 }
 
-static void reb_integrator_whfast_hj_interaction_step(
-    const struct reb_simulation* const r,
-    struct reb_integrator_whfast_hj_state* const whfast,
-    const double dt
-){
+static void reb_integrator_whfast_hj_interaction_step( const struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     for (size_t i=0; i+1<whfast->tree_N; i++){
         struct reb_particle* const p = &whfast->nodes[i].q;
         p->vx += dt*p->ax;
@@ -256,22 +229,14 @@ static void reb_integrator_whfast_hj_interaction_step(
     }
 }
 
-static void reb_integrator_whfast_hj_kepler_step(
-    const struct reb_simulation* const r,
-    struct reb_integrator_whfast_hj_state* const whfast,
-    const double dt
-){
+static void reb_integrator_whfast_hj_kepler_step( const struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     for (size_t i=0; i+1<whfast->tree_N; i++){
         struct reb_particle* const q = &whfast->nodes[i].q;
         reb_integrator_whfast_kepler_solver(q, q->m*r->G, dt, r);
     }
 }
 
-static void reb_integrator_whfast_hj_com_step(
-    struct reb_simulation* const r,
-    struct reb_integrator_whfast_hj_state* const whfast,
-    const double dt
-){
+static void reb_integrator_whfast_hj_com_step( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     const size_t node_count = reb_integrator_whfast_hj_node_count(whfast->tree_N);
     if (node_count == 0){
         return;
@@ -282,8 +247,7 @@ static void reb_integrator_whfast_hj_com_step(
     com->z += dt*com->vz;
 }
 
-void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state)
-{
+void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     const double dt = r->dt;
     
