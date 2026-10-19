@@ -27,8 +27,8 @@ const struct reb_integrator reb_integrator_whfast_hj = {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_hj_field_descriptor_list[] = {
-    { "Whether a fixed user-supplied HJ tree has been configured.",
-        REB_INT, "given_tree", offsetof(struct reb_integrator_whfast_hj_state, given_tree), 0, 0, 0},
+    { "Tree. For example: [[1,2],3]",
+        REB_STRING, "tree", offsetof(struct reb_integrator_whfast_hj_state, tree), 0, 0, 0},
     { 0 },
 };
 
@@ -203,97 +203,10 @@ REB_API int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, co
     };
     reb_integrator_whfast_hj_parse_tree_node(&parser);
 
-    candidate.given_tree = 1;
     struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
     reb_integrator_whfast_hj_clear_state(whfast);
     *whfast = candidate;
     return 0;
-}
-
-REB_API int reb_integrator_whfast_hj_set_binary_plus_particles_tree(struct reb_simulation* const r)
-{
-    struct reb_integrator_whfast_hj_state candidate = {0};
-    if (reb_integrator_whfast_hj_allocate_fixed_tree(r, &candidate)){
-        return 1;
-    }
-
-    size_t root = 0;
-    for (size_t i=1; i<r->N; i++){
-        const size_t index = r->N + i - 1;
-        reb_integrator_whfast_hj_initialize_internal(&candidate, index, root, i);
-        root = index;
-    }
-
-    candidate.given_tree = 1;
-    struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
-    reb_integrator_whfast_hj_clear_state(whfast);
-    *whfast = candidate;
-    return 0;
-}
-
-static void reb_integrator_whfast_hj_tree_append(
-    char* const buffer,
-    const size_t buffer_size,
-    size_t* const required,
-    const char* const text
-){
-    const size_t len = strlen(text);
-    if (buffer != NULL && buffer_size > 0 && *required < buffer_size - 1){
-        size_t copy_len = buffer_size - 1 - *required;
-        if (copy_len > len){
-            copy_len = len;
-        }
-        memcpy(buffer + *required, text, copy_len);
-        buffer[*required + copy_len] = '\0';
-    }
-    *required += len;
-}
-
-static void reb_integrator_whfast_hj_tree_node_to_string(
-    const struct reb_integrator_whfast_hj_state* const whfast,
-    const size_t index,
-    char* const buffer,
-    const size_t buffer_size,
-    size_t* const required
-){
-    if (index < whfast->tree_N){
-        char leaf[32];
-        snprintf(leaf, sizeof(leaf), "%zu", index + 1);
-        reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, leaf);
-        return;
-    }
-    const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
-    reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, "[");
-    reb_integrator_whfast_hj_tree_node_to_string(whfast, node->primary, buffer, buffer_size, required);
-    reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, ",");
-    reb_integrator_whfast_hj_tree_node_to_string(whfast, node->secondary, buffer, buffer_size, required);
-    reb_integrator_whfast_hj_tree_append(buffer, buffer_size, required, "]");
-}
-
-REB_API int reb_integrator_whfast_hj_tree_to_string(
-    struct reb_simulation* const r,
-    char* const buffer,
-    const size_t buffer_size
-){
-    if (buffer != NULL && buffer_size > 0){
-        buffer[0] = '\0';
-    }
-    if (r == NULL || r->integrator.name == NULL || strcmp(r->integrator.name, "whfast_hj") != 0 || r->integrator.state == NULL){
-        return -1;
-    }
-    const struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
-    if (!whfast->given_tree || (whfast->tree_N > 1 && whfast->nodes == NULL)){
-        return -1;
-    }
-
-    size_t required = 0;
-    const size_t node_count = reb_integrator_whfast_hj_node_count(whfast->tree_N);
-    if (node_count == 0){
-        reb_integrator_whfast_hj_tree_append(buffer, buffer_size, &required, "[]");
-    }else{
-        reb_integrator_whfast_hj_tree_node_to_string(whfast, node_count - 1, buffer, buffer_size, &required);
-    }
-    return required > (size_t)INT_MAX ? -1 : (int)required;
 }
 
 // Positions/velocities and accelerations have separate passes: the gravity
@@ -401,11 +314,11 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state)
 {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     const double dt = r->dt;
-
-    if (!whfast->given_tree || (r->N > 1 && whfast->nodes == NULL)){
-        reb_simulation_error(r, "WHFast HJ requires a fixed tree. Provide one with integrate(..., given_tree=True, tree=...).");
-        return;
+    
+    if (!whfast->tree_N){
+        reb_integrator_whfast_hj_set_tree(r, whfast->tree);
     }
+
     if (whfast->tree_N != r->N){
         reb_simulation_error(r, "WHFast HJ particle count changed after the fixed tree was set.");
         return;

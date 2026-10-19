@@ -20,14 +20,12 @@ struct reb_integrator_whfast_hj_node {
 struct reb_integrator_whfast_hj_state {
     // One entry per binary orbit, in postorder. Child indices below tree_N
     // refer to particles; larger indices refer to nodes[index - tree_N].
+    char* tree;
     struct reb_integrator_whfast_hj_node* nodes;
     struct reb_particle* barycenters; // Only binaries with two nonzero-mass children.
     double* masses;                  // Original particle masses for validation.
     size_t tree_N;
     size_t N_barycenters;
-
-    // Set after a user-supplied tree has been compiled into nodes.
-    int given_tree;
 };
 
 #endif
