@@ -28,7 +28,7 @@ const struct reb_integrator reb_integrator_whfast_hj = {
 
 const struct reb_binarydata_field_descriptor reb_integrator_whfast_hj_field_descriptor_list[] = {
     { "Tree structure. Format example: [[1,2],3]. The tree can only be set once. "
-    { "To change the tree aftwards, you need to first reset the integrator.",
+        "To change the tree aftwards, you need to first reset the integrator.",
         REB_STRING, "tree", offsetof(struct reb_integrator_whfast_hj_state, tree), 0, 0, 0},
     { 0 },
 };
@@ -138,7 +138,6 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whf
 
 int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
     struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
-    reb_integrator_whfast_hj_allocate_fixed_tree(r, whfast);
     
     whfast->tree_N = r->N;
     const size_t orbit_count = r->N - 1;
