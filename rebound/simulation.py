@@ -13,6 +13,18 @@ import warnings
 class allocated_c_char_p(c_char_p):
     pass
 
+def _whfast_hj_tree_to_string(tree):
+    if isinstance(tree, str):
+        return tree
+    if isinstance(tree, (list, tuple)):
+        if len(tree) != 2:
+            raise ValueError("WHFast HJ tree nodes must be binary pairs.")
+        return "[" + _whfast_hj_tree_to_string(tree[0]) + "," + _whfast_hj_tree_to_string(tree[1]) + "]"
+    try:
+        return str(tree.__index__())
+    except AttributeError:
+        raise TypeError("WHFast HJ tree leaves must be particle indices, and internal nodes must be binary pairs.")
+
 ### The following enum and class definitions need to
 ### consistent with those in rebound.h
 BOUNDARIES = {"none": 0, "open": 1, "periodic": 2, "shear": 3}
@@ -1294,6 +1306,45 @@ class Simulation(Structure):
             raise Collision("Two particles collided (d < r1+r2)")
         self.process_messages()
 
+    @property
+    def tree(self):
+        """The configured WHFast HJ tree as a bracket string, or an empty string if unset.
+
+        Set this after selecting whfast_hj and adding the particles. Accepts a
+        bracket string, a nested list/tuple of one-based particle indices, or
+        "binary_plus_particles". The hierarchy is reused by integrate().
+        """
+        clibrebound.reb_integrator_whfast_hj_tree_to_string.argtypes = [POINTER(Simulation), c_char_p, c_size_t]
+        clibrebound.reb_integrator_whfast_hj_tree_to_string.restype = c_int
+        size = clibrebound.reb_integrator_whfast_hj_tree_to_string(byref(self), None, 0)
+        buffer = create_string_buffer(size + 1)
+        clibrebound.reb_integrator_whfast_hj_tree_to_string(byref(self), buffer, size + 1)
+        return buffer.value.decode("ascii")
+
+    @tree.setter
+    def tree(self, tree):
+        if str(self.integrator) != "whfast_hj":
+            raise ValueError("tree is only supported by the whfast_hj integrator.")
+
+        tree_string = _whfast_hj_tree_to_string(tree)
+        try:
+            tree_bytes = tree_string.encode("ascii")
+        except UnicodeEncodeError:
+            raise ValueError("WHFast HJ tree strings must contain only ASCII characters.")
+
+        if tree_string == "binary_plus_particles":
+            clibrebound.reb_integrator_whfast_hj_set_binary_plus_particles_tree.argtypes = [POINTER(Simulation)]
+            clibrebound.reb_integrator_whfast_hj_set_binary_plus_particles_tree.restype = c_int
+            ret_tree = clibrebound.reb_integrator_whfast_hj_set_binary_plus_particles_tree(byref(self))
+        else:
+            clibrebound.reb_integrator_whfast_hj_set_tree.argtypes = [POINTER(Simulation), c_char_p]
+            clibrebound.reb_integrator_whfast_hj_set_tree.restype = c_int
+            ret_tree = clibrebound.reb_integrator_whfast_hj_set_tree(byref(self), c_char_p(tree_bytes))
+        if ret_tree != 0:
+            self.process_messages()
+            raise GenericError("Could not set WHFast HJ tree.")
+        self.process_messages()
+
     def integrate(self, tmax, exact_finish_time=1):
         """
         Main integration function. Call this function when you have setup your simulation and want to integrate it forward (or backward) in time. The function might be called many times to integrate the simulation in steps and create outputs in-between steps.
@@ -1304,7 +1355,6 @@ class Simulation(Structure):
             The final time of your simulation. If the current time is 100, and tmax=200, then after the calling the integrate routine, the time has advanced to t=200. If tmax is larger than or equal to the current time, no integration will be performed.
         exact_finish_time: int, optional
             This argument determines whether REBOUND should try to finish at the exact time (tmax) you give it or if it is allowed to overshoot. Overshooting could happen if one starts at t=0, has a timestep of dt=10 and wants to integrate to tmax=25. With ``exact_finish_time=1``, the integrator will choose the last timestep such that t is exactly 25 after the integration, otherwise t=30. Note that changing the timestep does affect the accuracy of symplectic integrators negatively.
-        
         Exceptions
         ----------
         Exceptions are thrown when no more particles are left in the simulation or when a generic integration error occurred. 
