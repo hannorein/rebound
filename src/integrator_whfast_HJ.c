@@ -156,45 +156,25 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whf
     return particle_number - 1;
 }
 
-static int reb_integrator_whfast_hj_allocate_fixed_tree(
-    struct reb_simulation* const r,
-    struct reb_integrator_whfast_hj_state* const whfast
-){
-    if (r == NULL){
-        return 1;
-    }
+static void reb_integrator_whfast_hj_allocate_fixed_tree( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast){
     whfast->tree_N = r->N;
-    const size_t orbit_count = r->N > 0 ? r->N - 1 : 0;
-    whfast->masses = r->N ? calloc(r->N, sizeof(*whfast->masses)) : NULL;
-    whfast->nodes = orbit_count ? calloc(orbit_count, sizeof(*whfast->nodes)) : NULL;
+    const size_t orbit_count = r->N - 1;
+    whfast->masses = calloc(r->N, sizeof(*whfast->masses));
+    whfast->nodes = calloc(orbit_count, sizeof(*whfast->nodes));
     // At most K-1 new barycenters are needed for K nonzero-mass particles.
     size_t massive_count = 0;
     for (size_t i=0; i<r->N; i++){
         massive_count += r->particles[i].m != 0.;
     }
-    whfast->barycenters = massive_count > 1 ? calloc(massive_count - 1, sizeof(*whfast->barycenters)) : NULL;
-    if ((r->N && !whfast->masses) || (orbit_count && !whfast->nodes) ||
-            (massive_count > 1 && !whfast->barycenters)){
-        reb_integrator_whfast_hj_clear_state(whfast);
-        reb_simulation_error(r, "WHFast HJ was not able to allocate memory for the fixed hierarchy.");
-        return 1;
-    }
+    whfast->barycenters = calloc(massive_count - 1, sizeof(*whfast->barycenters));
     for (size_t i=0; i<r->N; i++){
         whfast->masses[i] = r->particles[i].m;
     }
-    return 0;
 }
 
-REB_API int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree)
-{
-    if (tree == NULL){
-        return 1;
-    }
-
+int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
     struct reb_integrator_whfast_hj_state candidate = {0};
-    if (reb_integrator_whfast_hj_allocate_fixed_tree(r, &candidate)){
-        return 1;
-    }
+    reb_integrator_whfast_hj_allocate_fixed_tree(r, &candidate);
 
     struct reb_integrator_whfast_hj_tree_parser parser = {
         .whfast = &candidate,
