@@ -18,7 +18,6 @@ struct reb_integrator_whfast_hj_state {
     char* tree;
     struct reb_integrator_whfast_hj_node* nodes;
     struct reb_particle* barycenters; // Only binaries with two nonzero-mass children.
-    double* masses;                  // Original particle masses for validation.
     size_t tree_N;
     size_t N_barycenters;
 };

@@ -44,7 +44,6 @@ void reb_integrator_whfast_hj_free(void* state) {
     }
     free(whfast->nodes);
     free(whfast->barycenters);
-    free(whfast->masses);
     free(whfast->tree);
     free(whfast);
 }
@@ -60,14 +59,14 @@ static struct reb_particle* reb_integrator_whfast_hj_barycenter( struct reb_simu
     return host < whfast->tree_N ? &r->particles[host] : &whfast->barycenters[host - whfast->tree_N];
 }
 
-static double reb_integrator_whfast_hj_subtree_mass( const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
-    return index < whfast->tree_N ? whfast->masses[index] : whfast->nodes[index - whfast->tree_N].q.m;
+static double reb_integrator_whfast_hj_subtree_mass(const struct reb_simulation* r, const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
+    return index < whfast->tree_N ? r->particles[index].m : whfast->nodes[index - whfast->tree_N].q.m;
 }
 
-static void reb_integrator_whfast_hj_initialize_internal( struct reb_integrator_whfast_hj_state* const whfast, const size_t index, const size_t primary, const size_t secondary){
+static void reb_integrator_whfast_hj_initialize_internal(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index, const size_t primary, const size_t secondary){
     struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
-    const double primary_mass = reb_integrator_whfast_hj_subtree_mass(whfast, primary);
-    const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(whfast, secondary);
+    const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, primary);
+    const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, secondary);
     const double total_mass = primary_mass + secondary_mass;
     node->primary = primary;
     node->secondary = secondary;
@@ -99,7 +98,7 @@ static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrato
 // Recursion is used only while compiling a user-supplied tree, never per timestep.
 // The caller supplies valid syntax, each particle exactly once, and positive
 // total mass for every binary. Whitespace is allowed between tokens.
-static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whfast_hj_tree_parser* const parser) {
+static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_tree_parser* const parser) {
     reb_integrator_whfast_hj_tree_parser_skip_space(parser);
 
     if (*parser->cursor == '['){
@@ -112,7 +111,7 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whf
 
         size_t children[2];
         for (int i=0; i<2; i++){
-            children[i] = reb_integrator_whfast_hj_parse_tree_node(parser);
+            children[i] = reb_integrator_whfast_hj_parse_tree_node(r, parser);
             reb_integrator_whfast_hj_tree_parser_skip_space(parser);
             parser->cursor++;  // Consume ',' after the first child, ']' after the second.
         }
@@ -120,7 +119,7 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(struct reb_integrator_whf
         // Unique in-range leaves allow at most tree_N - 1 internal binary nodes.
         const size_t index = parser->next_internal++;
         // here
-        reb_integrator_whfast_hj_initialize_internal(parser->whfast, index, children[0], children[1]);
+        reb_integrator_whfast_hj_initialize_internal(r, parser->whfast, index, children[0], children[1]);
         return index;
     }
 
@@ -137,13 +136,11 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
 
     whfast->tree_N = r->N;
     const size_t orbit_count = r->N - 1;
-    whfast->masses = calloc(r->N, sizeof(*whfast->masses));
     whfast->nodes = calloc(orbit_count, sizeof(*whfast->nodes));
     // At most K-1 new barycenters are needed for K nonzero-mass particles.
     size_t massive_count = 0;
     for (size_t i=0; i<r->N; i++){
         massive_count += r->particles[i].m != 0.;
-        whfast->masses[i] = r->particles[i].m;
     }
     whfast->barycenters = calloc(massive_count - 1, sizeof(*whfast->barycenters));
 
@@ -152,7 +149,7 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
         .cursor = tree,
         .next_internal = r->N,
     };
-    reb_integrator_whfast_hj_parse_tree_node(&parser);
+    reb_integrator_whfast_hj_parse_tree_node(r, &parser);
 
     return 0;
 }
