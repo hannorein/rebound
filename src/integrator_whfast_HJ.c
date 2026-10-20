@@ -104,10 +104,6 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
     if (*parser->cursor == '['){
         parser->cursor++;
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-        if (*parser->cursor == ']'){
-            parser->cursor++;
-            return SIZE_MAX;
-        }
 
         size_t children[2];
         for (int i=0; i<2; i++){
