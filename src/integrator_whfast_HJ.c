@@ -64,7 +64,6 @@ static double reb_integrator_whfast_hj_subtree_mass(const struct reb_simulation*
 }
 
 struct reb_integrator_whfast_hj_tree_parser {
-    struct reb_integrator_whfast_hj_state* whfast;
     const char* cursor;
     size_t next_internal;
 };
@@ -79,22 +78,21 @@ static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrato
 // Recursion is used only while compiling a user-supplied tree, never per timestep.
 // The caller supplies valid syntax, each particle exactly once, and positive
 // total mass for every binary. Whitespace is allowed between tokens.
-static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_tree_parser* const parser) {
+static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, struct reb_integrator_whfast_hj_tree_parser* const parser) {
     reb_integrator_whfast_hj_tree_parser_skip_space(parser);
 
     if (*parser->cursor == '['){
         parser->cursor++;
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-        size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, parser);
+        size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, parser);
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
         parser->cursor++;  // Consume ','
-        size_t secondary = reb_integrator_whfast_hj_parse_tree_node(r, parser);
+        size_t secondary = reb_integrator_whfast_hj_parse_tree_node(r, whfast, parser);
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
         parser->cursor++;  // Consume ']'
 
         // Unique in-range leaves allow at most tree_N - 1 internal binary nodes.
         const size_t index = parser->next_internal++;
-        struct reb_integrator_whfast_hj_state* const whfast = parser->whfast;
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
         const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, primary);
         const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, secondary);
@@ -137,11 +135,10 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
     whfast->barycenters = calloc(massive_count - 1, sizeof(*whfast->barycenters));
 
     struct reb_integrator_whfast_hj_tree_parser parser = {
-        .whfast = whfast,
         .cursor = tree,
         .next_internal = r->N,
     };
-    reb_integrator_whfast_hj_parse_tree_node(r, &parser);
+    reb_integrator_whfast_hj_parse_tree_node(r, whfast, &parser);
 
     return 0;
 }
