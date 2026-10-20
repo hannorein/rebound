@@ -56,31 +56,27 @@ static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_si
     }
 }
 
-struct reb_integrator_whfast_hj_tree_parser {
-    const char* cursor;
-};
-
-static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrator_whfast_hj_tree_parser* const parser) {
-    while (isspace((unsigned char)*parser->cursor)){
-        parser->cursor++;
+static inline void reb_integrator_whfast_hj_tree_skip_space(const char** cursor) {
+    while (isspace((unsigned char)**cursor)){
+        (*cursor)++;
     }
 }
 
 // The input grammar is recursive, but the result is a flat postordered array.
 // Recursion is used only while compiling a user-supplied tree, never per timestep.
-static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, struct reb_integrator_whfast_hj_tree_parser* const parser) {
-    reb_integrator_whfast_hj_tree_parser_skip_space(parser);
+static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, const char** cursor) {
+    reb_integrator_whfast_hj_tree_skip_space(cursor);
 
-    if (*parser->cursor == '['){
+    if (**cursor == '['){
         // Node is a barycenter
-        parser->cursor++;  // Consume '['
-        reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-        size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, parser);
-        reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-        parser->cursor++;  // Consume ','
-        size_t secondary = reb_integrator_whfast_hj_parse_tree_node(r, whfast, parser);
-        reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-        parser->cursor++;  // Consume ']'
+        (*cursor)++;  // Consume '['
+        reb_integrator_whfast_hj_tree_skip_space(cursor);
+        size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
+        reb_integrator_whfast_hj_tree_skip_space(cursor);
+        (*cursor)++;  // Consume ','
+        size_t secondary = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
+        reb_integrator_whfast_hj_tree_skip_space(cursor);
+        (*cursor)++;  // Consume ']'
 
         const size_t index = whfast->N_barycenters++;
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index];
@@ -91,25 +87,21 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
     }else{
         // Node is a real particle
         size_t particle_number = 0;
-        while (isdigit((unsigned char)*parser->cursor)){
-            particle_number = 10*particle_number + (size_t)(*parser->cursor - '0');
-            parser->cursor++;
+        while (isdigit((unsigned char)**cursor)){
+            particle_number = 10*particle_number + (size_t)(**cursor - '0');
+            (*cursor)++;
         }
         return particle_number;
     }
 }
 
-int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
+int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* tree) {
     struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
 
     whfast->tree_N = r->N;
     whfast->nodes = calloc(r->N-1, sizeof(*whfast->nodes));
     whfast->barycenters = calloc(r->N-1, sizeof(*whfast->barycenters));
-
-    struct reb_integrator_whfast_hj_tree_parser parser = {
-        .cursor = tree,
-    };
-    reb_integrator_whfast_hj_parse_tree_node(r, whfast, &parser);
+    reb_integrator_whfast_hj_parse_tree_node(r, whfast, &tree);
 
     return 0;
 }
