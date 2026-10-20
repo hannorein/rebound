@@ -4,10 +4,10 @@
 extern const struct reb_integrator reb_integrator_whfast_hj;
 
 struct reb_integrator_whfast_hj_node {
-    size_t primary;
-    size_t secondary;
-    size_t barycenter;  // Particle index, or tree_N + shared barycenter index.
-    struct reb_particle q;  // Relative coordinates; m is the orbit's total mass.
+    size_t primary;     // Index of real particle or barycenter particle
+    size_t secondary;   // Index of real particle or barycenter particle
+    size_t barycenter;  // Index of barycenter particle
+    struct reb_particle q;  // Relative coordinates
 };
 
 struct reb_integrator_whfast_hj_state {

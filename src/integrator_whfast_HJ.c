@@ -69,8 +69,6 @@ static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrato
 
 // The input grammar is recursive, but the result is a flat postordered array.
 // Recursion is used only while compiling a user-supplied tree, never per timestep.
-// The caller supplies valid syntax, each particle exactly once, and positive
-// total mass for every binary. Whitespace is allowed between tokens.
 static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, struct reb_integrator_whfast_hj_tree_parser* const parser) {
     reb_integrator_whfast_hj_tree_parser_skip_space(parser);
 
@@ -126,13 +124,12 @@ static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i];
         const struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
         const struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
-        const double total_mass = primary->m + secondary->m;
         struct reb_particle* const q = &node->q;
-        struct reb_particle* const com = &whfast->barycenters[node->barycenter];
-        com->m = total_mass;
+        struct reb_particle* const barycenter = &whfast->barycenters[node->barycenter];
+        barycenter->m = primary->m + secondary->m;
 #define HJ_FORWARD(field) \
         q->field = secondary->field - primary->field; \
-        com->field = (primary->m*primary->field + secondary->m*secondary->field)/total_mass;
+        barycenter->field = (primary->m*primary->field + secondary->m*secondary->field)/barycenter->m;
         if (accelerations){
             HJ_FORWARD(ax); HJ_FORWARD(ay); HJ_FORWARD(az);
         }else{
@@ -148,13 +145,10 @@ static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r
         const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i-1];
         struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
         struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
-        const double total_mass = primary->m + secondary->m;
-        const struct reb_particle* const com = &whfast->barycenters[node->barycenter];
+        const struct reb_particle* const barycenter = &whfast->barycenters[node->barycenter];
         const struct reb_particle* const q = &node->q;
-        // Shared hosts have already been reconstructed by their ancestors.
-        // Only place the massless child; do not rewrite the host for each tracer.
-#define HJ_PRIMARY(field) primary->field = com->field - secondary->m/total_mass*q->field
-#define HJ_SECONDARY(field) secondary->field = com->field + primary->m/total_mass*q->field
+#define HJ_PRIMARY(field) primary->field = barycenter->field - secondary->m/barycenter->m*q->field
+#define HJ_SECONDARY(field) secondary->field = barycenter->field + primary->m/barycenter->m*q->field
         HJ_PRIMARY(x); HJ_PRIMARY(y); HJ_PRIMARY(z);
         HJ_PRIMARY(vx); HJ_PRIMARY(vy); HJ_PRIMARY(vz);
         HJ_SECONDARY(x); HJ_SECONDARY(y); HJ_SECONDARY(z);
