@@ -7,6 +7,7 @@ struct reb_integrator_whfast_hj_node {
     size_t primary;     // Index of real particle or barycenter particle
     size_t secondary;   // Index of real particle or barycenter particle
     size_t barycenter;  // Index of barycenter particle
+    struct reb_particle barycenter_p; 
     struct reb_particle q;  // Relative coordinates
 };
 
@@ -15,7 +16,6 @@ struct reb_integrator_whfast_hj_state {
     // refer to particles; larger indices refer to nodes[index - tree_N].
     char* tree;
     struct reb_integrator_whfast_hj_node* nodes;
-    struct reb_particle* barycenters; // Only binaries with two nonzero-mass children.
     size_t tree_N;
     size_t N_barycenters;
 };

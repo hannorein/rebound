@@ -40,7 +40,6 @@ void* reb_integrator_whfast_hj_create(void) {
 void reb_integrator_whfast_hj_free(void* state) {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     free(whfast->nodes);
-    free(whfast->barycenters);
     free(whfast->tree);
     free(whfast);
 }
@@ -51,8 +50,7 @@ static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_si
         return &r->particles[index];
     }else{
         // Barycenter particle
-        size_t b_index = whfast->nodes[index - r->N].barycenter;
-        return &whfast->barycenters[b_index];
+        return &(whfast->nodes[index - r->N].barycenter_p);
     }
 }
 
@@ -102,7 +100,7 @@ static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const
         const struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
         const struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
         struct reb_particle* const q = &node->q;
-        struct reb_particle* const barycenter = &whfast->barycenters[node->barycenter];
+        struct reb_particle* const barycenter = &node->barycenter_p;
         barycenter->m = primary->m + secondary->m;
 #define HJ_FORWARD(field) \
         q->field = secondary->field - primary->field; \
@@ -122,7 +120,7 @@ static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r
         const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i-1];
         struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
         struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
-        const struct reb_particle* const barycenter = &whfast->barycenters[node->barycenter];
+        const struct reb_particle* const barycenter = &node->barycenter_p;
         const struct reb_particle* const q = &node->q;
 #define HJ_PRIMARY(field) primary->field = barycenter->field - secondary->m/barycenter->m*q->field
 #define HJ_SECONDARY(field) secondary->field = barycenter->field + primary->m/barycenter->m*q->field
@@ -139,7 +137,7 @@ static void reb_integrator_whfast_hj_interaction_step( const struct reb_simulati
     for (size_t i=0; i+1<r->N; i++){
         struct reb_integrator_whfast_hj_node* node = &whfast->nodes[i];
         struct reb_particle* const q = &node->q;
-        struct reb_particle* const barycenter = &whfast->barycenters[node->barycenter];
+        struct reb_particle* const barycenter = &node->barycenter_p;
         q->vx += dt*q->ax;
         q->vy += dt*q->ay;
         q->vz += dt*q->az;
@@ -156,13 +154,13 @@ static void reb_integrator_whfast_hj_interaction_step( const struct reb_simulati
 static void reb_integrator_whfast_hj_kepler_step( const struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     for (size_t i=0; i+1<r->N; i++){
         struct reb_integrator_whfast_hj_node* node = &whfast->nodes[i];
-        struct reb_particle* barycenter = &whfast->barycenters[node->barycenter];
+        struct reb_particle* barycenter = &node->barycenter_p;
         reb_integrator_whfast_kepler_solver(&node->q, barycenter->m*r->G, dt, r);
     }
 }
 
 static void reb_integrator_whfast_hj_com_step(struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
-    struct reb_particle* const com = &whfast->barycenters[r->N-2];
+    struct reb_particle* const com = &(whfast->nodes[r->N-2].barycenter);
     com->x += dt*com->vx;
     com->y += dt*com->vy;
     com->z += dt*com->vz;
@@ -179,7 +177,6 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) 
         }
         whfast->tree_N = r->N;
         whfast->nodes = calloc(r->N-1, sizeof(*whfast->nodes));
-        whfast->barycenters = calloc(r->N-1, sizeof(*whfast->barycenters));
         const char* cursor = whfast->tree;
         reb_integrator_whfast_hj_parse_tree_node(r, whfast, &cursor);
     }
