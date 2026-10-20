@@ -53,27 +53,16 @@ static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_si
     }
 }
 
-static inline void reb_integrator_whfast_hj_tree_skip_space(const char** cursor) {
-    while (isspace((unsigned char)**cursor)){
-        (*cursor)++;
-    }
-}
-
 // The input grammar is recursive, but the result is a flat postordered array.
 // Recursion is used only while compiling a user-supplied tree, never per timestep.
 static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, const char** cursor) {
-    reb_integrator_whfast_hj_tree_skip_space(cursor);
-
     if (**cursor == '['){
         // Node is a barycenter
         struct reb_integrator_whfast_hj_node node;
         (*cursor)++;  // Consume '['
-        reb_integrator_whfast_hj_tree_skip_space(cursor);
         node.primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
-        reb_integrator_whfast_hj_tree_skip_space(cursor);
         (*cursor)++;  // Consume ','
         node.secondary = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
-        reb_integrator_whfast_hj_tree_skip_space(cursor);
         (*cursor)++;  // Consume ']'
 
         whfast->nodes[whfast->tree_N] = node;
