@@ -104,18 +104,16 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
     if (*parser->cursor == '['){
         parser->cursor++;
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-
-        size_t children[2];
-        for (int i=0; i<2; i++){
-            children[i] = reb_integrator_whfast_hj_parse_tree_node(r, parser);
-            reb_integrator_whfast_hj_tree_parser_skip_space(parser);
-            parser->cursor++;  // Consume ',' after the first child, ']' after the second.
-        }
+        size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, parser);
+        reb_integrator_whfast_hj_tree_parser_skip_space(parser);
+        parser->cursor++;  // Consume ','
+        size_t secondary = reb_integrator_whfast_hj_parse_tree_node(r, parser);
+        reb_integrator_whfast_hj_tree_parser_skip_space(parser);
+        parser->cursor++;  // Consume ']'
 
         // Unique in-range leaves allow at most tree_N - 1 internal binary nodes.
         const size_t index = parser->next_internal++;
-        // here
-        reb_integrator_whfast_hj_initialize_internal(r, parser->whfast, index, children[0], children[1]);
+        reb_integrator_whfast_hj_initialize_internal(r, parser->whfast, index, primary, secondary);
         return index;
     }
 
