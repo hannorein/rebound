@@ -48,7 +48,7 @@ void reb_integrator_whfast_hj_free(void* state) {
     free(whfast);
 }
 
-static struct reb_particle* reb_integrator_whfast_hj_barycenter( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
+static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
     if (index < whfast->tree_N){
         return &r->particles[index];
     }else{
@@ -133,17 +133,17 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
 static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const int accelerations){
     for (size_t i=0; i+1<whfast->tree_N; i++){
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i];
-        const struct reb_particle* const primary = reb_integrator_whfast_hj_barycenter(r, whfast, node->primary);
-        const struct reb_particle* const secondary = reb_integrator_whfast_hj_barycenter(r, whfast, node->secondary);
-        const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, node->primary);
-        const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, node->secondary);
+        const struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
+        const struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
+        const double primary_mass = primary->m;
+        const double secondary_mass = secondary->m;
         const double total_mass = primary_mass + secondary_mass;
         struct reb_particle* const q = &node->q;
-        struct reb_particle* const com = reb_integrator_whfast_hj_barycenter(r, whfast, whfast->tree_N + i);
-        const int shared = com == primary || com == secondary;
+        struct reb_particle* const com = &whfast->barycenters[node->barycenter - whfast->tree_N];
+        com->m = total_mass;
 #define HJ_FORWARD(field) \
         q->field = secondary->field - primary->field; \
-        if (!shared) com->field = (primary_mass*primary->field + secondary_mass*secondary->field)/total_mass;
+        com->field = (primary_mass*primary->field + secondary_mass*secondary->field)/total_mass;
         if (accelerations){
             HJ_FORWARD(ax); HJ_FORWARD(ay); HJ_FORWARD(az);
         }else{
@@ -157,25 +157,21 @@ static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const
 static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast){
     for (size_t i=whfast->tree_N-1; i>0;i--){
         const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i-1];
-        struct reb_particle* const primary = reb_integrator_whfast_hj_barycenter(r, whfast, node->primary);
-        struct reb_particle* const secondary = reb_integrator_whfast_hj_barycenter(r, whfast, node->secondary);
-        const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, node->primary);
-        const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, node->secondary);
+        struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
+        struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
+        const double primary_mass = primary->m;
+        const double secondary_mass = secondary->m;
         const double total_mass = primary_mass + secondary_mass;
-        const struct reb_particle* const com = reb_integrator_whfast_hj_barycenter(r, whfast, whfast->tree_N + i - 1);
+        const struct reb_particle* const com = &whfast->barycenters[node->barycenter - whfast->tree_N];
         const struct reb_particle* const q = &node->q;
         // Shared hosts have already been reconstructed by their ancestors.
         // Only place the massless child; do not rewrite the host for each tracer.
 #define HJ_PRIMARY(field) primary->field = com->field - secondary_mass/total_mass*q->field
 #define HJ_SECONDARY(field) secondary->field = com->field + primary_mass/total_mass*q->field
-        if (primary != com){
-            HJ_PRIMARY(x); HJ_PRIMARY(y); HJ_PRIMARY(z);
-            HJ_PRIMARY(vx); HJ_PRIMARY(vy); HJ_PRIMARY(vz);
-        }
-        if (secondary != com){
-            HJ_SECONDARY(x); HJ_SECONDARY(y); HJ_SECONDARY(z);
-            HJ_SECONDARY(vx); HJ_SECONDARY(vy); HJ_SECONDARY(vz);
-        }
+        HJ_PRIMARY(x); HJ_PRIMARY(y); HJ_PRIMARY(z);
+        HJ_PRIMARY(vx); HJ_PRIMARY(vy); HJ_PRIMARY(vz);
+        HJ_SECONDARY(x); HJ_SECONDARY(y); HJ_SECONDARY(z);
+        HJ_SECONDARY(vx); HJ_SECONDARY(vy); HJ_SECONDARY(vz);
 #undef HJ_PRIMARY
 #undef HJ_SECONDARY
     }
@@ -199,14 +195,15 @@ static void reb_integrator_whfast_hj_interaction_step( const struct reb_simulati
 
 static void reb_integrator_whfast_hj_kepler_step( const struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     for (size_t i=0; i+1<whfast->tree_N; i++){
-        struct reb_particle* const q = &whfast->nodes[i].q;
-        reb_integrator_whfast_kepler_solver(q, q->m*r->G, dt, r);
+        struct reb_integrator_whfast_hj_node* node = &whfast->nodes[i];
+        struct reb_particle* barycenter = &whfast->barycenters[node->barycenter - whfast->tree_N];
+        reb_integrator_whfast_kepler_solver(&node->q, barycenter->m*r->G, dt, r);
     }
 }
 
 static void reb_integrator_whfast_hj_com_step( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     const size_t node_count = 2*whfast->tree_N-1;
-    struct reb_particle* const com = reb_integrator_whfast_hj_barycenter(r, whfast, node_count - 1);
+    struct reb_particle* const com = reb_integrator_whfast_hj_get_particle(r, whfast, node_count - 1);
     com->x += dt*com->vx;
     com->y += dt*com->vy;
     com->z += dt*com->vz;
