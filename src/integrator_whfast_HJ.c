@@ -156,7 +156,7 @@ static void reb_integrator_whfast_hj_com_step(struct reb_simulation* r, struct r
 void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) {
     struct reb_integrator_whfast_hj_state* const whfast = state;
     const double dt = r->dt;
-        
+
     if (!whfast->tree){
         reb_simulation_error(r, "WHFast HJ requires a fixed tree to be set.");
         return;
@@ -167,7 +167,7 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) 
         const char* cursor = whfast->tree;
         reb_integrator_whfast_hj_parse_tree_node(r, whfast, &cursor);
     }
-    
+
     reb_integrator_whfast_hj_from_inertial(r, whfast, 0);
 
     reb_integrator_whfast_hj_kepler_step(r, whfast, dt/2.);
