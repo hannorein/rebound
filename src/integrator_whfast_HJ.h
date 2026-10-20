@@ -7,8 +7,6 @@ struct reb_integrator_whfast_hj_node {
     size_t primary;
     size_t secondary;
     size_t barycenter;  // Particle index, or tree_N + shared barycenter index.
-    double primary_offset;
-    double secondary_offset;
     struct reb_particle q;  // Relative coordinates; m is the orbit's total mass.
 };
 
