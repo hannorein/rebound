@@ -116,7 +116,7 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
         reb_integrator_whfast_hj_initialize_internal(r, parser->whfast, index, primary, secondary);
         return index;
     }
-
+    // Node is a real particle
     size_t particle_number = 0;
     while (isdigit((unsigned char)*parser->cursor)){
         particle_number = 10*particle_number + (size_t)(*parser->cursor - '0');
