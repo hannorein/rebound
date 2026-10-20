@@ -49,8 +49,12 @@ void reb_integrator_whfast_hj_free(void* state) {
 }
 
 static struct reb_particle* reb_integrator_whfast_hj_barycenter( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
-    const size_t host = index < whfast->tree_N ? index : whfast->nodes[index - whfast->tree_N].barycenter;
-    return host < whfast->tree_N ? &r->particles[host] : &whfast->barycenters[host - whfast->tree_N];
+    if (index < whfast->tree_N){
+        return &r->particles[index];
+    }else{
+        size_t b_index = whfast->nodes[index - whfast->tree_N].barycenter;
+        return &whfast->barycenters[b_index - whfast->tree_N];
+    }
 }
 
 static double reb_integrator_whfast_hj_subtree_mass(const struct reb_simulation* r, const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
