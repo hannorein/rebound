@@ -69,21 +69,19 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
 
     if (**cursor == '['){
         // Node is a barycenter
+        struct reb_integrator_whfast_hj_node node;
         (*cursor)++;  // Consume '['
         reb_integrator_whfast_hj_tree_skip_space(cursor);
-        size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
+        node.primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
         reb_integrator_whfast_hj_tree_skip_space(cursor);
         (*cursor)++;  // Consume ','
-        size_t secondary = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
+        node.secondary = reb_integrator_whfast_hj_parse_tree_node(r, whfast, cursor);
         reb_integrator_whfast_hj_tree_skip_space(cursor);
         (*cursor)++;  // Consume ']'
 
-        const size_t index = whfast->N_barycenters++;
-        struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index];
-        node->primary = primary;
-        node->secondary = secondary;
-        node->barycenter = index;
-        return index + r->N;
+        node.barycenter = whfast->N_barycenters++;
+        whfast->nodes[node.barycenter] = node;
+        return node.barycenter + r->N;
     }else{
         // Node is a real particle
         size_t particle_number = 0;
