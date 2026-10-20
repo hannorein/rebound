@@ -58,7 +58,6 @@ static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_si
 
 struct reb_integrator_whfast_hj_tree_parser {
     const char* cursor;
-    size_t next_internal;
 };
 
 static void reb_integrator_whfast_hj_tree_parser_skip_space(struct reb_integrator_whfast_hj_tree_parser* const parser) {
@@ -83,12 +82,11 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
         parser->cursor++;  // Consume ']'
 
-
-        const size_t index = whfast->N_barycenters;
+        const size_t index = whfast->N_barycenters++;
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index];
         node->primary = primary;
         node->secondary = secondary;
-        node->barycenter = whfast->N_barycenters++;
+        node->barycenter = index;
         return index + r->N;
     }else{
         // Node is a real particle
@@ -110,7 +108,6 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
 
     struct reb_integrator_whfast_hj_tree_parser parser = {
         .cursor = tree,
-        .next_internal = r->N,
     };
     reb_integrator_whfast_hj_parse_tree_node(r, whfast, &parser);
 
