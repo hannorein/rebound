@@ -48,14 +48,8 @@ void reb_integrator_whfast_hj_free(void* state) {
     free(whfast);
 }
 
-// Resolve a subtree to its shared barycenter. A massless attachment aliases
-// its massive child, so a chain of test particles adds no barycenter work.
-static size_t reb_integrator_whfast_hj_barycenter_index( const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
-    return index < whfast->tree_N ? index : whfast->nodes[index - whfast->tree_N].barycenter;
-}
-
 static struct reb_particle* reb_integrator_whfast_hj_barycenter( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
-    const size_t host = reb_integrator_whfast_hj_barycenter_index(whfast, index);
+    const size_t host = index < whfast->tree_N ? index : whfast->nodes[index - whfast->tree_N].barycenter;
     return host < whfast->tree_N ? &r->particles[host] : &whfast->barycenters[host - whfast->tree_N];
 }
 
