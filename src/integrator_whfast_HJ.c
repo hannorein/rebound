@@ -33,10 +33,6 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_hj_field_desc
     { 0 },
 };
 
-static size_t reb_integrator_whfast_hj_node_count(const size_t N) {
-    return N == 0 ? 0 : 2*N - 1;
-}
-
 void* reb_integrator_whfast_hj_create(void) {
     return calloc(1, sizeof(struct reb_integrator_whfast_hj_state));
 }
@@ -233,10 +229,7 @@ static void reb_integrator_whfast_hj_kepler_step( const struct reb_simulation* c
 }
 
 static void reb_integrator_whfast_hj_com_step( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
-    const size_t node_count = reb_integrator_whfast_hj_node_count(whfast->tree_N);
-    if (node_count == 0){
-        return;
-    }
+    const size_t node_count = 2*whfast->tree_N-1;
     struct reb_particle* const com = reb_integrator_whfast_hj_barycenter(r, whfast, node_count - 1);
     com->x += dt*com->vx;
     com->y += dt*com->vy;
