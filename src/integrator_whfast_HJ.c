@@ -100,13 +100,7 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
         node->primary = primary;
         node->secondary = secondary;
         node->q.m = total_mass;
-        if (primary_mass == 0.){
-            node->barycenter = reb_integrator_whfast_hj_barycenter_index(whfast, secondary);
-        }else if (secondary_mass == 0.){
-            node->barycenter = reb_integrator_whfast_hj_barycenter_index(whfast, primary);
-        }else{
-            node->barycenter = whfast->tree_N + whfast->N_barycenters++;
-        }
+        node->barycenter = whfast->tree_N + whfast->N_barycenters++;
         return index;
     }
 
@@ -123,14 +117,8 @@ int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char
     struct reb_integrator_whfast_hj_state* const whfast = r->integrator.state;
 
     whfast->tree_N = r->N;
-    const size_t orbit_count = r->N - 1;
-    whfast->nodes = calloc(orbit_count, sizeof(*whfast->nodes));
-    // At most K-1 new barycenters are needed for K nonzero-mass particles.
-    size_t massive_count = 0;
-    for (size_t i=0; i<r->N; i++){
-        massive_count += r->particles[i].m != 0.;
-    }
-    whfast->barycenters = calloc(massive_count - 1, sizeof(*whfast->barycenters));
+    whfast->nodes = calloc(r->N-1, sizeof(*whfast->nodes));
+    whfast->barycenters = calloc(r->N-1, sizeof(*whfast->barycenters));
 
     struct reb_integrator_whfast_hj_tree_parser parser = {
         .cursor = tree,
