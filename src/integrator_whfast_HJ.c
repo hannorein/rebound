@@ -47,8 +47,10 @@ void reb_integrator_whfast_hj_free(void* state) {
 
 static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
     if (index < whfast->tree_N){
+        // Real particle
         return &r->particles[index];
     }else{
+        // Barycenter particle
         size_t b_index = whfast->nodes[index - whfast->tree_N].barycenter;
         return &whfast->barycenters[b_index];
     }
@@ -192,9 +194,8 @@ static void reb_integrator_whfast_hj_kepler_step( const struct reb_simulation* c
     }
 }
 
-static void reb_integrator_whfast_hj_com_step( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
-    const size_t node_count = 2*whfast->tree_N-1;
-    struct reb_particle* const com = reb_integrator_whfast_hj_get_particle(r, whfast, node_count - 1);
+static void reb_integrator_whfast_hj_com_step(struct reb_integrator_whfast_hj_state* const whfast, const double dt){
+    struct reb_particle* const com = &whfast->barycenters[whfast->tree_N-2];
     com->x += dt*com->vx;
     com->y += dt*com->vy;
     com->z += dt*com->vz;
@@ -219,7 +220,7 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) 
     reb_integrator_whfast_hj_from_inertial(r, whfast, 0);
 
     reb_integrator_whfast_hj_kepler_step(r, whfast, dt/2.);
-    reb_integrator_whfast_hj_com_step(r, whfast, dt/2.);
+    reb_integrator_whfast_hj_com_step(whfast, dt/2.);
     reb_integrator_whfast_hj_to_inertial(r, whfast);
 
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
@@ -233,7 +234,7 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) 
     reb_integrator_whfast_hj_interaction_step(r, whfast, dt);
 
     reb_integrator_whfast_hj_kepler_step(r, whfast, dt/2.);
-    reb_integrator_whfast_hj_com_step(r, whfast, dt/2.);
+    reb_integrator_whfast_hj_com_step(whfast, dt/2.);
     reb_integrator_whfast_hj_to_inertial(r, whfast);
 
     r->t += dt;
