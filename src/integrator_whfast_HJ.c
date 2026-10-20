@@ -18,8 +18,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_hj_field_desc
 const struct reb_integrator reb_integrator_whfast_hj = {
     .documentation =
     "WHFast HJ is a hierarchical Jacobi-coordinate variant of WHFast. "
-    "It requires a fixed user-supplied binary hierarchy, which is compiled once "
-    "into compact orbit arrays with shared barycenters for massless particles.",
+    "It requires a fixed user-supplied binary hierarchy, which is compiled once.",
     .step = reb_integrator_whfast_hj_step,
     .create = reb_integrator_whfast_hj_create,
     .free = reb_integrator_whfast_hj_free,
@@ -77,7 +76,7 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
         reb_integrator_whfast_hj_tree_skip_space(cursor);
         (*cursor)++;  // Consume ']'
 
-        node.barycenter = whfast->N_barycenters++;
+        node.barycenter = whfast->tree_N++;
         whfast->nodes[node.barycenter] = node;
         return node.barycenter + r->N;
     }else{
@@ -175,13 +174,12 @@ void reb_integrator_whfast_hj_step(struct reb_simulation* const r, void* state) 
             reb_simulation_error(r, "WHFast HJ requires a fixed tree to be set.");
             return;
         }
-        whfast->tree_N = r->N;
         whfast->nodes = calloc(r->N-1, sizeof(*whfast->nodes));
         const char* cursor = whfast->tree;
         reb_integrator_whfast_hj_parse_tree_node(r, whfast, &cursor);
     }
 
-    if (whfast->tree_N != r->N){
+    if (whfast->tree_N != r->N-1){
         reb_simulation_error(r, "WHFast HJ particle count changed after the fixed tree was set.");
         return;
     }
