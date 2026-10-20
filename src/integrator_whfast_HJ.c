@@ -73,7 +73,8 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
     reb_integrator_whfast_hj_tree_parser_skip_space(parser);
 
     if (*parser->cursor == '['){
-        parser->cursor++;
+        // Node is a barycenter
+        parser->cursor++;  // Consume '['
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
         size_t primary   = reb_integrator_whfast_hj_parse_tree_node(r, whfast, parser);
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
@@ -82,22 +83,22 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
         reb_integrator_whfast_hj_tree_parser_skip_space(parser);
         parser->cursor++;  // Consume ']'
 
-        // Unique in-range leaves allow at most tree_N - 1 internal binary nodes.
-        const size_t index = parser->next_internal++;
-        struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
+
+        const size_t index = whfast->N_barycenters;
+        struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index];
         node->primary = primary;
         node->secondary = secondary;
         node->barycenter = whfast->N_barycenters++;
-        return index;
+        return index + r->N;
+    }else{
+        // Node is a real particle
+        size_t particle_number = 0;
+        while (isdigit((unsigned char)*parser->cursor)){
+            particle_number = 10*particle_number + (size_t)(*parser->cursor - '0');
+            parser->cursor++;
+        }
+        return particle_number;
     }
-
-    // Node is a real particle
-    size_t particle_number = 0;
-    while (isdigit((unsigned char)*parser->cursor)){
-        particle_number = 10*particle_number + (size_t)(*parser->cursor - '0');
-        parser->cursor++;
-    }
-    return particle_number - 1;
 }
 
 int reb_integrator_whfast_hj_set_tree(struct reb_simulation* const r, const char* const tree) {
