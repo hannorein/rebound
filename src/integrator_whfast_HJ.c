@@ -39,9 +39,6 @@ void* reb_integrator_whfast_hj_create(void) {
 
 void reb_integrator_whfast_hj_free(void* state) {
     struct reb_integrator_whfast_hj_state* const whfast = state;
-    if (whfast == NULL){
-        return;
-    }
     free(whfast->nodes);
     free(whfast->barycenters);
     free(whfast->tree);
