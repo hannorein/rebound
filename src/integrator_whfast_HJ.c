@@ -182,11 +182,11 @@ static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const
 }
 
 static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast){
-    for (size_t i=whfast->tree_N > 0 ? whfast->tree_N - 1 : 0; i-- > 0;){
-        const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i];
+    for (size_t i=whfast->tree_N-1; i>0;i--){
+        const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i-1];
         struct reb_particle* const primary = reb_integrator_whfast_hj_barycenter(r, whfast, node->primary);
         struct reb_particle* const secondary = reb_integrator_whfast_hj_barycenter(r, whfast, node->secondary);
-        const struct reb_particle* const com = reb_integrator_whfast_hj_barycenter(r, whfast, whfast->tree_N + i);
+        const struct reb_particle* const com = reb_integrator_whfast_hj_barycenter(r, whfast, whfast->tree_N + i - 1);
         const struct reb_particle* const q = &node->q;
         // Shared hosts have already been reconstructed by their ancestors.
         // Only place the massless child; do not rewrite the host for each tracer.
