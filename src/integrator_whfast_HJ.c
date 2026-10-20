@@ -63,25 +63,6 @@ static double reb_integrator_whfast_hj_subtree_mass(const struct reb_simulation*
     return index < whfast->tree_N ? r->particles[index].m : whfast->nodes[index - whfast->tree_N].q.m;
 }
 
-static void reb_integrator_whfast_hj_initialize_internal(const struct reb_simulation* r, struct reb_integrator_whfast_hj_state* const whfast, const size_t index, const size_t primary, const size_t secondary){
-    struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
-    const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, primary);
-    const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, secondary);
-    const double total_mass = primary_mass + secondary_mass;
-    node->primary = primary;
-    node->secondary = secondary;
-    node->primary_offset = secondary_mass/total_mass;
-    node->secondary_offset = primary_mass/total_mass;
-    node->q.m = total_mass;
-    if (primary_mass == 0.){
-        node->barycenter = reb_integrator_whfast_hj_barycenter_index(whfast, secondary);
-    }else if (secondary_mass == 0.){
-        node->barycenter = reb_integrator_whfast_hj_barycenter_index(whfast, primary);
-    }else{
-        node->barycenter = whfast->tree_N + whfast->N_barycenters++;
-    }
-}
-
 struct reb_integrator_whfast_hj_tree_parser {
     struct reb_integrator_whfast_hj_state* whfast;
     const char* cursor;
@@ -113,9 +94,26 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
 
         // Unique in-range leaves allow at most tree_N - 1 internal binary nodes.
         const size_t index = parser->next_internal++;
-        reb_integrator_whfast_hj_initialize_internal(r, parser->whfast, index, primary, secondary);
+        struct reb_integrator_whfast_hj_state* const whfast = parser->whfast;
+        struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
+        const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, primary);
+        const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, secondary);
+        const double total_mass = primary_mass + secondary_mass;
+        node->primary = primary;
+        node->secondary = secondary;
+        node->primary_offset = secondary_mass/total_mass;
+        node->secondary_offset = primary_mass/total_mass;
+        node->q.m = total_mass;
+        if (primary_mass == 0.){
+            node->barycenter = reb_integrator_whfast_hj_barycenter_index(whfast, secondary);
+        }else if (secondary_mass == 0.){
+            node->barycenter = reb_integrator_whfast_hj_barycenter_index(whfast, primary);
+        }else{
+            node->barycenter = whfast->tree_N + whfast->N_barycenters++;
+        }
         return index;
     }
+
     // Node is a real particle
     size_t particle_number = 0;
     while (isdigit((unsigned char)*parser->cursor)){
