@@ -57,10 +57,6 @@ static struct reb_particle* reb_integrator_whfast_hj_get_particle( struct reb_si
     }
 }
 
-static double reb_integrator_whfast_hj_subtree_mass(const struct reb_simulation* r, const struct reb_integrator_whfast_hj_state* const whfast, const size_t index){
-    return index < whfast->tree_N ? r->particles[index].m : whfast->nodes[index - whfast->tree_N].q.m;
-}
-
 struct reb_integrator_whfast_hj_tree_parser {
     const char* cursor;
     size_t next_internal;
@@ -92,12 +88,8 @@ static size_t reb_integrator_whfast_hj_parse_tree_node(const struct reb_simulati
         // Unique in-range leaves allow at most tree_N - 1 internal binary nodes.
         const size_t index = parser->next_internal++;
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[index - whfast->tree_N];
-        const double primary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, primary);
-        const double secondary_mass = reb_integrator_whfast_hj_subtree_mass(r, whfast, secondary);
-        const double total_mass = primary_mass + secondary_mass;
         node->primary = primary;
         node->secondary = secondary;
-        node->q.m = total_mass;
         node->barycenter = whfast->tree_N + whfast->N_barycenters++;
         return index;
     }
@@ -179,17 +171,19 @@ static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r
 
 static void reb_integrator_whfast_hj_interaction_step( const struct reb_simulation* const r, struct reb_integrator_whfast_hj_state* const whfast, const double dt){
     for (size_t i=0; i+1<whfast->tree_N; i++){
-        struct reb_particle* const p = &whfast->nodes[i].q;
-        p->vx += dt*p->ax;
-        p->vy += dt*p->ay;
-        p->vz += dt*p->az;
+        struct reb_integrator_whfast_hj_node* node = &whfast->nodes[i];
+        struct reb_particle* const q = &node->q;
+        struct reb_particle* const barycenter = &whfast->barycenters[node->barycenter - whfast->tree_N];
+        q->vx += dt*q->ax;
+        q->vy += dt*q->ay;
+        q->vz += dt*q->az;
 
-        const double inverse_r2 = 1./(p->x*p->x + p->y*p->y + p->z*p->z);
+        const double inverse_r2 = 1./(q->x*q->x + q->y*q->y + q->z*q->z);
         const double inverse_r = sqrt(inverse_r2);
-        const double prefactor = dt*r->G*p->m*inverse_r*inverse_r2;
-        p->vx += prefactor*p->x;
-        p->vy += prefactor*p->y;
-        p->vz += prefactor*p->z;
+        const double prefactor = dt*r->G*barycenter->m*inverse_r*inverse_r2;
+        q->vx += prefactor*q->x;
+        q->vy += prefactor*q->y;
+        q->vz += prefactor*q->z;
     }
 }
 
