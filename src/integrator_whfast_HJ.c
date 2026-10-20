@@ -126,15 +126,13 @@ static void reb_integrator_whfast_hj_from_inertial( struct reb_simulation* const
         struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i];
         const struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
         const struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
-        const double primary_mass = primary->m;
-        const double secondary_mass = secondary->m;
-        const double total_mass = primary_mass + secondary_mass;
+        const double total_mass = primary->m + secondary->m;
         struct reb_particle* const q = &node->q;
         struct reb_particle* const com = &whfast->barycenters[node->barycenter];
         com->m = total_mass;
 #define HJ_FORWARD(field) \
         q->field = secondary->field - primary->field; \
-        com->field = (primary_mass*primary->field + secondary_mass*secondary->field)/total_mass;
+        com->field = (primary->m*primary->field + secondary->m*secondary->field)/total_mass;
         if (accelerations){
             HJ_FORWARD(ax); HJ_FORWARD(ay); HJ_FORWARD(az);
         }else{
@@ -150,15 +148,13 @@ static void reb_integrator_whfast_hj_to_inertial( struct reb_simulation* const r
         const struct reb_integrator_whfast_hj_node* const node = &whfast->nodes[i-1];
         struct reb_particle* const primary = reb_integrator_whfast_hj_get_particle(r, whfast, node->primary);
         struct reb_particle* const secondary = reb_integrator_whfast_hj_get_particle(r, whfast, node->secondary);
-        const double primary_mass = primary->m;
-        const double secondary_mass = secondary->m;
-        const double total_mass = primary_mass + secondary_mass;
+        const double total_mass = primary->m + secondary->m;
         const struct reb_particle* const com = &whfast->barycenters[node->barycenter];
         const struct reb_particle* const q = &node->q;
         // Shared hosts have already been reconstructed by their ancestors.
         // Only place the massless child; do not rewrite the host for each tracer.
-#define HJ_PRIMARY(field) primary->field = com->field - secondary_mass/total_mass*q->field
-#define HJ_SECONDARY(field) secondary->field = com->field + primary_mass/total_mass*q->field
+#define HJ_PRIMARY(field) primary->field = com->field - secondary->m/total_mass*q->field
+#define HJ_SECONDARY(field) secondary->field = com->field + primary->m/total_mass*q->field
         HJ_PRIMARY(x); HJ_PRIMARY(y); HJ_PRIMARY(z);
         HJ_PRIMARY(vx); HJ_PRIMARY(vy); HJ_PRIMARY(vz);
         HJ_SECONDARY(x); HJ_SECONDARY(y); HJ_SECONDARY(z);
