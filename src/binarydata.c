@@ -135,7 +135,7 @@ static void write_to_stream(char** bufp, size_t* allocatedsize, size_t* sizep, v
 static const struct reb_binarydata_field_descriptor* reb_binarydata_field_descriptor_for_name_in_list(const struct reb_binarydata_field_descriptor* list, const char* name){
     if (!list) return NULL;
     for(size_t i=0; list[i].name[0]; i++){
-        if (strcmp(list[i].name, name)==0){
+        if (list[i].name[0] == name[0] && list[i].name[1] == name[1] && strcmp(list[i].name, name)==0){
             return &list[i];
         }
     }
