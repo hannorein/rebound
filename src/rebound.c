@@ -284,6 +284,11 @@ void reb_free(void* p){
     free(p);
 }
 
+// Wrapper to copy strings from python.
+char* reb_strdup(const char* p){
+    return strdup(p);
+}
+
 // Helper function to check for equal strings with whitespace ignored
 int reb_strcmp_ignore_whitespace(const char *s1, const char *s2) {
     while (*s1 != '\0' || *s2 != '\0') {

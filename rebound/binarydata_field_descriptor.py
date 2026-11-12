@@ -115,7 +115,7 @@ class BinarydataFieldDescriptor(ctypes.Structure):
                 __doc__ = self.doc()
             return BinarydataFieldFloat(value)
         if REB_BINARYDATA_DTYPE[self.dtype] == ctypes.c_char_p:
-            class BinarydataFieldString(int):
+            class BinarydataFieldString(str):
                 __doc__ = self.doc()
             return BinarydataFieldString(value.decode("utf-8"))
         return value

@@ -90,6 +90,8 @@ REB_API void* reb_aligned_alloc(size_t alignment, size_t size);
 REB_API void reb_aligned_free(void *ptr);
 // Free any pointer. Alias for free(). Used by python.
 REB_API void reb_free(void* p);
+// Duplicate string. Alias for strdup(). Used by python.
+char* reb_strdup(const char* p);
 // Get the next stored warning message. Used only if save_messages==1. Return value is 0 if no messages are present, 1 otherwise.
 REB_API int reb_pop_message(char** messages, char* const buf); 
 // Print or save a message. 
