@@ -52,7 +52,12 @@ class TestFrequencyAnalysis(unittest.TestCase):
             self.assertLess(A_error, 3e-7)
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 5e-5)
-    def test_frequency_analysis_no_frequencies_in_range(self):
+    def test_invalid_analysis_type(self):
+        with self.assertRaises(ValueError):
+            rebound.frequency_analysis(np.zeros(16), type=3)
+        with self.assertRaises(ValueError):
+            rebound.frequency_analysis(np.zeros(16), type="other")
+    def test_no_frequencies_in_range(self):
         domain = np.arange(16)
         signal = np.zeros(2*len(domain)) # interleaved real/complex values
         signal[0::2] = np.cos(np.pi / 4 * domain) # populate real components

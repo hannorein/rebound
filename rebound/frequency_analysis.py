@@ -50,7 +50,7 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
     if inp.dtype != np.float64:
         raise ValueError("Input array must be have datatype np.float64")
 
-    if isinstance(type, int):
+    if isinstance(type, int) and type in FREQUENCY_ANALYSIS_TYPES.values():
         type = ctypes.c_uint(type)
     elif isinstance(type, str):
         type = type.lower()
