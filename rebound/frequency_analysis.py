@@ -4,7 +4,7 @@ FREQUENCY_ANALYSIS_TYPES = {"mft": 0, "fmft": 1, "fmft2": 2}
 FREQUENCY_ANALYSIS_ERRORS = [  
     (-1, "Frequency analysis error: minfreq must be smaller than maxfreq."),
     (-2, "Frequency analysis error: nfreq must be larger than 0."),
-    (-3, "Frequency analysis error: ndata must be power of 2."),
+    (-3, "Frequency analysis error: ndata must be a power of 2."),
     (-4, "Frequency analysis error: input array is NULL."),
     (-5, "Frequency analysis error: pointer to output array is NULL."),
     (-6, "Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq]."),
