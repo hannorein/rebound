@@ -118,7 +118,7 @@ void reb_display_settings_init(struct reb_simulation*r, struct reb_display_setti
     reb_display_set_default_view(r, s);
 }
 
-void reb_simulation_add_orbit_colors(struct reb_simulation* r, struct reb_vec3df color) {
+void reb_display_add_orbit_colors(struct reb_simulation* r, struct reb_vec3df color) {
     struct reb_vec3df* new_color_list = calloc(r->N_orbit_colors + 1, sizeof(struct reb_vec3df));
     if(r->orbit_colors != NULL) {
         memcpy(new_color_list, r->orbit_colors, r->N_orbit_colors * sizeof(struct reb_vec3df));
@@ -133,7 +133,7 @@ void reb_simulation_add_orbit_colors(struct reb_simulation* r, struct reb_vec3df
     r->N_orbit_colors++;
 }
 
-void reb_simulation_set_orbit_color(struct reb_simulation* r, struct reb_vec3df color, int i) {
+void reb_display_set_orbit_color(struct reb_simulation* r, struct reb_vec3df color, int i) {
     if(i < 0 || i >= r->N_orbit_colors) {
         printf("Invalid index for setting orbit color -> index %i is out of range of %zu colors.", i, r->N_orbit_colors);
         return;

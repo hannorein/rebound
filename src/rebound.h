@@ -900,8 +900,8 @@ struct reb_display_settings {
 };
 
 // Orbit Display Function (If visualization is not enabled, nothing will happen)
-REB_API void reb_simulation_add_orbit_colors(struct reb_simulation* r, struct reb_vec3df color);
-REB_API void reb_simulation_set_orbit_color(struct reb_simulation* r, struct reb_vec3df color, int i);
+REB_API void reb_display_add_orbit_colors(struct reb_simulation* r, struct reb_vec3df color);
+REB_API void reb_display_set_orbit_color(struct reb_simulation* r, struct reb_vec3df color, int i);
 
 // Display settings initialization. Overwrites user interactions.
 REB_API void reb_simulation_add_display_settings(struct reb_simulation* r);

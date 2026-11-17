@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
     reb_simulation_add_fmt(r, "solar system"); // Built in dataset for testing. (8 bodies)
     struct reb_particle sun = r->particles[0]; // The built in dataset has the first particle added being the sun.
     for(int i = 0; i < 8; i++) {
-        reb_simulation_add_orbit_colors(r, cyan);
+        reb_display_add_orbit_colors(r, cyan);
     }
 
     // Orbital elements taken from NASA Horizons on November 10, masses were sourced from wikipedia
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
 
     // Add all the dwarf planets and their orbit colors (ensuring order so that colors are correctly applied)
     for(int i = 0; i < 4; i++) {
-        reb_simulation_add_orbit_colors(r, yellow);
+        reb_display_add_orbit_colors(r, yellow);
     }
 
     reb_simulation_add(r, pluto);
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]){
     reb_simulation_add(r, eris);
 
     // Add the new body with the stronger cyan color for greater glow
-    reb_simulation_add_orbit_colors(r, cyan_strong);
+    reb_display_add_orbit_colors(r, cyan_strong);
     reb_simulation_add(r, ed138);
 
     reb_simulation_move_to_com(r);
