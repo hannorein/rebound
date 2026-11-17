@@ -59,7 +59,7 @@ class TestFrequencyAnalysis(unittest.TestCase):
             rebound.frequency_analysis(np.zeros(16), type="other")
     def test_no_frequencies_in_range(self):
         domain = np.arange(16)
-        signal = np.zeros(2*len(domain)) # interleaved real/complex values
+        signal = np.zeros(2*len(domain)) # interleaved real/imaginary values
         signal[0::2] = np.cos(np.pi / 4 * domain) # populate real components
         with self.assertRaisesRegex(RuntimeError, "cannot find frequencies"):
             rebound.frequency_analysis(signal, nfreq=1, minfreq=10.0, maxfreq=11.0)
