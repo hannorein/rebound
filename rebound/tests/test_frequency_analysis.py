@@ -53,8 +53,11 @@ class TestFrequencyAnalysis(unittest.TestCase):
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 5e-5)
     def test_frequency_analysis_no_frequencies_in_range(self):
+        domain = np.arange(16)
+        signal = np.zeros(2*len(domain)) # interleaved real/complex values
+        signal[0::2] = np.cos(np.pi / 4 * domain) # populate real components
         with self.assertRaisesRegex(RuntimeError, "cannot find frequencies"):
-            rebound.frequency_analysis(np.zeros(32), nfreq=1, minfreq=10.0, maxfreq=11.0)
+            rebound.frequency_analysis(signal, nfreq=1, minfreq=10.0, maxfreq=11.0)
 
 if __name__ == "__main__":
     unittest.main()
