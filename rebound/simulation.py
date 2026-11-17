@@ -1424,6 +1424,8 @@ Simulation._fields_ = [
                 ("usleep", c_double),
                 ("_display_view", c_void_p),
                 ("_display_data", c_void_p), # not needed from python
+                ("_orbit_colors", c_void_p),
+                ("N_orbit_colors", c_size_t),
                 ("_server_data", POINTER(ServerData)),
                 ("track_energy_offset", c_int),
                 ("energy_offset", c_double),
