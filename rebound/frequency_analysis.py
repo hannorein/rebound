@@ -7,6 +7,7 @@ FREQUENCY_ANALYSIS_ERRORS = [
     (-3, "Frequency analysis error: ndata must be power of 2."),
     (-4, "Frequency analysis error: input array is NULL."),
     (-5, "Frequency analysis error: pointer to output array is NULL."),
+    (-6, "Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq]."),
 ]
 
 def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
