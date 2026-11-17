@@ -75,13 +75,17 @@ struct reb_display_data {
     uint64_t breadcrumb_last_steps_done;
     unsigned int breadcrumb_N_allocated;
     unsigned int breadcrumb_current_index;
+
     unsigned int mouse_action;      
-    unsigned int key_mods;      
+    unsigned int key_mods;    
+
     unsigned int particle_buffer;
     unsigned int particle_buffer_current;
+
     unsigned int orbit_buffer;
     unsigned int orbit_buffer_current;
     void* window;
+
     struct {
         unsigned int texture;
         unsigned int program;
@@ -95,6 +99,7 @@ struct reb_display_data {
         unsigned int texture_location;
         unsigned int charval_buffer;
     } shader_simplefont;
+
     struct {
         unsigned int program;
         unsigned int box_vao;
@@ -103,6 +108,7 @@ struct reb_display_data {
         unsigned int mvp_location;
         unsigned int color_location;
     } shader_box;
+
     struct {
         unsigned int mvp_location;
         unsigned int color_location;
@@ -112,12 +118,14 @@ struct reb_display_data {
         unsigned int program;
         unsigned int particle_vao;
     } shader_point;
+
     struct {
         unsigned int mvp_location;
         unsigned int program;
         unsigned int particle_vao_current;
         unsigned int particle_vao;
     } shader_sphere;
+
     struct {
         unsigned int mvp_location;
         unsigned int current_index_location;
@@ -129,6 +137,7 @@ struct reb_display_data {
         unsigned int particle_vao;
         unsigned int vertex_count;
     } shader_orbit;
+
     struct {
         unsigned int mvp_location;
         unsigned int vertex_count_location;
@@ -136,6 +145,44 @@ struct reb_display_data {
         unsigned int particle_vao_current;
         unsigned int vertex_count;
     } shader_plane;
+    
+    struct {
+        unsigned int shader_program;
+
+        unsigned int v_location;
+        unsigned int p_location;
+        unsigned int mvp_location;
+
+        unsigned int anomaly_sample_count_to_use;
+        unsigned int anomaly_sample_count_location;
+
+        // 0 = default
+        // 1 = Perihelion highlighted
+        // 2 = Aphelion highlighted
+        unsigned int focused_orbit_section_to_use;
+        unsigned int focused_orbit_section_location;
+
+        unsigned int thick_orbit_vertex_array;
+        unsigned int thick_orbit_cbo;
+        unsigned int thick_orbit_ebo;
+    } shader_thick_orbit;
+
+    struct {
+        unsigned int post_processing_active; // If enabled, is the post processing rendering?
+        unsigned int post_processing_enabled; // This is whether or not the post processing CAN be active or not
+        unsigned int post_processing_frame_buffers[2];
+        unsigned int post_processing_color_textures[2];
+        unsigned int post_processing_texture_w;
+        unsigned int post_processing_texture_h;
+        
+        unsigned int horizontal_blur_shader;
+        unsigned int vertical_blur_and_combine_shader;
+
+        unsigned int fullscreen_quad_shader_program;
+        unsigned int fullscreen_quad_vao;
+        unsigned int fullscreen_quad_vbo;
+        unsigned int fullscreen_quad_ebo;
+    } reb_post_processing;
 };
 
 void reb_display_init(struct reb_simulation* const r);

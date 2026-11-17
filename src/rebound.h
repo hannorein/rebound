@@ -252,6 +252,10 @@ struct reb_simulation {
     size_t  N_allocated;            // Current maximum space allocated in the particles array on this node. 
     struct reb_particle* particles; // Main particle array with active, variational, and test particles.
 
+    // orbit colors list for visualization. (If opengl or visualization is disabled, this will not affect anything)
+    struct reb_vec3df* orbit_colors;
+    size_t N_orbit_colors;
+
     // Collision routines and some integrators can operate on only some particles.
     // This array r->map defines which ones. Set to NULL to operate on all particles.
     size_t N_map;                   // If map is not NULL, use map to operate on only N_map particles
@@ -437,7 +441,6 @@ REB_API int reb_simulation_start_server(struct reb_simulation* r, int port);
 // Stop webserver.
 REB_API void reb_simulation_stop_server(struct reb_simulation* r);
 
-
 // Integrator selelection
 
 // This function sets the integrator of the simulation to the one with the matching name. 
@@ -540,7 +543,6 @@ REB_API struct reb_particle reb_particle_from_orbit(double G, struct reb_particl
 REB_API struct reb_particle reb_particle_from_pal(double G, struct reb_particle primary, double m, double a, double lambda, double k, double h, double ix, double iy);
 // Returns a reb_particle structure with fields/name/ptrs initialized to nan/0/NULL. 
 REB_API struct reb_particle reb_particle_nan(void);
-
 
 // Functions to access, remove, and operate on particles
 
@@ -887,6 +889,8 @@ struct reb_display_settings {
     int spheres;                    // Switches between point sprite and real spheres.
     int pause;                      // Pauses visualization, but keep simulation running
     int wire;                       // Shows/hides orbit wires.
+    int drawwiresthick;             // Whether or not the orbit wires should be drawn with thickness and color
+    int drawglow;                   // Whether or not to render with a glow effect.
     unsigned int breadcrumbs;       // Number of past particle positions.
     int onscreentext;               // Shows/hides onscreen text.
     int onscreenhelp;               // Shows/hides onscreen help.
@@ -894,6 +898,10 @@ struct reb_display_settings {
     int ghostboxes;                 // Shows/hides ghost boxes.
     size_t reference;                  // reb_particle used as a reference for centering.
 };
+
+// Orbit Display Function (If visualization is not enabled, nothing will happen)
+REB_API void reb_simulation_add_orbit_colors(struct reb_simulation* r, struct reb_vec3df color);
+REB_API void reb_simulation_set_orbit_color(struct reb_simulation* r, struct reb_vec3df color, int i);
 
 // Display settings initialization. Overwrites user interactions.
 REB_API void reb_simulation_add_display_settings(struct reb_simulation* r);
