@@ -75,7 +75,7 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
         return -2;
     }
     if (ndata < 2 || (ndata & (ndata - 1)) != 0){
-        printf("Frequency analysis error: ndata must be a power of 2.\n");
+        printf("Frequency analysis error: ndata must be a power of 2 and at least 2.\n");
         return -3;
     }
     if (!input){
