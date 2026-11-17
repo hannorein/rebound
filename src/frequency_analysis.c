@@ -90,6 +90,8 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
 
     /* ALLOCATION OF VARIABLES */
 
+    int status = 0;
+
     double* xdata = malloc(sizeof(double)*ndata);
     double* ydata = malloc(sizeof(double)*ndata);
     double* x = malloc(sizeof(double)*ndata);
@@ -160,7 +162,8 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
                 frequencies_removed++;
                 if (frequencies_removed>FMFT_MAX_REMOVE){
                     printf("Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq].\n");
-                    return -6;
+                    status = -6;
+                    goto cleanup;
                 }
             }   
         }else{ 
@@ -233,7 +236,8 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
                     frequencies_removed++;
                     if (frequencies_removed>FMFT_MAX_REMOVE){
                         printf("Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq].\n");
-                        return -6;
+                        status = -6;
+                        goto cleanup;
                     }
                 }   
 
@@ -364,6 +368,7 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
     // SORT THE FREQUENCIES IN DECREASING ORDER OF AMPLITUDE
     sort3(nfreq, &(output[1*nfreq]), &(output[0*nfreq]), &(output[1*nfreq]), &(output[2*nfreq]));
 
+cleanup:
     /* FREE THE ALLOCATED VARIABLES */
     free(xdata);
     free(ydata);
@@ -382,7 +387,7 @@ int reb_frequency_analysis(double *output, size_t nfreq, double minfreq, double 
     free(Q); 
     free(alpha);
     free(B);
-    return 0;
+    return status;
 }
 
 static void window(double *x, double *y, double *xdata, double *ydata, size_t ndata) {  
