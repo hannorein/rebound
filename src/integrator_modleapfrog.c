@@ -7,11 +7,7 @@
 #include "integrator_modleapfrog.h"
 #include "binarydata.h"
 #include "math.h"
-
-// struct reb_integrator_modleapfrog_state{
-//     double dtau;
-//     double* E_0;
-// };
+#include "integrator_leapfrog.h"
 
 
 void reb_integrator_modleapfrog_step(struct reb_simulation* r, void* state);
@@ -30,18 +26,15 @@ const struct reb_integrator reb_integrator_modleapfrog = {
 };
 
 const struct reb_binarydata_field_descriptor reb_integrator_modleapfrog_field_descriptor_list[] = {
-    { "Ficticious time step that should be set by the user. Dafult value is 0.01",
-    REB_DOUBLE,        "dtau",          offsetof(struct reb_integrator_modleapfrog_state, dtau), 0, 0, 0},
-    { "Initial energy of the system to be used in calculating dt. E_0 = T - U",
-    REB_DOUBLE,        "E_0",          offsetof(struct reb_integrator_modleapfrog_state, E_0), 0, 0, 0},
+    { "Order of the integrator. Default is 2. Other allowed values are 4, 6 and 8.",
+        REB_UINT,        "order",          offsetof(struct reb_integrator_modleapfrog_state, order), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
 void* reb_integrator_modleapfrog_create(){
     struct reb_integrator_modleapfrog_state* modleapfrog = calloc(sizeof(struct reb_integrator_modleapfrog_state),1);
-    // double E = 0.432;
+    modleapfrog->order = 2;
     modleapfrog->E_0 = NAN;
-    modleapfrog->dtau = 0.01;
     return modleapfrog;
 }
 
@@ -122,7 +115,7 @@ void reb_integrator_modleapfrog_step(struct reb_simulation* r, void* state){
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     struct reb_integrator_modleapfrog_state* modleapfrog = state;
 
-    const double dtau = modleapfrog->dtau;
+    const double dtau = r->dt;
     double* E_0 = &(modleapfrog->E_0);
     
     // If we haven't set the initial energy yet, do it.
@@ -130,11 +123,117 @@ void reb_integrator_modleapfrog_step(struct reb_simulation* r, void* state){
         *E_0 = reb_simulation_energy(r);
     }
 
-    // Normal leapfrog, just in ficticious time, saving the timestep to update dt_last_done
-    double dt1 = drift(r, E_0, dtau*0.5);
-    reb_simulation_update_acceleration(r);
-    kick(r, dtau);
-    double dt2 = drift(r, E_0, dtau*0.5);
+    double dt = 0;
+    switch (modleapfrog->order){
+        case 2: // 1*2 FE
+            dt += drift(r, E_0, dtau*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r, dtau);
+            dt += drift(r, E_0, dtau*0.5);
+            break;
+        case 4: // 3*2 FE
+            dt += drift(r, E_0, dtau*reb_integrator_leapfrog_lf4_a);
+            reb_simulation_update_acceleration(r);
+            kick(r, dtau*2.*reb_integrator_leapfrog_lf4_a);
+            dt += drift(r, E_0, dtau*(0.5-reb_integrator_leapfrog_lf4_a));
+            reb_simulation_update_acceleration(r);
+            kick(r, dtau*(1.-4.*reb_integrator_leapfrog_lf4_a));
+            dt += drift(r, E_0, dtau*(0.5-reb_integrator_leapfrog_lf4_a));
+            reb_simulation_update_acceleration(r);
+            kick(r, dtau*2.*reb_integrator_leapfrog_lf4_a);
+            dt += drift(r, E_0, dtau*reb_integrator_leapfrog_lf4_a);
+            break;
+        case 6: // 9*2 FE
+            dt += drift(r, E_0, dtau*reb_integrator_leapfrog_lf6_a[0]*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[0]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[0]+reb_integrator_leapfrog_lf6_a[1])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[1]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[1]+reb_integrator_leapfrog_lf6_a[2])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[2]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[2]+reb_integrator_leapfrog_lf6_a[3])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[3]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[3]+reb_integrator_leapfrog_lf6_a[4])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[4]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[3]+reb_integrator_leapfrog_lf6_a[4])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[3]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[2]+reb_integrator_leapfrog_lf6_a[3])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[2]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[1]+reb_integrator_leapfrog_lf6_a[2])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[1]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf6_a[0]+reb_integrator_leapfrog_lf6_a[1])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf6_a[0]);
+            dt += drift(r, E_0, dtau*reb_integrator_leapfrog_lf6_a[0]*0.5);
+            break; 
+        case 8: // 17*2 FE
+            dt += drift(r, E_0, dtau*reb_integrator_leapfrog_lf8_a[0]*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[0]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[0]+reb_integrator_leapfrog_lf8_a[1])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[1]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[1]+reb_integrator_leapfrog_lf8_a[2])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[2]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[2]+reb_integrator_leapfrog_lf8_a[3])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[3]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[3]+reb_integrator_leapfrog_lf8_a[4])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[4]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[4]+reb_integrator_leapfrog_lf8_a[5])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[5]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[5]+reb_integrator_leapfrog_lf8_a[6])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[6]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[6]+reb_integrator_leapfrog_lf8_a[7])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[7]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[7]+reb_integrator_leapfrog_lf8_a[8])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[8]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[7]+reb_integrator_leapfrog_lf8_a[8])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[7]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[6]+reb_integrator_leapfrog_lf8_a[7])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[6]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[5]+reb_integrator_leapfrog_lf8_a[6])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[5]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[4]+reb_integrator_leapfrog_lf8_a[5])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[4]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[3]+reb_integrator_leapfrog_lf8_a[4])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[3]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[2]+reb_integrator_leapfrog_lf8_a[3])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[2]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[1]+reb_integrator_leapfrog_lf8_a[2])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[1]);
+            dt += drift(r, E_0, dtau*(reb_integrator_leapfrog_lf8_a[0]+reb_integrator_leapfrog_lf8_a[1])*0.5);
+            reb_simulation_update_acceleration(r);
+            kick(r,  dtau*reb_integrator_leapfrog_lf8_a[0]);
+            dt += drift(r, E_0, dtau*reb_integrator_leapfrog_lf8_a[0]*0.5);
+            break;
+        default:
+            reb_simulation_error(r, "Leapfrog order not supported.");
+            return;
+    }
+
+    // Assert that we cannot give an exact finish time
+    r->exact_finish_time = 0; 
     
-    r->dt_last_done = dt1 + dt2;
+    r->dt_last_done = dt;
 }

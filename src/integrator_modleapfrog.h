@@ -11,7 +11,7 @@ extern const struct reb_integrator reb_integrator_modleapfrog;
 
 struct reb_integrator_modleapfrog_state {
     double E_0;
-    double dtau; //ficticious time step size
+    unsigned int order;
 };
 
 
