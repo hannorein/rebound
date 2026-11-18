@@ -4,6 +4,12 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.2.3
+* Fixed frequency analysis error handling.
+* Fixed CI tests and python examples to work with python 3.15.
+* Support for NetBSD/FreeBSD.
+* Checking all ipynb examples in CI by default.
+
 ### Version 5.2.2
 * Fixed a bug that occured when setting a heartbeat function from python. 
 * Fixed a bug that occured when reading a Simulationarchive when WHFast512 is used.
