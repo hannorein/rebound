@@ -36,7 +36,7 @@ Homepage = "https://github.com/hannorein/rebound/"
 
 [tool.setuptools.packages.find]
 include = ["rebound*"]
-exclude = ["reboundx*"]
+exclude = ["reboundx*","utsc_nfs*"]
 
 [tool.setuptools.package-data]
 rebound = ["../src/*.h"]

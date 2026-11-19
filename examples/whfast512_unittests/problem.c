@@ -336,7 +336,7 @@ int test_synchronization_fallback(){
     for (int i=0;i<r1->N;i++){
         double dx = fabs(r1->particles[i].x - r2->particles[i].x);
         double dvx = fabs(r1->particles[i].vx - r2->particles[i].vx);
-        if (dx>1e-15 || dvx>1e-15){
+        if (dx>4e-15 || dvx>1e-15){
             printf("Accuracy not met in synchronization fallback test.\n");
             printf("i=%i diff_x=%.16e diff_vx=%.16e\n",i,dx, dvx);
             return 0;

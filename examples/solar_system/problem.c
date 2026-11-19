@@ -22,9 +22,8 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->dt                   = 4;             // in days
-    tmax                    = 7.3e10;        // 200 Myr
-    r->G                    = 1.4880826e-34; // in AU^3 / kg / day^2.
+    r->dt                   = 0.05*M_PI*2.0;       // in units of years/(2*pi)
+    tmax                    = 1e6*M_PI*2.0;        // in units of years/(2*pi)
     reb_simulation_set_integrator(r, "whfast");
     // reb_simulation_set_integrator(r, "whfast");    // Alternative non-symplectic integrator
     struct reb_integrator_whfast_state* whfast = r->integrator.state;
@@ -43,7 +42,7 @@ int main(int argc, char* argv[]){
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_simulation_output_check(r, 10000.)){
+    if (reb_simulation_output_check(r, 10*M_PI*2.0)){ // in units of years/(2*pi)
         reb_simulation_output_timing(r, tmax);
         reb_simulation_synchronize(r);
         FILE* f = fopen("energy.txt","ab");

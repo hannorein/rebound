@@ -52,8 +52,6 @@ struct reb_integrator_whfast_state {
     struct reb_particle* REB_RESTRICT p_jh;     // Jacobi/heliocentric/WHDS coordinates
     size_t N_allocated_var;
     struct reb_particle* REB_RESTRICT p_jh_var; // Jacobi coordinates for variational equations
-    size_t N_allocated_temp;
-    struct reb_particle* REB_RESTRICT p_temp;   // Used for lazy implementer's kernel 
     unsigned int recalculate_coordinates_but_not_synchronized_warning;
 };
 
