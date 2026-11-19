@@ -20,6 +20,7 @@
  *
  */
 
+#include <stdio.h>
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <string.h>
@@ -107,6 +108,9 @@ const struct reb_binarydata_field_descriptor reb_integrator_whfast_field_descrip
 
 
 void* reb_integrator_whfast_create(){
+    fprintf(stderr, "Lu's version of rebound.\n");
+
+    
     // Allocate memory and set default parameters.
     struct reb_integrator_whfast_state* whfast = calloc(sizeof(struct reb_integrator_whfast_state),1);
     whfast->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI;
