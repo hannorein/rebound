@@ -17,9 +17,11 @@ else:
     # Get data from NASA Horizons
     try:
         sim.add(solar_system_objects)
-    except socket.error:
-        print("A socket error occurred. Maybe Horizons is down?")
-        sys.exit(0) # we ignore the error and exit
+    except:
+        if os.getenv('GITHUB_ACTIONS') == 'true':
+            print("::warning file=python_examples/horizons/problem.py,line=22:: HORIZONS error. Most likely due to HORIZON being slow.")
+        else:
+            raise Exception("HORIZONS error. Most likely due to HORIZON being slow.")
 
     sim.move_to_com()
     # Configure simulation

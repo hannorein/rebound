@@ -12,10 +12,14 @@ ifneq ($(OS),Windows_NT)
 	@echo "Compiling source file $< ..."
 	$(CC) -c $(OPT) $(OPTLIB) $(PREDEF) -o $@ $<
 
-$(LIBREBOUND): $(OBJECTS)
+integrator_whfast512.asm_o: integrator_whfast512.s
+	@echo "Assembling source file integrator_asm512.s ..."
+	$(AS)
+
+$(LIBREBOUND): $(OBJECTS) $(OBJECTS_ASM)
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) $(LIB) -o $@ 
+	$(CC) $(OPT) $(OPTLIB) -shared $(OBJECTS) $(OBJECTS_ASM) $(LIB) -o $@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."
@@ -23,12 +27,16 @@ else
 # Windows
 %.$(OBJFILEEXT): %.c $(HEADERS)
 	@echo "Compiling source file $< ..."
-	$(CC) -c  /DBUILDINGLIBREBOUND $(OPT) $(OPTLIB) $(PREDEF) /Fo: $@ $<
+	$(CC) -c  /DBUILDINGLIBREBOUND $(OPT) $(OPTLIB) $(PREDEF) /Fo:$@ $<
 
-$(LIBREBOUND): $(OBJECTS)
+integrator_whfast512_asm.$(OBJFILEEXT): integrator_whfast512.s
+	@echo "Assembling source file integrator_asm512.s ..."
+	$(AS)
+
+$(LIBREBOUND): $(OBJECTS) $(OBJECTS_ASM)
 	@echo ""        
 	@echo "Linking shared library $@ ..."
-	$(CC) /D_USRDLL /D_WINDLL $(OBJECTS) /link /DLL /OUT:$@ 
+	$(CC) /D_USRDLL /D_WINDLL $(OBJECTS) $(OBJECTS_ASM) /link /DLL /OUT:$@ 
 	
 	@echo ""        
 	@echo "The shared library $< has been created successfully."
@@ -43,4 +51,3 @@ clean:
 	@echo "Removing coverage files ..."
 	@-$(RM) *.gcda
 	@-$(RM) *.gcno
-	

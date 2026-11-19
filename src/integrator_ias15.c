@@ -609,8 +609,8 @@ static int reb_integrator_ias15_step_try(struct reb_simulation* r, struct reb_in
     // Find new timestep
     const double dt_done = r->dt;
 
-    double dt_new;
     if (ias15->epsilon>0){
+        double dt_new;
         // Estimate error (given by last term in series expansion) 
         // There are two options:
         // ias15->adaptive_mode==REB_IAS15_ADAPTIVEMODE_GLOBAL (used to be default until January 2024)

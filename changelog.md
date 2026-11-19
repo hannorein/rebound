@@ -4,6 +4,41 @@ This changelog only includes the most important changes in recent updates. For a
 
 ## Version 5.x
 
+### Version 5.2.3
+* Fixed frequency analysis error handling.
+* Fixed CI tests and python examples to work with python 3.15.
+* Support for NetBSD/FreeBSD.
+* Checking all ipynb examples in CI by default.
+
+### Version 5.2.2
+* Fixed a bug that occured when setting a heartbeat function from python. 
+* Fixed a bug that occured when reading a Simulationarchive when WHFast512 is used.
+
+### Version 5.2.1
+* Support python on arm based linux systems (no wheels yet).
+
+### Version 5.2.0
+* Improved WHFast512 Kepler solver for highly eccentric and hyperbolic orbits.
+* Added symplectic correctors for WHFast with Democratic Heliocentric Coordinates.
+* Fixed an edge case where WHFast's Kepler solver might get stuck in an infinite loop.
+* Improved accuracy in phase calculation of orbital parameters.
+* Wrap Omega and pomega to [0, 2pi) range.
+* Added colours to bounding box and origin marker in visualizations.
+
+### Version 5.1.1
+* Fixed python source dist.
+* Added python wheels for 3.13 and 3.14.
+
+### Version 5.1.0
+* Updated WHFast512. See Dagli and Rein (in prep) for details. WHFast512 is now written in x86 assembly, it uses Jacobi coordinates, supports symplectic correctors, and close encounter and ejection checks. The accuracy of the scheme is up to 5 orders of magnitude better and long term bias in the Kepler solver has been reduced. The walltime required to integrate the Solar System for 5Gyr has been reduced to only 8.7 hours.
+* Updated build system for both C and python to support assembly code on Linux and Windows. MacOS does not support 64bit x86 CPUs.
+* `reb_simulation_steps()` now stops if the simulation's status indicates an error.
+
+### Version 5.0.1
+* Optimized Lazy Kernel method in WHFast.
+* Fixed bug in WHFast512 when GR is enabled, related to backreaction.
+* Fixed size of integers in collision structure in python. 
+
 ### Version 5.0.0
 * This release incorporates major updates and breaks backwards compatability. 
 * Particles can now be identified with a name. The names can be any string. The memory for names is managed by REBOUND. Names are automatically stored in Simulationarchives. Hashes are now longer available to identify particles.

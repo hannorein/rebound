@@ -49,6 +49,7 @@ If you want to stop a current integration after the current timestep, for exampl
     reb_simulation_stop(r); 
     ```
 === "Python"
+    ```
     sim.stop()
     ```
 

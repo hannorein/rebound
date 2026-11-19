@@ -18,15 +18,16 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v4.1.0
         env:
            FFP_CONTRACT_OFF: 1
            CIBW_ARCHS_MACOS: x86_64 arm64
+           #CIBW_ARCHS_WINDOWS: AMD64 ARM64
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: dist-${{ matrix.os }}
           path: ./wheelhouse/*.whl
@@ -37,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Download and install emscripten
         run: |
           git clone https://github.com/emscripten-core/emsdk.git
@@ -48,10 +49,8 @@ jobs:
           bash web_client/compile.bash
       - name: Upload rebound.html
         if: github.event_name == 'release' && github.event.action == 'published'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          #   tag_name: "test-tag" # Hardcoded for testing
-          #   draft: true # Keep it hidden from the public
           files: |
             web_client/rebound.html
         env:
@@ -61,14 +60,14 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0  # Optional, use if you use setuptools_scm
 
     - name: Build SDist
       run: pipx run build --sdist
 
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v6
       with:
         name: dist-source
         path: dist/*.tar.gz

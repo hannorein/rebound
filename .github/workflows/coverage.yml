@@ -6,10 +6,11 @@ jobs:
   build:
 
     name: Checking test coverage
+    if: github.event.repository.fork == false # don't have CODECOV_TOKEN on fork
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download Codecov
         run: |
           curl -Os https://cli.codecov.io/latest/linux/codecov
@@ -18,13 +19,13 @@ jobs:
       - name: Install lcov
         run: sudo apt-get install -y lcov
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest coverage multiprocess matplotlib numpy
+          pip install pytest coverage joblib matplotlib numpy
       - name: Build package
         run: |
           pip install . -v

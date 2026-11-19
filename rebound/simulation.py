@@ -36,10 +36,10 @@ BINARY_WARNINGS = [
 
 # Note: name conflict with exception "Collision"
 class CollisionS(Structure):
-    _fields_ = [("p1", c_int),
-                ("p2", c_int),
+    _fields_ = [("p1", c_size_t),
+                ("p2", c_size_t),
                 ("gb", Vec6d),
-                ("ri", c_int)]
+                ("ri", c_size_t)]
     
     def __repr__(self):
         return '<{0}.{1} object at {2}, p1={3}, p2={4}>'.format(self.__module__, type(self).__name__, hex(id(self)), self.p1, self.p2)
@@ -92,7 +92,7 @@ class Simulation(Structure):
 
     # Only allow attributes which are fields.
     # Exceptions are listed here. Used to keep reference for function pointers.
-    __slots__ = ["_afp", "_colrfp", "_corfp", "_posttmp", "_pretmp", "_simulation_needsfree_", "_extras_ref"]
+    __slots__ = ["_afp", "_colrfp", "_corfp", "_hb", "_posttmp", "_pretmp", "_simulation_needsfree_", "_extras_ref"]
 
     def __new__(cls, *args, **kw):
         clibrebound.reb_simulation_create.restype = POINTER(Simulation)
@@ -1273,7 +1273,25 @@ class Simulation(Structure):
         """
         Perform exactly N_steps integration steps with REBOUND.
         """
-        clibrebound.reb_simulation_steps(byref(self),c_size_t(N_steps))
+        ret_value = clibrebound.reb_simulation_steps(byref(self),c_size_t(N_steps))
+        if ret_value == 1:
+            self.process_messages()
+            raise GenericError("An error occurred during the integration.")
+        if ret_value == 2:
+            if self._N_odes>0:
+                raise NoParticles("No particles found. Will exit. Use BS integrator to integrate user-defined ODEs without any particles present.");
+            else:
+                raise NoParticles("No more particles left in simulation.")
+        if ret_value == 3:
+            raise Encounter("Two particles had a close encounter (d<exit_min_distance).")
+        if ret_value == 4:
+            raise Escape("A particle escaped (r>exit_max_distance).")
+        if ret_value == 5:
+            pass # User caused exit. Do not raise error message
+        if ret_value == 6:
+            raise KeyboardInterrupt
+        if ret_value == 7:
+            raise Collision("Two particles collided (d < r1+r2)")
         self.process_messages()
 
     def integrate(self, tmax, exact_finish_time=1):
