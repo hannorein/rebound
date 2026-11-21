@@ -11,10 +11,10 @@
  * You can change the viewing angle of the camera with your mouse or by pressing
  * the `r` key. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 extern double OMEGA;
 extern double OMEGAZ;
@@ -31,27 +31,33 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->ri_sei.OMEGA         = 1.;
-    r->ri_sei.OMEGAZ        = 3.6;
+    r->OMEGA                = 1.;
+    r->OMEGAZ               = 3.6;
     r->dt                   = 2e-3*2.*M_PI;
     double particle_r       = 1;
     double tau              = 1.64;
     r->coefficient_of_restitution     = coefficient_of_restitution;
-    r->integrator           = REB_INTEGRATOR_SEI;
+    reb_simulation_set_integrator(r, "sei");
     r->collision            = REB_COLLISION_TREE;
     r->collision_resolve    = reb_collision_resolve_hardsphere;
     r->gravity              = REB_GRAVITY_NONE;
     r->boundary             = REB_BOUNDARY_SHEAR;
 
-    reb_simulation_configure_box(r,1.,200,5,20);
+    r->root_size = 1;
+    r->N_root_x = 200;    r->N_root_y = 5;      r->N_root_z = 20;
     r->N_ghost_x = 1;     r->N_ghost_y = 1;     r->N_ghost_z = 0;
 
     // Initial conditions
-    double _N = tau * r->boxsize.x * r->boxsize.y/(M_PI*particle_r *particle_r);
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
+    double _N = tau * boxsize.x * boxsize.y/(M_PI*particle_r *particle_r);
     while (r->N<_N){
         struct reb_particle p;
-        p.x     = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.x;
-        p.y     = ((double)rand()/(double)RAND_MAX-0.5)*r->boxsize.y;
+        p.x     = ((double)rand()/(double)RAND_MAX-0.5)*boxsize.x;
+        p.y     = ((double)rand()/(double)RAND_MAX-0.5)*boxsize.y;
         p.z     = 10.0*((double)rand()/(double)RAND_MAX-0.5)*particle_r;
         p.vx    = 0;
         p.vy    = -1.5*p.x; // shear

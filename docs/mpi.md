@@ -13,8 +13,8 @@ This can be useful to accelerate simulations but it only makes sense if certain 
 
 Use cases where MPI might be a good way to speed up simulations are:
 
-- [A self-gravitating disk](../c_examples/selfgravity_disc_mpi/)
-- [A shearing sheet simulation](../c_examples/shearing_sheet_mpi/) of self-gravitating or collisional particles (e.g. to simulate Saturn's Rings)
+- [A self-gravitating disk](c_examples/selfgravity_disc_mpi.md)
+- [A shearing sheet simulation](c_examples/shearing_sheet_mpi.md) of self-gravitating or collisional particles (e.g. to simulate Saturn's Rings)
 
 ## Basic Workflow
 The basic workflow when using MPI is as follows. You need to enable MPI and choose the appropriate compiler for MPI in the Makefile of the problem directory:
@@ -31,7 +31,9 @@ struct reb_simulation* r = reb_simulation_create();
 r->gravity          = REB_GRAVITY_TREE;
 r->collision        = REB_COLLISION_TREE;
 // other configuration options
-reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+r->root_size = boxsize;
+r->N_root_x = 2;
+r->N_root_y = 2;
 ```    
 
 The number of root trees needs to be an integer multiple of the number of MPI processes.

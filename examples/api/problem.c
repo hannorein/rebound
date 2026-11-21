@@ -12,6 +12,7 @@
 #include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 int main(int argc, char* argv[]) {
     // Let's use the WHFAST's built-in Kepler solver to move a single particle
@@ -27,9 +28,7 @@ int main(int argc, char* argv[]) {
     double G = 1.0;     // Working in units where G=1, but you can choose other units if you prefer.
     double GM = G*1.0;  // The gravitational parameter (G*mass);
     double dt = M_PI;   // Time interval, here: half an orbital period
-    reb_whfast_kepler_solver(NULL, &p, GM, 0,  dt); 
-    // We pass NULL to indicate that particle p is not part of a REBOUND simulation
-    // The second argument can be a pointer to a list of particles. Here we just use the 0th entry. 
+    reb_integrator_whfast_kepler_solver(&p, GM, dt, NULL); // We pass NULL to indicate that particle p is not part of a REBOUND simulation.
 
     // The particle is now on the opposite site of the primary.
     printf("Final position: %f %f %f\n", p.x, p.y, p.z);    

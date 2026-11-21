@@ -1,8 +1,71 @@
 import rebound
 import unittest
 import math
-import rebound.data
 import warnings
+import ctypes 
+
+class TestIntegratorDoc(unittest.TestCase):
+    def test_field_doc(self):
+        sim = rebound.Simulation()
+        sim.integrator = "whfast"
+        doc = sim.integrator.safe_mode.__doc__
+        lines = len(doc.split("\n"))
+        self.assertGreater(lines, 4)
+
+    def test_integrator_doc(self):
+        """ Make sure documentation is available for each integrator and it renders ok """
+        clibrebound = rebound.clibrebound
+        clibrebound.reb_integrators_registered.restype = ctypes.POINTER(ctypes.c_char_p)
+        res = clibrebound.reb_integrators_registered()
+        i = 0
+        names = []
+        while True:
+            if res[i] == None:
+                break
+            else:
+                names.append(res[i].decode("ascii"))
+            i = i+1
+        clibrebound.reb_free(res)
+        for name in names:
+            with self.subTest(val=name):
+                sim = rebound.Simulation()
+                sim.integrator = name
+                doc = sim.integrator.__doc__
+                self.assertNotEqual(doc, None)
+                lines = len(doc.split("\n"))
+                self.assertGreater(lines, 4)
+
+
+class TestUniqueIntegrator(unittest.TestCase):
+    def test_unique_integrator_names(self):
+        clibrebound = rebound.clibrebound
+        clibrebound.reb_integrators_registered.restype = ctypes.POINTER(ctypes.c_char_p)
+        res = clibrebound.reb_integrators_registered()
+        i = 0
+        names = []
+        while True:
+            if res[i] == None:
+                break
+            else:
+                names.append(res[i].decode("ascii"))
+            i = i+1
+        clibrebound.reb_free(res)
+        self.assertEqual(len(names), len(set(names)))
+
+class TestUniqueEqual(unittest.TestCase):
+    def test_not_equal(self):
+        sim1 = rebound.Simulation()
+        sim1.integrator = "whfast"
+        sim2 = rebound.Simulation()
+        sim2.integrator = "ias15"
+        self.assertNotEqual(sim1.integrator, sim2.integrator)
+    def test_equal(self):
+        sim1 = rebound.Simulation()
+        sim1.integrator = "whfast"
+        sim2 = rebound.Simulation()
+        sim2.integrator = "WHFAST"
+        self.assertEqual(sim1.integrator, sim2.integrator)
+
 
 class TestIntegratorIAS15Timescale(unittest.TestCase):
     def test_ias15_timescale(self):
@@ -25,7 +88,7 @@ class TestIntegratorWHFastHyper(unittest.TestCase):
         sim.add(m=0.,x=1.,vy=100000.)
         sim.integrator = "whfast"
         sim.dt = 1.234567
-        sim.step()
+        sim.steps(1)
         y = sim.particles[1].y
         ys = 1.234567*100000.
         self.assertAlmostEqual((y-ys)/ys, 0., delta=1e-10)
@@ -85,7 +148,7 @@ class TestIntegrator2(unittest.TestCase):
 class TestIntegrator(unittest.TestCase):
     def setUp(self):
         self.sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(self.sim)
+        self.sim.add("outer solar system")
         self.sim.move_to_com()
     
     def tearDown(self):
@@ -93,7 +156,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_ias15_globaloff(self):
         self.sim.integrator = "ias15"
-        self.sim.ri_ias15.epsilon_global = 0
+        self.sim.integrator.adaptive_mode = "individual"
         jupyr = 11.86*2.*math.pi
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
@@ -179,8 +242,8 @@ class TestIntegrator(unittest.TestCase):
     
     def test_whfast_nosafemode(self):
         self.sim.integrator = "whfast"
-        self.sim.ri_whfast.safe_mode = 0
-        self.sim.ri_whfast.corrector = 11
+        self.sim.integrator.safe_mode = 0
+        self.sim.integrator.corrector = 11
         jupyr = 11.86*2.*math.pi
         self.sim.dt = 0.0123*jupyr
         e0 = self.sim.energy()

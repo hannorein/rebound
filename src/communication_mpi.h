@@ -73,18 +73,8 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r);
  */
 void reb_communication_mpi_distribute_particles_all_to_all(struct reb_simulation* const r);
 
-/**
- * Places a particle in the send queue.  
- * @param pt reb_particle to be added to the send queue.
- * @param proc_id reb_particle will be send to this MPI node on next call of communication_mpi_distribute_particles();
- */
-void reb_communication_mpi_add_particle_to_send_queue(struct reb_simulation* const r, struct reb_particle pt, int proc_id);
-
-/**
- * Determine if the root box is local or if it is a copy of a remote node.
- * @param i Id of root box.
- */ 
-int  reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i);
+// Determine if the root box is local or if it is a copy of a remote node.
+int  reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int rootbox);
 
 /**
  * Send cells in buffer tree_essential_send to corresponding node. 

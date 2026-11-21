@@ -6,10 +6,10 @@
  * is ideally suited to handle non-conservative forces.
  * No gravitational forces or collisions are present.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void additional_forces(struct reb_simulation* const r);
 void heartbeat(struct reb_simulation* const r);
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
    
     // Setup constants
     r->dt             = 1e-4;        // initial timestep.
-    r->integrator     = REB_INTEGRATOR_IAS15;
+    reb_simulation_set_integrator(r, "ias15");
     r->gravity        = REB_GRAVITY_NONE;
 
     // Setup callback function for velocity dependent forces.

@@ -4,9 +4,10 @@ FREQUENCY_ANALYSIS_TYPES = {"mft": 0, "fmft": 1, "fmft2": 2}
 FREQUENCY_ANALYSIS_ERRORS = [  
     (-1, "Frequency analysis error: minfreq must be smaller than maxfreq."),
     (-2, "Frequency analysis error: nfreq must be larger than 0."),
-    (-3, "Frequency analysis error: ndata must be power of 2."),
+    (-3, "Frequency analysis error: ndata must be a power of 2 and at least 2."),
     (-4, "Frequency analysis error: input array is NULL."),
     (-5, "Frequency analysis error: pointer to output array is NULL."),
+    (-6, "Frequency analysis error: cannot find frequencies in range [minfreq, maxfreq]."),
 ]
 
 def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
@@ -49,9 +50,9 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
     if inp.dtype != np.float64:
         raise ValueError("Input array must be have datatype np.float64")
 
-    if isinstance(type, int):
-        type = ctypes.c_int(type)
-    elif isinstance(type, basestring):
+    if isinstance(type, int) and type in FREQUENCY_ANALYSIS_TYPES.values():
+        type = ctypes.c_uint(type)
+    elif isinstance(type, str):
         type = type.lower()
         if type in FREQUENCY_ANALYSIS_TYPES:
             type = FREQUENCY_ANALYSIS_TYPES[type]
@@ -67,9 +68,9 @@ def frequency_analysis(inp, type=0, nfreq=10, minfreq=-1e-3, maxfreq=1e-3):
     out = np.zeros(nfreq*3,dtype=np.double)
     out_ptr = out.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
     clibrebound.reb_frequency_analysis.restype = ctypes.c_int
-    ret = clibrebound.reb_frequency_analysis(out_ptr, ctypes.c_int(nfreq), ctypes.c_double(minfreq), ctypes.c_double(maxfreq), type, inp_ptr, ctypes.c_uint(ndata))
+    ret = clibrebound.reb_frequency_analysis(out_ptr, ctypes.c_size_t(nfreq), ctypes.c_double(minfreq), ctypes.c_double(maxfreq), type, inp_ptr, ctypes.c_size_t(ndata))
     for value, message in FREQUENCY_ANALYSIS_ERRORS:
-        if ret & value:
+        if ret == value:
             raise RuntimeError(message)
     return np.split(out,3)
 

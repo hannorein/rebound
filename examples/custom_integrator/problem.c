@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-void leapfrog_step(struct reb_simulation* r){
+void leapfrog_step(struct reb_simulation* r, void* point){
     struct reb_particle* restrict const particles = r->particles;
     // Drift
     for (unsigned int i=0;i<r->N;i++){
@@ -44,21 +44,25 @@ int main(int argc, char* argv[]) {
     // Create a copy of the simulation and use the built-in leapfrog integrator
     // as a comparison.
     struct reb_simulation* r_copy= reb_simulation_copy(r);
-    r_copy->integrator = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
 
-    // Choose CUSTOM integrator and setup function pointers.
-    r->integrator = REB_INTEGRATOR_CUSTOM;
-    r->ri_custom.step = leapfrog_step;
+    // Create a custom integrator and setup function pointers.
+    struct reb_integrator custom = {
+        .step = leapfrog_step,
+    };
+    reb_integrator_register(custom, "my_custom_leapfrog_integrator");
+
+    reb_simulation_set_integrator(r_copy, "my_custom_leapfrog_integrator");
     
     // Integrate both simulations
-    reb_simulation_integrate(r,10.);
-    reb_simulation_integrate(r_copy,10.);
+    reb_simulation_steps(r,10.);
+    reb_simulation_steps(r_copy,10.);
 
     // Compare the final coordinates of both simulations.
     for (int i=0; i<r->N; i++){
         struct reb_particle p1 = r->particles[i];
         struct reb_particle p2 = r_copy->particles[i];
-        // They are be identical.
+        // They are identical.
         assert(p1.x==p2.x);
         assert(p1.y==p2.y);
         assert(p1.z==p2.z);

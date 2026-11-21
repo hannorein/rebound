@@ -18,10 +18,15 @@ There are only a few special cases where the round-off error in force calculatio
 
 This method uses an oct tree (Barnes and Hut 1986) to approximate self-gravity. It scales as  $O(N \log(N))$.
 
-## Tree
+## Jacobi
 `REB_GRAVITY_JACOBI`        
 
 Direct summation, scales as $O(N^2)$, includes special terms needed for some symplectic integrators.
+
+## Custom
+`REB_GRAVITY_CUSTOM`   
+
+Some integrators and some special setups require a custom gravity routine. By setting the `gravity` variable in `reb_simulation` to `REB_GRAVITY_CUSTOM`, the function pointer `gravity_custom` is called whenever REBOUND required an update to the accelerations. 
 
 ## None
 `REB_GRAVITY_NONE`          

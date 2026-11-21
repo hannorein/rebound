@@ -15,6 +15,10 @@ class Vec3dBasic(Structure):
     _fields_ = [("x", c_double),
                 ("y", c_double),
                 ("z", c_double)]
+    
+    @property
+    def value(self):
+        return [self.x, self.y, self.z]
 
 class Vec3d:
     """

@@ -87,7 +87,7 @@ This variable contains the natural logarithm of all re-scaling factors that have
     reb_simulation_init_megno_seed(r);
     // ... integrate ...
     struct reb_variational_configuration* vc = &(r->var_config[0]);
-    double log_x = log(r->particles[vc->index].x) + vc->lrescale; // log of x coordinate of variational particle
+    double log_x = log(r->particles_var[vc->index].x) + vc->lrescale; // log of x coordinate of variational particle
     ```
 === "Python"
     ```python

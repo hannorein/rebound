@@ -19,7 +19,7 @@ class TestMegno(unittest.TestCase):
         self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
     
-    def test_initial_t(self):
+    def test_initial_t_ias15(self):
         self.sim.integrator = "ias15"
         self.sim.t = 1e6
         self.sim.add(m=1)
@@ -29,7 +29,7 @@ class TestMegno(unittest.TestCase):
         self.sim.integrate(self.sim.t + 10000.)
         self.assertAlmostEqual(self.sim.megno(),2.,delta=2e-1)
         self.assertAlmostEqual(self.sim.lyapunov(),0.,delta=1e-3)
-
+    
     def test_whfast(self):
         self.sim.integrator = "whfast"
         self.sim.add(m=1)
@@ -64,7 +64,8 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
         self.sim.integrate(1000.)
-        self.megnoIAS = self.sim.megno()
+        megnoIAS = self.sim.megno()
+        self.assertGreater(megnoIAS, 50.)
         self.sim = rebound.Simulation()
         self.sim.integrator = "whfast"
         self.sim.add(m=1.)
@@ -73,8 +74,9 @@ class TestMegno(unittest.TestCase):
         self.sim.init_megno(seed=0)
         self.sim.move_to_com()
         self.sim.integrate(1000)
-        self.megnoWHFast = self.sim.megno()
-        self.assertAlmostEqual(abs((self.megnoIAS-self.megnoWHFast)/self.megnoIAS), 0., delta=0.3)
+        megnoWHFast = self.sim.megno()
+        self.assertGreater(megnoWHFast, 50.)
+        self.assertAlmostEqual(abs((megnoIAS-megnoWHFast)/megnoIAS), 0., delta=0.3)
 
 if __name__ == "__main__":
     unittest.main()

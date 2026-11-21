@@ -5,7 +5,7 @@ import warnings
 class TestSimulationarchiveMatrix(unittest.TestCase):
     pass
 
-def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=3):
+def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=None, safe_mode=True, integrator="ias15",G=1., testparticle=0,simulationarchive_version=5):
     if restart:
         if keep_unsynchronized==1:
             sim = rebound.Simulation("test.bin")
@@ -22,8 +22,10 @@ def runSimulation(test,tmax=40., restart=False, keep_unsynchronized=1, interval=
         sim.dt = 0.1313
         sim.simulationarchive_version = simulationarchive_version
         if safe_mode==False:
-            sim.ri_whfast.safe_mode = 1
-            sim.ri_mercurius.safe_mode = 1
+            try:
+                sim.integrator.safe_mode = 1
+            except: 
+                pass # not all integrators have a safe mode
         if testparticle>0:
             if testparticle==1:
                 sim.testparticle_type=0
@@ -88,12 +90,12 @@ def create_test_sa_synchronize(params):
 
 
 
-for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabacl4", "saba(10,6,4)"]:
+for integrator in ["ias15","whfast","leapfrog","janus","mercurius","saba","sabacl,4", "sabah,10,6,4"]:
     for safe_mode in [True,False]:
         for G in [1.,0.9]:
             for testparticle in [0,1,2]: # no test particle, passive, semi-active
                 for keep_unsynchronized in [1,0]:
-                    for simulationarchive_version in [3]: # no longer testing versions 1 and 2!
+                    for simulationarchive_version in [5]: # no longer testing old versions.
                         params = {'safe_mode':safe_mode,
                                 'integrator':integrator,
                                 'G':G, 

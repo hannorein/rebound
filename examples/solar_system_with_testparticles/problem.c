@@ -9,10 +9,10 @@
  * not resolved. The OpenMP speedup you get depends on the 
  * compiler and CPU that you are using. 
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -26,8 +26,9 @@ int main(int argc, char* argv[]){
 
     // Setup constants
     r->dt           = 4./365.25*2.*M_PI;        // 4days
-    r->integrator   = REB_INTEGRATOR_WHFAST;
-    r->ri_whfast.coordinates   = REB_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+    reb_simulation_set_integrator(r, "whfast");
+    struct reb_integrator_whfast_state* whfast = r->integrator.state; 
+    whfast->coordinates   = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
     r->heartbeat    = heartbeat;
     r->N_active     = r->N;
 

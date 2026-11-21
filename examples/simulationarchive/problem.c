@@ -8,11 +8,11 @@
  * the latest data from the Simulationarchive. 
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "rebound.h"
 
 
 int main(int argc, char* argv[]) {
@@ -36,9 +36,10 @@ int main(int argc, char* argv[]) {
         reb_simulation_add_fmt(r, "m a e", 1e-3, 2.3, 0.01);   // planet 2
         reb_simulation_move_to_com(r);
         r->dt = 6./365.25*2.*M_PI;              // 6 days in units where G=1 
-        r->ri_whfast.safe_mode = 0;             // The Simulationarchive works with both safe_mode on and off           
-        r->ri_whfast.corrector = 5;    
-        r->integrator = REB_INTEGRATOR_WHFAST;
+        reb_simulation_set_integrator(r, "whfast");
+        struct reb_integrator_whfast_state* whfast = r->integrator.state;
+        whfast->safe_mode = 0;             // The Simulationarchive works with both safe_mode on and off           
+        whfast->corrector = 5;    
     }else{
         printf("Found simulationarchive. Loaded snapshot at t=%.16f.\n",r->t);
     }

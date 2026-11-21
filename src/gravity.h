@@ -1,6 +1,6 @@
 /**
  * @file 	gravity.h
- * @brief 	Calculate gravitational forces. 
+ * @brief 	Default gravity modules. 
  * @author 	Hanno Rein <hanno@hanno-rein.de>
  *
  * @section LICENSE
@@ -26,20 +26,22 @@
 #define _GRAVITY_H
 struct reb_simulation;
 
-/**
- * Calculate all the gravitational acceleration for all non-variational particles.
- */
-void reb_simulation_update_acceleration_gravity(struct reb_simulation* r);
+// Basic O(N^2) gravity routine
+void reb_gravity_basic_calculate_acceleration(struct reb_simulation* r);
 
-/**
- * The function calculates the acceleration for the variational equations.
- */
-void reb_simulation_update_acceleration_gravity_var(struct reb_simulation* r);
+// Tree based gravity routine
+void reb_gravity_tree_calculate_acceleration(struct reb_simulation* r);
 
+// O(N^2) gravity routine with compensated summation
+void reb_gravity_compensated_calculate_acceleration(struct reb_simulation* r);
 
-/**
- * The function calculates the jerk (derivative of the acceleration) and applies it to the particles' velocity.
- */
-void reb_calculate_and_apply_jerk(struct reb_simulation* r, const double v);
+// Gravity routine for WH-style integrators in Jacobi coordinates
+void reb_gravity_jacobi_calculate_acceleration(struct reb_simulation* r);
+
+// Calculates the acceleration for the variational equations.
+void reb_gravity_basic_calculate_acceleration_var(struct reb_simulation* r);
+
+// Calculates the jerk (derivative of the acceleration) and applies it to the particles' velocity.
+void reb_gravity_basic_calculate_and_apply_jerk(struct reb_simulation* r, const double v);
 
 #endif

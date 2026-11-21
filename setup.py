@@ -1,131 +1,109 @@
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    # Legacy distutils import. No longer available on Python > 3.12
-    from distutils.core import setup, Extension
-from codecs import open
+# This file exists solely to configure the dynamic C extension.
+# All project metadata lives in pyproject.toml.
+
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
+from glob import glob
+import platform
+import struct
 import os
+import subprocess
 import sys
-
 import sysconfig
-suffix = sysconfig.get_config_var('EXT_SUFFIX')
-if suffix is None:
-    suffix = ".so"
+import shutil
 
-# Try to get git hash
+
+##### Compile with AVX512 if we are on x86 with 64bit.
+##### On Windows, we also need clang.
+def is_x86_64():
+    if sys.platform == "darwin":
+        return False
+    if sys.platform == "win32":
+        if not shutil.which("clang-cl"):
+            return False
+    if sys.platform == "linux":
+        import platform
+        arch = platform.machine().lower()
+        if not ("x86" in arch or "amd64" in arch):
+            return False
+        if "arm" in arch or "aarch" in arch:
+            return False
+    return struct.calcsize("P")*8 == 64
+
+##### Git hash
 try:
-    import subprocess
-    ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
-    ghash_arg = "-DGITHASH="+ghash.strip()
-except:
-    ghash_arg = "-DGITHASH=e853676f202355b7c3e62f96501fb2c2d3c8c862" #GITHASHAUTOUPDATE
+    ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+    ghash_arg = f"-DGITHASH={ghash}"
+except Exception:
+    ghash_arg = "-DGITHASH=96efa5e98f9540c1e94161fe2ea68bead5d2b320" #GITHASHAUTOUPDATE
 
-extra_link_args=[]
-if sys.platform == 'darwin':
-    config_vars = sysconfig.get_config_vars()
-    config_vars['LDSHARED'] = config_vars['LDSHARED'].replace('-bundle', '-shared')
-    extra_link_args=['-Wl,-install_name,@rpath/librebound'+suffix]
-if sys.platform == 'win32':
-    extra_compile_args=[ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER']
+##### Link args
+extra_link_args = []
+if sys.platform == "darwin":
+    cfg = sysconfig.get_config_vars()
+    cfg["LDSHARED"] = cfg["LDSHARED"].replace("-bundle", "-shared")
+    suffix = sysconfig.get_config_var("EXT_SUFFIX") or ".so"
+    extra_link_args += [f"-Wl,-install_name,@rpath/librebound{suffix}"]
+
+##### Compile args
+if sys.platform == "win32":
+    extra_compile_args = [ghash_arg, "/wd4996", "/wd4244", "-DBUILDINGLIBREBOUND", "-D_GNU_SOURCE", "-DSERVER", "-D_CRT_NONSTDC_NO_WARNINGS=1"]
 else:
-    # Default compile args
-    extra_compile_args=['-fstrict-aliasing', '-std=c99','-Wno-unknown-pragmas', ghash_arg, '-DLIBREBOUND', '-D_GNU_SOURCE', '-DSERVER', '-fPIC']
-    # For coverage runs, turn off optimizations and turn on coverage generation
-    COVERAGE = os.environ.get("COVERAGE", None)
-    if COVERAGE:
-        extra_compile_args += ['-O1', '-fprofile-arcs', '-ftest-coverage' ,'-coverage']
-        extra_link_args += ['-fprofile-arcs', '-ftest-coverage' ,'-coverage']
+    extra_compile_args = [ "-fstrict-aliasing", "-std=c99", "-Wno-unreachable-code", "-Wno-unknown-pragmas", ghash_arg, "-D_GNU_SOURCE", "-DSERVER", "-fPIC"]
+    if os.environ.get("COVERAGE"):
+        extra_compile_args += ["-O1", "-fprofile-arcs", "-ftest-coverage", "--coverage"]
+        extra_link_args += ["-fprofile-arcs", "-ftest-coverage", "--coverage"]
     else:
-        extra_compile_args += ['-O3']
+        extra_compile_args.append("-O3")
+    ##### Turn off floating point contractions for bitwise reproducibility
+    if os.environ.get("FFP_CONTRACT_OFF"):
+        extra_compile_args.append("-ffp-contract=off")
 
-# Option to disable FMA in CLANG. 
-FFP_CONTRACT_OFF = os.environ.get("FFP_CONTRACT_OFF", None)
-if FFP_CONTRACT_OFF:
-    extra_compile_args.append('-ffp-contract=off')
 
-# Option to enable AVX512 enabled integrators (WHFast512). 
-AVX512 = os.environ.get("AVX512", None)
-if AVX512:
-    extra_compile_args.append('-march=native')
-    extra_compile_args.append('-DAVX512')
-    
-libreboundmodule = Extension('librebound',
-                    sources = [ 'src/rebound.c',
-                                'src/integrator_ias15.c',
-                                'src/integrator_whfast.c',
-                                'src/integrator_whfast512.c',
-                                'src/integrator_saba.c',
-                                'src/integrator_mercurius.c',
-                                'src/integrator_trace.c',
-                                'src/integrator_eos.c',
-                                'src/integrator_leapfrog.c',
-                                'src/integrator_bs.c',
-                                'src/integrator_janus.c',
-                                'src/integrator_sei.c',
-                                'src/integrator.c',
-                                'src/gravity.c',
-                                'src/server.c',
-                                'src/frequency_analysis.c',
-                                'src/boundary.c',
-                                'src/display.c',
-                                'src/collision.c',
-                                'src/tools.c',
-                                'src/fmemopen.c',
-                                'src/rotations.c',
-                                'src/derivatives.c',
-                                'src/tree.c',
-                                'src/particle.c',
-                                'src/binarydiff.c',
-                                'src/output.c',
-                                'src/input.c',
-                                'src/simulationarchive.c',
-                                'src/transformations.c',
-                                ],
-                    include_dirs = ['src'],
-                    define_macros=[ ('LIBREBOUND', None) ],
-                    extra_link_args=extra_link_args,
-                    extra_compile_args=extra_compile_args,
-                    )
+class build_ext_avx512(build_ext):
+    def build_extensions(self):
+        os.makedirs(self.build_temp, exist_ok=True)
+        if sys.platform == "darwin":
+            if hasattr(self.compiler, 'linker_so'):
+                for i, flag in enumerate(self.compiler.linker_so):
+                    if flag == '-bundle':
+                        self.compiler.linker_so[i] = '-shared'
+        if is_x86_64():
+            if sys.platform == "win32":
+                # Force clang compiler. 
+                orig_spawn = self.compiler.spawn
+                def new_spawn(cmd, **kwargs):
+                    if cmd and "link.exe" in cmd[0].lower():
+                        cmd[0] = "lld-link"
+                    if cmd and "cl.exe" in cmd[0].lower():
+                        cmd[0] = "clang-cl"
+                        cmd = [arg for arg in cmd if arg.upper() != "/GL"]
+                        cmd.append("/clang:-ffp-contract=off")
+                    return orig_spawn(cmd, **kwargs)
+                self.compiler.spawn = new_spawn
+                asm = os.path.join(self.build_temp, "integrator_whfast512_asm.obj")
+                cmd = ["clang", "-c", "src/integrator_whfast512.s", "-o", asm]
+                try:
+                    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                except subprocess.CalledProcessError as e:
+                    print(f"Assembly compilation failed: {e.stderr.decode()}", file=sys.stderr)
+                    raise
+            else:
+                # Linux
+                asm = os.path.join(self.build_temp, "integrator_whfast512_asm.o")
+                self.compiler.spawn(["as", "--noexecstack", "-g", "-o", asm, "src/integrator_whfast512.s"])
+            for ext in self.extensions:
+                ext.extra_objects = (ext.extra_objects or []) + [asm]
+        super().build_extensions()
 
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+##### C Extension
+libreboundmodule = Extension(
+    "librebound",
+    sources=sorted(glob("src/*.c")),
+    include_dirs=["src"],
+    depends=sorted(glob("src/*.s")),
+    extra_link_args=extra_link_args,
+    extra_compile_args=extra_compile_args,
+)
 
-setup(name='rebound',
-    version='4.6.0',
-    description='An open-source multi-purpose N-body code',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url='https://github.com/hannorein/rebound/',
-    author='Hanno Rein',
-    author_email='hanno@hanno-rein.de',
-    license='GPL',
-    classifiers=[
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
-        'Development Status :: 5 - Production/Stable',
-
-        # Indicate who your project is intended for
-        'Intended Audience :: Science/Research',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-        'Topic :: Scientific/Engineering :: Astronomy',
-
-        # Pick your license as you wish (should match "license" above)
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-    ],
-    keywords='astronomy astrophysics nbody integrator symplectic wisdom-holman',
-    packages=['rebound', 'rebound.integrators'],
-    package_data = {'rebound':['rebound.h']},
-    install_requires=[],
-    tests_require=["numpy","matplotlib"],
-    test_suite="rebound.tests",
-    ext_modules = [libreboundmodule],
-    zip_safe=False)
+setup(ext_modules=[libreboundmodule], cmdclass={"build_ext": build_ext_avx512})

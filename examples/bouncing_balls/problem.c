@@ -4,10 +4,10 @@
  * This example is a simple test of collision detection 
  * methods.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_simulation_create();
@@ -17,14 +17,14 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
     
     // Setup constants
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->gravity    = REB_GRAVITY_BASIC;
     r->collision    = REB_COLLISION_DIRECT;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->usleep    = 1000;            // Slow down integration (for visualization only)
     r->dt = 1e-2;
 
-    reb_simulation_configure_box(r, 3.0, 1, 1, 1);
+    r->root_size = 3;
     
     // Initial conditions
     {

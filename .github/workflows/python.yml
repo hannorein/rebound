@@ -10,42 +10,37 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.15"]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest
-          pip install -r requirements.txt
-          pip install multiprocess
+          pip install pytest joblib matplotlib numpy
       - name: Build package
-        run: pip install -e .
+        run: pip install -e . -v
         env: 
           FFP_CONTRACT_OFF: 1
       - name: Output package contents
         run: | 
           pip show rebound -vf
+          #- name: Setup tmate session
+          #uses: mxschmitt/action-tmate@v3
       - name: Running unittests
         run: |
           python -m unittest discover -s rebound/tests/ -v
       - name: Running python examples
         run: |
           python python_examples/dragforce/problem.py
-          python python_examples/horizons/problem.py
           python python_examples/megno_simple/problem.py
           python python_examples/orbital_elements/problem.py
           python python_examples/outersolarsystem/problem.py
           python python_examples/simple_orbit/problem.py
-      - name: Running remaining python examples
-        # Skipping on Windows because of multiprocessing
-        if: ${{ contains(matrix.os, 'ubuntu') }}
-        run: |
           python python_examples/longtermtest/problem.py
           python python_examples/megno/problem.py

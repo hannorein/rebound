@@ -1,11 +1,7 @@
 /**
- * @file 	integrator_whfast612.h
- * @brief 	Interface for numerical particle integrator
- * @author 	Hanno Rein <hanno@hanno-rein.de>
- *          Pejvak Javaheri <pejvak.javaheri@mail.utoronto.ca>
+ * integrator_whfast512.h: The AVX512 accelerated symplectic integrator WHFast512 in ASM
  * 
- * @section 	LICENSE
- * Copyright (c) 2023 Hanno Rein, Pejvak Javaheri
+ * Copyright (c) 2026 Hanno Rein, Rishit Dagli, Pejvak Javaheri
  *
  * This file is part of rebound.
  *
@@ -28,11 +24,17 @@
 
 #include "rebound.h"
 
-void reb_integrator_whfast512_reset(struct reb_simulation* r);		
-void reb_integrator_whfast512_step(struct reb_simulation* r);		///< Internal function used to call a specific integrator
-void reb_integrator_whfast512_synchronize(struct reb_simulation* r);	///< Internal function used to call a specific integrator
-void reb_integrator_whfast512_synchronize_fallback(struct reb_simulation* const r); // Internal function. 
-void reb_whfast512_kepler_solver(const struct reb_simulation* const r, struct reb_particle* const restrict p_j, const double M, unsigned int i, double _dt);   ///< Internal function (Main WHFast Kepler Solver)
-void reb_whfast512_calculate_jerk(struct reb_simulation* r);       ///< Calculates "jerk" term
+extern const struct reb_integrator reb_integrator_whfast512;
+
+struct reb_integrator_whfast512_state {
+    unsigned int gr_potential;
+    unsigned int N_systems;
+    unsigned int corrector;             
+    uint64_t concatenate_steps;
+
+    // Internal use
+    double last_synchronization;
+    void* data;
+};
 
 #endif

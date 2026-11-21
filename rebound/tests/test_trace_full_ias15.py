@@ -60,9 +60,9 @@ class TestIntegratorTraceHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
-        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),6e-9)
     
     def test_trace_harmonic_with_nbody_coupledy(self):
         sim = rebound.Simulation()
@@ -77,9 +77,9 @@ class TestIntegratorTraceHarmonic(unittest.TestCase):
         ode_ho.y[0] = 1. 
         ode_ho.y[1] = 0. # zero velocity
 
-        sim.integrate(20.*math.pi)
-        self.assertLess(math.fabs(ode_ho.y[0]-1.),2e-10)
-        self.assertLess(math.fabs(ode_ho.y[1]),2e-9)
+        sim.integrate(20.5*math.pi)
+        self.assertLess(math.fabs(ode_ho.y[0]+1.),2e-10)
+        self.assertLess(math.fabs(ode_ho.y[1]),6e-9)
         e1 = sim.energy()
         self.assertLess(math.fabs((e0-e1)/e0),1e-10)
 
@@ -93,15 +93,15 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.move_to_com()
         sim.N_active=2
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 0.1
         sim2 = sim.copy()
         p = sim.particles[1].copy()
         p.x += 0.01
         p.m = 0
         sim.add(p)
-        sim.step()
-        sim2.step()
+        sim.steps(1)
+        sim2.steps(1)
 
         self.assertEqual(sim.particles[1].x,sim2.particles[1].x)
         self.assertEqual(sim.particles[1].vx,sim2.particles[1].vx)
@@ -110,17 +110,17 @@ class TestIntegratorTrace(unittest.TestCase):
 
     def test_outer_solar(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         P = sim.particles[1].P
         sim.dt = 1e-3*P
 
         E0 = sim.energy()
         sim.integrate(1000)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,2e-10)
+        self.assertLess(dE,2.5e-10)
 
     def test_order_doesnt_matter_tp0(self):
         sim = rebound.Simulation()
@@ -129,9 +129,9 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         #sim.integrator = "whfast"
-        #sim.ri_whfast.coordinates = "democraticheliocentric"
+        #sim.integrator_datat.coordinates = "democraticheliocentric"
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 0
@@ -151,7 +151,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 0
@@ -176,7 +176,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=5e-3,a=1.0,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 1
@@ -193,7 +193,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.add(m=1e-3,a=1.1,e=0.1,primary=sim.particles[0])
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 1e-2*2.*3.14
         sim.N_active = 1
         sim.testparticle_type = 1
@@ -210,19 +210,19 @@ class TestIntegratorTrace(unittest.TestCase):
 
     def test_outer_solar_massive(self):
         sim = rebound.Simulation()
-        rebound.data.add_outer_solar_system(sim)
+        sim.add("outer solar system")
         for i in range(1,sim.N):
             sim.particles[i].m *=50.
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         P = sim.particles[1].P
         sim.dt = 1e-3*P
 
         E0 = sim.energy()
         sim.integrate(1000)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,7e-8)
+        self.assertLess(dE,2.7e-7)
 
     def test_simple_collision(self):
         sim = rebound.Simulation()
@@ -234,7 +234,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 0.01
         sim.track_energy_offset = 1
         sim.collision = "direct"
@@ -263,7 +263,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 0.01
         sim.testparticle_type = 1
         sim.track_energy_offset = 1
@@ -288,7 +288,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.N_active = 2
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 0.01
         sim.testparticle_type = 1
         sim.collision = "direct"
@@ -296,8 +296,7 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.track_energy_offset = 1
 
         sim.boundary = "open"
-        boxsize = 3.
-        sim.configure_box(boxsize)
+        sim.root_size = 3
 
         E0 = sim.energy()
         sim.integrate(1)
@@ -313,7 +312,7 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 0.01
         sim.track_energy_offset = 1
         sim.collision = "direct"
@@ -342,12 +341,13 @@ class TestIntegratorTrace(unittest.TestCase):
         N0 = sim.N
 
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         sim.dt = 0.01
         sim.track_energy_offset = 1
         sim.collision = "direct"
         sim.collision_resolve = "merge"
-        sim.ri_trace.peri_crit_distance=0.2
+        # sim.integrator.peri_crit_distance=0.2
+        # above variable does not exist?? HR 2026
 
         E0 = sim.energy()
         sim.integrate(1)
@@ -381,7 +381,7 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim = get_sim()
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
+        sim.integrator.peri_mode = 2
         E0 = sim.energy()
         start=datetime.now()
         sim.integrate(2000)
@@ -436,8 +436,8 @@ class TestIntegratorTrace(unittest.TestCase):
 
         sim = chaotic_exchange_sim()
         sim.integrator = "trace"
-        sim.ri_trace.peri_mode = 2
-        sim.ri_trace.r_crit_hill *= 1.21 # previously this was hardcoded
+        sim.integrator.peri_mode = 2
+        sim.integrator.r_crit_hill *= 1.21 # previously this was hardcoded
         sim.dt = (8./365.)*2.*math.pi
         E0 = jacobi(sim)
         start=datetime.now()

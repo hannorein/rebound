@@ -5,10 +5,10 @@
  * There are four particles, one in each corner. To see the ghost boxes in OpenGL
  * press `g` while the simulation is running.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 extern double coefficient_of_restitution; 
 int main(int argc, char* argv[]){
@@ -19,14 +19,14 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
     
     // Setup modules and constants
-    r->integrator  = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->gravity     = REB_GRAVITY_BASIC;
     r->collision   = REB_COLLISION_TREE;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->dt          = 1e-3;
     r->boundary    = REB_BOUNDARY_PERIODIC;
     r->usleep     = 1000;            // Slow down integration (for visualization only)
-    reb_simulation_configure_box(r,3.,1,1,1);
+    r->root_size = 3; 
     
     // Initial conditions
     int problem_id = 1;

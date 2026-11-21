@@ -1,0 +1,72 @@
+# Removing particles
+
+## Removing all particles
+
+You can remove all particles with the following code:
+
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_simulation_create();
+    // ... add particles ...
+    reb_simulation_remove_all_particles(r);
+    ```
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    # ... add particles ...
+    del sim.particles
+    ```
+## Remove particle by index
+Each particle in a REBOUND simulation can be uniquely identified with its position in the `particles` array, its **index**.
+You can remove a particle using this index as shown in the following code:
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m", 1.); // star, index=0
+    reb_simulation_add_fmt(r, "a", 1.); // planet 1, index=1
+    reb_simulation_add_fmt(r, "a", 2.); // planet 2, index=2
+    reb_simulation_remove_particle(r, 1, 1); // removes planet 1 (index 1)
+    ```
+    The first argument of `reb_simulation_remove_particle` is the simulation from which you want to remove the particle.
+    The second argument is the index of the particle.
+    The third argument determines if you want to keep the particle array sorted.
+    In most cases you want to (set the argument to 1). 
+    For simulation with many particles (millions), this might be slow. In that case set this argument to 0.
+
+    The function returns 0 if the particle was successfully removed, and 1 otherwise.
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.add(m=1.) // star, index=0
+    sim.add(a=1.) // planet 1, index=1
+    sim.add(a=2.) // planet 2, index=2
+    sim.remove(1)
+    ```
+    The order of the remaining particles will remain unchanged. 
+    (In previous versions of REBOUND this was the behaviour when `keep_sorted=1` was set. This is now the default.) 
+
+## Remove particle by name
+In addition to the index, you can also identify particles by name.
+This is useful when you want to make sure you can uniquely identify particles in simulations where you constantly add or remove particles. 
+If a particle has a name, you can remove it as shown here:
+
+=== "C"
+    ```c
+    struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_add_fmt(r, "m name", 1., "star"); 
+    reb_simulation_add_fmt(r, "a name", 1., "planet1"); 
+    reb_simulation_add_fmt(r, "a name", 2., "planet2"); 
+    reb_simulation_remove_particle_by_name(r, "planet1");
+    ```
+    The syntax of the function is the same as for `reb_simulation_remove_particle` except you pass the name instead of the index.
+
+=== "Python"
+    ```python
+    sim = rebound.Simulation()
+    sim.add(m=1., name="star")
+    sim.add(a=1., name="planet1")
+    sim.add(a=2., name="planet2")
+    sim.remove(name="planet1")
+    ```
+

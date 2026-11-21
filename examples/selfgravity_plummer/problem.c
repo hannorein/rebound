@@ -7,10 +7,10 @@
  * encounters. An alternative integrator is IAS15 which
  * comes with adaptive timestepping.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 void heartbeat(struct reb_simulation* r);
 
@@ -35,12 +35,12 @@ int main(int argc, char* argv[]){
 
     // Setup constants
     r->G         = G;        
-    r->integrator    = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->dt         = 2e-5*t0;     // timestep
     r->softening     = 0.01*r0;    // Softening parameter
     r->heartbeat    = heartbeat;
     
-    reb_simulation_configure_box(r, 20.*r0, 1, 1, 1);
+    r->root_size = 20.*r0;
     reb_simulation_add_plummer(r, _N, M, R);    // Adds particles
     reb_simulation_move_to_com(r); 
     reb_simulation_integrate(r, INFINITY);

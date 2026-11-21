@@ -21,7 +21,6 @@ def simulation(par):
     saturn_a, saturn_e = par
     sim = rebound.Simulation() 
     sim.integrator = "whfast"
-    sim.min_dt = 5.
     sim.dt = 1.
     
     # These parameters are only approximately those of Jupiter and Saturn.
@@ -49,15 +48,19 @@ for _e in e:
     for _a in a:
         parameters.append([_a,_e])
 
+
+# Run one simulation
 simulation((8,0.))
+
 # Run simulations in parallel
 try:
-    from multiprocess import Pool
+    from joblib import Parallel, delayed
 except:
-    raise RuntimeError("Please install the multiprocess module with `pip install multiprocess`.")
-with Pool() as pool:
-    print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
-    res = np.nan_to_num(np.array(pool.map(simulation,parameters))) 
+    raise RuntimeError("Unable to import the joblib module.")
+
+n_jobs = 8
+print("Running %d simulations on %d threads..." % (len(parameters), n_jobs))
+res = np.array(Parallel(n_jobs=n_jobs)(delayed(simulation)(p) for p in parameters))
 megno = np.clip(res[:,0].reshape((N,N)),1.8,4.)             # clip arrays to plot saturated 
 lyaptimescale = np.clip(np.absolute(res[:,1].reshape((N,N))),1e1,1e5)
 
@@ -69,8 +72,8 @@ extent = [a.min(), a.max(), e.min(), e.max()]
 for ax in axarr:
     ax.set_xlim(extent[0],extent[1])
     ax.set_ylim(extent[2],extent[3])
-    ax.set_xlabel("$a_{\mathrm{Saturn}}$ [AU]")
-    ax.set_ylabel("$e_{\mathrm{Saturn}}$")
+    ax.set_xlabel("$a_{\\mathrm{Saturn}}$ [AU]")
+    ax.set_ylabel("$e_{\\mathrm{Saturn}}$")
 
 
 # Plot MEGNO 

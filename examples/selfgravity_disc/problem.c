@@ -4,11 +4,11 @@
  * A self-gravitating disc is integrated using
  * the leap frog integrator. Collisions are not resolved.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "rebound.h"
 
 
 void heartbeat(struct reb_simulation* const r);
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     reb_simulation_start_server(r, 1234);
 
     // Setup constants
-    r->integrator       = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->gravity          = REB_GRAVITY_TREE;
     r->boundary         = REB_BOUNDARY_OPEN;
     r->opening_angle2   = 1.5;          // This constant determines the accuracy of the tree code gravity estimate.
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
     r->softening        = 0.02;         // Gravitational softening length
     r->dt               = 3e-2;         // Timestep
     const double boxsize = 10.2;
-    reb_simulation_configure_box(r,boxsize,1,1,1);
+    r->root_size = boxsize;
 
     // Setup particles
     double disc_mass = 2e-1;    // Total disc mass

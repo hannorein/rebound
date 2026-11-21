@@ -90,12 +90,13 @@ class Variation(ctypes.Structure):
         if self._sim is not None:
             sim = self._sim.contents
             particles = sim.particles
+            particles_var = sim.particles_var
         else:
             raise RuntimeError("Something went wrong. Cannot seem to find simulation corresponding to variation.")
         if self.testparticle >= 0:
-            particles[self.index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+            particles_var[self.index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
         else:
-            particles[self.index + particle_index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
+            particles_var[self.index + particle_index] = Particle(simulation=sim,particle=particles[particle_index], variation=variation, variation2=variation2, primary=primary)
 
     @property
     def particles(self):
@@ -115,10 +116,10 @@ class Variation(ctypes.Structure):
         if self.testparticle>=0:
             N = 1
         else:
-            N = sim.N-sim.N_var 
+            N = sim.N 
         
         ParticleList = Particle*N
-        ps = ParticleList.from_address(ctypes.addressof(sim._particles.contents)+self.index*ctypes.sizeof(Particle))
+        ps = ParticleList.from_address(ctypes.addressof(sim._particles_var.contents)+self.index*ctypes.sizeof(Particle))
         return ps
     
     @property

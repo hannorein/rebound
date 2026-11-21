@@ -11,10 +11,10 @@
  * routine. This is where one could add fragmentation, or merging of
  * particles.
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct reb_simulation* r, struct reb_collision c);
 
@@ -31,13 +31,13 @@ int main(int argc, char* argv[]) {
 
     // Setup constants
     r->opening_angle2    = .5;                    // This determines the precision of the tree code gravity calculation.
-    r->integrator        = REB_INTEGRATOR_SEI;
+    reb_simulation_set_integrator(r, "sei");
     r->boundary          = REB_BOUNDARY_SHEAR;
     r->gravity           = REB_GRAVITY_TREE;
     r->collision         = REB_COLLISION_TREE;
     r->collision_resolve = collision_resolve_hardsphere_pullaway;
     double OMEGA         = 0.00013143527;       // 1/s
-    r->ri_sei.OMEGA      = OMEGA;
+    r->OMEGA            = OMEGA;
     r->G                 = 6.67428e-11;         // N / (1e-5 kg)^2 m^2
     r->softening         = 0.1;                 // m
     r->dt                = 1e-3*2.*M_PI/OMEGA;  // s
@@ -50,14 +50,21 @@ int main(int argc, char* argv[]) {
     double particle_radius_min     = 1;        // m
     double particle_radius_max     = 4;        // m
     double particle_radius_slope   = -3;    
-    double boxsize                 = 100;      // m
-    if (argc>1){                               // Try to read boxsize from command line
-        boxsize = atof(argv[1]);
+    double root_size                 = 100;      // m
+    if (argc>1){                               // Try to read root_size from command line
+        root_size = atof(argv[1]);
     }
-    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+    r->root_size = root_size; 
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     r->N_ghost_x = 2;
     r->N_ghost_y = 2;
     r->N_ghost_z = 0;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     
     // Initial conditions
     printf("Toomre wavelength: %f\n",4.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*r->G);
@@ -69,12 +76,12 @@ int main(int argc, char* argv[]) {
 
 
     // Add all ring particles
-    double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
+    double total_mass = surfacedensity*boxsize.x*boxsize.y;
     double mass = 0;
     while(mass<total_mass){
         struct reb_particle pt = {0};
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vy         = -1.5*pt.x*OMEGA;
         double radius     = reb_random_powerlaw(r, particle_radius_min,particle_radius_max,particle_radius_slope);
@@ -97,11 +104,11 @@ double coefficient_of_restitution_bridges(const struct reb_simulation* const r, 
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->OMEGA)){
         reb_simulation_output_timing(r, 0);
         //reb_output_append_velocity_dispersion("veldisp.txt");
     }
-    if (reb_simulation_output_check(r, 2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 2.*M_PI/r->OMEGA)){
         //reb_simulation_output_ascii("position.txt");
     }
 }
@@ -172,7 +179,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct 
     particles[c.p2].vx -=    p1pf*dvx2n;
     particles[c.p2].vy -=    p1pf*dvy2nn;
     particles[c.p2].vz -=    p1pf*dvz2nn;
-    particles[c.p2].last_collision = r->t;
     particles[c.p2].x -=    p1pf*dxx2n;
     particles[c.p2].y -=    p1pf*dxy2nn;
     particles[c.p2].z -=    p1pf*dxz2nn;
@@ -185,7 +191,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME collision_resolve_hardsphere_pullaway(struct 
     particles[c.p1].y +=    p2pf*dxy2nn; 
     particles[c.p1].z +=    p2pf*dxz2nn; 
 
-    particles[c.p1].last_collision = r->t;
 
     return REB_COLLISION_RESOLVE_OUTCOME_REMOVE_NONE; // Do not remove any particle
 }

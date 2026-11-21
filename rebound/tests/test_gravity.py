@@ -52,9 +52,6 @@ class TestGravity(unittest.TestCase):
         x0 = sim.particles[0].x
         self.assertNotEqual(x0, 0.)
 
-
-
-
     def test_testparticle_whfast_comp_0(self):
         sim = rebound.Simulation()
         sim.gravity = "compensated"
@@ -68,9 +65,7 @@ class TestGravity(unittest.TestCase):
             sim.integrate(10.)
             self.assertEqual(1,len(w))
         x0 = sim.particles[0].x
-        # TODO
-        # Currently fails. WHFAST evolves COM, but should only include star
-        #self.assertEqual(x0, 0.)
+        self.assertEqual(x0, 0.)
 
     def test_testparticle_whfast_comp_1(self):
         sim = rebound.Simulation()
@@ -100,12 +95,13 @@ class TestGravity(unittest.TestCase):
     
     def test_tree_duplicate_particle(self):
         sim = rebound.Simulation()
-        sim.configure_box(10)
+        sim.root_size = 10
         sim.gravity = "tree"
         sim.add(m=1.)
+        sim.add(m=1.)
         with self.assertRaises(RuntimeError):
-            # Cannot add two particles on top of each other
-            sim.add(m=1.)
+            # Cannot add two particles on top of each other in tree
+            sim.steps(1)
 
 
 

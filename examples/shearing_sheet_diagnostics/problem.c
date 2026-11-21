@@ -10,10 +10,10 @@
  * translational viscosity and the collisional viscosity.
  */
 
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "rebound.h"
 
 // This example is using a custom velocity dependent coefficient of restitution
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v){
@@ -36,13 +36,13 @@ int main(int argc, char* argv[]) {
 
     // Setup constants
     r->opening_angle2     = .5;                 // This determines the precision of the tree code gravity calculation.
-    r->integrator         = REB_INTEGRATOR_SEI;
+    reb_simulation_set_integrator(r, "sei");
     r->boundary           = REB_BOUNDARY_SHEAR;
     r->gravity            = REB_GRAVITY_TREE;
     r->collision          = REB_COLLISION_TREE;
     r->collision_resolve  = reb_collision_resolve_hardsphere;
     double OMEGA          = 0.00013143527;      // 1/s
-    r->ri_sei.OMEGA       = OMEGA;
+    r->OMEGA              = OMEGA;
     r->G                  = 6.67428e-11;        // N / (1e-5 kg)^2 m^2
     r->softening          = 0.1;                // m
     r->dt                 = 1e-3*2.*M_PI/OMEGA; // s
@@ -55,11 +55,18 @@ int main(int argc, char* argv[]) {
     double particle_radius_min    = 1;          // m
     double particle_radius_max    = 4;          // m
     double particle_radius_slope  = -3;    
-    double boxsize                = 100;        // m
-    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
+    double root_size                = 100;        // m
+    r->root_size = root_size; 
+    r->N_root_x = 2;
+    r->N_root_y = 2;
     r->N_ghost_x = 2;
     r->N_ghost_y = 2;
     r->N_ghost_z = 0;
+    struct reb_vec3d boxsize = {
+        .x = r->root_size*(double)r->N_root_x,
+        .y = r->root_size*(double)r->N_root_y,
+        .z = r->root_size*(double)r->N_root_z,
+    };
     
     // Use Bridges et al coefficient of restitution.
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
@@ -69,12 +76,12 @@ int main(int argc, char* argv[]) {
 
 
     // Add all ring particles
-    double total_mass = surfacedensity*r->boxsize.x*r->boxsize.y;
+    double total_mass = surfacedensity*boxsize.x*boxsize.y;
     double mass = 0;
     while(mass<total_mass){
         struct reb_particle pt;
-        pt.x         = reb_random_uniform(r, -r->boxsize.x/2.,r->boxsize.x/2.);
-        pt.y         = reb_random_uniform(r, -r->boxsize.y/2.,r->boxsize.y/2.);
+        pt.x         = reb_random_uniform(r, -boxsize.x/2.,boxsize.x/2.);
+        pt.y         = reb_random_uniform(r, -boxsize.y/2.,boxsize.y/2.);
         pt.z         = reb_random_normal(r, 1.);                    // m
         pt.vx         = 0;
         pt.vy         = -1.5*pt.x*OMEGA;
@@ -98,7 +105,7 @@ double mean_normal_geometric_optical_depth(const struct reb_simulation* const r)
         struct reb_particle p = r->particles[i];
         area += M_PI*p.r*p.r;
     }
-    return area/(r->boxsize.x*r->boxsize.y);
+    return area/(r->root_size*r->root_size*r->N_root_x*r->N_root_y);
 }
 
 double midplane_fillingfactor(const struct reb_simulation* const r){
@@ -110,7 +117,7 @@ double midplane_fillingfactor(const struct reb_simulation* const r){
             area += M_PI*R2;
         }
     }
-    return area/(r->boxsize.x*r->boxsize.y);
+    return area/(r->root_size*r->root_size*r->N_root_x*r->N_root_y);
 }
 
 struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r){
@@ -122,10 +129,10 @@ struct reb_vec3d velocity_dispersion(const struct reb_simulation* const r){
         struct reb_vec3d Aim1 = A;
         struct reb_particle p = r->particles[i];
         A.x = A.x + (p.vx-A.x)/(double)(i+1);
-        A.y = A.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y)/(double)(i+1);
+        A.y = A.y + (p.vy+1.5*r->OMEGA*p.x-A.y)/(double)(i+1);
         A.z = A.z + (p.vz-A.z)/(double)(i+1);
         Q.x = Q.x + (p.vx-Aim1.x)*(p.vx-A.x);
-        Q.y = Q.y + (p.vy+1.5*r->ri_sei.OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->ri_sei.OMEGA*p.x-A.y);
+        Q.y = Q.y + (p.vy+1.5*r->OMEGA*p.x-Aim1.y)*(p.vy+1.5*r->OMEGA*p.x-A.y);
         Q.z = Q.z + (p.vz-Aim1.z)*(p.vz-A.z);
     }
     Q.x = sqrt(Q.x/(double)r->N);
@@ -141,10 +148,10 @@ double translational_viscosity(const struct reb_simulation* const r){
     for (int i=0;i<r->N;i++){
         struct reb_particle p = r->particles[i];
         double vx = p.vx;
-        double vy = p.vy+1.5*r->ri_sei.OMEGA*p.x;
+        double vy = p.vy+1.5*r->OMEGA*p.x;
         Wxy += vx*vy;
     }
-    return 2./3.*Wxy/r->N/r->ri_sei.OMEGA;
+    return 2./3.*Wxy/r->N/r->OMEGA;
 }
 
 double collisional_viscosity(const struct reb_simulation* const r){
@@ -154,11 +161,11 @@ double collisional_viscosity(const struct reb_simulation* const r){
     for (int i=0;i<r->N;i++){
         Mtotal += r->particles[i].m;
     }
-    return 2./3./r->ri_sei.OMEGA/Mtotal/r->t* r->collisions_plog;
+    return 2./3./r->OMEGA/Mtotal/r->t* r->collisions_plog;
 }
 
 void heartbeat(struct reb_simulation* const r){
-    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->ri_sei.OMEGA)){
+    if (reb_simulation_output_check(r, 1e-3*2.*M_PI/r->OMEGA)){
         printf("Midplane FF=  %5.3f\t",midplane_fillingfactor(r));
         printf("Mean normal tau=  %5.3f \t",mean_normal_geometric_optical_depth(r));
         struct reb_vec3d Q = velocity_dispersion(r);

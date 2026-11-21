@@ -5,14 +5,15 @@
  * using MPI.
  *
  */
+#include "rebound.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
 #include <assert.h>
-#include "rebound.h"
 #include "tools.h"
+#include "simulationarchive.h"
 
 void print_N(struct reb_simulation* r){
     int N_to_send;
@@ -20,28 +21,34 @@ void print_N(struct reb_simulation* r){
     for (int i=0; i<r->mpi_num;i++){
         N_to_send += r->N_particles_send[i];
     }
-    printf("Node %d:   N = %d (+%d to send)\n", r->mpi_id, r->N, N_to_send);
+    printf("Node %d:   N = %zu (+%d to send)\n", r->mpi_id, r->N, N_to_send);
 }
 
 void test_twobody(){
     struct reb_simulation* const r = reb_simulation_create();
-    r->integrator       = REB_INTEGRATOR_LEAPFROG;
+    reb_simulation_set_integrator(r, "leapfrog");
     r->gravity          = REB_GRAVITY_TREE;
     r->boundary         = REB_BOUNDARY_OPEN;
     r->opening_angle2   = 1.5; 
     r->G                = 1;        
     r->dt               = 0.1;
-    reb_simulation_configure_box(r,30,2,2,1);
+    r->root_size = 30; 
+    r->N_root_x = 2; 
+    r->N_root_y = 2; 
 
     printf("MPI init...\n");
     reb_mpi_init(r);
+
+    //int i=0;
+    //while(i==0 && r->mpi_id==1) sleep(1);
+
     if (r->mpi_id==0){
-        reb_simulation_add_fmt(r, "m y hash", 2., 4.0, reb_hash("star1"));
+        reb_simulation_add_fmt(r, "m y id", 2., 4.0, 1); //star 1
     }
     struct reb_particle com = reb_simulation_com(r); // Need to call this on all machines. 
     assert(com.y==4.0);
     if (r->mpi_id==0){
-        reb_simulation_add_fmt(r, "m a e primary hash", 1., 1., 0.1, com, reb_hash("star2"));
+        reb_simulation_add_fmt(r, "m a e primary id", 1., 1., 0.1, com, 2); // star 2
     }
 
     printf("Moving to com...\n"); // Will also distribute particles
@@ -66,10 +73,10 @@ void test_twobody(){
     reb_simulation_integrate(r, 10.);
     
     printf("Checking conservation of orbital elements...\n");
-    struct reb_particle star1 = reb_simulation_particle_by_hash_mpi(r, reb_hash("star1"));
-    struct reb_particle star2 = reb_simulation_particle_by_hash_mpi(r, reb_hash("star2"));
+    struct reb_particle star1 = reb_simulation_particle_by_id(r, 1);
+    struct reb_particle star2 = reb_simulation_particle_by_id(r, 2);
     struct reb_orbit o = reb_orbit_from_particle(r->G, star2, star1);
-    
+
     assert(fabs(o.a-1.)<1e-3);
     assert(fabs(o.e-0.1)<1e-2);
 
@@ -78,7 +85,7 @@ void test_twobody(){
     com = reb_simulation_com(r); // Need to call this on all machines. 
     if (r->mpi_id==0){
         for (int i=0; i<10; i++){
-            reb_simulation_add_fmt(r, "m a primary hash", 0.0001, 2.0+0.1*i, com, i);
+            reb_simulation_add_fmt(r, "m a primary id", 0.0001, 2.0+0.1*i, com, 10+i);
         }
     }
     reb_simulation_steps(r, 1);
@@ -101,10 +108,10 @@ void test_twobody(){
     assert(r->N == r2->N);
     assert(r->t == r2->t);
 
-    // Order of particles will be different. Need to compare them by hash
+    // Order of particles will be different. Need to compare them by id
     for(int i=0; i<10; i++){
-        struct reb_particle p1 = reb_simulation_particle_by_hash_mpi(r, i);
-        struct reb_particle p2 = reb_simulation_particle_by_hash_mpi(r2, i);
+        struct reb_particle p1 = reb_simulation_particle_by_id(r, 10+i);
+        struct reb_particle p2 = reb_simulation_particle_by_id(r2, 10+i);
         assert(p1.x==p2.x);
         assert(p1.y==p2.y);
         assert(p1.z==p2.z);
