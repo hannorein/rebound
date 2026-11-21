@@ -203,7 +203,7 @@ struct reb_integrator_configuration {
 extern const struct reb_integrator reb_integrator_none; /* Does nothing other than advance time. Defined in rebound.c      */
 
 // List of built-in integrators for X macros
-#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(trace)X(symba) X(none) 
+#define REB_BUILTIN_INTEGRATORS X(ias15) X(whfast) X(sei) X(leapfrog) X(janus) X(mercurius) X(saba) X(eos) X(bs) X(whfast512) X(trace) X(symba) X(none)
 
 
 // Available return values for collision resolve functions

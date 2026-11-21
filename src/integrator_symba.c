@@ -33,7 +33,7 @@ static double weight_changing_function(double distance, double r_outer, double r
     assert(distance >= 0.0);
     if (distance <= r_inner) {
         return 0.0;
-    }   
+    }
     if (distance >= r_outer) {
         return 1.0;
     }
@@ -41,7 +41,7 @@ static double weight_changing_function(double distance, double r_outer, double r
     const double w = (r_outer - distance) / (r_outer - r_inner);
     return 2 * w * w * w - 3 * w * w + 1;
 
-}       
+}
 
 static double level_weight(double distance, const double *radii, unsigned int level,
     unsigned int max_level){
@@ -53,7 +53,7 @@ static double level_weight(double distance, const double *radii, unsigned int le
             return weight_changing_function(distance, radii[0], radii[1]);
         }
         if(level == max_level){
-            return 1 - weight_changing_function(distance, radii[max_level - 1], radii[max_level]); 
+            return 1 - weight_changing_function(distance, radii[max_level - 1], radii[max_level]);
         }
         else{
             return weight_changing_function(distance, radii[level], radii[level + 1]) - weight_changing_function(distance, radii[level - 1], radii[level]);
@@ -163,9 +163,9 @@ static int evolve_level(struct reb_simulation* r,struct reb_particle* dh_particl
         for(size_t i = 1; i < r->N; i++){
             if(particles[i] && (deeper_particles == NULL || !deeper_particles[i])){
                 reb_integrator_whfast_kepler_solver(&dh_particles[i], mu, dt, r);
-                
+
             }
-               
+
         }
 
         if(num_deeper > 0){
@@ -236,7 +236,7 @@ static int evolve(struct reb_simulation* r,struct reb_particle* dh_particles, co
             struct SyMBA_Pair pair = {i, j};
             pairs[k++] = pair;
         }
-        
+
     }
 
     int result = evolve_level(r, dh_particles, particles, pairs, k, radii, 0, max_level, dt);
@@ -299,7 +299,7 @@ static void symba_step(struct reb_simulation* r, void* state){
 
     sun_drift(r, dh_particles, 0.5*dt);
 
-    // Advance the barycenter, corresponding to the operation on Q[0] in Python. 
+    // Advance the barycenter, corresponding to the operation on Q[0] in Python.
     reb_integrator_whfast_com_step(r, dh_particles, dt);
 
     reb_transformations_democraticheliocentric_to_inertial_posvel(r->particles, dh_particles, n, n);
@@ -311,7 +311,7 @@ static void symba_step(struct reb_simulation* r, void* state){
     cleanup:
     free(radii);
     free(dh_particles);
-    
+
     return;
 }
 
@@ -330,7 +330,7 @@ static const struct reb_binarydata_field_descriptor fields[] = {
     },
     {0},
 };
-              
+
 
 const struct reb_integrator reb_integrator_symba = {
     .documentation = "SyMBA with geometric shells and three substeps per level.",
