@@ -7,7 +7,6 @@ struct reb_integrator_symba_state {
     unsigned int levels;
     double r_outer;
     double ratio;
-    unsigned int optimized;
 };
 
 #endif
