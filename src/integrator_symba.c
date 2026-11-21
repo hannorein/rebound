@@ -44,21 +44,21 @@ static double weight_changing_function(double distance, double r_outer, double r
 }
 
 static double level_weight(double distance, const double *radii, unsigned int level,
-    unsigned int max_level){
-        assert(level <= max_level);
-        if (max_level == 0) {
-            return 1.0;
-        }
-        if(level == 0){
-            return weight_changing_function(distance, radii[0], radii[1]);
-        }
-        if(level == max_level){
-            return 1 - weight_changing_function(distance, radii[max_level - 1], radii[max_level]);
-        }
-        else{
-            return weight_changing_function(distance, radii[level], radii[level + 1]) - weight_changing_function(distance, radii[level - 1], radii[level]);
-        }
+        unsigned int max_level){
+    assert(level <= max_level);
+    if (max_level == 0) {
+        return 1.0;
     }
+    if(level == 0){
+        return weight_changing_function(distance, radii[0], radii[1]);
+    }
+    if(level == max_level){
+        return 1 - weight_changing_function(distance, radii[max_level - 1], radii[max_level]);
+    }
+    else{
+        return weight_changing_function(distance, radii[level], radii[level + 1]) - weight_changing_function(distance, radii[level - 1], radii[level]);
+    }
+}
 
 
 
@@ -70,31 +70,31 @@ struct SyMBA_Pair{
 
 
 static int level_wise_interaction_kick(const struct reb_simulation* r, struct reb_particle* dh_particles,
-    const struct SyMBA_Pair* pairs, size_t num_pairs,const double* radii,unsigned int level, unsigned int max_level,double dt){
-        for(size_t k = 0; k < num_pairs; k++)
-        {
-            struct reb_particle* a = &dh_particles[pairs[k].i];
-            struct reb_particle* b = &dh_particles[pairs[k].j];
-            const double dx = b->x - a->x;
-            const double dy = b->y - a->y;
-            const double dz = b->z - a->z;
-            const double r2 = dx * dx + dy * dy + dz * dz;
-            if (r2 == 0.0) {
-                return 0;
-            }
-            const double distance = sqrt(r2);
-            const double w = level_weight(distance, radii, level, max_level);
-            if (w == 0.0){continue; }
-            double force_common_part = r -> G * w / (r2 * distance);
-            double fi = force_common_part * a->m;
-            double fj = force_common_part * b->m;
-            a->vx += dt * fj * dx;
-            a->vy += dt * fj * dy;
-            a->vz += dt * fj * dz;
-            b->vx -= dt * fi * dx;
-            b->vy -= dt * fi * dy;
-            b->vz -= dt * fi * dz;
+        const struct SyMBA_Pair* pairs, size_t num_pairs,const double* radii,unsigned int level, unsigned int max_level,double dt){
+    for(size_t k = 0; k < num_pairs; k++)
+    {
+        struct reb_particle* a = &dh_particles[pairs[k].i];
+        struct reb_particle* b = &dh_particles[pairs[k].j];
+        const double dx = b->x - a->x;
+        const double dy = b->y - a->y;
+        const double dz = b->z - a->z;
+        const double r2 = dx * dx + dy * dy + dz * dz;
+        if (r2 == 0.0) {
+            return 0;
         }
+        const double distance = sqrt(r2);
+        const double w = level_weight(distance, radii, level, max_level);
+        if (w == 0.0){continue; }
+        double force_common_part = r -> G * w / (r2 * distance);
+        double fi = force_common_part * a->m;
+        double fj = force_common_part * b->m;
+        a->vx += dt * fj * dx;
+        a->vy += dt * fj * dy;
+        a->vz += dt * fj * dz;
+        b->vx -= dt * fi * dx;
+        b->vy -= dt * fi * dy;
+        b->vz -= dt * fi * dz;
+    }
     return 1;
 }
 
@@ -132,65 +132,65 @@ static int need_deeper_level(const struct reb_particle* a,const struct reb_parti
 
 static int evolve_level(struct reb_simulation* r,struct reb_particle* dh_particles, const int* particles,
         const struct SyMBA_Pair* pairs, size_t num_pairs, const double* radii,unsigned int level, unsigned int max_level, double dt){
-            int* deeper_particles = NULL;
-            struct SyMBA_Pair* deeper_pairs = NULL;
-            size_t num_deeper = 0;
-        if (!level_wise_interaction_kick(r, dh_particles, pairs, num_pairs, radii, level, max_level, dt / 2)) {
-            return 0;
-        }
-        if(level < max_level){
-            for(size_t k = 0; k < num_pairs; k++){
-                const struct SyMBA_Pair pair = pairs[k];
-                if (!need_deeper_level(&dh_particles[pair.i], &dh_particles[pair.j], radii[level], dt)) {
-                    continue;
-                }
-                if(num_deeper == 0){
-                    deeper_particles = calloc(r->N, sizeof(*deeper_particles));
-                    deeper_pairs = malloc(sizeof(struct SyMBA_Pair) * num_pairs);
-                    if(!deeper_particles || !deeper_pairs){
-                        free(deeper_particles);
-                        free(deeper_pairs);
-                        return 0;
-                    }
-                }
-                deeper_particles[pair.i] = 1;
-                deeper_particles[pair.j] = 1;
-                deeper_pairs[num_deeper++] = pair;
+    int* deeper_particles = NULL;
+    struct SyMBA_Pair* deeper_pairs = NULL;
+    size_t num_deeper = 0;
+    if (!level_wise_interaction_kick(r, dh_particles, pairs, num_pairs, radii, level, max_level, dt / 2)) {
+        return 0;
+    }
+    if(level < max_level){
+        for(size_t k = 0; k < num_pairs; k++){
+            const struct SyMBA_Pair pair = pairs[k];
+            if (!need_deeper_level(&dh_particles[pair.i], &dh_particles[pair.j], radii[level], dt)) {
+                continue;
             }
-        }
-
-        const double mu = r->G * r->particles[0].m;
-        for(size_t i = 1; i < r->N; i++){
-            if(particles[i] && (deeper_particles == NULL || !deeper_particles[i])){
-                reb_integrator_whfast_kepler_solver(&dh_particles[i], mu, dt, r);
-
-            }
-
-        }
-
-        if(num_deeper > 0){
-            for (size_t i = 0; i < 3; i++)
-            {
-                if (! evolve_level( r, dh_particles, deeper_particles, deeper_pairs, num_deeper,
-                radii, level + 1, max_level, dt/3))
-                {
+            if(num_deeper == 0){
+                deeper_particles = calloc(r->N, sizeof(*deeper_particles));
+                deeper_pairs = malloc(sizeof(struct SyMBA_Pair) * num_pairs);
+                if(!deeper_particles || !deeper_pairs){
                     free(deeper_particles);
                     free(deeper_pairs);
                     return 0;
                 }
             }
+            deeper_particles[pair.i] = 1;
+            deeper_particles[pair.j] = 1;
+            deeper_pairs[num_deeper++] = pair;
         }
-
-
-        free(deeper_particles);
-        free(deeper_pairs);
-
-        if(!level_wise_interaction_kick(r, dh_particles, pairs, num_pairs, radii, level, max_level, dt / 2)) {
-            return 0;
-        }
-
-        return 1;
     }
+
+    const double mu = r->G * r->particles[0].m;
+    for(size_t i = 1; i < r->N; i++){
+        if(particles[i] && (deeper_particles == NULL || !deeper_particles[i])){
+            reb_integrator_whfast_kepler_solver(&dh_particles[i], mu, dt, r);
+
+        }
+
+    }
+
+    if(num_deeper > 0){
+        for (size_t i = 0; i < 3; i++)
+        {
+            if (! evolve_level( r, dh_particles, deeper_particles, deeper_pairs, num_deeper,
+                        radii, level + 1, max_level, dt/3))
+            {
+                free(deeper_particles);
+                free(deeper_pairs);
+                return 0;
+            }
+        }
+    }
+
+
+    free(deeper_particles);
+    free(deeper_pairs);
+
+    if(!level_wise_interaction_kick(r, dh_particles, pairs, num_pairs, radii, level, max_level, dt / 2)) {
+        return 0;
+    }
+
+    return 1;
+}
 
 
 static int evolve(struct reb_simulation* r,struct reb_particle* dh_particles, const double* radii,unsigned int max_level, double dt){
@@ -251,20 +251,20 @@ static void symba_step(struct reb_simulation* r, void* state){
     const struct reb_integrator_symba_state* s = state;
 
     if (!s || s->levels == 0 || !(s->r_outer > 0.0) || !isfinite(s->r_outer) ||
-        (s->levels > 1 && (!(s->ratio > 1.0) || !isfinite(s->ratio)))){
+            (s->levels > 1 && (!(s->ratio > 1.0) || !isfinite(s->ratio)))){
         fail_step(r, "Invalid fixed-depth SyMBA shell configuration.");
         return;
     }
     const size_t n = r->N;
     if (!n || !(r->particles[0].m > 0.0) || !(r->G > 0.0) ||
-        (r->N_active != SIZE_MAX && r->N_active != n) || r->N_var || r->additional_forces || r->gravity != REB_GRAVITY_BASIC){
+            (r->N_active != SIZE_MAX && r->N_active != n) || r->N_var || r->additional_forces || r->gravity != REB_GRAVITY_BASIC){
         fail_step(r, "SyMBA requires active particles and isolated basic Newtonian gravity.");
         return;
     }
 
     if (r->dt == 0.0){
-    r->dt_last_done = 0.0;
-    return;}
+        r->dt_last_done = 0.0;
+        return;}
 
     double* radii = malloc(sizeof(double) * s->levels);
     struct reb_particle* dh_particles = malloc(sizeof(struct reb_particle) * n);
@@ -292,10 +292,10 @@ static void symba_step(struct reb_simulation* r, void* state){
     sun_drift(r, dh_particles, dt / 2);
 
     int result = evolve(r, dh_particles, radii, s->levels - 1, dt);
-        if (!result) {
-            fail_step(r, "Optimized SyMBA step failed.");
-            goto cleanup;
-        }
+    if (!result) {
+        fail_step(r, "Optimized SyMBA step failed.");
+        goto cleanup;
+    }
 
     sun_drift(r, dh_particles, 0.5*dt);
 
@@ -308,7 +308,7 @@ static void symba_step(struct reb_simulation* r, void* state){
     r->dt_last_done = dt;
 
 
-    cleanup:
+cleanup:
     free(radii);
     free(dh_particles);
 
