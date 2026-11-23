@@ -37,6 +37,8 @@ int main(int argc, char* argv[]) {
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
 
+    double boxsize = 3.5e7;
+    r->root_size = boxsize;
     r->N_root_x = 2;
     r->N_root_y = 2;
 	
