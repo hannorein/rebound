@@ -14,6 +14,7 @@ void force_J2_C22(struct reb_simulation* r);
 
 const int tmax = 10000; // time during which impact velocities are measured (measured in periods)
 const double dt_frac = 1./1200.;
+struct reb_timeval tim_start;
 
 int main(int argc, char* argv[]) {
     // Get the number of processors
@@ -65,6 +66,8 @@ int main(int argc, char* argv[]) {
 
     r->additional_forces = force_J2_C22;
     const double period_b = 2*M_PI/OMEGA_H; // rotational period of central body
+		
+    gettimeofday(&tim_start, NULL);
     reb_simulation_integrate(r, tmax*period_b);
 
     reb_simulation_free(r);
@@ -134,11 +137,12 @@ void heartbeat(struct reb_simulation* const r){
 	if (reb_simulation_output_check(r, 1e-1*2.*M_PI/OMEGA_H)){
 		struct reb_timeval tim;
         gettimeofday(&tim, NULL);
-        double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
+        double temp = tim.tv_sec+(tim.tv_usec/1000000.0) - tim_start.tv_sec+(tim_start.tv_usec/1000000.0);
+        tim_start = tim;
         printf("N_tot= %- 9ld  ",r->N);
         printf("t= %- 9f [orb]  ",r->t*OMEGA_H/2./M_PI);
         printf("dt= %- 9f  ",r->dt);
-        printf("cpu= %- 9f [s]  \n",temp-r->output_timing_last);
+        printf("cpu= %- 9f [s]  \n",temp);
 	}
 }
 
