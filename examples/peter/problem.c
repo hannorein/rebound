@@ -11,7 +11,6 @@
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 void heartbeat(struct reb_simulation* const r);
 void force_J2_C22(struct reb_simulation* r);
-double corr_factor(const struct reb_simulation* r, const struct reb_particle pt, const struct reb_particle primary);
 
 const int tmax = 10000; // time during which impact velocities are measured (measured in periods)
 const double dt_frac = 1./1200.;
@@ -28,6 +27,7 @@ int main(int argc, char* argv[]) {
         printf("Inside parallel region: %d\n", omp_get_num_threads());
     }
 	struct reb_simulation* r = reb_simulation_create();
+    reb_simulation_start_server(r, 1234);
 	// Setup constants
 	reb_simulation_set_integrator(r, "leapfrog");
     r->gravity      = REB_GRAVITY_TREE;
@@ -64,23 +64,6 @@ int main(int argc, char* argv[]) {
     r->additional_forces = force_J2_C22;
     const double period_b = 2*M_PI/OMEGA_H; // rotational period of central body
     reb_simulation_integrate(r, tmax*period_b);
-/*     char buffer[32];
-    snprintf(buffer, sizeof(char) * 32, "orbit_collisional_%d.dat", N_p);
-    FILE* f = fopen(buffer, "w");
-    fclose(f);
-    int _N = 1;
-    FILE* _f = fopen(buffer, "a");
-    for (int i = 0; i < _N*tmax; i++) {
-        reb_simulation_integrate(r, i*period_b/_N);
-        if (i % 5 == 0) {
-            for (int j = 1; j < r->N; j++) {
-                struct reb_particle* p = &r->particles[j];
-                fprintf(_f, "%.3f   %.3f   %d\n", p->x, p->y, i);
-            }
-            printf("\nNumber of collisions: %lld\n", r->collisions_log_n);
-        }
-    }
-    fclose(f); */
 
     reb_simulation_free(r);
 }
@@ -158,10 +141,3 @@ void heartbeat(struct reb_simulation* const r){
 }
 
 
-double corr_factor(const struct reb_simulation *r, const struct reb_particle pt, const struct reb_particle primary) {
-    struct reb_orbit o = reb_orbit_from_particle(r->G, pt, primary);
-    double x = pt.x, y = pt.y;
-    double corr = sqrt(1 + ((3.0/2.0) * J2planet 
-        + 9 * C22planet*(x*x-y*y)/(x*x+y*y)) * (Rplanet * Rplanet/o.d/o.d));
-    return corr;
-}
