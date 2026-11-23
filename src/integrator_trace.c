@@ -53,9 +53,21 @@ const struct reb_integrator reb_integrator_trace = {
     "with a dominant central mass if particles occasionally have close encounters. "
     "This TRACE implementation is described in [Lu, Hernandez & Rein (2024)]. " 
     "\n\n"
+    "TRACE can also use wide binary coordinates ([Chambers et al. (2002)]) for planetary systems orbiting one star "
+    "of a binary star system, or a planetary system experiencing a stellar flyby. "
+    "Close encounters between pairs of planets, and between planets and either star, are supported. "
+    "The implementation is described in [Lu & Brown (2026)]. "
+    "To use them, name the companion `widebinary` and set the coordinates:"
+    "\n\n"
+    "```python\n"
+    "sim.integrator = \"trace\"\n"
+    "sim.integrator.coordinates = \"widebinary\"\n"
+    "```\n\n"
+    "[Chambers et al. (2002)]: https://ui.adsabs.harvard.edu/abs/2002AJ....123.2884C/abstract\n"
     "[Hernandez & Dehnen (2023)]: https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract\n" 
     "[Lu, Hernandez & Rein (2024)]: https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L/abstract\n" 
     "[Pham, Rein, and Spiegel (2024)]: https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract\n"
+    "[Lu & Brown (2026)]: https://ui.adsabs.harvard.edu/abs/2026arXiv260501005L/abstract\n"
     ,
     .step = reb_integrator_trace_step,
     .create = reb_integrator_trace_create,
@@ -70,7 +82,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         "modified Hill radii criteria. This modified Hill radius for each particle is "
         "calculated and then multiplied by this parameter. The parameter is in units of "
         "the modified Hill radius. This value is used by the `default` switching function. "
-        "The default value is 4.", 
+        "The default value is 3.", 
         REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
     { "Critical distance (units of hill radius) for close encounters with the binary in WB coordinates.", 
         REB_DOUBLE,      "r_crit_WB",      offsetof(struct reb_integrator_trace_state, r_crit_WB), 0, 0, 0},
@@ -81,7 +93,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
     { "This flag determines how TRACE integrates close approaches with the central star.", 
         REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
-    { "Coordinates system. Possible options are DEMOCRATICHELIOCENTRIC (default) and WB (Wide binary).", 
+    { "Coordinates system. Possible options are DEMOCRATICHELIOCENTRIC (default) and WIDEBINARY (Wide binary).", 
         REB_INT,         "coordinates",      offsetof(struct reb_integrator_trace_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_COORDINATES)},
     { "This is a function pointer to the switching function for close encounters between "
         "non-central bodies. If NULL (the default), the default switching function will be used."
@@ -102,7 +114,7 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         "The argument `j` is the index of the non-central particle considered. "
         "The return value is either 0 or 1. A return value of 1 means a close encounter "
         "has been flagged. ",
-        REB_FUNCTIONPOINTER,"S_peri",            offsetof(struct reb_integrator_trace_state, S), 0, 0, 0},
+        REB_FUNCTIONPOINTER,"S_peri",            offsetof(struct reb_integrator_trace_state, S_peri), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
