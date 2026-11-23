@@ -6,7 +6,7 @@
 #include "rebound_internal.h"
 #include <string.h>
 #include "chariklo.h"
-#define N_p 24000 // ring particle number
+#define N_p 96000 // ring particle number
 
 double coefficient_of_restitution_bridges(const struct reb_simulation* const r, double v);
 void heartbeat(struct reb_simulation* const r);
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     int np = omp_get_num_procs();
     printf("Number of processors: %d\n", np);
     // Set the number of OpenMP threads to be the number of processors    
-    //omp_set_num_threads(np);
+    omp_set_num_threads(np);
     #pragma omp parallel
     {
         #pragma omp single
