@@ -1,3 +1,4 @@
+export OPENMP=1#
 export OPENGL=0# Set this to 1 to enable OpenGL
 export SERVER=1# Set this to 1 to enable the visualization web server
 include ../../src/Makefile.defs

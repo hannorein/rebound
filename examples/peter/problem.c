@@ -3,6 +3,7 @@
 #include <math.h>
 #include <omp.h>
 #include "rebound.h"
+#include "rebound_internal.h"
 #include <string.h>
 #include "chariklo.h"
 #define N_p 24000 // ring particle number
@@ -28,17 +29,18 @@ int main(int argc, char* argv[]) {
     }
 	struct reb_simulation* r = reb_simulation_create();
 	// Setup constants
-	r->integrator   = REB_INTEGRATOR_LEAPFROG;
+	reb_simulation_set_integrator(r, "leapfrog");
     r->gravity      = REB_GRAVITY_TREE;
     r->collision    = REB_COLLISION_LINETREE;
     r->boundary     = REB_BOUNDARY_OPEN;
     r->opening_angle2 = .5;
-    double boxsize = 3.5e7;
     r->collision_resolve = reb_collision_resolve_hardsphere;
     r->coefficient_of_restitution = coefficient_of_restitution_bridges;
 
-    reb_simulation_configure_box(r, boxsize, 2, 2, 1);
-	r->G                 = 6.67428e-11;         // N / kg^2 m^2
+    r->N_root_x = 2;
+    r->N_root_y = 2;
+	
+    r->G                 = 6.67428e-11;         // N / kg^2 m^2
     double a_cor = cbrt(r->G*Mplanet/pow(OMEGA_H, 2)); // corotation radius
     double a0 = cbrt(r->G*Mplanet/pow(OMEGA_H/3., 2)); // radius corresponding to 1/3 SOR
     double OMEGA = sqrt(r->G*Mplanet/pow(a0, 3));
@@ -148,12 +150,8 @@ void heartbeat(struct reb_simulation* const r){
 		struct reb_timeval tim;
         gettimeofday(&tim, NULL);
         double temp = tim.tv_sec+(tim.tv_usec/1000000.0);
-        printf("N_tot= %- 9d  ",r->N);
-        if (r->integrator==REB_INTEGRATOR_SEI){
-            printf("t= %- 9f [orb]  ",r->t*r->ri_sei.OMEGA/2./M_PI);
-        }else{
-            printf("t= %- 9f [orb]  ",r->t*OMEGA_H/2./M_PI);
-        }
+        printf("N_tot= %- 9ld  ",r->N);
+        printf("t= %- 9f [orb]  ",r->t*OMEGA_H/2./M_PI);
         printf("dt= %- 9f  ",r->dt);
         printf("cpu= %- 9f [s]  \n",temp-r->output_timing_last);
 	}
