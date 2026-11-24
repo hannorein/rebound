@@ -79,6 +79,7 @@ def kozai_sim():
 class TestIntegratorTrace(unittest.TestCase):
 
     # ------ Boilerplate transformations/ordering ------------
+    @unittest.skipIf(sys.platform == "win32", "TRACE's WB transformations are internal and not exported from the Windows DLL")
     def test_transformation(self):
         clib = rebound.clibrebound
         # tests if transforming inertial -> WB -> inertial returns same ICs
