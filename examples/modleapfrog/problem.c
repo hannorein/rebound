@@ -1,8 +1,8 @@
 /**
- * Modleapfrog
+ * Regularized Leap-frog
  *
  * This integrator is good at resolving highly eccentric orbits and 
- * close encounters of significant bodies. In this simulation, you
+ * close encounters of massive bodies. In this simulation, you
  * can visualize the increase in time resolution near periapsis as 
  * the simulation progresses through time nonlinearly.
  */
