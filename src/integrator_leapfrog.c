@@ -112,7 +112,7 @@ static double kinetic_energy(struct reb_simulation* r){
 static double drift(struct reb_simulation* r, struct reb_integrator_leapfrog_state* leapfrog, double dt){
     const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
-    
+
     if (leapfrog->regularized){
         dt /= (kinetic_energy(r) - leapfrog->E0); // use ficticious time to determine actual time step
     }
@@ -150,7 +150,7 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state){
     const double dtau = r->dt; // Fictitous timestep for regularized leapfrog, real timestep otherwise
     struct reb_integrator_leapfrog_state* leapfrog = state;
 
-    
+
     if (leapfrog->regularized){
         if (r->exact_finish_time){
             reb_simulation_error(r, "Regularized leap frog has an adaptive timestep and can not be used with exact_finish_time=1.");
