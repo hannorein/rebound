@@ -20,7 +20,12 @@ int main(int argc, char* argv[]){
     r->usleep = 40000; //May need to adjust per device
 
     // Setup system
-    reb_simulation_set_integrator(r, "modleapfrog");
+    reb_simulation_set_integrator(r, "leapfrog");
+    struct reb_integrator_leapfrog_state* leapfrog = r->integrator.state;
+    leapfrog->regularized = 1;
+    r->exact_finish_time = 0;
+
+
     double M = 1000;    //primary mass
     double m = 1;       //secondary mass
     double a = 1;       //secondary semi-major axis

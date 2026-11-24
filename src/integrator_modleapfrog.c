@@ -28,12 +28,15 @@ const struct reb_integrator reb_integrator_modleapfrog = {
 const struct reb_binarydata_field_descriptor reb_integrator_modleapfrog_field_descriptor_list[] = {
     { "Order of the integrator. Default is 2. Other allowed values are 4, 6 and 8.",
         REB_UINT,        "order",          offsetof(struct reb_integrator_modleapfrog_state, order), 0, 0, 0},
+    { "Set this flag to 1 to use the Mikkola and Tanikawa (1999) regularization. Default is 0.",
+        REB_UINT,        "regularized",    offsetof(struct reb_integrator_modleapfrog_state, regularized), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
 void* reb_integrator_modleapfrog_create(){
     struct reb_integrator_modleapfrog_state* modleapfrog = calloc(sizeof(struct reb_integrator_modleapfrog_state),1);
     modleapfrog->order = 2;
+    modleapfrog->regularized = 0;
     modleapfrog->E_0 = nan("");
     return modleapfrog;
 }
@@ -44,8 +47,7 @@ void reb_integrator_modleapfrog_free(void* p){
 }
 
 
-static double potential(struct reb_simulation* r){
-    // taken from tools.c's reb_simulation_energy
+static double potential_energy(struct reb_simulation* r){
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX)?N:r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
@@ -64,8 +66,7 @@ static double potential(struct reb_simulation* r){
     return e_pot;
 }
 
-static double kinetic(struct reb_simulation* r){
-    // taken from tools.c's reb_simulation_energy
+static double kinetic_energy(struct reb_simulation* r){
     const size_t N = r->N;
     const size_t N_active = (r->N_active==SIZE_MAX)?N:r->N_active;
     const struct reb_particle* restrict const particles = r->particles;
@@ -82,7 +83,10 @@ static double drift(struct reb_simulation* r, struct reb_integrator_modleapfrog_
     const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
     double E_0 = modleapfrog->E_0;
-    dt /= (kinetic(r) - E_0); // use ficticious time to determine actual time step
+    
+    if (modleapfrog->regularized){
+        dt /= (kinetic_energy(r) - E_0); // use ficticious time to determine actual time step
+    }
 
 #pragma omp parallel for schedule(guided)
     for (size_t i=0;i<N;i++){
@@ -94,11 +98,13 @@ static double drift(struct reb_simulation* r, struct reb_integrator_modleapfrog_
     return dt;
 }
 
-static void kick(struct reb_simulation* r, struct reb_integrator_modleapfrog_state* modleapfrog, double dtau){
+static void kick(struct reb_simulation* r, struct reb_integrator_modleapfrog_state* modleapfrog, double dt){
     const size_t N = r->N;
     struct reb_particle* restrict const particles = r->particles;
 
-    double dt = -1 * dtau/potential(r); // use ficticious time to determine actual time step
+    if (modleapfrog->regularized){
+        dt /= -potential_energy(r); // use ficticious time to determine actual time step
+    }
 
 #pragma omp parallel for schedule(guided)
     for (size_t i=0;i<N;i++){
@@ -111,18 +117,22 @@ static void kick(struct reb_simulation* r, struct reb_integrator_modleapfrog_sta
 // Leapfrog integrator (Drift-Kick-Drift)
 // for non-rotating frame.
 void reb_integrator_modleapfrog_step(struct reb_simulation* r, void* state){
-
     r->gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
+    const double dtau = r->dt; // Fictitous timestep for regularized leapfrog, real timestep otherwise
     struct reb_integrator_modleapfrog_state* modleapfrog = state;
 
-    const double dtau = r->dt;
     
-    // If we haven't set the initial energy yet, do it.
-    if (isnan(modleapfrog->E_0)){
-        modleapfrog->E_0 = reb_simulation_energy(r);
+    if (modleapfrog->regularized){
+        if (r->exact_finish_time){
+            reb_simulation_error(r, "Regularized leapfrog has an adaptive timestep and can not be used with exact_finish_time=1.");
+        }
+        if (isnan(modleapfrog->E_0)){
+            // If we haven't set the initial energy yet, do it.
+            modleapfrog->E_0 = reb_simulation_energy(r);
+        }
     }
 
-    double dt = 0;
+    double dt = 0; // real timesteps performed
     switch (modleapfrog->order){
         case 2: // 1*2 FE
             dt += drift(r, modleapfrog, dtau*0.5);
@@ -230,9 +240,5 @@ void reb_integrator_modleapfrog_step(struct reb_simulation* r, void* state){
             reb_simulation_error(r, "Leapfrog order not supported.");
             return;
     }
-
-    // Assert that we cannot give an exact finish time
-    r->exact_finish_time = 0; 
-    
     r->dt_last_done = dt;
 }
