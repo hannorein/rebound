@@ -10,35 +10,41 @@ class TestIntegrator(unittest.TestCase):
     def tearDown(self):
         self.sim = None
 
-    def test_force_exact_finish_time(self):
-        self.sim.integrator = "modleapfrog"
+    def test_regularized_leapfrog_exact_finish_time(self):
+        self.sim.integrator = "leapfrog"
         self.sim.integrator.order = 2
+        self.sim.integrator.regularized = 1
         self.sim.dt = 1
-        self.sim.steps(1)
-        exact_finish_time = self.sim.exact_finish_time
-        self.assertEqual(exact_finish_time,0)
+        self.sim.add(m=1)
+        
+        with self.assertRaises(RuntimeError):
+            self.sim.integrate(1.0, exact_finish_time=1)
     
-    def test_modleapfrog_wrong_order(self):
-        self.sim.integrator = "modleapfrog"
+    def test_regularized_leapfrog_wrong_order(self):
+        self.sim.integrator = "leapfrog"
         self.sim.integrator.order = 42
+        self.sim.exact_finish_time = 0
+
         with self.assertRaises(RuntimeError):
             self.sim.steps(1)
 
-    def test_modleapfrog_energy_solar_system_order(self):
+    def test_regularized_leapfrog_energy_solar_system_order(self):
         for order, target in zip([2,4,6,8], [1e-5, 2e-6, 1e-9, 1e-12]):
-            self.sim.integrator = "modleapfrog"
+            self.sim.integrator = "leapfrog"
             self.sim.integrator.order = order
+            self.sim.integrator.regularized = 1
             self.sim.add("solar system")
             self.sim.dt = 1e-5
             e0 = self.sim.energy()
             self.assertNotEqual(e0,0.)
-            self.sim.integrate(1e3)
+            self.sim.integrate(1e3, exact_finish_time=0)
             e1 = self.sim.energy()
             self.assertLess(math.fabs((e0-e1)/e1), target)
     
-    def test_modleapfrog_energy_3body(self):
+    def test_regularized_leapfrog_energy_3body(self):
         for order, target in zip([2,4,6,8], [1e-4, 2e-7, 1e-11, 1e-11]):
-            self.sim.integrator = "modleapfrog"
+            self.sim.integrator = "leapfrog"
+            self.sim.integrator.regularized = 1
             self.sim.integrator.order = order
             self.sim.dt = 1e-2
 
@@ -53,12 +59,13 @@ class TestIntegrator(unittest.TestCase):
 
             e0 = self.sim.energy()
             self.assertNotEqual(e0,0.)
-            self.sim.integrate(T)
+            self.sim.integrate(T, exact_finish_time=0)
             e1 = self.sim.energy()
             self.assertLess(math.fabs((e0-e1)/e1), target)
 
-    def test_modleapfrog_energy_collision(self):
-        self.sim.integrator = "modleapfrog"
+    def test_regularized_leapfrog_energy_collision(self):
+        self.sim.integrator = "leapfrog"
+        self.sim.integrator.regularized = 1
         self.sim.integrator.order = 4
         self.sim.dt = 1e-1
 
@@ -67,13 +74,14 @@ class TestIntegrator(unittest.TestCase):
 
         e0 = self.sim.energy()
         self.assertNotEqual(e0,0.)
-        self.sim.integrate(1e3)
+        self.sim.integrate(1e3, exact_finish_time=0)
         e1 = self.sim.energy()
         self.assertLess(math.fabs((e0-e1)/e1), 1e-13)
 
 
-    def test_modleapfrog_dt_last_done(self):
-        self.sim.integrator = "modleapfrog"
+    def test_regularized_leapfrog_dt_last_done(self):
+        self.sim.integrator = "leapfrog"
+        self.sim.integrator.regularized = 1
         self.sim.integrator.order = 4
 
         dtau = 1e-1
