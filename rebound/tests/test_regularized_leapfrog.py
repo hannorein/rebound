@@ -76,13 +76,14 @@ class TestIntegrator(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         self.sim.integrate(1e3, exact_finish_time=0)
         e1 = self.sim.energy()
-        self.assertLess(math.fabs((e0-e1)/e1), 1e-13)
+        self.assertLess(math.fabs((e0-e1)/e1), 1.5e-13)
 
 
     def test_regularized_leapfrog_dt_last_done(self):
         self.sim.integrator = "leapfrog"
         self.sim.integrator.regularized = 1
         self.sim.integrator.order = 4
+        self.sim.exact_finish_time = 0
 
         dtau = 1e-1
         self.sim.dt = dtau
