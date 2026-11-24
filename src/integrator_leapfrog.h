@@ -29,6 +29,8 @@ extern const struct reb_integrator reb_integrator_leapfrog;
 
 struct reb_integrator_leapfrog_state {
     unsigned int order;
+    unsigned int regularized;
+    double E0; // Initial energy (used by regulaized leapfrog)
 };
 
 // Constants also used by EOS.
