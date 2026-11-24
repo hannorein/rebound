@@ -24,6 +24,7 @@ int main(int argc, char* argv[]){
     r->dt = 0.0012*2.*M_PI;                
     reb_simulation_set_integrator(r, "symba");
     struct reb_integrator_symba_state* symba = r->integrator.state;
+    symba->levels = 20;
     r->heartbeat = heartbeat;
     r->status = REB_STATUS_PAUSED;
 
