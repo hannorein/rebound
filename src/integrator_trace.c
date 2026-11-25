@@ -1720,8 +1720,10 @@ void reb_integrator_trace_step(struct reb_simulation* r, void* state){
     // Not sure why this was needed. HR 4 April 2026
     // reb_integrator_trace_update_acceleration(r);
 
-    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
-    else reb_integrator_trace_inertial_to_dh(r);
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+        reb_integrator_trace_inertial_to_wb(r);
+        if (reb_simulation_get_particle_by_name(r, "widebinary") == NULL) reb_simulation_warning(r, "TRACE is set to Wide Binary coordinates, but no particle is named \"widebinary\".");
+    }else reb_integrator_trace_inertial_to_dh(r);
 
     // Create copy of all particle to allow for the step to be rejected.
     memcpy(trace->particles_backup, r->particles, N*sizeof(struct reb_particle));

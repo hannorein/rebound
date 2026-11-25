@@ -32,7 +32,6 @@
 #include "rebound.h"
 #include "rebound_internal.h"
 #include <math.h>
-#include <string.h>
 #include "particle.h"
 #include "simulation.h"
 #include "collision.h"
@@ -683,18 +682,6 @@ enum REB_COLLISION_RESOLVE_OUTCOME reb_collision_resolve_merge(struct reb_simula
         swap = 1;
         i = c.p2;
         j = c.p1;
-    }
-
-    // Exception for TRACE in wide binary coordinates: companion keeps wide binary name
-    const size_t N_active_merge = ((r->N_active==SIZE_MAX)?r->N:r->N_active);
-    if (r->integrator.name && strcmp(r->integrator.name, "trace")==0 && j<N_active_merge){
-        const struct reb_integrator_trace_state* const trace = r->integrator.state;
-        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")) == (int)j){
-            const size_t tmp = i;
-            i = j;
-            j = tmp;
-            swap = !swap;
-        }
     }
 
     struct reb_particle* pi = &(r->particles[i]);
