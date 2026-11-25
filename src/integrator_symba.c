@@ -210,20 +210,13 @@ static int evolve(struct reb_simulation* r,struct reb_particle* dh_particles, co
 
     struct SyMBA_Pair* pairs;
     if(a*b == 0){
+        // n==1, r->N = 2
         pairs = NULL;
     }else{
         pairs = malloc(sizeof(struct SyMBA_Pair) * a * b);
-        if(!pairs){
-            return 0;
-        }
     }
 
     int* particles = calloc(r->N, sizeof(*particles));
-    if (!particles)
-    {
-        free(pairs);
-        return 0;
-    }
     size_t k = 0;
     for(size_t i = 1; i < r->N ; i++){
         particles[i] = 1;
