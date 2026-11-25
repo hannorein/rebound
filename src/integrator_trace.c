@@ -269,7 +269,7 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
             // reb_integrator_trace_wb_to_inertial(r);
             const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); // star B assumed to be last active particle
             const int has_binary = (idxB != -1);
-            if (has_binary && j != idxB){
+            if (has_binary && j != (size_t)idxB){
                 // A-B distance in inertial coordinates
                 double bx = r->particles[idxB].x - r->particles[0].x;
                 double by = r->particles[idxB].y - r->particles[0].y;
