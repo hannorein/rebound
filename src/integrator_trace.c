@@ -53,9 +53,21 @@ const struct reb_integrator reb_integrator_trace = {
     "with a dominant central mass if particles occasionally have close encounters. "
     "This TRACE implementation is described in [Lu, Hernandez & Rein (2024)]. " 
     "\n\n"
+    "TRACE can also use wide binary coordinates ([Chambers et al. (2002)]) for planetary systems orbiting one star "
+    "of a binary star system, or a planetary system experiencing a stellar flyby. "
+    "Close encounters between pairs of planets, and between planets and either star, are supported. "
+    "The implementation is described in [Lu & Brown (2026)]. "
+    "To use them, name the companion `widebinary` and set the coordinates:"
+    "\n\n"
+    "```python\n"
+    "sim.integrator = \"trace\"\n"
+    "sim.integrator.coordinates = \"widebinary\"\n"
+    "```\n\n"
+    "[Chambers et al. (2002)]: https://ui.adsabs.harvard.edu/abs/2002AJ....123.2884C/abstract\n"
     "[Hernandez & Dehnen (2023)]: https://ui.adsabs.harvard.edu/abs/2023MNRAS.522.4639H/abstract\n" 
     "[Lu, Hernandez & Rein (2024)]: https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L/abstract\n" 
     "[Pham, Rein, and Spiegel (2024)]: https://ui.adsabs.harvard.edu/abs/2024OJAp....7E...1P/abstract\n"
+    "[Lu & Brown (2026)]: https://ui.adsabs.harvard.edu/abs/2026arXiv260501005L/abstract\n"
     ,
     .step = reb_integrator_trace_step,
     .create = reb_integrator_trace_create,
@@ -70,8 +82,10 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         "modified Hill radii criteria. This modified Hill radius for each particle is "
         "calculated and then multiplied by this parameter. The parameter is in units of "
         "the modified Hill radius. This value is used by the `default` switching function. "
-        "The default value is 4.", 
+        "The default value is 3.", 
         REB_DOUBLE,      "r_crit_hill",      offsetof(struct reb_integrator_trace_state, r_crit_hill), 0, 0, 0},
+    { "Critical distance (units of hill radius) for close encounters with the binary in WB coordinates.", 
+        REB_DOUBLE,      "r_crit_WB",      offsetof(struct reb_integrator_trace_state, r_crit_WB), 0, 0, 0},
     { "The criteria for a pericenter approach with the central body. This criteria is used "
         "in the `default` pericenter switching condition. It flags a particle as in a close "
         "pericenter approach if the ratio of the timestep to the condition described in "
@@ -79,6 +93,8 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         REB_DOUBLE,      "peri_crit_eta",    offsetof(struct reb_integrator_trace_state, peri_crit_eta), 0, 0, 0},
     { "This flag determines how TRACE integrates close approaches with the central star.", 
         REB_INT,         "peri_mode",        offsetof(struct reb_integrator_trace_state, peri_mode), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_PERIMODE)},
+    { "Coordinates system. Possible options are DEMOCRATICHELIOCENTRIC (default) and WIDEBINARY (Wide binary).", 
+        REB_INT,         "coordinates",      offsetof(struct reb_integrator_trace_state, coordinates), 0, 0, REB_GENERATE_ENUM_DESCRIPTORS(REB_INTEGRATOR_TRACE_COORDINATES)},
     { "This is a function pointer to the switching function for close encounters between "
         "non-central bodies. If NULL (the default), the default switching function will be used."
         "The default switching function is a similar (but slightly modified) switching function "
@@ -98,17 +114,19 @@ const struct reb_binarydata_field_descriptor reb_integrator_trace_field_descript
         "The argument `j` is the index of the non-central particle considered. "
         "The return value is either 0 or 1. A return value of 1 means a close encounter "
         "has been flagged. ",
-        REB_FUNCTIONPOINTER,"S_peri",            offsetof(struct reb_integrator_trace_state, S), 0, 0, 0},
+        REB_FUNCTIONPOINTER,"S_peri",            offsetof(struct reb_integrator_trace_state, S_peri), 0, 0, 0},
     { 0 }, // Null terminated list
 };
 
 void* reb_integrator_trace_create(){
     struct reb_integrator_trace_state* trace = calloc(sizeof(struct reb_integrator_trace_state),1);
     trace->r_crit_hill = 3;
+    trace->r_crit_WB = 0.1;
     trace->peri_crit_eta = 1.0;
     trace->S = NULL;
     trace->S_peri = NULL;
     trace->peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS;
+    trace->coordinates = REB_INTEGRATOR_TRACE_COORDINATES_DEMOCRATICHELIOCENTRIC;
     return trace;
 }
 
@@ -205,16 +223,16 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     const struct reb_integrator_trace_state* const trace = r->integrator.state;
     double GM = r->G*r->particles[0].m; // Not sure if this is the right mass to use.
 
-    double x = r->particles[j].x;
-    double y = r->particles[j].y;
-    double z = r->particles[j].z;
+    double x = r->particles[j].x - r->particles[0].x;
+    double y = r->particles[j].y - r->particles[0].y;
+    double z = r->particles[j].z - r->particles[0].z;
     double d2 = x*x + y*y + z*z;
     double d = sqrt(d2);
 
     // first derivative
-    double dx = r->particles[j].vx;
-    double dy = r->particles[j].vy;
-    double dz = r->particles[j].vz;
+    double dx = r->particles[j].vx - r->particles[0].vx;
+    double dy = r->particles[j].vy - r->particles[0].vy;
+    double dz = r->particles[j].vz - r->particles[0].vz;
 
     // second derivative
     double prefact2 = -GM/(d2*d);
@@ -245,8 +263,61 @@ int reb_integrator_trace_switch_peri_default(struct reb_simulation* const r, con
     if (r->dt * r->dt > dt_prs2){
         return 1;
     }else{
+        // In WB coordinates, we also switch if we enter the binary's hill sphere x r_crit_WB
+
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+            // reb_integrator_trace_wb_to_inertial(r);
+            const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); // star B assumed to be last active particle
+            const int has_binary = (idxB != -1);
+            if (has_binary && j != idxB){
+                // A-B distance in inertial coordinates
+                double bx = r->particles[idxB].x - r->particles[0].x;
+                double by = r->particles[idxB].y - r->particles[0].y;
+                double bz = r->particles[idxB].z - r->particles[0].z;
+                double br2 = bx*bx + by*by + bz*bz;
+                double mr = r->particles[idxB].m/(3.*r->particles[0].m);
+
+                double factor2 = trace->r_crit_WB*trace->r_crit_WB;
+                const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+
+                double dxb = r->particles[j].x - r->particles[idxB].x;
+                double dyb = r->particles[j].y - r->particles[idxB].y;
+                double dzb = r->particles[j].z - r->particles[idxB].z;
+                double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+
+                if (d2b*d2b*d2b < rhillb6){
+                    return 1;
+                }
+            }
+
+        }
         return 0;
     }
+}
+
+int reb_integrator_trace_switch_WB_default(struct reb_simulation* const r, const size_t j){
+    // reb_integrator_trace_wb_to_inertial(r);
+    const struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); 
+    double bx = r->particles[idxB].x - r->particles[0].x;
+    double by = r->particles[idxB].y - r->particles[0].y;
+    double bz = r->particles[idxB].z - r->particles[0].z;
+    double br2 = bx*bx + by*by + bz*bz;
+    double mr = r->particles[idxB].m/(3.*r->particles[0].m);
+
+    double factor2 = trace->r_crit_WB*trace->r_crit_WB;
+    const double rhillb6 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+    //const double rhillb62 = factor2*factor2*factor2*br2*br2*br2*mr*mr;
+
+    double dxb = r->particles[j].x - r->particles[idxB].x;
+    double dyb = r->particles[j].y - r->particles[idxB].y;
+    double dzb = r->particles[j].z - r->particles[idxB].z;
+    double d2b = dxb*dxb + dyb*dyb + dzb*dzb;
+
+    if (d2b*d2b*d2b < rhillb6){
+        return 1;
+    }
+    return 0;
 }
 
 int reb_integrator_trace_switch_peri_none(struct reb_simulation* const r, const size_t j){
@@ -331,6 +402,363 @@ void reb_integrator_trace_dh_to_inertial(struct reb_simulation* r){
     particles[0].vx = trace->com_vel.x - temp.vx;
     particles[0].vy = trace->com_vel.y - temp.vy;
     particles[0].vz = trace->com_vel.z - temp.vz;
+}
+
+void reb_integrator_trace_inertial_to_wb(struct reb_simulation* r){
+    struct reb_particle* particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const int N = r->N;
+    const int N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?r->N:r->N_active;
+
+    const int idxA = 0; // star A assumed to be first particle
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+
+    if (idxB == -1){
+        // no binary companion, just shift to DH coordinates
+        reb_integrator_trace_inertial_to_dh(r);
+        return;
+    }
+
+    double mplanets = 0.0; // total planet mass
+    struct reb_vec3d sum_mx = {0.0, 0.0, 0.0};   // sum(m_i x_i)
+    struct reb_vec3d sum_mvx = {0.0, 0.0, 0.0};  // sum(m_i v_i)
+
+    for (int i = 1; i <= N_active-1; ++i){
+        if (i == idxB) continue; // skip binary companion
+        double m = particles[i].m;
+        mplanets += m;
+        sum_mx.x  += m * particles[i].x;
+        sum_mx.y  += m * particles[i].y;
+        sum_mx.z  += m * particles[i].z;
+        sum_mvx.x += m * particles[i].vx;
+        sum_mvx.y += m * particles[i].vy;
+        sum_mvx.z += m * particles[i].vz;
+    }
+
+    double mA = particles[idxA].m;
+    double mB = particles[idxB].m;
+    double mtot = mA + mB + mplanets;
+
+    // ------------------ POSITIONS ------------------
+    // Save B original position
+    struct reb_vec3d xB_orig = {
+        .x=particles[idxB].x,
+        .y=particles[idxB].y,
+        .z=particles[idxB].z
+    };
+
+    // X_i = x_i - x_A
+    // Particle 0 is also changed to allow for easy collision detection NOT YET BUT PUT THIS BACK IN!!!!!
+    for (int i=N-1; i>0; i--){
+        if (i == idxB) continue; // skip binary companion
+        particles[i].x -= particles[idxA].x;
+        particles[i].y -= particles[idxA].y;
+        particles[i].z -= particles[idxA].z;
+    }
+
+    // X_B = x_B - (mA xA + sum_mx)/(mA+mplanets)
+    particles[idxB].x -= (mA*particles[idxA].x + sum_mx.x)/(mA+mplanets);
+    particles[idxB].y -= (mA*particles[idxA].y + sum_mx.y)/(mA+mplanets);
+    particles[idxB].z -= (mA*particles[idxA].z + sum_mx.z)/(mA+mplanets);
+
+    // X_A = (mA xA + mB xB + sum_mx) / mtot
+    // X_A = COM position — save it, then zero particle A
+    trace->com_pos.x = (mA * particles[idxA].x + mB * xB_orig.x + sum_mx.x) / mtot;
+    trace->com_pos.y = (mA * particles[idxA].y + mB * xB_orig.y + sum_mx.y) / mtot;
+    trace->com_pos.z = (mA * particles[idxA].z + mB * xB_orig.z + sum_mx.z) / mtot;
+    // Particle 0 is also changed to allow for easy collision detection
+    particles[idxA].x = 0.0;
+    particles[idxA].y = 0.0;
+    particles[idxA].z = 0.0;
+
+    // ------------------ VELOCITIES ------------------
+    // Save original inertial velocities before any writes
+    struct reb_vec3d vA_orig = { particles[idxA].vx, particles[idxA].vy, particles[idxA].vz };
+    struct reb_vec3d vB_orig = { particles[idxB].vx, particles[idxB].vy, particles[idxB].vz };
+
+    // Planets: V_i = v_i - (mA vA + sum_mvx)/(mA+mplanets)
+    for (int i=N-1; i>0; i--) {
+        if (i == idxB) continue; // skip binary companion
+        particles[i].vx -= (mA*vA_orig.x + sum_mvx.x)/(mA+mplanets);
+        particles[i].vy -= (mA*vA_orig.y + sum_mvx.y)/(mA+mplanets);
+        particles[i].vz -= (mA*vA_orig.z + sum_mvx.z)/(mA+mplanets);
+    }
+
+    // Total momentum (inertial)
+    struct reb_vec3d Ptot = {
+        .x = mA*vA_orig.x + mB*vB_orig.x + sum_mvx.x,
+        .y = mA*vA_orig.y + mB*vB_orig.y + sum_mvx.y,
+        .z = mA*vA_orig.z + mB*vB_orig.z + sum_mvx.z
+    };
+
+    // A DOF is the COM: V_A = Ptot / mtot
+    trace->com_vel.x = Ptot.x / mtot;
+    trace->com_vel.y = Ptot.y / mtot;
+    trace->com_vel.z = Ptot.z / mtot;
+    particles[idxA].vx = 0.0;
+    particles[idxA].vy = 0.0;
+    particles[idxA].vz = 0.0;
+
+    // B DOF: V_B = v_B - Ptot/mtot  (i.e. v_B - V_A)
+    particles[idxB].vx -= trace->com_vel.x;
+    particles[idxB].vy -= trace->com_vel.y;
+    particles[idxB].vz -= trace->com_vel.z;
+}
+
+void reb_integrator_trace_wb_to_inertial(struct reb_simulation* r) {
+    struct reb_particle* particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const int N = r->N;
+    const int N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1)?r->N:r->N_active;
+
+    const int idxA = 0; // star A assumed to be first particle
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+
+    if (idxB == -1){
+        // no binary companion, just shift to DH coordinates
+        reb_integrator_trace_dh_to_inertial(r);
+        return;
+    }
+
+    // ------------------ sums from WB planet coordinates ------------------
+    double M = 0.0; // Σ m_i
+    struct reb_vec3d sum_mX = {0.0, 0.0, 0.0}; // Σ m_i X_i
+    struct reb_vec3d sum_mV = {0.0, 0.0, 0.0}; // Σ m_i V_i
+
+    for (int i = 1; i <= N_active-1; ++i) {
+        if (i == idxB) continue; // skip binary companion
+        const double m = particles[i].m;
+        M += m;
+        sum_mX.x += m * particles[i].x;
+        sum_mX.y += m * particles[i].y;
+        sum_mX.z += m * particles[i].z;
+
+        sum_mV.x += m * particles[i].vx;
+        sum_mV.y += m * particles[i].vy;
+        sum_mV.z += m * particles[i].vz;
+    }
+
+    const double mA = particles[idxA].m;
+    const double mB = particles[idxB].m;
+    const double mtot   = mA + mB + M;
+    const double denomA = mA + M;  // (mA + Σ m_i)
+
+    // Cache WB star
+    const struct reb_vec3d X_B = { particles[idxB].x,  particles[idxB].y,  particles[idxB].z };
+    const struct reb_vec3d V_B = { particles[idxB].vx, particles[idxB].vy, particles[idxB].vz };
+
+    // POSITIONS
+    struct reb_vec3d sum_mX_over_d = {0.0, 0.0, 0.0};
+    sum_mX_over_d.x = sum_mX.x / denomA;
+    sum_mX_over_d.y = sum_mX.y / denomA;
+    sum_mX_over_d.z = sum_mX.z / denomA;
+
+    // Use com to calculate central object's position.
+    // This ignores previous values stored in particles[0].
+    // Should not matter unless collisions occurred.
+    particles[idxA].x = trace->com_pos.x - (mB * X_B.x + mB * sum_mX_over_d.x + sum_mX.x) / mtot;
+    particles[idxA].y = trace->com_pos.y - (mB * X_B.y + mB * sum_mX_over_d.y + sum_mX.y) / mtot;
+    particles[idxA].z = trace->com_pos.z - (mB * X_B.z + mB * sum_mX_over_d.z + sum_mX.z) / mtot;
+
+    // Planets: x_i = X_i + x_A
+    // Loop over all N to include test particles
+    for (int i=1;i<N;i++) {
+        if (i == idxB) continue; // skip binary companion
+        particles[i].x += particles[idxA].x; // particles[i].x currently X_i
+        particles[i].y += particles[idxA].y;
+        particles[i].z += particles[idxA].z;
+    }
+
+    // Star B: x_B = X_B + x_A + sum_mX/denomA
+    particles[idxB].x = X_B.x + particles[idxA].x + sum_mX_over_d.x; 
+    particles[idxB].y = X_B.y + particles[idxA].y + sum_mX_over_d.y; 
+    particles[idxB].z = X_B.z + particles[idxA].z + sum_mX_over_d.z;
+
+    // Common additive term for all planets: W = V_A - coefB * V_B
+    const struct reb_vec3d W = {
+        trace->com_vel.x - (mB / denomA) * V_B.x,
+        trace->com_vel.y - (mB / denomA) * V_B.y,
+        trace->com_vel.z - (mB / denomA) * V_B.z
+    };
+
+    // v_A
+    particles[idxA].vx = W.x - sum_mV.x / mA;
+    particles[idxA].vy = W.y - sum_mV.y / mA;
+    particles[idxA].vz = W.z - sum_mV.z / mA;
+
+    // v_B
+    particles[idxB].vx = V_B.x + trace->com_vel.x;
+    particles[idxB].vy = V_B.y + trace->com_vel.y;
+    particles[idxB].vz = V_B.z + trace->com_vel.z;
+
+    // Planets: v_i = V_i + add_planet
+    for (int i = 1; i < N; ++i) {
+        if (i == idxB) continue;
+        particles[i].vx += W.x; // particles[i].vx currently V_i
+        particles[i].vy += W.y;
+        particles[i].vz += W.z;
+    }
+}
+
+static void reb_integrator_trace_calculate_acceleration_mode_interaction_wb(struct reb_simulation* r){
+    struct reb_particle* const particles = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
+    const size_t N = r->N;
+    const double G = r->G;
+    const double softening2 = r->softening*r->softening;
+    const size_t N_active = ((r->N_active==SIZE_MAX)?N:r->N_active);
+    const int _testparticle_type   = r->testparticle_type;
+
+    const int idxA = 0;
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+    const int has_binary = (idxB != -1);
+    const double mA = particles[idxA].m;
+    const double mB = has_binary ? particles[idxB].m : 0.0;
+
+    // little s, equation (13)
+    struct reb_vec3d s = {0};
+    double mtotA = mA;
+    for (size_t i=0; i<N; i++){
+        particles[i].ax = 0;
+        particles[i].ay = 0;
+        particles[i].az = 0;
+
+        if (i != idxA && i < N_active){ // only loop over active planets
+            if ((int)i==idxB) continue; // skip binary companion
+            s.x += particles[i].m * particles[i].x;
+            s.y += particles[i].m * particles[i].y;
+            s.z += particles[i].m * particles[i].z;
+            mtotA += particles[i].m;
+        }
+    }
+
+    s.x /= mtotA;
+    s.y /= mtotA;
+    s.z /= mtotA;
+
+    // Binary-related quantities (only if binary exists)
+    double dbx = 0.0, dby = 0.0, dbz = 0.0;
+    double _rb = 1.0, _Rb = 1.0;
+    double prefact1 = 0.0;
+
+    if (has_binary){
+        dbx = particles[idxB].x + s.x;
+        dby = particles[idxB].y + s.y;
+        dbz = particles[idxB].z + s.z;
+        _rb = sqrt(dbx*dbx + dby*dby + dbz*dbz);
+        _Rb = sqrt(particles[idxB].x*particles[idxB].x + particles[idxB].y*particles[idxB].y + particles[idxB].z*particles[idxB].z);
+        prefact1 = -G*mA*mB/mtotA / (_rb*_rb*_rb);
+
+        // Acceleration of the binary due to star A
+        const double prefactorb1 = G*mA / (_Rb*_Rb*_Rb);
+        const double prefactorb2 = G*mA / (_rb*_rb*_rb);
+        particles[idxB].ax += prefactorb1*particles[idxB].x - prefactorb2*dbx;
+        particles[idxB].ay += prefactorb1*particles[idxB].y - prefactorb2*dby;
+        particles[idxB].az += prefactorb1*particles[idxB].z - prefactorb2*dbz;
+    }
+
+    // Second term in Equation 14 compute C = sum_i m_i * (Xb - Xi + s)/|...|^3
+    struct reb_vec3d C = {0};
+
+    // Active-active planet interactions
+    for (size_t i=2; i<N_active;i++){
+        if (reb_sigint > 1) return;
+        if ((int)i == idxB) continue;
+        for (size_t j=1;j<i;j++){
+            if ((int)j == idxB) continue;
+            // Pairwise planet interactions
+            if (trace->current_Ks[j*r->N+i]) continue;
+            const double dx = particles[i].x - particles[j].x;
+            const double dy = particles[i].y - particles[j].y;
+            const double dz = particles[i].z - particles[j].z;
+            const double _r = sqrt(dx*dx + dy*dy + dz*dz);
+
+            // Last term of Equation (14)
+            const double prefact = G / (_r*_r*_r);
+            const double prefactj = -prefact*particles[j].m;
+            const double prefacti = prefact*particles[i].m;
+            particles[i].ax    += prefactj*dx;
+            particles[i].ay    += prefactj*dy;
+            particles[i].az    += prefactj*dz;
+            particles[j].ax    += prefacti*dx;
+            particles[j].ay    += prefacti*dy;
+            particles[j].az    += prefacti*dz;
+        }
+    }
+
+    // Repurposing this loop. Outer loop is used to add in the binary terms too.
+    const int startitestp = MAX(N_active,2);
+    for (size_t i=1; i<N; i++){
+        if (reb_sigint > 1) return;
+        if ((int)i == idxB) continue; // to avoid double counting the binary
+
+        // All the binary interactions
+        // Xb - Xi + Sx
+        if (has_binary){
+            // Xb - Xi + Sx
+            const double dbix = dbx - particles[i].x;
+            const double dbiy = dby - particles[i].y;
+            const double dbiz = dbz - particles[i].z;
+            const double _rbi = sqrt(dbix*dbix + dbiy*dbiy + dbiz*dbiz);
+
+            const double rx = (particles[idxB].x + s.x) - particles[i].x;
+            const double ry = (particles[idxB].y + s.y) - particles[i].y;
+            const double rz = (particles[idxB].z + s.z) - particles[i].z;
+            const double _rs  = sqrt(rx*rx + ry*ry + rz*rz);
+            const double invr3 = 1.0/(_rs*_rs*_rs);
+
+            C.x += particles[i].m * rx * invr3;
+            C.y += particles[i].m * ry * invr3;
+            C.z += particles[i].m * rz * invr3;
+
+            // accelerations on particle i due to binary
+            const double prefact3 = G*mB / (_rbi*_rbi*_rbi);
+            particles[i].ax += prefact1*dbx + prefact3*dbix;
+            particles[i].ay += prefact1*dby + prefact3*dbiy;
+            particles[i].az += prefact1*dbz + prefact3*dbiz;
+
+            // acceleration on the binary due to i
+            const double prefactorb1i = G*particles[i].m/(_Rb*_Rb*_Rb);
+            const double prefactorb2i = G*particles[i].m/(_rbi*_rbi*_rbi);
+            particles[idxB].ax += prefactorb1i*particles[idxB].x - prefactorb2i*dbix;
+            particles[idxB].ay += prefactorb1i*particles[idxB].y - prefactorb2i*dbiy;
+            particles[idxB].az += prefactorb1i*particles[idxB].z - prefactorb2i*dbiz;
+        }
+
+        // Inner loop for active-test particle interactions
+        if ((int)i >= startitestp){
+            for (size_t j=1; j<N_active; j++){
+                if ((int)j == idxB) continue;
+                if (trace->current_Ks[j*r->N+i]) continue;
+                const double dx = particles[i].x - particles[j].x;
+                const double dy = particles[i].y - particles[j].y;
+                const double dz = particles[i].z - particles[j].z;
+                const double _r = sqrt(dx*dx + dy*dy + dz*dz + softening2);
+                const double prefact = G / (_r*_r*_r);
+                const double prefactj = -prefact*particles[j].m;
+                particles[i].ax    += prefactj*dx;
+                particles[i].ay    += prefactj*dy;
+                particles[i].az    += prefactj*dz;
+                if (_testparticle_type){
+                    const double prefacti = prefact*particles[i].m;
+                    particles[j].ax    += prefacti*dx;
+                    particles[j].ay    += prefacti*dy;
+                    particles[j].az    += prefacti*dz;
+                }
+            }
+        }
+    }
+
+    if (has_binary){
+        const double common = -G * mB / mtotA;
+        for (size_t k=1; k<N; k++){
+            if ((int)k == idxB) continue;
+            particles[k].ax += common * C.x;
+            particles[k].ay += common * C.y;
+            particles[k].az += common * C.z;
+        }
+    }
+
 }
 
 static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct reb_simulation* r){
@@ -427,31 +855,11 @@ static void reb_integrator_trace_calculate_acceleration_mode_interaction(struct 
         }
     }
 #endif // OPENMP
-
-    // Handle Additional forces
-    if (r->additional_forces){
-        // shift pos and velocity so that external forces are calculated in inertial frame
-        // Note: Copying avoids degrading floating point performance
-        // We should NOT do this in FULL mode, already in inertial frame
-        if(r->N>trace->N_allocated_additional_forces){
-            trace->particles_backup_additional_forces = realloc(trace->particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
-            trace->N_allocated_additional_forces = r->N;
-        }
-        memcpy(trace->particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
-        reb_integrator_trace_dh_to_inertial(r);
-        r->additional_forces(r);
-        struct reb_particle* restrict const particles = r->particles;
-        struct reb_particle* restrict const backup = trace->particles_backup_additional_forces;
-        for (size_t i=0;i<r->N;i++){
-            particles[i].x = backup[i].x;
-            particles[i].y = backup[i].y;
-            particles[i].z = backup[i].z;
-            particles[i].vx = backup[i].vx;
-            particles[i].vy = backup[i].vy;
-            particles[i].vz = backup[i].vz;
-        }
-    }
 }
+
+//static void reb_integrator_trace_calculate_acceleration_mode_kepler_wb(struct reb_simulation* r){
+
+//}
 
 static void reb_integrator_trace_calculate_acceleration_mode_kepler(struct reb_simulation* r){
     // Kepler Step
@@ -599,7 +1007,36 @@ void reb_integrator_trace_interaction_step(struct reb_simulation* const r, doubl
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     trace->mode = REB_INTEGRATOR_TRACE_MODE_INTERACTION;
-    reb_integrator_trace_calculate_acceleration_mode_interaction(r);
+    if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+        reb_integrator_trace_calculate_acceleration_mode_interaction_wb(r);
+    }else{
+        reb_integrator_trace_calculate_acceleration_mode_interaction(r);
+    }
+
+    // Handle Additional forces
+    if (r->additional_forces){
+        // shift pos and velocity so that external forces are calculated in inertial frame
+        // Note: Copying avoids degrading floating point performance
+        // We should NOT do this in FULL mode, already in inertial frame
+        if(r->N>trace->N_allocated_additional_forces){
+            trace->particles_backup_additional_forces = realloc(trace->particles_backup_additional_forces, r->N*sizeof(struct reb_particle));
+            trace->N_allocated_additional_forces = r->N;
+        }
+        memcpy(trace->particles_backup_additional_forces,r->particles,r->N*sizeof(struct reb_particle));
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+        else reb_integrator_trace_dh_to_inertial(r);
+        r->additional_forces(r);
+        struct reb_particle* restrict const backup = trace->particles_backup_additional_forces;
+        for (size_t i=0;i<r->N;i++){
+            particles[i].x = backup[i].x;
+            particles[i].y = backup[i].y;
+            particles[i].z = backup[i].z;
+            particles[i].vx = backup[i].vx;
+            particles[i].vy = backup[i].vy;
+            particles[i].vz = backup[i].vz;
+        }
+    }
+
     for (size_t i=1;i<N;i++){
         particles[i].vx += dt*particles[i].ax;
         particles[i].vy += dt*particles[i].ay;
@@ -618,8 +1055,11 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
     // If TP type 1, use r->N. Else, use N_active.
     const size_t N = r->testparticle_type==0 ? N_active: r->N;
 
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+
     double px=0., py=0., pz=0.;
     for (size_t i=1;i<N;i++){
+        if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && (int)i==idxB) continue; // skip star B
         px += r->particles[i].vx*r->particles[i].m; // in dh
         py += r->particles[i].vy*r->particles[i].m;
         pz += r->particles[i].vz*r->particles[i].m;
@@ -630,6 +1070,7 @@ void reb_integrator_trace_jump_step(struct reb_simulation* const r, double dt){
 
     const size_t N_all = r->N;
     for (size_t i=1;i<N_all;i++){
+        if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && (int)i==idxB) continue; // skip star B
         particles[i].x += px;
         particles[i].y += py;
         particles[i].z += pz;
@@ -644,10 +1085,31 @@ void reb_integrator_trace_com_step(struct reb_simulation* const r, double dt){
 }
 
 void reb_integrator_trace_whfast_step(struct reb_simulation* const r, double dt){
-    struct reb_particle* restrict const particles = r->particles;
+    struct reb_particle* restrict const p = r->particles;
+    struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
-    for (size_t i=1;i<N;i++){
-        reb_integrator_whfast_kepler_solver(&particles[i],r->G*particles[0].m,dt,NULL);
+    const size_t N_active = (r->N_active==SIZE_MAX || r->testparticle_type==1) ? N : r->N_active;
+
+    const int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
+    const int wb = (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY && idxB != -1);
+
+
+    double Mpl = 0.0;
+    for (size_t i=1; i<N; i++){
+        if (wb && i == (size_t)idxB) continue; // companion handled after the loop
+        reb_integrator_whfast_kepler_solver(&p[i], r->G*p[0].m, dt, NULL);
+        if (i < N_active) Mpl += p[i].m;
+    }
+    if (wb){
+        const double mA = p[0].m, mB = p[idxB].m;
+
+        // This is ONLY to integrate the wide binary in WB coordinates
+        // Kepler parameter for relative coordinate X_B is G * m_tot
+        const double GM_B  = r->G*(mA + Mpl + mB);
+        const double scale = (mA + mB + Mpl)/(mA + Mpl);
+        p[idxB].vx *= scale;  p[idxB].vy *= scale;  p[idxB].vz *= scale;
+        reb_integrator_whfast_kepler_solver(&p[idxB], GM_B, dt, NULL);
+        p[idxB].vx /= scale;  p[idxB].vy /= scale;  p[idxB].vz /= scale;
     }
 }
 
@@ -674,7 +1136,11 @@ void reb_integrator_trace_nbody_derivatives(struct reb_ode* ode, double* const y
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     // TRACE always needs this to ensure the right Hamiltonian is evolved
     reb_integrator_trace_update_particles(r, y);
+    //if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+    //    reb_integrator_trace_calculate_acceleration_mode_kepler_wb(r);
+    //}else{
     reb_integrator_trace_calculate_acceleration_mode_kepler(r);
+    //}
 
     double px=0., py=0., pz=0.;
     size_t* map = trace->encounter_map;
@@ -749,7 +1215,11 @@ void reb_integrator_trace_bs_step(struct reb_simulation* const r, double dt){
     r->map = trace->encounter_map; // for collision search
     r->N_map = trace->encounter_N;
     r->gravity = REB_GRAVITY_CUSTOM;
+    //if (trace->coordinates==REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY){
+    //r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler_wb;
+    //}else{
     r->gravity_custom = reb_integrator_trace_calculate_acceleration_mode_kepler;
+    //}
 
     // Only Partial BS uses this step 
     if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS || !trace->current_C){
@@ -878,6 +1348,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     const size_t Nactive = r->N_active==SIZE_MAX?r->N:r->N_active;
+    int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary"));
     int (*_switch) (struct reb_simulation* const r, const size_t i, const size_t j) = trace->S ? trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const size_t j) = trace->S_peri ? trace->S_peri : reb_integrator_trace_switch_peri_default;
 
@@ -904,11 +1375,17 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     }
 
     // Check for pericenter CE
+    // in WB we do the pericenter checks in inertial
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     for (size_t j = 1; j < Nactive; j++){
+        // Skip the WB
+        if ((int)j == idxB && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue;
+
         if (_switch_peri(r, j)){
             trace->current_C = 1;
             if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15){
                 // Everything will be integrated with BS/IAS15. No need to check any further.
+                if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
                 return;
             }
             if (j < Nactive){ // Two massive particles have a close encounter
@@ -917,6 +1394,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
 
     if (trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
@@ -931,6 +1409,7 @@ void reb_integrator_trace_pre_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (size_t i = 0; i < Nactive; i++){ // Check central body, for collisions
         for (size_t j = i + 1; j < N; j++){
+            if (((int)i == idxB || (int)j == idxB) && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 trace->current_Ks[i*N+j] = 1;
                 if (trace->encounter_map[i] == 0){
@@ -956,6 +1435,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     struct reb_integrator_trace_state* const trace = r->integrator.state;
     const size_t N = r->N;
     const size_t Nactive = r->N_active==SIZE_MAX?r->N:r->N_active;
+    int idxB = reb_simulation_particle_index(reb_simulation_get_particle_by_name(r, "widebinary")); // only used for WB
     int (*_switch) (struct reb_simulation* const r, const size_t i, const size_t j) = trace->S ? trace->S : reb_integrator_trace_switch_default;
     int (*_switch_peri) (struct reb_simulation* const r, const size_t j) = trace->S_peri ? trace->S_peri : reb_integrator_trace_switch_peri_default;
     size_t new_close_encounter = 0; // New CEs
@@ -963,14 +1443,21 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // Set this from pre-ts encounter map. I don't think we need to reset encounter_N here.
     memcpy(trace->encounter_map, trace->encounter_map_backup, N*sizeof(size_t));
 
+    // in WB we do the pericenter checks in inertial
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
     if (!trace->current_C){
         // Check for pericenter CE if not already triggered from pre-timestep.
         for (size_t j = 1; j < Nactive; j++){
+
+            // in WB coordinates this is checked against the WB itself
+            if ((int)j == idxB && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue;
+
             if (_switch_peri(r, j)){
                 trace->current_C = 1;
                 new_close_encounter = 1;
                 if (trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_BS || trace->peri_mode == REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15){
                     // Everything will be integrated with BS/IAS15. No need to check any further.
+                    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
                     return new_close_encounter;
                 }
 
@@ -981,6 +1468,8 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
             }
         }
     }
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+
     if (trace->current_C){
         // Pericenter close encounter detected. We integrate the entire simulation with BS
         trace->encounter_N = N;
@@ -994,6 +1483,7 @@ double reb_integrator_trace_post_ts_check(struct reb_simulation* const r){
     // there cannot be TP-TP CEs
     for (size_t i = 0; i < Nactive; i++){ // Do not check for central body anymore
         for (size_t j = i + 1; j < N; j++){
+            if (((int)i == idxB || (int)j == idxB) && trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) continue; // in WB coordinates star B does not have close encounters, for now
             if (_switch(r, i, j)){
                 if (trace->current_Ks[i*N+j] == 0){
                     new_close_encounter = 1;
@@ -1034,7 +1524,8 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         const double old_t = r->t;
         r->gravity = REB_GRAVITY_BASIC;
         trace->mode = REB_INTEGRATOR_TRACE_MODE_FULL;
-        reb_integrator_trace_dh_to_inertial(r);
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+        else reb_integrator_trace_dh_to_inertial(r);
         switch (trace->peri_mode){
             case REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15:
                 {
@@ -1104,7 +1595,9 @@ static void reb_integrator_trace_step_try(struct reb_simulation* const r){
         }
         r->t = old_t; // final time will be set later
         r->dt = old_dt;
-        reb_integrator_trace_inertial_to_dh(r);
+
+        if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+        else reb_integrator_trace_inertial_to_dh(r);
     }
 }
 
@@ -1227,7 +1720,8 @@ void reb_integrator_trace_step(struct reb_simulation* r, void* state){
     // Not sure why this was needed. HR 4 April 2026
     // reb_integrator_trace_update_acceleration(r);
 
-    reb_integrator_trace_inertial_to_dh(r);
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_inertial_to_wb(r);
+    else reb_integrator_trace_inertial_to_dh(r);
 
     // Create copy of all particle to allow for the step to be rejected.
     memcpy(trace->particles_backup, r->particles, N*sizeof(struct reb_particle));
@@ -1253,7 +1747,8 @@ void reb_integrator_trace_step(struct reb_simulation* r, void* state){
             reb_integrator_trace_step_try(r);
         }
     }
-    reb_integrator_trace_dh_to_inertial(r);
+    if (trace->coordinates == REB_INTEGRATOR_TRACE_COORDINATES_WIDEBINARY) reb_integrator_trace_wb_to_inertial(r);
+    else reb_integrator_trace_dh_to_inertial(r);
 
     r->t+=r->dt;
     r->dt_last_done = r->dt;
