@@ -1,6 +1,7 @@
 import ctypes
 import textwrap
 from .binarydata_field_descriptor import BinarydataFieldDescriptorList, REB_BINARYDATA_DTYPE, format_doc
+from . import clibrebound
 
 class Integrator(ctypes.Structure):
     """ Contains function pointers to integrator routines, documentation, and field data """
@@ -64,12 +65,18 @@ class IntegratorConfiguration(ctypes.Structure):
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         field_descriptor = self.callbacks.field_descriptor_list.field_descriptor_for_name(name)
         pointer_to_field = REB_BINARYDATA_DTYPE[field_descriptor.dtype].from_address(self.state + field_descriptor.offset)
-        if isinstance(value, str) and field_descriptor.enum_descriptor_list:
-            for enum_descriptor in field_descriptor.enum_descriptor_list:
-                if enum_descriptor.name.decode("utf-8").upper() == value.upper():
-                    pointer_to_field.value = enum_descriptor.value
-                    return
-            raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join([ed.name.decode("utf-8") for ed in field_descriptor.enum_descriptor_list])))
+        if isinstance(value, str):
+            if field_descriptor.enum_descriptor_list:
+                for enum_descriptor in field_descriptor.enum_descriptor_list:
+                    if enum_descriptor.name.decode("utf-8").upper() == value.upper():
+                        pointer_to_field.value = enum_descriptor.value
+                        return
+                raise AttributeError("Field '%s' can not be set to '%s' Available options are: %s." % (name, value, ", ".join([ed.name.decode("utf-8") for ed in field_descriptor.enum_descriptor_list])))
+            else: # REB_STRING type. Memory owned by simulation.
+                if pointer_to_field.value:
+                    clibrebound.reb_free(pointer_to_field.value)
+                clibrebound.reb_strdup.restype = ctypes.c_void_p
+                value = clibrebound.reb_strdup(value.encode("utf-8"))
         pointer_to_field.value = value
     
     def __repr__(self):
