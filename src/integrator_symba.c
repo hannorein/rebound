@@ -203,15 +203,11 @@ static int evolve(struct reb_simulation* r,struct reb_particle* dh_particles, co
     if(n % 2 == 0){
         a = n / 2;
         b = n - 1;
-    }else{ a = n;
+    }else{ 
+        a = n;
         b = (n - 1) / 2;
     }
 
-
-
-    if(b != 0 && a > SIZE_MAX / b /sizeof(struct SyMBA_Pair)){
-        return 0;
-    }
     struct SyMBA_Pair* pairs;
     if(a*b == 0){
         pairs = NULL;

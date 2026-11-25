@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
     // Point your browser to http://localhost:1234
     reb_simulation_start_server(r, 1234);
    
-    r->dt = 0.012*2.*M_PI;                
+    r->dt = 0.01*2.*M_PI;                
     if (1){
         reb_simulation_set_integrator(r, "symba");
         struct reb_integrator_symba_state* symba = r->integrator.state;
