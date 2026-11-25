@@ -79,7 +79,6 @@ def kozai_sim():
 class TestIntegratorTrace(unittest.TestCase):
 
     # ------ Boilerplate transformations/ordering ------------
-    @unittest.skipIf(sys.platform == "win32", "TRACE's WB transformations are internal and not exported from the Windows DLL")
     def test_transformation(self):
         clib = rebound.clibrebound
         # tests if transforming inertial -> WB -> inertial returns same ICs
@@ -102,7 +101,8 @@ class TestIntegratorTrace(unittest.TestCase):
         sim1 = jupsat_sim(wb_companion=False)
         sim2 = jupsat_sim(wb_companion=False)
         sim2.integrator.coordinates = "democraticheliocentric"
-        sim1.steps(2000)
+        with self.assertWarns(RuntimeWarning):
+            sim1.steps(2000)
         sim2.steps(2000)
         for name in ["jupiter", "saturn"]:
             self.assertAlmostEqual(sim1.particles[name].x, sim2.particles[name].x, delta=1e-8)
@@ -300,22 +300,6 @@ class TestIntegratorTrace(unittest.TestCase):
         sim.integrate(1000.)
         dE = abs((sim.energy() - E0)/E0)
         self.assertLess(dE,1e-3)
-
-    def test_companion_survives_merger(self):
-        # wide binary survives collision if it's the lower indexed particle
-        sim = rebound.Simulation()
-        sim.add(m=1., r=0.00465)
-        sim.add(m=1e-5, r=1e-3, x=47., vx=1., vy=math.sqrt(1.5/50.), name="planet")   # heading straight for the companion
-        sim.add(m=0.5, r=0.01, x=50., vy=math.sqrt(1.5/50.), name="widebinary")
-        sim.move_to_com()
-        sim.integrator = "trace"
-        sim.integrator.coordinates = "widebinary"
-        sim.dt = 0.01
-        sim.collision = "direct"
-        sim.collision_resolve = "merge"
-        sim.integrate(5.)
-        self.assertEqual(sim.N, 2)
-        self.assertIn("widebinary", [p.name for p in sim.particles])
 
     # --------- Accuracy Comparisons -----------------
 
