@@ -21,11 +21,16 @@ int main(int argc, char* argv[]){
     // Point your browser to http://localhost:1234
     reb_simulation_start_server(r, 1234);
    
-    r->dt = 0.0012*2.*M_PI;                
-    reb_simulation_set_integrator(r, "symba");
-    struct reb_integrator_symba_state* symba = r->integrator.state;
-    symba->levels = 20;
+    r->dt = 0.012*2.*M_PI;                
+    if (1){
+        reb_simulation_set_integrator(r, "symba");
+        struct reb_integrator_symba_state* symba = r->integrator.state;
+        symba->levels = 50;
+    }else{
+        reb_simulation_set_integrator(r, "mercurius");
+    }
     r->heartbeat = heartbeat;
+    r->usleep = 10000;
     r->status = REB_STATUS_PAUSED;
 
     struct reb_particle star = {0};
@@ -51,16 +56,7 @@ int main(int argc, char* argv[]){
 }
 
 void heartbeat(struct reb_simulation* r){
-    if (reb_simulation_output_check(r, 10.*2.*M_PI)){  
-        reb_simulation_output_timing(r, 0);
-    }
-    if (reb_simulation_output_check(r, 2.*M_PI)){  
-        // Once per year, output the relative energy error to a text file
-        FILE* f = fopen("energy.txt","ab");
-        reb_simulation_synchronize(r);
-        double e = reb_simulation_energy(r);
-        fprintf(f,"%e %e\n",r->t, fabs((e-e_init)/e_init));
-        fclose(f);
-    }
+    double e = reb_simulation_energy(r);
+    printf("%e %e\n",r->t, fabs((e-e_init)/e_init));
 }
 
