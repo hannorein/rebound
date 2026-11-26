@@ -3,8 +3,6 @@ import rebound
 import unittest
 import numpy as np
 import math
-import sys
-import warnings
 import os
 from datetime import datetime
 
@@ -80,6 +78,8 @@ class TestIntegratorTrace(unittest.TestCase):
 
     # ------ Boilerplate transformations/ordering ------------
     def test_transformation(self):
+        if os.name == 'nt':
+            return # not tested on windows because symbol is not exported
         clib = rebound.clibrebound
         # tests if transforming inertial -> WB -> inertial returns same ICs
         sim = jupsat_sim()
