@@ -1394,6 +1394,8 @@ Simulation._fields_ = [
                 ("N", c_size_t),
                 ("N_allocated", c_size_t),
                 ("_particles", POINTER(Particle)),
+                ("_orbit_colors", c_void_p),
+                ("N_orbit_colors", c_size_t),
                 ("_N_map", c_size_t),
                 ("_map", POINTER(c_size_t)),
                 ("N_var", c_size_t),

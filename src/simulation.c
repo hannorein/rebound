@@ -192,7 +192,8 @@ void reb_simulation_free(struct reb_simulation* const r){
         free(r->var_config);
     }
     free(r->odes);
-
+    free(r->orbit_colors);
+    
     // Free simulation itself
     free(r);
 }
