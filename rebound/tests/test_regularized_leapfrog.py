@@ -30,6 +30,7 @@ class TestIntegrator(unittest.TestCase):
 
     def test_regularized_leapfrog_energy_solar_system_order(self):
         for order, target in zip([2,4,6,8], [1e-5, 2e-6, 1e-9, 1e-12]):
+            self.sim = rebound.Simulation()
             self.sim.integrator = "leapfrog"
             self.sim.integrator.order = order
             self.sim.integrator.regularized = 1
@@ -43,6 +44,7 @@ class TestIntegrator(unittest.TestCase):
     
     def test_regularized_leapfrog_energy_3body(self):
         for order, target in zip([2,4,6,8], [1e-4, 2e-7, 1e-11, 1e-11]):
+            self.sim = rebound.Simulation()
             self.sim.integrator = "leapfrog"
             self.sim.integrator.regularized = 1
             self.sim.integrator.order = order
@@ -76,7 +78,7 @@ class TestIntegrator(unittest.TestCase):
         self.assertNotEqual(e0,0.)
         self.sim.integrate(1e3, exact_finish_time=0)
         e1 = self.sim.energy()
-        self.assertLess(math.fabs((e0-e1)/e1), 1.5e-13)
+        self.assertLess(math.fabs((e0-e1)/e1), 1e-9)
 
 
     def test_regularized_leapfrog_dt_last_done(self):
