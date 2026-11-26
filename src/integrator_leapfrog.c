@@ -161,7 +161,7 @@ void reb_integrator_leapfrog_step(struct reb_simulation* r, void* state){
         }
     }
 
-    double dt = 0; // real timesteps performed
+    double dt = 0; // real timestep performed
     switch (leapfrog->order){
         case 2: // 1*2 FE
             dt += drift(r, leapfrog, dtau*0.5);
