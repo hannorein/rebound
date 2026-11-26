@@ -18,7 +18,7 @@ There are only a few special cases where the round-off error in force calculatio
 
 This method uses an oct tree (Barnes and Hut 1986) to approximate self-gravity. It scales as  $O(N \log(N))$.
 
-## Tree
+## Jacobi
 `REB_GRAVITY_JACOBI`        
 
 Direct summation, scales as $O(N^2)$, includes special terms needed for some symplectic integrators.

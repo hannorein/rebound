@@ -29,7 +29,7 @@ class TestFrequencyAnalysis(unittest.TestCase):
             nu_error = np.abs(nu[i]*1296000.0/datasep-nu5[i])
             self.assertLess(nu_error, 3e-4)
             A_error = np.abs((A[i]-A5[i])/A5[i])
-            self.assertLess(nu_error, 2e-3)
+            self.assertLess(A_error, 2e-3)
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 5e-1)
     def test_LA1990_type_1(self):
@@ -39,7 +39,7 @@ class TestFrequencyAnalysis(unittest.TestCase):
             nu_error = np.abs(nu[i]*1296000.0/datasep-nu5[i])
             self.assertLess(nu_error, 4e-6)
             A_error = np.abs((A[i]-A5[i])/A5[i])
-            self.assertLess(nu_error, 1e-5)
+            self.assertLess(A_error, 1e-5)
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 6e-3)
     def test_LA1990_type_2(self):
@@ -49,9 +49,20 @@ class TestFrequencyAnalysis(unittest.TestCase):
             nu_error = np.abs(nu[i]*1296000.0/datasep-nu5[i])
             self.assertLess(nu_error, 2e-8)
             A_error = np.abs((A[i]-A5[i])/A5[i])
-            self.assertLess(nu_error, 3e-7)
+            self.assertLess(A_error, 3e-7)
             phi_error = np.abs(phi[i]/np.pi*180.0-phi5[i])
             self.assertLess(phi_error, 5e-5)
+    def test_invalid_analysis_type(self):
+        with self.assertRaises(ValueError):
+            rebound.frequency_analysis(np.zeros(16), type=3)
+        with self.assertRaises(ValueError):
+            rebound.frequency_analysis(np.zeros(16), type="other")
+    def test_no_frequencies_in_range(self):
+        domain = np.arange(16)
+        signal = np.zeros(2*len(domain)) # interleaved real/imaginary values
+        signal[0::2] = np.cos(np.pi / 4 * domain) # populate real components
+        with self.assertRaisesRegex(RuntimeError, "cannot find frequencies"):
+            rebound.frequency_analysis(signal, nfreq=1, minfreq=10.0, maxfreq=11.0)
 
 if __name__ == "__main__":
     unittest.main()

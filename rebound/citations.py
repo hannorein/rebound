@@ -162,7 +162,6 @@ archivePrefix = {arXiv},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 """
-
     if sim.integrator == "trace":
         txt += """The simulations were integrated using the hybrid time-reversible TRACE integrator \\citep{reboundtrace}. """
         bib += """@ARTICLE{reboundtrace,
@@ -182,8 +181,27 @@ archivePrefix = {arXiv},
        adsurl = {https://ui.adsabs.harvard.edu/abs/2024MNRAS.533.3708L},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
+"""
+        if sim.integrator.coordinates == "WIDEBINARY":
+            txt += """Wide binary coordinates were used in the TRACE integrator \\citep{reboundtracewb}. """
+            bib += """@ARTICLE{reboundtracewb,
+            author = {{Lu}, Tiger and {Brown}, Garett},
+            title = "{A Coordinate System for Dynamical Instabilities in Hierarchical Systems in REBOUND}",
+            journal = {arXiv e-prints},
+      keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+            year = 2026,
+            month = may,
+            eid = {arXiv:2605.01005},
+            pages = {arXiv:2605.01005},
+            doi = {10.48550/arXiv.2605.01005},
+      archivePrefix = {arXiv},
+            eprint = {2605.01005},
+      primaryClass = {astro-ph.EP},
+            adsurl = {https://ui.adsabs.harvard.edu/abs/2026arXiv260501005L},
+            adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 """
+
 
     if sim.integrator == "janus":
         txt += """The simulations were integrated using the time-reversible JANUS integrator \\citep{reboundjanus}. """

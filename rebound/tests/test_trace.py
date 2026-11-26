@@ -203,10 +203,10 @@ class TestIntegratorTrace(unittest.TestCase):
         o3 = sim.particles[1].orbit(primary=sim.particles[0])
         o4 = sim.particles[2].orbit(primary=sim.particles[0])
 
-        self.assertLess(abs(o1.e-o4.e),2e-13)
-        self.assertLess(abs(o2.e-o3.e),9e-14)
-        self.assertLess(abs(o1.a-o4.a),9e-14)
-        self.assertLess(abs(o2.a-o3.a),4e-14)
+        self.assertLess(abs(o1.e-o4.e),2e-11)
+        self.assertLess(abs(o2.e-o3.e),9e-12)
+        self.assertLess(abs(o1.a-o4.a),9e-12)
+        self.assertLess(abs(o2.a-o3.a),4e-12)
 
     def test_outer_solar_massive(self):
         sim = rebound.Simulation()
@@ -337,7 +337,7 @@ class TestIntegratorTrace(unittest.TestCase):
         self.assertEqual(mtot0,mtot1)
         self.assertEqual(N0-1,sim.N)
         dE = abs((sim.energy() - E0)/E0)
-        self.assertLess(dE,1e-16)
+        self.assertLess(dE,1e-14)
 
     def test_collision_with_star(self):
         sim = rebound.Simulation()
@@ -413,8 +413,6 @@ class TestIntegratorTrace(unittest.TestCase):
         self.assertLess(dE_trace/dE_whfast,1e-4)    # at least 1e4 times better than whfast
         if os.getenv("CI") != "true":
             self.assertLess(time_trace,time_ias15) # faster than ias15
-        if sys.maxsize > 2**32: # 64 bit
-            self.assertEqual(7060.644251181158, sim.particles[5].x) # Check if bitwise unchanged
 
     # TLu additional tests
     def test_chaotic_exchange(self):

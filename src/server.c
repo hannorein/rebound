@@ -212,9 +212,44 @@ static void reb_server_cerror(SOCKET clientS, char cause[]){
             struct reb_server_data* data = (struct reb_server_data*)args;
             struct reb_simulation* r = data->r;
 
+            int need_download = 0;
             if (access("rebound.html", F_OK)) {
-                reb_simulation_warning(r, "File rebound.html not found in current directory. Attempting to download it from github.");
-                char curl_cmd[] = "curl -L -s --output rebound.html https://github.com/hannorein/rebound/releases/latest/download/rebound.html";
+                // File does not exist.
+                reb_simulation_warning(r, "File rebound.html not found in current directory.");
+                need_download = 1;
+            }else{
+                // File exists. Check version.
+                FILE* fd = fopen("rebound.html", "r");
+                const char* needle = ">REBOUND v";
+                char file_version_str[256] = "";
+                int c;
+                int n = 0;
+                while ((c = fgetc(fd)) != EOF){
+                    if (c==needle[n]){
+                        n++;
+                        if (!needle[n]){ // end of needle
+                            n = 0;
+                            while(((c = fgetc(fd)) != EOF) && n<255 && c!='<'){
+                                file_version_str[n++] = c;
+                            }
+                            file_version_str[n++] = 0;
+                            break;
+                        }
+                    }else{
+                        n = 0;
+                    }
+                }
+                fclose(fd);
+                need_download = strcmp(reb_version_str, file_version_str);
+                if (need_download){
+                    reb_simulation_warning(r, "File rebound.html found but version does not match.");
+                }
+            }
+
+            if (need_download){
+                printf("Attempting to download rebound.html (version %s) from github.\n", reb_version_str);
+                char curl_cmd[1024];
+                sprintf(curl_cmd, "curl -L -s --output rebound.html https://github.com/hannorein/rebound/releases/%s/rebound.html", reb_version_str);
                 system(curl_cmd);
                 if (access("rebound.html", F_OK)) {
                     reb_simulation_warning(r, "Automatic download failed. Manually download the file from github and place it in the current directory to enable browser based visualization.");
@@ -391,6 +426,7 @@ static void reb_server_cerror(SOCKET clientS, char cause[]){
                         void* p = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
                         fwrite(p, 1, sbuf.st_size, stream);
                         munmap(p, sbuf.st_size);
+                        close(fd);
                     }
                 }else if (!strcasecmp(uri, "/favicon.ico")) {
                     fwrite(reb_server_header_png, 1, strlen(reb_server_header_png), stream);

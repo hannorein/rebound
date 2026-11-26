@@ -377,37 +377,36 @@ void reb_simulationarchive_free(struct reb_simulationarchive* sa){
 }
 
 void reb_simulationarchive_heartbeat(struct reb_simulation* const r){
-    if (r->simulationarchive_filename!=NULL){
-        int modes = 0;
-        if (r->simulationarchive_auto_interval!=0) modes++;
-        if (r->simulationarchive_auto_walltime!=0.) modes++;
-        if (r->simulationarchive_auto_step!=0) modes++;
-        if (modes>1){
-            reb_simulation_error(r,"Only use one of simulationarchive_auto_interval, simulationarchive_auto_walltime, or simulationarchive_auto_step");
-        }
-        if (r->simulationarchive_auto_interval!=0.){
-            const double sign = r->dt>0.?1.:-1;
-            if (sign*r->simulationarchive_next <= sign*r->t){
-                r->simulationarchive_next += sign*r->simulationarchive_auto_interval;
-                //Snap
-                reb_simulation_save_to_file(r, NULL);
-            }
-        }
-        if (r->simulationarchive_auto_step!=0.){
-            if (r->simulationarchive_next_step <= r->steps_done){
-                r->simulationarchive_next_step += r->simulationarchive_auto_step;
-                //Snap
-                reb_simulation_save_to_file(r, NULL);
-            }
-        }
-        if (r->simulationarchive_auto_walltime!=0.){
-            if (r->simulationarchive_next <= r->walltime){
-                r->simulationarchive_next += r->simulationarchive_auto_walltime;
-                //Snap
-                reb_simulation_save_to_file(r, NULL);
-            }
-        } 
+    // This function assumes that r->simulationarchive_filename!=NULL
+    int modes = 0;
+    if (r->simulationarchive_auto_interval!=0) modes++;
+    if (r->simulationarchive_auto_walltime!=0.) modes++;
+    if (r->simulationarchive_auto_step!=0) modes++;
+    if (modes>1){
+        reb_simulation_error(r,"Only use one of simulationarchive_auto_interval, simulationarchive_auto_walltime, or simulationarchive_auto_step");
     }
+    if (r->simulationarchive_auto_interval!=0.){
+        const double sign = r->dt>0.?1.:-1;
+        if (sign*r->simulationarchive_next <= sign*r->t){
+            r->simulationarchive_next += sign*r->simulationarchive_auto_interval;
+            //Snap
+            reb_simulation_save_to_file(r, NULL);
+        }
+    }
+    if (r->simulationarchive_auto_step!=0.){
+        if (r->simulationarchive_next_step <= r->steps_done){
+            r->simulationarchive_next_step += r->simulationarchive_auto_step;
+            //Snap
+            reb_simulation_save_to_file(r, NULL);
+        }
+    }
+    if (r->simulationarchive_auto_walltime!=0.){
+        if (r->simulationarchive_next <= r->walltime){
+            r->simulationarchive_next += r->simulationarchive_auto_walltime;
+            //Snap
+            reb_simulation_save_to_file(r, NULL);
+        }
+    } 
 }
 
 void reb_simulation_save_to_file(struct reb_simulation* const r, const char* filename){

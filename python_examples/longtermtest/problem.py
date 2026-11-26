@@ -98,15 +98,17 @@ colors = {
 }
 trials = 4
     
+
 parameters = [(inte,i*trials+j,j) for i,inte in enumerate(integrators) for j in range(trials)]
 if len(sys.argv)!=2:
     try:
-        from multiprocess import Pool
+        from joblib import Parallel, delayed
     except:
-        raise RuntimeError("Please install the multiprocess module with `pip install multiprocess`.")
-    with Pool() as pool:
-        print("Running %d simulations on %d threads..." % (len(parameters), pool._processes))
-        res = np.array(pool.map(simulation,parameters)).reshape(len(integrators),trials,2,Ngrid)
+        raise RuntimeError("Unable to import the joblib module.")
+    n_jobs = 8
+    print("Running %d simulations on %d threads..." % (len(parameters), n_jobs))
+    res = Parallel(n_jobs=n_jobs)(delayed(simulation)(p) for p in parameters)
+    res = np.array(res).reshape(len(integrators),trials,2,Ngrid)
     np.save("res.npy",res)
 else:
     print("Loading %d simulations" % (len(parameters)))

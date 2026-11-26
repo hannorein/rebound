@@ -176,7 +176,9 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
             struct reb_binarydata_field_descriptor fd_integrator = *fd;
             if (r && r->integrator.state){
                 fd_integrator.offset += (size_t)r->integrator.state;
-                fd_integrator.offset_N += (size_t)r->integrator.state;
+                if (fd_integrator.offset_N != SIZE_MAX){
+                    fd_integrator.offset_N += (size_t)r->integrator.state;
+                }
             }
             strcpy(fd_integrator.name, name);
             return fd_integrator;
@@ -188,7 +190,9 @@ struct reb_binarydata_field_descriptor reb_binarydata_field_descriptor_for_name(
         struct reb_binarydata_field_descriptor fd_simulation = *fd;
         if (r){
             fd_simulation.offset += (size_t)r;
-            fd_simulation.offset_N += (size_t)r;
+            if (fd_simulation.offset_N != SIZE_MAX){
+                fd_simulation.offset_N += (size_t)r;
+            }
         }
         return fd_simulation;
     }
